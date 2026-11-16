@@ -884,7 +884,10 @@ describe("a new chat's folder from its run", () => {
     task("chat-1");
     expect(() => service.checkPrimary(gh)).toThrow(/holds keys or tokens/);
     await expect(service.set(scope, "chat-1", { kind: "attach", path: gh }, local)).rejects.toThrow(/holds keys or tokens/);
-    expect(service.refusalOf(join(owner.home, ".GIT-CREDENTIALS"))).toMatch(/keys or tokens/);
+    expect(service.refusalOf(join(owner.home, ".git-credentials"))).toMatch(/keys or tokens/);
+    // Another spelling of the name is the same file where the file system folds case (macOS, Windows); on Linux it is another file.
+    const folds = process.platform === "darwin" || process.platform === "win32";
+    expect(service.refusalOf(join(owner.home, ".GIT-CREDENTIALS"))).toEqual(folds ? expect.stringMatching(/keys or tokens/) : undefined);
   });
 
   it("lets the canvas use a folder redeemed from a picker token, never one it named (I-web)", async () => {
