@@ -23,12 +23,13 @@ npm install playwright
 pnpm --filter @tavi/plugin-browser exec playwright install chromium
 ```
 
-Without Playwright, Tavi runs as usual. The first browser tool call or report
-render fails with `CAPABILITY_MISSING` naming these commands, and the
-renderer reports itself unavailable. With Playwright but without its Chromium,
-the first use fails with `CAPABILITY_MISSING` naming the second command. A
-checkout of this repository already has Playwright, as a development
-dependency.
+Without Playwright, or with Playwright but without its Chromium, Tavi runs as
+usual and does not offer the agent the browser's tools, so a chat goes to web
+search and `web_fetch` instead of asking you to approve a browser that cannot
+open. Install Chromium while the owner runs and they are offered within half a
+minute. A report render fails with `CAPABILITY_MISSING` naming these commands,
+and the renderer reports itself unavailable. A checkout of this repository
+already has Playwright, as a development dependency.
 
 A process launches Chromium on its first browser session and shares it across
 the rest. Closing the runtime — the end of an in-process `tavi run`,

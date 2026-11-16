@@ -104,8 +104,17 @@ export class ToolRegistry implements ToolRegistryPort {
   /**
    * Every tool registered on `staged`, published here as one batch, as `registerBatch` would: what composes its
    * tools before it knows whether they are wanted (a built-in that may be disabled) stages them, then adopts them.
+   * `offered`, when given, gates every one of them too (the browser's tools while no browser is installed), on top
+   * of a tool's own.
    */
-  adopt(staged: ToolRegistry): () => void {
+  adopt(staged: ToolRegistry, offered?: (context: ToolOfferContext) => boolean | Promise<boolean>): () => void {
+    if (offered !== undefined) {
+      for (const id of staged.#tools.keys()) {
+        const own = staged.#offered.get(id);
+        // The gate alone where a tool has none of its own, so one listing runs it once for all of them.
+        staged.#offered.set(id, own === undefined ? offered : async (context) => (await offered(context)) && (await own(context)));
+      }
+    }
     return this.#publish(staged);
   }
 

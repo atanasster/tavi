@@ -27,6 +27,15 @@ change behaviour or stored data.
   its brackets, say) was answered "expected object, received string". It is
   now told the arguments are not one JSON object, where they broke, and to send
   them again as one, so the model corrects the call on its retry.
+- While Playwright's Chromium is not installed, the browser's tools are not
+  offered: a chat asked to look something up went to the browser, asked you to
+  approve it, and failed. It now goes to web search and `web_fetch`; install
+  Chromium and the browser's tools are offered within half a minute.
+- A browser call that failed because Chromium was missing marked the chat as
+  having read a web page, though none opened, so later calls asked again.
+- The card asking to open the browser names the page, not only its site
+  ("Use the browser to open nodejs.org/en/download"), so two pages on one site
+  no longer look like the same question asked twice.
 
 ## 0.1.0 — first release
 

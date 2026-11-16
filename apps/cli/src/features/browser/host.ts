@@ -2,6 +2,7 @@ import type { BrowserLiveSource, BrowserPort, RenderPort } from "@tavi/contracts
 import { createBrowserLiveSource, type BrowserLiveSourceOptions } from "@tavi/plugin-browser/live";
 import {
   agentSignatureFromEnv,
+  chromiumInstalled,
   createPlaywrightBrowser,
   hostIdentity,
   signAgentRequest,
@@ -29,6 +30,20 @@ export function ownerRequestSigner(): ((url: URL) => Readonly<Record<string, str
 }
 
 /** The built-in browser engine: Playwright's Chromium, confined where the options say. */
+/**
+ * Whether the built-in browser has a Chromium to launch, read again at most every `ttlMs`: while Playwright's
+ * Chromium is not installed, the browser's tools are not offered, so the agent goes to `web_search` and `web_fetch`
+ * instead of asking approval for a browser that cannot open. Installed later, they are offered within `ttlMs`.
+ */
+export function ownerBrowserInstalled(ttlMs = 30_000, check: () => Promise<boolean> = () => chromiumInstalled()): () => Promise<boolean> {
+  let known: { readonly at: number; readonly installed: Promise<boolean> } | undefined;
+  return async () => {
+    const now = Date.now();
+    if (known === undefined || now - known.at >= ttlMs) known = { at: now, installed: check().catch(() => false) };
+    return await known.installed;
+  };
+}
+
 export function createOwnerBrowser(options: PlaywrightBrowserOptions): BrowserPort {
   return createPlaywrightBrowser(options);
 }

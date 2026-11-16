@@ -332,6 +332,8 @@ const ExtractInputSchema = z.object({
 });
 
 export interface BrowserExtractOptions {
+  /** Whether to offer the tool now (`ToolRegistry`'s `offered`): while a browser is installed to launch; absent, always. */
+  readonly offered?: () => boolean | Promise<boolean>;
   readonly browser: BrowserPort;
   readonly models: ModelPort;
   /**
@@ -400,6 +402,7 @@ export function registerBrowserExtractTool(registry: ToolRegistry, options: Brow
   const content = options.browser.content.bind(options.browser);
   registry.register({
     id: "browser.extract",
+    ...(options.offered === undefined ? {} : { offered: options.offered }),
     // A model call with its own deadline, and a repair after it.
     timeoutMs: 0,
     sink: "none",

@@ -81,6 +81,7 @@ const FindInputSchema = z.object({
 export function registerBrowserFindTool(registry: ToolRegistry, options: BrowserExtractOptions): void {
   registry.register({
     id: "browser.find",
+    ...(options.offered === undefined ? {} : { offered: options.offered }),
     // A model call with its own deadline, and a repair after it.
     timeoutMs: 0,
     sink: "none",

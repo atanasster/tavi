@@ -19,6 +19,7 @@ export {
   type BrowserIdentity,
 } from "./identity.js";
 export type { BrowserConfinementOptions, ChromiumSandboxMode } from "./confined.js";
+export { chromiumInstalled } from "./confined.js";
 export { extractLiteralPdfText, mediaTypeOf, sniffDownloadMediaType } from "./download-media.js";
 export type { PlaywrightBrowserOptions } from "./options.js";
 export { scrubErrorUrl } from "./page-status.js";

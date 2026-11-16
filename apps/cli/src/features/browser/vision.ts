@@ -67,6 +67,8 @@ export function pointerActionOf(input: unknown): ParsedVisionAction {
 }
 
 export interface BrowserVisionOptions {
+  /** Whether to offer the tool now (`ToolRegistry`'s `offered`): while a browser is installed to launch; absent, always. */
+  readonly offered?: () => boolean | Promise<boolean>;
   readonly browser: BrowserPort;
   readonly models: ModelPort;
   /** The model that acts by sight for a workspace: one that reads images; only a local one for a chat on a local connection (the call's `context`). */
@@ -102,6 +104,7 @@ export function registerBrowserVisionTool(registry: ToolRegistry, options: Brows
   if (pointer === undefined) return;
   registry.register({
     id: VISION_TOOL_ID,
+    ...(options.offered === undefined ? {} : { offered: options.offered }),
     // A loop of model steps, each bounded on its own: no one deadline holds the whole of it.
     timeoutMs: 0,
     sink: "network",

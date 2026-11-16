@@ -4,6 +4,8 @@ import { join } from "node:path";
 import type { BrowserType } from "playwright";
 import { describe, expect, it } from "vitest";
 
+import { isRefusedEarly } from "@tavi/contracts";
+
 import {
   CHROMIUM_MISSING_MESSAGE,
   PLAYWRIGHT_MISSING_MESSAGE,
@@ -59,6 +61,12 @@ describe("loading Playwright on first use", () => {
       message: CHROMIUM_MISSING_MESSAGE,
       details: { capability: "chromium" },
     });
+    // Tavi's own words, read from no page: a call it ends leaves the chat untainted.
+    expect(
+      isRefusedEarly(
+        await launchChromium({ headless: true }, () => Promise.resolve(failingChromium(noBinary))).catch((error: unknown) => error),
+      ),
+    ).toBe(true);
     const other = new Error("browserType.launch: Target page, context or browser has been closed");
     await expect(launchChromium({ headless: true }, () => Promise.resolve(failingChromium(other)))).rejects.toBe(other);
   });

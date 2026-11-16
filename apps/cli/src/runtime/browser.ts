@@ -13,7 +13,7 @@ import { errorMessage } from "@tavi/contracts/util";
 import { join } from "node:path";
 import { createFolderPromotion } from "../features/folders/promotion.js";
 import { createEgressCheck, listedAddresses } from "../features/browser/address-guard.js";
-import { createOwnerBrowser, createOwnerLiveSource, ownerBrowserIdentity } from "../features/browser/host.js";
+import { createOwnerBrowser, createOwnerLiveSource, ownerBrowserIdentity, ownerBrowserInstalled } from "../features/browser/host.js";
 import { folderFileReader, folderFileTaint } from "../features/folders/fs-tools.js";
 import { WORKLOAD_DEFAULTS, ownerDenyRead } from "../features/sandbox/host.js";
 import { APPS_SITES_SETTING, parseSites, type SitesOn } from "../features/apps/sharing.js";
@@ -252,11 +252,14 @@ export function composeBrowser(composed: SandboxContext) {
     ...(overrides.liveViewServed === true ? { handoff: true } : {}),
   });
   frameHostAllowed = browserTools.frameHostAllowed;
+  // The real browser's tools are offered only while its Chromium is installed; a browser handed in (tests) always is.
+  const browserOffered = overrides.browserOverride === undefined ? ownerBrowserInstalled() : undefined;
   // Typed by its port, which a declaration can name: the repository's own interface is not exported.
   const ports: { readonly keptFindings: TaskFindingRepositoryPort } = { keptFindings };
   return {
     browser,
     browserBoundary,
+    browserOffered,
     browserTools,
     browserToolStage,
     folderPromotion,

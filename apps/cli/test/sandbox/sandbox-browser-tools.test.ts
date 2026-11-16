@@ -469,6 +469,10 @@ describe("composition — browser.navigate destinations are operator policy", ()
     expect(create.assess?.({ url: "https://smart.example.org" }, assessContext).display.title).toBe(
       "Use the browser to open smart.example.org",
     );
+    // A page past the site's root is named by its path, so two pages on one site are told apart.
+    expect(create.assess?.({ url: "https://smart.example.org/docs/latest?lang=en#top" }, assessContext).display.title).toBe(
+      "Use the browser to open smart.example.org/docs/latest?lang=en",
+    );
     // A bare host is refused before the person is asked, not after they allow it.
     expect(create.assess?.({ url: "smart.example.org" }, assessContext).hardDeny).toContain("absolute http(s) url");
     await expect(callTool(runtime, "browser.create_session", { url: "https://smart.example.org" })).rejects.toMatchObject({

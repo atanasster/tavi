@@ -1,7 +1,7 @@
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
-import { TaviError, type ChromiumSandboxMode, type ConfinementPort, type ResourceLimitPort } from "@tavi/contracts";
+import { TaviError, refusedEarly, type ChromiumSandboxMode, type ConfinementPort, type ResourceLimitPort } from "@tavi/contracts";
 import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, LaunchOptions } from "playwright";
 
 import { HEADLESS_SHELL_MISSING_MESSAGE, launchChromium, launchPersistentChromium, loadChromium } from "./chromium.js";
@@ -86,6 +86,29 @@ export function browsersRoot(executable: string): string {
 }
 
 /**
+ * Whether a browser is here to launch: Playwright resolves, and its Chromium
+ * or the headless shell beside it was downloaded. What the owner reads before
+ * offering the browser tools, so a model is not handed tools that can only
+ * fail with `CAPABILITY_MISSING` (and a person asked to approve them). Read
+ * afresh on each call (the owner rereads it at most every half minute):
+ * `npx playwright install chromium` while the owner runs offers them soon after.
+ */
+export async function chromiumInstalled(
+  load: () => Promise<Pick<BrowserType, "executablePath">> = () => loadChromium(),
+  exists: (path: string) => boolean = existsSync,
+  list?: (directory: string) => readonly string[],
+): Promise<boolean> {
+  let executable: string;
+  try {
+    executable = (await load()).executablePath();
+  } catch {
+    // Playwright not installed (or broken): nothing to launch.
+    return false;
+  }
+  return exists(executable) || headlessShellOf(executable, ...(list === undefined ? [] : [list])) !== undefined;
+}
+
+/**
  * The headless shell beside a Chromium (`chromium_headless_shell-<rev>`), when
  * Playwright installed it: what a confined headless launch runs. The full
  * browser's process singleton needs `socket(AF_UNIX)`, which srt's Linux
@@ -136,9 +159,7 @@ export function createConfinedChromium(options: BrowserConfinementOptions): Conf
     const browser = (await load()).executablePath();
     const shell = launchOptions.headless === false || !useShell ? undefined : headlessShellOf(browser);
     if (launchOptions.headless !== false && useShell && shell === undefined) {
-      throw new TaviError("CAPABILITY_MISSING", HEADLESS_SHELL_MISSING_MESSAGE, {
-        details: { capability: "chromium-headless-shell" },
-      });
+      throw refusedEarly("CAPABILITY_MISSING", HEADLESS_SHELL_MISSING_MESSAGE, { capability: "chromium-headless-shell" });
     }
     const executable = shell ?? browser;
     mkdirSync(options.scratchDirectory, { recursive: true, mode: 0o700 });

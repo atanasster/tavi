@@ -1560,7 +1560,8 @@ export function assessBrowserCreateSession(input: unknown): CallAssessment {
   const host = hostOf(url);
   // A navigation, judged by the known-URL rule under taint, fragment included.
   return {
-    display: { title: clip(`Use the browser to open ${host}`, 300), host: clip(host, 300), command: clip(url, 4_000) },
+    // The page, not only its site: two pages on one site are two questions, and must not read as one asked twice.
+    display: { title: clip(`Use the browser to open ${hostAndPathOf(url)}`, 300), host: clip(host, 300), command: clip(url, 4_000) },
     subjects: [host],
     risk: "medium",
     reasons: [],

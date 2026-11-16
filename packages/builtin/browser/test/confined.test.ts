@@ -6,7 +6,7 @@ import { temporaryDirectories } from "@tavi/test-support";
 import type { Browser, BrowserContext, BrowserType, LaunchOptions } from "playwright";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { browsersRoot, createConfinedChromium, headlessShellOf } from "../src/confined.js";
+import { browsersRoot, chromiumInstalled, createConfinedChromium, headlessShellOf } from "../src/confined.js";
 
 /** Chromium confined, against a fake Playwright and confinement: what a launch is given, and how a mode is chosen. */
 
@@ -31,6 +31,33 @@ describe("finding Playwright's browsers", () => {
       "/cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux-arm64/chrome-headless-shell",
     );
     expect(headlessShellOf("/elsewhere/chrome", list)).toBeUndefined();
+  });
+});
+
+describe("whether a Chromium is installed", () => {
+  const CHROMIUM = "/cache/ms-playwright/chromium-1243/chrome-linux/chrome";
+  const at = (executable: string) => () => Promise.resolve({ executablePath: () => executable });
+  const nothing = (): readonly string[] => {
+    throw new Error("ENOENT");
+  };
+
+  it("is yes when Playwright's Chromium is on disk, and no when it was never downloaded", async () => {
+    expect(await chromiumInstalled(at(CHROMIUM), (path) => path === CHROMIUM, nothing)).toBe(true);
+    expect(await chromiumInstalled(at(CHROMIUM), () => false, nothing)).toBe(false);
+  });
+
+  it("is yes when only the headless shell beside it was downloaded", async () => {
+    const list = (directory: string): readonly string[] => {
+      if (directory === "/cache/ms-playwright") return ["chromium_headless_shell-1243"];
+      if (directory === "/cache/ms-playwright/chromium_headless_shell-1243") return ["chrome-headless-shell-linux64"];
+      if (directory === "/cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64") return ["chrome-headless-shell"];
+      throw new Error("ENOENT");
+    };
+    expect(await chromiumInstalled(at(CHROMIUM), () => false, list)).toBe(true);
+  });
+
+  it("is no when Playwright itself is not installed", async () => {
+    expect(await chromiumInstalled(() => Promise.reject(new Error("Cannot find package 'playwright'")))).toBe(false);
   });
 });
 

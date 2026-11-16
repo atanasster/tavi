@@ -115,6 +115,27 @@ describe("ToolRegistry", () => {
     expect(registry.get("fixture.scoped")).toBeDefined();
   });
 
+  it("adopts a staged registry behind a gate, joined with each tool's own predicate", async () => {
+    const registry = new ToolRegistry();
+    const staged = new ToolRegistry();
+    staged.register({ ...baseDefinition, id: "fixture.open", handler: async () => ({ ok: true }) });
+    staged.register({
+      ...baseDefinition,
+      id: "fixture.scoped",
+      offered: async (context) => context.workspaceId === "configured",
+      handler: async () => ({ ok: true }),
+    });
+    let installed = false;
+    registry.adopt(staged, async () => installed);
+    // Gate shut: neither is offered, though a direct caller still resolves them.
+    expect(await registry.listOffered({ workspaceId: "configured" })).toEqual([]);
+    expect(registry.get("fixture.open")).toBeDefined();
+    installed = true;
+    expect((await registry.listOffered({ workspaceId: "configured" })).map((tool) => tool.id)).toEqual(["fixture.open", "fixture.scoped"]);
+    // Gate open, a tool's own predicate still decides.
+    expect((await registry.listOffered({ workspaceId: "other" })).map((tool) => tool.id)).toEqual(["fixture.open"]);
+  });
+
   it("runs a predicate shared by several tools once per listing, and keeps its listing until a tool changes", async () => {
     const registry = new ToolRegistry();
     let reads = 0;

@@ -30,6 +30,7 @@ const SITE_USAGE_KEEP_DAYS = 30;
 export async function composePlugins(composed: AccessContext) {
   const {
     access,
+    browserOffered,
     browserToolStage,
     clock,
     confinement,
@@ -56,7 +57,8 @@ export async function composePlugins(composed: AccessContext) {
   });
   const disabledBuiltins = await pluginRegistry.disabledBuiltins();
   // The browser's tools, offered while `tavi.browser` is enabled: disabled, the agent has no browser from the next start.
-  if (!disabledBuiltins.has(BROWSER_ENGINE_PLUGIN_ID)) tools.adopt(browserToolStage);
+  // Enabled, they are offered while Chromium is installed.
+  if (!disabledBuiltins.has(BROWSER_ENGINE_PLUGIN_ID)) tools.adopt(browserToolStage, browserOffered);
   // MCP servers: supervised out of process. What an earlier owner left running is reaped
   // first, and only by the owner (a foreground run must not kill a running owner's servers).
   // The household rule, for MCP servers and plugins alike: read at every offer, so a choice made on the page applies at once.

@@ -1,4 +1,4 @@
-import { TaviError } from "@tavi/contracts";
+import { refusedEarly } from "@tavi/contracts";
 import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, LaunchOptions } from "playwright";
 
 /**
@@ -60,10 +60,8 @@ export async function loadChromium(
     return (await importPlaywright()).chromium;
   } catch (error) {
     if (playwrightNotInstalled(error)) {
-      throw new TaviError("CAPABILITY_MISSING", PLAYWRIGHT_MISSING_MESSAGE, {
-        cause: error,
-        details: { capability: "playwright" },
-      });
+      // Tavi's own words, wrapping nothing: a call it ends read no page, so it leaves the chat untainted.
+      throw refusedEarly("CAPABILITY_MISSING", PLAYWRIGHT_MISSING_MESSAGE, { capability: "playwright" });
     }
     throw error;
   }
@@ -104,10 +102,8 @@ export async function launchPersistentChromium(
 /** A launch error, typed `CAPABILITY_MISSING` when it says the browser binary was never downloaded. */
 function missingBrowser(error: unknown): unknown {
   if (error instanceof Error && MISSING_BROWSER.test(error.message)) {
-    return new TaviError("CAPABILITY_MISSING", CHROMIUM_MISSING_MESSAGE, {
-      cause: error,
-      details: { capability: "chromium" },
-    });
+    // Tavi's own words, wrapping nothing: no browser started, so no page was read and the chat stays untainted.
+    return refusedEarly("CAPABILITY_MISSING", CHROMIUM_MISSING_MESSAGE, { capability: "chromium" });
   }
   return error;
 }

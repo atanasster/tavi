@@ -53,6 +53,7 @@ import type { ChannelsContext } from "./channels.js";
 export async function composeTools(composed: ChannelsContext) {
   const {
     browser,
+    browserOffered,
     browserTools,
     chatIsLocal,
     clock,
@@ -105,6 +106,7 @@ export async function composeTools(composed: ChannelsContext) {
     findings: keptFindings,
     recipes,
     sites: sitePolicy,
+    ...(browserOffered === undefined ? {} : { offered: browserOffered }),
   };
   // Reading a page with a model rides the browser: offered while `tavi.browser` is enabled.
   const browserOn = !disabledBuiltins.has(BROWSER_ENGINE_PLUGIN_ID);
