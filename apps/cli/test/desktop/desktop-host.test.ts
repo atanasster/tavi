@@ -2,7 +2,7 @@ import { chmodSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { type DesktopPort, type DesktopTreeResult, isRefusedEarly } from "@tavi/contracts";
 import { partialFake, temporaryDirectories } from "@tavi/test-support";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DESKTOP_STOPPED_NOTICE,
   createDesktopWorkspaces,
@@ -83,6 +83,13 @@ describe("desktop control on the owner", () => {
     expect(workspaces.grantedApps("w1")).toEqual(["TextEdit"]);
     expect(workspaces.grantedApps("w2")).toEqual([]);
     expect(workspaces.grantedApps("unread")).toEqual([]);
+    // A fresh owner whose first desktop call is an act (Mac mini tests): its card is not refused as ungranted
+    // before the grants were ever read; it reads them, and the next card holds to them. The gate reads them before acting.
+    grants["fresh"] = ["Calculator"];
+    expect(workspaces.tierOf("fresh", { bundleId: "com.apple.TextEdit", name: "TextEdit" })).toBe("full");
+    await vi.waitFor(() => expect(workspaces.grantedApps("fresh")).toEqual(["Calculator"]));
+    expect(workspaces.tierOf("fresh", { bundleId: "com.apple.TextEdit", name: "TextEdit" })).toBeUndefined();
+    await expect(workspaces.portFor("fresh").tree("com.apple.TextEdit")).rejects.toThrow(/not granted/);
     // Each workspace keeps its own gate, and so its own observed trees.
     expect(workspaces.portFor("w1")).toBe(workspaces.portFor("w1"));
     expect(workspaces.portFor("w1")).not.toBe(workspaces.portFor("w2"));

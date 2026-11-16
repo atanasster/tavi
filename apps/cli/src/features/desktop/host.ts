@@ -113,7 +113,11 @@ export function createDesktopWorkspaces(options: {
   /** A run that is using desktop control, as its card is asked about: the abort hotkey stops it too. */
   readonly noteRun: (workspaceId: string, runId: string) => void;
   readonly abortAll: () => void;
-  /** An app's tier under the workspace's grants as last read, for the approval card. */
+  /**
+   * An app's tier under the workspace's grants as last read, for the approval card. Before they were ever read (a
+   * fresh owner whose first desktop call is an act) its built-in tier, while they are read: the gate, which reads
+   * them before it acts, still refuses an app they do not grant.
+   */
   readonly tierOf: (workspaceId: string, app: { readonly bundleId: string; readonly name: string }) => DesktopAppGrantTier | undefined;
   /** The workspace's `desktop.grantedApps` as last read (`refresh`): what `desktop.observe` tells the model it may focus. */
   readonly grantedApps: (workspaceId: string) => readonly string[];
@@ -140,7 +144,17 @@ export function createDesktopWorkspaces(options: {
   const noteRun = (workspaceId: string, runId: string): void => remember(seen, workspaceId, runId);
   return {
     portFor,
-    tierOf: (workspaceId, app) => grantedTierOf(grants.get(workspaceId) ?? [], app),
+    tierOf: (workspaceId, app) => {
+      const read = grants.get(workspaceId);
+      if (read !== undefined) return grantedTierOf(read, app);
+      void options
+        .grantedApps(workspaceId)
+        .then((apps) => {
+          if (!grants.has(workspaceId)) grants.set(workspaceId, apps);
+        })
+        .catch(() => undefined);
+      return defaultDesktopAppGrantTier(app.bundleId, app.name);
+    },
     grantedApps: (workspaceId) => grants.get(workspaceId) ?? [],
     noteRun,
     refresh: async (workspaceId, runId) => {
