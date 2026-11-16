@@ -2,7 +2,8 @@
   "policy": {
     "filesystem": {
       "allowRead": [
-        "<root>/owner-temporary-parent/tmp/data/chats/default/t1"
+        "<root>/owner-temporary-parent/tmp/data/chats/default/t1",
+        "<root>/owner-temporary-parent/tmp/xcrun_db"
       ],
       "allowWrite": [
         "<root>/owner-temporary-parent/tmp/data/chats/default/t1"
@@ -341,6 +342,7 @@
       ],
       "allowRead": [
         "<root>/owner-temporary-parent/tmp/data/chats/default/t1",
+        "<root>/owner-temporary-parent/tmp/xcrun_db",
         "<srt-helpers>"
       ],
       "allowWrite": [

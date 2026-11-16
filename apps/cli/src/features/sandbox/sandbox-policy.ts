@@ -20,6 +20,7 @@ import { OWNER_TEMPORARY_STAGING, credentialFiles, credentialHomes, ownerStaging
 import { canonical, within, withinFolded } from "../folders/fs-tools.js";
 import { sandboxSharedWritePaths } from "./host.js";
 import { foldersOf } from "./sandbox-folders.js";
+import { xcrunCacheFile } from "./xcrun.js";
 
 /**
  * What `sandbox.run` runs with, built from the chat's folder and the
@@ -238,6 +239,11 @@ export interface SandboxToolOptions {
    * Default: those entries on macOS (at most 512), none elsewhere.
    */
   readonly othersTemporary?: () => readonly string[];
+  /**
+   * Files in a closed folder every chat's shell may read: macOS's xcrun cache (`XCRUN_CACHE_FILE`), in the owner's
+   * temporary folder, which a shimmed `python3` or `git` reads. Default: that file on macOS, none elsewhere.
+   */
+  readonly readableCaches?: readonly string[];
   /** The workspace's `sandbox.network`: under `ask`, a run may ask the person for more (`requestDomains`). Default: `granted`. */
   readonly workspaceNetwork?: (workspaceId: string) => Promise<SandboxNetworkMode>;
   /**
@@ -337,6 +343,8 @@ export interface SandboxBase {
   readonly gitIdentity: () => Promise<GitIdentity>;
   /** `SandboxToolOptions.othersTemporary`. */
   readonly othersTemporary: () => readonly string[];
+  /** `SandboxToolOptions.readableCaches`, real. */
+  readonly readableCaches: readonly string[];
 }
 
 /**
@@ -494,6 +502,9 @@ export function sandboxBase(options: SandboxToolOptions): SandboxBase {
     denyEnv,
     gitIdentity: () => (identity ??= Promise.resolve(gitIdentity?.() ?? {}).catch(() => ({}))),
     othersTemporary: options.othersTemporary ?? (process.platform === "darwin" ? othersEntriesIn("/private/tmp") : () => []),
+    readableCaches: (options.readableCaches ?? (process.platform === "darwin" ? [xcrunCacheFile()] : [])).map((file) =>
+      canonical(resolve(file)),
+    ),
   };
 }
 
@@ -674,7 +685,9 @@ export function policyFor(
   ]);
   return {
     filesystem: {
-      allowRead,
+      // A cache re-opened in the owner's closed temporary folder, that file only: added after the folder's deny was
+      // chosen, so the folder is still denied whole.
+      allowRead: unique([...allowRead, ...base.readableCaches]),
       allowWrite,
       denyRead: unique([
         base.home,

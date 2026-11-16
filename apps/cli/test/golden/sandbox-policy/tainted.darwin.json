@@ -3,6 +3,7 @@
     "filesystem": {
       "allowRead": [
         "<root>/tainted/data/chats/default/t1",
+        "<root>/tainted/tmp/xcrun_db",
         "<root>/tainted/work/project"
       ],
       "allowWrite": [
@@ -342,6 +343,7 @@
       ],
       "allowRead": [
         "<root>/tainted/data/chats/default/t1",
+        "<root>/tainted/tmp/xcrun_db",
         "<root>/tainted/work/project"
       ],
       "allowWrite": [

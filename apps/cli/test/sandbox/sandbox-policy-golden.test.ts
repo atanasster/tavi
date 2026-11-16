@@ -64,6 +64,8 @@ function world(name: string, layout: { readonly dataInHome?: boolean; readonly d
     ownerStaging: staging,
     ownerEnv: { PATH: "/usr/bin:/bin", LANG: "C.UTF-8" },
     othersTemporary: () => [],
+    // macOS's xcrun cache in the closed temporary folder: re-opened, that file alone, on every platform's golden alike.
+    readableCaches: [join(temporary, "xcrun_db")],
   };
   const folder = (primary: string, extra: Partial<ChatFolder> = {}): ChatFolder => ({
     primary,

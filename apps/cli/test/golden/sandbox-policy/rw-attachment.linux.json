@@ -3,6 +3,7 @@
     "filesystem": {
       "allowRead": [
         "<root>/rw-attachment/data/chats/default/t1",
+        "<root>/rw-attachment/tmp/xcrun_db",
         "<root>/rw-attachment/work/shared"
       ],
       "allowWrite": [
@@ -405,6 +406,7 @@
       ],
       "allowRead": [
         "<root>/rw-attachment/data/chats/default/t1",
+        "<root>/rw-attachment/tmp/xcrun_db",
         "<root>/rw-attachment/work/shared",
         "<srt-helpers>"
       ],

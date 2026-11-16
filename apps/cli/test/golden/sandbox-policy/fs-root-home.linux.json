@@ -3,7 +3,8 @@
     "filesystem": {
       "allowRead": [
         "<root>/fs-root-home/home/.tavi/chats/default/t1",
-        "<root>/fs-root-home/home/project"
+        "<root>/fs-root-home/home/project",
+        "<root>/fs-root-home/tmp/xcrun_db"
       ],
       "allowWrite": [
         "<root>/fs-root-home/home/.tavi/chats/default/t1",
@@ -404,6 +405,7 @@
       "allowRead": [
         "<root>/fs-root-home/home/.tavi/chats/default/t1",
         "<root>/fs-root-home/home/project",
+        "<root>/fs-root-home/tmp/xcrun_db",
         "<srt-helpers>"
       ],
       "allowWrite": [

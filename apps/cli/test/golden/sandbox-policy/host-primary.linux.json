@@ -3,6 +3,7 @@
     "filesystem": {
       "allowRead": [
         "<root>/host-primary/data/chats/default/t1",
+        "<root>/host-primary/tmp/xcrun_db",
         "<root>/host-primary/work/project"
       ],
       "allowWrite": [
@@ -405,6 +406,7 @@
       ],
       "allowRead": [
         "<root>/host-primary/data/chats/default/t1",
+        "<root>/host-primary/tmp/xcrun_db",
         "<root>/host-primary/work/project",
         "<srt-helpers>"
       ],

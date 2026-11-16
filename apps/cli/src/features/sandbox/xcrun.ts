@@ -1,11 +1,28 @@
-import { execFile } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+/**
+ * xcrun's cache: in the user's temporary folder (`getconf DARWIN_USER_TEMP_DIR`), which is the owner's `os.tmpdir()`
+ * unless `TMPDIR` says otherwise. The sandbox closes that folder, so the shell is let read this one file in it.
+ */
+export function xcrunCacheFile(): string {
+  try {
+    const folder = execFileSync("/usr/bin/getconf", ["DARWIN_USER_TEMP_DIR"], { encoding: "utf8", timeout: 5_000 }).trim();
+    if (folder !== "") return join(folder, "xcrun_db");
+  } catch {
+    // Not macOS, or no getconf: the owner's own temporary folder.
+  }
+  return join(tmpdir(), "xcrun_db");
+}
 
 /**
  * The command-line tools macOS ships as `xcrun` shims in /usr/bin (`python3`, `git`, `make`, …). A shim looks its tool
  * up in xcrun's cache, a file in the user's temporary folder (`getconf DARWIN_USER_TEMP_DIR`), and writes the entry
  * when it is missing. `sandbox.run` cannot write there, so on a host where the cache was never filled every run of
  * these printed `couldn't create cache file … xcrun_db-…` to stderr, which a model then had to explain away. Filled
- * once from the owner, outside the sandbox, the runs read it and print nothing.
+ * once from the owner, outside the sandbox, and re-opened for reading (`xcrunCacheFile`), the runs read it and print
+ * nothing.
  */
 export const XCRUN_SHIMS: readonly string[] = ["python3", "pip3", "git", "make", "clang", "cc", "c++", "swift", "ld"];
 
