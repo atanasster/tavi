@@ -835,9 +835,14 @@ export function environmentFor(
   identity: GitIdentity,
 ): Readonly<Record<string, string>> {
   const denied = policy.filesystem.denyRead ?? [];
-  const path = pathEntries(base.ownerEnv["PATH"]).filter((entry) => {
+  const readable = (path: string): boolean =>
+    !denied.some((deny) => within(path, deny)) || policy.filesystem.allowRead.some((allow) => within(path, allow));
+  // An entry reached through a link in a closed folder (`~/.local/node` → `~/.local/node-v22…`) is spelled as its real
+  // path: the shell would read the link itself, which the sandbox refuses, before it reached the re-opened install.
+  const path = pathEntries(base.ownerEnv["PATH"]).flatMap((entry) => {
     const real = canonical(entry);
-    return !denied.some((deny) => within(real, deny)) || policy.filesystem.allowRead.some((allow) => within(real, allow));
+    if (!readable(real)) return [];
+    return [isAbsolute(entry) && real !== entry && !readable(resolve(entry)) ? real : entry];
   });
   const owner = (name: string): Record<string, string> => {
     const value = base.ownerEnv[name];

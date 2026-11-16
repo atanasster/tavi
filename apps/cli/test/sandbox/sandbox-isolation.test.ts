@@ -521,17 +521,21 @@ describe("the per-call policy", () => {
 
   it("re-opens the owner's own Node, installed by hand under $HOME, when its bin is on PATH; never $HOME for a Node in ~/bin (Mac mini tests)", async () => {
     const { home, mine, options } = owner();
-    mkdirSync(join(home, ".local", "node", "bin"), { recursive: true });
-    mkdirSync(join(home, ".local", "node", "lib"), { recursive: true });
+    // As on the Mac mini: a versioned install, and a link to it that PATH names.
+    const install = join(home, ".local", "node-v22.23.4-darwin-arm64");
+    mkdirSync(join(install, "bin"), { recursive: true });
+    mkdirSync(join(install, "lib"), { recursive: true });
+    writeFileSync(join(install, "bin", "node"), "");
+    symlinkSync(install, join(home, ".local", "node"));
     const node = join(home, ".local", "node", "bin", "node");
-    writeFileSync(node, "");
     const ownerEnv = { PATH: [join(home, ".local", "node", "bin"), "/usr/bin"].join(":") };
     const { policy, env } = await sandboxCallFor({ ...options, ownerEnv, nodeExecutable: node }, folderOf(mine, mine));
-    expect(policy.filesystem.allowRead).toContain(join(home, ".local", "node"));
-    expect(env["PATH"]).toBe([join(home, ".local", "node", "bin"), "/usr/bin"].join(":"));
+    expect(policy.filesystem.allowRead).toContain(realpathSync(install));
+    // The shell would read the link in the closed ~/.local before the install: PATH names the install itself.
+    expect(env["PATH"]).toBe([join(realpathSync(install), "bin"), "/usr/bin"].join(":"));
     // Not on PATH: nothing re-opened for it.
     const off = await sandboxCallFor({ ...options, ownerEnv: { PATH: "/usr/bin" }, nodeExecutable: node }, folderOf(mine, mine));
-    expect(off.policy.filesystem.allowRead).not.toContain(join(home, ".local", "node"));
+    expect(off.policy.filesystem.allowRead).not.toContain(realpathSync(install));
     // In ~/bin, its install would be $HOME itself: only the bin folder is re-opened.
     mkdirSync(join(home, "bin"));
     writeFileSync(join(home, "bin", "node"), "");
