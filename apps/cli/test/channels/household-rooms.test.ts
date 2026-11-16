@@ -113,7 +113,8 @@ beforeAll(async () => {
   // A plugin whose manifest says its account is Personal, and the group channel the rooms are on.
   for (const argv of [
     ["plugins", "install", personalPlugin()],
-    ["plugins", "approve", "acme.cal", "1.0.0"],
+    // In-process: the household rule is the point, not the worker's confinement, which not every host has.
+    ["plugins", "approve", "acme.cal", "1.0.0", "--in-process"],
     ["plugins", "enable", "acme.cal"],
     ["plugins", "install", GROUP_LIKE],
     ["plugins", "approve", "fixture.grouplike", "1.0.0", "--in-process"],

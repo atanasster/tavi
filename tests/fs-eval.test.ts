@@ -258,7 +258,8 @@ describe("the fs action eval", () => {
     expect(parseArgs(["--template", "/tmp/t", "--case", "edit-three-hunks", "--repeat", "3"], data)).toMatchObject({
       only: ["edit-three-hunks"],
       repeat: 3,
-      data: { template: "/tmp/t" },
+      // Resolved, so on Windows it carries the drive.
+      data: { template: resolve("/tmp/t") },
     });
     expect(() => parseArgs(["--template", "/tmp/t", "--repeat", "0"], data)).toThrow(/--repeat/);
   });

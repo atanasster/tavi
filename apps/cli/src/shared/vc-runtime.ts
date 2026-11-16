@@ -9,7 +9,7 @@ import { win32 } from "node:path";
 export const VC_RUNTIME_FILES = ["vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll"] as const;
 
 /** How to install the runtime for the processor Node runs on: Windows on Arm needs the arm64 build. */
-export function vcRuntimeFix(arch: string = process.arch): string {
+function vcRuntimeFix(arch: string = process.arch): string {
   const build = arch === "arm64" ? "arm64" : "x64";
   return `winget install Microsoft.VCRedist.2015+.${build} (or install the Visual C++ Redistributable for ${build} from Microsoft)`;
 }

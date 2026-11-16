@@ -37,6 +37,8 @@ let runtime: TaviRuntime;
 beforeAll(async () => {
   runtime = await composeTaviRuntime(fixtureRuntimeOptions(directories.create("tavi-tool-selection-"), { scheduleSweepEnabled: false }), {
     modelOverride: createFixtureModel({ turns: [] }),
+    // The video tools are offered once a decoder exists, as on a host with ffmpeg: the eval names them whether or not this one has it.
+    videoDecoderOverride: { close: async () => undefined } as never,
   });
   // `web_search` is registered once a search provider exists; the eval reads its description, never calls it.
   const provider = { id: "fixture-search", available: () => true };

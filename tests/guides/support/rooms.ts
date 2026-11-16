@@ -31,9 +31,8 @@ export const DISCORD_ID = "discord.channel";
 export const DISCORD_VERSION = "0.1.1";
 /** The room's own name in Tavi, as the pages give it. */
 export const ROOM_LABEL = "general";
-/** The names the pictures show for the person and their guest: the display names the walks give them. */
+/** The name the pictures show for the person: the display name the walks give them. */
 export const YOU = "Ana";
-export const GUEST = "Sam";
 
 export interface Connection {
   readonly connectionId: string;
@@ -129,7 +128,7 @@ export const rooms = (walk: Walk, connectionId: string): Rooms => walk.taviJson<
  * A page's starting point after the Discord guide: the plugin in, the person's bot added and open, and the room of
  * their test server listened to. Returns the connection id.
  */
-export async function discordWithRoom(walk: Walk): Promise<string> {
+async function discordWithRoom(walk: Walk): Promise<string> {
   const token = discordToken(walk);
   await installDiscord(walk);
   walk.tavi("channels", "add", "discord", "--secret-file", `token=${token}`);

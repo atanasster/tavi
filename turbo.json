@@ -44,7 +44,7 @@
       "cache": false
     },
     "@tavi/cli#test": {
-      "dependsOn": ["^build", "@tavi/plugin-discord#build"],
+      "dependsOn": ["build", "@tavi/plugin-discord#build"],
       "outputs": [],
       "cache": false
     },
@@ -59,6 +59,11 @@
       "cache": false
     },
     "@tavi/pdf-ocr#test": {
+      "dependsOn": ["build"],
+      "outputs": [],
+      "cache": false
+    },
+    "@tavi/video-pose#test": {
       "dependsOn": ["build"],
       "outputs": [],
       "cache": false

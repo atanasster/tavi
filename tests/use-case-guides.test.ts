@@ -1,6 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
-import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
@@ -102,12 +101,20 @@ function taviCommands(text: string): { text: string; argv: string[] }[] {
     .map((snippet) => ({ text: snippet, argv: words(snippet).slice(1) }));
 }
 
-/** A command line's words: quotes group, a placeholder (`<task-id>`) stands for a value, and an unquoted `~` is home, as a shell reads it. */
+/** Home in the guides' commands. */
+const HOME = "/home/reader";
+
+/**
+ * A command line's words: quotes group, a placeholder (`<task-id>`) stands for a
+ * value, and an unquoted `~` is home, as a shell reads it. Home is a fixed POSIX
+ * folder, not this host's: the guides' commands are POSIX shell lines, and on
+ * Windows the home folder would spell `~/x` as `C:\Users\me/x`.
+ */
 function words(line: string): string[] {
   const out: string[] = [];
   for (const match of line.matchAll(/"([^"]*)"|'([^']*)'|(\S+)/g)) {
     const bare = match[3];
-    const word = match[1] ?? match[2] ?? (bare !== undefined && /^~(?:\/|$)/.test(bare) ? `${homedir()}${bare.slice(1)}` : bare) ?? "";
+    const word = match[1] ?? match[2] ?? (bare !== undefined && /^~(?:\/|$)/.test(bare) ? `${HOME}${bare.slice(1)}` : bare) ?? "";
     out.push(/^<[^>]+>$/.test(word) ? "x" : word);
   }
   return out;

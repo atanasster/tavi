@@ -63,6 +63,14 @@ jobs:
           node-version: 22.22.2
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # The sandbox, as a Linux host has it once `tavi sandbox setup` is done: PDF processing and plugin
+      # workers run only confined, and their tests need it. Ubuntu 24.04 restricts the unprivileged user
+      # namespaces bubblewrap needs; a throwaway runner lifts that rather than installing setup's profile.
+      - name: Sandbox dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bubblewrap socat ripgrep
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: pnpm exec turbo run test --filter=@tavi/cli
 
   test-packages:

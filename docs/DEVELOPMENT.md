@@ -495,7 +495,7 @@ flowchart LR
 | Job | Runs |
 | --- | --- |
 | `typecheck` | `pnpm audit --prod --audit-level high` (accepted advisories are listed, each with its reason, under `auditConfig` in `pnpm-workspace.yaml`), `pnpm run lint`, `pnpm run build`, then `pnpm run typecheck`, `pnpm run knip`, `knip --production --include dependencies` (a runtime dependency only tests import) and `pnpm run lint:css`. |
-| `test-cli` | `pnpm exec turbo run test --filter=@tavi/cli`. |
+| `test-cli` | Installs the Linux sandbox (bubblewrap, socat, ripgrep, and lifts Ubuntu 24.04's user-namespace restriction), since PDF processing and plugin workers run only confined, then `pnpm exec turbo run test --filter=@tavi/cli`, which builds the CLI (its `ui-dist` too) first. |
 | `test-packages` | Every other package's tests, a build of the canvas (for its bundle budget), then the repository-wide tests (`pnpm exec vitest run`), on Node 22.22.2, Node 24 and Node 26. |
 | `browser-miniweb` | Installs Chromium, then runs the browser's guards against real Chromium on local fixture pages (`tests/integration/browser-miniweb.real.test.ts` with `TAVI_REAL_TESTS=1`; zero cases run is a failure), then records the per-action timing bench (`evals/browser/timing.ts`), which never fails the run. |
 | `release` | `pnpm run test:release`. |

@@ -134,10 +134,24 @@ describe("renderServiceUnit", () => {
   });
 });
 
+/** What `tavi service unit --kind <kind>` prints for the data directory the host test uses. */
+async function unitOf(kind: string): Promise<string> {
+  const printed = capture();
+  expect(await main(["service", "unit", "--kind", kind, "--data-dir", "/tmp/tavi-service-unit"], { io: printed.io })).toBe(EXIT.ok);
+  return printed.stdout();
+}
+
 describe("tavi service unit", () => {
-  it("prints a unit for the host's init system and says how to install it", async () => {
+  it("defaults to the host's init system", async () => {
     const printed = capture();
     expect(await main(["service", "unit", "--data-dir", "/tmp/tavi-service-unit"], { io: printed.io })).toBe(EXIT.ok);
+    const kind = process.platform === "darwin" ? "launchd" : process.platform === "win32" ? "task" : "systemd";
+    expect(printed.stdout()).toBe(await unitOf(kind));
+  });
+
+  it("prints a launchd unit and says how to install it", async () => {
+    const printed = capture();
+    expect(await main(["service", "unit", "--kind", "launchd", "--data-dir", "/tmp/tavi-service-unit"], { io: printed.io })).toBe(EXIT.ok);
     expect(printed.stdout()).toContain('<plist version="1.0">');
     expect(printed.stdout()).toContain("/tmp/tavi-service-unit");
     // Nothing is installed: the operator is told what to do with it instead.
@@ -201,7 +215,7 @@ describe("tavi service unit", () => {
     const directory = directories.create("tavi-service-");
     const out = join(directory, "dev.tavi.serve.plist");
     const result = capture();
-    expect(await main(["service", "unit", "--data-dir", "/tmp/x", "--out", out], { io: result.io })).toBe(EXIT.ok);
+    expect(await main(["service", "unit", "--kind", "launchd", "--data-dir", "/tmp/x", "--out", out], { io: result.io })).toBe(EXIT.ok);
     expect(result.stdout().trim()).toBe(out);
     expect(readFileSync(out, "utf8")).toContain("<key>Label</key>");
   });

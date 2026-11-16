@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { TEST_SUPPORT, workspacePackageDirectories } from "./support/dependency-rules.js";
@@ -143,7 +143,7 @@ function channelNamesInCore(): Record<string, number> {
     if (!statSync(src, { throwIfNoEntry: false })?.isDirectory()) continue;
     for (const file of sources(src)) {
       const count = code(readFileSync(file, "utf8")).match(NAMES)?.length ?? 0;
-      if (count > 0) counts[relative(root, file)] = count;
+      if (count > 0) counts[relative(root, file).split(sep).join("/")] = count;
     }
   }
   return counts;

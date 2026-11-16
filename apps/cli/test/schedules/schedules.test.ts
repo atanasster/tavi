@@ -1,12 +1,12 @@
 import { join } from "node:path";
 
-import { RoutineCreateSchema, routineDefaults, type ScheduleRecord } from "@tavi/contracts";
+import { RoutineCreateSchema, hostTimeZone, routineDefaults, type ScheduleRecord } from "@tavi/contracts";
 import { DatabaseClient, RoutineService } from "@tavi/runtime";
 import { SqliteStore } from "../support/database-fixture.js";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { EXIT, main } from "../../src/main.js";
-import { agendaText, schedulePreview, scheduleTools } from "../../src/features/schedules/actions.js";
+import { agendaText, fireTimeText, schedulePreview, scheduleTools } from "../../src/features/schedules/actions.js";
 import { SCHEDULES_USAGE } from "../../src/features/schedules/parse.js";
 import { nextOccurrence } from "@tavi/agent-host/schedule-scheduler";
 import { capture, temporaryDirectories } from "@tavi/test-support";
@@ -933,7 +933,9 @@ describe("tavi schedules", () => {
     expect(listed.stdout()).toMatch(/\tlast=running \(fire due [^)]*07:00\)\n/);
     const shown = capture();
     expect(await main(["schedules", "show", id, "--data-dir", directory], { io: shown.io })).toBe(EXIT.ok);
-    expect(shown.stdout()).toMatch(/last run {4}.*\(running \(fire due [^)]*07:00\)\)\n/);
+    // `show` reads times in the workspace's zone, the host's while none is set: 07:00 in Sofia, 04:00 on a UTC runner.
+    const due = fireTimeText("2026-10-05T04:00:00.000Z", hostTimeZone());
+    expect(shown.stdout()).toContain(`(running (fire due ${due}))\n`);
     expect(shown.stdout()).not.toContain("dispatching");
   });
 

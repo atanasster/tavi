@@ -242,7 +242,9 @@ describe("tavi doctor's pdf section", () => {
     const { runtime } = await harness({ dobQuote: "2016-03-04" });
     const pdf = (await buildDoctorDocument(runtime, { integrity: "skip" }))["pdf"] as { enabled: boolean; confinement: string };
     expect(pdf.enabled).toBe(true);
-    expect(pdf.confinement).toBe(process.platform === "darwin" ? "srt" : "refused");
+    // Linux confines it where the sandbox works (bubblewrap, socat, ripgrep, user namespaces) and refuses it elsewhere.
+    const confines = process.platform === "darwin" || (process.platform === "linux" && runtime.sandboxHost.current().tier !== "unavailable");
+    expect(pdf.confinement).toBe(confines ? "srt" : "refused");
     // Whether OCR is there to read scans and check covered text.
     expect(typeof (pdf as unknown as { ocr: unknown }).ocr).toBe("string");
     const settings = runtime.store.asPort().repositories.workspaceSettings;

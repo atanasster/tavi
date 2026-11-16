@@ -155,6 +155,9 @@ export function createInkPrompter(streams: InkPrompterStreams): Prompter {
     const instance = render(element(settle as Answered<T>), {
       stdin: streams.stdin,
       stdout: streams.stdout,
+      // Chosen for a terminal alone: drawn live even where `CI` is set, which
+      // Ink otherwise takes to mean "print only the last frame".
+      interactive: true,
       exitOnCtrlC: false,
       patchConsole: false,
     });

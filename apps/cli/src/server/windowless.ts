@@ -19,7 +19,7 @@ import { EXIT } from "../cli/exit.js";
  */
 
 /** This command line without `--windowless`: what the hidden owner is started with. */
-export function windowlessArgv(argv: readonly string[]): string[] {
+function windowlessArgv(argv: readonly string[]): string[] {
   return argv.filter((arg) => arg !== "--windowless");
 }
 
@@ -35,7 +35,7 @@ export const WINDOWLESS_RESTART_MS = 5_000;
 export const WINDOWLESS_FINAL: ReadonlySet<number> = new Set([EXIT.usage, EXIT.unavailable, EXIT.alreadyOwned]);
 
 /** What `runWindowless` needs of the owner it started: its exit, or why it never started. */
-export interface WindowlessChild {
+interface WindowlessChild {
   once(event: "exit", listener: (code: number | null) => void): unknown;
   once(event: "error", listener: () => void): unknown;
 }

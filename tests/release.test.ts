@@ -919,7 +919,7 @@ describe.skipIf(posixOnly)("clean core-only install", () => {
       // line reached it: each ends on a word numbered by 40.
       expect(transcript).not.toContain(CLEAR_SCROLLBACK);
       for (let word = 40; word <= 10_000; word += 40) expect(transcript).toContain(`w${word}`);
-      expect(transcript).toContain("✓ completed task-1.");
+      expect(transcript).toContain("✓ Done.");
       expect(stats.peakRssBytes).toBeLessThan(CHAT_PEAK_RSS_BUDGET);
       expect(stats.heapUsedBytes).toBeLessThan(CHAT_HEAP_BUDGET);
 
