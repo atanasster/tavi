@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { PluginManifestSchema } from "@tavi/contracts";
+import { PluginManifestSchema, sandboxConfines } from "@tavi/contracts";
 import { temporaryDirectories } from "@tavi/test-support";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -12,7 +12,7 @@ import { endpointFor } from "../../src/features/mcp/actions.js";
 import { writeMcpPluginDirectory } from "../../src/features/mcp/add.js";
 import { McpConnection } from "../../src/features/mcp/client.js";
 import { serverEnvironment, stdioLaunch } from "../../src/features/mcp/launcher.js";
-import { ownerConfinement } from "../../src/features/sandbox/host.js";
+import { createOwnerSandboxHost, ownerConfinement } from "../../src/features/sandbox/host.js";
 import { lockfileProblems } from "../../src/features/mcp/npm.js";
 import { capture } from "../support/attached-owner.js";
 
@@ -221,8 +221,10 @@ describe("where the sandbox cannot run", () => {
   it("refuses the probe, naming --unsandboxed; that choice is recorded and asked for again at approve", async () => {
     const data = directories.create("tavi-mcp-probe-");
     const at = ["--data-dir", data];
-    // Linux in this build, or a machine where srt fails: simulated by a server srt cannot confine on any platform.
-    if (!macOS) {
+    // A host whose sandbox does not work (Linux without bubblewrap, socat and ripgrep, or with user namespaces
+    // restricted) refuses the probe; elsewhere the server's refusal is simulated by the --unsandboxed choice below.
+    const confines = macOS || sandboxConfines(await createOwnerSandboxHost({ dataDirectory: data }).check({ nested: false }));
+    if (!confines) {
       const refused = await tavi(["mcp", "add", "raw", "--dir", rawServer(), ...at, "--", "node", "raw.mjs"]);
       expect(refused.stderr).toContain("--unsandboxed");
     }

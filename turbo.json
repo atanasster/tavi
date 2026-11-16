@@ -39,32 +39,12 @@
       "outputs": []
     },
     "test": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build"],
       "outputs": [],
       "cache": false
     },
     "@tavi/cli#test": {
       "dependsOn": ["build", "@tavi/plugin-discord#build"],
-      "outputs": [],
-      "cache": false
-    },
-    "@tavi/runtime#test": {
-      "dependsOn": ["build"],
-      "outputs": [],
-      "cache": false
-    },
-    "@tavi/plugin-pdf#test": {
-      "dependsOn": ["build"],
-      "outputs": [],
-      "cache": false
-    },
-    "@tavi/pdf-ocr#test": {
-      "dependsOn": ["build"],
-      "outputs": [],
-      "cache": false
-    },
-    "@tavi/video-pose#test": {
-      "dependsOn": ["build"],
       "outputs": [],
       "cache": false
     }

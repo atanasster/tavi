@@ -82,10 +82,11 @@ pnpm run test:release   # the packed, installed CLI (TAVI_RELEASE_INSTALL=1)
   build also waits for `@tavi/ui`, then copies the canvas into
   `apps/cli/ui-dist` (`apps/cli/scripts/copy-canvas.mjs`). Outputs are
   `dist/`, `dist-plugin/` (external plugins) and `ui-dist/`.
-- `typecheck` and `test` need the dependencies built. `@tavi/runtime`,
-  `@tavi/plugin-pdf` and `@tavi/pdf-ocr` build themselves before their tests
-  (their tests run the built workers and children); `@tavi/cli`'s tests also
-  need `@tavi/plugin-discord` built. Tests are never cached.
+- `typecheck` needs the dependencies built. `test` builds the package itself
+  first, and so its dependencies: several packages' tests run their own built
+  workers and children (`@tavi/runtime`, `@tavi/plugin-worker`,
+  `@tavi/plugin-pdf`, `@tavi/pdf-ocr`, the video packages). `@tavi/cli`'s
+  tests also need `@tavi/plugin-discord` built. Tests are never cached.
 - `knip` reads each package's entry points from its `package.json` and its
   tsdown, Vite and Vitest configs; `knip.jsonc` adds what they cannot see
   (files started by path, dependencies used from CSS or by resolved path),
