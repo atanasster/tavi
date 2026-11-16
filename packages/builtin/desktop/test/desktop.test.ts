@@ -851,6 +851,34 @@ describe("the gate's own rules", () => {
     expect(acted).toEqual([]);
   });
 
+  it("says where keys would land when the app the call names is not the one with focus (Mac mini tests)", async () => {
+    let focus: DesktopResolvedElement | undefined;
+    const { port, acted } = engine(
+      () => undefined,
+      () => focus,
+    );
+    const settings = { bundleId: "com.apple.systempreferences", name: "System Settings", pid: 12, active: true };
+    const gated = createGatedDesktopPort(
+      { ...port, apps: async () => [textEdit, settings] },
+      { grantedApps: { "com.apple.TextEdit": "full" }, attended: true },
+    );
+    // Nothing has focus that can be read: the app in front is named, and so is what to do.
+    await expect(gated.act({ kind: "type", text: "Hello" }, { app: "TextEdit" })).resolves.toMatchObject({
+      status: "rejected",
+      detail: expect.stringMatching(/^Nothing has keyboard focus .* \(System Settings is in front\).*bring TextEdit to the front/),
+    });
+    // Focus in another app: the keys would go there, whatever that app's grant.
+    focus = { app: settings, role: "AXTextField", title: "Search" };
+    await expect(gated.act({ kind: "press", key: "n", modifiers: ["cmd"] }, { app: "com.apple.TextEdit" })).resolves.toMatchObject({
+      status: "rejected",
+      detail: expect.stringMatching(/^Keyboard focus is in System Settings, not com\.apple\.TextEdit/),
+    });
+    // In the app it names, by name or bundle id in any case: it types.
+    focus = field();
+    await expect(gated.act({ kind: "type", text: "Hello" }, { app: "textedit" })).resolves.toMatchObject({ status: "accepted" });
+    expect(acted).toEqual([{ kind: "type", text: "Hello" }]);
+  });
+
   it("never drives the desktop when nobody said the run is attended", async () => {
     const { port, acted } = engine(() => field());
     const gated = createGatedDesktopPort(port, { grantedApps: { "com.apple.TextEdit": "full" } });

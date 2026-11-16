@@ -31,8 +31,14 @@ you enable it. To use it:
    granted, `desktop.observe` and `desktop.act` refuse with **desktop control
    has no Accessibility permission**, naming where to grant it, rather than
    read an empty window; restart `tavi serve` from that terminal once it is
-   granted. An owner started over SSH cannot be granted it: start it from a
-   terminal on the Mac.
+   granted. An owner started over SSH is listed there as
+   **sshd-keygen-wrapper**; turning that on grants every SSH session, so
+   prefer starting `tavi serve` from Terminal on the Mac and granting Terminal.
+
+   Keys and text go to the app in front. A `desktop.act` that types or
+   presses a key while another app has keyboard focus, or while no focus can
+   be read, is refused, naming the app in front: bring the app forward and
+   click where the text goes, then ask again.
 4. **Grant the apps** a workspace may see and act in:
    `tavi config set desktop.grantedApps com.apple.TextEdit,Notes` (bundle ids
    or app names; `none` clears the list). Each app gets its built-in tier

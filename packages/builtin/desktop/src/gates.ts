@@ -224,6 +224,29 @@ export function createGatedDesktopPort(inner: DesktopPort, options: GatedDesktop
     return tree === undefined || found === undefined ? undefined : { node: found, tree };
   };
 
+  /**
+   * Why keys or text cannot go where the call means them, in words a person can act on: nothing has keyboard focus
+   * that can be read (naming the app in front when the helper reports one), or focus is in another app than the
+   * one the call names. Either way the keystrokes would land elsewhere, so the call is refused before any is sent.
+   */
+  const keyboardTargetDenial = async (
+    focused: DesktopResolvedElement | undefined,
+    target: string | undefined,
+  ): Promise<string | undefined> => {
+    const wanted = target?.trim() ?? "";
+    const bringForward = `Ask the person to bring ${wanted === "" ? "the app" : wanted} to the front and click where the text goes, then try again; do not retry before that.`;
+    if (focused === undefined) {
+      const front = (await inner.apps().catch(() => [])).find((app) => app.active === true);
+      const inFront = front === undefined ? "" : ` (${front.name || front.bundleId} is in front)`;
+      return `Nothing has keyboard focus that desktop control can read${inFront}, so the keys would land somewhere unknown. ${bringForward}`;
+    }
+    if (wanted === "") return undefined;
+    const lower = wanted.toLowerCase();
+    const { app } = focused;
+    if (app.bundleId.toLowerCase() === lower || app.name.toLowerCase() === lower) return undefined;
+    return `Keyboard focus is in ${app.name || app.bundleId}, not ${wanted}: the keys would go to ${app.name || app.bundleId}. ${bringForward}`;
+  };
+
   const checkElementSafety = (
     el: DesktopResolvedElement | undefined,
     action: DesktopAction,
@@ -563,6 +586,9 @@ export function createGatedDesktopPort(inner: DesktopPort, options: GatedDesktop
 
       // Check currently focused element for active credential fields or auth dialogs before any keyboard/type action.
       if (isKeyboardOrWriteAction(action)) {
+        // Keys go to the app in front: said so, by name, when that is not the app the call names (or none can be read).
+        const misdirected = await keyboardTargetDenial(beforeFocused, actOptions.app);
+        if (misdirected !== undefined) return { status: "rejected", detail: misdirected };
         const focusDenial =
           checkElementSafety(beforeFocused, action, actOptions) ?? (await checkKeyPress(action, beforeFocused, actOptions));
         if (focusDenial !== undefined) {

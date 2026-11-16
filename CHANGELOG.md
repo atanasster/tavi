@@ -79,6 +79,10 @@ change behaviour or stored data.
 - `desktop.observe` of an app not in `desktop.grantedApps` (the app in front,
   when none was named) said only "is not granted. Do not retry.". It now names
   the granted apps, so the model can look at one of them or ask you to add it.
+- Typing or pressing a key with `desktop.act` while the app it named was not
+  in front was refused as "Target element or application could not be
+  resolved". It now says where the keys would have gone (the app with focus,
+  or the app in front when no focus can be read) and to bring the app forward.
 - A desktop action the gate refused showed as "desktop.act done". It now shows
   as a failed call, with the gate's reason.
 - A desktop action's card asked "Why am I asked?" with "changes something that
