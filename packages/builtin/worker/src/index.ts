@@ -398,7 +398,8 @@ class Worker {
     }
     this.#state = "running";
     this.#startedAt = Date.now();
-    this.#touch();
+    // A renewal that came due while it started waits for the call that started it, which a stop now would fail.
+    if (!this.#renewDue) this.#touch();
   }
 
   /** The worker's registrations, held to what it registered at its first start. */

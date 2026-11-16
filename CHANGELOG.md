@@ -15,6 +15,9 @@ change behaviour or stored data.
 
 - `tavi onboard`'s questions are drawn in a terminal where `CI` is set: Ink
   took that to mean "print only the last frame", so the prompt never showed.
+- A plugin worker whose proxy CA came due for renewal while it was starting
+  was stopped as soon as it was ready, failing the call that started it. That
+  call is answered first, and the worker restarts after it.
 
 ## 0.1.0 — first release
 

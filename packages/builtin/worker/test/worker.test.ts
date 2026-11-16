@@ -245,6 +245,17 @@ describe("a worker", () => {
     await handle.stop();
   }, 30_000);
 
+  it("answers the call that started a worker whose CA came due while it started, then starts it again", async () => {
+    const due = {
+      wrap: (launch: Parameters<typeof passThrough.wrap>[0]) => ({ ...passThrough.wrap(launch), renewBy: Date.now() - 1 }),
+    };
+    const handle = await isolation({ confinement: due }).start(launch(), services());
+    expect(await handle.callTool("echo", { text: "a" }, signal(), "read")).toMatchObject({ echoed: "a" });
+    expect(await handle.callTool("echo", { text: "b" }, signal(), "read")).toMatchObject({ echoed: "b" });
+    expect(handle.status()).toMatchObject({ restarts: 0 });
+    await handle.stop();
+  }, 30_000);
+
   it("keeps a worker whose CA runs out weeks from now running: a timer past Node's limit never fires early", async () => {
     const later = {
       wrap: (launch: Parameters<typeof passThrough.wrap>[0]) => ({ ...passThrough.wrap(launch), renewBy: Date.now() + 29 * 86_400_000 }),

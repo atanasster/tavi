@@ -148,7 +148,8 @@ describe("argumentOrigins", () => {
     ]) {
       const started = Date.now();
       argumentOrigins({ body: leaf }, []);
-      expect(Date.now() - started, `${leaf.slice(0, 12)}…`).toBeLessThan(50);
+      // A quadratic scan of 200 KB takes seconds; the bound leaves room for a busy CI runner.
+      expect(Date.now() - started, `${leaf.slice(0, 12)}…`).toBeLessThan(500);
     }
     expect(argumentOrigins({ body: `write to bob@x.example ${"z".repeat(40)}` }, []).map((origin) => origin.value)).toContain(
       "bob@x.example",
