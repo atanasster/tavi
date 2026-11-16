@@ -84,6 +84,30 @@ describe("the text renderer", () => {
     expect(written).toBe('[approval] Run ls {"command":"ls⟨U+202E⟩"}\n');
   });
 
+  it("says what flagged a call besides taint, as a guard mod gave it (Mac mini tests)", () => {
+    let written = "";
+    const renderer = createEventRenderer({ format: "text", write: (chunk) => void (written += chunk) });
+    renderer.render(
+      approval({
+        toolName: "sandbox.run",
+        summary: "Run rm -rf build",
+        input: { command: "rm -rf build" },
+        risk: {
+          level: "high",
+          tainted: true,
+          reasons: [
+            "deletes files recursively",
+            "acme.guard: deletes files recursively",
+            "the conversation contains untrusted content from the web or a document",
+          ],
+        },
+      }),
+    );
+    expect(written).toBe(
+      '[approval] Run rm -rf build {"command":"rm -rf build"}\n  Flagged: deletes files recursively · acme.guard: deletes files recursively\n',
+    );
+  });
+
   it("says how a round was decided, and that --approval deny decided it", () => {
     let written = "";
     const renderer = createEventRenderer({ format: "text", write: (chunk) => void (written += chunk) });

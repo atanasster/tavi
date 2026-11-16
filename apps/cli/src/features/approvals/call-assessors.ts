@@ -1186,7 +1186,9 @@ export function assessSandboxRun(input: unknown, context?: Pick<InvocationContex
   const args = argv.args;
   const script = shellScriptOf(command, args);
   const commands = sandboxCommands(command, args);
-  const whole = [command, ...args].join(" ");
+  // The line as a shell would read it: an argv's words quoted, so `echo` + `["rm -rf /"]` is the text it prints, as
+  // `echo "rm -rf /"` is in a script, not the deletion it spells.
+  const whole = script === undefined ? [command, ...args].map(quoteWord).join(" ") : [command, ...args].join(" ");
   // An argv (`command` + `args`) that is no `sh -c` script is one command whose words need no quoting:
   // read its forms from the words themselves, so `["env", "sudo", "ls"]` and an
   // argument holding spaces are seen as the shell would run them.
@@ -1271,7 +1273,7 @@ export function assessSandboxRun(input: unknown, context?: Pick<InvocationContex
     HARD_DENY.find(
       (entry) =>
         forms.some((form) => entry.pattern.exec(homeSpelled(form))?.index === 0) ||
-        commands.some((subject) => entry.pattern.test(homeSpelled(subject))) ||
+        (script === undefined ? [] : commands).some((subject) => entry.pattern.test(homeSpelled(subject))) ||
         entry.pattern.test(homeSpelled(whole)),
     ) ??
     (deletesHomeLexically(

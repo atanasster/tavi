@@ -21,16 +21,48 @@ you enable it. To use it:
    and `codesign -s - --force …` commands for your install. Run them in the
    terminal you will run `tavi serve` from. Tavi never runs them itself.
    `swiftc` and `codesign` come with Xcode or the Xcode Command Line Tools
-   (`xcode-select --install`).
+   (`xcode-select --install`). With the Swift 6.1 Command Line Tools alone,
+   `swiftc` may stop at "redefinition of module 'SwiftBridging'"; see
+   [Build the helper with the Command Line Tools](#build-the-helper-with-the-command-line-tools).
 3. **Grant the Accessibility and Screen Recording permissions.** macOS asks
    for them when the helper first reads another app or captures the screen,
    and grants them to the app that started it: the terminal running
-   `tavi serve`. Screenshots need macOS 14 or newer.
+   `tavi serve`. Screenshots need macOS 14 or newer. Until Accessibility is
+   granted, `desktop.observe` and `desktop.act` refuse with **desktop control
+   has no Accessibility permission**, naming where to grant it, rather than
+   read an empty window; restart `tavi serve` from that terminal once it is
+   granted. An owner started over SSH cannot be granted it: start it from a
+   terminal on the Mac.
 4. **Grant the apps** a workspace may see and act in:
    `tavi config set desktop.grantedApps com.apple.TextEdit,Notes` (bundle ids
    or app names; `none` clears the list). Each app gets its built-in tier
    (below). An app not on the list is refused on its approval card and at the
-   gate.
+   gate. `desktop.observe` of one, the app in front included, refuses and
+   names the granted apps, so the model can look at one of them or ask you to
+   add it.
+
+### Build the helper with the Command Line Tools
+
+The Swift 6.1 Command Line Tools ship the `SwiftBridging` module in two module
+maps (`module.modulemap` and `bridging.modulemap` in
+`/Library/Developer/CommandLineTools/usr/include/swift`), and `swiftc` stops at
+"redefinition of module 'SwiftBridging'". A full Xcode does not. Without one,
+a file-system overlay that hides the second map builds it. Write the overlay
+once:
+
+```bash
+mkdir -p ~/swiftfix && : > ~/swiftfix/empty.modulemap
+cat > ~/swiftfix/overlay.yaml <<EOF
+{ "version": 0, "case-sensitive": "false", "roots": [ { "type": "directory",
+  "name": "/Library/Developer/CommandLineTools/usr/include/swift",
+  "contents": [ { "type": "file", "name": "bridging.modulemap",
+  "external-contents": "$HOME/swiftfix/empty.modulemap" } ] } ] }
+EOF
+```
+
+Then run the `swiftc` command the refusal prints with the overlay added,
+`swiftc -O -vfsoverlay ~/swiftfix/overlay.yaml -Xcc -ivfsoverlay -Xcc ~/swiftfix/overlay.yaml <helper.swift> -o <helper>`,
+and the `codesign` command after it as printed.
 
 Every desktop action runs only in an attended run, after its own approval
 card. Looking at an app's window (`desktop.observe`) asks too: once per call,

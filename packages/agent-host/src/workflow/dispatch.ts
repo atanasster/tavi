@@ -35,7 +35,7 @@ import {
   isRefusedEarly,
   zodIssues,
 } from "@tavi/contracts";
-import { definedOnly, nowTimestamp } from "@tavi/contracts/util";
+import { definedOnly, errorMessage, nowTimestamp } from "@tavi/contracts/util";
 import { toModelError } from "../models/models.js";
 import {
   scrubToolOutput,
@@ -817,7 +817,7 @@ function notJson(text: string): string {
     JSON.parse(text);
     return "";
   } catch (error) {
-    return `: ${error instanceof Error ? error.message.slice(0, 200) : String(error)}`;
+    return `: ${errorMessage(error).slice(0, 200)}`;
   }
 }
 

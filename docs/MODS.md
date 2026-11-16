@@ -111,7 +111,7 @@ mkdir -p ~/tavi-plugins
 tavi serve --fs-root ~/tavi-plugins
 ```
 
-Then open a chat that works in it: `cd ~/tavi-plugins && tavi chat`, or on the canvas pick the folder with the chat's folder chip and "Work in this folder". A chat started elsewhere works in its own folder and can only read `~/tavi-plugins`. Each file Tavi writes is an `fs.write` approval that shows the whole file: read it before you approve, because once approved and enabled it runs inside the owner.
+Then open a chat that works in it: `cd ~/tavi-plugins && tavi chat`, or on the canvas pick the folder with the chat's folder chip and "Work in this folder". A chat started elsewhere works in its own folder and can only read `~/tavi-plugins`. Each file Tavi writes is an `fs.write` approval that shows the whole file: read it before you approve, because once approved and enabled its code runs, as a confined worker with what its manifest asks for.
 
 Chats from Telegram, Discord or email cannot write files unless you allowed it: `tavi serve --messaging-allow-tool fs.write` for your own one-to-one chat, or a contact grant (`tavi channels grant <connection> contact <sender> fs.write allow`) for one person's one-to-one chat on a chat channel, still asked each time ([CHANNELS.md](CHANNELS.md#rooms)). Keep it that way: write plugins from the terminal or the canvas.
 

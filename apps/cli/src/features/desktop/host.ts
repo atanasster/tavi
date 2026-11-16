@@ -66,7 +66,11 @@ export function requireDesktopHelper(dataDirectory: string): string {
 
 /** What to do when the helper is not built: the commands that build it for this install. */
 export function desktopHelperMissing(dataDirectory: string): string {
-  return `desktop control's helper is not built: run, in the terminal you grant Accessibility and Screen Recording to,\n  ${desktopHelperBuild(dataDirectory).join("\n  ")}`;
+  return (
+    `desktop control's helper is not built: run, in the terminal you grant Accessibility and Screen Recording to,\n  ${desktopHelperBuild(dataDirectory).join("\n  ")}\n` +
+    "If swiftc stops at \"redefinition of module 'SwiftBridging'\" (the Swift 6.1 Command Line Tools ship it twice), " +
+    "docs/DESKTOP.md#build-the-helper-with-the-command-line-tools gives the overlay that builds it."
+  );
 }
 
 /**

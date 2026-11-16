@@ -1306,22 +1306,25 @@ describe("site skills in observations", () => {
     ).not.toHaveProperty("recipe");
   });
 
+  /** A recipe store whose example.com recipe a person marked to replay, with these steps. */
+  const replayingRecorder = <Step>(steps: readonly Step[]) => ({
+    observed: () => undefined,
+    acted: () => undefined,
+    extracted: async () => undefined,
+    recipeFor: async () => ({
+      workspaceId: context.workspaceId,
+      host: "example.com",
+      steps: [...steps],
+      results: 1,
+      uses: 1,
+      updatedAt: "2026-10-08T12:00:00.000Z",
+      replay: true,
+    }),
+  });
+
   it("replays a recipe a person marked only in an attended run with a trusted chat, holding each step to its site", async () => {
     const acted: string[] = [];
-    const recorder = {
-      observed: () => undefined,
-      acted: () => undefined,
-      extracted: async () => undefined,
-      recipeFor: async () => ({
-        workspaceId: context.workspaceId,
-        host: "example.com",
-        steps: [{ kind: "click" as const, role: "button", label: "Dismiss promo" }],
-        results: 1,
-        uses: 1,
-        updatedAt: "2026-10-08T12:00:00.000Z",
-        replay: true,
-      }),
-    };
+    const recorder = replayingRecorder([{ kind: "click", role: "button", label: "Dismiss promo" }]);
     let pageNowAt = "https://example.com/";
     const open = async (extra: Record<string, unknown>, via: "create_session" | "navigate" = "create_session") => {
       const registry = new ToolRegistry();
@@ -1378,20 +1381,7 @@ describe("site skills in observations", () => {
       { kind: "type" as const, role: "textbox", label: "Disability status", value: "No", stopped: "failed" },
     ]) {
       const acted: string[] = [];
-      const recorder = {
-        observed: () => undefined,
-        acted: () => undefined,
-        extracted: async () => undefined,
-        recipeFor: async () => ({
-          workspaceId: context.workspaceId,
-          host: "example.com",
-          steps: [{ kind: "click" as const, role: "button", label: "Dismiss promo" }, step],
-          results: 1,
-          uses: 1,
-          updatedAt: "2026-10-08T12:00:00.000Z",
-          replay: true,
-        }),
-      };
+      const recorder = replayingRecorder([{ kind: "click", role: "button", label: "Dismiss promo" }, step]);
       const registry = new ToolRegistry();
       const fixture = createFixtureBrowser({
         pages: {

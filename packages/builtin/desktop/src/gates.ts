@@ -28,6 +28,7 @@ import {
   isDesktopAuthDialog,
   isDesktopCredentialNode,
   isTaviDesktopApp,
+  refusedEarly,
 } from "@tavi/contracts";
 import { definedOnly } from "@tavi/contracts/util";
 
@@ -448,7 +449,10 @@ export function createGatedDesktopPort(inner: DesktopPort, options: GatedDesktop
       }
       const tier = resolveGrantTier(options.grantedApps, tree.app);
       if (tier === undefined) {
-        throw new Error(`Application '${tree.app.name || tree.app.bundleId}' is not granted. Do not retry.`);
+        // Nothing of the tree is handed on, so the chat read nothing; `notGranted` names the app for the caller's words.
+        throw refusedEarly("NOT_AUTHORIZED", `Application '${tree.app.name || tree.app.bundleId}' is not granted. Do not retry.`, {
+          notGranted: tree.app.name || tree.app.bundleId,
+        });
       }
       for (const key of [app, tree.app.bundleId, tree.app.name]) if (key !== "") lastTrees.set(key, tree);
       latestTree = tree;

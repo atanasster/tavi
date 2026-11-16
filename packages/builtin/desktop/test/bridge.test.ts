@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { PassThrough } from "node:stream";
-import { TaviError } from "@tavi/contracts";
+import { TaviError, isRefusedEarly } from "@tavi/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DESKTOP_HELPER_READY_TIMEOUT_MS,
@@ -292,6 +292,25 @@ describe("SwiftDesktopBridge abort", () => {
     const bridge = new SwiftDesktopBridge({ spawnTransport });
     await bridge.apps();
     expect(bridge.abortHotkey).toEqual({ combo: "cmd+shift+escape", active: false, error: "needs Accessibility permission" });
+    await bridge.dispose();
+  });
+
+  it("says the Accessibility permission is missing, before reading or sending anything, rather than answer an empty tree", async () => {
+    const { spawnTransport, helpers } = createFakeHelpers({
+      ready: { accessibility: false },
+      respond: (req) => (req.method === "list_apps" ? { result: [] } : { result: { nodes: [] } }),
+    });
+    const bridge = new SwiftDesktopBridge({ spawnTransport });
+    // The app list needs no permission.
+    await bridge.apps();
+    expect(bridge.accessibility).toBe(false);
+    for (const call of [() => bridge.tree("TextEdit"), () => bridge.act({ kind: "press", key: "n", modifiers: ["cmd"] })]) {
+      const error = await call().catch((caught: unknown) => caught);
+      expect(error).toMatchObject({ code: "NOT_CONFIGURED", message: expect.stringContaining("Privacy & Security → Accessibility") });
+      // A refusal that read nothing leaves the chat untainted.
+      expect(isRefusedEarly(error)).toBe(true);
+    }
+    expect(helpers[0]?.requests.map((request) => request.method)).toEqual(["list_apps"]);
     await bridge.dispose();
   });
 

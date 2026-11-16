@@ -24,6 +24,7 @@ import {
   TOOL_MEDIA_KEY,
   TaviError,
   type ToolResultLabel,
+  refusedEarly,
   untrustedLabel,
 } from "@tavi/contracts";
 import { definedOnly } from "@tavi/contracts/util";
@@ -440,7 +441,19 @@ export function registerDesktopTools(registry: ToolRegistry, options: DesktopToo
           );
         }
 
-        const tree = await desktop.tree(appName);
+        const tree = await desktop.tree(appName).catch((error: unknown) => {
+          const notGranted = error instanceof TaviError ? error.details?.["notGranted"] : undefined;
+          if (typeof notGranted !== "string") throw error;
+          // Said with what is granted, so the model can observe one of them, or ask for this one, instead of stopping.
+          const which = parsed.app === undefined ? `The focused app, ${notGranted},` : `${notGranted}`;
+          throw refusedEarly(
+            "NOT_AUTHORIZED",
+            granted === undefined || granted.length === 0
+              ? `${which} is not granted desktop control, and no app is: the person grants apps with \`tavi config set desktop.grantedApps <apps>\`.`
+              : `${which} is not granted desktop control. Granted: ${granted.join(", ")}; observe one of them by naming it in app, or ask the person to add ${notGranted} to desktop.grantedApps.`,
+            { ...grantedApps, notGranted },
+          );
+        });
         const fitted = fitDesktopTree(
           compactDesktopTree(tree.nodes, { withBounds: parsed.bounds === true }),
           DESKTOP_OBSERVE_TREE_TEXT_MAX,
@@ -525,10 +538,10 @@ export function registerDesktopTools(registry: ToolRegistry, options: DesktopToo
 
         // Gate action and capture as one unit: a rejected action never takes or returns a capture.
         const shown = [outcome.after?.app, outcome.after?.bundleId, app];
+        // A refused action is a failed call, not a done one: the chat shows it failed, the model reads why.
         if (outcome.status !== "accepted") {
-          return fromApp(shown, {
-            status: "rejected" as const,
-            ...(outcome.detail === undefined ? {} : { detail: outcome.detail }),
+          throw new TaviError("TOOL_FAILED", `desktop.act was not carried out: ${outcome.detail ?? "the desktop gate refused it."}`, {
+            details: { status: "rejected" },
           });
         }
 

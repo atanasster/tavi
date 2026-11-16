@@ -433,9 +433,10 @@ export function PluginsSettings({
       </PageHead>
 
       <Notice>
-        An installed plugin runs inside the owner with its privileges once you approve and enable it: approve only code you trust. Enable
-        and settings changes take effect when the owner next starts, except for a plugin that only adds to the canvas, which applies at
-        once. Disabling a loaded external plugin stops its calls immediately.
+        An installed plugin runs once you approve and enable it, as a confined worker that reaches only its own folder and the network
+        domains its manifest names; only one you approve to run in the owner's process gets the owner's privileges. Either way, approve only
+        code you trust. Enable and settings changes take effect when the owner next starts, except for a plugin that only adds to the
+        canvas, which applies at once. Disabling a loaded external plugin stops its calls immediately.
       </Notice>
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         <StatusNote note={note} />

@@ -71,6 +71,38 @@ change behaviour or stored data.
 - A rate-limited web search (429) was reported to the model as a call that
   "may have run", so it checked and retried at once. A search the provider
   refused ran nothing: it is now said to be retryable after a wait.
+- Desktop control without the Accessibility permission read every window as
+  empty and failed each action as "could not be resolved". `desktop.observe`
+  and `desktop.act` now refuse at once, saying to grant Accessibility to the
+  terminal that started `tavi serve` and restart it, and the chat is not
+  marked as having read an app's screen.
+- `desktop.observe` of an app not in `desktop.grantedApps` (the app in front,
+  when none was named) said only "is not granted. Do not retry.". It now names
+  the granted apps, so the model can look at one of them or ask you to add it.
+- A desktop action the gate refused showed as "desktop.act done". It now shows
+  as a failed call, with the gate's reason.
+- A desktop action's card asked "Why am I asked?" with "changes something that
+  lasts beyond this chat (a routine, a reminder, a rule, a file)", wrong for a
+  keypress. It now says the call clicks, types or presses keys in an app on
+  your computer.
+- `sandbox.run` refused `echo` with the argument `rm -rf /` as deleting the
+  root directory: an argument was read as if unquoted. It is read as the shell
+  would read it, as `echo "rm -rf /"` already was; `rm -rf /` itself is still
+  refused.
+- `tavi run`'s `[approval]` lines and `tavi approvals show` did not say what
+  flagged a call, such as a guard mod's reasons ("acme.guard: …"). Both now
+  print a `Flagged:` line, as the terminal UI's card does.
+- A chat's shell could not run the owner's own Node when it was installed by
+  hand under your home folder (`~/.local/node`, say) rather than by a version
+  manager. That install is now readable in the sandbox when its `bin` is on
+  `PATH`.
+- The Plugins settings page and the model's plugin authoring guide said an
+  approved plugin runs inside the owner with its privileges. An approved
+  plugin runs as a confined worker; only one approved `--in-process` runs in
+  the owner's process.
+- The refusal printed while the desktop helper is not built now says what to
+  do when `swiftc` stops at "redefinition of module 'SwiftBridging'" with the
+  Swift 6.1 Command Line Tools ([DESKTOP.md](docs/DESKTOP.md#build-the-helper-with-the-command-line-tools)).
 
 ## 0.1.0 — first release
 

@@ -6,6 +6,7 @@ import {
   boundEventPayloads,
   clipText,
   displaySafe,
+  flaggedReasons,
   isNothingToReport,
   isUnifiedDiff,
   type ClientEvent,
@@ -215,7 +216,10 @@ const APPROVAL_DIFF_LINES = 20;
 function approvalText(event: Extract<ClientEvent, { kind: "approval.required" }>): string {
   const title = terminalText(displaySafe(approvalTitleOf(event)));
   const diff = event.display?.detail;
-  if (!isUnifiedDiff(diff)) return `[approval] ${title} ${clipText(shownInput(event.input), 400)}\n`;
+  // What flagged it besides taint (a guard mod's reasons, the shell checks'), as the terminal UI's card says it.
+  const reasons = flaggedReasons(event.risk?.reasons);
+  const flagged = reasons.length === 0 ? "" : `  Flagged: ${terminalText(displaySafe(reasons.join(" · ")))}\n`;
+  if (!isUnifiedDiff(diff)) return `[approval] ${title} ${clipText(shownInput(event.input), 400)}\n${flagged}`;
   const lines = diff.split("\n");
   const shown = lines.slice(0, APPROVAL_DIFF_LINES).map((line) => `  ${terminalText(displaySafe(line))}\n`);
   // Only the diff's own lines are counted: a cut diff's closing note is none.
@@ -224,7 +228,7 @@ function approvalText(event: Extract<ClientEvent, { kind: "approval.required" }>
     lines.length > APPROVAL_DIFF_LINES
       ? [`  … ${more === 0 ? "the rest" : `${more} more lines`} in tavi approvals show ${event.runId}\n`]
       : [];
-  return `[approval] ${title}\n${shown.join("")}${rest.join("")}`;
+  return `[approval] ${title}\n${flagged}${shown.join("")}${rest.join("")}`;
 }
 
 /** How a round was decided, and by whom: a run's own `--approval` policy by its flag, a schedule's by its name. */

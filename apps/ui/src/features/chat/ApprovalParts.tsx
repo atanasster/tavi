@@ -75,7 +75,7 @@ const ORIGIN_VALUE_CHARS = 80;
 export function Provenance({ request }: { readonly request: PendingRound["requests"][number] }) {
   const provenance = request.provenance;
   const tainted = requestTainted(request);
-  const why = whyAskedText(provenance?.gateReason, tainted, provenance?.skillCeiling);
+  const why = whyAskedText(provenance?.gateReason, tainted, provenance?.skillCeiling, request.toolName);
   const sources = requestSources(request);
   const chips = sources === undefined ? [] : provenanceChips(sources);
   const origins = (provenance?.argOrigins ?? []).filter((origin) => tainted || origin.from !== "unmatched");

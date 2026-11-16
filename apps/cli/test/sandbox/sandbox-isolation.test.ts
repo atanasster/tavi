@@ -519,6 +519,30 @@ describe("the per-call policy", () => {
     expect(env["VOLTA_HOME"]).toBeUndefined();
   });
 
+  it("re-opens the owner's own Node, installed by hand under $HOME, when its bin is on PATH; never $HOME for a Node in ~/bin (Mac mini tests)", async () => {
+    const { home, mine, options } = owner();
+    mkdirSync(join(home, ".local", "node", "bin"), { recursive: true });
+    mkdirSync(join(home, ".local", "node", "lib"), { recursive: true });
+    const node = join(home, ".local", "node", "bin", "node");
+    writeFileSync(node, "");
+    const ownerEnv = { PATH: [join(home, ".local", "node", "bin"), "/usr/bin"].join(":") };
+    const { policy, env } = await sandboxCallFor({ ...options, ownerEnv, nodeExecutable: node }, folderOf(mine, mine));
+    expect(policy.filesystem.allowRead).toContain(join(home, ".local", "node"));
+    expect(env["PATH"]).toBe([join(home, ".local", "node", "bin"), "/usr/bin"].join(":"));
+    // Not on PATH: nothing re-opened for it.
+    const off = await sandboxCallFor({ ...options, ownerEnv: { PATH: "/usr/bin" }, nodeExecutable: node }, folderOf(mine, mine));
+    expect(off.policy.filesystem.allowRead).not.toContain(join(home, ".local", "node"));
+    // In ~/bin, its install would be $HOME itself: only the bin folder is re-opened.
+    mkdirSync(join(home, "bin"));
+    writeFileSync(join(home, "bin", "node"), "");
+    const inHome = await sandboxCallFor(
+      { ...options, ownerEnv: { PATH: [join(home, "bin"), "/usr/bin"].join(":") }, nodeExecutable: join(home, "bin", "node") },
+      folderOf(mine, mine),
+    );
+    expect(inHome.policy.filesystem.allowRead).not.toContain(home);
+    expect(inHome.policy.filesystem.allowRead).toContain(join(home, "bin"));
+  });
+
   it("follows fnm's links to its installs, and never re-opens a credential file or $HOME through a manager's home", async () => {
     const { home, mine, options } = owner();
     for (const path of [".local/state/fnm_multishells/123_456", ".local/share/fnm/node-versions", ".cargo/bin", ".rustup/toolchains"])

@@ -10,7 +10,7 @@ import {
   printable,
   formatChoiceOption,
   maskedSecretsNote,
-  isTaintReason,
+  flaggedReasons,
   neutralizedText,
   pastChatSearchCitations,
   provenanceChips,
@@ -992,7 +992,7 @@ export class ChatStore {
       if (request.risk?.label?.integrity === "untrusted" && this.#state.taskId !== undefined)
         this.setTaint(this.#state.taskId, request.risk.label);
       // What else flags it (taint has its own lines above).
-      const reasons = (request.risk?.reasons ?? []).filter((reason) => !isTaintReason(reason));
+      const reasons = flaggedReasons(request.risk?.reasons);
       if (reasons.length > 0) this.#line(`      Flagged: ${printable(reasons.join(" · ")).slice(0, 300)}`, "notice");
     }
     if (!card.asked && this.decidesRounds && this.#whole(round)) {
@@ -1373,7 +1373,7 @@ function provenanceLines(request: RunState["pending"][number]["requests"][number
   const provenance = request.provenance;
   const tainted = requestTainted(request);
   const lines: string[] = [];
-  const why = whyAskedText(provenance?.gateReason, tainted, provenance?.skillCeiling);
+  const why = whyAskedText(provenance?.gateReason, tainted, provenance?.skillCeiling, request.toolName);
   if (why !== undefined) lines.push(`${GLYPHS.warning} Why am I asked? ${why}`);
   const sources = requestSources(request);
   const chips = sources === undefined ? [] : provenanceChips(sources);

@@ -119,16 +119,25 @@ export const GATE_REASON_WORDS: Readonly<Record<GateReason, string>> = {
     "A skill this chat loaded lists the tools it uses (allowed-tools), and this call is not one of them. Approve it only if you expect the skill to need it.",
 };
 
+/**
+ * "Why am I asked?" for a desktop action under taint: it is asked as a `persist` call, but a keypress or a click
+ * changes an app on the person's computer, not a routine or a file Tavi keeps.
+ */
+export const DESKTOP_TAINTED_WORDS =
+  "This chat read content Tavi does not trust, and this call acts in an app on your computer: it clicks, types or presses keys. What the model read can steer it into acting on your behalf.";
+
 /** What a card says when the chat is tainted but the taint step did not ask (another rule did). */
 export const TAINTED_CALL_WORDS = "This chat read content Tavi does not trust, which may be steering this call.";
 
-/** "Why am I asked?" for one call: its reason's words (a ceiling's naming its skill), the tainted line, or nothing. */
+/** "Why am I asked?" for one call: its reason's words (a ceiling's naming its skill, a desktop action's its own), the tainted line, or nothing. */
 export function whyAskedText(
   gateReason: GateReason | undefined,
   tainted: boolean,
   skillCeiling?: SkillCeilingSummary | undefined,
+  toolName?: string | undefined,
 ): string | undefined {
   if (gateReason === "outside-skill-ceiling" && skillCeiling !== undefined) return skillCeilingWords(skillCeiling);
+  if (gateReason === "tainted-persist" && toolName?.startsWith("desktop.") === true) return DESKTOP_TAINTED_WORDS;
   if (gateReason !== undefined) return GATE_REASON_WORDS[gateReason];
   return tainted ? TAINTED_CALL_WORDS : undefined;
 }

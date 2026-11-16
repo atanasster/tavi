@@ -1,5 +1,5 @@
 import type { DesktopTreeResult, GatedDesktopPort, InvocationContext, ModelOutcome, ModelPort, ModelRequest } from "@tavi/contracts";
-import { untrustedLabel } from "@tavi/contracts";
+import { isRefusedEarly, refusedEarly, untrustedLabel } from "@tavi/contracts";
 import { partialFake } from "@tavi/test-support";
 import { describe, expect, it } from "vitest";
 import {
@@ -189,6 +189,23 @@ describe("desktop CLI tools and assessors", () => {
       code: "INVALID_INPUT",
       message: expect.stringContaining("com.apple.Notes, TextEdit"),
     });
+    // The app in front is not granted: the refusal names the granted apps, and reads nothing (Mac mini tests).
+    const gated = desktop.tree;
+    desktop.apps = async () => [{ bundleId: "com.meggy.app", name: "Meggy", pid: 9, active: true }];
+    desktop.tree = async () => {
+      throw refusedEarly("NOT_AUTHORIZED", "Application 'Meggy' is not granted. Do not retry.", { notGranted: "Meggy" });
+    };
+    const refusal = await observe({ input: {}, context, signal }).catch((error: unknown) => error);
+    expect(refusal).toMatchObject({
+      code: "NOT_AUTHORIZED",
+      details: { notGranted: "Meggy", grantedApps: ["com.apple.Notes", "TextEdit"] },
+    });
+    expect((refusal as Error).message).toMatch(
+      /^The focused app, Meggy, is not granted desktop control\. Granted: com\.apple\.Notes, TextEdit/,
+    );
+    expect(isRefusedEarly(refusal)).toBe(true);
+    desktop.tree = gated;
+    desktop.apps = async () => [];
     // Without the grants wired in, nothing is claimed about them.
     const bare = new Map<string, { handler: (args: Record<string, unknown>) => Promise<unknown> }>();
     registerDesktopTools(
@@ -517,6 +534,7 @@ describe("desktop CLI tools and assessors", () => {
           const after = { app: "TextEdit", bundleId: "com.apple.TextEdit", focusedRole: "AXTextArea", focusedValue: docValue };
           return { status: "accepted", before, after };
         }
+        if (action.kind === "press" && action.key === "F19") return { status: "rejected", detail: "refused by the gate" };
         return { status: "accepted" };
       },
     });
@@ -626,6 +644,16 @@ describe("desktop CLI tools and assessors", () => {
     expect(actOut.status).toBe("accepted");
     expect(actOut.taviLabel).toEqual({ host: expect.stringMatching(/^desktop:./) });
     expect(actOut.changes).toEqual(['value changed to "Seed Note"']);
+
+    // An action the gate refused is a failed call, never a done one (Mac mini tests).
+    await expect(
+      actTool.handler({
+        input: { app: "com.apple.TextEdit", kind: "press", key: "F19" },
+        context,
+        signal: new AbortController().signal,
+        callId: "c-no",
+      }),
+    ).rejects.toMatchObject({ code: "TOOL_FAILED", message: "desktop.act was not carried out: refused by the gate" });
 
     // A missing field is refused before any card: the card would name an action that never runs.
     expect(actTool.assess?.({ app: "com.apple.TextEdit", kind: "press" }, context)).toMatchObject({

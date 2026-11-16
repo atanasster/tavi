@@ -11,7 +11,7 @@ import {
   type SandboxHostPort,
   type SandboxStatus,
 } from "@tavi/contracts";
-import { temporaryDirectories } from "@tavi/test-support";
+import { delay, temporaryDirectories } from "@tavi/test-support";
 
 import { pdfConfinementFacts } from "../../src/features/doctor/reports.js";
 import { pdfConfinement, pdfOcrAssets, pdfSandbox, settledPdfEngine } from "../../src/features/pdf/host.js";
@@ -148,11 +148,11 @@ describe("a PDF call while the sandbox is still checking", () => {
     const settled = settledPdfEngine(engine, host, { platform: "linux" });
     const calls = [settled.run({ op: "info" } as never, new Uint8Array()), settled.readWithOcr(new Uint8Array(), {}), settled.ocr([])];
     settled.prewarm();
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await delay(20);
     expect(seen).toEqual([]);
     answer({ tier: "unavailable", checks: [], cause: "AppArmor" });
     await Promise.all(calls);
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await delay(0);
     expect(seen.sort()).toEqual(["ocr:unavailable", "prewarm:unavailable", "read:unavailable", "run:unavailable"]);
     expect(checks()).toBe(1);
     // Settled: later calls go straight through, with no probe.
@@ -167,7 +167,7 @@ describe("a PDF call while the sandbox is still checking", () => {
     settled.prewarm();
     await settled.close();
     await settled.run({ op: "info" } as never, new Uint8Array());
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await delay(0);
     expect(seen).toEqual(["run:checking"]);
     expect(checks()).toBe(1);
   });

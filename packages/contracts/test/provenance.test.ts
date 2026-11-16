@@ -29,6 +29,7 @@ import {
   taintDetailLines,
   untrustedLabel,
   whyAskedText,
+  flaggedReasons,
   type ProvenanceWindowEntry,
 } from "../src/index.js";
 
@@ -231,6 +232,14 @@ describe("what the card and the chip say", () => {
       expect(whyAskedText(reason, true)).toBe(GATE_REASON_WORDS[reason]);
     }
     expect(whyAskedText(undefined, true)).toMatch(/steering/);
+    // A desktop action is asked as a lasting change, but a keypress is no routine or file: its card says what it does.
+    expect(whyAskedText("tainted-persist", true, undefined, "desktop.act")).toMatch(/acts in an app on your computer/);
+    expect(whyAskedText("tainted-persist", true, undefined, "routines.create")).toBe(GATE_REASON_WORDS["tainted-persist"]);
+    // What flagged a call besides taint: each once, clipped, at most eight, the taint reason left to its own line.
+    const taint = "the conversation contains untrusted content from the web or a document";
+    expect(flaggedReasons(["a", taint, "a", ` ${"x".repeat(400)} `])).toEqual(["a", "x".repeat(300)]);
+    expect(flaggedReasons(Array.from({ length: 12 }, (_, index) => `r${index}`))).toHaveLength(8);
+    expect(flaggedReasons(undefined)).toEqual([]);
     expect(whyAskedText(undefined, false)).toBeUndefined();
   });
 

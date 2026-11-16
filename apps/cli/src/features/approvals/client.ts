@@ -205,10 +205,15 @@ function showText(taskId: string, value: ApprovalsShowResult): string {
     (event) =>
       `  ${event.at}\tround ${event.steps}\t${event.kind}\t${event.via ?? "-"}\t${event.actor ?? "-"}${event.detail === undefined ? "" : `\t${JSON.stringify(event.detail)}`}`,
   );
+  // What flagged each call besides taint, as its round recorded it (a guard mod's reasons, the shell checks').
+  const flaggedOf = (steps: number, callId: string): string => {
+    const reasons = value.rounds.find((round) => round.steps === steps)?.callScopes?.find((call) => call.callId === callId)?.reasons;
+    return reasons === undefined || reasons.length === 0 ? "" : `\n    Flagged: ${terminalText(reasons.join(" · "))}`;
+  };
   // The full input of each call: a chat's announcement is clipped to fit it.
   const calls = (value.calls ?? []).map(
     (call) =>
-      `call ${call.callId}\tround ${call.steps}\t${call.toolId}\t${call.state}${call.decidedBy === null ? "" : `\t${call.decidedBy}`}${call.note === null ? "" : `\t${JSON.stringify(call.note)}`}\n    ${shownInput(call.inputs, 2).split("\n").join("\n    ")}`,
+      `call ${call.callId}\tround ${call.steps}\t${call.toolId}\t${call.state}${call.decidedBy === null ? "" : `\t${call.decidedBy}`}${call.note === null ? "" : `\t${JSON.stringify(call.note)}`}${flaggedOf(call.steps, call.callId)}\n    ${shownInput(call.inputs, 2).split("\n").join("\n    ")}`,
   );
   return [...rounds, ...events, ...calls].join("\n");
 }

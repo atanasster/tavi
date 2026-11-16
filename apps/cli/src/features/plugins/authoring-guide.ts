@@ -11,7 +11,7 @@ export const PLUGIN_AUTHORING_GUIDE_VERSION = "5";
 // built bundle is not read as an import statement by the build's import-graph checks (tests/support/imports.ts).
 export const PLUGIN_AUTHORING_GUIDE = `# Writing a Tavi plugin (a "mod")
 
-A plugin is a folder with two or more files: \`tavi-plugin.json\` (the manifest the person approves) and an ES module entry (\`index.mjs\`). It runs inside the owner with its privileges once the person installs, approves and enables it. You write it; you never install it — the person does, with the commands at the end.
+A plugin is a folder with two or more files: \`tavi-plugin.json\` (the manifest the person approves) and an ES module entry (\`index.mjs\`). Once the person installs, approves and enables it, it runs as a confined worker: its own Node process that reads its own folder, writes its home, and reaches only the network domains its manifest names (only a plugin the person approves \`--in-process\` runs in the owner's process, with its privileges). You write it; you never install it — the person does, with the commands at the end.
 
 ## Steps
 
@@ -19,7 +19,7 @@ A plugin is a folder with two or more files: \`tavi-plugin.json\` (the manifest 
 2. Pick a folder in your working folder (or in an attached folder you may write), such as \`tavi-plugins/<name>/\`; a relative path is in your working folder. Write the files with \`fs.write\`: \`tavi-plugin.json\`, \`index.mjs\`, and \`index.test.mjs\`.
 3. Call \`plugins.validate\` with the folder. Fix every error and re-run until it reports \`valid\`. Fix the warnings too, unless the person chose otherwise (say so). When it answers \`checked: "manifest only"\`, \`register\` was not run (only macOS runs it): say that the code itself was not checked. It also answers \`folder\`, the absolute path to give the person.
 4. If you can run commands, run \`node --test index.test.mjs\` in the folder; otherwise give the person that command.
-5. Finish with the install commands (below) naming that absolute \`folder\`, what the plugin does, what each hook can read (its \`disclosure\`), and that approving it lets the code run in the owner.
+5. Finish with the install commands (below) naming that absolute \`folder\`, what the plugin does, what each hook can read (its \`disclosure\`), and that approving it lets the code run as a confined worker with what its manifest asks for.
 
 ## Rules the owner enforces
 

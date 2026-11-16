@@ -2,7 +2,7 @@ import type { AsyncRepository } from "./persistence-types.js";
 import { z } from "zod";
 
 import { IdSchema } from "./ids.js";
-import { ApprovalScopeSchema, RiskLevelSchema, type RiskLevel } from "./tool-policy.js";
+import { ApprovalScopeSchema, RiskLevelSchema, isTaintReason, type RiskLevel } from "./tool-policy.js";
 import { CONTENT_LABEL_LIMITS, LabelSummarySchema, utf8Bytes, type LabelSummary } from "./content-label.js";
 
 /**
@@ -33,9 +33,36 @@ export function newRoundToken(fillRandom: (bytes: Uint8Array) => void): string {
   return token;
 }
 
-/** Each call of a round with the scopes the gate's verdict offered it. */
+/** What else flagged a call, a round keeps at most: a guard mod's reasons, the shell checks'. */
+export const CALL_REASONS_KEPT = { count: 8, chars: 300 } as const;
+
+/**
+ * What flagged a call besides taint (taint has its own words on every surface): its verdict's reasons, each once,
+ * clipped by characters to what a round keeps. Every surface that says "Flagged:" reads them through this.
+ */
+export function flaggedReasons(reasons: readonly string[] | undefined): string[] {
+  const kept: string[] = [];
+  for (const reason of reasons ?? []) {
+    const clipped = Array.from(reason.trim()).slice(0, CALL_REASONS_KEPT.chars).join("").trim();
+    if (clipped !== "" && !isTaintReason(reason) && !kept.includes(clipped)) kept.push(clipped);
+    if (kept.length === CALL_REASONS_KEPT.count) break;
+  }
+  return kept;
+}
+
+/**
+ * Each call of a round with the scopes the gate's verdict offered it, and what
+ * flagged it besides taint (its verdict's `risk.reasons`, so `tavi approvals
+ * show` says them once the run is gone). Absent reasons on older rounds.
+ */
 export const ApprovalCallScopesSchema = z
-  .array(z.strictObject({ callId: IdSchema, allowedScopes: z.array(ApprovalScopeSchema).min(1).max(3) }))
+  .array(
+    z.strictObject({
+      callId: IdSchema,
+      allowedScopes: z.array(ApprovalScopeSchema).min(1).max(3),
+      reasons: z.array(z.string().min(1).max(CALL_REASONS_KEPT.chars)).max(CALL_REASONS_KEPT.count).optional(),
+    }),
+  )
   .max(64);
 export type ApprovalCallScopes = z.infer<typeof ApprovalCallScopesSchema>;
 

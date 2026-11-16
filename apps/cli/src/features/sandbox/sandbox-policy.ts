@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { lstatSync, mkdirSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { homedir, tmpdir, userInfo } from "node:os";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { promisify } from "node:util";
 
 import {
@@ -221,6 +221,8 @@ export interface SandboxToolOptions {
   readonly ownerStaging?: string;
   /** The owner's environment, read for `PATH`, the locale and the user — never passed on whole. Default `process.env`. */
   readonly ownerEnv?: Readonly<Record<string, string | undefined>>;
+  /** The Node the owner runs on, whose install a chat's shell may read when its `bin` is on `PATH`. Default `process.execPath`. */
+  readonly nodeExecutable?: string;
   /** Read once, at the first `sandbox.run`. Default: none. */
   readonly gitIdentity?: () => GitIdentity | Promise<GitIdentity>;
   readonly network?: SandboxPolicy["network"];
@@ -427,6 +429,41 @@ function cacheEnvironment(base: SandboxBase, policy: SandboxPolicy): Record<stri
   return folder === undefined ? {} : Object.fromEntries(Object.entries(CACHE_VARIABLES).map(([name, sub]) => [name, join(folder, sub)]));
 }
 
+/**
+ * The owner's own Node when it is installed by hand under `$HOME` (a tarball in `~/.local/node`) and its `bin` is
+ * on `PATH`: no version manager names it, and a chat that runs `node --test` needs the Node the owner runs on. Its
+ * install folder is re-opened read-only, held to what `--sandbox-read` may open (never `~` itself, the data
+ * directory or a credential home); a Node outside `$HOME` is readable already.
+ */
+function ownNodeInstall(executable: string, home: string, onPath: readonly string[], checked: (path: string) => string): readonly string[] {
+  let bin: string;
+  try {
+    bin = canonical(dirname(realpathSync(executable)));
+  } catch {
+    return [];
+  }
+  if (!within(bin, home) || !onPath.some((entry) => entry === bin || canonical(dirname(resolveLink(join(entry, "node")))) === bin))
+    return [];
+  const install = basename(bin) === "bin" ? dirname(bin) : bin;
+  for (const candidate of install === bin ? [bin] : [install, bin]) {
+    try {
+      return [checked(candidate)];
+    } catch {
+      // Not openable (`~` itself, a credential home): its bin alone, or nothing.
+    }
+  }
+  return [];
+}
+
+/** Where a link leads, or the path itself when it is none or does not exist. */
+function resolveLink(path: string): string {
+  try {
+    return realpathSync(path);
+  } catch {
+    return path;
+  }
+}
+
 export function sandboxBase(options: SandboxToolOptions): SandboxBase {
   const home = canonical(resolve(options.homeDirectory ?? homedir()));
   const ownerEnv = options.ownerEnv ?? process.env;
@@ -475,6 +512,9 @@ export function sandboxBase(options: SandboxToolOptions): SandboxBase {
   const sandboxRead = (options.sandboxRead ?? []).map((path) =>
     checkedSandboxRead(path, options.dataDirectory, home, options.fsRoots ?? []),
   );
+  const ownNode = ownNodeInstall(options.nodeExecutable ?? process.execPath, home, onPath, (path) =>
+    checkedSandboxRead(path, options.dataDirectory, home, options.fsRoots ?? []),
+  );
   const resources = options.resources ?? { timeoutMs: DEFAULT_SANDBOX_TIMEOUT_MS, maxOutputBytes: DEFAULT_SANDBOX_OUTPUT_BYTES };
   const denyEnv = [
     ...new Set([
@@ -489,7 +529,7 @@ export function sandboxBase(options: SandboxToolOptions): SandboxBase {
     dataDirectory: canonical(resolve(options.dataDirectory)),
     roots,
     devPluginFolders: (options.devPluginFolders ?? []).map((folder) => canonical(resolve(folder))),
-    reopened: [...new Set([...toolchains, ...ownManagerHomes, ...onDrives, ...sandboxRead])],
+    reopened: [...new Set([...toolchains, ...ownManagerHomes, ...onDrives, ...ownNode, ...sandboxRead])],
     toolchainEnv,
     ownerTemporary: [...new Set((options.ownerTemporaryDirectories ?? [tmpdir()]).map((directory) => canonical(resolve(directory))))],
     ownerStaging: canonical(options.ownerStaging ?? ownerStagingDirectory()),

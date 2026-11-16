@@ -98,7 +98,21 @@ interface NdjsonEnvelope {
   readonly result?: unknown;
   readonly error?: string;
   readonly abortHotkey?: unknown;
+  /** The ready message's `AXIsProcessTrusted()`: whether macOS lets the helper read and drive other apps. */
+  readonly accessibility?: unknown;
 }
+
+/** The helper's requests macOS answers without the Accessibility permission: the app list, and a capture (Screen Recording). */
+const WITHOUT_ACCESSIBILITY: ReadonlySet<string> = new Set(["list_apps", "capture", "cancel"]);
+
+/**
+ * Said when the helper has no Accessibility permission: without it macOS hands back an empty tree and drops input
+ * events, which read as an app with no window and an element that cannot be resolved.
+ */
+export const DESKTOP_ACCESSIBILITY_MISSING =
+  "desktop control has no Accessibility permission, so it can neither read other apps nor act in them. Grant it to the " +
+  "app that started `tavi serve` (your terminal) in System Settings → Privacy & Security → Accessibility, then restart " +
+  "`tavi serve` from that terminal. Do not retry until then.";
 
 /** Spawns the helper binary, draining its stderr and reporting a spawn failure (ENOENT, EACCES) as an exit. */
 export function spawnDesktopHelper(helperPath: string, args: readonly string[] = []): DesktopBridgeTransport {
@@ -324,6 +338,8 @@ export class SwiftDesktopBridge implements DesktopPort {
   private restartCount = 0;
   private disposed = false;
   private hotkeyStatus: DesktopAbortHotkeyStatus | undefined;
+  /** The last ready message's Accessibility trust; `undefined` before the helper has started (or from an older helper). */
+  private accessibilityTrusted: boolean | undefined;
   private readonly pending = new Map<string, PendingRequest>();
   private readonly refBounds = new Map<
     string,
@@ -351,6 +367,11 @@ export class SwiftDesktopBridge implements DesktopPort {
   /** Helper exits (crashes, timeouts, failed starts) counted against `maxRestarts`. */
   public get restarts(): number {
     return this.restartCount;
+  }
+
+  /** Whether macOS trusts the helper for Accessibility, from the last ready message; `undefined` before it has started. */
+  public get accessibility(): boolean | undefined {
+    return this.accessibilityTrusted;
   }
 
   /** The abort hotkey's state from the last ready message; `undefined` before the helper has started. */
@@ -421,6 +442,7 @@ export class SwiftDesktopBridge implements DesktopPort {
           session.ready = true;
           clearTimeout(timer);
           this.hotkeyStatus = parseHotkeyStatus(msg.abortHotkey);
+          this.accessibilityTrusted = typeof msg.accessibility === "boolean" ? msg.accessibility : undefined;
           resolve();
           return;
         }
@@ -547,6 +569,10 @@ export class SwiftDesktopBridge implements DesktopPort {
   private async send<T>(method: string, params: Readonly<Record<string, unknown>>, signal: AbortSignal | undefined): Promise<T> {
     await this.ensureStarted();
     throwIfAborted(signal);
+    // Refused before anything is read or sent: a chat that met this read nothing, and stays untainted.
+    if (this.accessibilityTrusted === false && !WITHOUT_ACCESSIBILITY.has(method)) {
+      throw refusedEarly("NOT_CONFIGURED", DESKTOP_ACCESSIBILITY_MISSING);
+    }
 
     const session = this.session;
     if (session === undefined || session.exited) {

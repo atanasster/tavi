@@ -23,6 +23,7 @@ import {
   requestTainted,
   disarmUrls,
   approvalTitleOf,
+  flaggedReasons,
 } from "@tavi/contracts";
 import { clip } from "@tavi/contracts/util";
 import type { ApprovalRoundAnnouncement, ApprovalRoundSettlement } from "@tavi/agent-host/workflow";
@@ -120,10 +121,14 @@ export function roundScopes(requests: ApprovalRoundAnnouncement["requests"]): re
 
 /** Each call's scopes as the gate offered them, recorded with the round for the approvals inbox. */
 export function callScopesOf(requests: ApprovalRoundAnnouncement["requests"]): ApprovalCallScopes {
-  return requests.map((request) => ({
-    callId: request.callId,
-    allowedScopes: request.allowedScopes === undefined || request.allowedScopes.length === 0 ? ["once"] : [...request.allowedScopes],
-  }));
+  return requests.map((request) => {
+    const reasons = flaggedReasons(request.risk?.reasons);
+    return {
+      callId: request.callId,
+      allowedScopes: request.allowedScopes === undefined || request.allowedScopes.length === 0 ? ["once"] : [...request.allowedScopes],
+      ...(reasons.length === 0 ? {} : { reasons }),
+    };
+  });
 }
 
 /**

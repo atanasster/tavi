@@ -604,7 +604,7 @@ tavi run --attach <task-id> [options]
 - `-h, --help`: Show help text.
 
 #### Text output
-`--format text` streams the answer and prints each tool call as `[tool]` lines. A call that needs approval is printed once as `[approval] <what it does>`: a file change (`fs.edit`, `fs.write`) with its first 20 diff lines, as `tavi chat` shows it (the rest in `tavi approvals show <task-id>`), any other call with its input. Under `ask` the terminal then asks `Approve <what it does>? [y/s/a/N]`. Once the round is decided, `[approval] approved|denied by <who>` says how — `--approval approve|deny` for the run's own policy, a schedule's policy, or the person who decided — and the run goes on after `[attempt] replaced <attempt>: resuming after the decision`.
+`--format text` streams the answer and prints each tool call as `[tool]` lines. A call that needs approval is printed once as `[approval] <what it does>`: a file change (`fs.edit`, `fs.write`) with its first 20 diff lines, as `tavi chat` shows it (the rest in `tavi approvals show <task-id>`), any other call with its input, then a `Flagged:` line when something besides taint flagged it (a guard mod's reasons, the shell checks'), which `tavi approvals show` repeats under the call. Under `ask` the terminal then asks `Approve <what it does>? [y/s/a/N]`. Once the round is decided, `[approval] approved|denied by <who>` says how — `--approval approve|deny` for the run's own policy, a schedule's policy, or the person who decided — and the run goes on after `[attempt] replaced <attempt>: resuming after the decision`.
 
 ---
 
