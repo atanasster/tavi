@@ -1,0 +1,105 @@
+{
+ "total_count": 25551,
+ "results": [
+  {
+   "numerooffreforem": "2080441",
+   "titreoffre": "Responsable qualité (H/F/X)",
+   "lieuxtravaillocalite": [
+    "NEUFCHÂTEAU"
+   ],
+   "lieuxtravailregion": [
+    "Belgique",
+    "Province du Luxembourg",
+    "RÉGION WALLONNE"
+   ],
+   "lieuxtravailcodepostal": [
+    "6840"
+   ],
+   "lieuxtravailregionnuts": [
+    "BE",
+    "BE34",
+    "BE3"
+   ],
+   "lieuxtravailgeo": [
+    {
+     "lon": 5.434929,
+     "lat": 49.839283
+    }
+   ],
+   "typecontrat": "Durée indéterminée",
+   "nomemployeur": "Itzu Jobs",
+   "regimetravail": "Temps plein",
+   "nombrepostes": 1,
+   "niveauxetudes": null,
+   "niveauxetudesisced2011": null,
+   "langues": null,
+   "languescodeiso2": null,
+   "experiencerequise": null,
+   "permisdeconduire": null,
+   "secteurs": [
+    "Activités liées à l'emploi"
+   ],
+   "secteurscodenace": [
+    "78"
+   ],
+   "source": "Jobat",
+   "referenceexterne": "15120817_FR",
+   "url": "https://www.leforem.be/recherche-offres/offre-detail/2080441",
+   "datedebutdiffusion": "2026-10-03",
+   "datefindiffusion": "2026-10-31",
+   "metier": "Management et ingénierie qualité industrielle",
+   "metiercodedimeco": "H1502"
+  },
+  {
+   "numerooffreforem": "2071395",
+   "titreoffre": "Plombier /X) (H/F/X)",
+   "lieuxtravaillocalite": [
+    "LA LOUVIÈRE"
+   ],
+   "lieuxtravailregion": [
+    "Belgique",
+    "Province du Hainaut",
+    "RÉGION WALLONNE"
+   ],
+   "lieuxtravailcodepostal": [
+    "7100"
+   ],
+   "lieuxtravailregionnuts": [
+    "BE",
+    "BE32",
+    "BE3"
+   ],
+   "lieuxtravailgeo": [
+    {
+     "lon": 4.187935,
+     "lat": 50.478004
+    }
+   ],
+   "typecontrat": "Intérimaire avec option sur durée indéterminée",
+   "nomemployeur": "Itzu Jobs",
+   "regimetravail": "Temps plein",
+   "nombrepostes": 1,
+   "niveauxetudes": null,
+   "niveauxetudesisced2011": null,
+   "langues": null,
+   "languescodeiso2": null,
+   "experiencerequise": null,
+   "permisdeconduire": [
+    "B"
+   ],
+   "secteurs": [
+    "Activités liées à l'emploi"
+   ],
+   "secteurscodenace": [
+    "78"
+   ],
+   "source": "Jobat",
+   "referenceexterne": "15043187_FR",
+   "url": "https://www.leforem.be/recherche-offres/offre-detail/2071395",
+   "datedebutdiffusion": "2026-09-26",
+   "datefindiffusion": "2026-10-24",
+   "metier": "Maintenance d'installation de chauffage",
+   "metiercodedimeco": "I1308"
+  }
+ ]
+}

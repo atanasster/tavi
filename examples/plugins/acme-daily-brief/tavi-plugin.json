@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "acme.dailybrief",
+  "version": "0.1.0",
+  "name": "ACME daily brief",
+  "description": "Stands in for the built-in tavi.collectors: a daily brief of the figures you give it, as text and a small HTML report, with no network.",
+  "entry": "index.mjs",
+  "tools": [
+    {
+      "name": "brief",
+      "effect": "read-only",
+      "description": "Write the day's brief from named figures (today's and yesterday's values): what moved, by how much, as text and HTML",
+      "untrustedOutput": false,
+      "sink": "none"
+    }
+  ]
+}

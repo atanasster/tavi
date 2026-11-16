@@ -1,0 +1,34 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "kakao-place",
+  "name": "Kakao Map place pages",
+  "countries": [
+    "KR"
+  ],
+  "hosts": [
+    "place.map.kakao.com",
+    "map.kakao.com"
+  ],
+  "kind": "directory",
+  "access": {
+    "mode": "read",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Kakao Local's official API gives each place's place_url; its place page carries the hours and reviews the API does not. No ban on reading found.",
+    "termsUrl": "https://www.kakao.com/policy/terms",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "LocalBusiness",
+      "Restaurant"
+    ]
+  },
+  "notes": "Tavi reads a place page Kakao's search named, for hours and reviews, at a few pages a task."
+}

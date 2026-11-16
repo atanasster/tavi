@@ -1,0 +1,211 @@
+{
+  "$comment": "What each synthetic fixture must do. Owner-recorded clips are listed under `recorded`, by sha256, once they exist (RECORDING.md); none is committed.",
+  "fixtures": {
+    "mp4-h264": {
+      "sniff": "mp4",
+      "expect": "decodes"
+    },
+    "mov-hevc-rotated-90": {
+      "sniff": "mov",
+      "expect": "decodes"
+    },
+    "webm-vp9": {
+      "sniff": "webm",
+      "expect": "decodes"
+    },
+    "mkv-av1": {
+      "sniff": "matroska",
+      "expect": "decodes"
+    },
+    "3gp": {
+      "sniff": "3gp",
+      "expect": "decodes"
+    },
+    "gif-animated": {
+      "sniff": "gif",
+      "expect": "decodes"
+    },
+    "gif-single": {
+      "sniff": "gif",
+      "expect": "decodes"
+    },
+    "video-note": {
+      "sniff": "mp4",
+      "expect": "decodes"
+    },
+    "slowmo-240fps": {
+      "sniff": "mov",
+      "expect": "decodes"
+    },
+    "with-location": {
+      "sniff": "mov",
+      "expect": "decodes"
+    },
+    "two-audio-streams": {
+      "sniff": "mp4",
+      "expect": "decodes"
+    },
+    "subtitle-track": {
+      "sniff": "mp4",
+      "expect": "decodes"
+    },
+    "no-audio": {
+      "sniff": "mp4",
+      "expect": "decodes"
+    },
+    "hls-as-mp4": {
+      "sniff": null,
+      "expect": "refused-before-ffmpeg",
+      "note": "Not a video by its bytes: FFmpeg never sees it."
+    },
+    "concat-list": {
+      "sniff": null,
+      "expect": "refused-before-ffmpeg",
+      "note": "Not a video by its bytes: FFmpeg never sees it."
+    },
+    "sdp": {
+      "sniff": null,
+      "expect": "refused-before-ffmpeg",
+      "note": "Not a video by its bytes: FFmpeg never sees it."
+    },
+    "text-as-mp4": {
+      "sniff": null,
+      "expect": "refused-before-ffmpeg",
+      "note": "Not a video by its bytes: FFmpeg never sees it."
+    },
+    "empty": {
+      "sniff": null,
+      "expect": "refused-before-ffmpeg",
+      "note": "Not a video by its bytes: FFmpeg never sees it."
+    },
+    "polyglot-gif-zip": {
+      "sniff": "gif",
+      "expect": "contained",
+      "note": "A GIF with a ZIP trailer: read as the GIF it starts as."
+    },
+    "truncated-moov": {
+      "sniff": "mp4",
+      "expect": "refused-by-ffmpeg",
+      "note": "Half a moov: FFmpeg refuses it, nothing is killed."
+    },
+    "moov-external-ref": {
+      "sniff": "mov",
+      "expect": "contained",
+      "note": "Its first track's dref entry made external, naming file:///etc/passwd: FFmpeg 9.0.2 never opens a url-entry's location and reads the samples from the file itself; the confinement would deny the read in any case."
+    },
+    "16k-frame": {
+      "sniff": "mp4",
+      "expect": "refused-by-ffmpeg",
+      "note": "16384\u00d71088 is past -max_pixels (4096\u00d74096): refused before a frame is decoded."
+    },
+    "10h-one-frame": {
+      "sniff": "mp4",
+      "expect": "contained",
+      "note": "Ten hours by its timestamps: the probe answers, then it is refused as too long."
+    },
+    "1e6-tiny-frames": {
+      "sniff": "mp4",
+      "expect": "contained",
+      "note": "A million 16\u00d716 frames, 1,000 s: refused as too long after the probe."
+    },
+    "huge-moov": {
+      "sniff": "mp4",
+      "expect": "contained",
+      "note": "250,000 sample entries: probed within its clock and caps."
+    },
+    "fuzzed-0": {
+      "sniff": "mp4",
+      "expect": "contained",
+      "note": "Seeded bit flips past the ftyp: an answer, FFmpeg's refusal, or a kill within caps, never the owner's crash."
+    },
+    "fuzzed-1": {
+      "sniff": "mp4",
+      "expect": "contained",
+      "note": "Seeded bit flips past the ftyp: an answer, FFmpeg's refusal, or a kill within caps, never the owner's crash."
+    },
+    "fuzzed-2": {
+      "sniff": "mp4",
+      "expect": "contained",
+      "note": "Seeded bit flips past the ftyp: an answer, FFmpeg's refusal, or a kill within caps, never the owner's crash."
+    },
+    "fuzzed-3": {
+      "sniff": "mp4",
+      "expect": "contained",
+      "note": "Seeded bit flips past the ftyp: an answer, FFmpeg's refusal, or a kill within caps, never the owner's crash."
+    },
+    "fuzzed-4": {
+      "sniff": "mp4",
+      "expect": "contained",
+      "note": "Seeded bit flips past the ftyp: an answer, FFmpeg's refusal, or a kill within caps, never the owner's crash."
+    },
+    "fuzzed-5": {
+      "sniff": "mp4",
+      "expect": "contained",
+      "note": "Seeded bit flips past the ftyp: an answer, FFmpeg's refusal, or a kill within caps, never the owner's crash."
+    },
+    "fuzzed-6": {
+      "sniff": "mp4",
+      "expect": "contained",
+      "note": "Seeded bit flips past the ftyp: an answer, FFmpeg's refusal, or a kill within caps, never the owner's crash."
+    },
+    "fuzzed-7": {
+      "sniff": "mp4",
+      "expect": "contained",
+      "note": "Seeded bit flips past the ftyp: an answer, FFmpeg's refusal, or a kill within caps, never the owner's crash."
+    },
+    "three-cuts": {
+      "sniff": "mp4",
+      "expect": "decodes"
+    },
+    "motion-burst": {
+      "sniff": "mp4",
+      "expect": "decodes"
+    },
+    "burned-in-instruction": {
+      "sniff": "mp4",
+      "expect": "decodes",
+      "note": "Read as data: the text reaches the model labelled untrusted."
+    },
+    "subtitle-instruction": {
+      "sniff": "mp4",
+      "expect": "decodes",
+      "note": "Read as data: the text reaches the model labelled untrusted."
+    },
+    "spoken-instruction": {
+      "sniff": "mp4",
+      "expect": "decodes",
+      "note": "Read as data: the text reaches the model labelled untrusted."
+    },
+    "qr-in-frame": {
+      "sniff": "mp4",
+      "expect": "decodes",
+      "note": "A real QR code of the same instruction, drawn by macOS's Core Image: Tavi decodes no QR, so it reaches a model only as pixels of an untrusted frame."
+    },
+    "measure-1080p-h264-5s": {
+      "sniff": "mp4",
+      "expect": "decodes",
+      "note": "The sizes the decoder's qualification measures (trial.ts)."
+    },
+    "measure-1080p-h264-60s": {
+      "sniff": "mp4",
+      "expect": "decodes",
+      "note": "The sizes the decoder's qualification measures (trial.ts)."
+    },
+    "measure-1080p-hevc-5s": {
+      "sniff": "mp4",
+      "expect": "decodes",
+      "note": "The sizes the decoder's qualification measures (trial.ts)."
+    },
+    "measure-1080p-hevc-60s": {
+      "sniff": "mp4",
+      "expect": "decodes",
+      "note": "The sizes the decoder's qualification measures (trial.ts)."
+    },
+    "measure-4k-hevc-mov-10s": {
+      "sniff": "mov",
+      "expect": "decodes",
+      "note": "The sizes the decoder's qualification measures (trial.ts)."
+    }
+  },
+  "recorded": {}
+}

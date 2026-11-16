@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": {
+    "format": "bundled-esm",
+    "packages": []
+  },
+  "id": "acme.flightsites",
+  "version": "0.1.0",
+  "name": "ACME fare sites",
+  "description": "Stands in for the built-in tavi.siteskills on one site: a reviewed site profile for ACME's fare site, off until the operator turns it on.",
+  "entry": "index.mjs",
+  "sites": ["sites/acme-fares.json"],
+  "apps": {
+    "abi": "tavi.apps/1",
+    "apps": [
+      {
+        "id": "acme-fare-sites",
+        "name": "ACME fare sites",
+        "summary": "What Tavi may do on ACME's fare site, once you turn it on.",
+        "category": "search",
+        "publisher": "ACME"
+      }
+    ]
+  }
+}

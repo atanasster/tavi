@@ -1,0 +1,166 @@
+<rss version="2.0">
+  <channel>
+    <title>FuelWatch Prices For All Metro Regions</title>
+    <link>https://www.fuelwatch.wa.gov.au/</link>
+    <description>17/10/2026 - All Metro Regions</description>
+    <language>en-us</language>
+    <copyright>Copyright 2025 FuelWatch. All Rights Reserved.</copyright>
+    <lastBuildDate>Sat, 17 Oct 2026 15:10:46 +0800</lastBuildDate>
+    <ttl>1400</ttl>
+    <image>
+      <url>/fuelwatch/art/fuelwatch-logo.gif</url>
+      <title>FuelWatch</title>
+      <link>https://www.fuelwatch.wa.gov.au</link>
+    </image>
+    <item>
+      <title>249.3: Vibe Ascot</title>
+      <description>Address: 268 Great Eastern Hwy, ASCOT, Phone: (08) 9277 6806, Open 24 hours</description>
+      <brand>Vibe</brand>
+      <date>2026-10-17</date>
+      <price>249.3</price>
+      <trading-name>Vibe Ascot</trading-name>
+      <location>ASCOT</location>
+      <address>268 Great Eastern Hwy</address>
+      <phone>(08) 9277 6806</phone>
+      <latitude>-31.93596800</latitude>
+      <longitude>115.93436100</longitude>
+      <site-features>Open 24 hours</site-features>
+      <restrictions></restrictions>
+    </item>
+    <item>
+      <title>253.3: Burk Mount Lawley</title>
+      <description>Address: 791 Beaufort St, MOUNT LAWLEY, Phone: (08) 6205 9900, Open 24 hours</description>
+      <brand>Burk</brand>
+      <date>2026-10-17</date>
+      <price>253.3</price>
+      <trading-name>Burk Mount Lawley</trading-name>
+      <location>MOUNT LAWLEY</location>
+      <address>791 Beaufort St</address>
+      <phone>(08) 6205 9900</phone>
+      <latitude>-31.92588700</latitude>
+      <longitude>115.88022500</longitude>
+      <site-features>Open 24 hours</site-features>
+      <restrictions></restrictions>
+    </item>
+    <item>
+      <title>253.7: Vibe Bayswater</title>
+      <description>Address: 120 Beechboro Rd South, BAYSWATER, Phone: (08) 9370 2158, Open 24 hours</description>
+      <brand>Vibe</brand>
+      <date>2026-10-17</date>
+      <price>253.7</price>
+      <trading-name>Vibe Bayswater</trading-name>
+      <location>BAYSWATER</location>
+      <address>120 Beechboro Rd South</address>
+      <phone>(08) 9370 2158</phone>
+      <latitude>-31.90468330</latitude>
+      <longitude>115.91632680</longitude>
+      <site-features>Open 24 hours</site-features>
+      <restrictions></restrictions>
+    </item>
+    <item>
+      <title>253.9: Metro Bassendean</title>
+      <description>Address: 335 Collier Rd, BASSENDEAN, Phone: 0475 777 099, Site features: Fuel Cards ATM Bottled Gas EFTPOS Air Water Ice, Open Mon: 05:00-20:00, Tue: 05:00-20:00, Wed: 05:00-20:00, Thu: 05:00-20:00, Fri: 05:00-20:00, Sat: 07:00-18:00, Sun: 07:00-18:00</description>
+      <brand>Metro Petroleum</brand>
+      <date>2026-10-17</date>
+      <price>253.9</price>
+      <trading-name>Metro Bassendean</trading-name>
+      <location>BASSENDEAN</location>
+      <address>335 Collier Rd</address>
+      <phone>0475 777 099</phone>
+      <latitude>-31.90528300</latitude>
+      <longitude>115.93236700</longitude>
+      <site-features>Fuel Cards ATM Bottled Gas EFTPOS Air Water Ice, Open Mon: 05:00-20:00, Tue: 05:00-20:00, Wed: 05:00-20:00, Thu: 05:00-20:00, Fri: 05:00-20:00, Sat: 07:00-18:00, Sun: 07:00-18:00</site-features>
+      <restrictions></restrictions>
+    </item>
+    <item>
+      <title>257.5: Petro Fuels Bassendean</title>
+      <description>Address: 190 Railway Pde, BASSENDEAN, Phone: 0472 610 251, Site features: Pumped AdBlue Truck Friendly, Open 24 hours</description>
+      <brand>Petro Fuels</brand>
+      <date>2026-10-17</date>
+      <price>257.5</price>
+      <trading-name>Petro Fuels Bassendean</trading-name>
+      <location>BASSENDEAN</location>
+      <address>190 Railway Pde</address>
+      <phone>0472 610 251</phone>
+      <latitude>-31.91547600</latitude>
+      <longitude>115.93176800</longitude>
+      <site-features>Pumped AdBlue Truck Friendly, Open 24 hours</site-features>
+      <restrictions>Unmanned site (credit card charges may apply); </restrictions>
+    </item>
+    <item>
+      <title>257.9: Atlas Fuel Welshpool</title>
+      <description>Address: 36 Welshpool Rd, WELSHPOOL, Phone: (08) 6146 1152, Open Mon: 05:00-22:00, Tue: 05:00-22:00, Wed: 05:00-22:00, Thu: 05:00-22:00, Fri: 05:00-22:00, Sat: 06:00-21:00, Sun: 06:00-21:00</description>
+      <brand>Atlas</brand>
+      <date>2026-10-17</date>
+      <price>257.9</price>
+      <trading-name>Atlas Fuel Welshpool</trading-name>
+      <location>WELSHPOOL</location>
+      <address>36 Welshpool Rd</address>
+      <phone>(08) 6146 1152</phone>
+      <latitude>-31.99370700</latitude>
+      <longitude>115.91913900</longitude>
+      <site-features>Open Mon: 05:00-22:00, Tue: 05:00-22:00, Wed: 05:00-22:00, Thu: 05:00-22:00, Fri: 05:00-22:00, Sat: 06:00-21:00, Sun: 06:00-21:00</site-features>
+      <restrictions></restrictions>
+    </item>
+    <item>
+      <title>259.6: OMG Metro Dianella</title>
+      <description>Address: 63 Walter Rd West, DIANELLA, Site features: Fuel Cards ATM Bottled Gas Trailer Hire EFTPOS Air Ice, Open 24 hours</description>
+      <brand>OMG Metro</brand>
+      <date>2026-10-17</date>
+      <price>259.6</price>
+      <trading-name>OMG Metro Dianella</trading-name>
+      <location>DIANELLA</location>
+      <address>63 Walter Rd West</address>
+      <phone></phone>
+      <latitude>-31.90643500</latitude>
+      <longitude>115.88191700</longitude>
+      <site-features>Fuel Cards ATM Bottled Gas Trailer Hire EFTPOS Air Ice, Open 24 hours</site-features>
+      <restrictions></restrictions>
+    </item>
+    <item>
+      <title>259.7: Vibe Charles St</title>
+      <description>Address: 427 Charles St, NORTH PERTH, Phone: (08) 9242 2704, Open Mon: 05:00-22:00, Tue: 05:00-22:00, Wed: 05:00-22:00, Thu: 05:00-22:00, Fri: 05:00-22:00, Sat: 05:00-22:00, Sun: 05:00-22:00</description>
+      <brand>Vibe</brand>
+      <date>2026-10-17</date>
+      <price>259.7</price>
+      <trading-name>Vibe Charles St</trading-name>
+      <location>NORTH PERTH</location>
+      <address>427 Charles St</address>
+      <phone>(08) 9242 2704</phone>
+      <latitude>-31.92231200</latitude>
+      <longitude>115.85026400</longitude>
+      <site-features>Open Mon: 05:00-22:00, Tue: 05:00-22:00, Wed: 05:00-22:00, Thu: 05:00-22:00, Fri: 05:00-22:00, Sat: 05:00-22:00, Sun: 05:00-22:00</site-features>
+      <restrictions></restrictions>
+    </item>
+    <item>
+      <title>263.5: Petro Fuels Bluff Point</title>
+      <description>Address: 381 Chapman Rd, BLUFF POINT, Phone: (08) 9965 1496, Site features: EFTPOS Air, Open Mon: 05:30-22:00, Tue: 05:30-22:00, Wed: 05:30-22:00, Thu: 05:30-22:00, Fri: 05:30-22:00, Sat: 05:30-22:00, Sun: 05:30-22:00</description>
+      <brand>Petro Fuels</brand>
+      <date>2026-10-17</date>
+      <price>263.5</price>
+      <trading-name>Petro Fuels Bluff Point</trading-name>
+      <location>BLUFF POINT</location>
+      <address>381 Chapman Rd</address>
+      <phone>(08) 9965 1496</phone>
+      <latitude>-28.74142000</latitude>
+      <longitude>114.62245600</longitude>
+      <site-features>EFTPOS Air, Open Mon: 05:30-22:00, Tue: 05:30-22:00, Wed: 05:30-22:00, Thu: 05:30-22:00, Fri: 05:30-22:00, Sat: 05:30-22:00, Sun: 05:30-22:00</site-features>
+      <restrictions></restrictions>
+    </item>
+    <item>
+      <title>263.9: Metro Geraldton</title>
+      <description>Address: 1 Fortyn Ct, MAHOMETS FLATS, Phone: (08) 9904 7479, Site features: Fuel Cards ATM Toilets Bottled Gas Trailer Hire EFTPOS Carwash Air Water Ice Pumped AdBlue Truck Friendly, Open Mon: 05:00-22:00, Tue: 05:00-22:00, Wed: 05:00-22:00, Thu: 05:00-22:00, Fri: 05:00-22:00, Sat: 05:00-22:00, Sun: 05:00-22:00</description>
+      <brand>Metro Petroleum</brand>
+      <date>2026-10-17</date>
+      <price>263.9</price>
+      <trading-name>Metro Geraldton</trading-name>
+      <location>MAHOMETS FLATS</location>
+      <address>1 Fortyn Ct</address>
+      <phone>(08) 9904 7479</phone>
+      <latitude>-28.79232800</latitude>
+      <longitude>114.61697400</longitude>
+      <site-features>Fuel Cards ATM Toilets Bottled Gas Trailer Hire EFTPOS Carwash Air Water Ice Pumped AdBlue Truck Friendly, Open Mon: 05:00-22:00, Tue: 05:00-22:00, Wed: 05:00-22:00, Thu: 05:00-22:00, Fri: 05:00-22:00, Sat: 05:00-22:00, Sun: 05:00-22:00</site-features>
+      <restrictions></restrictions>
+    </item>
+  </channel>
+</rss>

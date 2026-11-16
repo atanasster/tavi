@@ -1,0 +1,126 @@
+/* The built-in browser view. Its tokens are the canvas's, as `init` and
+   `theme` pass them, with `plugin-base.css`'s light and dark values until
+   they arrive. Fonts are the system's (--font-system): a frame cannot load
+   the canvas's. */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  font: var(--text-sm)/var(--leading-snug) var(--font-system);
+}
+
+.view { display: flex; flex-direction: column; height: 100%; }
+
+.chrome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-1) var(--space-1-5);
+  border-bottom: var(--border-width) solid var(--line-faint);
+}
+
+.chip {
+  flex: none;
+  padding: 0 var(--space-1-5);
+  border-radius: var(--radius-full);
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  font-weight: var(--weight-semibold);
+}
+.chip[data-state="live"] { background: hsl(var(--primary) / var(--tint-strong)); color: hsl(var(--primary)); }
+.chip[data-state="hidden"] { background: hsl(var(--warning) / var(--tint-strong)); color: hsl(var(--warning)); }
+.chip[data-state="operator"] { background: hsl(var(--warning) / var(--tint-strong)); color: hsl(var(--warning)); }
+.chip[data-state="requested"] { background: hsl(var(--destructive) / var(--tint-strong)); color: hsl(var(--destructive)); }
+
+/* Its own width before it shares the row: in a narrow panel the buttons wrap to a line of their own rather than
+   squeezing the address to a letter; past the panel's width it ends in an ellipsis. */
+.address { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.host { font-weight: var(--weight-semibold); }
+.path { color: hsl(var(--muted-foreground)); }
+.title { margin-left: var(--space-1-5); color: hsl(var(--muted-foreground)); }
+
+.actions { display: flex; gap: var(--space-1); }
+button, select {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: var(--space-px) var(--space-1-5);
+  cursor: pointer;
+}
+button:disabled { opacity: var(--opacity-disabled); cursor: default; }
+button:focus-visible, select:focus-visible { outline: var(--outline-width) solid hsl(var(--primary)); outline-offset: var(--space-px); }
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: hsl(var(--background));
+}
+.stage img { display: block; width: 100%; height: auto; }
+/* Drawn inside the stage, which clips. */
+.stage[data-control="agent"] { outline: var(--outline-width) solid hsl(var(--primary) / var(--alpha-faint)); outline-offset: calc(-1 * var(--outline-width)); }
+.stage[data-control="operator"],
+.stage[data-control="requested"] { outline: var(--outline-width) solid hsl(var(--warning)); outline-offset: calc(-1 * var(--outline-width)); }
+.letter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-5xl);
+  font-weight: var(--weight-bold);
+  color: hsl(var(--muted-foreground) / var(--alpha-muted));
+}
+.box {
+  position: absolute;
+  border: var(--border-width-thick) solid hsl(var(--primary));
+  border-radius: var(--radius-2xs);
+  background: hsl(var(--primary) / var(--tint-medium));
+  pointer-events: none;
+}
+/* A submit, upload or download waiting for the operator's approval. */
+.box.pending {
+  border-style: dashed;
+  border-color: hsl(var(--warning));
+  background: hsl(var(--warning) / var(--tint-strong));
+}
+.pulse {
+  position: absolute;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  margin: calc(var(--icon-size) / -2) 0 0 calc(var(--icon-size) / -2);
+  border-radius: var(--radius-round);
+  background: hsl(var(--primary) / var(--alpha-half));
+  pointer-events: none;
+  animation: pulse var(--duration-ping) var(--ease-out) forwards;
+}
+@keyframes pulse { to { transform: scale(2.4); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
+
+.notice {
+  position: absolute;
+  inset: auto var(--space-2) var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: hsl(var(--card) / var(--alpha-hover));
+  color: hsl(var(--foreground));
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+[hidden] { display: none !important; }

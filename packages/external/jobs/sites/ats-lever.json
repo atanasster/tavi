@@ -1,0 +1,54 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "ats-lever",
+  "name": "Lever",
+  "countries": [
+    "*"
+  ],
+  "hosts": [
+    "jobs.lever.co",
+    "jobs.eu.lever.co"
+  ],
+  "kind": "ats",
+  "access": {
+    "mode": "stage",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "An employer's application form on Lever. Tavi fills the fields it may and stops before the final control, which the person presses.",
+    "termsUrl": "https://jobs.lever.co/leverdemo/ad208490-4052-4f91-a57e-433f2d1e484b/apply",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 12,
+    "pagesPerDay": 60,
+    "minIntervalMs": 2000
+  },
+  "stage": {
+    "fillable": [
+      "name",
+      "first_name",
+      "last_name",
+      "email",
+      "phone",
+      "location",
+      "links",
+      "work_history",
+      "education",
+      "cv_upload",
+      "cover_letter",
+      "custom_answer"
+    ],
+    "finalStep": {
+      "labels": [
+        "Submit application"
+      ],
+      "urlPatterns": [],
+      "selectors": [
+        "#btn-submit"
+      ]
+    },
+    "perDay": 10
+  },
+  "notes": "Its submit is a type=button #btn-submit, so the selector names it."
+}

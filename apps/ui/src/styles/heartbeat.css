@@ -1,0 +1,89 @@
+/* Center → Heartbeat. */
+/* On a touch screen every heartbeat control is a full-size target. */
+@media (hover: none) and (pointer: coarse) {
+  /* The switch keeps its track's height: its own ::before is the touch-sized target. */
+  .heartbeat-page button:not(.switch),
+  .heartbeat-page summary,
+  .heartbeat-page select,
+  .heartbeat-page input:not([type="checkbox"]):not([type="radio"]),
+  .heartbeat-item button,
+  .memory-card button,
+  .memory-used button,
+  .heartbeat-offer button {
+    min-height: var(--size-touch);
+  }
+  /* A checkbox or radio is reached through its whole label. */
+  .heartbeat-page label:has(> input[type="checkbox"]),
+  .heartbeat-page label:has(> input[type="radio"]) {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--size-touch);
+  }
+}
+.heartbeat-status {
+  margin-block: var(--space-2) var(--space-4);
+}
+.heartbeat-lines {
+  margin-block: var(--space-2);
+}
+.heartbeat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block: var(--space-2);
+}
+.heartbeat-editor {
+  width: 100%;
+  font: inherit;
+}
+.heartbeat-history-text {
+  white-space: pre-wrap;
+  margin-block: var(--space-1) var(--space-2);
+}
+/* Active from … to …, then its zone, on one row that wraps only on a narrow screen. */
+.heartbeat-hours {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+.heartbeat-hours label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+.settings-fields .heartbeat-hours input {
+  width: auto;
+}
+/* Tell me: one choice a line, each radio at the same indent. */
+.settings-fields > .heartbeat-tell {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.heartbeat-radio {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+.heartbeat-more {
+  margin-block: var(--space-4);
+}
+.heartbeat-targets ul {
+  margin-block-end: var(--space-2);
+}
+.heartbeat-target-form,
+.heartbeat-limits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: end;
+}
+.heartbeat-log li {
+  padding-block: var(--space-1);
+}
+.heartbeat-pill {
+  margin-block-end: var(--space-2);
+}

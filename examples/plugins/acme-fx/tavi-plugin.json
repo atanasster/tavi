@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "acme.fx",
+  "version": "0.1.0",
+  "name": "FX",
+  "description": "Exchange rates between currencies, from example-fx.",
+  "entry": "index.mjs",
+  "tools": [
+    { "name": "rate", "effect": "external", "untrustedOutput": true, "description": "Exchange rate between two ISO currency codes" }
+  ],
+  "config": {
+    "apiKey": { "type": "credential", "required": true, "description": "API key for example-fx" }
+  }
+}

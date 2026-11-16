@@ -1,0 +1,58 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "dcard-popular",
+  "name": "Dcard popular",
+  "countries": [
+    "TW"
+  ],
+  "hosts": [
+    "www.dcard.tw"
+  ],
+  "kind": "trending",
+  "access": {
+    "mode": "assist-only",
+    "navigate": false,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Dcard's terms bar automated collection of what its users post, so Tavi is not to open it.",
+    "termsUrl": "https://www.dcard.tw/terms",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 3,
+    "pagesPerDay": 10,
+    "minIntervalMs": 10000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "ItemList",
+      "ListItem",
+      "SocialMediaPosting",
+      "NewsArticle",
+      "DiscussionForumPosting",
+      "VideoObject"
+    ],
+    "resultSchema": {
+      "type": "object",
+      "properties": {
+        "rank": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "metric": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "title",
+        "url"
+      ]
+    }
+  },
+  "notes": "Turned on, this profile stops Tavi's browser opening Dcard, and if you open www.dcard.tw/f yourself, Tavi reads that page for the chat only: nothing from it is kept, relayed with ingest or counted."
+}

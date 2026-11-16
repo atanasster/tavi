@@ -1,0 +1,34 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "gasbuddy",
+  "name": "GasBuddy",
+  "countries": [
+    "US",
+    "CA"
+  ],
+  "hosts": [
+    "gasbuddy.com",
+    "*.gasbuddy.com"
+  ],
+  "kind": "fuel",
+  "access": {
+    "mode": "assist-only",
+    "navigate": false,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "GasBuddy's terms prohibit any automated script, robot, scraper or agent from accessing or extracting fuel price data.",
+    "termsUrl": "https://www.gasbuddy.com/terms",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "GasStation"
+    ]
+  },
+  "notes": "Tavi reads only a GasBuddy page you opened yourself, for the chat; the prices are GasBuddy's users' reports."
+}

@@ -1,0 +1,56 @@
+{
+ "ok": true,
+ "license": "CC BY 4.0 -  https://creativecommons.tankerkoenig.de",
+ "data": "MTS-K",
+ "status": "ok",
+ "stations": [
+  {
+   "id": "278130b1-e062-4a0f-80cc-19e486b4c024",
+   "name": "Aral Tankstelle",
+   "brand": "ARAL",
+   "street": "Holzmarktstraße",
+   "place": "Berlin",
+   "lat": 52.514153,
+   "lng": 13.421487,
+   "dist": 1,
+   "diesel": 1.009,
+   "e5": 1.009,
+   "e10": 1.009,
+   "isOpen": true,
+   "houseNumber": "12/14",
+   "postCode": 10179
+  },
+  {
+   "id": "94e70fc4-b22f-4e5a-877f-bc1082cdae81",
+   "name": "TotalEnergies Berlin",
+   "brand": "TotalEnergies",
+   "street": "Prenzlauer Allee",
+   "place": "Berlin",
+   "lat": 52.528899,
+   "lng": 13.41808,
+   "dist": 1.1,
+   "diesel": 1.009,
+   "e5": 1.009,
+   "e10": 1.009,
+   "isOpen": true,
+   "houseNumber": "1-4",
+   "postCode": 10405
+  },
+  {
+   "id": "594eafdd-3537-45ae-8bf0-d667aaa25454",
+   "name": "Shell Berlin Oranienstr. 138",
+   "brand": "Shell",
+   "street": "Oranienstr.",
+   "place": "Berlin",
+   "lat": 52.504122,
+   "lng": 13.408138,
+   "dist": 1.8,
+   "diesel": 1.009,
+   "e5": 1.009,
+   "e10": 1.009,
+   "isOpen": true,
+   "houseNumber": "138",
+   "postCode": 10969
+  }
+ ]
+}

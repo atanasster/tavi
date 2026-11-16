@@ -1,0 +1,42 @@
+/* The canvas's stylesheet, in cascade order: the tokens, the control
+   primitives, the face, the page's layout, then each feature's rules. A later
+   file outranks an earlier one at equal specificity, so the order is load-bearing. */
+@import "./tokens.css";
+@import "./breakpoints.css";
+@import "./controls.css";
+
+/* Inter Variable, self-hosted (ai-finance's face): every subset gated by
+   unicode-range, so a page downloads only what it renders, with the optical
+   size axis. Nothing links a font host; without the import the stack below
+   falls back to system-ui. */
+@import "@fontsource-variable/inter/opsz.css";
+
+/* Bricolage Grotesque Variable, self-hosted the same way: the display face,
+   with its optical size axis, for Welcome's title and the pages' titles. */
+@import "@fontsource-variable/bricolage-grotesque/opsz.css";
+
+@import "./layout.css";
+@import "./chat-panel.css";
+@import "./strip.css";
+@import "./turn.css";
+@import "./composer.css";
+@import "./settings.css";
+@import "./dialogs.css";
+@import "./trajectory.css";
+@import "./settings-layout.css";
+@import "./models.css";
+@import "./section-cards.css";
+@import "./center.css";
+@import "./soul-memory.css";
+@import "./schedule.css";
+@import "./reminders.css";
+@import "./browser.css";
+@import "./needs.css";
+@import "./takeover.css";
+@import "./transcript-extras.css";
+@import "./heartbeat.css";
+@import "./memory-cards.css";
+@import "./fills.css";
+@import "./apps.css";
+@import "./ideas.css";
+@import "./welcome.css";

@@ -1,0 +1,89 @@
+{
+  "name": "@tavi/plugin-browser",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/builtin/browser"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "description": "BrowserToolPort contract adapters: a scripted in-memory fixture and a real Playwright adapter (Playwright is an optional peer; Chromium installed separately)",
+  "exports": {
+    "./chromium": {
+      "development": "./src/chromium.ts",
+      "types": "./dist/chromium.d.mts",
+      "import": "./dist/chromium.mjs"
+    },
+    "./live": {
+      "development": "./src/live.ts",
+      "types": "./dist/live.d.mts",
+      "import": "./dist/live.mjs"
+    },
+    "./playwright": {
+      "development": "./src/playwright.ts",
+      "types": "./dist/playwright.d.mts",
+      "import": "./dist/playwright.mjs"
+    },
+    "./render": {
+      "development": "./src/render.ts",
+      "types": "./dist/render.d.mts",
+      "import": "./dist/render.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.bin.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tavi/contracts": "workspace:*",
+    "@tavi/node-kit": "workspace:*"
+  },
+  "peerDependencies": {
+    "playwright": "^1.65.1"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@tavi/test-support": "workspace:*",
+    "playwright": "1.65.1",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      "./chromium": {
+        "types": "./dist/chromium.d.mts",
+        "import": "./dist/chromium.mjs"
+      },
+      "./live": {
+        "types": "./dist/live.d.mts",
+        "import": "./dist/live.mjs"
+      },
+      "./playwright": {
+        "types": "./dist/playwright.d.mts",
+        "import": "./dist/playwright.mjs"
+      },
+      "./render": {
+        "types": "./dist/render.d.mts",
+        "import": "./dist/render.mjs"
+      },
+      "./package.json": "./package.json"
+    }
+  }
+}

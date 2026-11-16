@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "acme.ideas",
+  "version": "0.1.0",
+  "name": "ACME ideas",
+  "description": "Offers a short, fixed set of ACME routines in place of the built-in catalogue.",
+  "entry": "index.mjs",
+  "isolation": "in-process",
+  "provides": ["ideas"],
+  "ideas": {
+    "abi": "tavi.ideas/1",
+    "receives": ["ledger"],
+    "maxRunSeconds": 30,
+    "disclosure": "Reads none of your memory or chats; it sees which of its ideas you dismissed, snoozed or muted."
+  }
+}

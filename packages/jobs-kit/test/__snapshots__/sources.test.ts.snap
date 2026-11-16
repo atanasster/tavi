@@ -1,0 +1,790 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`each board adapter on its recorded answer > adzuna matches its snapshot 1`] = `
+[
+  {
+    "attribution": "Jobs by Adzuna",
+    "clusterId": "adzuna:889b877b62b8df31f59d6c21",
+    "company": "Example Payments GmbH",
+    "employmentType": "FULL_TIME",
+    "excerpt": "We are hiring a senior backend engineer to build payment services in Go and Postgres on Kubernetes. Hybrid, two days a week in our Berlin office…",
+    "flags": [],
+    "places": [
+      {
+        "city": "Berlin",
+        "country": "DE",
+        "lat": 52.52,
+        "lon": 13.405,
+        "region": "Berlin",
+      },
+    ],
+    "postedAt": "2026-10-14T08:12:00.000Z",
+    "postingId": "adzuna:889b877b62b8df31f59d6c21",
+    "salary": {
+      "basis": "gross",
+      "currency": "EUR",
+      "max": 95000,
+      "min": 80000,
+      "origin": "stated",
+      "period": "YEAR",
+    },
+    "seniority": "senior",
+    "skills": [],
+    "source": "adzuna",
+    "sourceRef": "DE/4870001001",
+    "sponsorship": "unknown",
+    "title": "Senior Backend Engineer (Go)",
+    "url": "https://www.adzuna.de/land/ad/4870001001?se=example&utm_medium=api&utm_source=example&v=example",
+    "workplace": "unknown",
+  },
+  {
+    "attribution": "Jobs by Adzuna",
+    "clusterId": "adzuna:c6a4d07f90b1f39ae7785ea9",
+    "company": "Example Logistics AG",
+    "employmentType": "FULL_TIME",
+    "excerpt": "Join our team as a backend developer working with Python and Django on our logistics platform…",
+    "flags": [],
+    "places": [
+      {
+        "city": "Hamburg",
+        "country": "DE",
+        "region": "Hamburg",
+      },
+    ],
+    "postedAt": "2026-10-12T15:40:00.000Z",
+    "postingId": "adzuna:c6a4d07f90b1f39ae7785ea9",
+    "salary": {
+      "basis": "gross",
+      "currency": "EUR",
+      "max": 61234.56,
+      "min": 61234.56,
+      "origin": "predicted",
+      "period": "YEAR",
+    },
+    "skills": [],
+    "source": "adzuna",
+    "sourceRef": "DE/4870001002",
+    "sponsorship": "unknown",
+    "title": "Backend Developer",
+    "url": "https://www.adzuna.de/land/ad/4870001002?se=example&utm_medium=api&utm_source=example&v=example",
+    "workplace": "unknown",
+  },
+]
+`;
+
+exports[`each board adapter on its recorded answer > ashby matches its snapshot 1`] = `
+[
+  {
+    "applyUrl": "https://jobs.ashbyhq.com/ashby/7458d4e9-da2e-47bd-98cb-adfda43d42b2/application",
+    "attribution": "ashby via Ashby",
+    "clusterId": "ashby:0988b5919b7c357cf9e2c3ee",
+    "company": "ashby",
+    "employmentType": "FULL_TIME",
+    "excerpt": "Hi 👋 I’m the hiring manager (https://www.linkedin.com/in/example), Director of Engineering, Europe. How do you feel about software engineers writing product specs, making product decisions, and not breaking down projects into individual tickets? If that sounds exciting (even if a bit scary), read on because I’m looking for an engineering manager to help us build a different type of engineering team and culture at Ashby.
+To start, why do we need to be different? Time and again, I have witnessed engineers knowing what needs to be done yet being unable to get things done because of “the process” or because “more data is needed.” Some of the most effective projects have been skunkworks projects, where engineers have taken total ownership of a problem and driven it to completion. I want to normalize that at Ashby.
+When we think about how these processes came about, we realize they carry a pessimistic mindset. They box people into smaller roles to minimize the chance of not meeting a certain standard. At Ashby. we’re building an environment that is optimistic about what engineers can own and achieve and embraces the innovative engineers (and frankly, often stays out of their way).
+To accomplish this, our engineering leaders need to think deeply about individual performance, process, and culture - not running sprint planning or driving product and technical decisions. You’ll focus on building your team, their skills to thrive with the ownership they’re given, and an environment that empowers them to do their best work consistently, with little distraction. For junior EMs we try to stay within 6 direct reports. This enables them to spend time with our teams observing, correcting, praising, and, yes, coding. We like our managers to be hands-on while also making sure they’re not on the critical path.
+We’ve already gathered an experienced, talented, and collaborative team (https://www.ashbyhq.com/team) of 25+ engineers. You’ll help me manage the growing team of engineers in E",
+    "flags": [
+      "ghost:age",
+    ],
+    "places": [
+      {
+        "country": "ES",
+      },
+      {
+        "country": "IT",
+      },
+      {
+        "country": "DE",
+      },
+      {
+        "country": "CH",
+      },
+      {
+        "country": "DK",
+      },
+      {
+        "country": "NO",
+      },
+      {
+        "country": "HR",
+      },
+      {
+        "country": "IE",
+      },
+      {
+        "city": "Stockholm",
+        "country": "SE",
+      },
+      {
+        "country": "RO",
+      },
+      {
+        "country": "AT",
+      },
+      {
+        "city": "Barcelona",
+        "country": "ES",
+      },
+      {
+        "country": "NL",
+      },
+      {
+        "country": "PT",
+      },
+      {
+        "country": "FR",
+      },
+      {
+        "city": "Berlin",
+        "country": "DE",
+      },
+    ],
+    "postedAt": "2024-03-04T14:29:08.532Z",
+    "postingId": "ashby:0988b5919b7c357cf9e2c3ee",
+    "remoteRegions": [
+      "EU",
+    ],
+    "salary": {
+      "basis": "unknown",
+      "currency": "EUR",
+      "max": 185000,
+      "min": 110000,
+      "origin": "stated",
+      "period": "YEAR",
+    },
+    "seniority": "manager",
+    "skills": [],
+    "source": "ashby",
+    "sourceRef": "ashby/7458d4e9-da2e-47bd-98cb-adfda43d42b2",
+    "sponsorship": "unknown",
+    "tenant": "ashby",
+    "title": "Engineering Manager - EU",
+    "url": "https://jobs.ashbyhq.com/ashby/7458d4e9-da2e-47bd-98cb-adfda43d42b2",
+    "workplace": "remote",
+  },
+  {
+    "applyUrl": "https://jobs.ashbyhq.com/ashby/390e266b-4b6c-4490-ad74-05ff5e0bb36a/application",
+    "attribution": "ashby via Ashby",
+    "clusterId": "ashby:8cd2540158275d98cb133229",
+    "company": "ashby",
+    "employmentType": "FULL_TIME",
+    "excerpt": "Hi, I’m Geo, Ashby’s VP of Product. I joined Ashby August ‘26; read more about why I joined here. (https://www.ashbyhq.com/blog/all/a-letter-from-chris-geoghegan-on-joining-ashby) I’m looking for a growth-oriented product manager to help users onboard and expand their usage of the product.
+At Ashby, we have a unique approach to building products (https://www.ashbyhq.com/blog/culture/ashbys-operating-principles) (more on that below). As a PM, your primary goal is to eliminate frustration and bring delight to our customers. You’ll work with engineers who deeply understand the customer and business problem and own the solution end-to-end. This means that you spend less time writing detailed specs and more time with customers and doing deep product thinking.
+Our unique approach is working. We’re growing >100% year over year and have notable customers such as Notion, Linear, OpenAI, Shopify, and Snowflake. Our growth and retention metrics are best in class among our peers. We’re backed by amazing investors like Y Combinator, Elad Gil, Lachy Groom, and many more!
+The Challenge
+The surface area of our flagship ATS product is growing, and we are launching new products. This means customers are less likely to organically adopt the things that create value for them.
+Historically, onboarding has been human-driven by our amazing Customer Success team (https://www.ashbyhq.com/blog/culture/customer-success). And now, we’re ready to productize our learnings. As Ashby grows, we need a single owner who can think deeply about the customer journey and design the product and email experiences that help users achieve their desired outcomes and get the most out of Ashby.
+This isn’t just about onboarding individuals. It requires thinking about how to onboard organizations with different roles and stakeholders with different goals. It’s going to be a fun challenge.
+What You’ll Be Working On
+-
+Customer Journey: This role isn’t focused on conversion rate optimization or running A/B tests. In",
+    "flags": [],
+    "places": [],
+    "postedAt": "2026-10-16T00:42:17.137Z",
+    "postingId": "ashby:8cd2540158275d98cb133229",
+    "remoteRegions": [
+      "US",
+      "CA",
+    ],
+    "salary": {
+      "basis": "unknown",
+      "currency": "USD",
+      "max": 260000,
+      "min": 180000,
+      "origin": "stated",
+      "period": "YEAR",
+    },
+    "seniority": "manager",
+    "skills": [],
+    "source": "ashby",
+    "sourceRef": "ashby/390e266b-4b6c-4490-ad74-05ff5e0bb36a",
+    "sponsorship": "unknown",
+    "tenant": "ashby",
+    "title": "Product Manager, Onboarding and Growth",
+    "url": "https://jobs.ashbyhq.com/ashby/390e266b-4b6c-4490-ad74-05ff5e0bb36a",
+    "workplace": "remote",
+  },
+]
+`;
+
+exports[`each board adapter on its recorded answer > greenhouse matches its snapshot 1`] = `
+[
+  {
+    "attribution": "GitLab via Greenhouse",
+    "clusterId": "greenhouse:a6f7af302dff2e63164e0027",
+    "company": "GitLab",
+    "excerpt": "GitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.
+The same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems. Co-create the future with us (https://www.youtube.com/watch?v=OuZIb5zszQI) as we build technology that transforms how the world develops software.
+*Fortune 500® is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.
+An overview of this role
+The AI Transformation Owner drives the end-to-end AI agenda for the field organization, translating emerging AI capabilities into concrete enablement roadmaps, field use cases, and org-level strategy. You will partner closely with product and engineering teams to pilot and scale AI solutions, own the operational transformation plan needed to embed AI into day-to-day field workflows, and establish the governance framework that keeps AI adoption safe, compliant, and aligned with company standards. This is a hands-on role for someone who can move from strategy to execu",
+    "flags": [
+      "ghost:age",
+    ],
+    "places": [],
+    "postedAt": "2026-07-22T17:38:40.000Z",
+    "postingId": "greenhouse:a6f7af302dff2e63164e0027",
+    "remoteRegions": [
+      "US",
+    ],
+    "reqId": "6682",
+    "skills": [],
+    "source": "greenhouse",
+    "sourceRef": "gitlab/8638232002",
+    "sponsorship": "unknown",
+    "tenant": "gitlab",
+    "title": "AI Transformation Owner, CRO",
+    "url": "https://job-boards.greenhouse.io/gitlab/jobs/8638232002",
+    "workplace": "remote",
+  },
+  {
+    "attribution": "GitLab via Greenhouse",
+    "clusterId": "greenhouse:f86b5be07b42e727458840cf",
+    "company": "GitLab",
+    "excerpt": "GitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.
+The same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems. Co-create the future with us (https://www.youtube.com/watch?v=OuZIb5zszQI) as we build technology that transforms how the world develops software.
+*Fortune 500® is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.
+An overview of this role
+As an AI Transformation Owner at GitLab, you'll shape your function's AI strategy and build the solutions that deliver it. You are the person responsible for identifying where AI can fundamentally change how your org operates, partnering with your Executive Sponsor to align on the biggest challenges, and driving measurable outcomes against them.
+Think of this as a product management role where the product is your org's way of working. You'll manage the full lifecycle: understanding how work flows today, deciding where AI should reshape it, prioritizing what gets bui",
+    "flags": [],
+    "places": [],
+    "postedAt": "2026-08-19T20:52:27.000Z",
+    "postingId": "greenhouse:f86b5be07b42e727458840cf",
+    "remoteRegions": [
+      "CA",
+      "GB",
+      "US",
+    ],
+    "reqId": "6821",
+    "skills": [],
+    "source": "greenhouse",
+    "sourceRef": "gitlab/8716179002",
+    "sponsorship": "unknown",
+    "tenant": "gitlab",
+    "title": "AI Transformation Owner, Product & Design",
+    "url": "https://job-boards.greenhouse.io/gitlab/jobs/8716179002",
+    "workplace": "remote",
+  },
+  {
+    "attribution": "GitLab via Greenhouse",
+    "clusterId": "greenhouse:b1413252c6f864576213c437",
+    "company": "GitLab",
+    "excerpt": "GitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.
+The same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems. Co-create the future with us (https://www.youtube.com/watch?v=OuZIb5zszQI) as we build technology that transforms how the world develops software.
+*Fortune 500® is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.
+An overview of this role
+As an Account Executive, you'll be the primary connection between GitLab and its customers, working with organizations of up to 4,000 team members to help them adopt and expand the world's most comprehensive platform for software development, security, and operations (DevSecOps), which uses artificial intelligence. You'll own a broad book of business across a wide range of opportunity sizes, guiding small, fast-growing teams as well as more complex projects as they modernize their software delivery with GitLab. Reporting to a Regional Sales Director, you'll run the ",
+    "flags": [],
+    "places": [],
+    "postedAt": "2026-10-02T15:31:50.000Z",
+    "postingId": "greenhouse:b1413252c6f864576213c437",
+    "remoteRegions": [
+      "FR",
+    ],
+    "reqId": "7109",
+    "skills": [],
+    "source": "greenhouse",
+    "sourceRef": "gitlab/8860302002",
+    "sponsorship": "unknown",
+    "tenant": "gitlab",
+    "title": "Account Executive - France",
+    "url": "https://job-boards.greenhouse.io/gitlab/jobs/8860302002",
+    "workplace": "remote",
+  },
+]
+`;
+
+exports[`each board adapter on its recorded answer > himalayas matches its snapshot 1`] = `
+[
+  {
+    "applyUrl": "https://himalayas.app/companies/fuse-energy/jobs/senior-lead-backend-engineer-2763649120",
+    "attribution": "Remote jobs from Himalayas",
+    "clusterId": "himalayas:23b628f11aa1e4505cd668c4",
+    "company": "Fuse Energy",
+    "employmentType": "FULL_TIME",
+    "excerpt": "Fuse Energy (https://himalayas.app/companies/fuse-energy) is a forward-thinking renewable energy startup on a mission to deliver a terawatt of renewable energy - fast. We're combining first-principles thinking with cutting-edge technology to build a radically better energy system. We raised $210M from top-tier investors including Multicoin, Balderton, Lakestar, Accel, Creandum, Lowercarbon, Ribbit, Box Group and strategic angels like Nico Rosberg, the Co-Founder of Solana and GPs behind Meta, Revolut, Spotify, Uber and more.
+We’re creating a fully integrated energy company: from developing solar, wind and hydrogen projects to real-time power trading and distributed energy installations. By selling directly to consumers, we cut out the middleman, lower costs and pass on savings to customers.
+But we’re not stopping there. We’re also building the Energy Network: a decentralised platform of smart devices to electrify our homes, shifting usage to off-peak hours and helping balance the grid. This network strengthens grid stability - a critical foundation for scaling AI data centers and other energy-intensive industries.
+Responsibilities
+In this role you will work closely within product to build the core digital infrastructure for a next-generation energy company. You will use your experience to engineer backend infrastructure that is second-to-none.
+You'll be working across the back-end:
+- Constructing a real-time digital twin of our renewable generation and customer demand
+- Developing messaging interfaces with our third-party providers
+- Building high-volume pipelines for processing customer energy consumption
+- Build the backend of a world class energy app
+For this role, you should be able to think on your feet and adapt to new business needs as well as take ownership of projects and drive change.
+Requirements
+- Demonstrable excellence as a Software Engineer
+- Ideally 2+ years experience
+- Proven ability to define and build complex systems
+- Hands-on experience shippin",
+    "flags": [],
+    "places": [],
+    "postedAt": "2026-09-21T20:37:03.000Z",
+    "postingId": "himalayas:23b628f11aa1e4505cd668c4",
+    "remoteRegions": [
+      "CA",
+      "DE",
+      "NL",
+      "PL",
+      "CH",
+      "US",
+    ],
+    "seniority": "senior",
+    "skills": [],
+    "source": "himalayas",
+    "sourceRef": "https://himalayas.app/companies/fuse-energy/jobs/senior-lead-backend-engineer-2763649120",
+    "sponsorship": "unknown",
+    "timezones": {
+      "maxUtcOffset": 14,
+      "minUtcOffset": -10,
+    },
+    "title": "Senior/Lead Backend Engineer",
+    "url": "https://himalayas.app/companies/fuse-energy/jobs/senior-lead-backend-engineer-2763649120",
+    "validThrough": "2026-10-21T09:04:24.000Z",
+    "workplace": "remote",
+  },
+  {
+    "applyUrl": "https://himalayas.app/companies/xpert-development/jobs/backend-engineer",
+    "attribution": "Remote jobs from Himalayas",
+    "clusterId": "himalayas:dfd56d49e1e92c202639c348",
+    "company": "Xpert Development",
+    "employmentType": "FULL_TIME",
+    "excerpt": "Location: US – 100% Remote
+Salary: $150,000 - $200,000 base salary + equity
+Overview
+We are seeking a dynamic and passionate Backend Software Engineer to join our innovative development team. In this role, you will be at the forefront of designing, developing, and maintaining robust backend systems that power cutting-edge applications. Your expertise will drive the creation of scalable, efficient, and secure solutions that enhance user experiences and support business growth. If you thrive in a fast-paced environment and are eager to contribute to impactful projects, this is your opportunity to make a difference!
+Responsibilities:
+-
+Design and build core features for a composite AI platform, including agent-based systems, LLM integrations, and retrieval augmented generation (RAG).
+-
+Define and own the technical vision and roadmap for the platform, making architectural decisions that enable scalability, reliability, and long-term evolution.
+-
+Establish and promote engineering best practices, coding standards, architectural patterns, and AI assisted development techniques to ensure system quality at scale.
+-
+Act as a senior technical leader, providing guidance on complex engineering and architectural trade-offs and shaping the overall technical direction.
+-
+Develop high impact software solutions to address complex, mission critical business problems.
+Requirements:
+-
+Deep experience designing and operating large‑scale, production‑grade backend systems, with a strong understanding of distributed systems.
+-
+Strong proficiency in Python and Go, applied to building reliable, scalable backend services.
+-
+Demonstrated experience building and owning software from 0‑to‑1, taking systems from initial concept through production and ongoing ownership.
+-
+Proven ability to influence technical direction and architecture at a senior or cross‑team level.
+-
+Ability to clearly connect engineering decisions to business and product outcomes.
+Benefits:
+-
+401(k)
+-
+Employee assistance progra",
+    "flags": [],
+    "places": [],
+    "postedAt": "2026-10-12T16:53:04.000Z",
+    "postingId": "himalayas:dfd56d49e1e92c202639c348",
+    "remoteRegions": [
+      "US",
+    ],
+    "salary": {
+      "basis": "unknown",
+      "currency": "USD",
+      "max": 200000,
+      "min": 150000,
+      "origin": "stated",
+      "period": "YEAR",
+    },
+    "seniority": "senior",
+    "skills": [],
+    "source": "himalayas",
+    "sourceRef": "https://himalayas.app/companies/xpert-development/jobs/backend-engineer",
+    "sponsorship": "unknown",
+    "timezones": {
+      "maxUtcOffset": 14,
+      "minUtcOffset": -10,
+    },
+    "title": "Backend Engineer",
+    "url": "https://himalayas.app/companies/xpert-development/jobs/backend-engineer",
+    "validThrough": "2026-12-11T16:53:04.000Z",
+    "workplace": "remote",
+  },
+]
+`;
+
+exports[`each board adapter on its recorded answer > lever matches its snapshot 1`] = `
+[
+  {
+    "applyUrl": "https://jobs.lever.co/leverdemo/ad208490-4052-4f91-a57e-433f2d1e484b/apply",
+    "attribution": "leverdemo via Lever",
+    "clusterId": "lever:2b8ad2f2a671ed2ddda3c275",
+    "company": "leverdemo",
+    "employmentType": "FULL_TIME",
+    "excerpt": "This is a test job - created by a recruiter, for testing candidate insights.
+Join a scaling, tight-knit team that’s working directly with innovative talent acquisition teams and thought leaders across various industries and geographies to make hiring a strategic advantage for their organizations. You'll serve as an advisor to our customers and take a consultative approach to ensure customers are setup for long-term success as high performing hiring organizations using the Lever product suite.
+As a Customer Success Manager on the Customer Advocacy team, you will be our customers biggest champion and make their voice heard in everything we do- the problems we help solve, the solutions we build and the consultation we deliver. You will do that by building trusting partnerships with our customers and consistently empowering them to achieve their ongoing talent goals with Lever. We advocate for our customers by working across Lever to deliver solutions and share our learnings internally to help shape our products.
+We are looking for someone who is experienced in building lasting customer relationships and is passionate about making meaningful contributions to our customer’s success. Don’t be mistaken, this is a challenging career path but also highly rewarding. Are you up for the challenge? If so, stop reading and start applying.
+Skill Set:
+- 3+ years of customer relationship or account management experience working in software as a service (SaaS)
+- Solutions and results-oriented mindset
+- Experienced in customer-facing roles, including analyzing customer accounts, identifying churn signals and account growth opportunities
+- Highly organized with strong project management and time management skills
+- Hands-on experience with product training to external customers
+- Proven experience delivering value-based communications
+- Strong ability to facilitate meetings with customers and users of various levels of seniority
+- Empathy for customers
+- Experience with opportunity ide",
+    "flags": [],
+    "places": [
+      {
+        "country": "US",
+      },
+      {
+        "city": "Atlanta",
+        "country": "US",
+        "region": "GA",
+      },
+    ],
+    "postedAt": "2026-08-31T18:12:19.703Z",
+    "postingId": "lever:2b8ad2f2a671ed2ddda3c275",
+    "salary": {
+      "basis": "unknown",
+      "currency": "USD",
+      "max": 175000,
+      "min": 85000,
+      "origin": "stated",
+      "period": "YEAR",
+    },
+    "seniority": "manager",
+    "skills": [],
+    "source": "lever",
+    "sourceRef": "leverdemo/ad208490-4052-4f91-a57e-433f2d1e484b",
+    "sponsorship": "unknown",
+    "tenant": "leverdemo",
+    "title": "Customer Success Manager",
+    "url": "https://jobs.lever.co/leverdemo/ad208490-4052-4f91-a57e-433f2d1e484b",
+    "workplace": "hybrid",
+  },
+  {
+    "applyUrl": "https://jobs.lever.co/leverdemo/120b5976-ee4e-4dc5-b31b-2b1ca124460c/apply",
+    "attribution": "leverdemo via Lever",
+    "clusterId": "lever:4325e98197b0b7410667f183",
+    "company": "leverdemo",
+    "employmentType": "FULL_TIME",
+    "excerpt": "Key Responsibilities
+- Perform comprehensive dental examinations, evaluations, and treatment planning.
+- Diagnose oral health conditions and develop individualized treatment plans.
+- Provide general dentistry services, including fillings, crowns, bridges, extractions, and other restorative procedures.
+- Review and interpret dental X-rays and other diagnostic imaging.
+- Administer local anesthesia as appropriate.
+- Perform routine and complex restorative dental procedures.
+- Educate patients on oral hygiene, preventive care, and treatment options.
+- Maintain accurate and detailed patient records in accordance with clinical and regulatory standards.
+- Clearly explain diagnoses, treatment recommendations, risks, benefits, and alternatives to patients.
+- Monitor patient progress and provide appropriate follow-up care.
+- Collaborate with Dental Assistants and Hygienists to ensure efficient patient flow and quality care.
+- Maintain strict infection-control, OSHA, HIPAA, and safety standards.
+- Stay current with developments in dentistry, technology, materials, and treatment techniques.
+- Participate in continuing education and professional development.
+- Build trust and positive relationships with patients and families.
+- Contribute to a collaborative, professional, and positive office culture.
+Qualifications
+- Doctor of Dental Surgery (DDS) or Doctor of Dental Medicine (DMD) degree from an accredited dental school.
+- Active and unrestricted state dental license.
+- Current CPR/BLS certification.
+- DEA registration, if required for the position.
+- Proven experience providing comprehensive general dentistry services.
+- Strong knowledge of dental procedures, treatment planning, and clinical protocols.
+- Excellent written and verbal communication skills.
+- Strong diagnostic and clinical decision-making abilities.
+- Exceptional attention to detail.
+- Ability to work effectively with Dental Assistants, Hygienists, and administrative staff.
+- Strong commitment to patient safety,",
+    "flags": [],
+    "places": [
+      {
+        "country": "US",
+      },
+      {
+        "city": "Houston",
+        "country": "US",
+        "region": "TX",
+      },
+    ],
+    "postedAt": "2026-08-24T19:43:07.936Z",
+    "postingId": "lever:4325e98197b0b7410667f183",
+    "salary": {
+      "basis": "unknown",
+      "currency": "USD",
+      "max": 185000,
+      "min": 150000,
+      "origin": "stated",
+      "period": "YEAR",
+    },
+    "skills": [],
+    "source": "lever",
+    "sourceRef": "leverdemo/120b5976-ee4e-4dc5-b31b-2b1ca124460c",
+    "sponsorship": "unknown",
+    "tenant": "leverdemo",
+    "title": "Dentist",
+    "url": "https://jobs.lever.co/leverdemo/120b5976-ee4e-4dc5-b31b-2b1ca124460c",
+    "workplace": "onsite",
+  },
+]
+`;
+
+exports[`each board adapter on its recorded answer > personio matches its snapshot 1`] = `
+[
+  {
+    "applyUrl": "https://personio.jobs.personio.de/job/1834171/apply",
+    "attribution": "Personio SE & Co. KG via Personio",
+    "clusterId": "personio:f040cf82fdce5cd2a947fec3",
+    "company": "Personio SE & Co. KG",
+    "employmentType": "FULL_TIME",
+    "excerpt": "The Role: How you'll make an impact at Personio
+This position is hybrid based in either Dublin or Munich locations
+At Personio, your work transforms the way millions of people experience work every day. Join our Product & Technology team, where we drive our customers’ outcomes by designing, developing and delivering innovative and high quality products. Be empowered to take ownership of your areas and make an impact on your team, our product, and our customers.
+The Data Platform team is on a mission to enable all Personio engineers to build data rich experiences across Personio’s product. We are a rapidly growing, enablement-focused domain that strives to create secure, reusable, and extensible systems that accelerate the ability of our internal teams to create customer value, at scale.
+To support our mission, we are looking for a Software Engineer with expertise in event-driven architecture and tooling, effective data governance, developer experience as well as continuously enhancing system reliability and operational excellence. You’ll partner with product and engineering peers across the organization to build a reliable, resilient, scalable and future-proof Personio data platform.
+Role Responsibilities: What you'll do
+- You will conceptualize and own technical solutions end-to-end. Organizing effective groups of engineers to brainstorm, design and deliver impactful work.
+- You will invest in experimenting and building platform solutions that improve the developer experience for all product teams.
+- Your scope will include everything from how software components are built, tested, deployed, released and monitored across all environments, from the local machine straight through to our production clusters.
+- You will foster relationships and work closely with product teams to support them through platform specific migrations. Learn from and understand the challenges they face so that you can translate them into result-oriented solutions that help improve the reliabi",
+    "flags": [
+      "ghost:age",
+    ],
+    "places": [
+      {
+        "city": "Munich",
+        "country": "DE",
+      },
+      {
+        "city": "Berlin",
+        "country": "DE",
+      },
+    ],
+    "postedAt": "2024-11-13T14:10:41.000Z",
+    "postingId": "personio:f040cf82fdce5cd2a947fec3",
+    "seniority": "staff",
+    "skills": [],
+    "source": "personio",
+    "sourceRef": "personio.jobs.personio.de/1834171",
+    "sponsorship": "unknown",
+    "tenant": "personio",
+    "title": "Staff Software Engineer, Data Platform",
+    "url": "https://personio.jobs.personio.de/job/1834171",
+    "workplace": "unknown",
+  },
+]
+`;
+
+exports[`each board adapter on its recorded answer > recruitee matches its snapshot 1`] = `
+[
+  {
+    "applyUrl": "https://careers.bunq.com/o/head-of-product-6/c/new",
+    "attribution": "bunq via Recruitee",
+    "clusterId": "recruitee:4f63cfb0db6c8ddd46291425",
+    "company": "bunq",
+    "employmentType": "FULL_TIME",
+    "excerpt": "As Head of Product, your mission is to lead the product organization that builds what our users bank with every day, ensuring they get the safe, smart and effortless banking they expect.
+Why this matters:
+At bunq, our mission is to Make Life Easy, for our users, our teams, and the world around us.
+Every team plays a unique role in making this mission a reality. The Product team does this by building and improving the products our users bank with, while keeping them safe and compliant.
+As Head of Product, you contribute by setting product direction and leading the product leaders who deliver it, helping us grow as the bank of The Free.
+Take ownership:
+As Head of Product, you’ll take charge of key responsibilities that directly impact bunq’s growth and our users’ seamless experience:
+-
+Grow our users’ use of bunq’s products by leading product strategy and delivery for your area.
+-
+Keep growth and safety moving together, so that fraud, compliance and quality are built into the products rather than bolted on.
+-
+Build a strong, AI-first product organization by leading Product Owners and Team Leads, and redesigning how the function works around AI agents instead of adding headcount by default.
+-
+Be bunq’s product voice with the management board, regulators, auditors and partners.
+-
+You’ve led a technical product organization and can get hands-on when needed. Size of organization isn’t the bar.
+-
+You have product leadership experience in a regulated financial services setting.
+-
+You understand payments and fraud, and you have data analysis skills and engineering depth.
+-
+You have experience working with regulators and across multiple markets.
+-
+You’re skilled at stakeholder management at management-board level.
+-
+You have AI fluency at the AI Architect level: you design AI-native systems, not only use AI tools.",
+    "flags": [],
+    "places": [
+      {
+        "city": "Amsterdam",
+        "country": "NL",
+        "region": "Noord-Holland",
+      },
+      {
+        "city": "Sofia",
+        "country": "BG",
+        "region": "Sofia (stolitsa)",
+      },
+    ],
+    "postedAt": "2026-10-15T09:31:36.000Z",
+    "postingId": "recruitee:4f63cfb0db6c8ddd46291425",
+    "seniority": "executive",
+    "skills": [],
+    "source": "recruitee",
+    "sourceRef": "bunq/2783543",
+    "sponsorship": "unknown",
+    "tenant": "bunq",
+    "title": "Head of Product",
+    "url": "https://careers.bunq.com/o/head-of-product-6",
+    "workplace": "hybrid",
+  },
+  {
+    "applyUrl": "https://careers.bunq.com/o/senior-product-owner-1/c/new",
+    "attribution": "bunq via Recruitee",
+    "clusterId": "recruitee:27da238ea8672e0dd91e41e6",
+    "company": "bunq",
+    "employmentType": "FULL_TIME",
+    "excerpt": "At bunq, we're not just building a banking app; we're reshaping how people around the world experience financial freedom. As a (Senior) Product Owner at bunq, you are the driving force behind a core piece of our user's experience. Your mission is to own your product, understand our users (Eva) inside and out, and ship beautiful, effective features that make their lives easy.
+We have several exciting and immediate openings within our Product sector. Submit your application, and our team will work with you to understand your unique skillset and interests, helping you find the perfect current opportunity that suits your career aspirations.
+Take ownership
+As a (Senior) Product Owner, you will own the end-to-end product vision and roadmap for your domain, whatever that may be. You get it done.
+-
+Own the end-to-end product vision and roadmap for your domain, relentlessly focused on solving user problems and creating massive value.
+-
+Lead the full product lifecycle, from identifying user needs and defining problems to collaborating with world-class engineers and designers to ship elegant and effective solutions.
+-
+Relentlessly use data, A/B testing, and user feedback to measure the impact of your work, ensuring every feature we ship moves us closer to our North Star.
+-
+Proven experience in product management, with a track record of owning a product or significant features from concept to launch and beyond.
+-
+Experience in either Payments, AI, Business, Wealth, Stocks, Crypto, Savings, Credit, FinCrime & Security, International Expansion, Growth, UX, Retention, or Propositions is a major plus.
+-
+A deep, user-obsessed mindset, with a passion for turning complex problems into simple, elegant, and intuitive user experiences.
+-
+Strong analytical and data-driven skills. You are comfortable with data, know how to ask the right questions, and can use A/B testing and analytics to guide your product decisions.
+-
+A strong technical aptitude and the ability to have credible conversati",
+    "flags": [],
+    "places": [
+      {
+        "city": "Amsterdam",
+        "country": "NL",
+        "region": "Noord-Holland",
+      },
+    ],
+    "postedAt": "2026-10-13T10:58:56.000Z",
+    "postingId": "recruitee:27da238ea8672e0dd91e41e6",
+    "salary": {
+      "basis": "unknown",
+      "currency": "EUR",
+      "min": 1500,
+      "origin": "text",
+      "period": "YEAR",
+    },
+    "seniority": "senior",
+    "skills": [],
+    "source": "recruitee",
+    "sourceRef": "bunq/2781634",
+    "sponsorship": "unknown",
+    "tenant": "bunq",
+    "title": "(Senior) Product Owner",
+    "url": "https://careers.bunq.com/o/senior-product-owner-1",
+    "workplace": "hybrid",
+  },
+]
+`;
+
+exports[`each board adapter on its recorded answer > smartrecruiters matches its snapshot 1`] = `
+[
+  {
+    "attribution": "ServiceNow via SmartRecruiters",
+    "clusterId": "smartrecruiters:af11c3b0ed1dde2adee6570f",
+    "company": "ServiceNow",
+    "employmentType": "FULL_TIME",
+    "excerpt": "",
+    "flags": [
+      "salary-missing-required",
+    ],
+    "places": [
+      {
+        "city": "San Diego",
+        "country": "US",
+        "region": "California",
+      },
+    ],
+    "postedAt": "2026-10-16T17:19:26.831Z",
+    "postingId": "smartrecruiters:af11c3b0ed1dde2adee6570f",
+    "reqId": "JB0076298",
+    "seniority": "senior",
+    "skills": [],
+    "source": "smartrecruiters",
+    "sourceRef": "ServiceNow/744000156052424",
+    "sponsorship": "unknown",
+    "tenant": "ServiceNow",
+    "title": "Senior Manager, Software Engineering Management",
+    "url": "https://jobs.smartrecruiters.com/ServiceNow/744000156052424",
+    "workplace": "hybrid",
+  },
+  {
+    "attribution": "ServiceNow via SmartRecruiters",
+    "clusterId": "smartrecruiters:cc45e94d453251a7f2a88c77",
+    "company": "ServiceNow",
+    "employmentType": "FULL_TIME",
+    "excerpt": "",
+    "flags": [],
+    "places": [
+      {
+        "city": "Hyderabad",
+        "country": "IN",
+        "region": "Telangana",
+      },
+    ],
+    "postedAt": "2026-10-16T16:28:12.166Z",
+    "postingId": "smartrecruiters:cc45e94d453251a7f2a88c77",
+    "reqId": "JB0076008",
+    "seniority": "staff",
+    "skills": [],
+    "source": "smartrecruiters",
+    "sourceRef": "ServiceNow/744000156043929",
+    "sponsorship": "unknown",
+    "tenant": "ServiceNow",
+    "title": "Sr Staff Inbound Product Manager - Partner Relationship Management(PRM)",
+    "url": "https://jobs.smartrecruiters.com/ServiceNow/744000156043929",
+    "workplace": "hybrid",
+  },
+  {
+    "attribution": "ServiceNow via SmartRecruiters",
+    "clusterId": "smartrecruiters:c88684cdd71c8cf89d2a4a0a",
+    "company": "ServiceNow",
+    "employmentType": "FULL_TIME",
+    "excerpt": "",
+    "flags": [
+      "salary-missing-required",
+    ],
+    "places": [
+      {
+        "city": "Toronto",
+        "country": "CA",
+        "region": "Ontario",
+      },
+    ],
+    "postedAt": "2026-10-16T16:18:12.809Z",
+    "postingId": "smartrecruiters:c88684cdd71c8cf89d2a4a0a",
+    "reqId": "JB0076283",
+    "seniority": "staff",
+    "skills": [],
+    "source": "smartrecruiters",
+    "sourceRef": "ServiceNow/744000156040224",
+    "sponsorship": "unknown",
+    "tenant": "ServiceNow",
+    "title": "Staff Site Reliability Engineer",
+    "url": "https://jobs.smartrecruiters.com/ServiceNow/744000156040224",
+    "workplace": "hybrid",
+  },
+]
+`;

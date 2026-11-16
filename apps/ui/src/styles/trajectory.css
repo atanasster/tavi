@@ -1,0 +1,115 @@
+/* ---------- Trajectory and agents ---------- */
+
+.trajectory details {
+  margin: var(--space-2) 0;
+  padding-inline-start: var(--space-2-5);
+}
+
+.trajectory-call.notable {
+  border-inline-start: var(--stripe-width) solid hsl(var(--muted-foreground));
+}
+
+.trajectory-call.major {
+  border-inline-start: var(--stripe-width-xl) solid hsl(var(--foreground));
+  font-weight: var(--weight-semibold);
+}
+
+.trajectory-columns {
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-sm);
+}
+
+/* The agent tree: its own session view, in the reading column like the turns. */
+.agent-tree {
+  font-size: var(--text-base);
+  color: hsl(var(--muted-foreground));
+}
+
+.agent-tree-column {
+  max-width: var(--column);
+  margin-inline: auto;
+}
+
+.agent-tree p {
+  margin: var(--space-0-5) 0;
+}
+
+.agent-tree ul {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-1) 0 0;
+}
+
+.agent-tree li {
+  padding: var(--space-0-5) 0;
+}
+
+.agent-tree nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-mono);
+}
+
+.agent-tree button {
+  min-height: var(--control-height-xs);
+  padding: var(--space-0-5) var(--space-2);
+  font-size: var(--text-sm);
+}
+
+/* A worker's latest activity and final text in its agent-tree row. */
+.agent-tree-activity {
+  margin: var(--space-0-5) 0 0 1em;
+}
+
+.worker-final {
+  margin: var(--space-0-5) 0 0 1em;
+  color: hsl(var(--foreground));
+}
+
+.worker-final p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* A worker's view-only transcript, a column beside the chat that delegated to it. */
+.worker-view {
+  flex: none;
+  width: min(var(--width-worker-view), 45vw);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-3) var(--space-4);
+  border-left: var(--border-width) solid var(--line);
+  background: hsl(var(--card));
+}
+
+.worker-view-head h2 {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+.worker-view .muted {
+  font-size: var(--text-meta);
+}
+
+.worker-turn {
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: var(--border-width) solid var(--line-soft);
+}
+
+@media (--phone) {
+  .worker-view {
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-overlay);
+    width: auto;
+  }
+}
+
+.center-delegated-open {
+  justify-self: start;
+  color: hsl(var(--foreground));
+  text-decoration: underline;
+}

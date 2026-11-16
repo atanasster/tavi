@@ -1,0 +1,291 @@
+/* ---------- The strip ---------- */
+
+/* The one home for numbers — and only the ones that have a source. */
+.strip {
+  /* The containing block of the full model id read to a screen reader. */
+  position: relative;
+  flex: none;
+  display: flex;
+  gap: var(--space-5);
+  padding: var(--space-1-5) var(--space-4);
+  border-top: var(--border-width) solid var(--line);
+  background: hsl(var(--card));
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-sm);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+/* Narrow: the sidebar becomes a strip above the transcript rather than
+   squeezing it, and the inspector takes the width instead of a column. */
+@media (--phone) {
+  /* Narrow: the sheet's button keeps only its icon (it is the way to the
+     sheet without the chord), and the strip's figures share one line, the
+     last one ending in an ellipsis rather than scrolling. Its word leaves the
+     screen as .visually-hidden does, so it stays in the button's name. */
+  .strip .strip-keys-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: calc(-1 * var(--space-px));
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .strip .strip-keys kbd {
+    display: none;
+  }
+
+  .strip {
+    gap: var(--space-3);
+    overflow: hidden;
+  }
+
+  .strip > span:last-of-type {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .body {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .main {
+    width: 100%;
+    min-height: 0;
+  }
+
+  .bar {
+    flex-wrap: wrap;
+    height: auto;
+    gap: var(--space-2) var(--space-3);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .sidebar {
+    width: auto;
+    max-height: 36vh;
+    border-right: none;
+    border-bottom: var(--border-width) solid var(--line);
+  }
+
+  .panel-resizer {
+    display: none;
+  }
+
+  .sidebar-rail {
+    width: auto;
+    flex-direction: row;
+    padding: var(--space-1) var(--space-2);
+    border-right: none;
+    border-bottom: var(--border-width) solid var(--line);
+  }
+
+  /* The chat panel on a phone: the rail is a floating button over the
+     transcript's corner, and the panel a sheet over the bottom of the page. */
+  .chat-panel-rail {
+    position: fixed;
+    right: var(--space-2);
+    bottom: var(--space-10);
+    z-index: var(--z-rail);
+    width: auto;
+    padding: 0;
+    border: none;
+    background: transparent;
+  }
+
+  .chat-panel-rail-item {
+    display: none;
+  }
+
+  .chat-panel-any {
+    display: block;
+  }
+
+  .chat-panel-rail .chat-panel-toggle {
+    background: hsl(var(--card));
+    box-shadow: var(--shadow-lg);
+  }
+
+  .chat-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-drawer);
+    width: auto;
+    height: calc(45dvh - var(--chat-panel-sheet-drag, 0px));
+    max-height: calc(100dvh - var(--space-12));
+    transition: height var(--duration-slow) var(--ease-standard);
+    border-left: none;
+    border-top: var(--border-width) solid var(--line);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .chat-panel.sheet-full {
+    height: calc(90dvh - var(--chat-panel-sheet-drag, 0px));
+  }
+
+  /* Under a finger, the sheet follows it rather than easing after it. */
+  .chat-panel.sheet-dragging {
+    transition: none;
+  }
+
+  .chat-panel-grip {
+    display: block;
+  }
+
+  .main {
+    --gutter: var(--space-3);
+  }
+
+  .main-head,
+  .settings {
+    padding-inline: var(--space-3);
+  }
+}
+
+/* Chats opened by hand on a phone: the stack scrolls, and the chat below them
+   keeps its whole height rather than giving it to them. */
+@media (--phone) {
+  .body:has(> .sidebar) {
+    overflow-y: auto;
+  }
+
+  .body:has(> .sidebar) > * {
+    flex: none;
+  }
+
+  .body:has(> .sidebar) > .main {
+    height: 100%;
+  }
+}
+
+/* A phone on its side: the height goes to the transcript. The figures leave,
+   and each bar above it keeps only the room its controls take. */
+@media (--short) {
+  .strip {
+    display: none;
+  }
+
+  .bar {
+    height: var(--bar-height);
+  }
+
+  .main-head {
+    min-height: 0;
+    padding-block: var(--space-0-5);
+  }
+
+  .task-header {
+    padding-block: var(--space-1) 0;
+  }
+
+  .runs {
+    padding-block: var(--space-2);
+  }
+}
+
+.runs {
+  flex: 1;
+  /* The containing block of its `.visually-hidden` labels: without it they
+     escape this scroller's clip, stretch the document, and focusing the
+     composer scrolls the whole page — header and all — out of view. */
+  position: relative;
+  overflow-y: auto;
+  padding: var(--space-4) var(--gutter);
+}
+
+.runs > * {
+  max-width: var(--column);
+  margin-inline: auto;
+}
+
+/* Stays at the foot of the scroller while there is more below it, over the words, taking no room of its own. */
+.runs > .jump-latest {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: 0;
+  margin-block: 0;
+}
+
+.jump-latest button {
+  flex: none;
+  background: hsl(var(--background));
+  box-shadow: var(--shadow-float);
+}
+
+.empty,
+.notice,
+.older,
+.boundary {
+  color: hsl(var(--muted-foreground));
+}
+
+/* A new chat: a greeting in the display face, then what to do first. */
+.chat-greeting {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-12) var(--space-4) var(--space-6);
+  text-align: center;
+}
+
+.chat-greeting-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--leading-tight);
+  color: hsl(var(--foreground));
+}
+
+.chat-greeting .empty {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+/* Read by a screen reader, not seen: `display: none` would take it out of the
+   accessibility tree, which is the opposite of what these are for. */
+.visually-hidden,
+.focus-guard,
+.skip-link:not(:focus),
+.sidebar-tools .field > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: calc(-1 * var(--space-px));
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The page's first stop: "Skip to content", seen only while it has focus. */
+.skip-link:focus {
+  position: fixed;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: var(--z-popover);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  box-shadow: var(--shadow-float);
+}
+
+/* The divider a bounded transcript folds its middle behind. */
+.older {
+  border-top: var(--border-width) dashed hsl(var(--border));
+  padding-top: var(--space-2);
+}

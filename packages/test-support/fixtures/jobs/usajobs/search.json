@@ -1,0 +1,54 @@
+{
+ "LanguageCode": "EN",
+ "SearchParameters": {},
+ "SearchResult": {
+  "SearchResultCount": 2,
+  "SearchResultCountAll": 2,
+  "SearchResultItems": [
+   {
+    "MatchedObjectId": "820001001",
+    "MatchedObjectDescriptor": {
+     "PositionID": "EX-26-001",
+     "PositionTitle": "IT Specialist (Software Engineering)",
+     "PositionURI": "https://www.usajobs.gov:443/job/820001001",
+     "ApplyURI": ["https://www.usajobs.gov:443/job/820001001"],
+     "PositionLocationDisplay": "Washington, District of Columbia",
+     "PositionLocation": [{ "LocationName": "Washington, District of Columbia", "CountryCode": "United States", "CountrySubDivisionCode": "District of Columbia", "CityName": "Washington, District of Columbia", "Longitude": -77.03196, "Latitude": 38.89037 }],
+     "OrganizationName": "Example Digital Service",
+     "DepartmentName": "Department of Examples",
+     "PositionSchedule": [{ "Name": "Full-time", "Code": "1" }],
+     "PositionOfferingType": [{ "Name": "Permanent", "Code": "15317" }],
+     "QualificationSummary": "Specialized experience building backend services in Go or Python.",
+     "PositionRemuneration": [{ "MinimumRange": "120000", "MaximumRange": "165000", "RateIntervalCode": "PA", "Description": "Per Year" }],
+     "PositionStartDate": "2026-10-10T00:00:00.0000",
+     "PositionEndDate": "2026-11-10T23:59:59.9970",
+     "PublicationStartDate": "2026-10-10T00:00:00.0000",
+     "ApplicationCloseDate": "2026-11-10T23:59:59.9970",
+     "UserArea": { "Details": { "JobSummary": "Build and run the services behind example.gov.", "MajorDuties": ["Design backend APIs.", "Operate Kubernetes clusters."], "RemoteIndicator": false, "TeleworkEligible": true } }
+    }
+   },
+   {
+    "MatchedObjectId": "820001002",
+    "MatchedObjectDescriptor": {
+     "PositionID": "EX-26-002",
+     "PositionTitle": "IT Specialist (Data Management)",
+     "PositionURI": "https://www.usajobs.gov:443/job/820001002",
+     "ApplyURI": ["https://www.usajobs.gov:443/job/820001002"],
+     "PositionLocationDisplay": "Anywhere in the U.S. (remote job)",
+     "PositionLocation": [{ "LocationName": "Anywhere in the U.S. (remote job)", "CountryCode": "United States", "CountrySubDivisionCode": "", "CityName": "Anywhere in the U.S. (remote job)", "Longitude": -97.92, "Latitude": 39.38 }],
+     "OrganizationName": "Example Statistics Office",
+     "DepartmentName": "Department of Examples",
+     "PositionSchedule": [{ "Name": "Full-time", "Code": "1" }],
+     "PositionOfferingType": [{ "Name": "Permanent", "Code": "15317" }],
+     "QualificationSummary": "Experience with PostgreSQL and data pipelines.",
+     "PositionRemuneration": [{ "MinimumRange": "52.40", "MaximumRange": "68.10", "RateIntervalCode": "PH", "Description": "Per Hour" }],
+     "PositionStartDate": "2026-10-12T00:00:00.0000",
+     "PositionEndDate": "2026-10-26T23:59:59.9970",
+     "PublicationStartDate": "2026-10-12T00:00:00.0000",
+     "ApplicationCloseDate": "2026-10-26T23:59:59.9970",
+     "UserArea": { "Details": { "JobSummary": "Run the office's data platform.", "MajorDuties": ["Maintain PostgreSQL."], "RemoteIndicator": true, "TeleworkEligible": false } }
+    }
+   }
+  ]
+ }
+}

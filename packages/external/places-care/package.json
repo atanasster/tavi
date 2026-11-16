@@ -1,0 +1,39 @@
+{
+  "name": "@tavi/plugin-places-care",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/external/places-care"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "description": "places.care: an external plugin, built to one bundle with its manifest, that finds health providers in public registries and checks a provider against a payer's published network; Personal",
+  "files": [
+    "dist-plugin"
+  ],
+  "scripts": {
+    "build": "tsdown && node scripts/assemble.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tavi/domain-kit": "workspace:*",
+    "@tavi/places-kit": "workspace:*",
+    "@tavi/plugin-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@tavi/contracts": "workspace:*",
+    "@tavi/test-support": "workspace:*",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "zod": "catalog:"
+  }
+}

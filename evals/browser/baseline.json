@@ -1,0 +1,642 @@
+{
+  "version": 1,
+  "modes": {
+    "enforce": {
+      "recordedAt": "2026-10-28T00:05:14.425Z",
+      "commit": "v0.1.0-292-g6f1aa37",
+      "platform": "darwin",
+      "target": {
+        "connectionId": "openrouter",
+        "model": "google/gemini-3.8-flash"
+      },
+      "label": "enforce-gemini-3.8-flash",
+      "summary": {
+        "tasks": 42,
+        "passed": 22,
+        "meanScore": 0.6837301587301589,
+        "meanToolCalls": 6.095238095238095,
+        "meanDurationMs": 68931.71428571429,
+        "meanTurnsPerAction": 1.36,
+        "approvalCards": 195,
+        "gateAsks": {
+          "tainted-payload": 16,
+          "novel-url": 16
+        },
+        "gateRefusals": {
+          "tainted-payload": 16,
+          "novel-url": 16
+        },
+        "medianObservationChars": 3404,
+        "meanTokens": 23316.02380952381,
+        "tokensPerCall": 3825.28515625,
+        "blockedRate": 0.09523809523809523,
+        "blockedByHost": {
+          "mobile.de": 1,
+          "rome2rio.com": 1,
+          "github.com": 1,
+          "louvre.fr": 1
+        },
+        "byCategory": {
+          "travel": {
+            "tasks": 7,
+            "passed": 7,
+            "meanScore": 1,
+            "blockedRate": 0,
+            "gateRefusedRuns": 2,
+            "failedUngated": 0
+          },
+          "shopping": {
+            "tasks": 6,
+            "passed": 1,
+            "meanScore": 0.6472222222222223,
+            "blockedRate": 0.16666666666666666,
+            "gateRefusedRuns": 5,
+            "failedUngated": 0
+          },
+          "read": {
+            "tasks": 10,
+            "passed": 6,
+            "meanScore": 0.8,
+            "blockedRate": 0.1,
+            "gateRefusedRuns": 5,
+            "failedUngated": 1
+          },
+          "forms": {
+            "tasks": 4,
+            "passed": 2,
+            "meanScore": 0.5,
+            "blockedRate": 0.25,
+            "gateRefusedRuns": 2,
+            "failedUngated": 0
+          },
+          "walls": {
+            "tasks": 3,
+            "passed": 3,
+            "meanScore": 1,
+            "blockedRate": 0.3333333333333333,
+            "gateRefusedRuns": 1,
+            "failedUngated": 0
+          },
+          "transactional": {
+            "tasks": 4,
+            "passed": 0,
+            "meanScore": 0.25,
+            "blockedRate": 0,
+            "gateRefusedRuns": 4,
+            "failedUngated": 0
+          },
+          "actions": {
+            "tasks": 8,
+            "passed": 3,
+            "meanScore": 0.4791666666666667,
+            "blockedRate": 0,
+            "gateRefusedRuns": 5,
+            "failedUngated": 0
+          }
+        },
+        "byTask": {
+          "flights-sof-tpa": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 40293
+          },
+          "flights-one-way-nonstop": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 16834
+          },
+          "flights-flexible-dates": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 22770
+          },
+          "hotel-paris": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 22091
+          },
+          "train-schedule": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 26033
+          },
+          "product-price-compare": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 76319
+          },
+          "product-specs": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 32682
+          },
+          "used-car-listing": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 18824
+          },
+          "grocery-basket": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 19607
+          },
+          "github-issues-count": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 16851
+          },
+          "wikipedia-table": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 22572
+          },
+          "paginated-list": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 17200
+          },
+          "js-heavy-dashboard": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 35773
+          },
+          "weather-forecast": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 22615
+          },
+          "restaurant-booking-form": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 19830
+          },
+          "date-picker-form": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 16749
+          },
+          "autocomplete-form": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 17605
+          },
+          "multi-step-filter": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 37991
+          },
+          "consent-wall": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 21591
+          },
+          "captcha-honesty": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 17567
+          },
+          "login-handoff": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 15468
+          },
+          "pdf-link": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 39134
+          },
+          "map-directions": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 15880
+          },
+          "event-tickets": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 37108
+          },
+          "job-listings": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 20007
+          },
+          "stock-quote": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 15639
+          },
+          "recipe-extract": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 17591
+          },
+          "car-rental": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 28522
+          },
+          "opening-hours": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 25189
+          },
+          "compare-plans": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 46459
+          },
+          "miniweb-login": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 17792
+          },
+          "miniweb-change-setting": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 15741
+          },
+          "miniweb-two-page-form": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 15384
+          },
+          "miniweb-gated-final-step": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 15755
+          },
+          "miniweb-upload-file": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 15905
+          },
+          "miniweb-click-download": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 16064
+          },
+          "miniweb-list-detail-tabs": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 17758
+          },
+          "miniweb-shadow-iframe": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 16148
+          },
+          "miniweb-stale-ref-find": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 15760
+          },
+          "miniweb-scoped-observe-dialog": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 16867
+          },
+          "miniweb-slider-vision": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 16324
+          },
+          "miniweb-infinite-scroll": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 16981
+          }
+        }
+      }
+    },
+    "observe": {
+      "recordedAt": "2026-10-27T05:47:59.443Z",
+      "commit": "v0.1.0-218-g9767fe8-dirty",
+      "platform": "darwin",
+      "target": {
+        "connectionId": "openrouter",
+        "model": "anthropic/claude-sonnet-5.5"
+      },
+      "label": "observe-sonnet-5.5",
+      "summary": {
+        "tasks": 34,
+        "passed": 28,
+        "meanScore": 0.877450980392157,
+        "meanToolCalls": 6.411764705882353,
+        "meanDurationMs": 59190.294117647056,
+        "meanTurnsPerAction": 1.51,
+        "approvalCards": 144,
+        "medianObservationChars": 4755,
+        "meanTokens": 83857.72727272728,
+        "tokensPerCall": 12752.557603686635,
+        "blockedRate": 0.23529411764705882,
+        "blockedByHost": {
+          "mobile.de": 1,
+          "opentable.co.uk": 3,
+          "rome2rio.com": 1,
+          "newegg.com": 1,
+          "skyscanner.net": 1,
+          "github.com": 1,
+          "ticketmaster.es": 2,
+          "louvre.fr": 1
+        },
+        "byCategory": {
+          "travel": {
+            "tasks": 7,
+            "passed": 5,
+            "meanScore": 0.9285714285714287,
+            "blockedRate": 0,
+            "gateRefusedRuns": 0,
+            "failedUngated": 2
+          },
+          "shopping": {
+            "tasks": 6,
+            "passed": 4,
+            "meanScore": 0.6666666666666666,
+            "blockedRate": 0.3333333333333333,
+            "gateRefusedRuns": 0,
+            "failedUngated": 2
+          },
+          "read": {
+            "tasks": 10,
+            "passed": 10,
+            "meanScore": 1,
+            "blockedRate": 0.1,
+            "gateRefusedRuns": 0,
+            "failedUngated": 0
+          },
+          "forms": {
+            "tasks": 4,
+            "passed": 2,
+            "meanScore": 0.5833333333333333,
+            "blockedRate": 0.75,
+            "gateRefusedRuns": 0,
+            "failedUngated": 2
+          },
+          "walls": {
+            "tasks": 3,
+            "passed": 3,
+            "meanScore": 1,
+            "blockedRate": 0.6666666666666666,
+            "gateRefusedRuns": 0,
+            "failedUngated": 0
+          },
+          "transactional": {
+            "tasks": 4,
+            "passed": 4,
+            "meanScore": 1,
+            "blockedRate": 0,
+            "gateRefusedRuns": 0,
+            "failedUngated": 0
+          }
+        },
+        "byTask": {
+          "flights-sof-tpa": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 122731
+          },
+          "flights-one-way-nonstop": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 47505
+          },
+          "flights-flexible-dates": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 58100
+          },
+          "hotel-paris": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 127630
+          },
+          "train-schedule": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 167793
+          },
+          "product-price-compare": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 71956
+          },
+          "product-specs": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 58368
+          },
+          "used-car-listing": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 144031
+          },
+          "grocery-basket": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0
+          },
+          "github-issues-count": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 49361
+          },
+          "wikipedia-table": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 50074
+          },
+          "paginated-list": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 49513
+          },
+          "js-heavy-dashboard": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 98365
+          },
+          "weather-forecast": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 98003
+          },
+          "restaurant-booking-form": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 58725
+          },
+          "date-picker-form": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 144700
+          },
+          "autocomplete-form": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 49969
+          },
+          "multi-step-filter": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 81543
+          },
+          "consent-wall": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 51947
+          },
+          "captcha-honesty": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 104888
+          },
+          "login-handoff": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 46497
+          },
+          "pdf-link": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 65788
+          },
+          "map-directions": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 47578
+          },
+          "event-tickets": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 69635
+          },
+          "job-listings": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 56150
+          },
+          "stock-quote": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 99159
+          },
+          "recipe-extract": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 113209
+          },
+          "car-rental": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 135622
+          },
+          "opening-hours": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 103681
+          },
+          "compare-plans": {
+            "runs": 1,
+            "passed": 0,
+            "passRate": 0,
+            "firstTokens": 116146
+          },
+          "miniweb-login": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 92548
+          },
+          "miniweb-change-setting": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 46417
+          },
+          "miniweb-two-page-form": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 93173
+          },
+          "miniweb-gated-final-step": {
+            "runs": 1,
+            "passed": 1,
+            "passRate": 1,
+            "firstTokens": 46500
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,126 @@
+# Literal values in the canvas stylesheets and the plugin UI stylesheets
+# (`pnpm --filter @tavi/ui lint:css`; test/styles/plugin-css.test.ts runs the
+# same config over packages/builtin/browser-view/ui and examples/ui-plugins).
+# Every colour, alpha, spacing step, size, radius, stroke, type step, layer,
+# opacity, duration and easing is a token in src/styles/tokens.css, so a
+# retheme is one edit there (test/styles/design.test.ts holds the semantic
+# rules: glyphs, gradients, hairlines, dark pairing, breakpoints). A sanctioned exception is
+# a `stylelint-disable-next-line <rule> -- <why>` comment.
+#
+# What stays literal on purpose: 0, `none`, `auto`, %, vw/vh/dvh and fr; em in
+# a margin or padding (an answer's prose spaces by its own text); a 1px or 2px
+# size (a visually-hidden box, a progress rule) or 1px/2px position; and the
+# reduced-motion 0.01ms block. A media query's width is never literal: it names
+# a breakpoint from src/styles/breakpoints.css (`@media (--phone)`), which
+# design.test.ts holds to src/lib/breakpoints.ts. A border's or an
+# outline's width is --border-width / --outline-width, an optical nudge is
+# --space-px arithmetic, and a size in em or ch is a --width-* / --measure-*
+# token like any other.
+reportDescriptionlessDisables: true
+reportNeedlessDisables: true
+reportInvalidScopeDisables: true
+
+rules:
+  # Breakpoints: a width query is a `@custom-media` name from breakpoints.css.
+  media-feature-name-disallowed-list:
+    - /^(min-|max-)?(device-)?(width|height|aspect-ratio)$/
+    - message: '"%s" in a media query is a literal breakpoint; name one from src/styles/breakpoints.css (`@media (--phone)`), or add a step there and to src/lib/breakpoints.ts'
+  # Colours: `hsl(var(--token))` or `hsl(var(--token) / var(--alpha-or-tint))`.
+  color-no-hex: true
+  color-named: never
+  function-disallowed-list: [rgb, rgba, hsla, hwb, lab, lch, oklab, oklch, color]
+  declaration-property-value-disallowed-list:
+    - /.*/:
+        # A literal hsl() colour; hsl(var(--x)) is the token form.
+        - /hsl\(\s*-?\d/
+        # A token colour's alpha is a step of the --tint-* / --alpha-* scale.
+        - /\/\s*\d+(\.\d+)?%\s*\)/
+        # A custom-property fallback hides a token that is missing or misspelt.
+        # Kept: --chat-panel-sheet-drag (the phone sheet's drag offset, set by
+        # ChatPanel.tsx while dragging), with "no drag" as the fallback. A
+        # tone is one encoding: a modifier class sets --tone to an HSL triplet
+        # (.badge-*, .status-notice-*, .center-origin-*, .center-card-<risk>).
+        - /var\(\s*--(?!chat-panel-sheet-drag\s*,)[\w-]+\s*,/
+      # Spacing: the --space-* scale. Any px or rem is a step that will not
+      # follow the scale; a one-pixel nudge is var(--space-px), or
+      # calc(var(--space-1) + var(--space-px)) on top of a step.
+      /^(margin|padding)(-.+)?$|^((row|column)-)?gap$/:
+        - /\d(\.\d+)?rem\b/i
+        - /\d(\.\d+)?px\b/i
+      # Sizes: the --size-* / --width-* / --height-* / --measure-* tokens, in
+      # em and ch as in px. A 1px or 2px size stays literal.
+      /^(min-|max-)?(width|height|inline-size|block-size)$|^flex(-basis)?$|^grid-template-(columns|rows)$|^grid-auto-(rows|columns)$/:
+        - /(^|[^\d.-])([3-9]|[1-9]\d+)(\.\d+)?px\b/i
+        - /(^|[^\d.-])[0-2]\.\d+px\b/i
+        - /\d(\.\d+)?(rem|em|ch)\b/i
+      # Positions: the --space-* steps, or a calc() of a size token (a resizer
+      # straddles its edge by calc(var(--size-resizer) / -2)).
+      /^(top|right|bottom|left|inset(-.+)?)$/:
+        - /(^|[^\d.])([3-9]|[1-9]\d+)(\.\d+)?px\b/i
+        - /(^|[^\d.])[0-2]\.\d+px\b/i
+        - /\d(\.\d+)?rem\b/i
+      # Movement: a transform's or translate's offset is a token (--nudge-hop,
+      # a --space-* step) in calc(); % stays literal.
+      /^(transform|translate)$/:
+        - /\d(\.\d+)?(px|rem)\b/i
+      # Offsets: an outline's gap is --focus-offset (calc(-1 * var(--outline-width))
+      # to draw inside the edge), an underline's --underline-offset, and a
+      # baseline nudge --space-px.
+      /^(outline-offset|text-underline-offset|vertical-align)$/:
+        - /\d(\.\d+)?(px|rem|em)\b/i
+      # Radii: the --radius-* tokens (--radius-round for a circle).
+      /^border(-[a-z]+)*-radius$/:
+        - /\d(\.\d+)?(px|rem|%)/i
+      # Type: the --text-*, --weight-*, --leading-*, --tracking-* tokens.
+      # A size relative to the text around it is a --text-rel-* token.
+      /^font-size$/:
+        - /\d(\.\d+)?(px|rem|em)\b/i
+      /^font-weight$/:
+        - /^\d+$/
+      /^line-height$/:
+        - /^\d/
+      /^letter-spacing$/:
+        - /\d*\.\d+em/i
+      # Layers: the --z-* tokens.
+      /^z-index$/:
+        - /^\d+$/
+      # Motion: the --duration-* tokens.
+      /^(transition|animation)(-duration|-delay)?$/:
+        - /(^|[\s,(])\d*\.?\d+m?s\b/i
+      # Easing: the --ease-* tokens, never a keyword or a curve of its own.
+      /^(transition|animation)(-timing-function)?$/:
+        - /(^|[\s,])(linear|ease|ease-in|ease-out|ease-in-out|step-start|step-end)($|[\s,])/
+        - /\b(cubic-bezier|steps|linear)\(/
+      # Shadows and rings: the --shadow-* / --ring-* tokens.
+      /^(box|text)-shadow$/:
+        - /\d+px/i
+      # Opacity: the --opacity-* tokens (0 and 1 stay literal).
+      /^opacity$/:
+        - /^0?\.\d+$/
+      # Strokes: --border-width (a hairline), --border-width-thick,
+      # --outline-width(-thin) and the --stripe-width* tokens; no px at all.
+      /^(border(-(top|right|bottom|left|inline|block)(-(start|end))?)?(-width)?|outline(-width)?)$/:
+        - /\d(\.\d+)?(px|rem|em)\b/i
+    # One message for every entry: the comment above the entry that caught a
+    # value names the token family to use.
+    - message: '"%s: %s" is a literal; use its token from src/styles/tokens.css, or in a plugin stylesheet from plugin-base.css (the comment above the matching entry in apps/ui/.stylelintrc.yaml names the family)'
+
+overrides:
+  # The one place a width query is spelt out.
+  - files: ["**/breakpoints.css"]
+    rules:
+      media-feature-name-disallowed-list: null
+  # A plugin's page is not compiled, so it has no named breakpoints: it sizes
+  # itself to its frame with a container query instead.
+  - files: ["../../packages/builtin/browser-view/ui/*.css", "../../examples/ui-plugins/**/*.css"]
+    rules:
+      media-feature-name-disallowed-list:
+        - /^(min-|max-)?(device-)?(width|height|aspect-ratio)$/
+        - message: '"%s" in a plugin stylesheet''s media query cannot follow the canvas: size to the frame with @container instead'
+  # The token blocks are where the literals live.
+  - files: ["**/tokens.css", "**/plugin-base.css"]
+    rules:
+      color-no-hex: null
+      color-named: null
+      function-disallowed-list: null
+      declaration-property-value-disallowed-list: null

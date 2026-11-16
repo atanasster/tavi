@@ -1,0 +1,1 @@
+{ "v": 10, "session_id": "f1e2d3c4b5a6", "resume_gateway_url": "wss://gateway-us-east1-b.discord.gg", "user": { "id": "900000000000000001", "bot": true, "username": "tavi" }, "application": { "id": "900000000000000002", "flags": 0 }, "guilds": [{ "id": "700000000000000001", "unavailable": true }] }

@@ -1,0 +1,472 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-10-17T05:40:35Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 3855804222,
+  "lat": 30.2711630,
+  "lon": -97.7907520,
+  "tags": {
+    "addr:housenumber": "2824",
+    "addr:postcode": "78746",
+    "addr:street": "Bee Caves Road",
+    "brand": "Goodyear",
+    "brand:wikidata": "Q620875",
+    "name": "Goodyear",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "node",
+  "id": 10825245187,
+  "lat": 30.3054583,
+  "lon": -97.7360515,
+  "tags": {
+    "brand": "Midas",
+    "brand:wikidata": "Q3312613",
+    "name": "Midas",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "node",
+  "id": 10830761016,
+  "lat": 30.2715925,
+  "lon": -97.6966229,
+  "tags": {
+    "brand": "Caliber Collision",
+    "brand:wikidata": "Q109329782",
+    "name": "Caliber Collision",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "node",
+  "id": 13798750894,
+  "lat": 30.2824812,
+  "lon": -97.7023301,
+  "tags": {
+    "check_date": "2026-05-05",
+    "name": "Automotive Services Of Austin",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "node",
+  "id": 14077899302,
+  "lat": 30.2738459,
+  "lon": -97.7629895,
+  "tags": {
+    "addr:housenumber": "1516",
+    "addr:street": "West 5th Street",
+    "check_date": "2026-08-06",
+    "name": "Complete Auto Detail",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 199742459,
+  "center": {
+    "lat": 30.3046095,
+    "lon": -97.7439074
+  },
+  "tags": {
+    "addr:city": "Austin",
+    "addr:housenumber": "3700",
+    "addr:postcode": "78705",
+    "addr:state": "TX",
+    "addr:street": "North Lamar Boulevard",
+    "building": "yes",
+    "name": "Brake Check",
+    "phone": "+1-512-459-1334",
+    "service:vehicle:alignment": "yes",
+    "service:vehicle:brakes": "yes",
+    "service:vehicle:oil_change": "yes",
+    "shop": "car_repair",
+    "website": "https://brakecheck.com/austin-n-lamar-w-38th-405/"
+  }
+},
+{
+  "type": "way",
+  "id": 293857277,
+  "center": {
+    "lat": 30.2855210,
+    "lon": -97.7051014
+  },
+  "tags": {
+    "addr:housenumber": "2201",
+    "addr:postcode": "78723",
+    "addr:street": "Airport Boulevard",
+    "brand": "Firestone",
+    "brand:wikidata": "Q420837",
+    "building": "commercial",
+    "name": "Firestone",
+    "official_name": "Firestone Complete Auto Care",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 364451218,
+  "center": {
+    "lat": 30.2379450,
+    "lon": -97.7528659
+  },
+  "tags": {
+    "addr:housenumber": "117",
+    "addr:postcode": "78704",
+    "addr:street": "East Oltorf Street",
+    "building": "yes",
+    "name": "Klingemann Car Care",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 379166000,
+  "center": {
+    "lat": 30.2682355,
+    "lon": -97.7349810
+  },
+  "tags": {
+    "addr:housenumber": "708",
+    "addr:street": "East 8th Street",
+    "building": "yes",
+    "coa:place_id": "886761",
+    "height": "20.110000000000014",
+    "name": "APD Garage",
+    "operator": "City of Austin",
+    "payment:private": "yes",
+    "phone": "+1 512-974-2000",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 379199758,
+  "center": {
+    "lat": 30.2560495,
+    "lon": -97.7104065
+  },
+  "tags": {
+    "addr:city": "Austin",
+    "addr:housenumber": "2817",
+    "addr:postcode": "78702",
+    "addr:state": "TX",
+    "addr:street": "East 5th Street",
+    "building": "yes",
+    "coa:place_id": "241503",
+    "height": "6.930000000000002",
+    "name": "Capitol Muffler & Mechanic",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 379199838,
+  "center": {
+    "lat": 30.2550966,
+    "lon": -97.7058173
+  },
+  "tags": {
+    "addr:city": "Austin",
+    "addr:housenumber": "3228",
+    "addr:postcode": "78702",
+    "addr:state": "TX",
+    "addr:street": "East 5th Street",
+    "building": "yes",
+    "coa:place_id": "394605",
+    "height": "7.18",
+    "name": "Matrix Automotriz",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 381793293,
+  "center": {
+    "lat": 30.2847637,
+    "lon": -97.7178667
+  },
+  "tags": {
+    "building": "yes",
+    "height": "5.6",
+    "name": "Gene Johnson Automotive Services",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 381805533,
+  "center": {
+    "lat": 30.3028050,
+    "lon": -97.7377260
+  },
+  "tags": {
+    "addr:housenumber": "3809",
+    "addr:street": "Guadalupe Street",
+    "brand": "Jiffy Lube",
+    "brand:wikidata": "Q6192247",
+    "building": "yes",
+    "height": "9.8",
+    "name": "Jiffy Lube",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 382372242,
+  "center": {
+    "lat": 30.2746305,
+    "lon": -97.7198795
+  },
+  "tags": {
+    "building": "yes",
+    "height": "5.0",
+    "name": "C&M Services",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 382383401,
+  "center": {
+    "lat": 30.2710890,
+    "lon": -97.7909345
+  },
+  "tags": {
+    "brand": "Jiffy Lube",
+    "brand:wikidata": "Q6192247",
+    "building": "yes",
+    "height": "8.3",
+    "name": "Jiffy Lube",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 382383467,
+  "center": {
+    "lat": 30.2712300,
+    "lon": -97.7904635
+  },
+  "tags": {
+    "brand": "Goodyear",
+    "brand:wikidata": "Q620875",
+    "building": "yes",
+    "height": "9.4",
+    "name": "Goodyear",
+    "operator": "Good Year Tire",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 382444386,
+  "center": {
+    "lat": 30.2472185,
+    "lon": -97.7738875
+  },
+  "tags": {
+    "addr:housenumber": "2223",
+    "addr:street": "South Lamar Boulevard",
+    "building": "retail",
+    "height": "5.7",
+    "name": "Lube Pitstop",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 382446234,
+  "center": {
+    "lat": 30.2434830,
+    "lon": -97.7290660
+  },
+  "tags": {
+    "addr:city": "Austin",
+    "addr:housenumber": "1806",
+    "addr:postcode": "78741",
+    "addr:state": "TX",
+    "addr:street": "East Riverside Drive",
+    "brand": "Jiffy Lube",
+    "brand:wikidata": "Q6192247",
+    "building": "yes",
+    "height": "6.1",
+    "name": "Jiffy Lube",
+    "opening_hours": "Mo-Sa 08:00-18:00; Su 09:00-17:00",
+    "phone": "+1-512-445-2777",
+    "service:vehicle:inspection": "yes",
+    "shop": "car_repair",
+    "website": "https://www.jiffylube.com/"
+  }
+},
+{
+  "type": "way",
+  "id": 382450297,
+  "center": {
+    "lat": 30.2504560,
+    "lon": -97.7673610
+  },
+  "tags": {
+    "addr:city": "Austin",
+    "addr:housenumber": "1804",
+    "addr:postcode": "78704",
+    "addr:state": "TX",
+    "addr:street": "South Lamar Boulevard",
+    "brand": "Caliber Collision",
+    "brand:wikidata": "Q109329782",
+    "building": "yes",
+    "height": "7.6",
+    "name": "Caliber Collision",
+    "service:vehicle:body_repair": "yes",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 382454730,
+  "center": {
+    "lat": 30.2483205,
+    "lon": -97.7558380
+  },
+  "tags": {
+    "addr:housenumber": "1636",
+    "addr:street": "South 1st Street",
+    "building": "yes",
+    "height": "6.9",
+    "name": "Don's Automotive",
+    "phone": "+1 512-447-9032",
+    "shop": "car_repair",
+    "website": "https://donsautomotive.com/"
+  }
+},
+{
+  "type": "way",
+  "id": 382550223,
+  "center": {
+    "lat": 30.2583606,
+    "lon": -97.7459102
+  },
+  "tags": {
+    "addr:city": "Austin",
+    "addr:housenumber": "311",
+    "addr:postcode": "78704",
+    "addr:state": "TX",
+    "addr:street": "South Congress Avenue",
+    "brand": "Firestone",
+    "brand:wikidata": "Q420837",
+    "building": "yes",
+    "height": "6.8",
+    "name": "Firestone",
+    "official_name": "Firestone Complete Auto Care",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 383355022,
+  "center": {
+    "lat": 30.2557349,
+    "lon": -97.7613373
+  },
+  "tags": {
+    "addr:city": "Austin",
+    "addr:country": "US",
+    "addr:housenumber": "1001",
+    "addr:postcode": "78704",
+    "addr:state": "TX",
+    "addr:street": "South Lamar Boulevard",
+    "branch": "Rising Sun South",
+    "brand": "Rising Sun Automotive",
+    "brand:website": "https://www.risingsunjapanese.com",
+    "building": "yes",
+    "check_date": "2025-02-16",
+    "height": "5.0",
+    "name": "Rising Sun Japanese Auto Service",
+    "opening_hours": "Mo-Fr 07:30-17:30",
+    "phone": "+1-512-443-4122",
+    "shop": "car_repair",
+    "website": "https://www.risingsunjapanese.com/rising-sun-south-south-lamar/"
+  }
+},
+{
+  "type": "way",
+  "id": 383355322,
+  "center": {
+    "lat": 30.2515383,
+    "lon": -97.7652183
+  },
+  "tags": {
+    "addr:city": "Austin",
+    "addr:housenumber": "1602",
+    "addr:postcode": "78704",
+    "addr:state": "TX",
+    "addr:street": "South Lamar Boulevard",
+    "building": "yes",
+    "contact:facebook": "Sams-Auto-Care/100087308501866",
+    "contact:yelp": "sams-auto-care-austin",
+    "height": "4.8",
+    "name": "Sam's Auto Care",
+    "opening_hours": "Mo-Fr 08:30-18:00; Sa-Su off",
+    "phone": "+1-512-842-6690",
+    "service:vehicle:body_repair": "yes",
+    "service:vehicle:car_repair": "yes",
+    "service:vehicle:painting": "yes",
+    "service:vehicle:used_car_sales": "yes",
+    "shop": "car_repair",
+    "website": "https://www.samautocare.com/"
+  }
+},
+{
+  "type": "way",
+  "id": 383380629,
+  "center": {
+    "lat": 30.2427725,
+    "lon": -97.7516560
+  },
+  "tags": {
+    "addr:city": "Austin",
+    "addr:housenumber": "2105",
+    "addr:postcode": "78704",
+    "addr:state": "TX",
+    "addr:street": "South Congress Avenue",
+    "building": "yes",
+    "height": "4.9",
+    "name": "JRD Windshield Repair & Replacement",
+    "opening_hours": "Mo-Fr 09:00-17:00",
+    "phone": "+1 512 809 3282",
+    "service:vehicle:glass": "yes",
+    "shop": "car_repair",
+    "website": "https://jrdwindshieldrepair.com/"
+  }
+},
+{
+  "type": "way",
+  "id": 383839736,
+  "center": {
+    "lat": 30.2334940,
+    "lon": -97.7423890
+  },
+  "tags": {
+    "addr:housenumber": "2300",
+    "addr:street": "I 35 Frontage Road",
+    "brand": "Jiffy Lube",
+    "brand:wikidata": "Q6192247",
+    "building": "yes",
+    "height": "6.1",
+    "name": "Jiffy Lube",
+    "shop": "car_repair",
+    "source": "Oersonal experience"
+  }
+}
+
+  ]
+}

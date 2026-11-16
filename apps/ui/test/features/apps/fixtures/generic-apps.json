@@ -1,0 +1,374 @@
+{
+  "apps": [
+    {
+      "appId": "mcp.docs",
+      "name": "docs",
+      "summary": "Team docs over MCP.",
+      "category": "other",
+      "source": {
+        "kind": "mcp",
+        "pluginIds": [
+          "mcp.docs"
+        ],
+        "verified": "reviewed",
+        "isolation": "remote"
+      },
+      "auth": {
+        "kind": "oauth",
+        "client": "registration",
+        "scopes": [],
+        "stepUp": []
+      },
+      "tools": [
+        {
+          "toolId": "mcp.docs.search_docs",
+          "title": "Search docs",
+          "access": "read",
+          "effect": "read-only",
+          "sink": "network",
+          "state": "offered",
+          "decision": "allow",
+          "because": [
+            "default-read"
+          ],
+          "canSetHere": [
+            "allow",
+            "ask",
+            "block"
+          ]
+        },
+        {
+          "toolId": "mcp.docs.edit_page",
+          "title": "Edit page",
+          "access": "change",
+          "effect": "mutating",
+          "sink": "network",
+          "state": "offered",
+          "decision": "ask",
+          "because": [
+            "default-write",
+            "never-always"
+          ],
+          "canSetHere": [
+            "ask",
+            "block"
+          ]
+        }
+      ],
+      "egress": {
+        "hosts": [
+          "mcp.docs.example"
+        ],
+        "lan": false,
+        "anyNetwork": false
+      },
+      "credentials": [
+        {
+          "name": "clientSecret",
+          "raw": false
+        },
+        {
+          "name": "sign-in",
+          "raw": false
+        }
+      ],
+      "settings": [
+        {
+          "key": "clientId",
+          "label": "clientId",
+          "help": "A client registered at the server's authorization server (optional: CIMD or registration otherwise)",
+          "type": "string",
+          "required": false,
+          "advanced": false
+        },
+        {
+          "key": "clientSecret",
+          "label": "clientSecret",
+          "help": "That client's secret, if it has one",
+          "type": "credential",
+          "required": false,
+          "advanced": false
+        }
+      ],
+      "trust": {
+        "output": "untrusted",
+        "source": "mcp",
+        "confidentiality": "public"
+      },
+      "accounts": [
+        {
+          "accountId": "mcp.docs",
+          "label": "docs",
+          "owner": {
+            "kind": "owner"
+          },
+          "health": "not-set-up",
+          "grantedScopes": [],
+          "missingScopes": [],
+          "expiresWeekly": false,
+          "workspaces": [
+            "default"
+          ],
+          "people": false,
+          "sharing": "shared",
+          "readOnly": false,
+          "on": true
+        }
+      ],
+      "health": "not-set-up",
+      "repairs": [
+        {
+          "kind": "sign-in",
+          "accountId": "mcp.docs",
+          "title": "Sign in to docs",
+          "detail": "It has not been signed in yet.",
+          "cli": "tavi mcp login mcp.docs"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "appId": "example.weather",
+      "name": "Weather",
+      "summary": "Forecasts from a weather service.",
+      "category": "other",
+      "source": {
+        "kind": "plugin",
+        "pluginIds": [
+          "example.weather"
+        ],
+        "verified": "reviewed",
+        "isolation": "sandboxed"
+      },
+      "auth": {
+        "kind": "api-key",
+        "fields": [
+          {
+            "key": "apiKey",
+            "label": "apiKey",
+            "help": "The forecast service's key",
+            "type": "credential",
+            "required": true,
+            "advanced": false
+          }
+        ]
+      },
+      "tools": [
+        {
+          "toolId": "example.weather.forecast",
+          "title": "forecast",
+          "says": "Get the forecast for a city",
+          "saysSource": "author",
+          "access": "read",
+          "effect": "read-only",
+          "sink": "network",
+          "state": "offered",
+          "decision": "allow",
+          "because": [
+            "default-read"
+          ],
+          "canSetHere": [
+            "allow",
+            "ask",
+            "block"
+          ]
+        }
+      ],
+      "egress": {
+        "hosts": [],
+        "lan": false,
+        "anyNetwork": false
+      },
+      "credentials": [
+        {
+          "name": "apiKey",
+          "raw": false
+        }
+      ],
+      "settings": [
+        {
+          "key": "apiKey",
+          "label": "apiKey",
+          "help": "The forecast service's key",
+          "type": "credential",
+          "required": true,
+          "advanced": false
+        }
+      ],
+      "trust": {
+        "output": "untrusted",
+        "source": "plugin",
+        "confidentiality": "public"
+      },
+      "accounts": [
+        {
+          "accountId": "example.weather",
+          "label": "Weather",
+          "owner": {
+            "kind": "owner"
+          },
+          "health": "not-set-up",
+          "grantedScopes": [],
+          "missingScopes": [],
+          "expiresWeekly": false,
+          "workspaces": [
+            "default"
+          ],
+          "people": false,
+          "sharing": "shared",
+          "readOnly": false,
+          "on": false
+        }
+      ],
+      "health": "not-set-up",
+      "repairs": [
+        {
+          "kind": "finish-setup",
+          "accountId": "example.weather",
+          "title": "Finish setting up Weather",
+          "detail": "It needs apiKey.",
+          "cli": "tavi credentials set plugins.example.weather.apiKey --file … && tavi plugins config example.weather --set apiKey=plugins.example.weather.apiKey"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "appId": "acme-notes",
+      "name": "Acme Notes",
+      "summary": "Your notes in Acme.",
+      "category": "notes",
+      "icon": "/plugin-ui/acme.notes/cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc/assets/notes.svg",
+      "publisher": "Acme",
+      "source": {
+        "kind": "plugin",
+        "pluginIds": [
+          "acme.notes"
+        ],
+        "verified": "reviewed",
+        "isolation": "sandboxed"
+      },
+      "auth": {
+        "kind": "none"
+      },
+      "tools": [
+        {
+          "toolId": "acme.notes.search",
+          "title": "Search notes",
+          "says": "Finds notes by their words.",
+          "saysSource": "author",
+          "access": "read",
+          "effect": "read-only",
+          "sink": "network",
+          "state": "offered",
+          "decision": "allow",
+          "because": [
+            "default-read"
+          ],
+          "canSetHere": [
+            "allow",
+            "ask",
+            "block"
+          ]
+        },
+        {
+          "toolId": "acme.notes.save",
+          "title": "Save a note",
+          "says": "Save a note",
+          "saysSource": "author",
+          "access": "change",
+          "effect": "mutating",
+          "sink": "network",
+          "state": "offered",
+          "decision": "ask",
+          "because": [
+            "default-write"
+          ],
+          "canSetHere": [
+            "ask",
+            "block"
+          ]
+        }
+      ],
+      "egress": {
+        "hosts": [],
+        "lan": false,
+        "anyNetwork": false
+      },
+      "credentials": [],
+      "settings": [],
+      "trust": {
+        "output": "untrusted",
+        "source": "plugin",
+        "confidentiality": "public"
+      },
+      "accounts": [
+        {
+          "accountId": "acme.notes",
+          "label": "acme notes",
+          "owner": {
+            "kind": "owner"
+          },
+          "health": "ready",
+          "grantedScopes": [],
+          "missingScopes": [],
+          "expiresWeekly": false,
+          "workspaces": [
+            "default"
+          ],
+          "people": false,
+          "sharing": "shared",
+          "readOnly": false,
+          "on": true
+        }
+      ],
+      "health": "ready",
+      "repairs": [],
+      "warnings": []
+    }
+  ],
+  "catalog": {
+    "sections": [
+      {
+        "section": "installed",
+        "entries": [
+          {
+            "ref": {
+              "kind": "installed",
+              "pluginId": "mcp.docs"
+            },
+            "name": "docs",
+            "summary": "Team docs over MCP.",
+            "category": "other",
+            "auth": "oauth",
+            "badges": [
+              "remote"
+            ],
+            "installed": true,
+            "appId": "mcp.docs",
+            "options": []
+          },
+          {
+            "ref": {
+              "kind": "installed",
+              "pluginId": "example.weather"
+            },
+            "name": "Weather",
+            "summary": "Forecasts from a weather service.",
+            "category": "other",
+            "auth": "api-key",
+            "badges": [
+              "runs-here"
+            ],
+            "installed": true,
+            "appId": "example.weather",
+            "options": []
+          }
+        ]
+      },
+      {
+        "section": "channels",
+        "entries": []
+      }
+    ]
+  }
+}

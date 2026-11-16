@@ -1,0 +1,116 @@
+/* A root chat's workers' questions and handoffs, after its latest turn. */
+.worker-needs {
+  display: grid;
+  gap: var(--space-2-5);
+  margin-block: var(--space-3);
+}
+
+.worker-handoff > .need-asker {
+  margin: 0 0 var(--space-1);
+}
+
+.handoff-receipt {
+  margin: var(--space-1) 0 var(--space-2);
+}
+
+.chat-panel-top-item.needs-you {
+  box-shadow: var(--ring-warning);
+}
+
+@media (--phone) {
+  .takeover {
+    padding: var(--space-2);
+  }
+
+  .takeover-address {
+    max-width: var(--measure-narrow);
+  }
+}
+
+/* A live session's card in the Command Center, shown live (the `center.browser` slot). */
+.browser-thumb-live .browser-tile {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* A side chat sits beneath the chat it was opened from. */
+.session-item.side-chat {
+  margin-left: var(--space-4);
+}
+
+/* Notices: background output posted into a chat, between its turns. */
+.chat-notices {
+  display: grid;
+  gap: var(--space-2);
+  margin-block: var(--space-3);
+}
+
+.chat-notice {
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid hsl(var(--border));
+  border-left: var(--stripe-width) solid hsl(var(--info));
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+}
+
+.chat-notice-title {
+  margin: 0;
+  font-weight: var(--weight-semibold);
+}
+
+.chat-notice-summary {
+  margin: var(--space-1) 0 0;
+  white-space: pre-line;
+  color: hsl(var(--muted-foreground));
+  overflow-wrap: anywhere;
+}
+
+/* "Earlier chats": one line until opened. */
+.chat-notice-list > summary {
+  cursor: pointer;
+}
+
+.chat-notice-count {
+  font-weight: var(--weight-regular);
+  color: hsl(var(--muted-foreground));
+}
+
+.chat-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-1-5);
+}
+
+/* Epoch dividers: where a chat rolled over, between its turns. */
+.epoch-divider {
+  display: grid;
+  gap: var(--space-1);
+  margin-block: var(--space-4);
+  padding-top: var(--space-2);
+  border-top: var(--border-width) dashed hsl(var(--border));
+  font-size: var(--text-base);
+  text-align: center;
+}
+
+.epoch-divider-title {
+  margin: 0;
+  font-weight: var(--weight-semibold);
+  color: hsl(var(--muted-foreground));
+}
+
+.epoch-divider-summary,
+.epoch-divider-status {
+  margin: 0;
+  color: hsl(var(--muted-foreground));
+}
+
+.epoch-divider-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}

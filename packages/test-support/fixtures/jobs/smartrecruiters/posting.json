@@ -1,0 +1,140 @@
+{
+ "id": "744000156052424",
+ "name": "Senior Manager, Software Engineering Management",
+ "uuid": "b256421c-6ad1-4a63-94a9-e44b53e48792",
+ "jobId": "246ec562-30b2-492e-b57c-e336a8052989",
+ "jobAdId": "f560c1a0-3779-413f-a031-a2ea658215dc",
+ "defaultJobAd": true,
+ "refNumber": "JB0076298",
+ "company": {
+  "name": "ServiceNow",
+  "identifier": "ServiceNow"
+ },
+ "location": {
+  "city": "San Diego",
+  "region": "California",
+  "country": "us",
+  "address": "4810 Eastgate Mall",
+  "postalCode": "92121",
+  "remote": false,
+  "hybrid": true,
+  "fullLocation": "San Diego, California, United States"
+ },
+ "customField": [
+  {
+   "fieldId": "60345fa28b4ba8595bef1863",
+   "fieldLabel": "Recruiting Team",
+   "valueId": "professional",
+   "valueLabel": "Professional"
+  },
+  {
+   "fieldId": "60345e1a0b24a127cbdfa148",
+   "fieldLabel": "Employee Type",
+   "valueId": "0082f6cbe6154da19322cbab1f6aa5af",
+   "valueLabel": "Regular"
+  },
+  {
+   "fieldId": "5f63a78f1dae5c5c4e54ba2b",
+   "fieldLabel": "Department",
+   "valueId": "2294038",
+   "valueLabel": "Engineering, Infrastructure and Operations"
+  },
+  {
+   "fieldId": "COUNTRY",
+   "fieldLabel": "Country/Region",
+   "valueId": "us",
+   "valueLabel": "United States"
+  },
+  {
+   "fieldId": "5f63a78f1dae5c5c4e54ba2a",
+   "fieldLabel": "Brands",
+   "valueId": "default",
+   "valueLabel": "ServiceNow"
+  },
+  {
+   "fieldId": "60345d5c5165a31b17288279",
+   "fieldLabel": "Region",
+   "valueId": "722a833b93e4437798309f43c0d25990",
+   "valueLabel": "AMS - North America and Canada"
+  },
+  {
+   "fieldId": "603462175165a31b1728827d",
+   "fieldLabel": "Cost Center",
+   "valueId": "CC6307",
+   "valueLabel": "6307 Platform Engineering Workflow Automation"
+  },
+  {
+   "fieldId": "6034601b43915a29a4b3389b",
+   "fieldLabel": "Job Location",
+   "valueId": "L_SAN003",
+   "valueLabel": "4810 Eastgate Mall, San Diego, California, 92121, United States of America(L_SAN003)"
+  },
+  {
+   "fieldId": "618ed92b8f5e5f110e5bfb95",
+   "fieldLabel": "Work Persona",
+   "valueId": "bf7551c6-9b06-4e7c-8217-3baf43edd060",
+   "valueLabel": "Flexible"
+  },
+  {
+   "fieldId": "690cc0e8c682c3dbadaa7d73",
+   "fieldLabel": "Job Posting Type",
+   "valueId": "professional",
+   "valueLabel": "Professional"
+  }
+ ],
+ "releasedDate": "2026-10-16T17:19:26.831Z",
+ "creator": {
+  "name": "A Recruiter",
+  "avatarUrl": "https://c.smartrecruiters.com/example-avatar"
+ },
+ "postingUrl": "https://jobs.smartrecruiters.com/ServiceNow/744000156052424-senior-manager-software-engineering-management",
+ "applyUrl": "https://jobs.smartrecruiters.com/ServiceNow/744000156052424-senior-manager-software-engineering-management?oga=true",
+ "referralUrl": "https://jobs.smartrecruiters.com/external-referrals/company/ServiceNow/publication/b256421c-6ad1-4a63-94a9-e44b53e48792?dcr_ci=ServiceNow",
+ "jobAd": {
+  "sections": {
+   "companyDescription": {
+    "title": "Company Description",
+    "text": "<p>It all started when engineer Fred Luddy wrote code that automated a tedious task for his coworker, Phyllis. She cried tears of joy. That moment inspired Fred to build a company that could do that for everyone—freeing people from busywork so they could focus on meaningful work. Today, ServiceNow is the AI control tower for business reinvention. Our ServiceNow AI platform brings together any AI, any data, and any workflow— helping 85% of the Fortune 500® work smarter, faster, and better. We're building an AI-native culture where technology and talent are unstoppable together. And we're just getting started.</p><p>Join us to put AI to work for people.</p><p>&#xa0;</p>"
+   },
+   "jobDescription": {
+    "title": "Job Description",
+    "text": "<p><strong>The team: Workflow Automation, Intelligence &amp; Mining</strong></p><p>We build the workflow and automation engines that power how work gets done across the ServiceNow Platform. Our engines process billions of workflow transactions every month across enterprise customers, and we’re now extending that foundation to support AI-native, agentic workflows.</p><p>As Senior Manager, Software Engineering, you lead that team. You lead people, own delivery outcomes, and set operating standards, working on some of the highest-stakes problems in the org. This is a hands-on leadership role. Close enough to the work to go deep with an engineer on a hard production issue, senior enough to own the trajectory of the whole team.</p><p><strong>What you get to do in this role</strong></p><ul><li>Lead, coach, and grow the team, including Staff, Sr, and Jr-level ICs, owning hiring, ramp, performance, and career development, and building the bench that carries the org forward.</li><li>Own delivery outcomes across your part of the platform, from major architecture initiatives and releases to the production escalations where depth and experience matter most.</li><li>Serve as the senior escalation owner for critical production issues, running path-to-green plans and coordinating resolution across engineering, product, and support.</li><li>Set and uphold the engineering standard for your team, define what great looks like, and back your engineers when they hold the line on it.</li><li>Champion shared architecture patterns, tooling, and documentation as force multipliers, and cleared the path for the team to build and maintain them.</li><li>Report delivery status, platform health, and program signal to executive stakeholders, with a clear read on trajectory and what is needed to unblock.</li><li>Partner with product and engineering leadership to close the feedback loop from the platform back into the roadmap and technical strategy.</li></ul><p><strong>What we’re looking for</strong></p>"
+   },
+   "qualifications": {
+    "title": "Qualifications",
+    "text": "<p>To be successful in this role, you have:</p><ul><li>8+ years of experience in software engineering, technical delivery, or engineering leadership, with 3+ years managing engineers, ideally including senior, staff, or principal-level ICs.</li><li>Proven track record of leading complex platform initiatives and high-stakes releases to production, including turning around at-risk or high-visibility work.</li><li>Strong technical depth, architecture, system design, and production troubleshooting.</li><li>Experience building or integrating AI and GenAI capabilities into production systems, including agents, LLM-based workflows, or agentic automation.</li><li>Demonstrated judgment in balancing engineering standards against delivery pressure, knowing when a gate applies, when it doesn’t, and how to hold that line across a team.</li><li>Experience building the operating machinery of an engineering team: performance rubrics, staffing models, hiring bars, and reusable patterns that raise consistency across engineers.</li><li>Strong cross-functional stakeholder management, with experience in reporting delivery status and technical risk to executive leadership.</li><li>A demonstrated ability to lead through coaching and influence rather than authority, raising the technical and operational bar of the engineers around you.</li><li>Experience with large-scale distributed systems, workflow or automation platforms, or enterprise cloud infrastructure is a strong plus.</li><li>Experience partnering with a product leader</li></ul><p>For positions in this location, we offer a base pay of <strong>$171,900 - $300,800</strong>, plus equity (when applicable), variable/incentive compensation and benefits. Sales positions generally offer a competitive On Target Earnings (OTE) incentive compensation structure. Please note that the base pay shown is a guideline, and individual total compensation will vary based on factors such as qualifications, skill level, competencies, and work location. We also offer health plans, including flexible spending accounts, a 401(k) Plan with company match, ESPP, matching donations, a flexible time away plan and family leave programs. Compensation is based on the geographic location in which the role is located and is subject to change based on work location.</p>"
+   },
+   "additionalInformation": {
+    "title": "Additional Information",
+    "text": "<p><strong>Work Personas</strong></p><p>We approach our distributed world of work with flexibility and trust. Work personas (flexible, remote, or required in office) are categories that are assigned to ServiceNow employees depending on the nature of their work and their assigned work location. <a href=\"https://careers.servicenow.com/life-at-servicenow#workpersonas\" rel=\"noopener noreferrer\"><u>Learn more here</u></a>. To determine eligibility for a work persona, ServiceNow may confirm the distance between your primary residence and the closest ServiceNow office using a third-party service.</p><p><strong>Equal Opportunity Employer</strong></p><p>ServiceNow is an equal opportunity employer. All qualified applicants will receive consideration for employment without regard to race, color, religion, sex, sexual orientation, national origin, age, disability, gender identity,&#xa0; veteran status, or any other category protected by law. In addition, all qualified applicants with arrest or conviction records will be considered for employment in accordance with legal requirements. &#xa0;</p><p><strong>Accommodations</strong></p><p>We strive to create an accessible and inclusive experience for all candidates. If you require a reasonable accommodation to complete any part of the application process, or are unable to use this online application and need an alternative method to apply, please contact <a href=\"mailto:recruiter@example.com\" rel=\"noopener noreferrer\">recruiter@example.com </a>for assistance.&#xa0;</p>"
+   }
+  }
+ },
+ "active": true,
+ "visibility": "PUBLIC",
+ "industry": {
+  "id": "it_and_services",
+  "label": "Information Technology And Services"
+ },
+ "function": {
+  "id": "engineering",
+  "label": "Engineering"
+ },
+ "department": {
+  "id": 2294038,
+  "label": "Engineering, Infrastructure and Operations"
+ },
+ "experienceLevel": {
+  "id": "not_applicable",
+  "label": "Not Applicable"
+ },
+ "typeOfEmployment": {
+  "id": "permanent",
+  "label": "Full-time"
+ },
+ "language": {
+  "code": "en",
+  "label": "English",
+  "labelNative": "English (US)"
+ }
+}

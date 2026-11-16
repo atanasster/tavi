@@ -1,0 +1,57 @@
+{
+  "name": "@tavi/jobs-kit",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/jobs-kit"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "description": "The jobs domain's library: source records and adapters, normalisation, deduplication, matching, skills, flags and the store's schema. No network and no runtime imports: the jobs plugin's worker runs it",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./skills.json": "./assets/skills.json"
+  },
+  "files": [
+    "dist",
+    "assets"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "eval": "vitest run test/eval.test.ts --mode eval"
+  },
+  "dependencies": {
+    "@tavi/contracts": "workspace:*",
+    "@tavi/domain-kit": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@tavi/test-support": "workspace:*",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.mts",
+        "import": "./dist/index.mjs"
+      },
+      "./package.json": "./package.json"
+    }
+  }
+}

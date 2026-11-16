@@ -1,0 +1,54 @@
+{
+  "name": "@tavi/trends-kit",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/trends-kit"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "description": "The trends domain's library: source records and adapters, the velocity engine, clustering, the brief checker and the store's schema. No network and no runtime imports: the trends plugin's worker runs it",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tavi/contracts": "workspace:*",
+    "@tavi/domain-kit": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@tavi/test-support": "workspace:*",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.mts",
+        "import": "./dist/index.mjs"
+      },
+      "./package.json": "./package.json"
+    }
+  }
+}

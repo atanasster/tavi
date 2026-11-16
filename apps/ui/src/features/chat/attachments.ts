@@ -1,0 +1,144 @@
+import {
+  ATTACHMENT_UPLOAD_CHUNK_CHARS,
+  ATTACHMENT_UPLOAD_PDF_MAX_BYTES,
+  ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES,
+  IPC_MAX_PROMPT_CHARS,
+  type ArtifactUploadAnswer,
+} from "@tavi/contracts";
+
+import { ask, type SettingsClient } from "../../lib/ipc.js";
+
+interface TextAttachment {
+  readonly kind?: "text";
+  readonly name: string;
+  readonly text: string;
+}
+/**
+ * A PDF, a video or a GIF:
+ * uploaded when the message is sent, and named by it, never inlined. The file
+ * itself is kept, and read a slice at a time as it is sent, never whole.
+ */
+export interface UploadAttachment {
+  readonly kind: "upload";
+  readonly media: "pdf" | "video" | "gif";
+  readonly name: string;
+  readonly file: Blob;
+}
+export type Attachment = TextAttachment | UploadAttachment;
+export const MAX_ATTACHMENT_BYTES = 48 * 1024;
+export const MAX_ATTACHMENTS = 5;
+const TEXT_FILE_ACCEPT = ".txt,.md,.csv,.tsv,.json,.yaml,.yml,.xml,.html,.css,.js,.jsx,.ts,.tsx,.py,.sh,.sql,.log,.rs,.go,.java,.c,.h,.cpp";
+const VIDEO_FILE_ACCEPT = ".mp4,.mov,.m4v,.webm,.gif";
+export const FILE_ACCEPT = `${TEXT_FILE_ACCEPT},.pdf,${VIDEO_FILE_ACCEPT}`;
+/** What a message of files alone says: the owner takes no blank prompt. */
+export const FILES_ONLY_PROMPT = "(see the attached file)";
+
+const isUpload = (attachment: Attachment): attachment is UploadAttachment => attachment.kind === "upload";
+
+/** What a file's first bytes say it is, of the kinds the owner takes by upload: the owner checks again. */
+function headIs(media: UploadAttachment["media"], head: Uint8Array): boolean {
+  const ascii = (offset: number, text: string): boolean =>
+    new TextDecoder("latin1").decode(head.subarray(offset, offset + text.length)) === text;
+  if (media === "pdf") return ascii(0, "%PDF-");
+  if (media === "gif") return ascii(0, "GIF87a") || ascii(0, "GIF89a");
+  // An ISO media file (MP4, MOV, M4V), or Matroska's EBML header (WebM).
+  return ascii(4, "ftyp") || (head[0] === 0x1a && head[1] === 0x45 && head[2] === 0xdf && head[3] === 0xa3);
+}
+
+export async function readAttachment(file: File): Promise<Attachment> {
+  const extension = `.${file.name.split(".").at(-1)?.toLowerCase()}`;
+  const media: UploadAttachment["media"] | undefined =
+    extension === ".pdf" || file.type === "application/pdf"
+      ? "pdf"
+      : extension === ".gif" || file.type === "image/gif"
+        ? "gif"
+        : // Only the containers the owner takes: a Matroska or 3GP file is not attached as a video it would refuse.
+          VIDEO_FILE_ACCEPT.split(",").includes(extension) || ["video/mp4", "video/quicktime", "video/webm"].includes(file.type)
+          ? "video"
+          : undefined;
+  if (media !== undefined) {
+    const cap = media === "pdf" ? ATTACHMENT_UPLOAD_PDF_MAX_BYTES : ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES;
+    if (file.size > cap)
+      throw new Error(`${file.name}: ${media === "pdf" ? "a PDF" : "a video or GIF"} is at most ${String(cap / 1024 / 1024)} MiB.`);
+    // Only its head is read now: the rest is read a slice at a time as it is sent.
+    const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+    if (!headIs(media, head))
+      throw new Error(
+        `${file.name}: this file is not ${media === "pdf" ? "a PDF" : media === "gif" ? "a GIF" : "an MP4, MOV or WebM video"}.`,
+      );
+    return { kind: "upload", media, name: file.name, file };
+  }
+  if (!TEXT_FILE_ACCEPT.split(",").includes(extension) && !file.type.startsWith("text/"))
+    throw new Error(
+      `${file.name}: the canvas takes a PDF, a video (MP4, MOV, WebM), a GIF (read as a short clip), or a text or code file. A photo (PNG, JPEG) is read when it is sent from a messaging channel; it cannot be attached here yet.`,
+    );
+  if (file.size > MAX_ATTACHMENT_BYTES) throw new Error(`${file.name}: maximum file size is 48 KB.`);
+  const text = new TextDecoder("utf-8", { fatal: true }).decode(await file.arrayBuffer());
+  if (text.includes("\0")) throw new Error(`${file.name}: binary files are not supported.`);
+  return { name: file.name, text };
+}
+
+/** A code fence longer than any run of backticks in `text`, so the file's own cannot end it early. */
+function fenceFor(text: string): string {
+  const longest = Math.max(0, ...[...text.matchAll(/`+/g)].map((run) => run[0].length));
+  return "`".repeat(Math.max(3, longest + 1));
+}
+
+/**
+ * The prompt with the text files inlined, each as its lines in a fence (shown
+ * as a block in the message, never one escaped string); PDFs, videos and GIFs
+ * go by upload.
+ */
+export function composePrompt(prompt: string, attachments: readonly Attachment[]): string {
+  const texts = attachments.filter((file): file is TextAttachment => !isUpload(file));
+  const result = [
+    prompt.trim(),
+    ...texts.map((file) => {
+      const fence = fenceFor(file.text);
+      return `Attached file ${JSON.stringify(file.name)} (reference content):\n${fence}\n${file.text.replace(/\n$/, "")}\n${fence}`;
+    }),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  if (result.length > IPC_MAX_PROMPT_CHARS)
+    throw new Error("The prompt and attachments exceed the 64K-character limit. Remove a file or shorten the prompt.");
+  return result;
+}
+
+export const uploadsOf = (attachments: readonly Attachment[]): readonly UploadAttachment[] => attachments.filter(isUpload);
+
+/** The upload chunk's bytes: their base64 fits `ATTACHMENT_UPLOAD_CHUNK_CHARS`. */
+const CHUNK_BYTES = (ATTACHMENT_UPLOAD_CHUNK_CHARS / 4) * 3;
+
+function base64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let at = 0; at < bytes.length; at += 0x8000) binary += String.fromCharCode(...bytes.subarray(at, at + 0x8000));
+  return btoa(binary);
+}
+
+/**
+ * `file` sent with `artifacts upload`, chunk by chunk, each read from the file
+ * as it is sent (a 50 MB video is never in memory whole): its artifact id, or
+ * why the owner refused it.
+ */
+export async function uploadFile(client: SettingsClient, workspaceId: string, file: UploadAttachment, uploadId: string): Promise<string> {
+  const size = file.file.size;
+  for (let offset = 0; offset < size; offset += CHUNK_BYTES) {
+    let chunk: Uint8Array;
+    try {
+      chunk = new Uint8Array(await file.file.slice(offset, offset + CHUNK_BYTES).arrayBuffer());
+    } catch {
+      // The file is read as it is sent: one moved, deleted or changed since it was attached cannot be.
+      throw new Error(`${file.name}: the file changed or moved after it was attached; attach it again.`);
+    }
+    const answer = await ask<ArtifactUploadAnswer>(
+      client,
+      "artifacts",
+      { action: "upload", workspaceId, uploadId, name: file.name, size, offset, data: base64(chunk) },
+      { timeoutMs: 60_000 },
+    );
+    if (!answer.ok) throw new Error(`${file.name}: ${answer.message}`);
+    if (answer.value.attachment !== undefined) return answer.value.attachment.artifactId;
+  }
+  throw new Error(`${file.name}: the upload did not finish; attach it again.`);
+}

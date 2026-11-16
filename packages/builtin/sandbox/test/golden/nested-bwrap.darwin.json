@@ -1,0 +1,25 @@
+{
+  "network": {
+    "allowedDomains": [],
+    "deniedDomains": [],
+    "strictAllowlist": true
+  },
+  "filesystem": {
+    "denyRead": [
+      "/home/person",
+      "/srv/tavi-data"
+    ],
+    "allowRead": [],
+    "allowWrite": [
+      "/srv/tavi-data/mcp/mcp.docs/home"
+    ],
+    "denyWrite": [
+      "/private/tmp/claude",
+      "/tmp/claude",
+      "/home/person/.npm/_logs",
+      "/home/person/.claude/debug"
+    ]
+  },
+  "enableWeakerNestedSandbox": true,
+  "bwrapPath": "/opt/tavi/libexec/bwrap"
+}

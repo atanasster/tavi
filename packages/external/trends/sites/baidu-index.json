@@ -1,0 +1,62 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "baidu-index",
+  "name": "Baidu Index",
+  "countries": [
+    "CN"
+  ],
+  "hosts": [
+    "index.baidu.com"
+  ],
+  "kind": "trending",
+  "access": {
+    "mode": "read",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Baidu Index needs a Baidu sign-in, and its numbers are drawn in the browser.",
+    "termsUrl": "https://passport.baidu.com/static/passpc-account/html/protocal.html",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 3,
+    "pagesPerDay": 10,
+    "minIntervalMs": 10000
+  },
+  "signIn": {
+    "required": true,
+    "handoffNote": "Sign in to Baidu yourself in the live view; Tavi never types a password."
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "ItemList",
+      "ListItem",
+      "SocialMediaPosting",
+      "NewsArticle",
+      "DiscussionForumPosting",
+      "VideoObject"
+    ],
+    "resultSchema": {
+      "type": "object",
+      "properties": {
+        "rank": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "metric": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "title",
+        "url"
+      ]
+    }
+  },
+  "notes": "Open index.baidu.com in your session when you ask; sign in yourself in the live view. Its numbers are Baidu's own index, not search counts."
+}

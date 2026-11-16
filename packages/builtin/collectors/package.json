@@ -1,0 +1,53 @@
+{
+  "name": "@tavi/plugin-collectors",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/builtin/collectors"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "description": "tavi.collectors: the daily brief's deterministic collectors (projects.get, ga4.report, gsc.query, gcp.billing, stripe.subscriptions, news.search, collect.daily) and its report tools (reports.generate, reports.history)",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tavi/contracts": "workspace:*",
+    "@tavi/node-kit": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@tavi/test-support": "workspace:*",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.mts",
+        "import": "./dist/index.mjs"
+      },
+      "./package.json": "./package.json"
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "name": "@tavi/plugin-sandbox",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/builtin/sandbox"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "description": "SandboxPort contract adapters: a real @anthropic-ai/sandbox-runtime (Seatbelt) adapter, macOS-targeted",
+  "exports": {
+    "./runtime": {
+      "development": "./src/runtime.ts",
+      "types": "./dist/runtime.d.mts",
+      "import": "./dist/runtime.mjs"
+    },
+    "./srt-cli": {
+      "development": "./src/srt-cli.ts",
+      "types": "./dist/srt-cli.d.mts",
+      "import": "./dist/srt-cli.mjs"
+    },
+    "./host": {
+      "development": "./src/host.ts",
+      "types": "./dist/host.d.mts",
+      "import": "./dist/host.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@anthropic-ai/sandbox-runtime": "catalog:",
+    "@tavi/child-kit": "workspace:*",
+    "@tavi/contracts": "workspace:*",
+    "@tavi/node-kit": "workspace:*"
+  },
+  "devDependencies": {
+    "@tavi/test-support": "workspace:*",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      "./runtime": {
+        "types": "./dist/runtime.d.mts",
+        "import": "./dist/runtime.mjs"
+      },
+      "./srt-cli": {
+        "types": "./dist/srt-cli.d.mts",
+        "import": "./dist/srt-cli.mjs"
+      },
+      "./host": {
+        "types": "./dist/host.d.mts",
+        "import": "./dist/host.mjs"
+      },
+      "./package.json": "./package.json"
+    }
+  }
+}

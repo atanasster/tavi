@@ -1,0 +1,13 @@
+{
+  "country": "US",
+  "order": [
+    "gtrends-rss",
+    "wikipedia-pageviews",
+    "gdelt-doc",
+    "hn-algolia",
+    "bluesky-search",
+    "bluesky-trends",
+    "mastodon-trends",
+    "arxiv"
+  ]
+}

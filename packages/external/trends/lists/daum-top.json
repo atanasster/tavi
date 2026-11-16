@@ -1,0 +1,13 @@
+{
+  "recordId": "daum-top",
+  "url": "https://www.daum.net/",
+  "extract": {
+    "mode": "embedded-json",
+    "marker": "window.tillerInitData=",
+    "path": "$..contents.data[*]"
+  },
+  "map": {
+    "title": "title",
+    "url": "url"
+  }
+}

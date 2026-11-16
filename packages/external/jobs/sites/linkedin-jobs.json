@@ -1,0 +1,37 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "linkedin-jobs",
+  "name": "LinkedIn Jobs",
+  "countries": [
+    "*"
+  ],
+  "hosts": [
+    "linkedin.com",
+    "*.linkedin.com"
+  ],
+  "kind": "jobs-board",
+  "access": {
+    "mode": "assist-only",
+    "navigate": false,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "LinkedIn's User Agreement §8.2 bans bots, crawlers and browser add-ons that scrape it, and its robots.txt disallows /jobs/view/ and /jobs-guest/.",
+    "termsUrl": "https://www.linkedin.com/legal/user-agreement",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "JobPosting"
+    ]
+  },
+  "notes": "Tavi never browses LinkedIn. It reads a job page you opened yourself, for the chat, and you may save that one posting. Your LinkedIn job-alert emails are the other way in.",
+  "signIn": {
+    "required": true,
+    "handoffNote": "Sign in to LinkedIn yourself in the live view."
+  }
+}

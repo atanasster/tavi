@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "description": "Anchors planted in a chat's first turns, each of which must still be named, exactly, in the epoch summary the chat carries after its third rollover.",
+  "minRollovers": 3,
+  "anchors": [
+    { "id": "issue-url", "kind": "url", "value": "https://github.com/acme/widgets/issues/4217", "plantedIn": "person" },
+    { "id": "source-path", "kind": "path", "value": "packages/plugins/src/workflow.ts", "plantedIn": "person" },
+    { "id": "relative-path", "kind": "path", "value": "./docs/ROLLOVER-NOTES.md", "plantedIn": "person" },
+    { "id": "tool-path", "kind": "path", "value": "apps/cli/src/runtime/composition.ts", "plantedIn": "tool" },
+    { "id": "build-log-url", "kind": "url", "value": "https://ci.example.com/runs/88123/log.txt", "plantedIn": "tool" },
+    { "id": "commit-sha", "kind": "sha", "value": "2deab52c4f1e9a8b7d6c5e4f3a2b1c0d9e8f7a6b", "plantedIn": "assistant" },
+    { "id": "task-id", "kind": "id", "value": "task-7f3a9c21-4b8e-4d10-9a6b-2c5e8f1d0e34", "plantedIn": "assistant" }
+  ],
+  "keyRequest": {
+    "id": "deploy-rule",
+    "text": "From now on never deploy on a Friday; hold every release until Monday morning.",
+    "plantedIn": "person"
+  },
+  "turns": [
+    {
+      "prompt": "Please look at https://github.com/acme/widgets/issues/4217 and fix the rollover in packages/plugins/src/workflow.ts, as ./docs/ROLLOVER-NOTES.md describes.",
+      "toolInput": "read apps/cli/src/runtime/composition.ts",
+      "answer": "Read the plan; the fix touches the model node."
+    },
+    {
+      "prompt": "From now on never deploy on a Friday; hold every release until Monday morning.",
+      "answer": "Understood: no Friday deploys."
+    },
+    {
+      "prompt": "Did the build pass?",
+      "toolInput": "build log at https://ci.example.com/runs/88123/log.txt",
+      "answer": "The build passed. The fix landed in commit 2deab52c4f1e9a8b7d6c5e4f3a2b1c0d9e8f7a6b and is tracked as task-7f3a9c21-4b8e-4d10-9a6b-2c5e8f1d0e34."
+    }
+  ],
+  "filler": {
+    "prompt": "Carry on with the next small step ({n}).",
+    "answer": "Done with that step."
+  }
+}

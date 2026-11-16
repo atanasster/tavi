@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1216" height="228" viewBox="0 0 1216 228" role="img">
+<rect width="1216" height="228" rx="12" fill="#ffffff" stroke="#d9e0dc"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="608" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#52605a">tavi chat</text>
+<line x1="0" y1="36" x2="1216" y2="36" stroke="#d9e0dc"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#1f6b55">❯ Say hello in two words.</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#132620">Hello there!</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#8c5a07">… type to continue Home</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#8c5a07">… this chat works in its own folder, ~/tavi-demo/chats/default/task-mw70cenc-1</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#8c5a07">  code (read-only): ~/code</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#8c5a07">  size: 0 B of its 2.0 GB budget</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#132620" opacity="0.62">✓ ready</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#132620">❯ █</tspan></text>
+</g>
+</svg>

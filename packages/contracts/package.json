@@ -1,0 +1,105 @@
+{
+  "name": "@tavi/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/contracts"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "description": "Platform-neutral service types and Zod schemas",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./inbound-parts": {
+      "development": "./src/inbound-parts.ts",
+      "types": "./dist/inbound-parts.d.mts",
+      "import": "./dist/inbound-parts.mjs"
+    },
+    "./plugin-sdk": {
+      "development": "./src/plugin-sdk.ts",
+      "types": "./dist/plugin-sdk.d.mts",
+      "import": "./dist/plugin-sdk.mjs"
+    },
+    "./print-theme": {
+      "development": "./src/print-theme.ts",
+      "types": "./dist/print-theme.d.mts",
+      "import": "./dist/print-theme.mjs"
+    },
+    "./url-text": {
+      "development": "./src/url-text.ts",
+      "types": "./dist/url-text.d.mts",
+      "import": "./dist/url-text.mjs"
+    },
+    "./util": {
+      "development": "./src/util.ts",
+      "types": "./dist/util.d.mts",
+      "import": "./dist/util.mjs"
+    },
+    "./zod-util": {
+      "development": "./src/zod-util.ts",
+      "types": "./dist/zod-util.d.mts",
+      "import": "./dist/zod-util.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.mts",
+        "import": "./dist/index.mjs"
+      },
+      "./package.json": "./package.json",
+      "./inbound-parts": {
+        "types": "./dist/inbound-parts.d.mts",
+        "import": "./dist/inbound-parts.mjs"
+      },
+      "./plugin-sdk": {
+        "types": "./dist/plugin-sdk.d.mts",
+        "import": "./dist/plugin-sdk.mjs"
+      },
+      "./print-theme": {
+        "types": "./dist/print-theme.d.mts",
+        "import": "./dist/print-theme.mjs"
+      },
+      "./url-text": {
+        "types": "./dist/url-text.d.mts",
+        "import": "./dist/url-text.mjs"
+      },
+      "./util": {
+        "types": "./dist/util.d.mts",
+        "import": "./dist/util.mjs"
+      },
+      "./zod-util": {
+        "types": "./dist/zod-util.d.mts",
+        "import": "./dist/zod-util.mjs"
+      }
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "opentable",
+  "name": "OpenTable",
+  "countries": [
+    "US",
+    "CA",
+    "GB",
+    "IE",
+    "DE",
+    "AU",
+    "JP"
+  ],
+  "hosts": [
+    "www.opentable.com",
+    "www.opentable.ca",
+    "www.opentable.co.uk",
+    "www.opentable.ie",
+    "www.opentable.de",
+    "www.opentable.com.au",
+    "www.opentable.jp"
+  ],
+  "kind": "booking",
+  "access": {
+    "mode": "stage",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "OpenTable's terms bar bots that extract availability or monitor for tables, but support restaurant deeplinks and JSON-LD ReserveAction. Tavi opens a restaurant's booking page you asked for, fills it and stops before Complete reservation.",
+    "termsUrl": "https://www.opentable.com/legal/terms-and-conditions",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "Restaurant",
+      "ReserveAction"
+    ]
+  },
+  "stage": {
+    "fillable": [
+      "name",
+      "email",
+      "phone",
+      "party_size",
+      "date",
+      "time",
+      "notes"
+    ],
+    "finalStep": {
+      "labels": [
+        "Complete reservation",
+        "Confirm reservation",
+        "Reservierung abschließen",
+        "予約を確定する"
+      ],
+      "urlPatterns": []
+    },
+    "perDay": 5
+  },
+  "notes": "No polling for tables: one booking page the person asked for, read with browser.structured first. Its final-step labels were not checked on the live site here."
+}

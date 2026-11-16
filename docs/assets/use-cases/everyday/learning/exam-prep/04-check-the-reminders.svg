@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="513" viewBox="0 0 880 513" role="img">
+<rect width="880" height="513" rx="12" fill="#ffffff" stroke="#d9e0dc"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="440" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#52605a">tavi reminders list</text>
+<line x1="0" y1="36" x2="880" y2="36" stroke="#d9e0dc"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#132620">Reminders (Europe/London)</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#132620">REMINDER        STATUS  NEXT</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#132620">rem-mw3cqvhv-j  active  Fri 4 Dec 18:00</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#132620">    Driving Theory Study Session 7: Final pre-test review (cheat sheet recap and</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#132620">    test day checklist)</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#132620">rem-mw3cqvhr-i  active  Fri 27 Nov 18:00</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#132620">    Driving Theory Study Session 6: Full mock theory test review and weak-spot</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#132620">    polish</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#132620">rem-mw3cqvhn-h  active  Fri 20 Nov 18:00</tspan></text>
+<text x="20" y="241.0" xml:space="preserve"><tspan fill="#132620">    Driving Theory Study Session 5: Targeted quiz drill on Road Signs and</tspan></text>
+<text x="20" y="260.0" xml:space="preserve"><tspan fill="#132620">    Stopping Distances</tspan></text>
+<text x="20" y="279.0" xml:space="preserve"><tspan fill="#132620">rem-mw3cqvhi-g  active  Mon 16 Nov 18:00</tspan></text>
+<text x="20" y="298.0" xml:space="preserve"><tspan fill="#132620">    Driving Theory Study Session 4: Stopping Distances in adverse weather (wet</tspan></text>
+<text x="20" y="317.0" xml:space="preserve"><tspan fill="#132620">    2x, icy 10x) and safe gaps</tspan></text>
+<text x="20" y="336.0" xml:space="preserve"><tspan fill="#132620">rem-mw3cqvhe-f  active  Fri 13 Nov 18:00</tspan></text>
+<text x="20" y="355.0" xml:space="preserve"><tspan fill="#132620">    Driving Theory Study Session 3: Road Signs &amp; Markings deep dive (junctions,</tspan></text>
+<text x="20" y="374.0" xml:space="preserve"><tspan fill="#132620">    clearways, box junctions)</tspan></text>
+<text x="20" y="393.0" xml:space="preserve"><tspan fill="#132620">rem-mw3cqvha-e  active  Mon 9 Nov 18:00</tspan></text>
+<text x="20" y="412.0" xml:space="preserve"><tspan fill="#132620">    Driving Theory Study Session 2: Stopping Distances &amp; core calculation</tspan></text>
+<text x="20" y="431.0" xml:space="preserve"><tspan fill="#132620">    formulas</tspan></text>
+<text x="20" y="450.0" xml:space="preserve"><tspan fill="#132620">rem-mw3cqvh2-d  active  Fri 6 Nov 18:00</tspan></text>
+<text x="20" y="469.0" xml:space="preserve"><tspan fill="#132620">    Driving Theory Study Session 1: Road Signs fundamentals (orders, warnings,</tspan></text>
+<text x="20" y="488.0" xml:space="preserve"><tspan fill="#132620">    directions)</tspan></text>
+</g>
+</svg>

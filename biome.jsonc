@@ -1,0 +1,117 @@
+{
+  // Lint and format: `pnpm run lint` (CI: the typecheck job) and `pnpm run format`.
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": [
+      "**/*.{ts,tsx,mts,cts,js,mjs,cjs,jsx}",
+      // Configuration JSON only. Data JSON (site profiles, routing tables, eval worlds) stays as written.
+      "**/package.json",
+      "**/tsconfig*.json",
+      "**/tavi-plugin.json",
+      "turbo.json",
+      "knip.jsonc",
+      "biome.jsonc",
+      "!**/dist",
+      "!**/dist-plugin",
+      "!**/ui-dist",
+      // Recorded and golden test data: tests read these as captured, some byte for byte.
+      "!**/test/fixtures",
+      "!**/test/fixture-site",
+      "!**/test/golden",
+      "!tests/fixtures",
+      "!tests/integration/fixtures",
+      "!packages/test-support/fixtures",
+      "!plans"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    // Wide lines keep the codebase's long one-line expressions: 140 changes the fewest lines short of
+    // unbounded widths (a 160 width leaves only 3% more files untouched).
+    "lineWidth": 140
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "jsxQuoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    }
+  },
+  "assist": { "enabled": true, "actions": { "source": { "organizeImports": "off" } } },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "complexity": {
+        // tsconfig's noPropertyAccessFromIndexSignature requires `record["key"]` for index signatures.
+        "useLiteralKeys": "off",
+        // `(calls.push(x), result)` in test doubles: a recorded call and its answer in one expression.
+        "noCommaOperator": "off",
+        // `x !== undefined && x.ok` stays boolean; `x?.ok` would widen it to boolean | undefined.
+        "useOptionalChain": "off"
+      },
+      "style": {
+        // With noUncheckedIndexedAccess, `!` marks an index the surrounding code has just checked.
+        "noNonNullAssertion": "off",
+        // `"…" + "rest"` splits a long message across lines; a template would join it back into one.
+        "useTemplate": "off"
+      },
+      "suspicious": {
+        // `cache ??= create()`, `id-${(n += 1)}` and `void (out += text)` are the codebase's idioms.
+        "noAssignInExpressions": "off",
+        // `${package}`, `${env:…}` and `{{…}}` are placeholders other programs expand, not mistyped templates.
+        "noTemplateCurlyInString": "off",
+        // Stripping and refusing control characters is what these regular expressions are for.
+        "noControlCharactersInRegex": "off",
+        // `let x;` assigned in a try block: TypeScript types it from the assignments (strict mode).
+        "noImplicitAnyLet": "off",
+        // `items.forEach((x) => out.push(x))` returns push's count harmlessly; noImplicitReturns covers missing returns.
+        "useIterableCallbackReturn": "off",
+        // Plugin-author contracts type optional hook answers as `T | void`, so a hook may return nothing.
+        "noConfusingVoidType": "off",
+        // Local `escape` and `valueOf` helpers shadow a deprecated global and an Object.prototype member, never used here.
+        "noShadowRestrictedNames": "off"
+      },
+      "correctness": {
+        // `return setError(…)` ends a void handler early; the value is undefined by type.
+        "noVoidTypeReturn": "off"
+      },
+      "nursery": {
+        // A promise nobody awaits or catches turns its rejection into an unhandled one, which ends the process.
+        "noFloatingPromises": "error"
+      },
+      "a11y": {
+        // `<Select>` renders a native <select>, so a label wrapping it has its control.
+        "noLabelWithoutControl": { "level": "error", "options": { "inputComponents": ["Select"] } },
+        // Chip groups and resize handles carry role=group/separator on purpose: <fieldset> and <hr>
+        // bring their own layout and cannot be dragged or focused as a handle.
+        "useSemanticElements": "off",
+        // Delegated key and blur handlers on wrappers (focus traps, menus, tooltips); their children are the controls.
+        "noStaticElementInteractions": "off",
+        // autoFocus only on fields that open on the person's own action (an inline form, a reject reason).
+        "noAutofocus": "off",
+        // Fires on native checkboxes with role=switch, whose `checked` already states aria-checked.
+        "useAriaPropsForRole": "off"
+      }
+    }
+  },
+  "overrides": [
+    {
+      // Tests start servers, children and timers that the test body settles later (or that a
+      // rejected expectation reports): a floating promise there is the test's shape, not a leak.
+      "includes": ["**/test/**", "tests/**", "**/*.test.ts", "**/*.test.tsx"],
+      // `(found?.detail as T).token`: a TypeError there fails the test, as it should.
+      "linter": { "rules": { "nursery": { "noFloatingPromises": "off" }, "correctness": { "noUnsafeOptionalChaining": "off" } } }
+    },
+    {
+      // The browser plugin reads `innerText` on purpose: the text a page renders, which leaves out hidden
+      // nodes and follows CSS, not every text node `textContent` returns.
+      "includes": ["packages/builtin/browser/**"],
+      "linter": { "rules": { "performance": { "useDomNodeTextContent": "off" } } }
+    }
+  ]
+}

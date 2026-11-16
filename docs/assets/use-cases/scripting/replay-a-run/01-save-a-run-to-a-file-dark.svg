@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1216" height="323" viewBox="0 0 1216 323" role="img">
+<rect width="1216" height="323" rx="12" fill="#141e1a" stroke="#26332e"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="608" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#9aaba3">tavi run --format json</text>
+<line x1="0" y1="36" x2="1216" y2="36" stroke="#26332e"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#e6efea">{"protocolVersion":8,"epoch":"serve-59632-272b5250-7eee-42ce-9fbc-29426dec7ec7","sequence":0,"runId":"task-mw70e43e-1","attemptId":"attempt-</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#e6efea">admission-mw70e43e-3","at":"2026-11-07T23:02:46.596Z","kind":"run.started","threadId":"thread-mw70e43e-2","workspaceId":"default"}</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#e6efea">{"protocolVersion":8,"epoch":"serve-59632-272b5250-7eee-42ce-9fbc-29426dec7ec7","sequence":1,"runId":"task-mw70e43e-1","attemptId":"attempt-</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#e6efea">mw70e447-4","at":"2026-11-07T23:02:51.275Z","kind":"tool.started","blockId":"call_12155162320235681465","callId":"call_12155162320235681465"</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#e6efea">,"toolName":"fs.read","input":{"path":"todo.txt"}}</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#e6efea">{"protocolVersion":8,"epoch":"serve-59632-272b5250-7eee-42ce-9fbc-29426dec7ec7","sequence":2,"runId":"task-mw70e43e-1","attemptId":"attempt-</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#e6efea">mw70e447-4","at":"2026-11-07T23:02:51.278Z","kind":"tool.completed","callId":"call_12155162320235681465","toolName":"fs.read","output":{"pat</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#e6efea">h":"todo.txt","content":"- renew passport\n- book dentist\n- call the plumber\n","offset":0},"durationMs":2.649}</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#e6efea">{"protocolVersion":8,"epoch":"serve-59632-272b5250-7eee-42ce-9fbc-29426dec7ec7","sequence":3,"runId":"task-mw70e43e-1","attemptId":"attempt-</tspan></text>
+<text x="20" y="241.0" xml:space="preserve"><tspan fill="#e6efea">mw70e7pu-5","at":"2026-11-07T23:02:54.436Z","kind":"text.delta","blockId":"0","text":"3"}</tspan></text>
+<text x="20" y="260.0" xml:space="preserve"><tspan fill="#e6efea">{"protocolVersion":8,"epoch":"serve-59632-272b5250-7eee-42ce-9fbc-29426dec7ec7","sequence":4,"runId":"task-mw70e43e-1","attemptId":"attempt-</tspan></text>
+<text x="20" y="279.0" xml:space="preserve"><tspan fill="#e6efea">mw70e7pu-5","at":"2026-11-07T23:02:54.517Z","kind":"task.completed","metrics":{"models":["openrouter/google/gemini-3.8-flash"],"totalTokens"</tspan></text>
+<text x="20" y="298.0" xml:space="preserve"><tspan fill="#e6efea">:32005,"partial":false,"cacheReadTokens":15793},"finalText":"3"}</tspan></text>
+</g>
+</svg>

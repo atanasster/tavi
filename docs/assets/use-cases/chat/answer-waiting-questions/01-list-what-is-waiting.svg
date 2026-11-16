@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="247" viewBox="0 0 1300 247" role="img">
+<rect width="1300" height="247" rx="12" fill="#ffffff" stroke="#d9e0dc"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="650" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#52605a">tavi needs</text>
+<line x1="0" y1="36" x2="1300" y2="36" stroke="#d9e0dc"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#132620">? What type of food would you like for dinner this Saturday?  [1. Italian  2. Thai  3. Mexican]</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#132620">    Plan a dinner for Saturday. Before anything else, ask me wi… (task-mw02ykfi-1) · until 2026-11-03 03:10Z</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#132620">    answer: tavi answer task-mw02ykfi-1 &lt;answer&gt;</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#132620">? What is your budget for your sister's gift?  [1. Under £20  2. £20 to £50  3. Over £50]</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#132620">    Help me choose a gift for my sister. Before anything else, … (task-mw02yqsc-5) · until 2026-11-03 03:10Z</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#132620">    answer: tavi answer task-mw02yqsc-5 &lt;answer&gt;</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#132620">! fs.write notes.txt</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#132620">    Write a file called notes.txt in this chat's folder contain… (task-mw02yysk-9)</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#132620">    decide: tavi approvals approve task-mw02yysk-9 (or reject)</tspan></text>
+</g>
+</svg>

@@ -1,0 +1,73 @@
+{
+  "servers": [
+    {
+      "server": {
+        "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+        "name": "io.github.example/notes",
+        "title": "Notes",
+        "description": "Search your notes.\u001b[31m Trusted by everyone‮",
+        "version": "1.4.0",
+        "websiteUrl": "https://notes.example",
+        "repository": { "url": "https://github.com/example/notes", "source": "github" },
+        "packages": [
+          {
+            "registryType": "npm",
+            "registryBaseUrl": "https://registry.npmjs.org",
+            "identifier": "@example/notes-mcp",
+            "version": "1.4.0",
+            "runtimeHint": "npx",
+            "transport": { "type": "stdio" },
+            "runtimeArguments": [{ "type": "positional", "value": "-y" }],
+            "packageArguments": [{ "type": "named", "name": "--root", "value": "/notes" }],
+            "environmentVariables": [
+              { "name": "NOTES_KEY", "description": "Your notes service key", "isRequired": true, "isSecret": true },
+              { "name": "NOTES_MODE", "default": "read" },
+              { "name": "NOTES_DEBUG", "isRequired": false }
+            ]
+          },
+          { "registryType": "pypi", "identifier": "notes-mcp", "version": "1.4.0", "transport": { "type": "stdio" } },
+          { "registryType": "oci", "identifier": "docker.io/example/notes", "version": "1.4.0", "transport": { "type": "stdio" } }
+        ]
+      },
+      "_meta": { "io.modelcontextprotocol.registry/official": { "status": "active", "isLatest": true } }
+    },
+    {
+      "server": {
+        "name": "com.example/calendar",
+        "description": "A hosted calendar.",
+        "version": "2.0.0",
+        "remotes": [
+          { "type": "streamable-http", "url": "https://mcp.calendar.example/mcp", "headers": [{ "name": "Authorization", "value": "Bearer {api_key}", "isRequired": true, "isSecret": true }] },
+          { "type": "sse", "url": "https://mcp.calendar.example/sse" }
+        ]
+      },
+      "_meta": { "io.modelcontextprotocol.registry/official": { "status": "active", "isLatest": true } }
+    },
+    {
+      "server": {
+        "name": "io.github.example/raw",
+        "title": "Raw",
+        "description": "The raw server, as a bundle.",
+        "version": "1.2.0",
+        "packages": [
+          { "registryType": "mcpb", "identifier": "https://github.com/example/raw/releases/download/v1.2.0/raw.mcpb", "version": "1.2.0", "fileSha256": "{{RAW_SHA256}}", "transport": { "type": "stdio" } }
+        ]
+      },
+      "_meta": { "io.modelcontextprotocol.registry/official": { "status": "active", "isLatest": true } }
+    },
+    {
+      "server": {
+        "name": "io.github.example/dotnet",
+        "description": "A .NET server.",
+        "version": "0.3.0",
+        "packages": [
+          { "registryType": "nuget", "identifier": "Example.Mcp", "version": "0.3.0", "transport": { "type": "stdio" } },
+          { "registryType": "cargo", "identifier": "example-mcp", "version": "0.3.0" }
+        ]
+      },
+      "_meta": { "io.modelcontextprotocol.registry/official": { "status": "active", "isLatest": true } }
+    },
+    { "server": { "name": "io.github.example/unreadable" } }
+  ],
+  "metadata": { "nextCursor": "io.github.example/dotnet:0.3.0", "count": 5 }
+}

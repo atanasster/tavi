@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>tavi</title>
+  </head>
+  <body>
+    <!-- The page's one announcement region. It is here, not in the
+         bundle's JSX, so it is in the accessibility tree before the bundle
+         runs: a live region inserted together with its first message is
+         commonly missed, and the first message is the one that matters. -->
+    <p id="announcer" class="visually-hidden" role="status" aria-live="polite"></p>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

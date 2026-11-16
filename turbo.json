@@ -1,0 +1,67 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "stream",
+  "globalDependencies": [
+    "tsconfig.base.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "vitest.config.ts",
+    "scripts/third-party-notices.mjs"
+  ],
+  "globalPassThroughEnv": [
+    "TAVI_REAL_TESTS",
+    "TAVI_LIVE*",
+    "TAVI_SOAK*",
+    "TAVI_INJECTION_*",
+    "TAVI_TAKEOVER_MINUTES",
+    "TAVI_UPDATE_GOLDEN",
+    "TAVI_RECORD_FIXTURES",
+    "TAVI_MCP_LOAD",
+    "TAVI_LIMITS_REAL",
+    "TAVI_SANDBOX_MATRIX",
+    "TAVI_RELEASE_INSTALL",
+    "JOBS_KEY_*"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", "dist-plugin/**"]
+    },
+    "@tavi/cli#build": {
+      "dependsOn": ["^build", "@tavi/ui#build"],
+      "outputs": ["dist/**", "ui-dist/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "lint:css": {
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "cache": false
+    },
+    "@tavi/cli#test": {
+      "dependsOn": ["^build", "@tavi/plugin-discord#build"],
+      "outputs": [],
+      "cache": false
+    },
+    "@tavi/runtime#test": {
+      "dependsOn": ["build"],
+      "outputs": [],
+      "cache": false
+    },
+    "@tavi/plugin-pdf#test": {
+      "dependsOn": ["build"],
+      "outputs": [],
+      "cache": false
+    },
+    "@tavi/pdf-ocr#test": {
+      "dependsOn": ["build"],
+      "outputs": [],
+      "cache": false
+    }
+  }
+}

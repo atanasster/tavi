@@ -1,0 +1,59 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "weibo-hot",
+  "name": "Weibo hot search",
+  "countries": [
+    "CN"
+  ],
+  "hosts": [
+    "s.weibo.com",
+    "weibo.com"
+  ],
+  "kind": "trending",
+  "access": {
+    "mode": "assist-only",
+    "navigate": false,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Weibo's terms (§1.3.2) ban obtaining content by program, even in your session, so Tavi is not to open it.",
+    "termsUrl": "https://weibo.com/signup/v5/protocol",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 3,
+    "pagesPerDay": 10,
+    "minIntervalMs": 10000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "ItemList",
+      "ListItem",
+      "SocialMediaPosting",
+      "NewsArticle",
+      "DiscussionForumPosting",
+      "VideoObject"
+    ],
+    "resultSchema": {
+      "type": "object",
+      "properties": {
+        "rank": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "metric": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "title",
+        "url"
+      ]
+    }
+  },
+  "notes": "Turned on, this profile stops Tavi's browser opening Weibo, and if you open s.weibo.com/top/summary yourself, Tavi reads that page for the chat only: nothing from it is kept, relayed with ingest or counted."
+}

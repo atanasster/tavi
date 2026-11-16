@@ -1,0 +1,20 @@
+/* The layout's breakpoints, the one place a stylesheet states a width: every
+   other query names one of these (`@media (--phone)`), which Lightning CSS
+   (vite.config.ts, `drafts.customMedia`) writes out at build time. The script
+   reads the same numbers from src/lib/breakpoints.ts, and
+   test/styles/design.test.ts holds the two equal; stylelint refuses a raw
+   width query anywhere else.
+
+   --phone     up to 720px: the phone layout (PHONE_QUERY).
+   --overlay   721px to 1279px: the chat panel overlays the transcript.
+   --undocked  below 1280px (DOCKED_MIN_WIDTH): the chat panel cannot dock,
+               and the Command Center's rail goes under its section.
+   --wide      from 960px (WIDE_MIN_WIDTH): room for two panes side by
+               side, or a rail.
+   --short     up to 500px tall (SHORT_MAX_HEIGHT), a phone on its side: the
+               chrome folds so the transcript keeps the height. */
+@custom-media --phone (max-width: 720px);
+@custom-media --overlay (min-width: 721px) and (max-width: 1279px);
+@custom-media --undocked (max-width: 1279px);
+@custom-media --wide (min-width: 960px);
+@custom-media --short (max-height: 500px);

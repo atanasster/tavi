@@ -1,0 +1,54 @@
+{
+  "country": "DE",
+  "rows": [
+    {
+      "jurisdiction": "DE",
+      "profession": "auto_repair",
+      "regime": "licensed",
+      "regulator": "The local Handwerkskammer (Handwerksrolle)",
+      "access": "web",
+      "ruleUrl": "https://www.gesetze-im-internet.de/hwo/anlage_a.html",
+      "note": "Motor vehicle technician (Kraftfahrzeugtechniker) is a trade in Anlage A of the Handwerksordnung: the business must be in the Handwerksrolle of its Handwerkskammer, with a Meister or an equivalent. Each chamber keeps its own register.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "DE",
+      "profession": "electrician",
+      "regime": "licensed",
+      "regulator": "The local Handwerkskammer (Handwerksrolle)",
+      "access": "web",
+      "ruleUrl": "https://www.gesetze-im-internet.de/hwo/anlage_a.html",
+      "note": "Electrician (Elektrotechniker) is a trade in Anlage A of the Handwerksordnung: the business must be in the Handwerksrolle of its Handwerkskammer, with a Meister or an equivalent.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "DE",
+      "profession": "plumber",
+      "regime": "licensed",
+      "regulator": "The local Handwerkskammer (Handwerksrolle)",
+      "access": "web",
+      "ruleUrl": "https://www.gesetze-im-internet.de/hwo/anlage_a.html",
+      "note": "Plumbing and heating (Installateur und Heizungsbauer) is a trade in Anlage A of the Handwerksordnung: the business must be in the Handwerksrolle of its Handwerkskammer.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "DE",
+      "profession": "hairdresser",
+      "regime": "licensed",
+      "regulator": "The local Handwerkskammer (Handwerksrolle)",
+      "access": "web",
+      "ruleUrl": "https://www.gesetze-im-internet.de/hwo/anlage_a.html",
+      "note": "Hairdressing (Friseure) is a trade in Anlage A of the Handwerksordnung: the business must be in the Handwerksrolle of its Handwerkskammer.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "DE",
+      "profession": "tailor",
+      "regime": "not_licensed",
+      "access": "none",
+      "ruleUrl": "https://www.gesetze-im-internet.de/hwo/anlage_b.html",
+      "note": "Bespoke tailoring (Maßschneider) is in Anlage B of the Handwerksordnung: anyone may run it, with no Meister needed. It is listed with the chamber, which is not a licence.",
+      "reviewedAt": "2026-10-17"
+    }
+  ]
+}

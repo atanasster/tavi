@@ -1,0 +1,51 @@
+{
+  "name": "@tavi/plugin-local",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/builtin/local"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "description": "The local messaging connection: the TUI's channel, one per workspace, with a conversation per IPC run",
+  "exports": {
+    "./connector": {
+      "development": "./src/connector.ts",
+      "types": "./dist/connector.d.mts",
+      "import": "./dist/connector.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tavi/contracts": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      "./connector": {
+        "types": "./dist/connector.d.mts",
+        "import": "./dist/connector.mjs"
+      },
+      "./package.json": "./package.json"
+    }
+  }
+}

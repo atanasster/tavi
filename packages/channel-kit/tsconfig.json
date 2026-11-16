@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts", "*.config.ts"],
+  // The root tsconfig.tests.json checks it: it imports the repository's vitest.config.ts, which a declaration
+  // build of this package (tsdown's dts) would otherwise emit beside its source at the repository root.
+  "exclude": ["vitest.config.ts"]
+}

@@ -1,0 +1,40 @@
+{
+  "name": "@tavi/plugin-discord",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/external/discord"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "description": "discord.channel: Discord as an external group channel plugin, built to one bundle with its manifest",
+  "files": [
+    "dist-plugin"
+  ],
+  "scripts": {
+    "build": "tsdown && node scripts/assemble.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tavi/channel-kit": "workspace:*",
+    "@tavi/plugin-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@tavi/contracts": "workspace:*",
+    "@tavi/test-support": "workspace:*",
+    "@types/ws": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "ws": "catalog:",
+    "zod": "catalog:"
+  }
+}

@@ -1,0 +1,936 @@
+/* ---------- The Command Center ---------- */
+
+/* What is waiting, on the Center tab: the count the needs pill carried. */
+.view-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--size-count);
+  height: var(--size-count);
+  margin-left: var(--space-1-5);
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-full);
+  background: hsl(var(--warning) / var(--tint-strong));
+  color: hsl(var(--warning));
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The section nav, in the sessions column's frame and width. */
+.center-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+
+.center-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-2-5);
+  width: 100%;
+  padding: var(--space-2) var(--space-2-5);
+  border-radius: var(--radius-sm);
+  color: hsl(var(--muted-foreground));
+  text-align: left;
+}
+
+.center-nav-item:hover:enabled {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+
+.center-nav-item[aria-current="page"] {
+  background: hsl(var(--primary) / var(--tint-medium));
+  color: hsl(var(--primary));
+}
+
+.center-nav-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.center-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.center-count.waiting {
+  color: hsl(var(--warning));
+  font-weight: var(--weight-semibold);
+}
+
+/* Activity: the owner's sustained growth in memory, open files or child processes. */
+.center-health {
+  color: hsl(var(--warning));
+}
+
+.center-health p {
+  margin: 0;
+}
+
+.center-nav-foot {
+  margin: var(--space-4) var(--space-1) 0;
+  padding-top: var(--space-2-5);
+  border-top: var(--border-width) solid var(--line-faint);
+}
+
+/* The page: the section's column and the rail, scrolling as one. */
+.center {
+  flex: 1;
+  min-height: 0;
+  /* The containing block of its `.visually-hidden` labels, as `.runs` is. */
+  position: relative;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--width-rail-column);
+}
+
+/* Schedule alone, against an owner without the Command Center: no rail beside it. */
+.center.center-alone {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.center-main {
+  min-width: 0;
+  padding: var(--space-6) var(--space-7) var(--space-12);
+}
+
+/* The divider between the section and the rail: the section's edge, which
+   runs the page's full length; the rail sticks, so its own stops with it. */
+.center:not(.center-alone) > .center-main {
+  border-right: var(--border-width) solid var(--line-soft);
+}
+
+.center-main > * {
+  max-width: var(--width-page);
+  margin-inline: auto;
+}
+
+.center-unavailable {
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+}
+
+.center-head {
+  align-items: flex-end;
+}
+
+/* The title and its line keep a readable width: below it, the actions wrap under them. */
+.center-head > div {
+  flex: 1 1 var(--card-min-lg);
+  min-width: 0;
+}
+
+/* Schedule's and Heartbeat's actions sit on their own row under the whole
+   intro, rather than squeezing it into half the width. */
+.schedule > .center-head > div,
+.heartbeat-page > .center-head > div {
+  flex-basis: 100%;
+}
+
+/* Whether reminders notify is a line of its own above the buttons: beside them, it pushed New routine onto a row alone. */
+.center-head-actions > :is(.reminder-notify-on, .reminder-notify-off) {
+  flex-basis: 100%;
+}
+
+.center-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-height);
+  padding-inline: var(--space-2-5);
+  border: var(--border-width) solid hsl(var(--input) / var(--alpha-muted));
+  border-radius: var(--radius);
+  background: hsl(var(--card));
+  color: hsl(var(--muted-foreground));
+}
+
+/* In a section head the search keeps its width and wraps below the title
+   rather than shrinking until its placeholder is clipped. */
+.center-head > .center-search {
+  flex: 0 0 auto;
+}
+
+.center-search:focus-within {
+  outline: var(--outline-width) solid hsl(var(--ring));
+  outline-offset: var(--focus-offset);
+}
+
+.center-search input {
+  width: var(--width-search);
+  max-width: 100%;
+  /* The label draws the box and its padding: the field's own would clip the placeholder. */
+  padding-inline: 0;
+  border: 0;
+  outline: 0;
+  /* The label draws the focus ring; the field's own would be a second box inside it. */
+  box-shadow: none;
+  background: none;
+  color: hsl(var(--foreground));
+}
+
+/* The day strip: tasks per day, a bar each, the busiest day full height. */
+.center-strip-card {
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-2-5);
+  font-variant-numeric: tabular-nums;
+}
+
+.center-strip-cap {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-2-5) var(--space-3) 0;
+  font-size: var(--text-sm);
+  color: hsl(var(--muted-foreground));
+}
+
+.center-strip-cap b {
+  color: hsl(var(--foreground));
+  font-weight: var(--weight-semibold);
+}
+
+.center-strip,
+.center-strip-axis {
+  display: grid;
+  grid-template-columns: repeat(var(--center-days), minmax(0, 1fr));
+  gap: var(--space-1);
+  padding-inline: var(--space-3);
+}
+
+.center-strip {
+  align-items: end;
+  height: var(--height-strip);
+  padding-top: var(--space-3);
+}
+
+.center-strip button {
+  min-height: var(--size-bar-min);
+  border-radius: var(--radius-2xs) var(--radius-2xs) 0 0;
+  background: hsl(var(--primary) / var(--tint-heavy));
+  align-self: end;
+}
+
+.center-strip button:hover:enabled,
+.center-strip button.today {
+  background: hsl(var(--primary));
+}
+
+/* A day with no turns: a hairline on the baseline, not a bar that reads as a few. */
+.center-strip button.none {
+  height: 2px;
+  min-height: 2px;
+  background: var(--line-soft);
+}
+
+.center-strip button.none.today,
+.center-strip button.none:hover:enabled {
+  background: hsl(var(--primary) / var(--alpha-faint));
+}
+
+.center-strip button:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.center-strip-axis {
+  padding-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: hsl(var(--muted-foreground));
+  text-align: center;
+}
+
+.center-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  margin-bottom: var(--space-4);
+}
+
+.center-chip {
+  min-height: 0;
+  padding: var(--space-0-5) var(--space-2-5);
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius-full);
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-meta);
+  line-height: var(--leading-4-5);
+}
+
+.center-chip[aria-pressed="true"] {
+  border-color: transparent;
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+}
+
+.center-chip[aria-pressed="true"]:hover:enabled {
+  background: hsl(var(--foreground) / var(--alpha-hover));
+}
+
+/* A day's tasks, under a heading that stays while its rows scroll by. */
+.center-day-head {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-raised);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2-5) 0 var(--space-1-5);
+  border-bottom: var(--border-width) solid var(--line-fainter);
+  background: hsl(var(--background));
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+}
+
+/* The count or date beside a heading, said quietly. */
+.center-day-head span,
+.center-subhead span {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  color: hsl(var(--muted-foreground));
+}
+
+.center-rows {
+  margin: 0 0 var(--space-3);
+}
+
+.center-rows > li {
+  border-bottom: var(--border-width) solid var(--line-faintest);
+}
+
+.center-row {
+  display: grid;
+  grid-template-columns: var(--time-column) minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-3-5);
+  width: 100%;
+  padding: var(--space-3) var(--space-2);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  font-weight: var(--weight-regular);
+}
+
+.center-row:hover:enabled {
+  background: hsl(var(--card));
+}
+
+.center-row time {
+  padding-top: var(--space-px);
+  font-size: var(--text-meta);
+  color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
+}
+
+/* A column of text that may shrink: a row's title over its detail. */
+.center-row-main,
+.center-need-text,
+.center-next-link > span,
+.schedule-what {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.center-row-title {
+  font-weight: var(--weight-strong);
+  overflow-wrap: anywhere;
+}
+
+.center-row-text {
+  margin-top: var(--space-px);
+}
+
+.center-row-meta {
+  margin-top: var(--space-1-5);
+  font-size: var(--text-sm);
+  color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
+}
+
+.channel-icon {
+  flex: none;
+}
+
+/* Where a task came from: a dot in the source's colour, then its name. */
+.center-origin {
+  --tone: var(--muted-foreground);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-px) var(--space-2) var(--space-px) var(--space-1-5);
+  border-radius: var(--radius-full);
+  background: hsl(var(--muted));
+  white-space: nowrap;
+}
+
+.center-origin::before {
+  content: "";
+  width: var(--size-dot);
+  height: var(--size-dot);
+  border-radius: var(--radius-round);
+  background: hsl(var(--tone));
+}
+
+.center-origin-terminal {
+  --tone: var(--foreground);
+}
+
+.center-origin-messaging {
+  --tone: var(--info);
+}
+
+.center-origin-routine {
+  --tone: var(--primary);
+}
+
+.center-origin-agent {
+  --tone: var(--border);
+}
+
+.center-origin-web {
+  --tone: var(--positive);
+}
+
+/* A channel's task: its icon, from its descriptor, in place of the dot. */
+.center-origin-channel {
+  color: hsl(var(--info));
+}
+
+.center-origin-channel::before {
+  content: none;
+}
+
+.center-origin-schedule {
+  --tone: var(--muted-foreground);
+}
+
+/* A row's follow-up prompts: a toggle under the row, the prompts once opened. */
+.center-followups {
+  /* Lines up with .center-row's text column: its padding, time column and gap. */
+  padding: 0 var(--space-2) var(--space-2-5) calc(var(--space-2) + var(--time-column) + var(--space-3-5));
+  font-size: var(--text-meta);
+}
+
+.center-followups-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-0-5) var(--space-1-5);
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.center-followups-toggle:hover {
+  color: hsl(var(--foreground));
+}
+
+.center-followups-list {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: var(--space-1-5) 0 0;
+  padding: 0 0 0 var(--space-1-5);
+  list-style: none;
+}
+
+.center-followups-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2-5);
+}
+
+/* A list's timestamps: muted figures that never wrap. */
+.center-followups-list time,
+.browser-visits-list time {
+  color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.center-followups-list span {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.center-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+}
+
+.center-mark-done {
+  color: hsl(var(--positive));
+}
+
+.center-mark-working {
+  color: hsl(var(--info));
+}
+
+.center-mark-needs {
+  color: hsl(var(--warning));
+}
+
+.center-mark-failed {
+  color: hsl(var(--destructive));
+}
+
+.center-pulse {
+  width: var(--size-dot-md);
+  height: var(--size-dot-md);
+  border-radius: var(--radius-round);
+  background: currentColor;
+  animation: center-pulse var(--duration-pulse) var(--ease-in-out) infinite;
+}
+
+@keyframes center-pulse {
+  50% {
+    opacity: var(--opacity-faint);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .center-pulse {
+    animation: none;
+  }
+}
+
+.center-more {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-4);
+}
+
+/* The rail: what needs the reader, what runs next, a few figures. */
+.center-rail {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  display: grid;
+  align-content: start;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-4);
+}
+
+.center-rail h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-widest);
+}
+
+.center-rail .empty {
+  margin: 0;
+  font-size: var(--text-base);
+}
+
+.center-need {
+  display: grid;
+  grid-template-columns: var(--size-avatar-xs) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) 0;
+  border-bottom: var(--border-width) solid var(--line-faintest);
+  text-align: left;
+  font-size: var(--text-base);
+  font-weight: var(--weight-regular);
+}
+
+.center-needs li:last-child .center-need {
+  border-bottom: 0;
+}
+
+.center-need:hover {
+  color: hsl(var(--primary));
+}
+
+.center-need-icon {
+  display: grid;
+  place-items: center;
+  width: var(--size-avatar-xs);
+  height: var(--size-avatar-xs);
+  border-radius: var(--radius-sm);
+  background: hsl(var(--warning) / var(--tint-strong));
+  color: hsl(var(--warning));
+}
+
+.center-need-title {
+  font-weight: var(--weight-strong);
+}
+
+/* A coming-up entry is a link to Schedule. */
+.center-next-link {
+  display: grid;
+  grid-template-columns: var(--time-column-narrow) minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: var(--space-1-5) 0;
+  font-size: var(--text-base);
+  color: inherit;
+  text-decoration: none;
+}
+
+.center-next-link:hover .center-next-title {
+  color: hsl(var(--primary));
+}
+
+.center-next time {
+  font-size: var(--text-meta);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.center-next-title {
+  overflow-wrap: anywhere;
+}
+
+.center-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2-5);
+  margin: 0;
+  padding: var(--space-3);
+}
+
+.center-stats > div {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+}
+
+.center-stats dt {
+  font-size: var(--text-sm);
+  color: hsl(var(--muted-foreground));
+}
+
+.center-stats dd {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tighter);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Approvals: what waits, as cards with a risk stripe, then the history table. */
+.center-subhead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.center-subhead:focus {
+  outline: none;
+}
+
+/* A subhead whose hint sits beside its heading rather than in it: the heading takes the line's type. */
+.center-subhead > h2 {
+  margin: 0;
+  font: inherit;
+}
+
+.center-empty {
+  margin: 0 0 var(--space-6);
+}
+
+.center-cards {
+  display: grid;
+  gap: var(--space-2-5);
+  margin: 0 0 var(--space-7);
+}
+
+.center-card {
+  position: relative;
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3-5) var(--space-4) var(--space-3-5) var(--space-4-5);
+  overflow: hidden;
+}
+
+/* A card's accent stripe down its left edge. */
+.center-card::before,
+.need::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--stripe-width-lg);
+}
+
+/* The stripe is the round's risk, in its tone; a round with none recorded has none. */
+.center-card-low { --tone: var(--positive); }
+.center-card-medium { --tone: var(--info); }
+.center-card-high { --tone: var(--warning); }
+.center-card-critical { --tone: var(--destructive); }
+
+.center-card-medium::before,
+.center-card-high::before,
+.center-card-critical::before {
+  background: hsl(var(--tone));
+}
+
+.center-card-low::before {
+  background: hsl(var(--tone) / var(--alpha-muted));
+}
+
+.center-card h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.center-tool {
+  padding: var(--space-px) var(--space-1-5);
+  border-radius: var(--radius-sm);
+  background: hsl(var(--muted));
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.center-risk-tag {
+  color: hsl(var(--muted-foreground));
+}
+
+.center-card-low .center-risk-tag,
+.center-card-medium .center-risk-tag,
+.center-card-high .center-risk-tag,
+.center-card-critical .center-risk-tag {
+  color: hsl(var(--tone));
+}
+
+.center-card-ctx,
+.center-card-hint {
+  margin: 0;
+}
+
+.center-card-ctx a,
+.center-history a {
+  color: hsl(var(--primary));
+}
+
+.center-expires {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.center-card-calls {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--text-base);
+}
+
+.center-card .confirmation {
+  margin: 0;
+}
+
+.center-card-decided {
+  padding-block: var(--space-2-5);
+}
+
+.center-decided {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-base);
+  color: hsl(var(--muted-foreground));
+}
+
+.center-decided-what {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.center-verdict {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+}
+
+.center-verdict-approved,
+.center-verdict-answered { color: hsl(var(--positive)); }
+.center-verdict-rejected { color: hsl(var(--destructive)); }
+.center-verdict-expired,
+.center-verdict-cancelled { color: hsl(var(--muted-foreground)); }
+
+/* The history scrolls sideways on a phone rather than squeezing its columns. */
+.center-table-wrap {
+  overflow-x: auto;
+}
+
+.center-history {
+  width: 100%;
+  min-width: var(--width-table-min);
+  border-collapse: collapse;
+  font-size: var(--text-base);
+  font-variant-numeric: tabular-nums;
+}
+
+.center-history th {
+  padding: var(--space-2-5) var(--space-3);
+  border-bottom: var(--border-width) solid var(--line-faint);
+  text-align: left;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: hsl(var(--muted-foreground));
+}
+
+.center-history td {
+  padding: var(--space-2-5) var(--space-3);
+  border-bottom: var(--border-width) solid var(--line-faintest);
+  vertical-align: top;
+}
+
+.center-history tr:last-child td {
+  border-bottom: 0;
+}
+
+.center-history-request {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1);
+  max-width: var(--width-cell-max);
+  overflow-wrap: anywhere;
+}
+
+.center-history a {
+  font-size: var(--text-sm);
+}
+
+.center-history-when {
+  white-space: nowrap;
+}
+
+.center-scope {
+  padding: var(--space-px) var(--space-1-5);
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.center-scope-always {
+  border-color: hsl(var(--primary) / var(--alpha-half));
+  color: hsl(var(--primary));
+}
+
+a.center-need {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Below the docked width, too narrow for the three columns: the rail goes under the section. */
+@media (--undocked) {
+  .center {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .center:not(.center-alone) > .center-main {
+    border-right: 0;
+  }
+
+  .center-rail {
+    position: static;
+    grid-template-columns: repeat(auto-fit, minmax(var(--card-min-md), 1fr));
+    padding: var(--space-5) var(--space-7) var(--space-10);
+    border-top: var(--border-width) solid var(--line-soft);
+  }
+}
+
+/* A phone: the section nav is a scrolling segmented control under the bar. */
+@media (--phone) {
+  .center-nav {
+    max-height: none;
+    background: hsl(var(--background));
+  }
+
+  .center-nav .sidebar-head,
+  .center-nav .center-nav-foot {
+    display: none;
+  }
+
+  .center-nav .sidebar-body {
+    overflow-x: auto;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .center-nav-list {
+    flex-direction: row;
+    gap: var(--space-1);
+  }
+
+  .settings-nav .sidebar-body {
+    display: flex;
+    gap: var(--space-1);
+  }
+
+  .settings-nav-heading {
+    display: none;
+  }
+
+  .center-nav-item {
+    width: auto;
+    padding: var(--space-1-5) var(--space-2-5);
+    white-space: nowrap;
+  }
+
+  .center-nav-label {
+    flex: none;
+  }
+
+  .center-main {
+    padding: var(--space-4-5) var(--space-4) var(--space-8);
+  }
+
+  .center-rail {
+    padding: var(--space-5) var(--space-4) var(--space-8);
+  }
+
+  .center-row {
+    grid-template-columns: var(--time-column-phone) minmax(0, 1fr);
+  }
+
+  .center-row .center-mark {
+    grid-column: 2;
+  }
+
+  .center-followups {
+    /* The phone row's text column: its padding, time column and gap. */
+    padding-left: calc(var(--space-2) + var(--time-column-phone) + var(--space-3-5));
+  }
+
+  .center-search {
+    width: 100%;
+  }
+
+  .center-search input {
+    width: 100%;
+  }
+
+  /* A phone: a section's description, then its actions below it. */
+  .center-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .center-head > div {
+    flex: none;
+  }
+
+  .center-head > .center-search {
+    flex: none;
+    box-sizing: border-box;
+  }
+}

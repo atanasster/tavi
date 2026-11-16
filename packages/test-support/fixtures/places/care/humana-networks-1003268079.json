@@ -1,0 +1,484 @@
+{
+  "resourceType": "Bundle",
+  "type": "searchset",
+  "timestamp": "2026-10-17T08:13:14.192+00:00",
+  "meta": {
+    "lastUpdated": "2026-10-17T08:13:14.192+00:00",
+    "versionId": "0c77df1f-24fd-4281-b495-bfff06429688"
+  },
+  "entry": [
+    {
+      "fullUrl": "https://fhir.humana.com/api/Organization/03cd033222113e73b7486b78eebf3c4b63c3723229527c508b42baa26535a297",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Organization",
+        "id": "03cd033222113e73b7486b78eebf3c4b63c3723229527c508b42baa26535a297",
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/OrgTypeCS",
+                "code": "ntwk",
+                "display": "Network"
+              }
+            ]
+          }
+        ],
+        "name": "Medicare PPO27",
+        "partOf": {
+          "reference": "https://fhir.humana.com/api/Organization/67c29814ee1eb20b1be2c2c692cfdd2cfb84e919a867998eccd1762b7b785780",
+          "display": "Humana"
+        },
+        "meta": {
+          "versionId": "c0b9a0b7-a023-44e1-9a63-7da789b165c0",
+          "lastUpdated": "2026-05-13T03:58:15.554+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/Organization/08debbaaea60d87ef1c300c904f8640b9ab7feb2fad166f73486b4193dbdef8f",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Organization",
+        "id": "08debbaaea60d87ef1c300c904f8640b9ab7feb2fad166f73486b4193dbdef8f",
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/OrgTypeCS",
+                "code": "ntwk",
+                "display": "Network"
+              }
+            ]
+          }
+        ],
+        "name": "Natl Medicare HMO/SNP-Travel27",
+        "partOf": {
+          "reference": "https://fhir.humana.com/api/Organization/67c29814ee1eb20b1be2c2c692cfdd2cfb84e919a867998eccd1762b7b785780",
+          "display": "Humana"
+        },
+        "meta": {
+          "versionId": "a35dc156-fd3d-4da0-8f84-1132e6204366",
+          "lastUpdated": "2026-05-13T03:58:15.356+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/Organization/2926c2101d66317884ed5a3eddff8442283ad02fe8c8df5b837637a421de3bd3",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Organization",
+        "id": "2926c2101d66317884ed5a3eddff8442283ad02fe8c8df5b837637a421de3bd3",
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/OrgTypeCS",
+                "code": "ntwk",
+                "display": "Network"
+              }
+            ]
+          }
+        ],
+        "name": "Gold Plus HMO and SNP H0028",
+        "partOf": {
+          "reference": "https://fhir.humana.com/api/Organization/67c29814ee1eb20b1be2c2c692cfdd2cfb84e919a867998eccd1762b7b785780",
+          "display": "Humana"
+        },
+        "meta": {
+          "versionId": "c3cb841f-d293-4be9-a31d-55ac83b83f16",
+          "lastUpdated": "2025-10-05T18:47:10.214+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/Organization/2da0fdd6843fcd0dab404299e40262a174491f69e3217cf9e040112e2f126594",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Organization",
+        "id": "2da0fdd6843fcd0dab404299e40262a174491f69e3217cf9e040112e2f126594",
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/OrgTypeCS",
+                "code": "ntwk",
+                "display": "Network"
+              }
+            ]
+          }
+        ],
+        "name": "Employer HMO27",
+        "partOf": {
+          "reference": "https://fhir.humana.com/api/Organization/67c29814ee1eb20b1be2c2c692cfdd2cfb84e919a867998eccd1762b7b785780",
+          "display": "Humana"
+        },
+        "meta": {
+          "versionId": "b7971f7c-55e6-4f1e-84dc-d5e186a7d953",
+          "lastUpdated": "2026-06-12T05:49:52.880+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/Organization/589617b1fed7e55196ea805f5f4f9fa95b14102e1e0f5edb247eb4706ad8dea5",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Organization",
+        "id": "589617b1fed7e55196ea805f5f4f9fa95b14102e1e0f5edb247eb4706ad8dea5",
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/OrgTypeCS",
+                "code": "ntwk",
+                "display": "Network"
+              }
+            ]
+          }
+        ],
+        "name": "Gold Plus HMO27",
+        "partOf": {
+          "reference": "https://fhir.humana.com/api/Organization/67c29814ee1eb20b1be2c2c692cfdd2cfb84e919a867998eccd1762b7b785780",
+          "display": "Humana"
+        },
+        "meta": {
+          "versionId": "e4aead50-b8ec-4179-93cf-8ed12e319d4c",
+          "lastUpdated": "2026-06-06T16:15:49.257+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/Organization/751baa4643af4db68e1bb82a5dc5f342b59c310aae7d479aeabcee792a60b2be",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Organization",
+        "id": "751baa4643af4db68e1bb82a5dc5f342b59c310aae7d479aeabcee792a60b2be",
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/OrgTypeCS",
+                "code": "ntwk",
+                "display": "Network"
+              }
+            ]
+          }
+        ],
+        "name": "Gold Plus DSNP H002827",
+        "partOf": {
+          "reference": "https://fhir.humana.com/api/Organization/67c29814ee1eb20b1be2c2c692cfdd2cfb84e919a867998eccd1762b7b785780",
+          "display": "Humana"
+        },
+        "meta": {
+          "versionId": "6aac3afd-0ccb-4644-bf02-f32419a08c56",
+          "lastUpdated": "2026-09-17T01:20:37.488+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/Organization/757f8644582e8124a51243d1f8f64cb9b48f81d59263d6cd1233034c32d3751d",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Organization",
+        "id": "757f8644582e8124a51243d1f8f64cb9b48f81d59263d6cd1233034c32d3751d",
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/OrgTypeCS",
+                "code": "ntwk",
+                "display": "Network"
+              }
+            ]
+          }
+        ],
+        "name": "Gold Plus HMO and SNP H4461",
+        "partOf": {
+          "reference": "https://fhir.humana.com/api/Organization/67c29814ee1eb20b1be2c2c692cfdd2cfb84e919a867998eccd1762b7b785780",
+          "display": "Humana"
+        },
+        "meta": {
+          "versionId": "8d2b0715-a71a-4c32-873a-92651dc1e5a5",
+          "lastUpdated": "2026-02-01T02:10:24.448+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/Organization/b4da7dceca660702845c3227ed63e31ec77ed893dd567d7156a4a22d062a1790",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Organization",
+        "id": "b4da7dceca660702845c3227ed63e31ec77ed893dd567d7156a4a22d062a1790",
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/OrgTypeCS",
+                "code": "ntwk",
+                "display": "Network"
+              }
+            ]
+          }
+        ],
+        "name": "Group Medicare PPO+",
+        "partOf": {
+          "reference": "https://fhir.humana.com/api/Organization/67c29814ee1eb20b1be2c2c692cfdd2cfb84e919a867998eccd1762b7b785780",
+          "display": "Humana"
+        },
+        "meta": {
+          "versionId": "57bbd579-bbaf-46d5-97cd-4d691397659e",
+          "lastUpdated": "2026-09-29T13:41:26.979+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/Organization/cb357a5b3820b4f9f7db7b87d308696ef3dc853c4da446594e628d2baeef9ef8",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Organization",
+        "id": "cb357a5b3820b4f9f7db7b87d308696ef3dc853c4da446594e628d2baeef9ef8",
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/OrgTypeCS",
+                "code": "ntwk",
+                "display": "Network"
+              }
+            ]
+          }
+        ],
+        "name": "Gold Plus HMO/SNP H446127",
+        "partOf": {
+          "reference": "https://fhir.humana.com/api/Organization/67c29814ee1eb20b1be2c2c692cfdd2cfb84e919a867998eccd1762b7b785780",
+          "display": "Humana"
+        },
+        "meta": {
+          "versionId": "2ac14089-fc11-43e0-8073-f250d3697ec8",
+          "lastUpdated": "2026-10-01T10:50:07.874+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/Organization/e415c8070b87155de1019fb86d90e01beed27a7a901b3155254b848b9a4821b1",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Organization",
+        "id": "e415c8070b87155de1019fb86d90e01beed27a7a901b3155254b848b9a4821b1",
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/OrgTypeCS",
+                "code": "ntwk",
+                "display": "Network"
+              }
+            ]
+          }
+        ],
+        "name": "HumanaGoldChoice Ntwk PFFS27",
+        "partOf": {
+          "reference": "https://fhir.humana.com/api/Organization/67c29814ee1eb20b1be2c2c692cfdd2cfb84e919a867998eccd1762b7b785780",
+          "display": "Humana"
+        },
+        "meta": {
+          "versionId": "70a32e2e-13ff-46f7-be7c-b804847c0376",
+          "lastUpdated": "2026-05-13T03:58:15.052+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/Organization/07e4a92d1b7925b3bc442583523d3c8133b4342e142640e44dc6bf9086d94b8e",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Organization",
+        "id": "07e4a92d1b7925b3bc442583523d3c8133b4342e142640e44dc6bf9086d94b8e",
+        "meta": {
+          "versionId": "2d059574-97c6-4f9a-a9cc-4c41a94f79f4",
+          "lastUpdated": "2024-12-18T05:54:32.888+00:00"
+        },
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/OrgTypeCS",
+                "code": "ntwk",
+                "display": "Network"
+              }
+            ]
+          }
+        ],
+        "name": "Employer HMO Austin",
+        "partOf": {
+          "reference": "https://fhir.humana.com/api/Organization/67c29814ee1eb20b1be2c2c692cfdd2cfb84e919a867998eccd1762b7b785780",
+          "display": "Humana"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/Organization/36686bbb76934b2b0c0f1311f941d3c531a379d6f87b716552c41ee7cb2675d2",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Organization",
+        "id": "36686bbb76934b2b0c0f1311f941d3c531a379d6f87b716552c41ee7cb2675d2",
+        "meta": {
+          "versionId": "2ca4d50c-18c1-46db-b6be-0752afbe97ed",
+          "lastUpdated": "2024-12-18T05:54:15.583+00:00"
+        },
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/OrgTypeCS",
+                "code": "ntwk",
+                "display": "Network"
+              }
+            ]
+          }
+        ],
+        "name": "Gold Plus HMO",
+        "partOf": {
+          "reference": "https://fhir.humana.com/api/Organization/67c29814ee1eb20b1be2c2c692cfdd2cfb84e919a867998eccd1762b7b785780",
+          "display": "Humana"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/Organization/5d626ffed77edf02baec65eb1803acff508bd70bf6a0d695c3f112ca1f4bc4de",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Organization",
+        "id": "5d626ffed77edf02baec65eb1803acff508bd70bf6a0d695c3f112ca1f4bc4de",
+        "meta": {
+          "versionId": "e7aeafd7-76a9-4676-bba1-90eef052b142",
+          "lastUpdated": "2024-12-18T05:54:13.737+00:00"
+        },
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/OrgTypeCS",
+                "code": "ntwk",
+                "display": "Network"
+              }
+            ]
+          }
+        ],
+        "name": "Natl Medicare HMO/SNP-Travel",
+        "partOf": {
+          "reference": "https://fhir.humana.com/api/Organization/67c29814ee1eb20b1be2c2c692cfdd2cfb84e919a867998eccd1762b7b785780",
+          "display": "Humana"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/Organization/c3a4fb61d18f07155aacdcdbc006ad4c9e0fd7ef34ccdadcb2781da408c6b5ae",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Organization",
+        "id": "c3a4fb61d18f07155aacdcdbc006ad4c9e0fd7ef34ccdadcb2781da408c6b5ae",
+        "meta": {
+          "versionId": "6b4913e9-04d1-4fca-8893-5b74b3d619f6",
+          "lastUpdated": "2024-12-18T05:54:13.736+00:00"
+        },
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/OrgTypeCS",
+                "code": "ntwk",
+                "display": "Network"
+              }
+            ]
+          }
+        ],
+        "name": "HumanaGoldChoice Ntwk PFFS",
+        "partOf": {
+          "reference": "https://fhir.humana.com/api/Organization/67c29814ee1eb20b1be2c2c692cfdd2cfb84e919a867998eccd1762b7b785780",
+          "display": "Humana"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/Organization/f8d3bbe174ecae019d3d0f1c9ba7b9653e31f49e30b2f66795e77c119b51ba14",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Organization",
+        "id": "f8d3bbe174ecae019d3d0f1c9ba7b9653e31f49e30b2f66795e77c119b51ba14",
+        "meta": {
+          "versionId": "aa726809-ee3e-4b85-8e4d-6e74370a7983",
+          "lastUpdated": "2024-12-18T05:54:13.825+00:00"
+        },
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/OrgTypeCS",
+                "code": "ntwk",
+                "display": "Network"
+              }
+            ]
+          }
+        ],
+        "name": "Medicare PPO",
+        "partOf": {
+          "reference": "https://fhir.humana.com/api/Organization/67c29814ee1eb20b1be2c2c692cfdd2cfb84e919a867998eccd1762b7b785780",
+          "display": "Humana"
+        }
+      }
+    }
+  ],
+  "total": 15,
+  "link": [
+    {
+      "relation": "self",
+      "url": "https://fhir.humana.com/api/Organization?_id=03cd033222113e73b7486b78eebf3c4b63c3723229527c508b42baa26535a297%2C07e4a92d1b7925b3bc442583523d3c8133b4342e142640e44dc6bf9086d94b8e%2C08debbaaea60d87ef1c300c904f8640b9ab7feb2fad166f73486b4193dbdef8f%2C2926c2101d66317884ed5a3eddff8442283ad02fe8c8df5b837637a421de3bd3%2C2da0fdd6843fcd0dab404299e40262a174491f69e3217cf9e040112e2f126594%2C36686bbb76934b2b0c0f1311f941d3c531a379d6f87b716552c41ee7cb2675d2%2C589617b1fed7e55196ea805f5f4f9fa95b14102e1e0f5edb247eb4706ad8dea5%2C5d626ffed77edf02baec65eb1803acff508bd70bf6a0d695c3f112ca1f4bc4de%2C751baa4643af4db68e1bb82a5dc5f342b59c310aae7d479aeabcee792a60b2be%2C757f8644582e8124a51243d1f8f64cb9b48f81d59263d6cd1233034c32d3751d%2Cb4da7dceca660702845c3227ed63e31ec77ed893dd567d7156a4a22d062a1790%2Cc3a4fb61d18f07155aacdcdbc006ad4c9e0fd7ef34ccdadcb2781da408c6b5ae%2Ccb357a5b3820b4f9f7db7b87d308696ef3dc853c4da446594e628d2baeef9ef8%2Ce415c8070b87155de1019fb86d90e01beed27a7a901b3155254b848b9a4821b1%2Cf8d3bbe174ecae019d3d0f1c9ba7b9653e31f49e30b2f66795e77c119b51ba14&_total=estimate&_count=50&_skip=0"
+    }
+  ],
+  "id": "a195d796-ee6e-41cb-852a-062b0ec79152"
+}

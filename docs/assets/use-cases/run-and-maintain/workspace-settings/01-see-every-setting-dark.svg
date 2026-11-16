@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1384" height="722" viewBox="0 0 1384 722" role="img">
+<rect width="1384" height="722" rx="12" fill="#141e1a" stroke="#26332e"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="692" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#9aaba3">tavi config get</text>
+<line x1="0" y1="36" x2="1384" y2="36" stroke="#26332e"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#e6efea">workspace.timezone = Europe/London (default: host zone)</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#e6efea">operator.name = unset (default)</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#e6efea">activity.summaries = on (default)</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#e6efea">activity.summaryModel = the fast role when bound, else the task's own model (default)</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#e6efea">browser.noThumbnailHosts = mail.google.com,outlook.live.com,outlook.office.com,outlook.office365.com,mail.yahoo.com,mail.proton.me,*.paypal.com,*.bank (default)</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#e6efea">browser.sessionIdleMinutes = 30 minutes (default)</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#e6efea">browser.downloadMaxMiB = 256 MiB (default)</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#e6efea">browser.visionEngine = generic (default)</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#e6efea">desktop.grantedApps = none (default)</tspan></text>
+<text x="20" y="241.0" xml:space="preserve"><tspan fill="#e6efea">ui.roles = built-in (default)</tspan></text>
+<text x="20" y="260.0" xml:space="preserve"><tspan fill="#e6efea">ui.placements = each manifest's own (default)</tspan></text>
+<text x="20" y="279.0" xml:space="preserve"><tspan fill="#e6efea">chat.home = on (default)</tspan></text>
+<text x="20" y="298.0" xml:space="preserve"><tspan fill="#e6efea">chat.home-dm = off (default)</tspan></text>
+<text x="20" y="317.0" xml:space="preserve"><tspan fill="#e6efea">models.keptRequests = 10 (default)</tspan></text>
+<text x="20" y="336.0" xml:space="preserve"><tspan fill="#e6efea">models.maxOutputTokens = 16384 (default)</tspan></text>
+<text x="20" y="355.0" xml:space="preserve"><tspan fill="#e6efea">scheduled.monthlyTokenBudget = none (default)</tspan></text>
+<text x="20" y="374.0" xml:space="preserve"><tspan fill="#e6efea">models.promptLayout = v2 (default)</tspan></text>
+<text x="20" y="393.0" xml:space="preserve"><tspan fill="#e6efea">models.toolDeferral = auto (default)</tspan></text>
+<text x="20" y="412.0" xml:space="preserve"><tspan fill="#e6efea">tasks.home = tavi (default)</tspan></text>
+<text x="20" y="431.0" xml:space="preserve"><tspan fill="#e6efea">travel.flightSearch = on (default)</tspan></text>
+<text x="20" y="450.0" xml:space="preserve"><tspan fill="#e6efea">travel.googleFlights = on (default)</tspan></text>
+<text x="20" y="469.0" xml:space="preserve"><tspan fill="#e6efea">skills.suggestions = on (default)</tspan></text>
+<text x="20" y="488.0" xml:space="preserve"><tspan fill="#e6efea">pdf.enabled = on (default)</tspan></text>
+<text x="20" y="507.0" xml:space="preserve"><tspan fill="#e6efea">video.enabled = on (default)</tspan></text>
+<text x="20" y="526.0" xml:space="preserve"><tspan fill="#e6efea">video.keepDays = 30 days (default)</tspan></text>
+<text x="20" y="545.0" xml:space="preserve"><tspan fill="#e6efea">tools.redactResults = on (default)</tspan></text>
+<text x="20" y="564.0" xml:space="preserve"><tspan fill="#e6efea">tools.parallelReads = 8 (default)</tspan></text>
+<text x="20" y="583.0" xml:space="preserve"><tspan fill="#e6efea">memory = defaults (default)</tspan></text>
+<text x="20" y="602.0" xml:space="preserve"><tspan fill="#e6efea">security.taint = enforce (default)</tspan></text>
+<text x="20" y="621.0" xml:space="preserve"><tspan fill="#e6efea">security.injectionDetector = patterns (default)</tspan></text>
+<text x="20" y="640.0" xml:space="preserve"><tspan fill="#e6efea">mcp.servers = none (default)</tspan></text>
+<text x="20" y="659.0" xml:space="preserve"><tspan fill="#e6efea">mcp.people = none (default)</tspan></text>
+<text x="20" y="678.0" xml:space="preserve"><tspan fill="#e6efea">sandbox.domains = none (default)</tspan></text>
+<text x="20" y="697.0" xml:space="preserve"><tspan fill="#e6efea">sandbox.network = granted (default)</tspan></text>
+</g>
+</svg>

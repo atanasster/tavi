@@ -1,0 +1,127 @@
+{
+ "exhaustive": {
+  "nbHits": false,
+  "typo": false
+ },
+ "exhaustiveNbHits": false,
+ "exhaustiveTypo": false,
+ "hits": [
+  {
+   "_tags": [
+    "story",
+    "author_Brajeshwar",
+    "story_45581579"
+   ],
+   "author": "user0",
+   "created_at": "2025-10-14T15:56:46Z",
+   "created_at_i": 1760457406,
+   "num_comments": 0,
+   "objectID": "45581579",
+   "points": 2,
+   "story_id": 45581579,
+   "title": "Self-healing layer improves safety and lifespan of solid-state lithium batteries",
+   "updated_at": "2026-03-05T22:52:26Z",
+   "url": "https://techxplore.com/news/2025-10-layer-safety-lifespan-solid-state.html"
+  },
+  {
+   "_tags": [
+    "story",
+    "author_rbanffy",
+    "story_45553338"
+   ],
+   "author": "user1",
+   "created_at": "2025-10-11T22:49:23Z",
+   "created_at_i": 1760222963,
+   "num_comments": 0,
+   "objectID": "45553338",
+   "points": 2,
+   "story_id": 45553338,
+   "title": "How close are we to solid state batteries for electric vehicles?",
+   "updated_at": "2026-03-05T22:50:30Z",
+   "url": "https://knowablemagazine.org/content/article/technology/2025/next-gen-car-batteries-get-closer-to-hitting-road"
+  },
+  {
+   "_tags": [
+    "story",
+    "author_thelastgallon",
+    "story_45542423"
+   ],
+   "author": "user2",
+   "children": [
+    45543665,
+    45543236,
+    45543543,
+    45543312,
+    45544577,
+    45543310,
+    45543175,
+    45543094,
+    45543246,
+    45543463,
+    45545136
+   ],
+   "created_at": "2025-10-10T18:53:22Z",
+   "created_at_i": 1760122402,
+   "num_comments": 118,
+   "objectID": "45542423",
+   "points": 114,
+   "story_id": 45542423,
+   "title": "Toyota aims to launch the ' first' all-solid-state EV batteries",
+   "updated_at": "2026-03-05T22:49:45Z",
+   "url": "https://electrek.co/2025/10/08/toyota-aims-to-launch-worlds-first-all-solid-state-ev-batteries/"
+  },
+  {
+   "_tags": [
+    "story",
+    "author_nicoburns",
+    "story_45527318"
+   ],
+   "author": "user3",
+   "created_at": "2025-10-09T13:19:55Z",
+   "created_at_i": 1760015995,
+   "num_comments": 0,
+   "objectID": "45527318",
+   "points": 1,
+   "story_id": 45527318,
+   "title": "Solid-State Batteries Are Here, but There's a Catch [video]",
+   "updated_at": "2026-03-05T22:48:41Z",
+   "url": "https://www.youtube.com/watch?v=fJ92EnWYbcQ"
+  },
+  {
+   "_tags": [
+    "story",
+    "author_rbanffy",
+    "story_45461644"
+   ],
+   "author": "user4",
+   "created_at": "2025-10-03T11:28:58Z",
+   "created_at_i": 1759490938,
+   "num_comments": 0,
+   "objectID": "45461644",
+   "points": 1,
+   "story_id": 45461644,
+   "title": "Solid-state technology shows promise for faster, safer EV battery power",
+   "updated_at": "2026-03-05T22:49:25Z",
+   "url": "https://knowablemagazine.org/content/article/technology/2025/next-gen-car-batteries-get-closer-to-hitting-road"
+  }
+ ],
+ "hitsPerPage": 5,
+ "nbHits": 6,
+ "nbPages": 2,
+ "page": 0,
+ "params": "query=solid-state+battery&tags=story&numericFilters=created_at_i%3E1758067200%2Ccreated_at_i%3C1760659200&hitsPerPage=5&advancedSyntax=true&analyticsTags=backend",
+ "processingTimeMS": 8,
+ "processingTimingsMS": {
+  "_request": {
+   "queue": 1,
+   "roundTrip": 18
+  },
+  "fetch": {
+   "query": 5,
+   "total": 6
+  },
+  "total": 8
+ },
+ "query": "solid-state battery",
+ "serverTimeMS": 9
+}

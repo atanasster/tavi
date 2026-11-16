@@ -1,0 +1,44 @@
+{
+  "args": [
+    "<srt-cli>",
+    "--settings",
+    "<policy-file>",
+    "--",
+    "/usr/bin/env",
+    "TMPDIR=",
+    "/usr/bin/node",
+    "--max-old-space-size=512",
+    "/opt/tavi/plugin-pdf/dist/ocr-child.mjs",
+    "/opt/tavi/pdf-ocr/assets/tesseract-core.wasm.js",
+    "/opt/tavi/pdf-ocr/assets/tesseract-core.wasm",
+    "/opt/tavi/pdf-ocr/assets/eng.traineddata"
+  ],
+  "written": {
+    "network": {
+      "allowedDomains": [],
+      "deniedDomains": [],
+      "strictAllowlist": true
+    },
+    "filesystem": {
+      "denyRead": [
+        "/home/person",
+        "/srv/tavi-data",
+        "/tmp/tavi-1000",
+        "/tmp/tavi-render-*"
+      ],
+      "allowRead": [
+        "<node>",
+        "<srt-helpers>",
+        "/opt/tavi/plugin-pdf",
+        "/opt/tavi/pdf-ocr/assets"
+      ],
+      "allowWrite": [],
+      "denyWrite": [
+        "/private/tmp/claude",
+        "/tmp/claude",
+        "/home/person/.npm/_logs",
+        "/home/person/.claude/debug"
+      ]
+    }
+  }
+}

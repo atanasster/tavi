@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "acme.guard",
+  "version": "0.1.0",
+  "name": "Guard",
+  "description": "Asks before shell commands that delete or overwrite files (docs/MODS.md, Example 3).",
+  "entry": "index.mjs",
+  "mods": {
+    "abi": "tavi.mods/1",
+    "hooks": [
+      {
+        "event": "tool.check",
+        "match": { "tools": ["sandbox.run"] },
+        "onFailure": "ask",
+        "disclosure": "Asks before shell commands that delete or overwrite files."
+      }
+    ]
+  }
+}

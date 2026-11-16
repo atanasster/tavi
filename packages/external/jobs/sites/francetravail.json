@@ -1,0 +1,33 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "francetravail",
+  "name": "France Travail",
+  "countries": [
+    "FR"
+  ],
+  "hosts": [
+    "candidat.francetravail.fr",
+    "www.francetravail.fr"
+  ],
+  "kind": "jobs-board",
+  "access": {
+    "mode": "assist-only",
+    "navigate": false,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "France Travail withdrew its job offers API after massive automated use by AI tools. Its website's terms have not been reviewed for automation, so Tavi does not browse it.",
+    "termsUrl": "https://www.data.gouv.fr/dataservices/api-offres-demploi",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "JobPosting"
+    ]
+  },
+  "notes": "Tavi never browses France Travail. It reads a page you opened, for the chat."
+}

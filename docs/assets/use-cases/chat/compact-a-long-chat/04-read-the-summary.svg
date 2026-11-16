@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="722" viewBox="0 0 880 722" role="img">
+<rect width="880" height="722" rx="12" fill="#ffffff" stroke="#d9e0dc"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="440" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#52605a">tavi tasks history</text>
+<line x1="0" y1="36" x2="880" y2="36" stroke="#d9e0dc"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#132620"># Home</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#132620">## Earlier, in summary</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#132620">[compaction:epoch] epoch 1: 4 earlier message(s) (ids input-admission-mw6meq34-3..assistant-attempt-</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#132620">mw6meula-a) were archived as artifact art-40e85307-ccb9-45d9-b9b3-2c7091047cfc at 2026-11-07T16:31:3</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#132620">8.191Z. The chat goes on; this is what came before. compactorVersion: epoch-fold-v1.</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#132620">Requests in this span (oldest first):</tspan></text>
+<text x="20" y="241.0" xml:space="preserve"><tspan fill="#132620">- "Give one tip for growing basil indoors, in one sentence."</tspan></text>
+<text x="20" y="260.0" xml:space="preserve"><tspan fill="#132620">- "And one tip for growing mint, in one sentence."</tspan></text>
+<text x="20" y="279.0" xml:space="preserve"></text>
+<text x="20" y="298.0" xml:space="preserve"><tspan fill="#132620">## Turn 1 · 2026-11-07T16:31:26.247Z</tspan></text>
+<text x="20" y="317.0" xml:space="preserve"></text>
+<text x="20" y="336.0" xml:space="preserve"><tspan fill="#132620">&gt; Give one tip for growing basil indoors, in one sentence.</tspan></text>
+<text x="20" y="355.0" xml:space="preserve"></text>
+<text x="20" y="374.0" xml:space="preserve"><tspan fill="#132620">Place your basil on a south-facing windowsill where it receives at least six hours of direct sunligh</tspan></text>
+<text x="20" y="393.0" xml:space="preserve"><tspan fill="#132620">t daily, and water at the base whenever the top inch of soil feels dry.</tspan></text>
+<text x="20" y="412.0" xml:space="preserve"></text>
+<text x="20" y="431.0" xml:space="preserve"><tspan fill="#132620">## Turn 2 · 2026-11-07T16:31:32.154Z</tspan></text>
+<text x="20" y="450.0" xml:space="preserve"></text>
+<text x="20" y="469.0" xml:space="preserve"><tspan fill="#132620">&gt; And one tip for growing mint, in one sentence.</tspan></text>
+<text x="20" y="488.0" xml:space="preserve"></text>
+<text x="20" y="507.0" xml:space="preserve"><tspan fill="#132620">Plant mint in its own dedicated container to keep its aggressive roots from overtaking other plants,</tspan></text>
+<text x="20" y="526.0" xml:space="preserve"><tspan fill="#132620"> and keep the soil consistently moist in bright, indirect light.</tspan></text>
+<text x="20" y="545.0" xml:space="preserve"></text>
+<text x="20" y="564.0" xml:space="preserve"><tspan fill="#132620">*Notice · epoch · 2026-11-07T16:31:38.204Z:* **Epoch 1 began** — 4 earlier message(s) were summarize</tspan></text>
+<text x="20" y="583.0" xml:space="preserve"><tspan fill="#132620">d and archived as art-40e85307-ccb9-45d9-b9b3-2c7091047cfc.</tspan></text>
+<text x="20" y="602.0" xml:space="preserve"></text>
+<text x="20" y="621.0" xml:space="preserve"><tspan fill="#132620">## Turn 3 · 2026-11-07T16:31:43.264Z</tspan></text>
+<text x="20" y="640.0" xml:space="preserve"></text>
+<text x="20" y="659.0" xml:space="preserve"><tspan fill="#132620">&gt; Which herb did we talk about first? One word.</tspan></text>
+<text x="20" y="678.0" xml:space="preserve"></text>
+<text x="20" y="697.0" xml:space="preserve"><tspan fill="#132620">Basil</tspan></text>
+</g>
+</svg>

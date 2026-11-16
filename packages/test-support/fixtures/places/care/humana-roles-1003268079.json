@@ -1,0 +1,2319 @@
+{
+  "resourceType": "Bundle",
+  "type": "searchset",
+  "timestamp": "2026-10-17T08:12:55.360+00:00",
+  "meta": {
+    "lastUpdated": "2026-10-17T08:12:55.360+00:00",
+    "versionId": "c77fcb38-7841-413a-825c-c41b22f8ca77"
+  },
+  "entry": [
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/b1e03320c7787b0a6e2d909ad9817319e6d742db7d590b3cf90325d4931b6212",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "b1e03320c7787b0a6e2d909ad9817319e6d742db7d590b3cf90325d4931b6212",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/5d626ffed77edf02baec65eb1803acff508bd70bf6a0d695c3f112ca1f4bc4de",
+              "display": "Natl Medicare HMO/SNP-Travel"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36005445e688ac4ea4d2206704468e853c54ed968f764494ccba1116158d8621",
+            "display": "Seton Family of Doctors, Luling"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "da5830a5-0a7a-4824-a724-10776d5b27e4",
+          "lastUpdated": "2026-10-14T14:29:46.863+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/ed895ce9d382a6cf0b24b139139bb8fcef3210ffb9409d863ddac6d8b13a77e8",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "ed895ce9d382a6cf0b24b139139bb8fcef3210ffb9409d863ddac6d8b13a77e8",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/07e4a92d1b7925b3bc442583523d3c8133b4342e142640e44dc6bf9086d94b8e",
+              "display": "Employer HMO Austin"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "fa85e20e-f163-4480-8e46-f711594af739",
+          "lastUpdated": "2026-10-14T14:29:46.867+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/8699158c057833064d32742a2bd203f1a2c6f68b3640bd29c5c88be8dec46d28",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "8699158c057833064d32742a2bd203f1a2c6f68b3640bd29c5c88be8dec46d28",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/c3a4fb61d18f07155aacdcdbc006ad4c9e0fd7ef34ccdadcb2781da408c6b5ae",
+              "display": "HumanaGoldChoice Ntwk PFFS"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36005445e688ac4ea4d2206704468e853c54ed968f764494ccba1116158d8621",
+            "display": "Seton Family of Doctors, Luling"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "48b97cf8-59e1-4d0f-b0b5-7a610e08a57e",
+          "lastUpdated": "2026-10-14T14:29:46.865+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/3aae602fa249f819ed4ce8e29f486af73379bf551f9f5871e2ceff10bd3fe16e",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "3aae602fa249f819ed4ce8e29f486af73379bf551f9f5871e2ceff10bd3fe16e",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/f8d3bbe174ecae019d3d0f1c9ba7b9653e31f49e30b2f66795e77c119b51ba14",
+              "display": "Medicare PPO"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36005445e688ac4ea4d2206704468e853c54ed968f764494ccba1116158d8621",
+            "display": "Seton Family of Doctors, Luling"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "edb7dd83-427c-4cd7-9420-cbe06f51908d",
+          "lastUpdated": "2026-10-14T14:29:46.863+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/e647da9a9f15f50d1f14ed1dfbc3fe3747b0e99b39a4efd0c3d2ebd3d7108e83",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "e647da9a9f15f50d1f14ed1dfbc3fe3747b0e99b39a4efd0c3d2ebd3d7108e83",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/757f8644582e8124a51243d1f8f64cb9b48f81d59263d6cd1233034c32d3751d",
+              "display": "Gold Plus HMO and SNP H4461"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "088aa9f2-be11-4a03-8864-d85461536cee",
+          "lastUpdated": "2026-10-14T14:29:46.870+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/707306a994ce8ed80769ae1272ac840739824f77f5e33ba6bfe4e5a667a297b7",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "707306a994ce8ed80769ae1272ac840739824f77f5e33ba6bfe4e5a667a297b7",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/08debbaaea60d87ef1c300c904f8640b9ab7feb2fad166f73486b4193dbdef8f",
+              "display": "Natl Medicare HMO/SNP-Travel27"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36005445e688ac4ea4d2206704468e853c54ed968f764494ccba1116158d8621",
+            "display": "Seton Family of Doctors, Luling"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "0edf17ca-50b9-4c59-83a1-d74d7b7dae0b",
+          "lastUpdated": "2026-10-14T14:29:46.871+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/aed9e3da50f08d10f571bdbbff4bc3b72d70c5eec7ec5b58564da73cd1b4a52e",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "aed9e3da50f08d10f571bdbbff4bc3b72d70c5eec7ec5b58564da73cd1b4a52e",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/b4da7dceca660702845c3227ed63e31ec77ed893dd567d7156a4a22d062a1790",
+              "display": "Group Medicare PPO+"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36005445e688ac4ea4d2206704468e853c54ed968f764494ccba1116158d8621",
+            "display": "Seton Family of Doctors, Luling"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "8179bffb-bba0-4568-b480-abca0ddc8cf8",
+          "lastUpdated": "2026-10-14T14:29:46.867+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/3664c3e02a77b5090c5c17dff9b5a5c97f25001953c126a4ad9ede0e7124a1f0",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "3664c3e02a77b5090c5c17dff9b5a5c97f25001953c126a4ad9ede0e7124a1f0",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/03cd033222113e73b7486b78eebf3c4b63c3723229527c508b42baa26535a297",
+              "display": "Medicare PPO27"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36005445e688ac4ea4d2206704468e853c54ed968f764494ccba1116158d8621",
+            "display": "Seton Family of Doctors, Luling"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "85ef09aa-31de-41f7-9457-40ae5cce163a",
+          "lastUpdated": "2026-10-14T14:29:46.885+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/e25dbfb9269f2291bf32a2aff27c65ad8f3dc2c33cdf6b47e399b33a98647720",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "e25dbfb9269f2291bf32a2aff27c65ad8f3dc2c33cdf6b47e399b33a98647720",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/36686bbb76934b2b0c0f1311f941d3c531a379d6f87b716552c41ee7cb2675d2",
+              "display": "Gold Plus HMO"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "64766379-fe9b-4cd5-b15d-6d5596f3f1ad",
+          "lastUpdated": "2026-10-14T14:29:46.881+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/992c83b05c44e3039097b3933dc5653602b24ec3dfd69556dbbc15f34cb42001",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "992c83b05c44e3039097b3933dc5653602b24ec3dfd69556dbbc15f34cb42001",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/2926c2101d66317884ed5a3eddff8442283ad02fe8c8df5b837637a421de3bd3",
+              "display": "Gold Plus HMO and SNP H0028"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "594b9b85-0161-4d09-8e45-850ffd5bfb65",
+          "lastUpdated": "2026-10-14T14:29:46.883+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/eab0f9147ef39a22558ea21ab972da3aca7693f36ef42c02e2d6b5bf67df485c",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "eab0f9147ef39a22558ea21ab972da3aca7693f36ef42c02e2d6b5bf67df485c",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/e415c8070b87155de1019fb86d90e01beed27a7a901b3155254b848b9a4821b1",
+              "display": "HumanaGoldChoice Ntwk PFFS27"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36005445e688ac4ea4d2206704468e853c54ed968f764494ccba1116158d8621",
+            "display": "Seton Family of Doctors, Luling"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "7ce345b4-7a7a-4ea2-b8b5-640ccf8f11f4",
+          "lastUpdated": "2026-10-14T14:29:46.952+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/f028ecb0ff64e328bb95f0f1e2fa764bf4620de3f22cf973a888790c5d8844bf",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "f028ecb0ff64e328bb95f0f1e2fa764bf4620de3f22cf973a888790c5d8844bf",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/751baa4643af4db68e1bb82a5dc5f342b59c310aae7d479aeabcee792a60b2be",
+              "display": "Gold Plus DSNP H002827"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "65732d29-1715-4214-a297-e3806ec27924",
+          "lastUpdated": "2026-10-14T14:29:46.956+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/9c5547340b166b42407b32277b930daa02833fcbe3b655837104abc101eda529",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "9c5547340b166b42407b32277b930daa02833fcbe3b655837104abc101eda529",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/2da0fdd6843fcd0dab404299e40262a174491f69e3217cf9e040112e2f126594",
+              "display": "Employer HMO27"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "ac878506-113e-432e-b522-79cac305b956",
+          "lastUpdated": "2026-10-14T14:29:46.957+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/e7c2b0786937eb603e9a1c05499adfbeff9369c9952fa6be89db7c6a0669119b",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "e7c2b0786937eb603e9a1c05499adfbeff9369c9952fa6be89db7c6a0669119b",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/589617b1fed7e55196ea805f5f4f9fa95b14102e1e0f5edb247eb4706ad8dea5",
+              "display": "Gold Plus HMO27"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "9072bbaa-a42c-4117-9337-82ac5bc2d59c",
+          "lastUpdated": "2026-10-14T14:29:46.956+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/467288163ca4b5d384166bde5ff0ac10dfad9b62022079430c17dc4a15b5e71b",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "467288163ca4b5d384166bde5ff0ac10dfad9b62022079430c17dc4a15b5e71b",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/b4da7dceca660702845c3227ed63e31ec77ed893dd567d7156a4a22d062a1790",
+              "display": "Group Medicare PPO+"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36005445e688ac4ea4d2206704468e853c54ed968f764494ccba1116158d8621",
+            "display": "Seton Family of Doctors, Luling"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "92143d88-1d89-4b11-9058-79b32fffd161",
+          "lastUpdated": "2026-10-14T14:29:46.956+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/335118c4d68ca60b12df79f7cf59abcb1b116a6623b35263b1d711142165b501",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "335118c4d68ca60b12df79f7cf59abcb1b116a6623b35263b1d711142165b501",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/cb357a5b3820b4f9f7db7b87d308696ef3dc853c4da446594e628d2baeef9ef8",
+              "display": "Gold Plus HMO/SNP H446127"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "a52178f8-09f4-4caf-9743-a8393ad878d0",
+          "lastUpdated": "2026-10-14T14:29:46.963+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/2799b4515e3c0399f4e262625d78185970af4abb363873f93270bb32cfaec2f8",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "2799b4515e3c0399f4e262625d78185970af4abb363873f93270bb32cfaec2f8",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/36686bbb76934b2b0c0f1311f941d3c531a379d6f87b716552c41ee7cb2675d2",
+              "display": "Gold Plus HMO"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "7f4a3751-09ea-459d-912c-2c6ec4dbc12b",
+          "lastUpdated": "2026-10-14T14:29:46.968+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "https://fhir.humana.com/api/PractitionerRole/3b4419cf6dd272c8018f73d4059073df35e7665707d9dfc91422b78cc4f1b7d1",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "3b4419cf6dd272c8018f73d4059073df35e7665707d9dfc91422b78cc4f1b7d1",
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "effectivenessDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 hearts"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "extension": [
+              {
+                "url": "ratingType",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "https://fhir.humana.com/documentation/glossary/ProviderRatings",
+                      "code": "efficiencyDescription"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "ratingValue",
+                "valueString": "3 badges"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/directory-query/StructureDefinition/rating"
+          },
+          {
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/network-reference",
+            "valueReference": {
+              "reference": "https://fhir.humana.com/api/Organization/589617b1fed7e55196ea805f5f4f9fa95b14102e1e0f5edb247eb4706ad8dea5",
+              "display": "Gold Plus HMO27"
+            }
+          },
+          {
+            "extension": [
+              {
+                "url": "acceptingPatients",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/AcceptingPatientsCS",
+                      "code": "newpt",
+                      "display": "Accepting"
+                    }
+                  ]
+                }
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/newpatients"
+          }
+        ],
+        "active": true,
+        "practitioner": {
+          "reference": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8"
+        },
+        "organization": {
+          "reference": "https://fhir.humana.com/api/Organization/ada44019b65956726f70ea330a2bc6712daaae4809bd3f22bf1e5c735824ba6a",
+          "display": "Seton Family of Doctors"
+        },
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207RC0000X",
+                "display": "Cardiovascular Disease Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "https://fhir.humana.com/api/Location/1345424df3a128efacbc0bd43a7b9f0d8ce6ed1748acc33adbc6af54474c4ac4",
+            "display": "Seton Family of Doctors, Kyle"
+          },
+          {
+            "reference": "https://fhir.humana.com/api/Location/36fb0d370d814d2080abc07666088516c09628d97e3a49ada135ef170cda7bca",
+            "display": "Seton Family of Doctors, Austin"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "meta": {
+          "versionId": "1e6b9f32-6bc7-430d-b168-fbb3c92eb3e0",
+          "lastUpdated": "2026-10-14T14:29:46.975+00:00"
+        }
+      }
+    }
+  ],
+  "total": 18,
+  "link": [
+    {
+      "relation": "self",
+      "url": "https://fhir.humana.com/api/PractitionerRole?practitioner=095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8&_total=estimate&_count=50&_skip=0"
+    }
+  ],
+  "id": "27889020-31d0-441d-b4c3-e1cca10aa3d1"
+}

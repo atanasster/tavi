@@ -1,0 +1,92 @@
+{
+  "name": "@tavi/runtime",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/runtime"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "description": "PluginHost, repositories, tool registry and application-owned services",
+  "exports": {
+    "./database-worker": {
+      "import": "./dist/database-worker.mjs",
+      "default": "./dist/database-worker.mjs"
+    },
+    "./ownership-worker": {
+      "import": "./dist/ownership-worker.mjs",
+      "default": "./dist/ownership-worker.mjs"
+    },
+    "./host-policy": {
+      "development": "./src/host-policy.ts",
+      "types": "./dist/host-policy.d.mts",
+      "import": "./dist/host-policy.mjs"
+    },
+    "./owner-attach": {
+      "development": "./src/owner-attach.ts",
+      "types": "./dist/owner-attach.d.mts",
+      "import": "./dist/owner-attach.mjs"
+    },
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@napi-rs/keyring": "2.1.2",
+    "@tavi/contracts": "workspace:*",
+    "@tavi/node-kit": "workspace:*",
+    "better-sqlite3": "catalog:",
+    "es-module-lexer": "3.0.4",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@tavi/plugin-kit": "workspace:*",
+    "@tavi/test-support": "workspace:*",
+    "@types/better-sqlite3": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      "./database-worker": {
+        "import": "./dist/database-worker.mjs",
+        "default": "./dist/database-worker.mjs"
+      },
+      "./ownership-worker": {
+        "import": "./dist/ownership-worker.mjs",
+        "default": "./dist/ownership-worker.mjs"
+      },
+      "./host-policy": {
+        "types": "./dist/host-policy.d.mts",
+        "import": "./dist/host-policy.mjs"
+      },
+      "./owner-attach": {
+        "types": "./dist/owner-attach.d.mts",
+        "import": "./dist/owner-attach.mjs"
+      },
+      ".": {
+        "types": "./dist/index.d.mts",
+        "import": "./dist/index.mjs"
+      },
+      "./package.json": "./package.json"
+    }
+  }
+}

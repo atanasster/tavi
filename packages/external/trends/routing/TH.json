@@ -1,0 +1,9 @@
+{
+  "country": "TH",
+  "order": [
+    "gtrends-rss",
+    "pantip-hot",
+    "wikipedia-pageviews",
+    "gdelt-doc"
+  ]
+}

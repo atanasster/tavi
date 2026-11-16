@@ -1,0 +1,231 @@
+/* ---------- Connected apps ---------- */
+.apps-filters {
+  margin-block: var(--space-3);
+}
+.apps-row,
+.apps-account {
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.apps-connect-card {
+  margin-block: var(--space-2);
+  padding: var(--space-3);
+}
+.apps-connect-card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--weight-semibold);
+}
+.apps-row-info,
+.apps-account-info,
+.apps-activity-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  /* Each line keeps its own width: a badge or a name is never stretched across the row. */
+  align-items: flex-start;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+/* An app's, account's or activity's name with its badge, on one line. */
+.apps-title-line > .badge {
+  margin: 0;
+}
+/* A channel's setup notes: one per line, its link last. */
+.apps-account-setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  overflow-wrap: anywhere;
+}
+.apps-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--size-avatar);
+  height: var(--size-avatar);
+  border: var(--border-width) solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+.apps-icon img {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  object-fit: contain;
+}
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-min-tile-md), 1fr));
+  gap: var(--space-3);
+}
+.apps-card {
+  height: 100%;
+  padding: var(--space-3);
+}
+.apps-card h3 {
+  margin: 0;
+  font-size: var(--text-md);
+}
+.apps-card .actions {
+  margin-top: auto;
+}
+.apps-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+}
+.apps-catalog-section {
+  margin-block: var(--space-4);
+}
+.apps-tool-group h4 {
+  margin: var(--space-3) 0 var(--space-1);
+  font-size: var(--text-base);
+}
+.apps-tool-choice {
+  flex: 1;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.apps-tool-name {
+  flex: 1 1 var(--basis-tool-name);
+  min-width: 0;
+}
+.apps-tool-targets {
+  display: flex;
+  gap: var(--space-3);
+}
+.apps-tool-choice > .meta-sm {
+  flex-basis: 100%;
+}
+.apps-sharing,
+.apps-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  border: 0;
+}
+.apps-options {
+  flex-direction: column;
+}
+.apps-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-meta);
+}
+.apps-steps [aria-current="step"] {
+  color: hsl(var(--foreground));
+  font-weight: var(--weight-semibold);
+}
+/* Holds focus only while its step has nothing to focus yet: no ring around the whole step. */
+.apps-step-host:focus {
+  outline: none;
+}
+.apps-guide {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+.apps-values {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-1) 0 0;
+}
+.apps-values > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.apps-values dt {
+  color: hsl(var(--muted-foreground));
+}
+.apps-values dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.apps-drop {
+  display: block;
+  padding: var(--space-4);
+  border: var(--border-width) dashed var(--line-soft);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  cursor: pointer;
+}
+.apps-drop-over,
+.apps-drop:focus-within {
+  border-color: hsl(var(--ring));
+}
+.apps-scopes {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+.apps-scopes dt {
+  font-weight: var(--weight-semibold);
+}
+.apps-scopes dd {
+  margin: 0;
+}
+.apps-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+.apps-connect-card-says {
+  font-weight: var(--weight-semibold);
+}
+.apps-user-code {
+  font-size: var(--text-lg);
+  letter-spacing: var(--tracking-widest);
+}
+.apps-elsewhere {
+  margin-top: var(--space-3);
+}
+.apps-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+/* Centred like the dashed box's words: the featured apps in a row under them, then Discover. */
+.apps-empty {
+  align-items: center;
+}
+.apps-empty > ul {
+  justify-content: center;
+}
+@media (--phone) {
+  .apps-tool-targets {
+    flex-wrap: wrap;
+  }
+  .apps-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* An MCP server's review (its page's Review its tools): the four columns fit the dialog. A long tool id or a link in a
+   description wraps rather than widening the table, and the selects give up their minimum width to the tool column. */
+.mcp-tools {
+  width: 100%;
+  border-collapse: collapse;
+}
+.mcp-tools td:first-child {
+  overflow-wrap: anywhere;
+}
+.mcp-tools .select-trigger {
+  min-width: 0;
+}

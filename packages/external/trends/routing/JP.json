@@ -1,0 +1,13 @@
+{
+  "country": "JP",
+  "order": [
+    "gtrends-rss",
+    "wikipedia-pageviews",
+    "gdelt-doc",
+    "hatena-hot",
+    "mastodon-trends",
+    "bluesky-search",
+    "hn-algolia",
+    "arxiv"
+  ]
+}

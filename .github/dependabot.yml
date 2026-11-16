@@ -1,0 +1,37 @@
+# Weekly update pull requests: the workflows' actions (pinned to commit SHAs, the
+# version in a trailing comment, which Dependabot keeps in step) and the npm
+# dependencies. Minor and patch updates are grouped into one pull request per
+# ecosystem each week; a major update comes as a pull request of its own. Every
+# bump goes through CI and review like any change; pins that need a closer look
+# (the sandbox runtime, a patched package) are tested on their pull request.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Security updates (raised whenever an advisory is published, off the weekly schedule) as one pull request.
+      npm-security:
+        applies-to: security-updates
+        patterns: ["*"]
+      npm:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      # @types/node follows the oldest supported Node.js (`engines.node`), not the newest.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # ink 8 (the terminal UI) is a deliberate later upgrade: its breaking changes need their own pass.
+      - dependency-name: ink
+        update-types: ["version-update:semver-major"]

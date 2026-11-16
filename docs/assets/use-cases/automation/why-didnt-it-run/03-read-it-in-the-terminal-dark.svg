@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="684" viewBox="0 0 880 684" role="img">
+<rect width="880" height="684" rx="12" fill="#141e1a" stroke="#26332e"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="440" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#9aaba3">tavi schedules show</text>
+<line x1="0" y1="36" x2="880" y2="36" stroke="#26332e"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#e6efea">schedule sched-6bbfdafd-ca6e-4d36-81e3-963c783caa99 (notes-digest)</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#e6efea">  fires       every day, every hour from 00:00 to 23:59 (Europe/London)</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#e6efea">  state       paused after 3 failed runs in a row; resume it to run again</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#e6efea">  next fire   -</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#e6efea">  last run    Sat, 07/11/2026, 22:44 (file-watch run: over budget: stopped after 25,739 tokens, past</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#e6efea"> its ceiling of 2,000 tokens)</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#e6efea">  failures    3 consecutive</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#e6efea">  prompt      Tell me in one short line that notes.txt has changed.</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#e6efea">  missed      run-once-if-missed-within-6h</tspan></text>
+<text x="20" y="241.0" xml:space="preserve"><tspan fill="#e6efea">  runs as     (the base instructions)</tspan></text>
+<text x="20" y="260.0" xml:space="preserve"><tspan fill="#e6efea">  alert       none</tspan></text>
+<text x="20" y="279.0" xml:space="preserve"><tspan fill="#e6efea">  questions   never asks</tspan></text>
+<text x="20" y="298.0" xml:space="preserve"><tspan fill="#e6efea">  delivers    its result into Home, as a notice</tspan></text>
+<text x="20" y="317.0" xml:space="preserve"><tspan fill="#e6efea">  notifies    after every run; failures always</tspan></text>
+<text x="20" y="336.0" xml:space="preserve"><tspan fill="#e6efea">  run limit   30 minutes of work (the default), then stopped</tspan></text>
+<text x="20" y="355.0" xml:space="preserve"><tspan fill="#e6efea">  tokens      2,000 tokens a run, its workers included, then stopped</tspan></text>
+<text x="20" y="374.0" xml:space="preserve"><tspan fill="#e6efea">  folder      each run's own</tspan></text>
+<text x="20" y="393.0" xml:space="preserve"><tspan fill="#e6efea">  pre-check   runs only when the file ~/code/notes.txt has changed since the last check</tspan></text>
+<text x="20" y="412.0" xml:space="preserve"><tspan fill="#e6efea">  watcher     watches the file ~/code/notes.txt every hour, and soon after it changes while tavi ser</tspan></text>
+<text x="20" y="431.0" xml:space="preserve"><tspan fill="#e6efea">ve runs; runs only when it changes</tspan></text>
+<text x="20" y="450.0" xml:space="preserve"><tspan fill="#e6efea">  email       off</tspan></text>
+<text x="20" y="469.0" xml:space="preserve"><tspan fill="#e6efea">  webhook     off</tspan></text>
+<text x="20" y="488.0" xml:space="preserve"><tspan fill="#e6efea">  may call unattended:</tspan></text>
+<text x="20" y="507.0" xml:space="preserve"><tspan fill="#e6efea">    (nothing — every gated tool call is denied)</tspan></text>
+<text x="20" y="526.0" xml:space="preserve"><tspan fill="#e6efea">  recent fires (Europe/London):</tspan></text>
+<text x="20" y="545.0" xml:space="preserve"><tspan fill="#e6efea">    Sat, 07/11/2026, 22:44      paused  paused: 3 failed runs in a row</tspan></text>
+<text x="20" y="564.0" xml:space="preserve"><tspan fill="#e6efea">    Sat, 07/11/2026, 22:44      watch   file-watch run: over budget: stopped after 25,739 tokens, pa</tspan></text>
+<text x="20" y="583.0" xml:space="preserve"><tspan fill="#e6efea">st its ceiling of 2,000 tokens  task task-mw6zq2eu-j</tspan></text>
+<text x="20" y="602.0" xml:space="preserve"><tspan fill="#e6efea">    Sat, 07/11/2026, 22:42      watch   file-watch run: over budget: stopped after 25,767 tokens, pa</tspan></text>
+<text x="20" y="621.0" xml:space="preserve"><tspan fill="#e6efea">st its ceiling of 2,000 tokens  task task-mw6znrwq-c</tspan></text>
+<text x="20" y="640.0" xml:space="preserve"><tspan fill="#e6efea">    Sat, 07/11/2026, 22:40      watch   file-watch run: over budget: stopped after 25,451 tokens, pa</tspan></text>
+<text x="20" y="659.0" xml:space="preserve"><tspan fill="#e6efea">st its ceiling of 2,000 tokens  task task-mw6zljkt-2</tspan></text>
+</g>
+</svg>

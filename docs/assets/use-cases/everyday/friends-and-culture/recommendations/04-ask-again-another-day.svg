@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="532" viewBox="0 0 880 532" role="img">
+<rect width="880" height="532" rx="12" fill="#ffffff" stroke="#d9e0dc"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="440" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#52605a">tavi chat</text>
+<line x1="0" y1="36" x2="880" y2="36" stroke="#d9e0dc"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#1f6b55">❯ Recommend one film for tonight that I haven't mentioned, from what you know I like.</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#8c5a07">◆ Earlier chats — Recommend next reads and watches after The Martian… (task-mw3fbg2s-1)</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#132620" opacity="0.62">⏺ sessions.search({"query":"film movie scifi"}) ✓ 30 ms</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#132620" opacity="0.62">  ⎿ Searched earlier chats · 1 found</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#132620" opacity="0.62">    • Recommend next reads and watches after The Martian…</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#132620" opacity="0.62">⏺ memory.list ✓ 38 ms</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#132620" opacity="0.62">  ⎿ {"hits":[{"recordId":"mem-8536d3ed-282b-41e1-befb-240885a54d2f","revisi…</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#132620" opacity="0.62">⏺ sessions.search({"query":"The Martian Contact Arrival"}) ✓ 4 ms</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#132620" opacity="0.62">  ⎿ Searched earlier chats · 1 found</tspan></text>
+<text x="20" y="241.0" xml:space="preserve"><tspan fill="#132620" opacity="0.62">    • Recommend next reads and watches after The Martian…</tspan></text>
+<text x="20" y="260.0" xml:space="preserve"><tspan fill="#132620">_Europa Report_ (2013, dir. Sebastián Cordero)</tspan></text>
+<text x="20" y="279.0" xml:space="preserve"></text>
+<text x="20" y="298.0" xml:space="preserve"><tspan fill="#132620">Why it fits</tspan></text>
+<text x="20" y="317.0" xml:space="preserve"><tspan fill="#132620">It shares the grounded, scientifically curious core you appreciate: an international crew of</tspan></text>
+<text x="20" y="336.0" xml:space="preserve"><tspan fill="#132620">astronauts and researchers journeys to Jupiter’s moon Europa to search for signs of life.</tspan></text>
+<text x="20" y="355.0" xml:space="preserve"></text>
+<text x="20" y="374.0" xml:space="preserve"><tspan fill="#132620">When communications fail and equipment malfunctions threaten the mission, the crew doesn’t descend</tspan></text>
+<text x="20" y="393.0" xml:space="preserve"><tspan fill="#132620">into manufactured interpersonal drama, panic, or cynicism. Instead, they act like real scientists</tspan></text>
+<text x="20" y="412.0" xml:space="preserve"><tspan fill="#132620">and engineers—responding to high-stakes crises with composure, intellectual rigor, mutual trust, and</tspan></text>
+<text x="20" y="431.0" xml:space="preserve"><tspan fill="#132620"> an unwavering dedication to discovery. It’s an understated, tightly paced hard sci-fi procedural</tspan></text>
+<text x="20" y="450.0" xml:space="preserve"><tspan fill="#132620">that respects competence and empathy.</tspan></text>
+<text x="20" y="469.0" xml:space="preserve"><tspan fill="#132620" opacity="0.62">memory: 1 looked through · /why</tspan></text>
+<text x="20" y="488.0" xml:space="preserve"><tspan fill="#132620" opacity="0.62">✓ Done. Type to continue it (/side for a side chat), or Ctrl-C to quit.</tspan></text>
+<text x="20" y="507.0" xml:space="preserve"><tspan fill="#132620">❯ █</tspan></text>
+</g>
+</svg>

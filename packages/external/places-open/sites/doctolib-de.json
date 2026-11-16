@@ -1,0 +1,34 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "doctolib-de",
+  "name": "Doctolib (Germany)",
+  "countries": [
+    "DE"
+  ],
+  "hosts": [
+    "doctolib.de",
+    "*.doctolib.de"
+  ],
+  "kind": "health",
+  "access": {
+    "mode": "assist-only",
+    "navigate": false,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Doctolib's patient terms (April 2026) ban scraping and reserve text and data mining against automated means; its robots.txt blocks /booking/ and availabilities. Read from the French patient terms; the German site's terms page refuses scripts.",
+    "termsUrl": "https://media.doctolib.com/image/upload/v1776929137/legal/B2C_T_Cs.pdf",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "Physician",
+      "MedicalBusiness"
+    ]
+  },
+  "notes": "You book on Doctolib yourself; Tavi reads only a page you opened, for the chat, and never stores it."
+}

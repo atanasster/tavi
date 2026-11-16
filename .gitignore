@@ -1,0 +1,62 @@
+node_modules/
+dist/
+coverage/
+.cache/
+.claude/
+.turbo/
+*.tsbuildinfo
+.DS_Store
+*.log
+
+# Runtime state: databases, artifacts, IPC tokens and credentials are never source.
+.tavi/
+# Live evals' traces (evals/*/score-live-eval.mjs reads them).
+.evidence/
+/data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# The web canvas the CLI build copies in from apps/ui.
+apps/cli/ui-dist/
+
+# Browser eval reports (evals/browser/README.md)
+evals/browser/results/
+evals/heartbeat/results/
+evals/ideas/results/
+evals/tool-choice/results/
+evals/skills/results/
+evals/injection/results/
+evals/memory/results/
+evals/sandbox-usability/results/
+# Generated PDF fixtures and eval reports (evals/pdf/README.md)
+evals/pdf/fixtures/
+evals/pdf/results/
+# Generated video fixtures and trial reports (evals/video/README.md)
+evals/video/fixtures/out/
+evals/video/results/
+
+# The sandbox matrix's raw job logs (scripts/sandbox-matrix.sh).
+reports/sandbox-matrix/
+
+# Research, planning and progress notes stay local: only documentation is tracked.
+plans/
+research/
+research_notes/
+*-PLAN.md
+# On a case-insensitive disk that line also takes meal-plan.md: guides are always tracked.
+!docs/use-cases/**/*.md
+*-PLAN-*.md
+*-RESEARCH*.md
+*-EVIDENCE*.md
+*-PROGRESS*.md
+*-AUDIT*.md
+!docs/use-cases/**/*.md
+*-GAP*.md
+reports/*.md
+
+# Desktop control's helper, built from its Swift source on the Mac it runs on.
+packages/builtin/desktop/native/tavi-desktop-helper
+
+# Keys the how-to guide walks use (pnpm test:guides): never committed.
+.env.tutorials

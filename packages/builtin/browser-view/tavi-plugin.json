@@ -1,0 +1,24 @@
+{
+  "id": "tavi.browserview",
+  "name": "Browser view",
+  "description": "The live view of the agent's browser: pages loading, clicks and typing, as they happen.",
+  "ui": {
+    "abi": "tavi.ui/1",
+    "contributions": [
+      {
+        "id": "live",
+        "role": "browser-view",
+        "title": "Browser",
+        "icon": "icon.svg",
+        "document": "live.html",
+        "channels": ["browser.live"],
+        "placements": [
+          { "slot": "chat.panel.top", "show": "while-active", "height": { "min": 140, "default": 220, "max": 480 } },
+          { "slot": "chat.panel.tab" },
+          { "slot": "center.browser" }
+        ],
+        "disclosure": "Receives live images of the pages the agent browses, and the address of each page."
+      }
+    ]
+  }
+}

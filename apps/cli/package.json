@@ -1,0 +1,106 @@
+{
+  "name": "@tavi/cli",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "apps/cli"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22.21.0"
+  },
+  "description": "tavi \u2014 foreground run, serve and operational commands",
+  "bin": {
+    "tavi": "./dist/executable.mjs"
+  },
+  "files": [
+    "dist",
+    "ui-dist"
+  ],
+  "scripts": {
+    "build": "tsdown && node scripts/copy-canvas.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/client": "2.3.1",
+    "@tavi/agent-host": "workspace:*",
+    "@tavi/child-kit": "workspace:*",
+    "@tavi/client": "workspace:*",
+    "@tavi/contracts": "workspace:*",
+    "@tavi/node-kit": "workspace:*",
+    "@tavi/plugin-browser": "workspace:*",
+    "@tavi/plugin-browser-view": "workspace:*",
+    "@tavi/plugin-collectors": "workspace:*",
+    "@tavi/plugin-defaults": "workspace:*",
+    "@tavi/plugin-desktop": "workspace:*",
+    "@tavi/plugin-flights": "workspace:*",
+    "@tavi/plugin-gmail": "workspace:*",
+    "@tavi/plugin-guard": "workspace:*",
+    "@tavi/plugin-limits": "workspace:*",
+    "@tavi/plugin-local": "workspace:*",
+    "@tavi/plugin-mailgun": "workspace:*",
+    "@tavi/plugin-pdf": "workspace:*",
+    "@tavi/plugin-router": "workspace:*",
+    "@tavi/plugin-sandbox": "workspace:*",
+    "@tavi/plugin-site-skills": "workspace:*",
+    "@tavi/plugin-telegram": "workspace:*",
+    "@tavi/plugin-types": "workspace:*",
+    "@tavi/plugin-video": "workspace:*",
+    "@tavi/plugin-worker": "workspace:*",
+    "@tavi/runtime": "workspace:*",
+    "ajv": "8.20.0",
+    "ink": "7.1.1",
+    "react": "catalog:",
+    "rolldown": "1.2.15",
+    "string-width": "8.3.0",
+    "undici": "8.12.3",
+    "ws": "catalog:",
+    "yaml": "2.9.1",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@cantoo/pdf-lib": "catalog:",
+    "@langchain/langgraph-checkpoint-sqlite": "catalog:",
+    "@modelcontextprotocol/server": "2.3.1",
+    "@tavi/pdf-ocr": "workspace:*",
+    "@tavi/plugin-kit": "workspace:*",
+    "@tavi/test-support": "workspace:*",
+    "@tavi/video-pose": "workspace:*",
+    "@tavi/video-transcribe": "workspace:*",
+    "@tavi/channel-kit": "workspace:*",
+    "@types/react": "catalog:",
+    "@types/ws": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "bin": {
+      "tavi": "./dist/executable.mjs"
+    },
+    "exports": {
+      ".": {
+        "types": "./dist/main.d.mts",
+        "import": "./dist/main.mjs"
+      },
+      "./package.json": "./package.json"
+    }
+  },
+  "exports": {
+    ".": {
+      "development": "./src/main.ts",
+      "types": "./dist/main.d.mts",
+      "import": "./dist/main.mjs"
+    },
+    "./package.json": "./package.json"
+  }
+}

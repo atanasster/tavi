@@ -1,0 +1,229 @@
+/* ---------- Dialogs ---------- */
+
+/* The dialogs (`.surface-popover`): a fainter hairline, larger corners. */
+.modal {
+  border-color: var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.modal {
+  padding: 0;
+  width: min(var(--width-dialog), calc(100% - var(--space-8)));
+  max-height: min(90dvh, calc(100% - var(--space-8)));
+  overflow: hidden;
+}
+
+.modal::backdrop {
+  background: var(--overlay);
+}
+
+/* The title above and the actions below stay put; only the fields between
+   them scroll when a form is taller than the viewport. */
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  max-height: min(90dvh, calc(100vh - var(--space-8)));
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex: none;
+  padding: var(--space-5) var(--space-5) var(--space-3) var(--space-6);
+  border-bottom: var(--border-width) solid var(--line);
+}
+
+.modal h2 {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+}
+
+.modal-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-4) var(--space-6) 0;
+  scrollbar-gutter: stable;
+}
+
+/* Only the dialog's own footer: an actions row inside a card or a list row
+   (a nested panel's Allow, Cancel, Revoke) stays in the flow of its card. */
+.modal-content .actions:not(.settings-panel .actions, .row .actions) {
+  position: sticky;
+  bottom: 0;
+  z-index: var(--z-raised);
+  justify-content: flex-end;
+  margin: var(--space-3) calc(-1 * var(--space-6)) 0;
+  padding: var(--space-3) var(--space-6) var(--space-5);
+  background: hsl(var(--popover));
+  border-top: var(--border-width) solid var(--line);
+}
+
+.modal-content:not(:has(.actions:not(.settings-panel .actions, .row .actions))) {
+  padding-bottom: var(--space-5);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+
+.form .actions {
+  justify-content: flex-end;
+  margin-top: var(--space-3);
+}
+
+.kinds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  border: none;
+  padding: 0;
+  margin: 0 0 var(--space-2);
+}
+
+.kind {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: var(--border-width) solid var(--line-firm);
+  border-radius: var(--radius);
+  padding: var(--space-2-5) var(--space-3);
+  cursor: pointer;
+}
+
+.kind.active {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / var(--tint-soft));
+}
+
+/* The show/hide toggle sits inside the field's right edge. */
+.password {
+  position: relative;
+  display: flex;
+}
+
+.password input {
+  flex: 1;
+  padding-right: calc(var(--control-height-sm) + var(--space-2));
+}
+
+.password .tooltip-trigger {
+  position: absolute;
+  top: 50%;
+  right: var(--space-1);
+  transform: translateY(-50%);
+}
+
+.password .button-icon {
+  border-color: transparent;
+}
+
+/* A key field is a text field masked here, so password managers leave it be. */
+input.secret {
+  -webkit-text-security: disc;
+}
+
+[aria-invalid="true"] {
+  border-color: hsl(var(--destructive));
+}
+
+/* Whatever the page animates, it does not animate for a reader who asked it
+   not to. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* stylelint-disable declaration-property-value-disallowed-list -- a near-zero duration ends every animation at once, whatever its token */
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    /* stylelint-enable declaration-property-value-disallowed-list */
+    scroll-behavior: auto !important;
+  }
+}
+
+/* The Cmd+/ sheet, inside a `Modal`: the chords the page binds as keycaps
+   in one aligned column, then what it only offers as a row of buttons. */
+.sheet-keys {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  font-size: var(--text-base);
+}
+
+.sheet-keys dt,
+.sheet-keys dd {
+  margin: 0;
+}
+
+.chord {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.chord kbd,
+.strip-keys kbd {
+  display: inline-block;
+  min-width: var(--width-key);
+  padding: var(--space-px) var(--space-1-5);
+  border: var(--border-width) solid var(--line);
+  border-bottom-width: var(--border-width-thick);
+  border-radius: var(--radius-sm);
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  font-size: var(--text-xs);
+  line-height: var(--leading-relaxed);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.sheet-offered {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--line);
+}
+
+.sheet-offered h3 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+}
+
+.sheet-offered p {
+  margin: 0 0 var(--space-3);
+}
+
+.sheet-offered-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* The strip's way to the sheet: quiet, at its far end. */
+.strip-keys {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  margin-inline-start: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.strip-keys:hover {
+  color: hsl(var(--foreground));
+}

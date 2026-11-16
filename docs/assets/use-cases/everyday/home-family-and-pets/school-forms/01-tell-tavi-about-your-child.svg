@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="494" viewBox="0 0 880 494" role="img">
+<rect width="880" height="494" rx="12" fill="#ffffff" stroke="#d9e0dc"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="440" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#52605a">tavi memory remember</text>
+<line x1="0" y1="36" x2="880" y2="36" stroke="#d9e0dc"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#132620">{</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#132620">  "recordId": "mem-9a3dcb26-0e65-4ceb-ae9a-279b3ef57c45",</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#132620">  "kind": "fact",</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#132620">  "scope": {</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#132620">    "kind": "personal",</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#132620">    "principalId": "operator"</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#132620">  },</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#132620">  "scopeKey": "personal|p=operator",</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#132620">  "currentRevisionId": "memrev-b89447f9-f92c-4024-9e27-741255452102",</tspan></text>
+<text x="20" y="241.0" xml:space="preserve"><tspan fill="#132620">  "status": "approved",</tspan></text>
+<text x="20" y="260.0" xml:space="preserve"><tspan fill="#132620">  "sensitivity": "normal",</tspan></text>
+<text x="20" y="279.0" xml:space="preserve"><tspan fill="#132620">  "validFrom": "2026-11-05T20:44:39.108Z",</tspan></text>
+<text x="20" y="298.0" xml:space="preserve"><tspan fill="#132620">  "revocationGeneration": 0,</tspan></text>
+<text x="20" y="317.0" xml:space="preserve"><tspan fill="#132620">  "recordedAt": "2026-11-05T20:44:39.102Z",</tspan></text>
+<text x="20" y="336.0" xml:space="preserve"><tspan fill="#132620">  "updatedAt": "2026-11-05T20:44:39.108Z",</tspan></text>
+<text x="20" y="355.0" xml:space="preserve"><tspan fill="#132620">  "target": "personal",</tspan></text>
+<text x="20" y="374.0" xml:space="preserve"><tspan fill="#132620">  "title": "My daughter Robin",</tspan></text>
+<text x="20" y="393.0" xml:space="preserve"><tspan fill="#132620">  "body": "My daughter Robin Ashdown is in class 4B. Her emergency phone number is 01632 960184.",</tspan></text>
+<text x="20" y="412.0" xml:space="preserve"><tspan fill="#132620">  "redacted": false,</tspan></text>
+<text x="20" y="431.0" xml:space="preserve"><tspan fill="#132620">  "truncated": false,</tspan></text>
+<text x="20" y="450.0" xml:space="preserve"><tspan fill="#132620">  "sourceCount": 0</tspan></text>
+<text x="20" y="469.0" xml:space="preserve"><tspan fill="#132620">}</tspan></text>
+</g>
+</svg>

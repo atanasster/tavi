@@ -1,0 +1,58 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "daum-realtime",
+  "name": "Daum real-time trends",
+  "countries": [
+    "KR"
+  ],
+  "hosts": [
+    "www.daum.net"
+  ],
+  "kind": "trending",
+  "access": {
+    "mode": "read",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Daum's real-time trend widget is drawn in the browser; its robots.txt allows only the front page, which the daum-top list reads.",
+    "termsUrl": "https://policy.daum.net/policy/service",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 3,
+    "pagesPerDay": 10,
+    "minIntervalMs": 10000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "ItemList",
+      "ListItem",
+      "SocialMediaPosting",
+      "NewsArticle",
+      "DiscussionForumPosting",
+      "VideoObject"
+    ],
+    "resultSchema": {
+      "type": "object",
+      "properties": {
+        "rank": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "metric": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "title",
+        "url"
+      ]
+    }
+  },
+  "notes": "Open www.daum.net in your session when you ask and read its real-time trend widget, a top 10 refreshed every 10 minutes."
+}

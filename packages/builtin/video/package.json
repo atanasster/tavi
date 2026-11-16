@@ -1,0 +1,63 @@
+{
+  "name": "@tavi/plugin-video",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/builtin/video"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "description": "Video understanding's built-in decoder over the person's own FFmpeg, one confined, capped run per call, and its command and MCP analysers",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./internals": {
+      "development": "./src/internals.ts",
+      "types": "./dist/internals.d.mts",
+      "import": "./dist/internals.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tavi/child-kit": "workspace:*",
+    "@tavi/contracts": "workspace:*",
+    "@tavi/node-kit": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@tavi/test-support": "workspace:*",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.mts",
+        "import": "./dist/index.mjs"
+      },
+      "./internals": {
+        "types": "./dist/internals.d.mts",
+        "import": "./dist/internals.mjs"
+      },
+      "./package.json": "./package.json"
+    }
+  }
+}

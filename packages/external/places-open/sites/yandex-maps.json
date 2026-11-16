@@ -1,0 +1,39 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "yandex-maps",
+  "name": "Yandex Maps",
+  "countries": [
+    "RU",
+    "BY",
+    "KZ",
+    "TR"
+  ],
+  "hosts": [
+    "yandex.ru",
+    "yandex.com",
+    "yandex.com.tr",
+    "yandex.by",
+    "yandex.kz"
+  ],
+  "kind": "directory",
+  "access": {
+    "mode": "assist-only",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Yandex's maps terms restrict automated extraction and storage: personal viewing only.",
+    "termsUrl": "https://yandex.ru/legal/maps_termsofuse/",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "LocalBusiness"
+    ]
+  },
+  "notes": "Tavi may open and read a Yandex Maps place page for the chat; it keeps and extracts nothing."
+}

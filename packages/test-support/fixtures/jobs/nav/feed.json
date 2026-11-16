@@ -1,0 +1,72 @@
+{
+ "version": "1.0",
+ "title": "Stillingsfeeden fra arbeidsplassen.no",
+ "home_page_url": "https://arbeidsplassen.nav.no",
+ "feed_url": "/api/v1/feed/90187580-5acc-4696-a75f-e15d1e5fcbfd",
+ "description": "Feed med stillinger fra arbeidsplassen.no - En av Norges største oversikter over utlyste stillinger",
+ "next_url": "/api/v1/feed/8396f19a-f959-47b9-a266-aac2f9958bc8",
+ "id": "90187580-5acc-4696-a75f-e15d1e5fcbfd",
+ "next_id": "8396f19a-f959-47b9-a266-aac2f9958bc8",
+ "items": [
+  {
+   "id": "e3a0f7c4-33ac-45dd-8934-21193d1a2b79",
+   "url": "/api/v1/feedentry/e3a0f7c4-33ac-45dd-8934-21193d1a2b79",
+   "title": "Independent Sales Partner – Patented Smart Window Technology | Commission-Based",
+   "content_text": "Stillingsannonse",
+   "date_modified": "2026-10-15T02:02:59.759142+02:00",
+   "_feed_entry": {
+    "uuid": "e3a0f7c4-33ac-45dd-8934-21193d1a2b79",
+    "status": "ACTIVE",
+    "title": "Independent Sales Partner – Patented Smart Window Technology | Commission-Based",
+    "businessName": "00SMART AS",
+    "municipal": "OSLO",
+    "sistEndret": "2026-10-15T02:02:59.759142+02:00"
+   }
+  },
+  {
+   "id": "6b135172-0765-4a3f-ab5a-3b7fdd9dc9b0",
+   "url": "/api/v1/feedentry/6b135172-0765-4a3f-ab5a-3b7fdd9dc9b0",
+   "title": "Head of Enterprise IT",
+   "content_text": "Stillingsannonse",
+   "date_modified": "2026-10-15T02:02:59.793616+02:00",
+   "_feed_entry": {
+    "uuid": "6b135172-0765-4a3f-ab5a-3b7fdd9dc9b0",
+    "status": "ACTIVE",
+    "title": "Head of Enterprise IT",
+    "businessName": "Sensio",
+    "municipal": "OSLO",
+    "sistEndret": "2026-10-15T02:02:59.793616+02:00"
+   }
+  },
+  {
+   "id": "f0de7304-aab5-4f1c-8101-20d4d7525786",
+   "url": "/api/v1/feedentry/f0de7304-aab5-4f1c-8101-20d4d7525786",
+   "title": "AI Enablement and Learning Specialist",
+   "content_text": "Stillingsannonse",
+   "date_modified": "2026-10-15T02:03:09.961331+02:00",
+   "_feed_entry": {
+    "uuid": "f0de7304-aab5-4f1c-8101-20d4d7525786",
+    "status": "ACTIVE",
+    "title": "AI Enablement and Learning Specialist",
+    "businessName": "Superside",
+    "municipal": "?",
+    "sistEndret": "2026-10-15T02:03:09.961331+02:00"
+   }
+  },
+  {
+   "id": "0115954a-1f4e-4e0c-919d-19b5199f697f",
+   "url": "/api/v1/feedentry/0115954a-1f4e-4e0c-919d-19b5199f697f",
+   "title": "...",
+   "content_text": "Stillingsannonse",
+   "date_modified": "2026-10-15T02:46:06.674588+02:00",
+   "_feed_entry": {
+    "uuid": "0115954a-1f4e-4e0c-919d-19b5199f697f",
+    "status": "INACTIVE",
+    "title": "...",
+    "businessName": "",
+    "municipal": "OSLO",
+    "sistEndret": "2026-10-15T02:46:06.674588+02:00"
+   }
+  }
+ ]
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "fixture.rules",
+  "version": "1.0.0",
+  "name": "Rule-based heartbeat (test fixture)",
+  "description": "A test-only heartbeat provider with no model: it tells you about a new signal whose title shares a word with one of your instruction lines.",
+  "entry": "index.mjs",
+  "provides": ["heartbeat"],
+  "heartbeat": { "abi": "tavi.heartbeat/1", "receives": ["instructions", "signals"], "usesTurns": false, "maxTickSeconds": 5 }
+}

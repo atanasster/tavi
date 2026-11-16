@@ -1,0 +1,4 @@
+[
+  { "id": "sf", "name": "San Francisco", "country": "US", "endpoint": "https://mobile311.sfgov.org/open311/v2", "box": { "south": 37.70, "west": -122.52, "north": 37.84, "east": -122.35 }, "reviewedAt": "2026-10-17" },
+  { "id": "boston", "name": "Boston", "country": "US", "endpoint": "https://311.boston.gov/open311/v2", "box": { "south": 42.22, "west": -71.20, "north": 42.40, "east": -70.98 }, "reviewedAt": "2026-10-17" }
+]

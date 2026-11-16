@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "acme.memorykeywords",
+  "version": "0.1.0",
+  "name": "Keyword memory",
+  "description": "A memory provider with no model: it ranks the memories Tavi hands it by the words they share with the query, and drafts a fact from a message that starts with \"remember that\".",
+  "entry": "index.mjs",
+  "isolation": "in-process",
+  "provides": ["memory"],
+  "memory": { "abi": "tavi.memory/1", "capabilities": ["recall", "capture"], "index": "host", "receives": ["records", "conversation"] }
+}

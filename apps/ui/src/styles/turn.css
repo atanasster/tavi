@@ -1,0 +1,631 @@
+/* ---------- A turn ---------- */
+
+/* Turns are set apart by space alone. */
+.run {
+  padding: var(--space-2) 0 var(--space-turn-pad);
+  margin-bottom: var(--space-turn-gap);
+  overflow-wrap: anywhere;
+}
+
+/*
+ * A person's message: the bubble holds the words alone, right-aligned and as
+ * wide as they are; its actions sit under it, out of the bubble, and show on
+ * hover or focus so a short prompt is not a tall box of chrome.
+ */
+.user-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin: 0 0 var(--space-5) auto;
+  max-width: min(85%, var(--width-bubble));
+}
+
+.user-message .message-heading {
+  margin: 0 var(--space-1) var(--space-1);
+  font-size: var(--text-xs);
+}
+
+.user-message .prompt {
+  margin: 0;
+  padding: var(--space-2-5) var(--space-3-5);
+  background: hsl(var(--primary) / var(--tint-medium));
+  border-radius: var(--radius-xl) var(--radius-xl) var(--radius-xs) var(--radius-xl);
+  line-height: var(--leading-normal);
+}
+
+/* The assistant's face over its answer: the mark, then its name. */
+.assistant-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: hsl(var(--foreground));
+  margin-bottom: var(--space-3);
+}
+
+.assistant-heading .tavi-mark {
+  width: var(--size-avatar-sm);
+  height: var(--size-avatar-sm);
+}
+
+.prompt {
+  font-weight: var(--weight-regular);
+  white-space: pre-wrap;
+  margin: var(--space-1-5) 0;
+  max-height: var(--height-scroll);
+  overflow: auto;
+}
+
+.message-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-0-5);
+  /* The icon button is padded; pull it back so the glyph sits on the text edge. */
+  margin-inline-start: calc(-1 * var(--space-2));
+}
+
+.user-message .message-actions {
+  margin: var(--space-0-5) calc(-1 * var(--space-1-5)) 0 0;
+  opacity: 0;
+  transition: opacity var(--duration-base);
+}
+
+.user-message:hover .message-actions,
+.user-message:focus-within .message-actions,
+.user-message .message-actions:has(.action-notice:not(:empty)) {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .user-message .message-actions {
+    opacity: 1;
+  }
+}
+
+/* Rewind's confirmation: stays shown while it asks, wrapping under the bubble. */
+.user-message .message-actions.rewind-confirm {
+  opacity: 1;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-inline-end: 0;
+  text-align: end;
+}
+
+.response-footer {
+  margin-top: var(--space-4-5);
+}
+
+.text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* An answer reads as prose: a touch larger than the page, with room between lines. */
+.run .text .markdown {
+  font-size: var(--text-answer);
+  line-height: var(--leading-relaxed);
+}
+
+/* An answer's Markdown: prose spacing, then tables, code and math. */
+.markdown-pending {
+  white-space: pre-wrap;
+}
+
+.markdown > :first-child {
+  margin-top: 0;
+}
+
+.markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown :is(p, ul, ol, blockquote, .markdown-table, .markdown-code, .katex-display) {
+  margin: 0 0 0.75em;
+}
+
+.markdown :is(h1, h2, h3, h4, h5, h6) {
+  margin: 1.25em 0 0.5em;
+  line-height: var(--leading-tight);
+  font-weight: var(--weight-semibold);
+}
+
+.markdown h1 {
+  font-size: var(--text-rel-h1);
+}
+
+.markdown h2 {
+  font-size: var(--text-rel-h2);
+}
+
+.markdown h3 {
+  font-size: var(--text-rel-h3);
+}
+
+.markdown :is(h4, h5, h6) {
+  font-size: var(--text-rel-h4);
+}
+
+.markdown :is(ul, ol) {
+  padding-left: 1.5em;
+}
+
+.markdown li + li,
+.markdown li > :is(ul, ol) {
+  margin-top: 0.25em;
+}
+
+.markdown li > :is(ul, ol) {
+  margin-bottom: 0;
+}
+
+/* A GFM task list: the checkbox stands in for the bullet. */
+.markdown li.task-list-item {
+  list-style: none;
+}
+
+.markdown li.task-list-item input {
+  margin: 0 0.4em 0 -1.4em;
+  vertical-align: calc(-1 * var(--space-px));
+}
+
+.markdown blockquote {
+  padding: 0 0 0 var(--space-3);
+  border-left: var(--stripe-width) solid var(--line-firm);
+  color: hsl(var(--muted-foreground));
+}
+
+.markdown hr {
+  margin: 1.25em 0;
+  border: 0;
+  border-top: var(--border-width) solid var(--line-soft);
+}
+
+.markdown img {
+  max-width: 100%;
+}
+
+.markdown :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-xs);
+  background: hsl(var(--secondary));
+}
+
+.markdown-table {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.markdown table {
+  border-collapse: collapse;
+  font-size: var(--text-base);
+}
+
+.markdown :is(th, td) {
+  /* Words stay whole: the table scrolls in its wrapper rather than splitting a price. */
+  overflow-wrap: normal;
+  padding: var(--space-1-5) var(--space-2-5);
+  border: var(--border-width) solid var(--line-soft);
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown th {
+  font-weight: var(--weight-semibold);
+  background: hsl(var(--secondary));
+}
+
+.markdown-code {
+  position: relative;
+}
+
+.markdown-code pre {
+  max-width: 100%;
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre;
+  overflow-wrap: normal;
+  font-size: var(--text-meta);
+  padding: var(--space-2-5) var(--space-10) var(--space-2-5) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: hsl(var(--secondary));
+}
+
+/* A novel link in a tainted turn: its real host beside the label, and it asks before it opens. */
+.markdown-link-host {
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-meta);
+  overflow-wrap: anywhere;
+}
+
+.markdown-code-copy {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  opacity: 0;
+}
+
+.markdown-code:hover .markdown-code-copy,
+.markdown-code-copy:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .markdown-code-copy {
+    opacity: 1;
+  }
+}
+
+.markdown .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* A formula in a line scrolls on its own, where it can't wrap, rather than widening the transcript. */
+.markdown :not(.katex-display) > .katex {
+  display: inline-flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  /* Room for a slanted letter's overhang, or every short formula would scroll by a pixel or two. */
+  padding-inline-end: 0.15em;
+}
+
+/* KaTeX's hidden copy for screen readers isn't selected along with what is drawn. */
+.markdown .katex-mathml {
+  user-select: none;
+}
+
+/* highlight.js classes, coloured from the theme's code tokens. */
+.markdown :is(.hljs-keyword, .hljs-selector-tag, .hljs-built_in, .hljs-type, .hljs-literal, .hljs-doctag) {
+  color: hsl(var(--code-keyword));
+}
+
+.markdown :is(.hljs-string, .hljs-regexp, .hljs-addition, .hljs-attribute, .hljs-template-tag) {
+  color: hsl(var(--code-string));
+}
+
+.markdown :is(.hljs-number, .hljs-symbol, .hljs-variable, .hljs-template-variable, .hljs-attr) {
+  color: hsl(var(--code-number));
+}
+
+.markdown :is(.hljs-comment, .hljs-quote, .hljs-meta) {
+  color: hsl(var(--code-comment));
+  font-style: italic;
+}
+
+.markdown :is(.hljs-title, .hljs-section, .hljs-name, .hljs-selector-id, .hljs-selector-class, .hljs-property) {
+  color: hsl(var(--code-title));
+}
+
+.markdown .hljs-deletion {
+  color: hsl(var(--destructive));
+}
+
+.discarded {
+  color: hsl(var(--muted-foreground));
+  text-decoration: line-through;
+}
+
+/* Tool cards: a hairline card, its failure state a red edge. */
+.tool,
+.tools {
+  min-width: 0;
+  max-width: 100%;
+  border: var(--border-width) solid var(--line);
+  border-left: var(--stripe-width) solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: hsl(var(--card));
+  padding: var(--space-1-5) var(--space-2-5);
+  margin: var(--space-2) 0;
+}
+
+/* A tool's input or output: its long lines (a page's text, an OCR read) wrap inside the card. */
+.tool pre.tool-payload,
+.tools pre.tool-payload {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: var(--height-clip);
+  overflow-y: auto;
+}
+
+.tool-failed,
+.tools-failed {
+  border-left-color: hsl(var(--destructive));
+}
+
+.tool pre,
+.tools pre,
+.trajectory pre {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre;
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-2-5);
+  border-radius: var(--radius-sm);
+  background: hsl(var(--secondary));
+}
+
+/* A failed call's message wraps, its own line breaks kept: a box that scrolls
+   sideways hides the end of the sentence and is not reachable by keyboard. */
+.tool .failure,
+.tools > .failure {
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* `display: flex` drops a summary's own marker in every engine, and the only
+   remaining hint that a card opens would be the cursor — invisible to a touch
+   or keyboard reader. So the marker is drawn here instead: a chevron that turns. */
+.tool summary,
+.tools summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+}
+
+.tool summary::before,
+.tools summary::before {
+  align-self: center;
+  margin-right: var(--space-0-5);
+}
+
+/* The scanned line: what this call touched, not what it is called. */
+.tool-headline {
+  min-width: 0;
+}
+
+/* What a call did, in words, where its family can say (past-chat search). */
+.tool-label {
+  flex: none;
+}
+
+/* The chats a past-chat search cited, each a link to it. */
+.past-chats {
+  margin: var(--space-1) 0;
+  padding-left: var(--space-4);
+}
+
+/* Consecutive calls, folded into one block rather than a column of cards. */
+.tools .tool {
+  border: none;
+  border-left: none;
+  background: none;
+  padding-left: var(--space-3);
+  margin: var(--space-1) 0;
+}
+
+.status-tool-failed {
+  color: hsl(var(--destructive));
+}
+
+.status-tool-running {
+  color: hsl(var(--info));
+}
+
+.status-tool-completed,
+.status-tool-interrupted {
+  color: hsl(var(--muted-foreground));
+}
+
+/* One entry could not be rendered; the session goes on around it. */
+.unrendered {
+  color: hsl(var(--destructive));
+  font-size: var(--text-base);
+}
+
+.round {
+  border: var(--border-width) solid hsl(var(--primary) / var(--alpha-half));
+  border-radius: var(--radius-lg);
+  background: hsl(var(--primary) / var(--tint-subtle));
+  padding: var(--space-3) var(--space-4);
+  margin: var(--space-3) 0;
+  animation: round-arrive var(--duration-settle) var(--ease-out);
+}
+
+/* What the round waits on is marked by the sun: a dot with a soft halo that
+   breathes while the call waits for the operator. */
+.round :is(.round-heading, .group-ask)::before {
+  content: "";
+  display: inline-block;
+  width: var(--size-dot-lg);
+  height: var(--size-dot-lg);
+  margin-inline-end: var(--space-2);
+  border-radius: var(--radius-round);
+  background: hsl(var(--sun));
+  box-shadow: 0 0 0 var(--space-0-5) hsl(var(--sun-soft));
+  vertical-align: middle;
+  animation: sun-halo var(--duration-pulse) var(--ease-in-out) infinite;
+}
+
+/* A round comes in by settling a step up into place. */
+@keyframes round-arrive {
+  from {
+    transform: translateY(var(--nudge-settle));
+  }
+}
+
+@keyframes sun-halo {
+  0%,
+  100% {
+    box-shadow: 0 0 0 var(--space-0-5) hsl(var(--sun-soft));
+  }
+  50% {
+    box-shadow: 0 0 0 var(--space-1) hsl(var(--sun-soft));
+  }
+}
+
+/* A running turn's sign of life. */
+.run-working {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  color: hsl(var(--muted-foreground));
+}
+
+.working-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: var(--size-working);
+}
+
+.working-dots span {
+  width: var(--size-dot);
+  height: var(--size-dot);
+  border-radius: var(--radius-round);
+  background: hsl(var(--primary));
+  opacity: var(--opacity-faint);
+  transform: scale(0.75);
+  animation: working-breathe var(--duration-bounce) var(--ease-in-out) infinite;
+}
+
+.working-dots span:nth-child(2) {
+  animation-delay: var(--duration-slow);
+}
+
+.working-dots span:nth-child(3) {
+  animation-delay: calc(var(--duration-slow) * 2);
+}
+
+/* The working dots breathe in turn: each swells and brightens, then rests. */
+@keyframes working-breathe {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.75);
+    opacity: var(--opacity-faint);
+  }
+  40% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .working-dots span {
+    animation: none;
+    opacity: var(--opacity-muted);
+  }
+
+  .round,
+  .round :is(.round-heading, .group-ask)::before {
+    animation: none;
+  }
+}
+
+/* A Run button never outgrows its card: the call is shown whole above it. */
+.round .actions button {
+  max-width: 100%;
+}
+
+/* A held file's line, its buttons after it on the line or under it, never inside the sentence. */
+.review-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.review-item-what {
+  flex: 1 1 var(--card-min);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The reason a step above its buttons, as the card's other rows are. */
+.reject-form {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.group-ask {
+  margin-top: 0;
+  font-weight: var(--weight-semibold);
+}
+
+.failure {
+  color: hsl(var(--destructive));
+}
+
+.decision-approved {
+  color: hsl(var(--positive));
+  font-weight: var(--weight-semibold);
+}
+
+.decision-rejected {
+  color: hsl(var(--destructive));
+  font-weight: var(--weight-semibold);
+}
+
+.decision-expired,
+.decision-cancelled {
+  color: hsl(var(--muted-foreground));
+  font-weight: var(--weight-semibold);
+}
+
+/* What waits on the reader — a question, a review, a confirmation — is a
+   panel in the warning tint, so it is seen before it is read. */
+.review,
+.confirmation {
+  margin: var(--space-3) 0;
+  padding: var(--space-3-5) var(--space-4);
+}
+
+.review h3 {
+  margin: 0 0 var(--space-1-5);
+  font-size: var(--text-md);
+}
+
+.review p,
+.review li {
+  font-size: var(--text-base);
+}
+
+.review ul {
+  padding-left: var(--space-4-5);
+}
+
+.review button {
+  margin: var(--space-1) var(--space-1-5) var(--space-1) 0;
+}
+
+.confirmation p {
+  margin-top: 0;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+}
+
+.continues {
+  margin: 0 0 var(--space-1);
+}
+
+.main > .notice {
+  max-width: calc(var(--column) + 2 * var(--gutter));
+  width: 100%;
+  margin-inline: auto;
+  padding: 0 var(--gutter);
+}
+
+.main > .notice {
+  margin-block: 0 var(--space-1-5);
+  font-size: var(--text-base);
+}
+
+/* A slash command's answer keeps its lines: `/forget`'s numbered matches, `/why`'s list. */
+.main > .command-answer {
+  white-space: pre-line;
+}
+
+/* A saved model not yet in effect: said beside the composer it holds. */
+.main > .model-notice {
+  color: hsl(var(--warning));
+}

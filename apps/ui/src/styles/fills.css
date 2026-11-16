@@ -1,0 +1,24 @@
+/* A form fill's values on its approval card. */
+.form-fill { margin: var(--space-2) 0; }
+.form-fill-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.form-fill-table th, .form-fill-table td { text-align: left; vertical-align: top; padding: var(--space-0-5) var(--space-1-5); border-bottom: var(--border-width) solid hsl(var(--border)); overflow-wrap: anywhere; }
+.form-fill-table thead th { white-space: nowrap; }
+.form-fill-table th[scope="rowgroup"] { font-weight: var(--weight-semibold); padding-top: var(--space-2); }
+.form-row-unmatched .form-check, .form-row-document .form-check, .form-row-choice .form-check { color: hsl(var(--warning)); }
+
+/* A PDF fill's or render's pages on its tool card. */
+.pdf-pages { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-1) 0 var(--space-2); }
+.pdf-page { margin: 0; width: var(--width-thumb); max-width: 100%; }
+.pdf-page img, .pdf-page-empty { display: block; width: 100%; aspect-ratio: 8.5 / 11; object-fit: contain; border: var(--border-width) solid hsl(var(--border)); background: hsl(var(--muted)); }
+/* A completed fill's review panel: pages left, the values and the download right. */
+.fill-review { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: var(--space-2-5); align-items: start; margin: var(--space-2) 0; }
+.fill-review-pages { flex-direction: column; margin: 0; }
+.fill-review-pages .pdf-page { width: 100%; }
+/* A video tool's sheet, stills and pose overlays: each image keeps its own shape (a portrait clip stays tall), the empty box a placeholder until it comes. */
+.video-frames { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-2); margin: var(--space-1) 0 var(--space-2); }
+.video-frame { margin: 0; width: var(--width-thumb-md); max-width: 100%; }
+.video-frame-wide { width: var(--width-thumb-wide); }
+.video-frame img { display: block; max-width: 100%; max-height: var(--height-clip-md); height: auto; border: var(--border-width) solid hsl(var(--border)); background: hsl(var(--muted)); }
+.video-frame-empty { display: block; width: 100%; aspect-ratio: 16 / 9; border: var(--border-width) solid hsl(var(--border)); background: hsl(var(--muted)); }
+.fill-review-side { min-width: 0; margin: 0; }
+@media (--phone) { .fill-review { grid-template-columns: minmax(0, 1fr); } }

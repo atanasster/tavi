@@ -1,0 +1,10 @@
+{"note": "synthetic: shaped as FuelCheck v2's prices/nearby answer; no key to record with",
+ "stations": [
+  {"brandid": "1-GPZ1-1", "stationid": "1-GPZ1-11", "brand": "Ampol", "code": 1111, "name": "Ampol Surry Hills", "address": "100 Cleveland St, SURRY HILLS NSW 2010", "location": {"latitude": -33.8885, "longitude": 151.2093, "distance": 1.2}, "state": "NSW"},
+  {"brandid": "1-GPZ1-2", "stationid": "1-GPZ1-22", "brand": "7-Eleven", "code": 2222, "name": "7-Eleven Redfern", "address": "200 Regent St, REDFERN NSW 2016", "location": {"latitude": -33.8930, "longitude": 151.2010, "distance": 1.8}, "state": "NSW"}
+ ],
+ "prices": [
+  {"stationcode": 1111, "fueltype": "DL", "price": 189.9, "lastupdated": "17/10/2026 08:15:00", "state": "NSW"},
+  {"stationcode": 2222, "fueltype": "DL", "price": 192.9, "lastupdated": "15/10/2026 08:15:00", "state": "NSW"},
+  {"stationcode": 2222, "fueltype": "E10", "price": 172.9, "lastupdated": "17/10/2026 08:15:00", "state": "NSW"}
+ ]}

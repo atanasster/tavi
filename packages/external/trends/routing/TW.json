@@ -1,0 +1,10 @@
+{
+  "country": "TW",
+  "order": [
+    "gtrends-rss",
+    "ptt-board",
+    "wikipedia-pageviews",
+    "gdelt-doc",
+    "threads"
+  ]
+}

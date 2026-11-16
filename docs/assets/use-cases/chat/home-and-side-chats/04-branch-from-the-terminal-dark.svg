@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="361" viewBox="0 0 880 361" role="img">
+<rect width="880" height="361" rx="12" fill="#141e1a" stroke="#26332e"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="440" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#9aaba3">tavi chat</text>
+<line x1="0" y1="36" x2="880" y2="36" stroke="#26332e"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#6fd9b4">❯ We're thinking of a long weekend in Lisbon. In one sentence, what is it best known for?</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#e6efea">Lisbon is best known for its steep, scenic hills traversed by historic yellow trams, vibrant tiled</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#e6efea">architecture, historic waterfront monuments in Belém, and rich cultural traditions of pastel de nata</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#e6efea"> and soulful Fado music.</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#f5c75a">◆ Side chat task-mw6mgc21-6 finished — Completed — Compared Baixa/Chiado and Saldanha in two</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#f5c75a">bullets… (task task-mw6mgc21-6)</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#f5c75a">… type to continue Home</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#f5c75a">… a side chat begins</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#6fd9b4">❯ What is a pastel de nata? One sentence.</tspan></text>
+<text x="20" y="241.0" xml:space="preserve"><tspan fill="#f5c75a">… This chat works in its own folder. Start tavi serve with --fs-root &lt;path&gt; to let chats work in</tspan></text>
+<text x="20" y="260.0" xml:space="preserve"><tspan fill="#f5c75a">your folders.</tspan></text>
+<text x="20" y="279.0" xml:space="preserve"><tspan fill="#e6efea">A pastel de nata is a traditional Portuguese egg custard tart featuring a rich, caramelized custard</tspan></text>
+<text x="20" y="298.0" xml:space="preserve"><tspan fill="#e6efea">filling encased in a crisp, flaky puff pastry crust.</tspan></text>
+<text x="20" y="317.0" xml:space="preserve"><tspan fill="#e6efea" opacity="0.62">✓ Done. Type to continue it (/side for a side chat), or Ctrl-C to quit.</tspan></text>
+<text x="20" y="336.0" xml:space="preserve"><tspan fill="#e6efea">❯ █</tspan></text>
+</g>
+</svg>

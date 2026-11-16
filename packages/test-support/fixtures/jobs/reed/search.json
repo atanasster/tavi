@@ -1,0 +1,38 @@
+{
+ "results": [
+  {
+   "jobId": 51000001,
+   "employerId": 600001,
+   "employerName": "Example Fintech Ltd",
+   "employerProfileId": null,
+   "employerProfileName": null,
+   "jobTitle": "Senior Backend Engineer",
+   "locationName": "London",
+   "minimumSalary": 85000.0,
+   "maximumSalary": 100000.0,
+   "currency": "GBP",
+   "expirationDate": "13/11/2026",
+   "date": "14/10/2026",
+   "jobDescription": " We are looking for a senior backend engineer with Go and PostgreSQL to join our payments team in London. Hybrid, three days in the office... ",
+   "applications": 12,
+   "jobUrl": "https://www.reed.co.uk/jobs/senior-backend-engineer/51000001"
+  },
+  {
+   "jobId": 51000002,
+   "employerId": 600002,
+   "employerName": "Example Retail plc",
+   "jobTitle": "Backend Developer (Contract)",
+   "locationName": "Manchester",
+   "minimumSalary": 500.0,
+   "maximumSalary": 600.0,
+   "currency": "GBP",
+   "expirationDate": "30/10/2026",
+   "date": "15/10/2026",
+   "jobDescription": " Contract backend developer, Python and Django, 6 months, day rate... ",
+   "applications": 3,
+   "jobUrl": "https://www.reed.co.uk/jobs/backend-developer-contract/51000002"
+  }
+ ],
+ "ambiguousLocations": [],
+ "totalResults": 2
+}

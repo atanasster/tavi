@@ -1,0 +1,63 @@
+{
+  "network": {
+    "allowedDomains": [
+      "api.github.com"
+    ],
+    "deniedDomains": [
+      "pastebin.com",
+      "*.pastebin.com",
+      "paste.ee",
+      "hastebin.com",
+      "termbin.com",
+      "0x0.st",
+      "transfer.sh",
+      "file.io",
+      "*.file.io",
+      "webhook.site",
+      "*.webhook.site",
+      "requestbin.com",
+      "*.requestbin.com"
+    ],
+    "strictAllowlist": true,
+    "deniedDomainReasons": {
+      "pastebin.com": "a paste or file-drop site: what is sent there is published; the sandbox never reaches one",
+      "*.pastebin.com": "a paste or file-drop site: what is sent there is published; the sandbox never reaches one",
+      "paste.ee": "a paste or file-drop site: what is sent there is published; the sandbox never reaches one",
+      "hastebin.com": "a paste or file-drop site: what is sent there is published; the sandbox never reaches one",
+      "termbin.com": "a paste or file-drop site: what is sent there is published; the sandbox never reaches one",
+      "0x0.st": "a paste or file-drop site: what is sent there is published; the sandbox never reaches one",
+      "transfer.sh": "a paste or file-drop site: what is sent there is published; the sandbox never reaches one",
+      "file.io": "a paste or file-drop site: what is sent there is published; the sandbox never reaches one",
+      "*.file.io": "a paste or file-drop site: what is sent there is published; the sandbox never reaches one",
+      "webhook.site": "a paste or file-drop site: what is sent there is published; the sandbox never reaches one",
+      "*.webhook.site": "a paste or file-drop site: what is sent there is published; the sandbox never reaches one",
+      "requestbin.com": "a paste or file-drop site: what is sent there is published; the sandbox never reaches one",
+      "*.requestbin.com": "a paste or file-drop site: what is sent there is published; the sandbox never reaches one"
+    },
+    "deniedResolvedAddresses": [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+      "100.64.0.0/10",
+      "fc00::/7"
+    ]
+  },
+  "filesystem": {
+    "denyRead": [
+      "/home/person",
+      "/srv/tavi-data"
+    ],
+    "allowRead": [
+      "/srv/tavi-data/mcp/mcp.docs/home"
+    ],
+    "allowWrite": [
+      "/srv/tavi-data/mcp/mcp.docs/home"
+    ],
+    "denyWrite": [
+      "/private/tmp/claude",
+      "/tmp/claude",
+      "/home/person/.npm/_logs",
+      "/home/person/.claude/debug"
+    ]
+  }
+}

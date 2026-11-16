@@ -1,0 +1,490 @@
+/* ---------- Schedule: Coming up and Recurring ---------- */
+
+.schedule .center-subhead {
+  margin-top: var(--space-6);
+}
+
+.schedule-recurring-head > button {
+  margin-left: auto;
+}
+
+.schedule-skipped {
+  font-size: var(--text-meta);
+}
+
+.schedule-day .center-day-head {
+  position: static;
+}
+
+/* One occurrence: its time, a node on the day's line, what runs, how soon. */
+.schedule-item {
+  display: grid;
+  grid-template-columns: var(--time-column) var(--size-node-column) minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0 var(--space-2-5);
+  padding: var(--space-2) 0;
+}
+
+.schedule-item time {
+  padding-top: var(--space-px);
+  text-align: right;
+  font-size: var(--text-base);
+  font-weight: var(--weight-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-node {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  height: 100%;
+}
+
+.schedule-node::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: calc(-1 * var(--space-4));
+  width: 1px;
+  background: var(--line-faint);
+}
+
+.schedule-timeline li:last-child .schedule-node::before {
+  bottom: 0;
+}
+
+.schedule-node i {
+  position: relative;
+  width: var(--size-node);
+  height: var(--size-node);
+  margin-top: var(--space-1);
+  border: var(--border-width-thick) solid hsl(var(--primary));
+  border-radius: var(--radius-round);
+  background: hsl(var(--background));
+}
+
+.schedule-item-schedule .schedule-node i {
+  border-color: hsl(var(--info));
+}
+
+.schedule-kind-routine {
+  color: hsl(var(--primary));
+}
+
+.schedule-kind-schedule {
+  color: hsl(var(--info));
+}
+
+.schedule-title {
+  font-weight: var(--weight-strong);
+  color: inherit;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+a.schedule-title:hover {
+  text-decoration: underline;
+}
+
+.schedule-cadence {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.schedule-rel,
+.schedule-overdue {
+  white-space: nowrap;
+}
+
+.schedule-overdue {
+  font-weight: var(--weight-semibold);
+  color: hsl(var(--warning));
+}
+
+/* A token ceiling below one model call's worth: said in the warning colour under the field. */
+.settings-fields .schedule-ceiling-low {
+  font-weight: var(--weight-semibold);
+  color: hsl(var(--warning));
+}
+
+.schedule-recurring-list {
+  border-color: var(--line-fainter);
+}
+
+.schedule-recurring {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3-5);
+  border-bottom: var(--border-width) solid var(--line-faintest);
+}
+
+.schedule-recurring:last-child {
+  border-bottom: 0;
+}
+
+/* A to-do in its list: padded as a Recurring row, its checkbox beside its words. */
+.center-todo {
+  padding: var(--space-3) var(--space-3-5);
+  border-bottom: var(--border-width) solid var(--line-faintest);
+}
+
+.center-todo:last-child {
+  border-bottom: 0;
+}
+
+.center-todo > label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.center-todo > p {
+  margin: var(--space-1) 0 0;
+}
+
+/* Add a to-do: the field and its button one height, the field taking the rest of the row. */
+.center-todo-add {
+  display: flex;
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
+}
+
+.center-todo-add input {
+  flex: 1 1 auto;
+  height: var(--field-height);
+}
+
+.schedule-recurring-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.schedule-kind-heartbeat {
+  color: hsl(var(--positive));
+}
+
+/* A row's controls, in one order for every kind: Run now, the switch, More. */
+.schedule-recurring-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Recurring's chips, its name filter and Pause all, on one line that wraps. */
+.schedule-recurring-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.schedule-recurring-tools .center-chips {
+  margin-bottom: 0;
+}
+
+/* A row's More menu: a short list under its button, at the row's right edge. */
+.row-menu {
+  position: relative;
+}
+
+.row-menu-list {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: var(--z-popover);
+  display: flex;
+  flex-direction: column;
+  min-width: var(--width-popover-min);
+  margin-top: var(--space-1);
+  padding: var(--space-1);
+}
+
+.row-menu-item {
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  font-size: var(--text-md);
+  outline: var(--outline-width) solid transparent;
+  outline-offset: calc(-1 * var(--outline-width));
+}
+
+.row-menu-danger,
+.row-menu-danger:hover,
+.row-menu-danger:focus-visible {
+  color: hsl(var(--destructive));
+}
+
+/* A delete waiting for its Undo, at the foot of the page, its bar running out with the wait. */
+.undo-toast {
+  position: fixed;
+  bottom: var(--space-4);
+  left: 50%;
+  z-index: var(--z-toast);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  width: max-content;
+  max-width: calc(100vw - var(--space-8));
+  padding: var(--space-2) var(--space-2) var(--space-2-5) var(--space-3-5);
+  border: var(--border-width) solid hsl(var(--border));
+  border-radius: var(--radius-lg);
+  background: hsl(var(--card));
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
+  transform: translateX(-50%);
+}
+
+/* The wait stops while Undo has focus or the pointer, and its bar with it. */
+.undo-toast-paused .need-undo-bar {
+  animation-play-state: paused;
+}
+
+.undo-toast-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* A plain schedule's page: its prompt as written, and its fire ledger, one
+   fire a line that wraps on a phone. */
+.schedule-prompt {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* One grid for every fire, whatever its length: time, badge, what happened (wrapping in its own column) and its task
+   link, each in the same column on every row. */
+.schedule-fires {
+  display: grid;
+  grid-template-columns: max-content max-content minmax(0, 1fr) max-content;
+  column-gap: var(--space-2);
+}
+
+.schedule-fires li {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: baseline;
+  padding: var(--space-1-5) 0;
+  border-bottom: var(--border-width) solid var(--line-faintest);
+}
+
+.schedule-fires li > a {
+  grid-column: 4;
+}
+
+.schedule-fires li:last-child {
+  border-bottom: 0;
+}
+
+.schedule-fires time {
+  font-weight: var(--weight-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-fire-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* A schedule's webhook and email trigger: an address, a sender or a new
+   secret wraps anywhere, so a long one never widens the page on a phone. */
+.schedule-webhook code,
+.schedule-email-trigger code {
+  overflow-wrap: anywhere;
+}
+
+/* The email trigger's fields, one under another, as wide as the section. */
+.schedule-email-trigger {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.schedule-email-trigger label {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.schedule-webhook-secret {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+/* A secret shown once: a read-only field to select or copy from, with its Copy button beside it. */
+.schedule-secret-field {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  width: 100%;
+}
+
+.schedule-secret-field input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+}
+
+/* An on/off switch: the pause toggle of a recurring row. Off, its track is
+   the full border colour, so the switch keeps a visible edge on the card;
+   24px tall, the least target a pointer is promised. */
+.switch {
+  position: relative;
+  flex: none;
+  width: var(--size-switch-width);
+  min-width: var(--size-switch-width);
+  height: var(--control-height-xs);
+  border-radius: var(--radius-full);
+  background: hsl(var(--border));
+  cursor: pointer;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: var(--space-0-5);
+  left: var(--space-0-5);
+  width: var(--size-switch-thumb);
+  height: var(--size-switch-thumb);
+  border-radius: var(--radius-round);
+  background: hsl(var(--card));
+  transition: transform var(--duration-slow);
+}
+
+.switch[aria-checked="true"] {
+  background: hsl(var(--primary));
+}
+
+.switch[aria-checked="true"]::after {
+  transform: translateX(calc(var(--size-switch-width) - var(--size-switch-thumb) - 2 * var(--space-0-5)));
+}
+
+/* A revision against the current one: each setting it changes, now and as restored. */
+.revision-diff {
+  display: grid;
+  gap: var(--space-2-5);
+  margin: var(--space-2) 0 var(--space-3);
+}
+
+.revision-diff dt {
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.revision-diff dd {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-1) 0 0;
+}
+
+.revision-diff-now,
+.revision-diff-then {
+  padding: var(--space-1) var(--space-2);
+  border-left: var(--stripe-width) solid var(--line);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.revision-diff-then {
+  border-left-color: hsl(var(--positive));
+  background: hsl(var(--secondary));
+}
+
+.revision-diff-tag {
+  margin-right: var(--space-1);
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-meta);
+  font-weight: var(--weight-semibold);
+}
+
+/* On, but blocked: the routine is not paused, yet it cannot do its work. */
+.switch-warning[aria-checked="true"] {
+  background: hsl(var(--warning));
+}
+
+@media (forced-colors: active) {
+  .switch {
+    border: var(--border-width) solid ButtonText;
+  }
+
+  .switch::after {
+    background: ButtonText;
+  }
+
+  .switch[aria-checked="true"]::after {
+    background: Highlight;
+  }
+
+  .switch-warning {
+    outline: var(--outline-width) dashed ButtonText;
+    outline-offset: var(--space-px);
+  }
+
+  .row-menu-item:hover,
+  .row-menu-item:focus-visible {
+    outline-color: Highlight;
+  }
+}
+
+.switch:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+@media (--phone) {
+  /* A fire's time and badge on a line, what happened and its task link each under them. */
+  .schedule-fires {
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+
+  .schedule-fire-text,
+  .schedule-fires li > a {
+    grid-column: 1 / -1;
+  }
+
+  .schedule-item {
+    grid-template-columns: var(--time-column-phone) var(--size-node-column-sm) minmax(0, 1fr);
+  }
+
+  /* On a phone a row's controls go under what it says, and each is a thumb's height. */
+  .schedule-recurring {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .schedule-recurring-controls .button-sm,
+  .row-menu-item {
+    min-height: var(--size-touch);
+  }
+
+  /* The switch keeps its look; what a thumb can press around it is a touch target's size. */
+  .switch::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, var(--size-touch));
+    height: var(--size-touch);
+    transform: translate(-50%, -50%);
+  }
+
+  .undo-toast {
+    right: var(--space-4);
+    left: var(--space-4);
+    width: auto;
+    max-width: none;
+    transform: none;
+  }
+
+  .schedule-rel,
+  .schedule-overdue {
+    grid-column: 3;
+  }
+}

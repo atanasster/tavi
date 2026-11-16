@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="323" viewBox="0 0 880 323" role="img">
+<rect width="880" height="323" rx="12" fill="#ffffff" stroke="#d9e0dc"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="440" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#52605a">tavi onboard</text>
+<line x1="0" y1="36" x2="880" y2="36" stroke="#d9e0dc"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#132620">Welcome to Tavi</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#132620">Tavi needs one model to answer you.</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#132620" font-weight="700">Which model provider?</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#1f6b55">❯ 1. OpenRouter (recommended)</tspan><tspan fill="#1f6b55" opacity="0.62"> — billed per use with your key</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#132620">  2. Ollama</tspan><tspan fill="#132620" opacity="0.62"> — runs on this computer, no key</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#132620">  3. Anthropic</tspan><tspan fill="#132620" opacity="0.62"> — billed per use with your key</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#132620">  4. OpenAI</tspan><tspan fill="#132620" opacity="0.62"> — billed per use with your key</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#132620">  5. Another provider…</tspan></text>
+<text x="20" y="241.0" xml:space="preserve"><tspan fill="#132620" font-weight="700">How do you want to connect OpenRouter?</tspan></text>
+<text x="20" y="260.0" xml:space="preserve"><tspan fill="#1f6b55">❯ 1. Sign in with OpenRouter</tspan><tspan fill="#1f6b55" opacity="0.62"> — opens your browser; a key is made for Tavi, billed per use to your</tspan></text>
+<text x="20" y="279.0" xml:space="preserve"><tspan fill="#1f6b55" opacity="0.62">credits</tspan></text>
+<text x="20" y="298.0" xml:space="preserve"><tspan fill="#132620">  2. Paste a key instead</tspan></text>
+</g>
+</svg>

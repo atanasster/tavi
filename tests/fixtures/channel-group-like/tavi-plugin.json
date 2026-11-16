@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "fixture.grouplike",
+  "version": "1.0.0",
+  "name": "Group-like (test fixture)",
+  "description": "A test-only group chat channel, proving the group-chat seam can carry a platform with rooms, polls and events.",
+  "entry": "index.mjs",
+  "provides": ["channel"],
+  "channelAbi": 2,
+  "channels": [
+    {
+      "providerId": "group-like",
+      "label": "Group-like",
+      "kind": "chat",
+      "description": "A group chat channel with rooms, threads, commands, polls and events (test fixture).",
+      "settings": [
+        { "key": "apiBaseUrl", "label": "API address", "type": "string", "default": "https://group-like.test/api" }
+      ],
+      "auth": { "kind": "secrets", "fields": [{ "key": "token", "label": "Bot token" }] },
+      "sender": { "label": "User ID", "placeholder": "user-1", "pattern": "[a-z0-9-]{1,64}", "normalize": "none", "authentication": "provider" },
+      "target": { "label": "Channel ID", "placeholder": "room-1", "pattern": "[a-z0-9:-]{1,64}", "normalize": "none" },
+      "sendRate": { "perMinute": 600, "perTargetPerMinute": 60 },
+      "groups": { "unboundSenders": "drop", "unlistedRooms": "drop", "defaultTrigger": ["mention", "reply", "command", "picked"] },
+      "hosts": ["group-like.test"],
+      "retention": "purge-on-remove",
+      "setupHelp": "A test fixture: never connect it to anything real."
+    }
+  ],
+  "capabilities": [],
+  "tools": [],
+  "config": {}
+}

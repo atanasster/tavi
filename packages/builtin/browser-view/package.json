@@ -1,0 +1,52 @@
+{
+  "name": "@tavi/plugin-browser-view",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/builtin/browser-view"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "description": "The built-in live browser view (tavi.browserview): a UI-only plugin the web canvas frames in a sandboxed iframe, speaking the tavi.ui/1 message ABI",
+  "exports": {
+    "./manifest": {
+      "development": "./src/manifest.ts",
+      "types": "./dist/manifest.d.mts",
+      "import": "./dist/manifest.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown && node scripts/assemble.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tavi/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "jsdom": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      "./manifest": {
+        "types": "./dist/manifest.d.mts",
+        "import": "./dist/manifest.mjs"
+      },
+      "./package.json": "./package.json"
+    }
+  }
+}

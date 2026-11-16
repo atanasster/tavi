@@ -1,0 +1,722 @@
+[
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.518334",
+   "street": {
+    "id": 1686418,
+    "name": "On or near Artillery Lane"
+   },
+   "longitude": "-0.077203"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137007350,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.529100",
+   "street": {
+    "id": 1688390,
+    "name": "On or near Lampern Square"
+   },
+   "longitude": "-0.064754"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137007062,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.532797",
+   "street": {
+    "id": 1686458,
+    "name": "On or near Theatre/concert Hall"
+   },
+   "longitude": "-0.076838"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137007112,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.528864",
+   "street": {
+    "id": 1683948,
+    "name": "On or near City Road"
+   },
+   "longitude": "-0.094261"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137007120,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.529714",
+   "street": {
+    "id": 1688230,
+    "name": "On or near Warner Place"
+   },
+   "longitude": "-0.065420"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137007128,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.528345",
+   "street": {
+    "id": 1683510,
+    "name": "On or near President Street"
+   },
+   "longitude": "-0.096633"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137007497,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.514032",
+   "street": {
+    "id": 1688314,
+    "name": "On or near Henriques Street"
+   },
+   "longitude": "-0.065494"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137007516,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.516982",
+   "street": {
+    "id": 1688365,
+    "name": "On or near Fieldgate Street"
+   },
+   "longitude": "-0.064979"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137007685,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.524929",
+   "street": {
+    "id": 1687022,
+    "name": "On or near Turville Street"
+   },
+   "longitude": "-0.073566"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137010227,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.518209",
+   "street": {
+    "id": 1687912,
+    "name": "On or near Greatorex Street"
+   },
+   "longitude": "-0.067435"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137010403,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.522154",
+   "street": {
+    "id": 1686916,
+    "name": "On or near Quaker Street"
+   },
+   "longitude": "-0.073798"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137010565,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.518334",
+   "street": {
+    "id": 1686418,
+    "name": "On or near Artillery Lane"
+   },
+   "longitude": "-0.077203"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137010717,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.513169",
+   "street": {
+    "id": 1687257,
+    "name": "On or near North Tenter Street"
+   },
+   "longitude": "-0.071540"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137010860,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.515341",
+   "street": {
+    "id": 1689104,
+    "name": "On or near Nelson Street"
+   },
+   "longitude": "-0.059298"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137011458,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.530720",
+   "street": {
+    "id": 1687892,
+    "name": "On or near Ropley Street"
+   },
+   "longitude": "-0.068117"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137011490,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.529100",
+   "street": {
+    "id": 1688390,
+    "name": "On or near Lampern Square"
+   },
+   "longitude": "-0.064754"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137011671,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.519193",
+   "street": {
+    "id": 1686584,
+    "name": "On or near Shopping Area"
+   },
+   "longitude": "-0.075603"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137011684,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.512988",
+   "street": {
+    "id": 1688106,
+    "name": "On or near Further/higher Educational Building"
+   },
+   "longitude": "-0.066561"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137011567,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.529786",
+   "street": {
+    "id": 1685747,
+    "name": "On or near Aske Street"
+   },
+   "longitude": "-0.081305"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137011648,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.517962",
+   "street": {
+    "id": 1689477,
+    "name": "On or near Parking Area"
+   },
+   "longitude": "-0.057890"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137011656,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.515237",
+   "street": {
+    "id": 1687651,
+    "name": "On or near Assam Street"
+   },
+   "longitude": "-0.068786"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137011658,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.526163",
+   "street": {
+    "id": 1687209,
+    "name": "On or near Tomlinson Close"
+   },
+   "longitude": "-0.072058"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137011668,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.532642",
+   "street": {
+    "id": 1684436,
+    "name": "On or near Cropley Street"
+   },
+   "longitude": "-0.089937"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137011755,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.515483",
+   "street": {
+    "id": 1687686,
+    "name": "On or near White Church Lane"
+   },
+   "longitude": "-0.068963"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137011823,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.522581",
+   "street": {
+    "id": 1684265,
+    "name": "On or near Errol Street"
+   },
+   "longitude": "-0.091698"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137012203,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.518200",
+   "street": {
+    "id": 1686480,
+    "name": "On or near Tenter Ground"
+   },
+   "longitude": "-0.076142"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137012043,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.525186",
+   "street": {
+    "id": 1687448,
+    "name": "On or near Granby Street"
+   },
+   "longitude": "-0.069519"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137012112,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.526163",
+   "street": {
+    "id": 1684235,
+    "name": "On or near Lizard Street"
+   },
+   "longitude": "-0.092428"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137012269,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.525867",
+   "street": {
+    "id": 1687026,
+    "name": "On or near Swanfield Street"
+   },
+   "longitude": "-0.073180"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137012349,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.521029",
+   "street": {
+    "id": 1687519,
+    "name": "On or near Spital Street"
+   },
+   "longitude": "-0.069911"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137012553,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.528345",
+   "street": {
+    "id": 1683510,
+    "name": "On or near President Street"
+   },
+   "longitude": "-0.096633"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137012555,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.522003",
+   "street": {
+    "id": 1687303,
+    "name": "On or near Quaker Street"
+   },
+   "longitude": "-0.071758"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137012785,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.519775",
+   "street": {
+    "id": 1687106,
+    "name": "On or near Princelet Street"
+   },
+   "longitude": "-0.071852"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137012679,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.513893",
+   "street": {
+    "id": 1687378,
+    "name": "On or near Alie Street"
+   },
+   "longitude": "-0.070746"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137012708,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.514021",
+   "street": {
+    "id": 1688350,
+    "name": "On or near Batty Street"
+   },
+   "longitude": "-0.064817"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137012731,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.511132",
+   "street": {
+    "id": 1687231,
+    "name": "On or near Yeoman's Yard"
+   },
+   "longitude": "-0.071266"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137012744,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.516010",
+   "street": {
+    "id": 1687818,
+    "name": "On or near Adler Street"
+   },
+   "longitude": "-0.067644"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137012801,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.525368",
+   "street": {
+    "id": 1684492,
+    "name": "On or near Martha's Buildings"
+   },
+   "longitude": "-0.090010"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137013328,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.521814",
+   "street": {
+    "id": 1689020,
+    "name": "On or near Brady Street"
+   },
+   "longitude": "-0.059729"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137013295,
+  "location_subtype": "",
+  "month": "2026-08"
+ },
+ {
+  "category": "anti-social-behaviour",
+  "location_type": "Force",
+  "location": {
+   "latitude": "51.523607",
+   "street": {
+    "id": 1686282,
+    "name": "On or near Parking Area"
+   },
+   "longitude": "-0.077961"
+  },
+  "context": "",
+  "outcome_status": null,
+  "persistent_id": "",
+  "id": 137012988,
+  "location_subtype": "",
+  "month": "2026-08"
+ }
+]

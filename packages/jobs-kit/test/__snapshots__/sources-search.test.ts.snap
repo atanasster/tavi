@@ -1,0 +1,682 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`each further adapter on its recorded or documented answer > breezy matches its snapshot 1`] = `
+[
+  {
+    "attribution": "MS Breezy Trial via Breezy HR",
+    "clusterId": "breezy:b8069a73598d2f3e5e4f2965",
+    "company": "MS Breezy Trial",
+    "employmentType": "OTHER",
+    "excerpt": "$0.05 – $0.06 / hour",
+    "flags": [
+      "ghost:age",
+    ],
+    "places": [
+      {
+        "city": "Chaos",
+        "country": "US",
+        "region": "FL",
+      },
+    ],
+    "postedAt": "2024-02-15T14:37:22.684Z",
+    "postingId": "breezy:b8069a73598d2f3e5e4f2965",
+    "salary": {
+      "basis": "unknown",
+      "currency": "USD",
+      "max": 0.06,
+      "min": 0.05,
+      "origin": "stated",
+      "period": "HOUR",
+    },
+    "skills": [],
+    "source": "breezy",
+    "sourceRef": "breezy/98323abf2296",
+    "sponsorship": "unknown",
+    "tenant": "breezy",
+    "title": "Employee #12",
+    "url": "https://breezy.breezy.hr/p/98323abf2296-employee-12",
+    "workplace": "unknown",
+  },
+  {
+    "attribution": "MS Breezy Trial via Breezy HR",
+    "clusterId": "breezy:d4371166d6964b71b7f37695",
+    "company": "MS Breezy Trial",
+    "employmentType": "CONTRACTOR",
+    "excerpt": "$1 – $5 / year",
+    "flags": [
+      "ghost:age",
+    ],
+    "places": [],
+    "postedAt": "2023-04-06T01:32:13.932Z",
+    "postingId": "breezy:d4371166d6964b71b7f37695",
+    "salary": {
+      "basis": "unknown",
+      "currency": "USD",
+      "max": 5,
+      "min": 1,
+      "origin": "stated",
+      "period": "YEAR",
+    },
+    "skills": [],
+    "source": "breezy",
+    "sourceRef": "breezy/088ac6d52139",
+    "sponsorship": "unknown",
+    "tenant": "breezy",
+    "title": "Open Position",
+    "url": "https://breezy.breezy.hr/p/088ac6d52139-open-position",
+    "workplace": "unknown",
+  },
+]
+`;
+
+exports[`each further adapter on its recorded or documented answer > forem matches its snapshot 1`] = `
+[
+  {
+    "attribution": "Offres du Forem (ODWB)",
+    "clusterId": "forem:e120bb1fd59e913144651db0",
+    "company": "Itzu Jobs",
+    "employmentType": "FULL_TIME",
+    "excerpt": "Management et ingénierie qualité industrielle
+Activités liées à l'emploi",
+    "flags": [],
+    "places": [
+      {
+        "city": "Neufchâteau",
+        "country": "BE",
+        "lat": 49.839283,
+        "lon": 5.434929,
+      },
+    ],
+    "postedAt": "2026-10-03T00:00:00.000Z",
+    "postingId": "forem:e120bb1fd59e913144651db0",
+    "reqId": "15120817_FR",
+    "skills": [],
+    "source": "forem",
+    "sourceRef": "2080441",
+    "sponsorship": "unknown",
+    "title": "Responsable qualité (H/F/X)",
+    "url": "https://www.leforem.be/recherche-offres/offre-detail/2080441",
+    "validThrough": "2026-10-31T23:59:59.000Z",
+    "workplace": "unknown",
+  },
+  {
+    "attribution": "Offres du Forem (ODWB)",
+    "clusterId": "forem:20a35ccaeaab791c3c0d8987",
+    "company": "Itzu Jobs",
+    "employmentType": "FULL_TIME",
+    "excerpt": "Maintenance d'installation de chauffage
+Activités liées à l'emploi",
+    "flags": [],
+    "places": [
+      {
+        "city": "La Louvière",
+        "country": "BE",
+        "lat": 50.478004,
+        "lon": 4.187935,
+      },
+    ],
+    "postedAt": "2026-09-26T00:00:00.000Z",
+    "postingId": "forem:20a35ccaeaab791c3c0d8987",
+    "reqId": "15043187_FR",
+    "skills": [],
+    "source": "forem",
+    "sourceRef": "2071395",
+    "sponsorship": "unknown",
+    "title": "Plombier /X) (H/F/X)",
+    "url": "https://www.leforem.be/recherche-offres/offre-detail/2071395",
+    "validThrough": "2026-10-24T23:59:59.000Z",
+    "workplace": "unknown",
+  },
+]
+`;
+
+exports[`each further adapter on its recorded or documented answer > jobtech matches its snapshot 1`] = `
+[
+  {
+    "applyUrl": "https://app.teamtailor.com/companies/zhttps://app.teamtailor.com/companies/zbu-mmYIt10@eu/jobs/8520094/stagesbu-mmYIt10@eu/jobs/8436137/stages",
+    "attribution": "Ads from Arbetsförmedlingen (JobTech)",
+    "clusterId": "jobtech:06b1493be52bd6705306b485",
+    "company": "Rasulson Consulting AB",
+    "employmentType": "TEMPORARY",
+    "excerpt": "Uppdrag: Senior Backend Developer / Solution Architect
+Om rollen
+Vår kund söker en senior Backend Developer / Solution Architect som kombinerar hands-on utveckling med lösningsarkitektur. Du designar och bygger backendtjänster och integrationer, och förstår verksamhetens behov tillräckligt väl för att översätta dem till pragmatiska tekniska lösningar.
+Du blir en del av en modern digital miljö där nya lösningar, backendarkitekturer och integrationer tas fram för verksamhetskritiska processer. Du är med genom hela kedjan, från design och tekniska vägval till implementation och drift, och har goda möjligheter att påverka hur det tekniska landskapet utformas i en miljö där mycket byggs och vidareutvecklas från grunden.
+Ansvarsområden
+- Designa och bygga backendtjänster och integrationer.
+- Fatta och driva tekniska vägval och bidra med arkitekturperspektiv i utvecklingsarbetet.
+- Delta i arbetet från design och implementation till drift.
+- Samarbeta nära både utvecklare och verksamhet och omsätta behov till tekniska lösningar.
+- Stötta och coacha andra utvecklare.
+Krav och kompetenser
+- Stark erfarenhet av Java, Kotlin eller liknande tekniker.
+- Gedigen erfarenhet av backendutveckling, API:er och integrationer.
+- God förståelse för mikrotjänster, messaging och event-driven arkitektur.
+- Erfarenhet av systemdesign, inklusive att definiera servicegränser och integrationer.
+- Praktisk erfarenhet av CI/CD, molnmiljöer och DevOps.
+- Erfarenhet av felsökning och drift av produktionssystem.
+- Pragmatiskt arbetssätt med förmåga att undvika onödig komplexitet.
+Meriterande
+- Erfarenhet av Kotlin och Spring.
+Personliga egenskaper
+Du är en praktiskt lagd senior utvecklare som vill kombinera stark utvecklarkompetens med ett arkitektoniskt perspektiv och vara med hela vägen från design till implementation och drift. Rollen passar inte en renodlad arkitekt.",
+    "flags": [],
+    "places": [
+      {
+        "city": "Stockholm",
+        "country": "SE",
+        "region": "Stockholms län",
+      },
+    ],
+    "postedAt": "2026-10-09T00:00:00.000Z",
+    "postingId": "jobtech:06b1493be52bd6705306b485",
+    "skills": [],
+    "source": "jobtech",
+    "sourceRef": "31574200",
+    "sponsorship": "unknown",
+    "title": "Backend Developer",
+    "url": "https://arbetsformedlingen.se/platsbanken/annonser/31574200",
+    "validThrough": "2026-11-13T23:59:59.000Z",
+    "workplace": "unknown",
+  },
+  {
+    "applyUrl": "https://career.knightecgroup.com/jobs/8350822-backend-developer/applications/new?promotion=2186669-arbetsformedlingen",
+    "attribution": "Ads from Arbetsförmedlingen (JobTech)",
+    "clusterId": "jobtech:dc64a5d782f7d5cb6f0efb06",
+    "company": "Knightec Group Software and Cloud AB",
+    "employmentType": "FULL_TIME",
+    "excerpt": "Därför är detta jobb för dig För att du älskar att skapa system som är effektiva, kostnadseffektiva och använder en modern teknikstack, och du ser dig själv som en väsentlig del av teamet där din och teamets vision blir verklighet i molnet. Du vill göra skillnad genom att bidra med perspektiv, färdigheter och erfarenhet till olika branscher och miljöer.
+Bygg en karriär du kan vara stolt över Som en del av vårt team kan din resa ta olika vägar när du utvecklar system tillsammans med våra kunder. Arbetet sker in-house i team från våra egna lokaler – alltid med målet att leverera resultat av hög kvalitet. Du kan till exempel skapa en IoT-plattform, utveckla en applikation för sensorhantering inom MedTech, eller bygga en dataplattform för industriell produktion. Exakt vilket projekt du kommer att arbeta med vet vi först när du har blivit en del av Knightec Group, och det är just den variationen och möjligheten att själv välja projekt som gör arbetet här så spännande!
+Du kommer att arbeta inom affärsområdet Software & Cloud som hjälper kunder att utveckla framtidssäkra, storskaliga dator- och mjukvarusystem över hela IT-landskapet – från elektroniska enheter och nätverk till datadrivna företagsapplikationer med stöd av AI och molntjänster.
+Arbetsuppgifter
+-
+Designa, utveckla och optimera backend-lösningar med fokus på molntjänster.
+-
+Implementera microservices för att säkerställa skalbara och effektiva system.
+-
+Utveckla och underhålla API:er för integration mellan system.
+-
+Arbeta med datalagring och informationshantering.
+-
+Samarbeta med front-end utvecklare, data engineers och andra för att skapa integrerade system.
+-
+Bidra med nya idéer och håll dig uppdaterad om de senaste teknologierna.
+Kvalifikationer
+-
+2-3 års erfarenhet av backend-utveckling i Java, C#, Kotlin eller motsvarande.",
+    "flags": [],
+    "places": [
+      {
+        "city": "Sundsvall",
+        "country": "SE",
+        "lat": 62.39160501761,
+        "lon": 17.3080081149981,
+        "region": "Västernorrlands län",
+      },
+    ],
+    "postedAt": "2026-09-09T10:38:10.000Z",
+    "postingId": "jobtech:dc64a5d782f7d5cb6f0efb06",
+    "skills": [],
+    "source": "jobtech",
+    "sourceRef": "31455334",
+    "sponsorship": "unknown",
+    "title": "Backend Developer",
+    "url": "https://arbetsformedlingen.se/platsbanken/annonser/31455334",
+    "validThrough": "2027-03-08T23:59:59.000Z",
+    "workplace": "unknown",
+  },
+]
+`;
+
+exports[`each further adapter on its recorded or documented answer > nav matches its snapshot 1`] = `
+[
+  {
+    "attribution": "Ads from arbeidsplassen.no (NAV)",
+    "clusterId": "nav:8faa50b30543ffdbe7cabb56",
+    "company": "00SMART AS",
+    "excerpt": "",
+    "flags": [],
+    "places": [
+      {
+        "city": "Oslo",
+        "country": "NO",
+      },
+    ],
+    "postedAt": "2026-10-15T00:02:59.759Z",
+    "postingId": "nav:8faa50b30543ffdbe7cabb56",
+    "skills": [],
+    "source": "nav",
+    "sourceRef": "e3a0f7c4-33ac-45dd-8934-21193d1a2b79",
+    "sponsorship": "unknown",
+    "title": "Independent Sales Partner – Patented Smart Window Technology | Commission-Based",
+    "url": "https://arbeidsplassen.nav.no/stillinger/stilling/e3a0f7c4-33ac-45dd-8934-21193d1a2b79",
+    "workplace": "unknown",
+  },
+  {
+    "attribution": "Ads from arbeidsplassen.no (NAV)",
+    "clusterId": "nav:1d9f2879c257d947b5fa7da8",
+    "company": "Sensio",
+    "excerpt": "",
+    "flags": [],
+    "places": [
+      {
+        "city": "Oslo",
+        "country": "NO",
+      },
+    ],
+    "postedAt": "2026-10-15T00:02:59.793Z",
+    "postingId": "nav:1d9f2879c257d947b5fa7da8",
+    "seniority": "executive",
+    "skills": [],
+    "source": "nav",
+    "sourceRef": "6b135172-0765-4a3f-ab5a-3b7fdd9dc9b0",
+    "sponsorship": "unknown",
+    "title": "Head of Enterprise IT",
+    "url": "https://arbeidsplassen.nav.no/stillinger/stilling/6b135172-0765-4a3f-ab5a-3b7fdd9dc9b0",
+    "workplace": "unknown",
+  },
+  {
+    "attribution": "Ads from arbeidsplassen.no (NAV)",
+    "clusterId": "nav:d9a4a4cb4f9031b1576717fa",
+    "company": "Superside",
+    "excerpt": "",
+    "flags": [],
+    "places": [
+      {
+        "city": "?",
+        "country": "NO",
+      },
+    ],
+    "postedAt": "2026-10-15T00:03:09.961Z",
+    "postingId": "nav:d9a4a4cb4f9031b1576717fa",
+    "skills": [],
+    "source": "nav",
+    "sourceRef": "f0de7304-aab5-4f1c-8101-20d4d7525786",
+    "sponsorship": "unknown",
+    "title": "AI Enablement and Learning Specialist",
+    "url": "https://arbeidsplassen.nav.no/stillinger/stilling/f0de7304-aab5-4f1c-8101-20d4d7525786",
+    "workplace": "unknown",
+  },
+]
+`;
+
+exports[`each further adapter on its recorded or documented answer > reed matches its snapshot 1`] = `
+[
+  {
+    "attribution": "Jobs by reed.co.uk",
+    "clusterId": "reed:2b6b611d794189df6fb38446",
+    "company": "Example Fintech Ltd",
+    "excerpt": "We are looking for a senior backend engineer with Go and PostgreSQL to join our payments team in London. Hybrid, three days in the office...",
+    "flags": [],
+    "places": [
+      {
+        "city": "London",
+        "country": "GB",
+      },
+    ],
+    "postedAt": "2026-10-14T00:00:00.000Z",
+    "postingId": "reed:2b6b611d794189df6fb38446",
+    "salary": {
+      "basis": "gross",
+      "currency": "GBP",
+      "max": 100000,
+      "min": 85000,
+      "origin": "stated",
+      "period": "YEAR",
+    },
+    "seniority": "senior",
+    "skills": [],
+    "source": "reed",
+    "sourceRef": "51000001",
+    "sponsorship": "unknown",
+    "title": "Senior Backend Engineer",
+    "url": "https://www.reed.co.uk/jobs/senior-backend-engineer/51000001",
+    "validThrough": "2026-11-13T23:59:59.000Z",
+    "workplace": "unknown",
+  },
+  {
+    "attribution": "Jobs by reed.co.uk",
+    "clusterId": "reed:4d87174809585d47ee45932b",
+    "company": "Example Retail plc",
+    "employmentType": "CONTRACTOR",
+    "excerpt": "Contract backend developer, Python and Django, 6 months, day rate...",
+    "flags": [],
+    "places": [
+      {
+        "city": "Manchester",
+        "country": "GB",
+      },
+    ],
+    "postedAt": "2026-10-15T00:00:00.000Z",
+    "postingId": "reed:4d87174809585d47ee45932b",
+    "salary": {
+      "basis": "gross",
+      "currency": "GBP",
+      "max": 600,
+      "min": 500,
+      "origin": "stated",
+      "period": "DAY",
+    },
+    "skills": [],
+    "source": "reed",
+    "sourceRef": "51000002",
+    "sponsorship": "unknown",
+    "title": "Backend Developer (Contract)",
+    "url": "https://www.reed.co.uk/jobs/backend-developer-contract/51000002",
+    "validThrough": "2026-10-30T23:59:59.000Z",
+    "workplace": "unknown",
+  },
+]
+`;
+
+exports[`each further adapter on its recorded or documented answer > usajobs matches its snapshot 1`] = `
+[
+  {
+    "applyUrl": "https://www.usajobs.gov:443/job/820001001",
+    "attribution": "Jobs from USAJOBS",
+    "clusterId": "usajobs:20b131bd706475933feba6cc",
+    "company": "Example Digital Service",
+    "employmentType": "FULL_TIME",
+    "excerpt": "Build and run the services behind example.gov.
+Specialized experience building backend services in Go or Python.
+Design backend APIs.
+Operate Kubernetes clusters.",
+    "flags": [],
+    "places": [
+      {
+        "city": "Washington",
+        "country": "US",
+        "lat": 38.89037,
+        "lon": -77.03196,
+        "region": "District of Columbia",
+      },
+    ],
+    "postedAt": "2026-10-10T00:00:00.000Z",
+    "postingId": "usajobs:20b131bd706475933feba6cc",
+    "reqId": "EX-26-001",
+    "salary": {
+      "basis": "gross",
+      "currency": "USD",
+      "max": 165000,
+      "min": 120000,
+      "origin": "stated",
+      "period": "YEAR",
+    },
+    "skills": [],
+    "source": "usajobs",
+    "sourceRef": "820001001",
+    "sponsorship": "unknown",
+    "title": "IT Specialist (Software Engineering)",
+    "url": "https://www.usajobs.gov:443/job/820001001",
+    "validThrough": "2026-11-10T23:59:59.997Z",
+    "workplace": "unknown",
+  },
+  {
+    "applyUrl": "https://www.usajobs.gov:443/job/820001002",
+    "attribution": "Jobs from USAJOBS",
+    "clusterId": "usajobs:b646114fc96f88d9910796be",
+    "company": "Example Statistics Office",
+    "employmentType": "FULL_TIME",
+    "excerpt": "Run the office's data platform.
+Experience with PostgreSQL and data pipelines.
+Maintain PostgreSQL.",
+    "flags": [],
+    "places": [],
+    "postedAt": "2026-10-12T00:00:00.000Z",
+    "postingId": "usajobs:b646114fc96f88d9910796be",
+    "remoteRegions": [
+      "US",
+    ],
+    "reqId": "EX-26-002",
+    "salary": {
+      "basis": "gross",
+      "currency": "USD",
+      "max": 68.1,
+      "min": 52.4,
+      "origin": "stated",
+      "period": "HOUR",
+    },
+    "skills": [],
+    "source": "usajobs",
+    "sourceRef": "820001002",
+    "sponsorship": "unknown",
+    "title": "IT Specialist (Data Management)",
+    "url": "https://www.usajobs.gov:443/job/820001002",
+    "validThrough": "2026-10-26T23:59:59.997Z",
+    "workplace": "remote",
+  },
+]
+`;
+
+exports[`each further adapter on its recorded or documented answer > workable matches its snapshot 1`] = `
+[
+  {
+    "applyUrl": "https://apply.workable.com/j/81B46579FE/apply",
+    "attribution": "Hugging Face via Workable",
+    "clusterId": "workable:84dfd0e3e3f9e577886a7383",
+    "company": "Hugging Face",
+    "employmentType": "FULL_TIME",
+    "excerpt": "At Hugging Face, we're on a journey to democratize good AI. We are building the fastest growing platform for AI builders with over 11 million users who collectively shared over 4 million models, 1 million datasets & 1.5 million Gradio apps. Our open-source libraries have more than 700,000 stars on Github.
+About the Role
+As an Open-Source Machine Learning Engineer, you'll work to improve the open-source machine learning ecosystem. You'll mainly work on existing open-source libraries such as Transformers, Datasets, Pytorch and vLLM, and you'll interact with users and contributors across the broad open-source ML ecosystem. We'll brainstorm with you to put you in a position to do the work that interests you and that is impactful.
+You'll help foster one of the most active machine learning communities, helping users contribute to and use the tools you build. You'll work with researchers, ML practitioners, and data scientists every day through GitHub, our forums, and Slack.
+About You
+You have a public track record of open-source work, and you enjoy collaborating with a community out in the open on GitHub. You love open source, you're passionate about making complex technology more accessible, and you want to contribute to one of the fastest-growing ML ecosystems. If that's you, we can't wait to see your application.
+What you'll need
+- Strong Python skills, with experience writing clean, well-tested, maintainable library code
+- Deep hands-on experience with a modern deep-learning framework, especially PyTorch (JAX or TensorFlow a plus)
+- Practical experience with the Hugging Face open-source stack (Transformers, Datasets, Accelerate) or comparable ML libraries
+- A public track record of open-source contributions, for example merged pull requests to ML or data libraries, that we can review on GitHub
+- Solid understanding of modern machine learning and deep learning, including transformer architectures
+- Experience collaborating with a technical community in the open (GitHub ",
+    "flags": [
+      "ghost:age",
+    ],
+    "places": [
+      {
+        "city": "Paris",
+        "country": "FR",
+        "region": "Île-de-France",
+      },
+    ],
+    "postedAt": "2026-05-29T00:00:00.000Z",
+    "postingId": "workable:84dfd0e3e3f9e577886a7383",
+    "remoteRegions": [],
+    "skills": [],
+    "source": "workable",
+    "sourceRef": "huggingface/81B46579FE",
+    "sponsorship": "unknown",
+    "tenant": "huggingface",
+    "title": "Open-Source Machine Learning Engineer - EMEA Remote",
+    "url": "https://apply.workable.com/j/81B46579FE",
+    "workplace": "remote",
+  },
+  {
+    "applyUrl": "https://apply.workable.com/j/19A136F8E2/apply",
+    "attribution": "Hugging Face via Workable",
+    "clusterId": "workable:c21aadfed7f2fe89406ee6db",
+    "company": "Hugging Face",
+    "employmentType": "FULL_TIME",
+    "excerpt": "At Hugging Face, we're on a journey to democratize good AI. We are building the fastest growing platform for AI builders with over 11 million users who collectively shared over 4 million models, 1 million datasets & 1.5 million Gradio apps. Our open-source libraries have more than 700,000 stars on Github.
+About the Role
+As an Open-Source Machine Learning Engineer, you'll work to improve the open-source machine learning ecosystem. You'll mainly work on existing open-source libraries such as Transformers, Datasets, Pytorch and vLLM, and you'll interact with users and contributors across the broad open-source ML ecosystem. We'll brainstorm with you to put you in a position to do the work that interests you and that is impactful.
+You'll help foster one of the most active machine learning communities, helping users contribute to and use the tools you build. You'll work with researchers, ML practitioners, and data scientists every day through GitHub, our forums, and Slack.
+About You
+You have a public track record of open-source work, and you enjoy collaborating with a community out in the open on GitHub. You love open source, you're passionate about making complex technology more accessible, and you want to contribute to one of the fastest-growing ML ecosystems. If that's you, we can't wait to see your application.
+What you'll need
+- Strong Python skills, with experience writing clean, well-tested, maintainable library code
+- Deep hands-on experience with a modern deep-learning framework, especially PyTorch (JAX or TensorFlow a plus)
+- Practical experience with the Hugging Face open-source stack (Transformers, Datasets, Accelerate) or comparable ML libraries
+- A public track record of open-source contributions, for example merged pull requests to ML or data libraries, that we can review on GitHub
+- Solid understanding of modern machine learning and deep learning, including transformer architectures
+- Experience collaborating with a technical community in the open (GitHub ",
+    "flags": [
+      "ghost:age",
+      "salary-missing-required",
+    ],
+    "places": [
+      {
+        "city": "New York",
+        "country": "US",
+        "region": "New York",
+      },
+    ],
+    "postedAt": "2026-05-29T00:00:00.000Z",
+    "postingId": "workable:c21aadfed7f2fe89406ee6db",
+    "remoteRegions": [],
+    "skills": [],
+    "source": "workable",
+    "sourceRef": "huggingface/19A136F8E2",
+    "sponsorship": "unknown",
+    "tenant": "huggingface",
+    "title": "Open-Source Machine Learning Engineer - US Remote",
+    "url": "https://apply.workable.com/j/19A136F8E2",
+    "workplace": "remote",
+  },
+]
+`;
+
+exports[`the boards' official MCP servers > reads Dice's event-stream answer, with its company link and the AI disclosure in each attribution 1`] = `
+[
+  {
+    "attribution": "Galaxy i Technologies, Inc. via Dice (https://www.dice.com/company/10374872). Found with AI-powered search: verify details with the employer before applying.",
+    "clusterId": "dice:f29c4948936af8ffffc2cf0e",
+    "company": "Galaxy i Technologies, Inc.",
+    "employmentType": "CONTRACTOR",
+    "excerpt": "Job Title : Senior Software Engineer  GraphQL Federation Platform (Apollo Router & Backend Services)  Location : Sunnyvale, CA JD :  Hybrid role    Job Title: Senior Software Engineer  Federated GraphQL Platform (Router & Services)      Role Description:    About the role We run a federated GraphQL data layer  a middleware tier that composes many back-end services into a single, typed API that powers large-scale, consumer-facing web experiences.  At the center of that layer is a federation route",
+    "flags": [],
+    "places": [
+      {
+        "city": "Sunnyvale",
+        "country": "US",
+        "region": "California",
+      },
+    ],
+    "postedAt": "2026-10-16T20:06:51.000Z",
+    "postingId": "dice:f29c4948936af8ffffc2cf0e",
+    "salary": {
+      "basis": "unknown",
+      "currency": "USD",
+      "max": 62,
+      "min": 60,
+      "origin": "text",
+      "period": "HOUR",
+    },
+    "seniority": "senior",
+    "skills": [],
+    "source": "dice",
+    "sourceRef": "9728b18c-de1c-4fd5-a539-f4d8ce459843",
+    "sponsorship": "unknown",
+    "title": "Senior Software Engineer – GraphQL Federation Platform (Apollo Router & Backend Services)",
+    "url": "https://www.dice.com/job-detail/9728b18c-de1c-4fd5-a539-f4d8ce459843?utm_source=tavi-jobs-0.1.0&utm_medium=mcp",
+    "workplace": "onsite",
+  },
+  {
+    "attribution": "Enexus Global via Dice (https://www.dice.com/company/90969158). Found with AI-powered search: verify details with the employer before applying.",
+    "clusterId": "dice:4e4bcabc915c04d4cad0d369",
+    "company": "Enexus Global",
+    "employmentType": "CONTRACTOR",
+    "excerpt": "Title: Back-End Software Engineer Location: Fremont, CA Duration: 12+ Mos Skills - .NET, SQL, C# Our direct client is searching for multiple Back-End Software Engineers to contribute to the development of vairous Web Alications. The Engineers will be responsible for building and maintaining full stack applications that support various use cases of service business. The Engineers will be working closely with our end users, focus on extensible design systems, and obsess over open-source quality so",
+    "flags": [
+      "salary-missing-required",
+    ],
+    "places": [
+      {
+        "city": "Fremont",
+        "country": "US",
+        "region": "California",
+      },
+    ],
+    "postedAt": "2026-10-16T19:31:06.000Z",
+    "postingId": "dice:4e4bcabc915c04d4cad0d369",
+    "skills": [],
+    "source": "dice",
+    "sourceRef": "e8fbe4ae-a4b1-4ef4-9d36-9abd849557b4",
+    "sponsorship": "unknown",
+    "title": "Backend .Net developer",
+    "url": "https://www.dice.com/job-detail/e8fbe4ae-a4b1-4ef4-9d36-9abd849557b4?utm_source=tavi-jobs-0.1.0&utm_medium=mcp",
+    "workplace": "onsite",
+  },
+  {
+    "attribution": "Modern Agile Technologies, LLC via Dice (https://www.dice.com/company/91131370). Found with AI-powered search: verify details with the employer before applying.",
+    "clusterId": "dice:8dd2012b2bbc6c5b146566a3",
+    "company": "Modern Agile Technologies, LLC",
+    "employmentType": "CONTRACTOR",
+    "excerpt": "Hiring, Greetings from Modern Agile Technologies.  Position: AI Sr. Fullstack Engineer  Location: Onsite: (Tempe, AZ/ Dallas, TX / Chicago, IL/ New York) Type: Contract (W2 Only)  Experience should be minimum 12+ years Position overview Clientis investing in enterprise AI capabilities to accelerate delivery, enable self-service technology, and help teams solve meaningful business problems faster. Tulip is a strategic AI platform that provides reusable patterns, tools, and services to make AI-ena",
+    "flags": [],
+    "places": [
+      {
+        "city": "Dallas",
+        "country": "US",
+        "region": "Texas",
+      },
+    ],
+    "postedAt": "2026-10-16T17:00:27.000Z",
+    "postingId": "dice:8dd2012b2bbc6c5b146566a3",
+    "seniority": "senior",
+    "skills": [],
+    "source": "dice",
+    "sourceRef": "abd2ffa0-d9d3-4fbd-98db-3dfa8df2cfd9",
+    "sponsorship": "unknown",
+    "title": "AI Sr. Full stack Engineer (W2 Contract)",
+    "url": "https://www.dice.com/job-detail/abd2ffa0-d9d3-4fbd-98db-3dfa8df2cfd9?utm_source=tavi-jobs-0.1.0&utm_medium=mcp",
+    "workplace": "onsite",
+  },
+  {
+    "attribution": "Lyft via Dice (https://www.dice.com/company/orcfeed). Found with AI-powered search: verify details with the employer before applying.",
+    "clusterId": "dice:9688fe9c763b5375e50a59c8",
+    "company": "Lyft",
+    "employmentType": "INTERN",
+    "excerpt": "At Lyft, our purpose is to serve and connect. Lyft fosters a collaborative environment in the office, so there\\'s always a sharp mind eager to hear about your next idea. Own your project, while checking in with other team members throughout the day with questions and updates You value reliability, ensured by testing (unit, integration and load tests) Participate in code reviews to ensure code quality and distribute knowledge Continuous integration and deployment Go home knowing that your work to",
+    "flags": [],
+    "places": [
+      {
+        "city": "Philadelphia",
+        "country": "US",
+        "region": "Pennsylvania",
+      },
+    ],
+    "postedAt": "2026-10-16T16:24:40.000Z",
+    "postingId": "dice:9688fe9c763b5375e50a59c8",
+    "salary": {
+      "basis": "unknown",
+      "currency": "USD",
+      "max": 58,
+      "min": 52,
+      "origin": "stated",
+      "period": "HOUR",
+    },
+    "seniority": "intern",
+    "skills": [],
+    "source": "dice",
+    "sourceRef": "971f46d1-35bf-429d-bd96-a078b7b16e56",
+    "sponsorship": "unknown",
+    "title": "Software Engineer Intern, Backend (Summer 2027 - SF)",
+    "url": "https://www.dice.com/direct-apply/971f46d1-35bf-429d-bd96-a078b7b16e56?utm_source=tavi-jobs-0.1.0&utm_medium=mcp",
+    "workplace": "onsite",
+  },
+  {
+    "attribution": "SDH Systems via Dice (https://www.dice.com/company/91089145). Found with AI-powered search: verify details with the employer before applying.",
+    "clusterId": "dice:336d84f3ed4d28f15dc36b31",
+    "company": "SDH Systems",
+    "employmentType": "CONTRACTOR",
+    "excerpt": "Job Title: Java Backend Developer/SDET  Location: Alpharetta, Georgia  Visa: Any-W-2  Interview Process: Video + In-Person  Work Schedule: Onsite Job Description: Primary Skills: Java, Spring Boot, REST APIs, Microservices, API Testing, Automation Testing  Design, develop, and maintain backend applications using Java and Spring Boot.  Develop scalable and reusable RESTful APIs and microservices.  Design and develop REST APIs following standard API design principles.  Work with JSON/XML payloads,",
+    "flags": [],
+    "places": [
+      {
+        "city": "Georgia",
+        "country": "US",
+      },
+    ],
+    "postedAt": "2026-10-16T15:46:07.000Z",
+    "postingId": "dice:336d84f3ed4d28f15dc36b31",
+    "skills": [],
+    "source": "dice",
+    "sourceRef": "32f26409-2ed7-4925-9aa1-6327017d3fbb",
+    "sponsorship": "unknown",
+    "title": "Java Backend Developer/SDET",
+    "url": "https://www.dice.com/job-detail/32f26409-2ed7-4925-9aa1-6327017d3fbb?utm_source=tavi-jobs-0.1.0&utm_medium=mcp",
+    "workplace": "unknown",
+  },
+]
+`;

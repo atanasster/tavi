@@ -1,0 +1,17 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "acme-fares",
+  "name": "ACME Fares",
+  "countries": ["*"],
+  "hosts": ["fares.acme.example"],
+  "kind": "booking",
+  "access": {
+    "mode": "assist-only",
+    "navigate": false,
+    "reason": "ACME's terms allow no automated browsing: read a fare page the person opened, never open one",
+    "termsUrl": "https://fares.acme.example/terms",
+    "reviewedAt": "2026-10-20"
+  },
+  "search": { "urlTemplate": "https://fares.acme.example/search?from={from}&to={to}&date={departDate}", "params": ["from", "to", "departDate"] },
+  "notes": "Fares show with taxes included. Prefer a flight search tool; use this site only to confirm a fare on a page the person opened."
+}

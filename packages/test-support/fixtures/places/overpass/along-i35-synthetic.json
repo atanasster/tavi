@@ -1,0 +1,80 @@
+{
+ "version": 0.6,
+ "generator": "synthetic: hand-made in Overpass's answer shape (both public instances were down on 2026-10-17)",
+ "elements": [
+  {
+   "type": "node",
+   "id": 9900000001,
+   "lat": 30.061468,
+   "lon": -97.9351415,
+   "tags": {
+    "amenity": "fuel",
+    "name": "Onion Creek Fuel",
+    "opening_hours": "24/7",
+    "fuel:diesel": "yes"
+   }
+  },
+  {
+   "type": "node",
+   "id": 9900000002,
+   "lat": 29.9965734,
+   "lon": -97.9994186,
+   "tags": {
+    "amenity": "fuel",
+    "name": "Kyle Travel Center",
+    "opening_hours": "24/7",
+    "fuel:diesel": "yes",
+    "brand": "Valero"
+   }
+  },
+  {
+   "type": "node",
+   "id": 9900000003,
+   "lat": 29.8484487,
+   "lon": -98.1206918,
+   "tags": {
+    "amenity": "fuel",
+    "name": "San Marcos Fuel Plaza",
+    "opening_hours": "24/7",
+    "fuel:diesel": "yes"
+   }
+  },
+  {
+   "type": "node",
+   "id": 9900000004,
+   "lat": 29.723066,
+   "lon": -98.255775,
+   "tags": {
+    "amenity": "fuel",
+    "name": "New Braunfels Gas",
+    "opening_hours": "24/7",
+    "fuel:diesel": "no"
+   }
+  },
+  {
+   "type": "node",
+   "id": 9900000005,
+   "lat": 29.6376252,
+   "lon": -98.3095306,
+   "tags": {
+    "amenity": "fuel",
+    "name": "Schertz Fuel",
+    "opening_hours": "24/7",
+    "fuel:diesel": "yes",
+    "brand": "Shell"
+   }
+  },
+  {
+   "type": "node",
+   "id": 9900000006,
+   "lat": 29.9022834,
+   "lon": -98.2011835,
+   "tags": {
+    "amenity": "fuel",
+    "name": "Far Off Ranch Fuel",
+    "opening_hours": "24/7",
+    "fuel:diesel": "yes"
+   }
+  }
+ ]
+}

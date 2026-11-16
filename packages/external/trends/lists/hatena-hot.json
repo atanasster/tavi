@@ -1,0 +1,10 @@
+{
+  "recordId": "hatena-hot",
+  "url": "https://b.hatena.ne.jp/hotentry/all.rss",
+  "extract": {
+    "mode": "rss"
+  },
+  "map": {
+    "title": "title"
+  }
+}

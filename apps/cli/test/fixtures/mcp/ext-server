@@ -1,0 +1,7 @@
+#!/bin/sh
+# An external MCP server binary for test/mcp-probe.test.ts: the fake server,
+# run by the node and at the path the test passes (FAKE_NODE, FAKE_SERVER).
+# It is a fixed file because macOS assesses each new executable at its first
+# exec (syspolicyd) and can hold it past a test's timeout; the test links to
+# it, and to ext-server-changed for a binary that changed since its probe.
+exec "$FAKE_NODE" "$FAKE_SERVER"

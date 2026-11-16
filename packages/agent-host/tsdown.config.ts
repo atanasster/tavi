@@ -1,0 +1,30 @@
+import { defineConfig } from "tsdown";
+
+export default defineConfig({
+  tsconfig: "tsconfig.build.json",
+  entry: {
+    models: "src/models/models.ts",
+    "openai-stream-compat": "src/models/openai-stream-compat.ts",
+    workflow: "src/workflow/index.ts",
+    "system-prompt": "src/prompts/system-prompt.ts",
+    context: "src/context/context.ts",
+    "agent-communication": "src/agents/agent-communication.ts",
+    "agent-wait-scheduler": "src/agents/agent-wait-scheduler.ts",
+    "schedule-scheduler": "src/schedulers/schedule-scheduler.ts",
+    "heartbeat-host": "src/hosts/heartbeat-host.ts",
+    "ideas-host": "src/hosts/ideas-host.ts",
+    "unattended-admission": "src/schedulers/unattended-admission.ts",
+    "heartbeat-delivery": "src/hosts/heartbeat-delivery.ts",
+    "reminder-scheduler": "src/schedulers/reminder-scheduler.ts",
+    "task-summarizer": "src/schedulers/task-summarizer.ts",
+    checkpoint: "src/workflow/checkpoint.ts",
+    "onboarding-host": "src/hosts/onboarding-host.ts",
+  },
+  format: ["esm"],
+  platform: "node",
+  dts: true,
+  clean: true,
+  sourcemap: true,
+  target: "node22",
+  deps: { neverBundle: ["better-sqlite3"] },
+});

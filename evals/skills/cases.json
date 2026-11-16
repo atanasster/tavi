@@ -1,0 +1,173 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "release-notes",
+      "prompt": "Write the release notes for version 4.2 of our app: we added dark mode (ticket APP-311), fixed the crash on login (APP-298), and changed the export button label (APP-305).",
+      "skill": {
+        "skillId": "release-notes",
+        "name": "Release notes",
+        "description": "How we write release notes for a version",
+        "body": "# Release notes\n\nWhen asked to write release notes:\n\n1. Start with the line `Release <version> — <today's date in YYYY-MM-DD>`.\n2. Group the changes under exactly these headings, in this order, leaving out an empty one: `### Added`, `### Fixed`, `### Changed`.\n3. Each item is one line starting with `- ` and ending with its ticket id in square brackets, like `[APP-123]`.\n4. Never add a closing remark.\n\nCheck before answering: every item has its ticket in brackets, and the headings are in the order above."
+      },
+      "checks": {
+        "mustInclude": [
+          "### Added",
+          "### Fixed",
+          "### Changed",
+          "[APP-311]",
+          "[APP-298]",
+          "[APP-305]"
+        ],
+        "mustMatch": [
+          "Release 4\\.2 — \\d{4}-\\d{2}-\\d{2}"
+        ],
+        "inOrder": [
+          "### Added",
+          "### Fixed",
+          "### Changed"
+        ]
+      },
+      "examples": {
+        "pass": "Release 4.2 — 2026-10-27\n### Added\n- Dark mode [APP-311]\n### Fixed\n- Crash on login [APP-298]\n### Changed\n- Export button label [APP-305]",
+        "fail": "## What's new in 4.2\n- Dark mode (APP-311)\n- Fixed the login crash (APP-298)\n- Renamed the export button (APP-305)\n\nThanks for using the app!"
+      }
+    },
+    {
+      "id": "expense-csv",
+      "prompt": "Turn these into our expense report: lunch at Café Sol on 3 Oct for 18.40 EUR, a taxi on 4 Oct for 32 EUR, and a hotel night on 4 Oct for 129 EUR.",
+      "skill": {
+        "skillId": "expense-report",
+        "name": "Expense report",
+        "description": "The CSV format our expense reports use",
+        "body": "# Expense report\n\nAn expense report is CSV, in a fenced code block, with exactly this header line:\n\n`date,merchant,amount_eur,category`\n\n- `date` is ISO (YYYY-MM-DD); assume the current year.\n- `amount_eur` has two decimals and no currency sign.\n- `category` is one of `meals`, `transport`, `lodging`, `other`.\n- One row per expense, oldest first. After the block, one line: `Total: <sum> EUR`."
+      },
+      "checks": {
+        "mustInclude": [
+          "date,merchant,amount_eur,category",
+          "18.40",
+          "32.00",
+          "129.00",
+          "meals",
+          "transport",
+          "lodging",
+          "Total: 179.40 EUR"
+        ]
+      },
+      "examples": {
+        "pass": "```\ndate,merchant,amount_eur,category\n2026-10-03,Café Sol,18.40,meals\n2026-10-04,Taxi,32.00,transport\n2026-10-04,Hotel,129.00,lodging\n```\nTotal: 179.40 EUR",
+        "fail": "| Date | Item | Amount |\n|---|---|---|\n| 3 Oct | Lunch at Café Sol | €18.40 |\n| 4 Oct | Taxi | €32 |\n| 4 Oct | Hotel | €129 |\n\nTotal: €179.40"
+      }
+    },
+    {
+      "id": "meeting-summary",
+      "prompt": "Summarise this meeting for the team: we agreed to move the launch to 14 November, Priya owns the press kit, and we still need a decision on pricing from finance.",
+      "skill": {
+        "skillId": "meeting-summary",
+        "name": "Meeting summary",
+        "description": "The shape of a meeting summary for the team",
+        "body": "# Meeting summary\n\n1. The first line starts with `TL;DR:` and is one sentence.\n2. Then a section `Decisions:` with one `- ` line per decision.\n3. Then `Owners:` with lines of the form `- <name>: <task>`.\n4. Then `Open questions:` with one `- ` line each, or `- none`.\n5. No other sections and no greeting."
+      },
+      "checks": {
+        "mustMatch": [
+          "^TL;DR: "
+        ],
+        "mustInclude": [
+          "Decisions:",
+          "Owners:",
+          "Open questions:",
+          "- Priya: "
+        ],
+        "inOrder": [
+          "Decisions:",
+          "Owners:",
+          "Open questions:"
+        ]
+      },
+      "examples": {
+        "pass": "**TL;DR:** The launch moves to 14 November.\n**Decisions:**\n- Launch on 14 November\n**Owners:**\n- **Priya**: press kit\n**Open questions:**\n- Pricing, waiting on finance",
+        "fail": "Hi team, here is a quick summary: we agreed to move the launch to 14 November. Priya owns the press kit, and we still need finance to decide on pricing."
+      }
+    },
+    {
+      "id": "incident-update",
+      "prompt": "Draft the status page update: the search API has been slow for about 20 minutes, we found a bad index and are rebuilding it, and expect recovery in about an hour.",
+      "skill": {
+        "skillId": "incident-update",
+        "name": "Incident update",
+        "description": "How we word a public status page update",
+        "body": "# Status page update\n\n- The first line is `[INVESTIGATING]`, `[IDENTIFIED]`, `[MONITORING]` or `[RESOLVED]`, then the affected component.\n- Then `Impact:` in one sentence, written for customers, with no internal jargon such as index, shard or deploy.\n- Then `Next update:` with a time at most 30 minutes ahead (\"in 30 minutes\" is fine).\n- Never promise a recovery time."
+      },
+      "checks": {
+        "mustInclude": [
+          "[IDENTIFIED]",
+          "Impact:",
+          "Next update:"
+        ],
+        "mustNotInclude": [
+          "index",
+          "about an hour",
+          "recovery in"
+        ]
+      },
+      "examples": {
+        "pass": "[IDENTIFIED] Search API\nImpact: Searches are slower than usual for some customers.\nNext update: in half an hour.",
+        "fail": "We found a bad index on the search API and are rebuilding it; we expect recovery in about an hour."
+      }
+    },
+    {
+      "id": "commit-message",
+      "prompt": "Write a commit message for: I renamed getUser to fetchUser everywhere and fixed the null check in the profile page.",
+      "skill": {
+        "skillId": "commit-message",
+        "name": "Commit message",
+        "description": "Our commit message convention",
+        "body": "# Commit messages\n\n- One commit, one change: when asked for a message covering two changes, write two messages, each in its own fenced block.\n- The subject is `<type>(<scope>): <summary>`, where type is one of `feat`, `fix`, `refactor`, `docs`, `test`, and the summary is lower case, imperative, and at most 60 characters.\n- No body unless asked."
+      },
+      "checks": {
+        "mustMatch": [
+          "^refactor\\([^)]+\\): [a-z][^\\n]{0,58}$",
+          "^fix\\([^)]+\\): [a-z][^\\n]{0,58}$",
+          "```[^`]*```[\\s\\S]*```[^`]*```"
+        ]
+      },
+      "examples": {
+        "pass": "```\nrefactor(user): rename getUser to fetchUser\n```\n\n```\nfix(profile): handle a missing user in the null check\n```",
+        "fail": "Rename getUser to fetchUser and fix profile null check\n\n- Renamed getUser to fetchUser everywhere\n- Fixed the null check on the profile page"
+      }
+    },
+    {
+      "id": "travel-packing",
+      "prompt": "Make me a packing list for a 3-day work trip to Oslo in January.",
+      "skill": {
+        "skillId": "packing-list",
+        "name": "Packing list",
+        "description": "How I like my packing lists",
+        "body": "# Packing list\n\n- Four sections, in this order: `Documents`, `Clothes`, `Tech`, `Toiletries`, each as a heading line ending in a colon.\n- Every item is a checkbox line `- [ ] <item>`.\n- Clothes quantities are written as `<n>×` before the item, sized to the trip's days.\n- The last line is `Weather check: <the city's typical conditions for that month>`."
+      },
+      "checks": {
+        "mustInclude": [
+          "Documents:",
+          "Clothes:",
+          "Tech:",
+          "Toiletries:",
+          "- [ ] ",
+          "Weather check:"
+        ],
+        "mustMatch": [
+          "\\d×"
+        ],
+        "inOrder": [
+          "Documents:",
+          "Clothes:",
+          "Tech:",
+          "Toiletries:"
+        ]
+      },
+      "examples": {
+        "pass": "Documents:\n- [ ] Passport\nClothes:\n- [ ] 3× shirts\n- [ ] 1× winter coat\nTech:\n- [ ] Laptop\nToiletries:\n- [ ] Toothbrush\nWeather check: cold, often below freezing, with snow",
+        "fail": "Here's a packing list for Oslo:\n- Warm coat\n- Gloves\n- Laptop and charger\n- Passport\n- Toiletries"
+      }
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+{
+ "comments": "21/08/2026: Cursor pagination is now available and is the preferred way to page through the feed. Pass the nextCursor value from each response back as ?cursor=. It is faster than offset and will never return the same job twice. The offset parameter is deprecated and will be removed in a future release. 13/03/2026: The API has been updated to include the companySlug field in the response.",
+ "updatedAt": 1792146485,
+ "offset": 0,
+ "limit": 20,
+ "totalCount": 3167,
+ "jobs": [
+  {
+   "title": "Senior/Lead Backend Engineer",
+   "excerpt": "Fuse Energy is a forward-thinking renewable energy startup on a mission to deliver a terawatt of renewable energy - fast.",
+   "companyName": "Fuse Energy",
+   "companySlug": "fuse-energy",
+   "companyLogo": "https://cdn-images.himalayas.app/zx5nflxovzdacd3ylgxagh64k72i",
+   "employmentType": "Full Time",
+   "minSalary": null,
+   "maxSalary": null,
+   "salaryPeriod": "annual",
+   "seniority": [
+    "Senior"
+   ],
+   "currency": null,
+   "locationRestrictions": [
+    "Canada",
+    "Germany",
+    "Netherlands",
+    "Poland",
+    "Switzerland",
+    "United States"
+   ],
+   "timezoneRestrictions": [
+    -10,
+    -9,
+    -8,
+    -7,
+    -6,
+    -5,
+    -4,
+    -3.5,
+    1,
+    14
+   ],
+   "categories": [
+    "Software-Engineer",
+    "Backend-Engineering",
+    "Energy-Technology",
+    "Backend-Development",
+    "Senior-Backend-Engineering",
+    "Backend-Engineering-Lead",
+    "Lead-Backend-Developer",
+    "Senior-Backend-Development",
+    "Lead-Backend-Engineering",
+    "Senior-Backend-Engineering-Manager",
+    "Principal-Backend-Engineer",
+    "Tech-Lead-Backend"
+   ],
+   "parentCategories": [
+    "Developer"
+   ],
+   "description": "<p><a href=\"https://himalayas.app/companies/fuse-energy\">Fuse Energy</a> is a forward-thinking renewable energy startup on a mission to deliver a terawatt of renewable energy - fast. We're combining first-principles thinking with cutting-edge technology to build a radically better energy system. We raised $210M from top-tier investors including Multicoin, Balderton, Lakestar, Accel, Creandum, Lowercarbon, Ribbit, Box Group and strategic angels like Nico Rosberg, the Co-Founder of Solana and GPs behind Meta, Revolut, Spotify, Uber and more.<br><br>We’re creating a fully integrated energy company: from developing solar, wind and hydrogen projects to real-time power trading and distributed energy installations. By selling directly to consumers, we cut out the middleman, lower costs and pass on savings to customers.<br><br>But we’re not stopping there. We’re also building the Energy Network: a decentralised platform of smart devices to electrify our homes, shifting usage to off-peak hours and helping balance the grid. This network strengthens grid stability - a critical foundation for scaling AI data centers and other energy-intensive industries.</p><h3>Responsibilities</h3><p>In this role you will work closely within product to build the core digital infrastructure for a next-generation energy company. You will use your experience to engineer backend infrastructure that is second-to-none.</p><h3>You'll be working across the back-end:</h3><ul>\n<li>Constructing a real-time digital twin of our renewable generation and customer demand</li>\n<li>Developing messaging interfaces with our third-party providers</li>\n<li>Building high-volume pipelines for processing customer energy consumption</li>\n<li>Build the backend of a world class energy app</li>\n</ul><p>For this role, you should be able to think on your feet and adapt to new business needs as well as take ownership of projects and drive change.</p><h3>Requirements</h3><ul>\n<li>Demonstrable excellence as a Software Engineer</li>\n<li>Ideally 2+ years experience</li>\n<li>Proven ability to define and build complex systems</li>\n<li>Hands-on experience shipping highly-available production systems</li>\n<li>Clear communication</li>\n</ul><h3>Bonus</h3><ul>\n<li>Experience with infrastructure as code (e.g. AWS CDK)</li>\n<li>Experience in the Energy sector</li>\n<li>Experience shipping consumer-facing products</li>\n</ul><h3>Benefits</h3><ul>\n<li>Competitive salary and an equity sign-on bonus</li>\n<li>Biannual bonus scheme</li>\n<li>Fully expensed tech to match your needs</li>\n<li>Paid annual leave</li>\n</ul><p>Originally posted on <a href=\"https://himalayas.app\">Himalayas</a></p>",
+   "pubDate": 1790023023,
+   "expiryDate": 1792573464,
+   "applicationLink": "https://himalayas.app/companies/fuse-energy/jobs/senior-lead-backend-engineer-2763649120",
+   "guid": "https://himalayas.app/companies/fuse-energy/jobs/senior-lead-backend-engineer-2763649120"
+  },
+  {
+   "title": "Backend Engineer",
+   "excerpt": "Location: US – 100% RemoteSalary: $150,000 - $200,000 base salary + equity Overview We are seeking a dynamic and passionate Backend Software Engineer to join our innovative development team.",
+   "companyName": "Xpert Development",
+   "companySlug": "xpert-development",
+   "companyLogo": "https://cdn-images.himalayas.app/qx4exn144seqko5ixsp6r09n3pxh",
+   "employmentType": "Full Time",
+   "minSalary": 150000,
+   "maxSalary": 200000,
+   "salaryPeriod": "annual",
+   "seniority": [
+    "Senior"
+   ],
+   "currency": "USD",
+   "locationRestrictions": [
+    "United States"
+   ],
+   "timezoneRestrictions": [
+    -10,
+    -9,
+    -8,
+    -7,
+    -6,
+    -5,
+    14
+   ],
+   "categories": [
+    "Backend-Engineering",
+    "Software-Engineer",
+    "Backend-Development",
+    "Python-Developer",
+    "Go-Developer",
+    "Backend-Engineer",
+    "Backend-Infrastructure-Engineer",
+    "Backend-Systems-Engineer",
+    "Backend-Services-Engineer",
+    "Product-Backend-Engineer",
+    "Backend-Platform-Engineer",
+    "Cloud-Backend-Engineer",
+    "Python-Backend-Engineer",
+    "SaaS-Backend-Engineer"
+   ],
+   "parentCategories": [
+    "Developer"
+   ],
+   "description": "<h3>Location: US – 100% Remote</h3><p><strong>Salary: $150,000 - $200,000 base salary + equity<br><strong>Overview</strong></strong></p><p><strong>We are seeking a dynamic and passionate Backend Software Engineer to join our innovative development team. In this role, you will be at the forefront of designing, developing, and maintaining robust backend systems that power cutting-edge applications. Your expertise will drive the creation of scalable, efficient, and secure solutions that enhance user experiences and support business growth. If you thrive in a fast-paced environment and are eager to contribute to impactful projects, this is your opportunity to make a difference!</strong></p><p><strong><strong>Responsibilities</strong>:</strong></p><ul>\n<li><p><strong>Design and build core features for a composite AI platform, including agent-based systems, LLM integrations, and retrieval augmented generation (RAG).</strong></p></li>\n<li><p><strong>Define and own the technical vision and roadmap for the platform, making architectural decisions that enable scalability, reliability, and long-term evolution.</strong></p></li>\n<li><p><strong>Establish and promote engineering best practices, coding standards, architectural patterns, and AI assisted development techniques to ensure system quality at scale.</strong></p></li>\n<li><p><strong>Act as a senior technical leader, providing guidance on complex engineering and architectural trade-offs and shaping the overall technical direction.</strong></p></li>\n<li><p><strong>Develop high impact software solutions to address complex, mission critical business problems.</strong></p></li>\n</ul><p><strong><strong>Requirements</strong>:</strong></p><ul>\n<li><p><strong>Deep experience designing and operating large‑scale, production‑grade backend systems, with a strong understanding of distributed systems.</strong></p></li>\n<li><p><strong>Strong proficiency in Python and Go, applied to building reliable, scalable backend services.</strong></p></li>\n<li><p><strong>Demonstrated experience building and owning software from 0‑to‑1, taking systems from initial concept through production and ongoing ownership.</strong></p></li>\n<li><p><strong>Proven ability to influence technical direction and architecture at a senior or cross‑team level.</strong></p></li>\n<li><p><strong>Ability to clearly connect engineering decisions to business and product outcomes.</strong></p></li>\n</ul><p><strong><strong>Benefits</strong>:</strong></p><ul>\n<li><h3><strong>401(k)</strong></h3></li>\n<li><h3><strong>Employee assistance program</strong></h3></li>\n<li><h3><strong>Health insurance</strong></h3></li>\n</ul><p>Originally posted on <a href=\"https://himalayas.app\">Himalayas</a></p>",
+   "pubDate": 1791823984,
+   "expiryDate": 1797007984,
+   "applicationLink": "https://himalayas.app/companies/xpert-development/jobs/backend-engineer",
+   "guid": "https://himalayas.app/companies/xpert-development/jobs/backend-engineer"
+  }
+ ]
+}

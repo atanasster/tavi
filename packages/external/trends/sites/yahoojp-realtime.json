@@ -1,0 +1,58 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "yahoojp-realtime",
+  "name": "Yahoo! JAPAN real-time search",
+  "countries": [
+    "JP"
+  ],
+  "hosts": [
+    "search.yahoo.co.jp"
+  ],
+  "kind": "trending",
+  "access": {
+    "mode": "assist-only",
+    "navigate": false,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "LY Corporation's terms (Yahoo! JAPAN) bar using a BOT or other technical means to operate the service improperly, so Tavi is not to open it.",
+    "termsUrl": "https://www.lycorp.co.jp/ja/company/terms/",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 3,
+    "pagesPerDay": 10,
+    "minIntervalMs": 10000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "ItemList",
+      "ListItem",
+      "SocialMediaPosting",
+      "NewsArticle",
+      "DiscussionForumPosting",
+      "VideoObject"
+    ],
+    "resultSchema": {
+      "type": "object",
+      "properties": {
+        "rank": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "metric": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "title",
+        "url"
+      ]
+    }
+  },
+  "notes": "Turned on, this profile stops Tavi's browser opening Yahoo! JAPAN, and if you open search.yahoo.co.jp/realtime yourself, Tavi reads that page for the chat only: nothing from it is kept, relayed with ingest or counted. Yahoo! JAPAN serves nobody in the EEA or the UK since 2022-04-06."
+}

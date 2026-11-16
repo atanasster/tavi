@@ -1,0 +1,37 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "resy",
+  "name": "Resy",
+  "countries": [
+    "US",
+    "GB",
+    "AU",
+    "CA"
+  ],
+  "hosts": [
+    "resy.com",
+    "*.resy.com"
+  ],
+  "kind": "booking",
+  "access": {
+    "mode": "assist-only",
+    "navigate": false,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Resy does not permit unapproved third-party bots or agents and has banned accounts that used personal agents.",
+    "termsUrl": "https://resy.com/terms",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "Restaurant",
+      "ReserveAction"
+    ]
+  },
+  "notes": "You book on Resy yourself; Tavi reads only a page you opened, and never polls for tables."
+}

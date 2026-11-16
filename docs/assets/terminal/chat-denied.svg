@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="247" viewBox="0 0 880 247" role="img">
+<rect width="880" height="247" rx="12" fill="#ffffff" stroke="#d9e0dc"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="440" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#52605a">tavi chat</text>
+<line x1="0" y1="36" x2="880" y2="36" stroke="#d9e0dc"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#132620">Opening BBC Good Food in the browser.</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#8c5a07">✗ Round 1 rejected by automatic denial (--approval deny)</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#132620" opacity="0.62">── resuming after approval ──</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#132620">Opening the browser to visit bbcgoodfood.com was denied by policy/operator.</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#132620">Because browser access is unavailable, I cannot browse the live site directly. If you'd like, I can</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#132620">provide a classic quick vegetarian (and peanut-free) pasta recipe directly here, or search via web</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#132620">search if you approve.</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#132620" opacity="0.62">✓ completed task-mvvd4gs1-1.</tspan></text>
+</g>
+</svg>

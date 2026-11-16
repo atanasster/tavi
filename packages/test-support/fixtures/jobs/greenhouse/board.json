@@ -1,0 +1,153 @@
+{
+ "jobs": [
+  {
+   "absolute_url": "https://job-boards.greenhouse.io/gitlab/jobs/8638232002",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false,
+     "requires_processing_consent": false,
+     "requires_retention_consent": false,
+     "retention_period": null,
+     "demographic_data_consent_applies": false
+    }
+   ],
+   "internal_job_id": 6449994002,
+   "location": {
+    "name": "Remote, United States"
+   },
+   "metadata": [
+    {
+     "id": 4595831002,
+     "name": "Quota Coverage Type",
+     "value": "n/a",
+     "value_type": "single_select"
+    }
+   ],
+   "id": 8638232002,
+   "updated_at": "2026-10-15T15:24:46-04:00",
+   "requisition_id": "6682",
+   "title": "AI Transformation Owner, CRO",
+   "company_name": "GitLab",
+   "first_published": "2026-07-22T13:38:40-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "content": "&lt;div class=&quot;content-intro&quot;&gt;&lt;p&gt;GitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.&lt;/p&gt;\n&lt;p&gt;The same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values&amp;nbsp;and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems. &lt;a href=&quot;https://www.youtube.com/watch?v=OuZIb5zszQI&quot;&gt;Co-create the future with us&lt;/a&gt; as we build technology that transforms how the world develops software.&lt;/p&gt;\n&lt;p&gt;*&lt;em&gt;Fortune 500® is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;&lt;h4&gt;&lt;strong&gt;An overview of this role&lt;/strong&gt;&lt;/h4&gt;\n&lt;p&gt;The AI Transformation Owner drives the end-to-end AI agenda for the field organization, translating emerging AI capabilities into concrete enablement roadmaps, field use cases, and org-level strategy. You will partner closely with product and engineering teams to pilot and scale AI solutions, own the operational transformation plan needed to embed AI into day-to-day field workflows, and establish the governance framework that keeps AI adoption safe, compliant, and aligned with company standards. This is a hands-on role for someone who can move from strategy to execution without heavy oversight.&lt;/p&gt;\n&lt;p&gt;This role reports to the Vice President, Enablement &amp;amp; AI.&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;What You’ll Do&lt;/strong&gt; &amp;nbsp;&lt;/p&gt;\n&lt;ul&gt;\n&lt;li&gt;&lt;strong&gt;AI Enablement Roadmap:&lt;/strong&gt; Own and continuously evolve the roadmap for AI-driven enablement initiatives, prioritizing based on field impact, feasibility, and alignment with broader Enterprise AI team and strategy..&lt;/li&gt;\n&lt;li&gt;&lt;strong&gt;AI Field Use Cases:&lt;/strong&gt; Identify, scope, and execute on high-value AI use cases for the field (e.g., deal support, prospecting, content generation, guided selling, skills, change management), working with stakeholders to define success criteria and measure impact.&lt;/li&gt;\n&lt;li&gt;&lt;strong&gt;AI Field Champions: &lt;/strong&gt;build relationships with champions in the field organization to activate power-usage and drive peer-led adoption; track this adoption (e.g., usage, proficiency, behavior change) with our AI Ops Specialist and Enablement Analyst.&lt;/li&gt;\n&lt;/ul&gt;\n&lt;ul&gt;\n&lt;li&gt;&lt;strong&gt;Ops Transformation Plan:&lt;/strong&gt; Design and drive the operational plan that turns AI pilots into scaled, repeatable processes, coordinating across enablement, ops, and technical teams to remove execution bottlenecks.&lt;/li&gt;\n&lt;li&gt;&lt;strong&gt;AI Governance:&lt;/strong&gt; Influence and lead governance standards for AI tool adoption in the field, including data usage, risk review, tool vetting, and alignment with company-wide AI policy.&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;&lt;strong&gt;What You’ll Bring&amp;nbsp;&lt;/strong&gt;&lt;/p&gt;",
+   "departments": [
+    {
+     "id": 4114891002,
+     "name": "Enablement",
+     "child_ids": [],
+     "parent_id": 4011049002
+    }
+   ],
+   "offices": [],
+   "ai_disclaimer": null,
+   "include_ai_disclaimer": null,
+   "ai_opt_out_request_url": null
+  },
+  {
+   "absolute_url": "https://job-boards.greenhouse.io/gitlab/jobs/8716179002",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false,
+     "requires_processing_consent": false,
+     "requires_retention_consent": false,
+     "retention_period": null,
+     "demographic_data_consent_applies": false
+    }
+   ],
+   "internal_job_id": 6483862002,
+   "location": {
+    "name": "Remote, Canada; Remote, United Kingdom; Remote, United States"
+   },
+   "metadata": [
+    {
+     "id": 4595831002,
+     "name": "Quota Coverage Type",
+     "value": "n/a",
+     "value_type": "single_select"
+    }
+   ],
+   "id": 8716179002,
+   "updated_at": "2026-10-15T15:24:46-04:00",
+   "requisition_id": "6821",
+   "title": "AI Transformation Owner, Product & Design",
+   "company_name": "GitLab",
+   "first_published": "2026-08-19T16:52:27-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "content": "&lt;div class=&quot;content-intro&quot;&gt;&lt;p&gt;GitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.&lt;/p&gt;\n&lt;p&gt;The same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values&amp;nbsp;and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems. &lt;a href=&quot;https://www.youtube.com/watch?v=OuZIb5zszQI&quot;&gt;Co-create the future with us&lt;/a&gt; as we build technology that transforms how the world develops software.&lt;/p&gt;\n&lt;p&gt;*&lt;em&gt;Fortune 500® is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;&lt;h2&gt;An overview of this role&lt;/h2&gt;\n&lt;p&gt;As an AI Transformation Owner at GitLab, you&#x27;ll shape your function&#x27;s AI strategy and build the solutions that deliver it. You are the person responsible for identifying where AI can fundamentally change how your org operates, partnering with your Executive Sponsor to align on the biggest challenges, and driving measurable outcomes against them.&lt;/p&gt;\n&lt;p&gt;Think of this as a product management role where the product is your org&#x27;s way of working. You&#x27;ll manage the full lifecycle: understanding how work flows today, deciding where AI should reshape it, prioritizing what gets built and in what order, and ensuring what ships actually gets adopted. You&#x27;ll also prototype solutions, configure agents, and prove what&#x27;s possible before pulling in engineering support to scale it.&lt;/p&gt;\n&lt;p&gt;You will work closely with an AI Engineer who sits within the Enterprise AI team. Together you form a partnership: you bring the business context, process intelligence, and strategic prioritization. They bring the technical depth, production-grade delivery, and architecture decisions. You&#x27;ll build working solutions at the no-code and low-code layer, and partner with the AI Engineer on the right approach, tooling, and structure.&lt;/p&gt;",
+   "departments": [
+    {
+     "id": 4115236002,
+     "name": "AI",
+     "child_ids": [],
+     "parent_id": 4043190002
+    }
+   ],
+   "offices": [],
+   "ai_disclaimer": null,
+   "include_ai_disclaimer": null,
+   "ai_opt_out_request_url": null
+  },
+  {
+   "absolute_url": "https://job-boards.greenhouse.io/gitlab/jobs/8860302002",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false,
+     "requires_processing_consent": false,
+     "requires_retention_consent": false,
+     "retention_period": null,
+     "demographic_data_consent_applies": false
+    }
+   ],
+   "internal_job_id": 6547054002,
+   "location": {
+    "name": "Remote, France"
+   },
+   "metadata": [
+    {
+     "id": 4595831002,
+     "name": "Quota Coverage Type",
+     "value": "Account Executive",
+     "value_type": "single_select"
+    }
+   ],
+   "id": 8860302002,
+   "updated_at": "2026-10-15T15:24:46-04:00",
+   "requisition_id": "7109",
+   "title": "Account Executive - France",
+   "company_name": "GitLab",
+   "first_published": "2026-10-02T11:31:50-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "content": "&lt;div class=&quot;content-intro&quot;&gt;&lt;p&gt;GitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.&lt;/p&gt;\n&lt;p&gt;The same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values&amp;nbsp;and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems. &lt;a href=&quot;https://www.youtube.com/watch?v=OuZIb5zszQI&quot;&gt;Co-create the future with us&lt;/a&gt; as we build technology that transforms how the world develops software.&lt;/p&gt;\n&lt;p&gt;*&lt;em&gt;Fortune 500® is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;&lt;h2&gt;An overview of this role&lt;/h2&gt;\n&lt;p&gt;As an Account Executive, you&#x27;ll be the primary connection between GitLab and its customers, working with organizations of up to 4,000 team members to help them adopt and expand the world&#x27;s most comprehensive platform for software development, security, and operations (DevSecOps), which uses artificial intelligence. You&#x27;ll own a broad book of business across a wide range of opportunity sizes, guiding small, fast-growing teams as well as more complex projects as they modernize their software delivery with GitLab. Reporting to a Regional Sales Director, you&#x27;ll run the full sales process: shaping the customer&#x27;s journey, documenting buying criteria and processes, and maintaining accurate pipeline data based on evidence. In your first year, you&#x27;ll focus on building trusted relationships and delivering meaningful business outcomes for customers.&lt;/p&gt;\n&lt;h2&gt;What you&#x27;ll do&lt;/h2&gt;\n&lt;ul&gt;\n&lt;li value=&quot;1&quot;&gt;Own a broad book of Enterprise business, from new prospects to growing existing accounts.&lt;/li&gt;\n&lt;li value=&quot;2&quot;&gt;Manage the full sales cycle for Enterprise prospects, from discovery and solution alignment through negotiation and close.&lt;/li&gt;\n&lt;li value=&quot;3&quot;&gt;Articulate the value of GitLab&#x27;s DevSecOps platform and its artificial intelligence capabilities to Mid-Market prospects and customers, tailoring messaging to their business and technical needs.&lt;/li&gt;\n&lt;li value=&quot;4&quot;&gt;Build and maintain a healthy pipeline through consistent prospecting, qualification, and advancement of opportunities, using a structured sales process to support your pipeline and revenue goals.&lt;/li&gt;\n&lt;li value=&quot;5&quot;&gt;Document buying criteria, decision processes, next steps, and key stakeholders to run disciplined, well-orchestrated sales cycles.&lt;/li&gt;\n&lt;li value=&quot;6&quot;&gt;Collaborate with sales development, customer success, renewals, marketing, technical teams, and partners to deliver a cohesive pre- and post-sales experience, co-sell and close opportunities, and expand GitLab’s footprint while delivering added value for customers.&lt;/li&gt;\n&lt;li value=&quot;7&quot;&gt;Support customer adoption of GitLab solutions, proactively work to reduce churn and contraction, and participate in quarterly forecasting and territory planning; travel to meet customers and attend events as needed.&lt;/li&gt;\n&lt;/ul&gt;\n&lt;h2&gt;What you&#x27;ll bring&lt;/h2&gt;\n&lt;ul&gt;\n&lt;li value=&quot;1&quot;&gt;Experience selling software as a service (SaaS) solutions.&lt;/li&gt;\n&lt;li value=&quot;2&quot;&gt;Ability to manage a broad mid-market territory as the primary point of contact, owning a book of business from prospecting through close, adoption, and expansion.&lt;/li&gt;\n&lt;li value=&quot;3&quot;&gt;Skill in building and maintaining strong customer relationships, including effective discovery, negotiation, and closing to support long-term customer outcomes.&lt;/li&gt;\n&lt;li value=&quot;4&quot;&gt;Experience conducting consistent outbound prospecting, creating and maintaining a healthy pipeline, and maintaining accurate territory and forecast documentation.&lt;/li&gt;\n&lt;li value=&quot;5&quot;&gt;Ability to collaborate closely with cross-functional partners (sales development, customer success, renewals, marketing, partners, and technical teams) to coordinate account strategies.&lt;/li&gt;\n&lt;li value=&quot;6&quot;&gt;Ability to connect customer business challenges to GitLab&#x27;s DevSecOps platform and communicate its value to different audiences, documenting customer insights and lessons learned; relevant, transferable sales experience from a variety of backgrounds is welcome.&lt;/li&gt;\n&lt;li value=&quot;7&quot;&gt;Fluent French language skills (required).&lt;/li&gt;\n&lt;li value=&quot;8&quot;&gt;Experience selling to development or DevSecOps teams is helpful, but not required.&lt;/li&gt;\n&lt;/ul&gt;\n&lt;h2&gt;About the team&lt;/h2&gt;\n&lt;p&gt;You&#x27;ll join the Europe, Middle East, and Africa Sales team, a distributed group of Account Executives, sales managers, and business development team members. We collaborate asynchronously across regions and partner with marketing, sales development, and technical teams.&lt;/p&gt;",
+   "departments": [
+    {
+     "id": 4096748002,
+     "name": "EMEA - Commercial",
+     "child_ids": [],
+     "parent_id": 4096735002
+    }
+   ],
+   "offices": [
+    {
+     "id": 4042500002,
+     "name": "France",
+     "location": "France",
+     "child_ids": [],
+     "parent_id": 4019553002
+    }
+   ],
+   "ai_disclaimer": null,
+   "include_ai_disclaimer": null,
+   "ai_opt_out_request_url": null
+  }
+ ],
+ "meta": {
+  "total": 3
+ }
+}

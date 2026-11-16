@@ -1,0 +1,8 @@
+[
+  { "id": "humana", "name": "Humana", "fhirBase": "https://fhir.humana.com/api", "directoryUrl": "https://www.humana.com/finder/search", "reviewedAt": "2026-10-17" },
+  { "id": "cigna", "name": "Cigna", "directoryUrl": "https://hcpdirectory.cigna.com/", "reviewedAt": "2026-10-17" },
+  { "id": "aetna", "name": "Aetna", "directoryUrl": "https://www.aetna.com/dsepublic/", "reviewedAt": "2026-10-17" },
+  { "id": "anthem", "name": "Anthem (Elevance Health)", "directoryUrl": "https://www.anthem.com/find-care/", "reviewedAt": "2026-10-17" },
+  { "id": "kaiser", "name": "Kaiser Permanente", "directoryUrl": "https://healthy.kaiserpermanente.org/doctors-locations", "reviewedAt": "2026-10-17" },
+  { "id": "bcbs", "name": "Blue Cross Blue Shield", "directoryUrl": "https://www.bcbs.com/find-a-doctor", "reviewedAt": "2026-10-17" }
+]

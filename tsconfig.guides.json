@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "noEmit": true,
+    // scripts/docs/browser.d.mts reaches the browser plugin's Playwright by a relative path, from where its own
+    // import of playwright-core is not found: pnpm keeps every package in this folder.
+    "paths": { "playwright-core": ["./node_modules/.pnpm/node_modules/playwright-core"] }
+  },
+  // The how-to guides' walks and the tests of their support code: these read the page's DOM (see tsconfig.tests.json).
+  "include": ["tests/guides/**/*.ts", "tests/guide-*.test.ts"]
+}

@@ -1,0 +1,376 @@
+import { memo, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+
+import { turnEnded, type TranscriptEntry } from "@tavi/client/browser";
+import type { PlanItem } from "@tavi/contracts";
+import { plural } from "@tavi/contracts/util";
+
+import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
+import { useScrollIntoView } from "../../hooks/scroll.js";
+import { useAnnounce } from "../../hooks/use-announce.js";
+import { Markdown } from "../../ui/Markdown.js";
+import { TaviMark } from "../../ui/TaviMark.js";
+import { ConnectCard } from "../apps/ConnectCard.js";
+import { QuestionCard } from "../needs/NeedCard.js";
+import { HandoffCard } from "../takeover/HandoffCard.js";
+import { Transcript } from "../transcript/Transcript.js";
+import { BrowserControlRow } from "../transcript/Receipts.js";
+import { Approvals } from "./Approvals.js";
+import { MessageActions, type RewindOffer } from "./MessageActions.js";
+import { latestPlan, planStep } from "./plan.js";
+import { Reviews } from "./Reviews.js";
+import {
+  cancelledWords,
+  isCancelled,
+  questionBlocker,
+  questionKey,
+  transcriptWindow,
+  TRANSCRIPT_HEAD,
+  TRANSCRIPT_TAIL,
+} from "./store/runs.js";
+import type { CanvasRun, CanvasState, CanvasStore } from "./store/types.js";
+import { Failure, Notice } from "../../ui/Parts.js";
+import { Button } from "../../ui/Button.js";
+import { Command } from "../../ui/Command.js";
+
+/**
+ * Whether a run is a turn of a chat that never ends — the person's Home, or a
+ * messaging conversation's chat — where a `session` grant lasts a day or until
+ * the chat rolls over, so its button says "until tomorrow".
+ */
+export function lastingChatOf(run: CanvasRun, state: Pick<CanvasState, "home" | "directory">): boolean {
+  const taskId = run.run.taskId ?? run.continues;
+  if (run.toHome === true || (taskId !== undefined && taskId === state.home)) return true;
+  return taskId !== undefined && state.directory?.rows.find((row) => row.taskId === taskId)?.origin === "messaging";
+}
+/** A person's message. A long one scrolls in its box, which a keyboard can do only from inside it: only then is it a tab stop. */
+function Prompt({ id, text }: { readonly id: string; readonly text: string }) {
+  const box = useRef<HTMLParagraphElement>(null);
+  const [scrolls, setScrolls] = useState(false);
+  useLayoutEffect(() => {
+    const { scrollHeight = 0, clientHeight = 0 } = box.current ?? {};
+    setScrolls(scrollHeight > clientHeight);
+  }, [text]);
+  return (
+    <p className="prompt" id={id} ref={box} {...(scrolls ? { tabIndex: 0 } : {})}>
+      <span className="visually-hidden">you: </span>
+      {text}
+    </p>
+  );
+}
+
+/**
+ * One turn's card. Memoized: a batched repaint hands `Canvas` a new array
+ * every flush, and a turn the event did not touch must not cost a walk over
+ * its whole window. The handlers come from the store and never change.
+ */
+export const RunView = memo(function RunView({
+  run,
+  timeZone,
+  lastingChat = false,
+  firstTurn,
+  earlierBegins = false,
+  connected,
+  onLoadArtifacts,
+  onReview,
+  onAnswer,
+  onDecide,
+  onExpand,
+  onCancelQueued,
+  onRewind,
+  rewindLater = 0,
+  onRepeat,
+  onSteerQueued,
+  awaitsDecision: waitsOnDecision = false,
+  earlierPlan,
+}: {
+  readonly run: CanvasRun;
+  readonly timeZone: string | undefined;
+  /** A turn of a Home or a messaging conversation's chat, where "Allow for this chat" lasts a day. */
+  readonly lastingChat?: boolean;
+  /** Its first prompt's turn number, written as `data-turn` for the chat panel to find. */
+  readonly firstTurn: number;
+  /** The first of the turns read back: "Earlier in this chat" marks that one boundary, not each turn. */
+  readonly earlierBegins?: boolean;
+  readonly connected: boolean;
+  readonly onLoadArtifacts: CanvasStore["loadArtifacts"];
+  readonly onReview: CanvasStore["reviewArtifacts"];
+  readonly onAnswer: CanvasStore["answerQuestion"];
+  readonly onDecide: CanvasStore["decide"];
+  readonly onExpand: (id: string, expanded: boolean) => void;
+  readonly onCancelQueued?: (id: string) => void;
+  /** Offered on a settled turn's message while its chat is still: answers why it was not rewound. */
+  readonly onRewind?: (id: string) => Promise<string | undefined>;
+  /** How many later turns of the chat a rewind here takes back with it. */
+  readonly rewindLater?: number;
+  /** *Repeat this…* on its message: the schedule form filled from `prompt`; `report` says what was created. */
+  readonly onRepeat?: ((prompt: string, report: (note: string) => void) => void) | undefined;
+  /** Offered while the turn it waits behind runs (not on a decision): sends it into that turn. */
+  readonly onSteerQueued?: (id: string) => void;
+  /** A queued prompt whose turn waits on the reader's approval or review: it sends once that is decided. */
+  readonly awaitsDecision?: boolean;
+  /** While it runs: the transcript of an earlier turn whose plan this one carries on, when it has kept none of its own. */
+  readonly earlierPlan?: readonly TranscriptEntry[] | undefined;
+}) {
+  /** Where focus lands once the divider that held it is gone. */
+  const shownHere = useRef<HTMLParagraphElement>(null);
+  /** The pending round's card, brought into view whenever the ask changes. */
+  const ask = useRef<HTMLDivElement>(null);
+  /** A pick still in its undo window when the question was settled elsewhere: never sent. */
+  const [dropped, setDropped] = useState<{ readonly waitId: string; readonly label: string }>();
+  const { status, transcript, pending, waiting, review, outcome, truncated } = run.run;
+  const droppedFor = dropped === undefined ? undefined : run.run.settledWaits.find((settled) => settled.waitId === dropped.waitId);
+  // A newer question makes the note about an older one read as about it: it goes.
+  useResetOnChange([waiting?.waitId], () => {
+    if (waiting?.waitId !== undefined && waiting.waitId !== dropped?.waitId) setDropped(undefined);
+  });
+  const response =
+    transcript
+      .filter((entry) => entry.kind === "text" && !entry.discarded)
+      .map((entry) => (entry.kind === "text" ? entry.text : ""))
+      .join("\n\n") || (outcome?.kind === "completed" ? outcome.finalText : "");
+  const round = pending[0];
+  // A long transcript is bounded: its first entries, its last, and a divider for the rest.
+  const shown = transcriptWindow(run);
+  // Offered only once every call the owner listed for the round has arrived.
+  useScrollIntoView(ask, round === undefined ? undefined : `${run.id}:${round.steps}`);
+  const rewindOffer = useMemo(
+    (): RewindOffer | undefined => (onRewind === undefined ? undefined : { later: rewindLater, onRewind: () => onRewind(run.id) }),
+    [onRewind, rewindLater, run.id],
+  );
+  const repeat = useMemo(
+    () => (onRepeat === undefined ? undefined : (report: (note: string) => void) => onRepeat(run.prompt, report)),
+    [onRepeat, run.prompt],
+  );
+  const droppedShown =
+    dropped !== undefined &&
+    droppedFor !== undefined &&
+    droppedFor.answers?.join(", ") !== dropped.label &&
+    droppedFor.replyText !== dropped.label;
+  const droppedWhy = droppedFor?.outcome === "answered" || droppedFor?.outcome === "replied" ? "answered" : "closed";
+  useAnnounce(droppedShown ? `Your pick, ${dropped.label}, was not sent: the question was ${droppedWhy} before it went.` : undefined);
+  // Queued is said by the page's announcer; sending into the running turn is said here.
+  useAnnounce(
+    run.queued === true && run.steering !== undefined
+      ? run.steering === "sending"
+        ? "Sending into this turn…"
+        : "Sent into this turn: shown there once the model reads it."
+      : undefined,
+  );
+  const promptId = useId();
+  if (run.noTurn === true) return null;
+  return (
+    <article className={`run run-${status}`} aria-labelledby={run.prompt === "" ? undefined : promptId}>
+      {/* A later turn of the chat on screen gets no line of its own (the reader is in that chat); where replayed turns
+          begin is said without naming a task id. No prompt shown says only that: a worker's report wakes a turn nobody
+          asked for, and a replay can't tell that from one whose prompt it lost. */}
+      {earlierBegins ? (
+        <p className="continues meta-sm">Earlier in this chat{run.prompt === "" ? " (no prompt shown)" : ""}</p>
+      ) : run.restored === true && run.prompt === "" ? (
+        <p className="continues meta-sm">No prompt shown</p>
+      ) : null}
+      {run.recordedPrompts?.length ? (
+        <details>
+          <summary>Recorded prompts (replay may be partial)</summary>
+          {run.recordedPrompts.map((prompt, index) => (
+            <p key={index} data-turn={firstTurn + index}>
+              {prompt}
+            </p>
+          ))}
+        </details>
+      ) : null}
+      {run.prompt === "" ? null : (
+        <div className="user-message" data-run={run.id} data-turn={firstTurn + (run.recordedPrompts?.length ?? 0)}>
+          <Prompt id={promptId} text={run.prompt} />
+          <MessageActions text={run.prompt} label="prompt" rewind={rewindOffer} onRepeat={repeat} />
+        </div>
+      )}
+      <div className="message-heading assistant-heading">
+        <TaviMark />
+        Tavi
+      </div>
+      {truncated ? <Notice>Joined late: the start of this run is no longer held.</Notice> : null}
+      <Transcript
+        entries={shown.head}
+        receipts={run.run.settledWaits}
+        timeZone={timeZone}
+        tainted={run.run.tainted}
+        knownUrls={run.run.knownUrls}
+      />
+      {shown.hidden > 0 ? (
+        <p className="older">
+          <Button
+            onClick={() => {
+              onExpand(run.id, true);
+              // The button is gone; focus and the announcement go where it was.
+              requestAnimationFrame(() => shownHere.current?.focus());
+            }}
+          >
+            Expand {plural(shown.hidden, "older entry", "older entries")}
+          </Button>
+        </p>
+      ) : run.expanded === true && transcript.length > TRANSCRIPT_HEAD + TRANSCRIPT_TAIL ? (
+        // Focus moves here when the divider it replaces is activated, which
+        // reads it: no live region of its own is needed.
+        <p className="older" tabIndex={-1} ref={shownHere}>
+          Every earlier entry is shown. <Button onClick={() => onExpand(run.id, false)}>Collapse</Button>
+        </p>
+      ) : null}
+      <Transcript
+        entries={shown.tail}
+        receipts={run.run.settledWaits}
+        timeZone={timeZone}
+        tainted={run.run.tainted}
+        knownUrls={run.run.knownUrls}
+      />
+      {/* A person's holds of the browser the task did not wait for: between turns, so after this one. */}
+      {run.run.browserControls.map((receipt) => (
+        <BrowserControlRow key={`${receipt.sessionId}@${receipt.at}`} receipt={receipt} />
+      ))}
+      {/* Said only when the answer recorded is not what was picked here. */}
+      {droppedShown ? (
+        <Notice>
+          Your pick, <strong>{dropped.label}</strong>, was not sent: the question was {droppedWhy} before it went.
+        </Notice>
+      ) : null}
+      {status === "running" && round === undefined && waiting === undefined && review === undefined ? (
+        <Working plan={latestPlan(transcript) ?? (earlierPlan === undefined ? undefined : latestPlan(earlierPlan))} />
+      ) : null}
+      <div ref={ask} data-waiting={round === undefined ? undefined : ""}>
+        <Approvals run={run} onDecide={onDecide} lastingChat={lastingChat} />
+      </div>
+      {waiting === undefined ? null : waiting.handoff !== undefined && run.run.taskId !== undefined ? (
+        <div data-waiting="">
+          <HandoffCard taskId={run.run.taskId} handoff={waiting.handoff} deadlineAt={waiting.deadlineAt} />
+        </div>
+      ) : waiting.connect !== undefined && waiting.waitId !== undefined ? (
+        <div data-waiting="">
+          <ConnectCard ask={{ kind: "wait", waitId: waiting.waitId, request: waiting.connect, deadlineAt: waiting.deadlineAt }} />
+        </div>
+      ) : waiting.question === undefined ? (
+        <Notice>Waiting on {waiting.on}.</Notice>
+      ) : (
+        <div data-waiting="">
+          <QuestionCard
+            // A new question — or the same one with other options — starts afresh, its boxes unticked.
+            key={`${questionKey(waiting, run.questionId)}\0${JSON.stringify(waiting.choices?.options ?? [])}`}
+            need={{ question: waiting.question, choices: waiting.choices, context: waiting.context, deadlineAt: waiting.deadlineAt }}
+            timeZone={timeZone}
+            answer={run.answer?.key === questionKey(waiting, run.questionId) ? run.answer : undefined}
+            blocked={(() => {
+              const reason = questionBlocker(run, connected, {
+                round: "Decide the approval above first.",
+                review: "Decide the review below first.",
+              });
+              return reason === undefined
+                ? undefined
+                : {
+                    reason: reason.text,
+                    ...(reason.kind === "round" ? { jump: () => ask.current?.scrollIntoView({ block: "center" }) } : {}),
+                  };
+            })()}
+            onAnswer={(text) => onAnswer(run.id, text)}
+            onDropped={(label) => {
+              if (waiting.waitId !== undefined) setDropped({ waitId: waiting.waitId, label });
+            }}
+          />
+        </div>
+      )}
+      {review !== undefined ? (
+        <div data-waiting="">
+          <Reviews run={run} connected={connected} onLoad={onLoadArtifacts} onReview={onReview} />
+        </div>
+      ) : null}
+      {outcome?.kind === "failed" && isCancelled(run.run) ? (
+        <Notice>{cancelledWords(outcome.message)}</Notice>
+      ) : outcome?.kind === "failed" ? (
+        <Failure alert={false}>
+          Failed ({outcome.errorCode}): {outcome.message}
+        </Failure>
+      ) : outcome?.kind === "stopped" ? (
+        <Notice>{outcome.message}</Notice>
+      ) : null}
+      {run.queued === true ? (
+        run.steering !== undefined ? (
+          <Notice className="queued">
+            {run.steering === "sending" ? "Sending into this turn…" : "Sent into this turn: shown there once the model reads it."}
+          </Notice>
+        ) : (
+          <Notice className="queued">
+            {waitsOnDecision ? "Queued: sends after you decide the approval above." : "Queued: sends after this turn."}
+            {onSteerQueued === undefined ? null : (
+              <>
+                {" "}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  title="Send it into the running turn: the model reads it before its next step"
+                  onClick={() => onSteerQueued(run.id)}
+                >
+                  Send now
+                </Button>
+              </>
+            )}
+            {onCancelQueued === undefined ? null : (
+              <>
+                {" "}
+                <Button variant="ghost" size="sm" onClick={() => onCancelQueued(run.id)}>
+                  Cancel
+                </Button>
+              </>
+            )}
+          </Notice>
+        )
+      ) : null}
+      {run.remark !== undefined ? <Notice>{run.remark}</Notice> : null}
+      {run.notice !== undefined ? <Notice>{run.notice}</Notice> : null}
+      {status === "unknown" && run.notice === undefined && run.error === undefined ? (
+        <Notice>
+          Where this chat stands is unknown here: <Command>tavi tasks</Command> shows it.
+        </Notice>
+      ) : null}
+      {outcome?.kind === "completed" && transcript.length === 0 ? (
+        outcome.finalText ? (
+          <div className="text">
+            <Markdown text={outcome.finalText} tainted={run.run.tainted} knownUrls={run.run.knownUrls} />
+          </div>
+        ) : (
+          <p className="text">No recorded output is available for this chat.</p>
+        )
+      ) : null}
+      {run.error !== undefined ? <Failure alert={false}>{run.error}</Failure> : null}
+      {/* Stop lives on the composer; the card only says when one is already on its way. */}
+      {run.aborting ? <Notice>Stopping…</Notice> : null}
+      {/* Numbers live in the strip and the Details tab; a response carries only its actions. */}
+      {response ? (
+        <footer className="response-footer">
+          <MessageActions text={response} label="response" readAloud={turnEnded(status)} />
+        </footer>
+      ) : null}
+    </article>
+  );
+});
+/**
+ * A running turn's sign of life, under its latest output: three dots that
+ * bounce (still for reduced motion), and with a plan, which of its steps is
+ * under way (the plan itself is in the Activity tab). Not a live region: the
+ * page's own announcer already says "Responding.".
+ */
+function Working({ plan }: { readonly plan: readonly PlanItem[] | undefined }) {
+  const at = plan === undefined ? undefined : planStep(plan);
+  return (
+    <p className="run-working meta-sm">
+      <span className="working-dots" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </span>
+      Working…
+      {at === undefined ? null : (
+        <span className="truncate">
+          {" "}
+          step {at.step} of {at.of}: {at.content}
+        </span>
+      )}
+    </p>
+  );
+}

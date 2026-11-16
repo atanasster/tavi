@@ -1,0 +1,15 @@
+{
+  "format": ["typescript", "tsx", "javascript", "css"],
+  "minLines": 8,
+  "minTokens": 70,
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/dist-plugin/**",
+    "**/ui-dist/**",
+    "**/fixtures/**",
+    "**/golden/**",
+    "**/*.d.ts",
+    "**/plans/**"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "country": "GB",
+  "rows": [
+    {
+      "jurisdiction": "GB",
+      "profession": "gas_engineer",
+      "regime": "licensed",
+      "regulator": "Gas Safe Register",
+      "access": "web",
+      "verifyUrl": "https://www.gassaferegister.co.uk/",
+      "ruleUrl": "https://www.hse.gov.uk/gas/gas-safe-register-check.htm",
+      "note": "Gas work in Great Britain must be done by a Gas Safe registered engineer; check by postcode or registration number. There is no API.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "GB-ENG",
+      "profession": "electrician",
+      "regime": "not_licensed",
+      "regulator": "Competent person schemes (NICEIC, NAPIT and others)",
+      "access": "web",
+      "ruleUrl": "https://www.gov.uk/guidance/competent-person-scheme-current-schemes-and-how-schemes-are-authorised",
+      "verifyUrl": "https://www.electricalcompetentperson.co.uk/",
+      "note": "Electricians are not licensed in England, but notifiable work in a home must be certified: through a competent person scheme (NICEIC, NAPIT and others), or by building control. The Registered Competent Person Electrical search checks a company by name.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "GB-WLS",
+      "profession": "electrician",
+      "regime": "not_licensed",
+      "regulator": "Competent person schemes (NICEIC, NAPIT and others)",
+      "access": "web",
+      "ruleUrl": "https://www.gov.uk/guidance/competent-person-scheme-current-schemes-and-how-schemes-are-authorised",
+      "verifyUrl": "https://www.electricalcompetentperson.co.uk/",
+      "note": "Electricians are not licensed in Wales, but notifiable work in a home must be certified: through a competent person scheme (NICEIC, NAPIT and others), or by building control. The Registered Competent Person Electrical search checks a company by name.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "GB-ENG",
+      "profession": "kennel",
+      "regime": "licensed",
+      "regulator": "The district council",
+      "access": "web",
+      "ruleUrl": "https://www.gov.uk/guidance/boarding-for-cats-or-dogs-licence-england",
+      "verifyUrl": "https://www.gov.uk/guidance/boarding-for-cats-or-dogs-licence-england",
+      "note": "Boarding cats or dogs needs a licence from the district council, rated 1 to 5 stars. There is no national register, so ask the council or the kennel for its licence.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "GB",
+      "profession": "tailor",
+      "regime": "not_licensed",
+      "access": "none",
+      "note": "Tailoring and alterations are not licensed.",
+      "reviewedAt": "2026-10-17"
+    }
+  ]
+}

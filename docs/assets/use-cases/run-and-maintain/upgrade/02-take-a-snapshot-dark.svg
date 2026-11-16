@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1384" height="152" viewBox="0 0 1384 152" role="img">
+<rect width="1384" height="152" rx="12" fill="#141e1a" stroke="#26332e"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="692" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#9aaba3">tavi backup</text>
+<line x1="0" y1="36" x2="1384" y2="36" stroke="#26332e"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#e6efea">snapshot ~/upgrade/before-upgrade (2.0 MB)</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#e6efea">  157 table(s), 60 row(s), 30 migration(s)</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#e6efea">  includes: database</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#e6efea">  excluded: credentials/, chats/.trash/, chats/*/*/.tmp/, chats/*/*/.home/, credentials.key, provider-bindings.key, logs/, owner.process.json, owner.lock</tspan></text>
+</g>
+</svg>

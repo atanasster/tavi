@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "edit-three-hunks",
+      "prompt": "Make three changes to inventory.py in my folder, as one fs.edit call: set LOW_STOCK_THRESHOLD to 10; in restock(), replace the line print(\"restocked\", item[\"sku\"]) with log.info(\"restocked %s\", item[\"sku\"]); and in report(), change the fallback text \"none\" to \"nothing to reorder\". Change nothing else in the file.",
+      "files": { "inventory.py": "inventory.py" },
+      "expect": {
+        "files": [{ "path": "inventory.py", "equals": "inventory.expected.py" }],
+        "calls": [
+          { "tool": "fs.edit", "min": 1, "max": 1, "where": { "path": "inventory.py" } },
+          { "tool": "fs.edit", "min": 1, "has": ["edits"] },
+          { "tool": "fs.write", "max": 0 }
+        ]
+      }
+    },
+    {
+      "id": "grep-window-big-log",
+      "prompt": "app.log in my folder is a service log of over 1 MiB with exactly one ERROR line. Find it with fs.grep, then read only the few lines around it with fs.read (startLine and lineCount), not the whole file. Tell me the ERROR's line number, its request id, the order number, and what the line right after it says happened.",
+      "files": { "app.log": "generated:app-log" },
+      "expect": {
+        "calls": [
+          { "tool": "fs.grep", "min": 1, "where": { "pattern": "error" } },
+          { "tool": "fs.read", "min": 1, "has": ["startLine"] },
+          { "tool": "sandbox.run", "max": 0 }
+        ],
+        "answer": [["9137"], ["r-7f3a9c"], ["55821"], ["retry"]]
+      }
+    },
+    {
+      "id": "sandbox-script-stdin",
+      "prompt": "sales.csv in my folder has columns date, region, product, units and unit_price. Read it, then compute the revenue (units × unit_price) per region with a short inline Python program run by sandbox.run (python3 -c), handing the CSV's text to it on stdin rather than having the program open the file. Give each region's total to two decimals.",
+      "files": { "sales.csv": "sales.csv" },
+      "expect": {
+        "files": [{ "path": "sales.csv", "equals": "sales.csv" }],
+        "calls": [{ "tool": "sandbox.run", "min": 1, "has": ["stdin"], "where": { "*": "python" } }],
+        "answer": [["7342.42"], ["4746.65"], ["2089.80", "2089.8"], ["2628.17"]]
+      }
+    }
+  ]
+}

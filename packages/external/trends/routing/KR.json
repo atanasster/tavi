@@ -1,0 +1,10 @@
+{
+  "country": "KR",
+  "order": [
+    "naver-datalab",
+    "daum-top",
+    "gtrends-rss",
+    "wikipedia-pageviews",
+    "gdelt-doc"
+  ]
+}

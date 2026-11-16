@@ -1,0 +1,78 @@
+{
+  "name": "@tavi/plugin-defaults",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/builtin/defaults"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "description": "Tavi's built-in default providers: heartbeat, ideas, memory and onboarding, one subpath each",
+  "exports": {
+    "./heartbeat": {
+      "development": "./src/heartbeat.ts",
+      "types": "./dist/heartbeat.d.mts",
+      "import": "./dist/heartbeat.mjs"
+    },
+    "./ideas": {
+      "development": "./src/ideas.ts",
+      "types": "./dist/ideas.d.mts",
+      "import": "./dist/ideas.mjs"
+    },
+    "./memory": {
+      "development": "./src/memory.ts",
+      "types": "./dist/memory.d.mts",
+      "import": "./dist/memory.mjs"
+    },
+    "./onboarding": {
+      "development": "./src/onboarding.ts",
+      "types": "./dist/onboarding.d.mts",
+      "import": "./dist/onboarding.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tavi/contracts": "workspace:*",
+    "@tavi/plugin-kit": "workspace:*"
+  },
+  "devDependencies": {
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      "./heartbeat": {
+        "types": "./dist/heartbeat.d.mts",
+        "import": "./dist/heartbeat.mjs"
+      },
+      "./ideas": {
+        "types": "./dist/ideas.d.mts",
+        "import": "./dist/ideas.mjs"
+      },
+      "./memory": {
+        "types": "./dist/memory.d.mts",
+        "import": "./dist/memory.mjs"
+      },
+      "./onboarding": {
+        "types": "./dist/onboarding.d.mts",
+        "import": "./dist/onboarding.mjs"
+      },
+      "./package.json": "./package.json"
+    }
+  }
+}

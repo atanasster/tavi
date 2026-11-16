@@ -1,0 +1,39 @@
+{
+  "name": "@tavi/plugin-jobs",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/external/jobs"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "description": "jobs.finder: an external plugin, built to one bundle with its manifest, that searches job sources, matches postings in code and keeps the person's pipeline",
+  "files": [
+    "dist-plugin"
+  ],
+  "scripts": {
+    "build": "tsdown && node scripts/assemble.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tavi/domain-kit": "workspace:*",
+    "@tavi/jobs-kit": "workspace:*",
+    "@tavi/plugin-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@tavi/contracts": "workspace:*",
+    "@tavi/test-support": "workspace:*",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "zod": "catalog:"
+  }
+}

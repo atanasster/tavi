@@ -1,0 +1,476 @@
+import { randomUUID } from "node:crypto";
+
+import {
+  DEFAULT_WORKSPACE_ID,
+  IDEA_CHIPS_MAX,
+  IDEA_LABEL_MAX,
+  IDEA_PREPARED_FRESH_MS,
+  IDEA_PROMPT_MAX,
+  IDEA_SNOOZE_MS,
+  REMINDER_TEXT_MAX,
+  TaviError,
+  type Idea,
+  type IdeaCapability,
+  type IdeaLedger,
+  type IdeasBriefAnswer,
+  type IdeasChipsAnswer,
+  type IdeasIdeaAnswer,
+  type IdeasListAnswer,
+  type IdeasPayload,
+  type IdeasProviderView,
+  type IdeasRecurAnswer,
+  type IdeasRefreshAnswer,
+  type IdeasRemindAnswer,
+  type IdeasResetAnswer,
+  type IdeasSettingsAnswer,
+  type IdeasTryAnswer,
+  type PersistencePort,
+} from "@tavi/contracts";
+import { clip, definedOnly } from "@tavi/contracts/util";
+
+import type { IpcAnswer } from "../../shared/ipc-decisions.js";
+import { workspaceZone } from "../reminders/owner.js";
+
+/**
+ * `ideas`: a workspace's ideas — listed, tried,
+ * given feedback, restored, pinned, turned into a routine draft or a
+ * reminder, refreshed — and its provider, brief and settings. Nothing here
+ * sends a message or starts a run: `try` hands back the prompt for the
+ * composer, and `recur` hands back a draft for the routine's own approval.
+ * Every rule about what is kept is the store's; this layer adds what
+ * only the owner knows: the census, the providers installed, the host.
+ */
+export interface IdeasCommandDependencies {
+  readonly repositories: Pick<PersistencePort["repositories"], "ideas" | "reminders" | "workspaceSettings">;
+  /** The operator principal a workspace is served for, or undefined for one this owner does not serve. */
+  readonly principalOf: (workspaceId: string) => string | undefined;
+  readonly now: () => Date;
+  /**
+   * What Tavi can do here now: an idea using anything else is hidden
+   * and `recur` needs `routines`. Absent offline, where nothing is checked.
+   */
+  readonly census?: (workspaceId: string) => Promise<readonly IdeaCapability[]>;
+  /** The providers installed on this owner; absent offline, where only a choice already saved is kept. */
+  readonly providers?: () => readonly IdeasProviderView[];
+  /** Asks this owner's ideas host for a run now; absent while no host runs. */
+  readonly refresh?: (workspaceId: string) => Promise<IdeasRefreshAnswer["status"]>;
+  /** The person's latest chat whose summary is under three days old: the empty chat's "Continue" chip. */
+  readonly continueChat?: (workspaceId: string) => Promise<{ readonly taskId: string; readonly title: string } | undefined>;
+  /** Whether routine `routineId` is the operator's in the workspace: `made-recurring` names a routine that exists. */
+  readonly routineExists?: (workspaceId: string, principalId: string, routineId: string) => Promise<boolean>;
+  /** Whether the operator has a chat on a connection the digest can be sent to; absent offline, where it is not checked. */
+  readonly digestReachable?: (workspaceId: string, principalId: string, connectionId: string) => Promise<boolean>;
+  /** A chat's title, so a set-aside chat is named (Settings → Ideas); absent, it is named by id. */
+  readonly chatTitle?: (workspaceId: string, taskId: string) => Promise<string | undefined>;
+  /** Whether the workspace has a fast model, which words ideas for the person (the tab says when it has none). */
+  readonly modelSet?: (workspaceId: string) => Promise<boolean>;
+  /**
+   * The request came from a page through the UI bridge: it may read
+   * and steer, but not switch the provider or the digest, which send the
+   * person's words somewhere new; those are the terminal's.
+   */
+  readonly fromBridge?: boolean;
+  /** When the host's next scheduled run is due, if one runs. */
+  readonly nextRunAt?: (workspaceId: string) => Promise<string | undefined>;
+  /** A fresh id; a test pins it. */
+  readonly newId?: () => string;
+}
+
+export type IdeasAnswer = IpcAnswer<
+  | IdeasListAnswer
+  | IdeasChipsAnswer
+  | IdeasTryAnswer
+  | IdeasIdeaAnswer
+  | IdeasRecurAnswer
+  | IdeasRemindAnswer
+  | IdeasRefreshAnswer
+  | IdeasBriefAnswer
+  | IdeasSettingsAnswer
+  | IdeasResetAnswer
+>;
+
+/**
+ * The active ideas a person may still see: none whose key they dismissed or
+ * snoozed, none resting on an excluded basis or in a muted section (the store
+ * ends those as the signal lands; this also covers a row written meanwhile),
+ * and none using what the census lacks. On the list (`keepPinnedMuted`), a
+ * pinned idea in a muted section stays: the person pinned it, and must see it
+ * to unpin it. Chips never offer one.
+ */
+function shown(
+  listed: readonly Idea[],
+  ledger: IdeaLedger,
+  census: ReadonlySet<IdeaCapability> | undefined,
+  keepPinnedMuted = false,
+): Idea[] {
+  return listed.filter(
+    (idea) =>
+      idea.status !== "active" ||
+      (!ledger.dismissedKeys.includes(idea.key) &&
+        !ledger.snoozedKeys.includes(idea.key) &&
+        (!ledger.mutedCategories.includes(idea.category) || (keepPinnedMuted && idea.pinned)) &&
+        !idea.basis.some((basis) => ledger.excludedBasis.includes(basis.ref)) &&
+        (census === undefined || idea.uses.every((use) => census.has(use.capability)))),
+  );
+}
+
+/**
+ * The empty chat's chips when there are no ideas to offer: one per
+ * capability the census has, never generic filler, in this order. Each
+ * prompt's [part] is what the person fills in.
+ */
+const CAPABILITY_CHIPS: readonly { readonly capability: IdeaCapability; readonly label: string; readonly prompt: string }[] = [
+  { capability: "web", label: "Search the web", prompt: "Search the web for [topic] and summarise what you find." },
+  { capability: "calendar", label: "Today's calendar", prompt: "What's on my calendar today?" },
+  { capability: "mailbox", label: "Emails to answer", prompt: "Which of my emails need a reply today?" },
+  { capability: "travel", label: "Find flights", prompt: "Find the cheapest flights from [origin] to [destination] around [dates]." },
+  { capability: "places", label: "Find a place", prompt: "Find a well-reviewed [kind of place] near [area]." },
+  { capability: "reminders", label: "Set a reminder", prompt: "Remind me to [thing] at [time]." },
+  { capability: "pdf", label: "Summarise a PDF", prompt: "Summarise the attached PDF and list its key points." },
+  { capability: "browser", label: "Read a page", prompt: "Open [link] and tell me what it says." },
+  { capability: "memory", label: "Remember something", prompt: "Remember that [something about me]." },
+];
+
+/** The capability chips the census allows; offline (no census), none is claimed. */
+function capabilityChips(census: ReadonlySet<IdeaCapability> | undefined): readonly { readonly label: string; readonly prompt: string }[] {
+  if (census === undefined) return [];
+  return CAPABILITY_CHIPS.filter((chip) => census.has(chip.capability)).map(({ label, prompt }) => ({ label, prompt }));
+}
+
+const chipPrompt = (title: string): string => {
+  const text = `Let's continue "${title}".`;
+  return clip(text, IDEA_PROMPT_MAX);
+};
+
+/**
+ * A chat an idea's *Try it* started: linked to the idea with what was
+ * sent. Ideas are the operator's: another person's message links
+ * nothing.
+ */
+export async function ideaChatSeeded(
+  deps: {
+    readonly repositories: Pick<PersistencePort["repositories"], "ideas">;
+    readonly principalOf: (workspaceId: string) => string | undefined;
+    readonly now: () => Date;
+    readonly newId?: () => string;
+    /** The new chat's memory mode: a private or memory-off chat is never read, so it is never linked either. */
+    readonly memoryModeOf: (taskId: string) => Promise<string | null | undefined>;
+  },
+  seed: {
+    readonly workspaceId: string;
+    readonly principalId: string;
+    readonly ideaId: string;
+    readonly taskId: string;
+    readonly sent: string;
+  },
+): Promise<void> {
+  if (deps.principalOf(seed.workspaceId) !== seed.principalId) return;
+  // Its words would be kept as an example: a chat whose memory is off or private keeps none.
+  const mode = await deps.memoryModeOf(seed.taskId);
+  if (mode !== null && mode !== undefined) return;
+  const { principalId: _principalId, ...link } = seed;
+  await deps.repositories.ideas.seedChat({ ...link, id: `ifb-${(deps.newId ?? randomUUID)()}`, now: deps.now().toISOString() });
+}
+
+/** An idea's fresh prepared answer, for the first turn of the chat its *Try it* starts: the operator's own, under a day old. */
+export async function ideaPreparedAnswer(
+  deps: {
+    readonly repositories: Pick<PersistencePort["repositories"], "ideas">;
+    readonly principalOf: (workspaceId: string) => string | undefined;
+    readonly now: () => Date;
+  },
+  workspaceId: string,
+  principalId: string,
+  ideaId: string,
+): Promise<{ readonly title: string; readonly text: string } | undefined> {
+  if (deps.principalOf(workspaceId) !== principalId) return undefined;
+  const idea = await deps.repositories.ideas.get(workspaceId, ideaId);
+  const prepared = idea?.prepared;
+  if (idea === undefined || prepared === undefined || deps.now().getTime() - Date.parse(prepared.at) >= IDEA_PREPARED_FRESH_MS)
+    return undefined;
+  return { title: idea.title, text: prepared.text };
+}
+
+/** A chat's turn ended: when it finished without failure, the idea that started it is done. */
+export async function ideaChatEnded(
+  repositories: Pick<PersistencePort["repositories"], "ideas" | "tasks">,
+  taskId: string,
+  id: string,
+  now: string,
+): Promise<void> {
+  if ((await repositories.tasks.get(taskId))?.status !== "completed") return;
+  await repositories.ideas.chatFinished(taskId, id, now);
+}
+
+/** The providers as the command shows them: what each receives and whether it is ready. */
+export function ideasProviderViews(
+  entries: readonly {
+    readonly id: string;
+    readonly kind: "builtin" | "plugin";
+    readonly receives: readonly IdeasProviderView["receives"][number][];
+    readonly ready: boolean;
+    readonly disclosure?: string;
+  }[],
+): readonly IdeasProviderView[] {
+  return entries.map((entry) => ({
+    id: entry.id,
+    kind: entry.kind,
+    receives: [...entry.receives],
+    ready: entry.ready,
+    ...(entry.disclosure === undefined ? {} : { disclosure: entry.disclosure }),
+  }));
+}
+
+export async function ideasCommand(deps: IdeasCommandDependencies, payload: IdeasPayload): Promise<IdeasAnswer> {
+  try {
+    const workspaceId = payload.workspaceId ?? DEFAULT_WORKSPACE_ID;
+    const operator = deps.principalOf(workspaceId);
+    if (operator === undefined) {
+      throw new TaviError("NOT_FOUND", `workspace ${workspaceId} is not configured on this owner`, { details: { workspaceId } });
+    }
+    const ideas = deps.repositories.ideas;
+    const now = deps.now();
+    const stamp = now.toISOString();
+    const newId = deps.newId ?? (() => randomUUID());
+    const census = async (): Promise<ReadonlySet<IdeaCapability> | undefined> =>
+      deps.census === undefined ? undefined : new Set(await deps.census(workspaceId));
+    /** An idea of this workspace, or `NOT_FOUND` — another workspace's is not said to exist. */
+    const inWorkspace = async (ideaId: string): Promise<Idea> => {
+      const idea = await ideas.get(workspaceId, ideaId);
+      if (idea === undefined) throw new TaviError("NOT_FOUND", `Idea ${ideaId} does not exist`);
+      return idea;
+    };
+    const feedback = async (fields: Omit<Parameters<typeof ideas.feedback>[0], "id" | "workspaceId" | "now">) =>
+      await ideas.feedback({ id: `ifb-${newId()}`, workspaceId, now: stamp, ...fields });
+
+    switch (payload.action) {
+      case "list": {
+        const [listed, ledger, lastRun, { settings }, checked, excludedSources] = await Promise.all([
+          ideas.list({
+            workspaceId,
+            now: stamp,
+            ...(payload.category === undefined ? {} : { category: payload.category }),
+            ...(payload.includeInactive === undefined ? {} : { includeInactive: payload.includeInactive }),
+          }),
+          ideas.ledger(workspaceId, stamp),
+          ideas.lastRun(workspaceId),
+          ideas.settings(workspaceId),
+          census(),
+          ideas.excludedSources(workspaceId, stamp),
+        ]);
+        const [nextAt, modelSet] = await Promise.all([deps.nextRunAt?.(workspaceId), deps.modelSet?.(workspaceId)]);
+        return {
+          ok: true,
+          result: {
+            ideas: shown(listed, ledger, checked, true),
+            mutedCategories: [...ledger.mutedCategories],
+            excludedBasis: [...ledger.excludedBasis],
+            excludedSources: await Promise.all(
+              excludedSources.map(async (source) => {
+                const title = source.kind === "task" ? await deps.chatTitle?.(workspaceId, source.ref) : undefined;
+                return title === undefined ? source : { ...source, title: title.slice(0, 200) };
+              }),
+            ),
+            enabled: settings.enabled,
+            ...definedOnly({
+              lastRun,
+              nextAt,
+              modelSet,
+            }),
+            provider: settings.provider,
+            providers: [...(deps.providers?.() ?? [])],
+          },
+        };
+      }
+      case "chips": {
+        // Off in Settings → Ideas: no chips at all. Ideas off, or none to offer: chips for what Tavi can do here.
+        const { settings } = await ideas.settings(workspaceId);
+        if (!settings.chips) return { ok: true, result: { chips: [] } };
+        const limit = payload.limit ?? IDEA_CHIPS_MAX;
+        const [listed, ledger, checked, latest] = await Promise.all([
+          settings.enabled ? ideas.list({ workspaceId, now: stamp }) : [],
+          ideas.ledger(workspaceId, stamp),
+          census(),
+          // A chat is read for Continue only while ideas may read chats, as the host reads them.
+          settings.sources.tasks ? deps.continueChat?.(workspaceId) : undefined,
+        ]);
+        const offered = shown(listed, ledger, checked)
+          .slice(0, limit)
+          .map((idea) => ({ ideaId: idea.id, label: idea.label, prompt: idea.prompt, uses: idea.uses }));
+        const chips = offered.length > 0 ? offered : capabilityChips(checked).slice(0, limit);
+        // The Continue chip comes first and counts toward the three.
+        const continuing =
+          latest === undefined || ledger.excludedBasis.includes(latest.taskId)
+            ? []
+            : [{ taskId: latest.taskId, label: clip(`Continue: ${latest.title}`, IDEA_LABEL_MAX), prompt: chipPrompt(latest.title) }];
+        return { ok: true, result: { chips: [...continuing, ...chips].slice(0, limit) } };
+      }
+      case "try": {
+        const idea = await inWorkspace(payload.id);
+        const tried = (await feedback({ ideaId: idea.id, signal: "tried" })) ?? idea;
+        return { ok: true, result: { prompt: tried.prompt, idea: tried } };
+      }
+      case "feedback": {
+        const idea = payload.id === undefined ? undefined : await inWorkspace(payload.id);
+        const current = await feedback({
+          signal: payload.signal,
+          ...(idea === undefined ? {} : { ideaId: idea.id }),
+          ...(payload.category === undefined ? {} : { category: payload.category }),
+          ...(payload.basisRef === undefined ? {} : { basisRef: payload.basisRef }),
+          ...(payload.signal === "not-now" ? { snoozedUntil: new Date(now.getTime() + IDEA_SNOOZE_MS).toISOString() } : {}),
+        });
+        return { ok: true, result: current === undefined ? {} : { idea: current } };
+      }
+      case "restore":
+        return { ok: true, result: { idea: await ideas.restore(workspaceId, (await inWorkspace(payload.id)).id, stamp) } };
+      case "pin":
+      case "unpin": {
+        const idea = await inWorkspace(payload.id);
+        return { ok: true, result: { idea: await ideas.setPinned(workspaceId, idea.id, payload.action === "pin", stamp) } };
+      }
+      case "recur": {
+        const idea = await inWorkspace(payload.id);
+        if (idea.recurring === undefined)
+          throw new TaviError("INVALID_INPUT", `Idea ${idea.id} is not one that repeats; try it once instead`);
+        // Routines repeat daily or on chosen weekdays: a monthly idea is not drafted as something it is not.
+        if (idea.recurring.cadence === "monthly")
+          throw new TaviError("UNAVAILABLE", "A routine cannot repeat monthly yet; set a reminder instead");
+        if (idea.status !== "active" && idea.status !== "tried") throw new TaviError("CONFLICT", `Idea ${idea.id} is ${idea.status}`);
+        const checked = await census();
+        if (checked !== undefined && !checked.has("routines"))
+          throw new TaviError("UNAVAILABLE", "Routines are not available on this owner, so an idea cannot repeat here");
+        return { ok: true, result: { draft: { name: idea.label, prompt: idea.prompt, cadence: idea.recurring.cadence } } };
+      }
+      case "made-recurring": {
+        const idea = await inWorkspace(payload.id);
+        if (idea.recurring === undefined) throw new TaviError("INVALID_INPUT", `Idea ${idea.id} is not one that repeats`);
+        // Done only for a routine that exists: a page cannot close an idea by naming one it did not make.
+        if (deps.routineExists === undefined) throw new TaviError("UNAVAILABLE", "Routines are not checked on this owner");
+        if (!(await deps.routineExists(workspaceId, operator, payload.routineId)))
+          throw new TaviError("NOT_FOUND", `Routine ${payload.routineId} does not exist`);
+        const done = await feedback({ ideaId: idea.id, signal: "done" });
+        return { ok: true, result: done === undefined ? {} : { idea: done } };
+      }
+      case "remind": {
+        const idea = await inWorkspace(payload.id);
+        if (idea.status !== "active" && idea.status !== "tried") throw new TaviError("CONFLICT", `Idea ${idea.id} is ${idea.status}`);
+        const checked = await census();
+        if (checked !== undefined && !checked.has("reminders"))
+          throw new TaviError("UNAVAILABLE", "Reminders are not available on this owner");
+        // Said, never run: the reminder carries the idea's words, and the person starts it from the chat if they want.
+        const said = `${idea.label}: ${idea.prompt}`;
+        const created = await deps.repositories.reminders.create({
+          reminderId: `rem-${newId()}`,
+          workspaceId,
+          principalId: operator,
+          text: clip(said, REMINDER_TEXT_MAX),
+          when: { kind: "once", at: payload.at },
+          timezone: await workspaceZone(deps, workspaceId),
+          deliverTo: { kind: "app" },
+          createdBy: "user",
+          operationKey: `idea:${idea.id}:${payload.at}`,
+          now: stamp,
+        });
+        return { ok: true, result: { reminderId: created.reminder.reminderId } };
+      }
+      case "refresh":
+        // At most `IDEA_REFRESH_PER_HOUR` an hour: counted by the store in the transaction that starts the run (QUOTA_EXCEEDED).
+        if (deps.refresh === undefined)
+          throw new TaviError("UNAVAILABLE", "Ideas are not generated on this owner yet: no ideas host is running");
+        return { ok: true, result: { status: await deps.refresh(workspaceId) } };
+      case "brief":
+        return { ok: true, result: { text: (await ideas.settings(workspaceId)).brief } };
+      case "set-brief": {
+        const before = (await ideas.settings(workspaceId)).brief;
+        const saved = await ideas.saveSettings({ workspaceId, brief: payload.text, now: stamp });
+        // Ideas quoting the old brief stop quoting it: what they quoted is no longer what the person asks for.
+        if (saved.brief !== before) await ideas.unquote({ workspaceId, ref: "brief", now: stamp });
+        return { ok: true, result: { text: saved.brief } };
+      }
+      case "settings":
+        return { ok: true, result: { settings: (await ideas.settings(workspaceId)).settings } };
+      case "set-settings": {
+        const { settings: current } = await ideas.settings(workspaceId);
+        const { changes } = payload;
+        // A page steers; it does not change where ideas go or what they may spend: those are the terminal's.
+        if (
+          deps.fromBridge === true &&
+          ((changes.provider !== undefined && changes.provider !== current.provider) ||
+            changes.digest !== undefined ||
+            changes.dailyTokens !== undefined ||
+            changes.prepareExternal !== undefined ||
+            changes.hours !== undefined)
+        ) {
+          throw new TaviError(
+            "NOT_AUTHORIZED",
+            "A page cannot switch the ideas provider or the digest, or change the hours, the budget or what a provider may prepare: use tavi ideas in a terminal",
+          );
+        }
+        // The digest goes only to the operator's own chat on a connection of this workspace: one with none is refused now, not skipped each week.
+        if (
+          changes.digest !== undefined &&
+          changes.digest !== null &&
+          deps.digestReachable !== undefined &&
+          !(await deps.digestReachable(workspaceId, operator, changes.digest.channel))
+        ) {
+          throw new TaviError(
+            "NOT_FOUND",
+            `No chat of yours on connection ${changes.digest.channel} can be sent to: tavi channels list shows them`,
+          );
+        }
+        if (changes.provider !== undefined && changes.provider !== current.provider) {
+          const installed = deps.providers?.();
+          if (installed === undefined)
+            throw new TaviError("UNAVAILABLE", "The ideas provider is chosen on a running owner, which knows what is installed");
+          if (!installed.some((provider) => provider.id === changes.provider)) {
+            throw new TaviError(
+              "NOT_FOUND",
+              `No ideas provider ${changes.provider} is installed here; installed: ${installed.map((provider) => provider.id).join(", ") || "none"}`,
+            );
+          }
+        }
+        // A patch, merged in the store's transaction: the host's own notes (volume, the digest sent) are never written back stale.
+        const patch = {
+          ...definedOnly({
+            enabled: changes.enabled,
+            provider: changes.provider,
+            chips: changes.chips,
+            prepareExternal: changes.prepareExternal,
+            dailyTokens: changes.dailyTokens,
+            hours: changes.hours,
+          }),
+          ...(changes.sources === undefined
+            ? {}
+            : {
+                sources: Object.fromEntries(
+                  Object.entries(changes.sources).filter((entry): entry is [string, boolean] => typeof entry[1] === "boolean"),
+                ),
+              }),
+          ...(changes.digest === undefined || changes.digest === null ? {} : { digest: changes.digest }),
+          // A switch to another provider turns prepareExternal off, unless set with it: it was granted to the last one.
+          ...(changes.provider !== undefined && changes.provider !== current.provider && changes.prepareExternal === undefined
+            ? { prepareExternal: false }
+            : {}),
+        };
+        // The last send stays recorded whatever is set: it keeps the digest to once a week, and a reply picks
+        // from it only while the digest still goes to its connection, so turned off or moved, it picks nothing.
+        const clear = changes.digest === null ? (["digest"] as const) : [];
+        const saved = await ideas.saveSettings({ workspaceId, patch, ...(clear.length === 0 ? {} : { clear }), now: stamp });
+        const next = saved.settings;
+        // A source switched off is no longer quoted: ideas citing it end, and the rest drop its words.
+        const kinds = { memory: "memory", tasks: "task", brief: "brief" } as const;
+        for (const source of ["memory", "tasks", "brief"] as const) {
+          if (current.sources[source] && !next.sources[source]) await ideas.unquote({ workspaceId, kind: kinds[source], now: stamp });
+        }
+        // A new provider's ideas replace the old one's: what the person pinned stays.
+        if (next.provider !== current.provider) await ideas.retireProvider(workspaceId, next.provider, stamp);
+        return { ok: true, result: { settings: saved.settings } };
+      }
+      case "reset":
+        return { ok: true, result: { cleared: await ideas.reset({ workspaceId, what: payload.what, now: stamp }) } };
+    }
+  } catch (error) {
+    const failure = TaviError.from(error);
+    return { ok: false, error: { code: failure.code, message: failure.message } };
+  }
+}

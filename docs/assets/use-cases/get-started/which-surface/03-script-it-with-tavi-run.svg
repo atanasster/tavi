@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1048" height="285" viewBox="0 0 1048 285" role="img">
+<rect width="1048" height="285" rx="12" fill="#ffffff" stroke="#d9e0dc"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="524" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#52605a">tavi run --format json</text>
+<line x1="0" y1="36" x2="1048" y2="36" stroke="#d9e0dc"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#132620">This chat works in its own folder. Start tavi serve with --fs-root &lt;path&gt; to let chats work in your folders.</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#132620">{"protocolVersion":8,"epoch":"serve-56523-e9693037-8c28-4f4d-ab0b-656f179e394d","sequence":0,"runId":"task-mw6n6hk9-6","</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#132620">attemptId":"attempt-admission-mw6n6hk9-8","at":"2026-11-07T16:52:55.793Z","kind":"run.started","threadId":"thread-mw6n6h</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#132620">k9-7","workspaceId":"default"}</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#132620">{"protocolVersion":8,"epoch":"serve-56523-e9693037-8c28-4f4d-ab0b-656f179e394d","sequence":1,"runId":"task-mw6n6hk9-6","</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#132620">attemptId":"attempt-mw6n6hl9-9","at":"2026-11-07T16:53:00.654Z","kind":"text.delta","blockId":"0","text":"The capital of</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#132620"> France is Paris."}</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#132620">{"protocolVersion":8,"epoch":"serve-56523-e9693037-8c28-4f4d-ab0b-656f179e394d","sequence":2,"runId":"task-mw6n6hk9-6","</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#132620">attemptId":"attempt-mw6n6hl9-9","at":"2026-11-07T16:53:00.811Z","kind":"task.completed","metrics":{"models":["openrouter</tspan></text>
+<text x="20" y="241.0" xml:space="preserve"><tspan fill="#132620">/google/gemini-3.8-flash"],"totalTokens":15911,"partial":false,"cacheReadTokens":15721},"finalText":"The capital of Fran</tspan></text>
+<text x="20" y="260.0" xml:space="preserve"><tspan fill="#132620">ce is Paris."}</tspan></text>
+</g>
+</svg>

@@ -1,0 +1,91 @@
+{
+  "name": "@tavi/plugin-kit",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/plugin-kit"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "description": "Shared pieces every heartbeat, ideas, memory and onboarding provider can use, one subpath per kind, and the conformance suites each must pass",
+  "exports": {
+    "./heartbeat": {
+      "development": "./src/heartbeat/index.ts",
+      "types": "./dist/heartbeat.d.mts",
+      "import": "./dist/heartbeat.mjs"
+    },
+    "./heartbeat/conformance": {
+      "development": "./src/heartbeat/conformance.ts"
+    },
+    "./ideas": {
+      "development": "./src/ideas/index.ts",
+      "types": "./dist/ideas.d.mts",
+      "import": "./dist/ideas.mjs"
+    },
+    "./ideas/conformance": {
+      "development": "./src/ideas/conformance.ts"
+    },
+    "./memory": {
+      "development": "./src/memory/index.ts",
+      "types": "./dist/memory.d.mts",
+      "import": "./dist/memory.mjs"
+    },
+    "./memory/conformance": {
+      "development": "./src/memory/conformance.ts"
+    },
+    "./onboarding": {
+      "development": "./src/onboarding/index.ts",
+      "types": "./dist/onboarding.d.mts",
+      "import": "./dist/onboarding.mjs"
+    },
+    "./onboarding/conformance": {
+      "development": "./src/onboarding/conformance.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tavi/contracts": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      "./heartbeat": {
+        "types": "./dist/heartbeat.d.mts",
+        "import": "./dist/heartbeat.mjs"
+      },
+      "./ideas": {
+        "types": "./dist/ideas.d.mts",
+        "import": "./dist/ideas.mjs"
+      },
+      "./memory": {
+        "types": "./dist/memory.d.mts",
+        "import": "./dist/memory.mjs"
+      },
+      "./onboarding": {
+        "types": "./dist/onboarding.d.mts",
+        "import": "./dist/onboarding.mjs"
+      },
+      "./package.json": "./package.json"
+    }
+  }
+}

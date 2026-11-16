@@ -1,0 +1,9 @@
+{
+  "note": "When the open-page lists' pages were recorded from the live sites, for the lists' tests; trimmed as test/lists.test.ts says. A test fails once a recording is over 180 days old.",
+  "recordings": {
+    "lists": {
+      "recordedAt": "2026-10-17",
+      "sources": "baidu-hot, hatena-hot, ptt-board, pantip-hot, daum-top"
+    }
+  }
+}

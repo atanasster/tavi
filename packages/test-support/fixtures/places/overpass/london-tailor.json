@@ -1,0 +1,915 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-10-17T05:41:32Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 456281123,
+  "lat": 51.5110585,
+  "lon": -0.1411020,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "19",
+    "addr:postcode": "W1S 3RH",
+    "addr:street": "Clifford Street",
+    "name": "Richard James Bespoke",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "node",
+  "id": 849731531,
+  "lat": 51.5076797,
+  "lon": -0.1245147,
+  "tags": {
+    "layer": "-1",
+    "name": "S&S Tailors",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "node",
+  "id": 1623696345,
+  "lat": 51.5291156,
+  "lon": -0.1013819,
+  "tags": {
+    "addr:city": "London",
+    "addr:country": "GB",
+    "addr:housenumber": "276",
+    "addr:street": "Goswell Road",
+    "name": "Bespoke Tailors For Ladies & Gentlemen",
+    "shop": "tailor",
+    "source": "photograph"
+  }
+},
+{
+  "type": "node",
+  "id": 2434611710,
+  "lat": 51.5189542,
+  "lon": -0.1549993,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "7",
+    "addr:postcode": "W1U 7PE",
+    "addr:street": "Chiltern Street",
+    "clothes": "men",
+    "email": "info@greyflannel.co.uk",
+    "name": "Grey Flannel",
+    "opening_hours": "Mo-We 10:30-17:30; Th 10:30-18:00; Fr-Sa 10:30-17:30",
+    "phone": "+44 20 7935 4067",
+    "shop": "tailor",
+    "website": "https://www.greyflannel.co.uk/"
+  }
+},
+{
+  "type": "node",
+  "id": 3781522298,
+  "lat": 51.5160048,
+  "lon": -0.1120461,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "78-80",
+    "addr:postcode": "WC2A 1DD",
+    "addr:street": "Chancery Lane",
+    "name": "Roderick Charles",
+    "opening_hours": "Mo-Fr 09:30-17:30",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "node",
+  "id": 4187508637,
+  "lat": 51.5070294,
+  "lon": -0.1332966,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "13",
+    "addr:postcode": "SW1Y 5LU",
+    "addr:street": "Pall Mall",
+    "contact:website": "http://www.apsleytailors.com/",
+    "name": "Apsley",
+    "shop": "tailor",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 4191567197,
+  "lat": 51.5114537,
+  "lon": -0.1407460,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "20a",
+    "addr:street": "Savile Row",
+    "email": "info@welshandjefferies.com",
+    "name": "Welsh & Jefferies",
+    "opening_hours": "Mo-Fr 09:30-17:30; Sa-Su closed",
+    "phone": "+44 20 7734 3062",
+    "shop": "tailor",
+    "website": "http://welshandjefferies.wix.com/welsh-and-jefferies"
+  }
+},
+{
+  "type": "node",
+  "id": 4194059505,
+  "lat": 51.5113844,
+  "lon": -0.1406772,
+  "tags": {
+    "name": "Chester Barrie",
+    "phone": "+44 20 7439 6079",
+    "shop": "tailor",
+    "website": "https://www.chesterbarrie.co.uk/"
+  }
+},
+{
+  "type": "node",
+  "id": 4199100130,
+  "lat": 51.5110275,
+  "lon": -0.1402909,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "First floor, 13",
+    "addr:postcode": "W1S 3NE",
+    "addr:street": "Savile Row",
+    "email": "savilerow@cadandthedandy.co.uk",
+    "name": "Cad & The Dandy",
+    "opening_hours": "Mo,Tu,Fr 09:00-18:00; We,Th 09:00-19:00; Sa 10:00-17:00; Su closed",
+    "phone": "+44 20 7434 4344",
+    "shop": "tailor",
+    "website": "https://www.cadandthedandy.co.uk/"
+  }
+},
+{
+  "type": "node",
+  "id": 4199100131,
+  "lat": 51.5106771,
+  "lon": -0.1403239,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "38",
+    "addr:postcode": "W1S 3QE",
+    "addr:street": "Savile Row",
+    "email": "info@daviesandson.com",
+    "fax": "+44 20 7287 4348",
+    "name": "Davies & Son",
+    "phone": "+44 20 7434 3016",
+    "shop": "tailor",
+    "website": "https://www.daviesandson.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 4199100133,
+  "lat": 51.5108403,
+  "lon": -0.1404832,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "34-35",
+    "addr:postcode": "W1S 3QA",
+    "addr:street": "Savile Row",
+    "email": "info@garyanderson.com",
+    "name": "Gary Anderson",
+    "opening_hours": "Mo-We,Fr,Sa 10:00-18:30; Th 10:00-19:00; Su 11:00-17:00",
+    "phone": "+44 20 7287 6661",
+    "shop": "tailor",
+    "website": "https://garyanderson.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 4199100137,
+  "lat": 51.5111466,
+  "lon": -0.1404342,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "15",
+    "addr:postcode": "W1S 3PJ",
+    "addr:street": "Savile Row",
+    "email": "office@henrypoole.com",
+    "name": "Henry Poole & Co",
+    "opening_hours": "Mo-Fr 09:00-17:15; Sa-Su closed",
+    "phone": "+44 20 7734 5985",
+    "shop": "tailor",
+    "website": "https://henrypoole.com/",
+    "wikidata": "Q3408814"
+  }
+},
+{
+  "type": "node",
+  "id": 4199100146,
+  "lat": 51.5107686,
+  "lon": -0.1404142,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "36",
+    "addr:postcode": "W1S 3QB",
+    "addr:street": "Savile Row",
+    "email": "info@jeffbankssavilerow.com",
+    "name": "Jeff Banks",
+    "phone": "+44 20 7734 3973",
+    "shop": "tailor",
+    "website": "https://www.jeffbankssavilerow.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 4199100147,
+  "lat": 51.5134721,
+  "lon": -0.1448176,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "37",
+    "addr:postcode": "W1S 3QD",
+    "addr:street": "Savile Row",
+    "email": "enquiries@kathrynsargent.com",
+    "name": "Kathryn Sargent",
+    "opening_hours": "Mo-Sa 10:00-18:00; Su closed",
+    "phone": "+44 20 7493 2450",
+    "shop": "tailor",
+    "website": "https://www.kathrynsargent.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 4199100150,
+  "lat": 51.5113320,
+  "lon": -0.1406305,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "19",
+    "addr:postcode": "W1S 3PP",
+    "addr:street": "Savile Row",
+    "email": "info@savilerowtailor.com",
+    "fax": "+44 20 7437 0529",
+    "name": "Maurice Sedwell",
+    "phone": "+44 20 7734 0824",
+    "shop": "tailor",
+    "website": "http://www.savilerowtailor.com/",
+    "wikidata": "Q16943646",
+    "wikipedia": "en:Maurice Sedwell"
+  }
+},
+{
+  "type": "node",
+  "id": 4199100151,
+  "lat": 51.5112028,
+  "lon": -0.1404839,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "16",
+    "addr:postcode": "W1S 3PL",
+    "addr:street": "Savile Row",
+    "email": "enquiries@nortonandsons.co.uk",
+    "name": "Norton & Sons",
+    "opening_hours": "Mo-Fr 09:00-17:30; Sa 13:00-17:00; Sa[-1] closed; PH closed; Aug: Sa off; Dec 25-Jan 01 off",
+    "phone": "+44 20 7437 0829",
+    "shop": "tailor",
+    "website": "https://www.nortonandsons.co.uk/",
+    "wikidata": "Q7060569"
+  }
+},
+{
+  "type": "node",
+  "id": 4199100152,
+  "lat": 51.5111659,
+  "lon": -0.1407975,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "30",
+    "addr:postcode": "W1S 3PT",
+    "addr:street": "Savile Row",
+    "email": "info@ozwaldboateng.co.uk",
+    "name": "Ozwald Boateng",
+    "opening_hours": "Mo-Sa 10:00-18:00; Su closed; PH 11:00-16:00",
+    "phone": "+44 20 7437 2030",
+    "shop": "tailor",
+    "website": "https://ozwaldboateng.co.uk/",
+    "wikidata": "Q3359235",
+    "wikipedia": "en:Ozwald Boateng#Savile Row"
+  }
+},
+{
+  "type": "node",
+  "id": 4209739399,
+  "lat": 51.5058330,
+  "lon": -0.0872044,
+  "tags": {
+    "name": "Nelly's Professional Tailoring",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "node",
+  "id": 4501839131,
+  "lat": 51.5171740,
+  "lon": -0.0889200,
+  "tags": {
+    "check_date": "2023-03-12",
+    "name": "Copperfield",
+    "shop": "tailor",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 4691514038,
+  "lat": 51.5137884,
+  "lon": -0.1104529,
+  "tags": {
+    "addr:city": "London",
+    "addr:country": "GB",
+    "addr:housenumber": "23",
+    "addr:postcode": "EC4Y 1AA",
+    "addr:street": "Fleet Street",
+    "check_date": "2026-09-09",
+    "contact:website": "http://www.stanley-ley.co.uk/",
+    "name": "Stanley Ley",
+    "shop": "tailor",
+    "source": "gps+mapnoter"
+  }
+},
+{
+  "type": "node",
+  "id": 4920417338,
+  "lat": 51.5058131,
+  "lon": -0.1378100,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "20",
+    "addr:postcode": "SW1Y 6PP",
+    "addr:street": "Crown Passage",
+    "name": "Arta Bespoke Tailoring",
+    "opening_hours": "Mo-Fr 08:00-18:00; Sa 10:00-17:00",
+    "phone": "+44 20 7839 5511",
+    "shop": "tailor",
+    "website": "https://artatailoring.co.uk/"
+  }
+},
+{
+  "type": "node",
+  "id": 4959303688,
+  "lat": 51.5080403,
+  "lon": -0.1390214,
+  "tags": {
+    "name": "Benson & Clegg",
+    "shop": "tailor",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 4959303689,
+  "lat": 51.5080061,
+  "lon": -0.1390004,
+  "tags": {
+    "name": "Neal & Palmer",
+    "shop": "tailor",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 5241088052,
+  "lat": 51.4888943,
+  "lon": -0.1370354,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "44",
+    "addr:street": "Moreton Street",
+    "check_date": "2024-04-04",
+    "name": "44 Moreton St",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "node",
+  "id": 5241371212,
+  "lat": 51.4889993,
+  "lon": -0.1365064,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "41",
+    "addr:street": "Moreton Street",
+    "name": "Kipper & Chalk",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "node",
+  "id": 5306613036,
+  "lat": 51.4900166,
+  "lon": -0.1562887,
+  "tags": {
+    "addr:housenumber": "83",
+    "addr:street": "Lower Sloane Street",
+    "name": "Buckleigh Of London",
+    "phone": "+44 20 7730 0770",
+    "shop": "tailor",
+    "website": "https://buckleighoflondon.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 5306722157,
+  "lat": 51.4902676,
+  "lon": -0.1566755,
+  "tags": {
+    "addr:housenumber": "69",
+    "addr:street": "Lower Sloane Street",
+    "name": "Sloane Tailors",
+    "opening_hours": "Mo-Sa 08:30-18:00",
+    "phone": "+44 20 7730 3800",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "node",
+  "id": 5307018323,
+  "lat": 51.5277620,
+  "lon": -0.1261724,
+  "tags": {
+    "addr:city": "London",
+    "addr:country": "GB",
+    "addr:housenumber": "5",
+    "addr:postcode": "WC1H 9PZ",
+    "addr:street": "Hastings Street",
+    "check_date": "2025-08-03",
+    "craft": "tailor",
+    "email": "info@tammam.co.uk",
+    "name": "Atelier Tammam",
+    "phone": "+44 20 7388 5924",
+    "website": "https://www.tammam.co.uk/"
+  }
+},
+{
+  "type": "node",
+  "id": 5833407169,
+  "lat": 51.5181782,
+  "lon": -0.1349580,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "10-16",
+    "addr:postcode": "W1T 1NT",
+    "addr:street": "Rathbone Street",
+    "addr:unit": "Studio 3",
+    "name": "Lambton Clothing Company",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "node",
+  "id": 6127435029,
+  "lat": 51.5171540,
+  "lon": -0.1379866,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "86",
+    "addr:street": "Margaret Street",
+    "check_date": "2025-08-26",
+    "name": "Hand & Lock",
+    "shop": "tailor",
+    "website": "https://handembroidery.com/about/"
+  }
+},
+{
+  "type": "node",
+  "id": 6326689592,
+  "lat": 51.5195244,
+  "lon": -0.1550142,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "58",
+    "addr:postcode": "W1U 7QZ",
+    "addr:street": "Chiltern Street",
+    "check_date": "2025-06-26",
+    "name": "TWC",
+    "opening_hours": "Mo-Sa 11:00-18:00; Su 12:00-17:00",
+    "shop": "tailor",
+    "website": "https://theworkersclub.co.uk/"
+  }
+},
+{
+  "type": "node",
+  "id": 6326689593,
+  "lat": 51.5194801,
+  "lon": -0.1549921,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "56",
+    "addr:postcode": "W1U 7QY",
+    "addr:street": "Chiltern Street",
+    "check_date": "2025-06-26",
+    "email": "info@cromfordleather.co.uk",
+    "name": "Cromford Leather Co.",
+    "opening_hours": "Tu-Fr 10:00-17:30; Sa 10:00-17:00",
+    "phone": "+44 20 7935 1041",
+    "shop": "tailor",
+    "website": "https://www.cromfordleather.co.uk/"
+  }
+},
+{
+  "type": "node",
+  "id": 6328534771,
+  "lat": 51.5188608,
+  "lon": -0.1549546,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "3",
+    "addr:street": "Chiltern Street",
+    "email": "customercare@casely-hayford.com",
+    "name": "Casely-Hayford",
+    "phone": "+44 20 7486 8881",
+    "shop": "tailor",
+    "website": "https://casely-hayford.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 7087241291,
+  "lat": 51.5243049,
+  "lon": -0.0938949,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "197A",
+    "addr:street": "Whitecross Street",
+    "name": "City Tailors",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "node",
+  "id": 7549940573,
+  "lat": 51.5213889,
+  "lon": -0.1183659,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "33",
+    "addr:street": "Lamb's Conduit Street",
+    "alt_name": "Connock and Lock Limited",
+    "check_date": "2026-07-26",
+    "name": "Connock & Lock Ltd",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "node",
+  "id": 8028059577,
+  "lat": 51.4972224,
+  "lon": -0.1641958,
+  "tags": {
+    "addr:housenumber": "33",
+    "addr:street": "Beauchamp Place",
+    "name": "Isabell Kristensen",
+    "phone": "+44 20 7589 1798",
+    "shop": "tailor",
+    "website": "https://www.isabellkristensen.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 8034599749,
+  "lat": 51.4980113,
+  "lon": -0.1659710,
+  "tags": {
+    "addr:housenumber": "61",
+    "addr:street": "Beauchamp Place",
+    "name": "Lauren B Couture",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "node",
+  "id": 12803228445,
+  "lat": 51.5133809,
+  "lon": -0.1015800,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "7a",
+    "addr:street": "Ludgate Square",
+    "name": "P A Crowe Ltd",
+    "shop": "tailor",
+    "website": "https://www.pacrowe.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 13577345312,
+  "lat": 51.5131648,
+  "lon": -0.1365289,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "51",
+    "addr:street": "Lexington Street",
+    "craft": "tailor",
+    "level": "1",
+    "name": "Pinnas and Needles",
+    "source": "photograph",
+    "tailor:alteration_service": "yes",
+    "website": "https://pinnasandneedles.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14178896049,
+  "lat": 51.5133406,
+  "lon": -0.1329881,
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "6",
+    "addr:postcode": "W1F 0EG",
+    "addr:street": "Meard Street",
+    "name": "John Pearse",
+    "shop": "tailor",
+    "website": "https://www.johnpearse.co.uk/"
+  }
+},
+{
+  "type": "way",
+  "id": 118808979,
+  "center": {
+    "lat": 51.5197802,
+    "lon": -0.1364250
+  },
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "63",
+    "addr:street": "Charlotte Street",
+    "building": "yes",
+    "building:levels": "4",
+    "building:material": "brick",
+    "check_date": "2026-09-29",
+    "name": "Casual Fitters",
+    "shop": "tailor",
+    "source:addr:housenumber": "extrapolation;OS 1:1250 map dated 1953",
+    "was:amenity": "cafe",
+    "was:brand": "Black Sheep Coffee",
+    "was:brand:wikidata": "Q109745011",
+    "was:cuisine": "coffee_shop",
+    "was:name": "Black Sheep Coffee",
+    "was:takeaway": "yes",
+    "website": "https://www.casualfitters.co.uk/"
+  }
+},
+{
+  "type": "way",
+  "id": 163272334,
+  "center": {
+    "lat": 51.5302512,
+    "lon": -0.1061036
+  },
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "19, 19A",
+    "addr:street": "Arlington Way",
+    "building": "yes",
+    "building:levels": "3",
+    "name": "Wali Asr Tailoring & Alterations",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "way",
+  "id": 217944879,
+  "center": {
+    "lat": 51.5135240,
+    "lon": -0.1500547
+  },
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "1-2",
+    "addr:postcode": "W1K 5LR",
+    "addr:street": "Weighhouse Street",
+    "building:levels": "1",
+    "building:part": "yes",
+    "contact:website": "http://thomsweeney.co.uk",
+    "name": "Thom Sweeney",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "way",
+  "id": 275127237,
+  "center": {
+    "lat": 51.5148827,
+    "lon": -0.1354882
+  },
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "4",
+    "addr:postcode": "W1F 8DJ",
+    "addr:street": "D'Arblay Street",
+    "building": "commercial",
+    "building:colour": "brown",
+    "building:levels": "3",
+    "building:material": "brick",
+    "name": "Sir Tom Baker",
+    "phone": "+44 20 7437 3366",
+    "ref:GB:uprn": "10033637630;10033637631;100023471679;10033629345;10033637629;10033629344",
+    "roof:levels": "1",
+    "shop": "tailor",
+    "source": "Bing;photograph",
+    "website": "https://tombakerlondon.com/"
+  }
+},
+{
+  "type": "way",
+  "id": 342315218,
+  "center": {
+    "lat": 51.5095585,
+    "lon": -0.1508373
+  },
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "96",
+    "addr:street": "Mount Street",
+    "building": "yes",
+    "name": "Rubinacci",
+    "phone": "+44 20 7499 2299",
+    "shop": "tailor",
+    "website": "http://www.marianorubinacci.it"
+  }
+},
+{
+  "type": "way",
+  "id": 350328157,
+  "center": {
+    "lat": 51.5177988,
+    "lon": -0.1513035
+  },
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "32",
+    "addr:postcode": "W1U 2QT",
+    "addr:street": "Thayer Street",
+    "building": "yes",
+    "description": "\"The Professional Menders for all garments and woven fabrics\"",
+    "name": "British Invisible Mending Service",
+    "opening_hours": "Mo-Fr 08:00-18:30; Sa 08:00-17:00",
+    "ref:GB:uprn": "100023464506",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "way",
+  "id": 435928171,
+  "center": {
+    "lat": 51.5217727,
+    "lon": -0.1400572
+  },
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "66",
+    "addr:street": "Cleveland Street",
+    "building": "retail",
+    "building:colour": "brown",
+    "building:levels": "3",
+    "building:material": "brick",
+    "check_date": "2026-10-16",
+    "roof:levels": "1",
+    "roof:material": "slate",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "way",
+  "id": 449451881,
+  "center": {
+    "lat": 51.4926974,
+    "lon": -0.1393154
+  },
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "32",
+    "addr:postcode": "SW1V 1SW",
+    "addr:street": "Upper Tachbrook Street",
+    "building": "apartments",
+    "building:colour": "white",
+    "building:levels": "3",
+    "building:material": "plaster",
+    "name": "Simon & James Of London",
+    "opening_hours": "Mo-Fr 08:00-19:30; Sa 09:00-19:00; Su off",
+    "ref:GB:uprn": "10033586209;10033557890;100023340667;10033636980;100023340460",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "way",
+  "id": 477053957,
+  "center": {
+    "lat": 51.5143789,
+    "lon": -0.1357735
+  },
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "76",
+    "addr:street": "Berwick Street",
+    "craft": "tailor",
+    "level": "1",
+    "name": "Jac Hui",
+    "website": "http://www.jachui.com"
+  }
+},
+{
+  "type": "way",
+  "id": 477968030,
+  "center": {
+    "lat": 51.5146656,
+    "lon": -0.1355896
+  },
+  "tags": {
+    "craft": "tailor",
+    "level": "1",
+    "name": "A1 Express Alteration Tailors",
+    "phone": "+44 20 7473 2710"
+  }
+},
+{
+  "type": "way",
+  "id": 478529823,
+  "center": {
+    "lat": 51.5142699,
+    "lon": -0.1351410
+  },
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "11b",
+    "addr:street": "Wardour Mews",
+    "level": "-1",
+    "name": "D.M. Buttons",
+    "phone": "+44 20 7437 8897",
+    "shop": "tailor",
+    "website": "https://www.dmbuttons.co.uk/"
+  }
+},
+{
+  "type": "way",
+  "id": 522314574,
+  "center": {
+    "lat": 51.5133029,
+    "lon": -0.0936222
+  },
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "3",
+    "addr:postcode": "EC4M 9EE",
+    "addr:street": "Bow Lane",
+    "name": "Graham Browne",
+    "shop": "tailor",
+    "website": "https://www.grahambrowne.co.uk/"
+  }
+},
+{
+  "type": "way",
+  "id": 522699917,
+  "center": {
+    "lat": 51.5133794,
+    "lon": -0.0931068
+  },
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "12",
+    "addr:street": "Well Court",
+    "name": "Graham Browne",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "way",
+  "id": 530784916,
+  "center": {
+    "lat": 51.4990655,
+    "lon": -0.1574821
+  },
+  "tags": {
+    "addr:city": "London",
+    "addr:housenumber": "21",
+    "addr:postcode": "SW1X 8LB",
+    "addr:street": "Motcomb Street",
+    "building": "yes",
+    "name": "Gio Genco",
+    "ref:GB:uprn": "100023348402;10033584227",
+    "shop": "tailor"
+  }
+},
+{
+  "type": "way",
+  "id": 975798034,
+  "center": {
+    "lat": 51.4952700,
+    "lon": -0.1327174
+  },
+  "tags": {
+    "building": "yes",
+    "check_date": "2026-06-09",
+    "name": "George & Son",
+    "shop": "tailor"
+  }
+}
+
+  ]
+}

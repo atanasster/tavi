@@ -1,0 +1,50 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "ats-workable",
+  "name": "Workable",
+  "countries": [
+    "*"
+  ],
+  "hosts": [
+    "apply.workable.com"
+  ],
+  "kind": "ats",
+  "access": {
+    "mode": "stage",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "An employer's application form on Workable. Tavi fills the fields it may and stops before the final control, which the person presses.",
+    "termsUrl": "https://help.workable.com/hc/en-us/articles/115011841267",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 12,
+    "pagesPerDay": 60,
+    "minIntervalMs": 2000
+  },
+  "stage": {
+    "fillable": [
+      "name",
+      "first_name",
+      "last_name",
+      "email",
+      "phone",
+      "location",
+      "links",
+      "work_history",
+      "education",
+      "cv_upload",
+      "cover_letter",
+      "custom_answer"
+    ],
+    "finalStep": {
+      "labels": [
+        "Submit application"
+      ],
+      "urlPatterns": []
+    },
+    "perDay": 10
+  },
+  "notes": "Its EEO survey comes after submission, so staging never reaches it."
+}

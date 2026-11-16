@@ -1,0 +1,200 @@
+{
+  "name": "@tavi/agent-host",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/agent-host"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "description": "The agent host: models (Vercel AI SDK), the task workflow (LangGraph), context assembly, tool routing, the system prompt, and the heartbeat, ideas, onboarding and memory hosts",
+  "exports": {
+    "./models": {
+      "development": "./src/models/models.ts",
+      "types": "./dist/models.d.mts",
+      "import": "./dist/models.mjs"
+    },
+    "./openai-stream-compat": {
+      "development": "./src/models/openai-stream-compat.ts",
+      "types": "./dist/openai-stream-compat.d.mts",
+      "import": "./dist/openai-stream-compat.mjs"
+    },
+    "./workflow": {
+      "development": "./src/workflow/index.ts",
+      "types": "./dist/workflow.d.mts",
+      "import": "./dist/workflow.mjs"
+    },
+    "./system-prompt": {
+      "development": "./src/prompts/system-prompt.ts",
+      "types": "./dist/system-prompt.d.mts",
+      "import": "./dist/system-prompt.mjs"
+    },
+    "./context": {
+      "development": "./src/context/context.ts",
+      "types": "./dist/context.d.mts",
+      "import": "./dist/context.mjs"
+    },
+    "./agent-communication": {
+      "development": "./src/agents/agent-communication.ts",
+      "types": "./dist/agent-communication.d.mts",
+      "import": "./dist/agent-communication.mjs"
+    },
+    "./agent-wait-scheduler": {
+      "development": "./src/agents/agent-wait-scheduler.ts",
+      "types": "./dist/agent-wait-scheduler.d.mts",
+      "import": "./dist/agent-wait-scheduler.mjs"
+    },
+    "./schedule-scheduler": {
+      "development": "./src/schedulers/schedule-scheduler.ts",
+      "types": "./dist/schedule-scheduler.d.mts",
+      "import": "./dist/schedule-scheduler.mjs"
+    },
+    "./heartbeat-host": {
+      "development": "./src/hosts/heartbeat-host.ts",
+      "types": "./dist/heartbeat-host.d.mts",
+      "import": "./dist/heartbeat-host.mjs"
+    },
+    "./ideas-host": {
+      "development": "./src/hosts/ideas-host.ts",
+      "types": "./dist/ideas-host.d.mts",
+      "import": "./dist/ideas-host.mjs"
+    },
+    "./unattended-admission": {
+      "development": "./src/schedulers/unattended-admission.ts",
+      "types": "./dist/unattended-admission.d.mts",
+      "import": "./dist/unattended-admission.mjs"
+    },
+    "./heartbeat-delivery": {
+      "development": "./src/hosts/heartbeat-delivery.ts",
+      "types": "./dist/heartbeat-delivery.d.mts",
+      "import": "./dist/heartbeat-delivery.mjs"
+    },
+    "./reminder-scheduler": {
+      "development": "./src/schedulers/reminder-scheduler.ts",
+      "types": "./dist/reminder-scheduler.d.mts",
+      "import": "./dist/reminder-scheduler.mjs"
+    },
+    "./task-summarizer": {
+      "development": "./src/schedulers/task-summarizer.ts",
+      "types": "./dist/task-summarizer.d.mts",
+      "import": "./dist/task-summarizer.mjs"
+    },
+    "./checkpoint": {
+      "development": "./src/workflow/checkpoint.ts",
+      "types": "./dist/checkpoint.d.mts",
+      "import": "./dist/checkpoint.mjs"
+    },
+    "./onboarding-host": {
+      "development": "./src/hosts/onboarding-host.ts",
+      "types": "./dist/onboarding-host.d.mts",
+      "import": "./dist/onboarding-host.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "4.0.88",
+    "@ai-sdk/openai": "4.0.101",
+    "@ai-sdk/provider": "4.0.34",
+    "@langchain/core": "1.2.20",
+    "@langchain/langgraph": "1.5.2",
+    "@langchain/langgraph-checkpoint": "1.2.1",
+    "@tavi/contracts": "workspace:*",
+    "@tavi/node-kit": "workspace:*",
+    "ai": "7.0.153",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@langchain/langgraph-checkpoint-sqlite": "catalog:",
+    "@tavi/plugin-kit": "workspace:*",
+    "@tavi/test-support": "workspace:*",
+    "@types/better-sqlite3": "catalog:",
+    "better-sqlite3": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      "./models": {
+        "types": "./dist/models.d.mts",
+        "import": "./dist/models.mjs"
+      },
+      "./openai-stream-compat": {
+        "types": "./dist/openai-stream-compat.d.mts",
+        "import": "./dist/openai-stream-compat.mjs"
+      },
+      "./workflow": {
+        "types": "./dist/workflow.d.mts",
+        "import": "./dist/workflow.mjs"
+      },
+      "./system-prompt": {
+        "types": "./dist/system-prompt.d.mts",
+        "import": "./dist/system-prompt.mjs"
+      },
+      "./context": {
+        "types": "./dist/context.d.mts",
+        "import": "./dist/context.mjs"
+      },
+      "./agent-communication": {
+        "types": "./dist/agent-communication.d.mts",
+        "import": "./dist/agent-communication.mjs"
+      },
+      "./agent-wait-scheduler": {
+        "types": "./dist/agent-wait-scheduler.d.mts",
+        "import": "./dist/agent-wait-scheduler.mjs"
+      },
+      "./schedule-scheduler": {
+        "types": "./dist/schedule-scheduler.d.mts",
+        "import": "./dist/schedule-scheduler.mjs"
+      },
+      "./heartbeat-host": {
+        "types": "./dist/heartbeat-host.d.mts",
+        "import": "./dist/heartbeat-host.mjs"
+      },
+      "./ideas-host": {
+        "types": "./dist/ideas-host.d.mts",
+        "import": "./dist/ideas-host.mjs"
+      },
+      "./unattended-admission": {
+        "types": "./dist/unattended-admission.d.mts",
+        "import": "./dist/unattended-admission.mjs"
+      },
+      "./heartbeat-delivery": {
+        "types": "./dist/heartbeat-delivery.d.mts",
+        "import": "./dist/heartbeat-delivery.mjs"
+      },
+      "./reminder-scheduler": {
+        "types": "./dist/reminder-scheduler.d.mts",
+        "import": "./dist/reminder-scheduler.mjs"
+      },
+      "./task-summarizer": {
+        "types": "./dist/task-summarizer.d.mts",
+        "import": "./dist/task-summarizer.mjs"
+      },
+      "./package.json": "./package.json",
+      "./checkpoint": {
+        "types": "./dist/checkpoint.d.mts",
+        "import": "./dist/checkpoint.mjs"
+      },
+      "./onboarding-host": {
+        "types": "./dist/onboarding-host.d.mts",
+        "import": "./dist/onboarding-host.mjs"
+      }
+    }
+  }
+}

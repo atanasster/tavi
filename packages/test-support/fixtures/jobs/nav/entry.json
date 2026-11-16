@@ -1,0 +1,70 @@
+{
+ "uuid": "e3a0f7c4-33ac-45dd-8934-21193d1a2b79",
+ "ad_content": {
+  "uuid": "e3a0f7c4-33ac-45dd-8934-21193d1a2b79",
+  "published": "2026-10-12T09:18:17.585+02:00",
+  "expires": "2026-11-13T00:00:00+01:00",
+  "updated": "2026-10-15T10:17:48.492291+02:00",
+  "workLocations": [
+   {
+    "country": "NORGE",
+    "address": "Oslo, Norway",
+    "city": "OSLO",
+    "postalCode": "0010",
+    "county": "OSLO",
+    "municipal": "OSLO"
+   }
+  ],
+  "contactList": [],
+  "title": "Independent Sales Partner – Patented Smart Window Technology | Commission-Based",
+  "description": "<p><strong>00SMART AS is looking for a freelance Sales &amp; Business Development Partner to help us find customers and commercial partners for our patented automatic window technology.</strong></p><p>00SMART AS owns <strong>Norwegian Patent No. 348622</strong>, covering a mechanism for controlled automatic opening and closing of windows. We have a functioning solution already installed and operating on two real windows at <strong>TradLab, Norsk Folkemuseum in Oslo</strong>.</p><p>We are now looking for someone who enjoys opening doors, contacting potential customers and developing new business opportunities.</p><p><br /></p><h4><strong>Your role will include:</strong></h4><ul><li><p>Identifying potential customers and commercial partners</p></li><li><p>Contacting relevant decision-makers</p></li><li><p>Generating qualified leads and arranging meetings</p></li><li><p>Presenting the commercial opportunity together with our technical team</p></li><li><p>Exploring opportunities for sales, pilots, licensing and partnerships</p></li><li><p>Helping move interested prospects toward a commercial agreement</p></li></ul><p>We are particularly interested in people with experience or contacts within:</p><ul><li><p>Window and façade companies</p></li><li><p>Building technology and PropTech</p></li><li><p>Building automation and ventilation</p></li><li><p>Property developers and construction companies</p></li><li><p>Distributors and manufacturers</p></li></ul><p><br /></p><h4><strong>What we offer:</strong></h4><p>This is a <strong>freelance, commission-based collaboration</strong>. Compensation will be based on an agreed percentage of commercial business generated through your work. The detailed commission structure and terms will be agreed in writing before sales activities begin.</p><p>00SMART will provide product information, presentations, demonstrations and technical support.</p><p>This could be a good opportunity for someone who already has a strong B2B network and wants to help bring a patented Norwegian technology to the market.</p>",
+  "sourceurl": "https://thehub.io/jobs/6acca5d9dabe7d3207915c8c",
+  "source": "IMPORTAPI",
+  "applicationUrl": "https://thehub.io/jobs/6acca5d9dabe7d3207915c8c",
+  "applicationDue": "Snarest",
+  "occupationCategories": [
+   {
+    "level1": "Salg og service",
+    "level2": "Salg, butikk- og varehandel"
+   }
+  ],
+  "categoryList": [
+   {
+    "categoryType": "ESCO",
+    "code": "http://data.europa.eu/esco/isco/C3322",
+    "name": "Selgere (engros)",
+    "description": "",
+    "score": 1.0
+   },
+   {
+    "categoryType": "JANZZ",
+    "code": "19903",
+    "name": "Selger (agent)",
+    "description": "",
+    "score": 1.0
+   },
+   {
+    "categoryType": "STYRK08",
+    "code": "3322",
+    "name": "Selgere (engros);",
+    "description": "",
+    "score": 1.0
+   }
+  ],
+  "jobtitle": "",
+  "link": "https://arbeidsplassen.nav.no/stillinger/stilling/e3a0f7c4-33ac-45dd-8934-21193d1a2b79",
+  "employer": {
+   "name": "00SMART AS",
+   "orgnr": "931056395",
+   "description": "00SMART is a Norwegian smart-building technology startup developing a vendor-independent Digital Twin and Automated Fault Detection and Diagnostics (AFDD) platform.\nBuildings generate large amounts of operational data from HVAC systems, BMS, sensors, controllers and IoT devices, but this data is often fragmented across different suppliers and systems. As a result, technical faults can remain hidden, energy is wasted, and building operators spend significant time troubleshooting manually.\n00SMART connects these different data sources, validates and structures the data, and makes it usable for automatic fault detection, dashboards, Digital Twin/3D visualisation and operational decision support.\nOur goal is to help building owners and facility managers detect problems earlier, reduce energy waste, improve indoor comfort and make building operations more efficient.\nWe are currently strengthening and expanding an existing working platform and preparing for further verification in real buildings.",
+   "homepage": "https://www.00smart.no"
+  },
+  "engagementtype": "Frilanser",
+  "extent": "Heltid",
+  "starttime": "",
+  "positioncount": "1",
+  "sector": "Privat"
+ },
+ "sistEndret": "2026-10-15T10:17:48.492+02:00",
+ "status": "ACTIVE"
+}

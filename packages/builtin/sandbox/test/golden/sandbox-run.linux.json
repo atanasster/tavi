@@ -1,0 +1,92 @@
+{
+  "network": {
+    "allowedDomains": [],
+    "deniedDomains": [],
+    "strictAllowlist": true
+  },
+  "filesystem": {
+    "denyRead": [
+      "/home/person",
+      "/srv/tavi-data",
+      "/tmp"
+    ],
+    "allowRead": [
+      "/work/project",
+      "/srv/tavi-data/chats/default/t1"
+    ],
+    "allowWrite": [
+      "/work/project",
+      "/srv/tavi-data/chats/default/t1"
+    ],
+    "denyWrite": [
+      {
+        "path": "/home/person/.ssh",
+        "literal": true
+      },
+      {
+        "path": "/tmp/claude",
+        "literal": true
+      },
+      {
+        "path": "/home/person/.npm/_logs",
+        "literal": true
+      },
+      {
+        "path": "/home/person/.claude/debug",
+        "literal": true
+      },
+      {
+        "path": "/work/project/.git",
+        "literal": true
+      },
+      {
+        "path": "/work/project/.bashrc",
+        "literal": true
+      },
+      {
+        "path": "/work/project/.zshrc",
+        "literal": true
+      },
+      {
+        "path": "/work/project/.profile",
+        "literal": true
+      },
+      {
+        "path": "/work/project/.envrc",
+        "literal": true
+      },
+      {
+        "path": "/work/project/.vscode",
+        "literal": true
+      },
+      {
+        "path": "/work/project/.idea",
+        "literal": true
+      },
+      {
+        "path": "/work/project/.claude/settings.json",
+        "literal": true
+      },
+      {
+        "path": "/work/project/HEAD",
+        "literal": true
+      },
+      {
+        "path": "/work/project/wt/.git",
+        "literal": true
+      }
+    ]
+  },
+  "credentials": {
+    "envVars": [
+      {
+        "name": "OPENAI_API_KEY",
+        "mode": "deny"
+      },
+      {
+        "name": "ANTHROPIC_API_KEY",
+        "mode": "deny"
+      }
+    ]
+  }
+}

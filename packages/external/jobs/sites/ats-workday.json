@@ -1,0 +1,59 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "ats-workday",
+  "name": "Workday",
+  "countries": [
+    "*"
+  ],
+  "hosts": [
+    "*.myworkdayjobs.com"
+  ],
+  "kind": "ats",
+  "access": {
+    "mode": "stage",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "An employer's application form on Workday. Tavi fills the fields it may and stops before the final control, which the person presses.",
+    "termsUrl": "https://doc.workday.com/admin-guide/en-us/human-capital-management/recruiting/candidates/candidate-personal-information/san1407356248164.html",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 12,
+    "pagesPerDay": 60,
+    "minIntervalMs": 2000
+  },
+  "stage": {
+    "fillable": [
+      "name",
+      "first_name",
+      "last_name",
+      "email",
+      "phone",
+      "location",
+      "links",
+      "work_history",
+      "education",
+      "cv_upload",
+      "cover_letter",
+      "custom_answer"
+    ],
+    "finalStep": {
+      "labels": [
+        "Submit",
+        "Absenden",
+        "Senden"
+      ],
+      "urlPatterns": [],
+      "selectors": [
+        "[data-automation-id=pageFooterNextButton]",
+        "[data-automation-id=bottom-navigation-next-button]"
+      ],
+      "stepHeadings": [
+        "Review"
+      ]
+    },
+    "perDay": 10
+  },
+  "notes": "Next and Submit are one element whose text changes, and the step is not in the address: on the Review step the footer button is the final control. \"Absenden\" and \"Senden\" are its German labels."
+}

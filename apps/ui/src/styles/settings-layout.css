@@ -1,0 +1,330 @@
+/* ---------- Settings layout ---------- */
+
+/* Settings share one layout system across providers, roles, schedules and dialogs. */
+.settings-panel {
+  margin-block: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+}
+
+.settings-panel > summary,
+.connection-title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.settings-panel[open] > summary {
+  margin-bottom: var(--space-4);
+}
+
+.settings-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  border: 0;
+  padding: 0;
+  margin: var(--space-4) 0 0;
+  min-width: 0;
+}
+
+.settings-fields > label,
+.settings-panel > label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1-5);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  min-width: 0;
+}
+
+/* A field that must be filled says so on its label line. The word is drawn
+   only: the field's own `required` is what a screen reader announces, so the
+   mark's alternative text is empty and it is not read twice. */
+.settings-fields > label:has(> :is(input, select, textarea):required),
+.settings-panel > label:has(> :is(input, select, textarea):required) {
+  position: relative;
+}
+
+.settings-fields > label:has(> :is(input, select, textarea):required)::before,
+.settings-panel > label:has(> :is(input, select, textarea):required)::before {
+  content: "Required" / "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  color: hsl(var(--muted-foreground));
+}
+
+.settings-fields > label:has(input[type="checkbox"]) {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* A checkbox's description goes on its own line below, so it never squeezes the label to a word a line. */
+.settings-fields > label:has(input[type="checkbox"]) > .settings-description {
+  flex-basis: 100%;
+  margin-top: 0;
+}
+
+.settings-fields > p,
+.settings-fields > fieldset,
+.settings-fields > div,
+.settings-fields > label:has(textarea) {
+  grid-column: 1 / -1;
+}
+
+/* Long text is seen whole, up to a limit, not through a two-row slot. */
+.settings-fields > label > textarea {
+  min-height: var(--height-textarea);
+  max-height: var(--height-scroll-sm);
+  field-sizing: content;
+}
+
+.settings-fields p {
+  margin: 0;
+  font-size: var(--text-base);
+  color: hsl(var(--muted-foreground));
+  line-height: var(--leading-relaxed);
+}
+
+/* A refusal among the fields stays a refusal, not the help text around it. */
+.settings-fields .failure {
+  color: hsl(var(--destructive));
+}
+
+.settings-fields > button {
+  justify-self: start;
+}
+
+/* Fields fill the form's column; a checkbox or radio keeps its own size (controls.css) beside its label. */
+.settings-fields input:not([type="checkbox"]):not([type="radio"]),
+.settings-fields textarea,
+.settings-fields .select-trigger {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.settings-fields > fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+}
+
+.settings-fields legend {
+  font-size: var(--text-base);
+  color: hsl(var(--muted-foreground));
+  padding: 0 var(--space-1);
+}
+
+.settings-panel > label {
+  max-width: var(--width-popover);
+}
+
+/* Nothing here yet: a dashed box where the content would be. */
+.settings .empty,
+.empty-state {
+  border: var(--border-width) dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+}
+
+.settings .empty {
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-md);
+}
+
+.settings .row {
+  padding: var(--space-3-5) var(--space-4);
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
+}
+
+.settings .rows {
+  display: grid;
+  gap: var(--space-2-5);
+}
+
+.settings .card {
+  padding: var(--space-4-5) var(--space-5);
+}
+
+.settings .card h2 {
+  font-size: var(--text-xl);
+  margin-top: 0;
+}
+
+.settings .card > button {
+  margin: var(--space-1) var(--space-1) var(--space-1) 0;
+}
+
+.modal .form {
+  gap: var(--space-2-5);
+}
+
+/* Inside a dialog the form's action row is the sticky footer; the settings
+   grid's own action rule must not undo that. */
+.modal-content .settings-fields > .actions {
+  margin: var(--space-3) calc(-1 * var(--space-6)) 0;
+}
+
+.modal .settings-fields {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (--phone) {
+  .settings-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settings-head > button {
+    width: 100%;
+  }
+}
+
+.settings-panel > label > .select-trigger {
+  width: 100%;
+}
+
+.settings-fields > .actions {
+  margin-top: var(--space-1);
+}
+
+/* Plugins → MCP servers: the add form's address spans the grid; the search box and a registry entry's name fill their rows. */
+.settings-fields > .mcp-add-wide {
+  grid-column: 1 / -1;
+}
+
+.mcp-search > input {
+  flex: 1;
+  min-width: 0;
+}
+
+.mcp-slug {
+  width: var(--width-field-ch);
+}
+
+/* A panel's inline field row (Channels → Connections: the channel to add, then Add). */
+.settings-panel > .actions {
+  margin-top: var(--space-4);
+}
+
+.settings-panel > .actions > label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+}
+
+.settings-panel > .settings-section-title {
+  margin-top: 0;
+}
+
+/* Routines reuse semantic controls and theme tokens; long immutable data wraps on narrow screens. */
+.routines {
+  min-width: 0;
+}
+
+/* Long text or JSON shown as is: a tinted block that wraps and scrolls. */
+.routines pre,
+.settings-panel pre,
+.soul-layer-detail pre,
+.soul-layer-detail p,
+.soul-shipped {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow: auto;
+  padding: var(--space-2-5) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: hsl(var(--secondary));
+}
+
+.routines pre,
+.settings-panel pre {
+  max-height: var(--height-clip-lg);
+}
+
+.routines p,
+.routines li {
+  overflow-wrap: anywhere;
+}
+
+.routines details {
+  margin-block: var(--space-2-5);
+}
+
+.routines summary {
+  cursor: pointer;
+}
+
+.routines button {
+  max-width: 100%;
+  white-space: normal;
+}
+
+/* The system prompt editor: its textarea is a direct child of a bare
+   form rather than of `.settings-fields`, so it needs the width that grid
+   provides elsewhere; and the shipped default is a `<pre>` that must wrap on a
+   narrow screen, as `.routines pre` already does. */
+.settings textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+}
+
+/* Approval risk: what a decision is made on, at a glance. */
+.risk-low { color: hsl(var(--positive)); }
+.risk-medium { color: hsl(var(--info)); }
+.risk-high { color: hsl(var(--warning)); font-weight: var(--weight-semibold); }
+.risk-critical { color: hsl(var(--destructive)); font-weight: var(--weight-bold); }
+.call-command { margin: var(--space-1) 0; padding: var(--space-1) var(--space-2); white-space: pre-wrap; word-break: break-all; max-height: var(--height-clip-xs); overflow: auto; }
+/* A file change's diff: tall enough for a function's edit, its added and removed lines marked by more than colour alone (+ and -). */
+.call-diff { max-height: var(--height-clip); }
+.call-diff .diff-added { background: hsl(var(--positive) / var(--tint-strong)); }
+.call-diff .diff-removed { background: hsl(var(--destructive) / var(--tint-strong)); }
+.call-diff .diff-hunk, .call-diff .diff-file { color: hsl(var(--muted-foreground)); }
+.round-heading { margin: 0 0 var(--space-1); color: hsl(var(--muted-foreground)); }
+.round-calls > li + li { margin-top: var(--space-2); }
+/* A many-call card's tick box and its word, apart as in every other checkbox row. */
+.round-calls label:has(> input[type="checkbox"]) { display: inline-flex; align-items: center; gap: var(--space-1-5); }
+.call-title { overflow-wrap: anywhere; }
+.call-title-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.risk-why { margin: var(--space-1) 0 0; color: hsl(var(--muted-foreground)); }
+/* A card's read-back in words (when, where results go, what runs): its own lines kept, wrapping anywhere a long one must. */
+.call-readback { margin: var(--space-1) 0 0; white-space: pre-line; overflow-wrap: anywhere; }
+/* Why a call is asked, and from where: Tavi's words first, a page's claim after. */
+.provenance { display: grid; gap: var(--space-1); margin-top: var(--space-1); }
+.why-asked { margin: 0; }
+.source-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.source-chip { max-width: 100%; overflow-wrap: anywhere; border: var(--border-width) solid var(--line-firm); border-radius: var(--radius-full); padding: 0 var(--space-2); font-size: var(--text-xs); }
+.source-established { font-weight: var(--weight-semibold); }
+.source-claim { color: hsl(var(--muted-foreground)); font-style: italic; }
+.arg-origins > li { overflow-wrap: anywhere; }
+.arg-origin { border-radius: var(--radius-2xs); padding: 0 var(--space-0-5); background: hsl(var(--secondary)); color: inherit; }
+.arg-origin-content { background: hsl(var(--warning) / var(--tint-strong)); }
+.arg-origin-person { background: hsl(var(--positive) / var(--tint-strong)); }
+/* The chat header's taint chip and its details. */
+.taint-chip-wrap { position: relative; display: inline-flex; align-items: center; min-width: 0; }
+.taint-chip { display: inline-flex; align-items: center; gap: var(--space-1); min-width: 0; max-width: var(--width-chip-wide); white-space: nowrap; border: var(--border-width) solid hsl(var(--warning)); border-radius: var(--radius-full); color: hsl(var(--warning)); }
+/* In place (no chip to anchor to) under the chip; by its chip, placed and kept in the window (`Popover`'s anchor). */
+.taint-panel { position: absolute; top: calc(100% + var(--space-1)); left: 0; white-space: normal; z-index: var(--z-popover); width: min(var(--width-menu), calc(100vw - 2 * var(--gutter))); display: grid; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: var(--border-width) solid var(--line-firm); border-radius: var(--radius); background: hsl(var(--background)); color: hsl(var(--foreground)); }
+.taint-panel-anchored { position: fixed; }
+.taint-panel-anchored:not([data-ready]) { visibility: hidden; }
+.taint-panel p { margin: 0; }
+.call-details { margin-top: var(--space-1); }
+.call-details > summary { padding-block: var(--space-0-5); }
+.reject-reason { display: flex; flex-direction: column; gap: var(--space-1); margin-top: var(--space-2); }
+.plan-card { margin: var(--space-2) 0; padding: var(--space-2) var(--space-2-5); border-left: var(--stripe-width) solid hsl(var(--info)); }
+.plan-card .plan-done { color: hsl(var(--muted-foreground)); }
+.run-working .truncate { min-width: 0; }

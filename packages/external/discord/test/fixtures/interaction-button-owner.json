@@ -1,0 +1,1 @@
+{ "id": "760000000000000001", "application_id": "900000000000000002", "type": 3, "token": "aW50ZXJhY3Rpb246NzYwMDAwMDAwMDAwMDAwMDAx", "channel_id": "720000000000000001", "user": { "id": "800000000000000001", "username": "operator" }, "message": { "id": "740000000000000200", "channel_id": "720000000000000001" }, "data": { "custom_id": "r:abcd1234:o", "component_type": 2 } }

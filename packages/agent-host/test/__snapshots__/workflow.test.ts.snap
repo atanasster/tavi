@@ -1,0 +1,139 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`workflow: model → tool → model round trip > freezes unrouted model inputs across governed tool approval and resume 1`] = `
+[
+  {
+    "connectionId": "fixture",
+    "messages": [
+      {
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "id": "sys-task-1",
+        "role": "system",
+        "text": "test system prompt
+
+Runtime facts for this response:
+- The latest message ends with a note headed "Runtime facts for this model step", written by the runtime rather than the operator. It states this response's remaining model steps and tool calls; those bounds apply to this response, not to the task as a whole, so reserve enough room to produce your final answer.
+- Independent read-only calls sent together in one step run at the same time; send a call that changes something, or that needs an earlier result, only after reading what came before.
+- Calls in these categories ask for a decision by default (mutating, external), and the operator's rules can allow, ask about or refuse a call of any tool, so do not assume a call will be approved.
+- A call refused by policy, denied by the operator, or left undecided until its deadline is final for that call: never try to evade it by another route; say what you could not do instead of retrying it or reaching the same effect another way.
+- A single tool result over 65536 bytes is bounded: you receive only a truncated preview, so narrow the call rather than assuming you will see all of it.
+- No tool here opens a web address (no \`http.request\`, \`web_fetch\` or browser): you cannot check whether a link is live or fetch an archive snapshot. Say so; never state a link's status or a snapshot's date.",
+      },
+      {
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "id": "input-admission-3",
+        "role": "user",
+        "text": "hello
+
+Runtime facts for this model step (from the runtime, not the operator):
+- These bounds apply to this response: this is model step 1 of at most 24, so at most 23 further model step(s) can follow it, along with 64 further tool call(s).",
+      },
+    ],
+    "model": "fixture-model",
+    "tools": [
+      {
+        "description": "Pretend to write",
+        "id": "fixture.write",
+        "inputJsonSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "properties": {
+            "message": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "message",
+          ],
+          "type": "object",
+        },
+        "name": "fixture_write",
+      },
+    ],
+  },
+  {
+    "connectionId": "fixture",
+    "messages": [
+      {
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "id": "sys-task-1",
+        "role": "system",
+        "text": "test system prompt
+
+Runtime facts for this response:
+- The latest message ends with a note headed "Runtime facts for this model step", written by the runtime rather than the operator. It states this response's remaining model steps and tool calls; those bounds apply to this response, not to the task as a whole, so reserve enough room to produce your final answer.
+- Independent read-only calls sent together in one step run at the same time; send a call that changes something, or that needs an earlier result, only after reading what came before.
+- Calls in these categories ask for a decision by default (mutating, external), and the operator's rules can allow, ask about or refuse a call of any tool, so do not assume a call will be approved.
+- A call refused by policy, denied by the operator, or left undecided until its deadline is final for that call: never try to evade it by another route; say what you could not do instead of retrying it or reaching the same effect another way.
+- A single tool result over 65536 bytes is bounded: you receive only a truncated preview, so narrow the call rather than assuming you will see all of it.
+- No tool here opens a web address (no \`http.request\`, \`web_fetch\` or browser): you cannot check whether a link is live or fetch an archive snapshot. Say so; never state a link's status or a snapshot's date.",
+      },
+      {
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "id": "input-admission-3",
+        "role": "user",
+        "text": "hello",
+      },
+      {
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "id": "assistant-attempt-4",
+        "role": "assistant",
+        "text": "",
+        "toolCalls": [
+          {
+            "id": "baseline-write",
+            "input": {
+              "message": "saved",
+            },
+            "name": "fixture.write",
+          },
+        ],
+      },
+      {
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "id": "tool-1-baseline-write",
+        "role": "tool",
+        "text": "",
+        "toolCallId": "baseline-write",
+        "toolName": "fixture.write",
+        "toolResults": [
+          {
+            "isError": false,
+            "output": {
+              "message": "saved",
+            },
+            "toolCallId": "baseline-write",
+            "toolName": "fixture.write",
+          },
+        ],
+      },
+      {
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "id": "facts-attempt-8",
+        "role": "user",
+        "text": "Runtime facts for this model step (from the runtime, not the operator):
+- These bounds apply to this response: this is model step 2 of at most 24, so at most 22 further model step(s) can follow it, along with 63 further tool call(s).",
+      },
+    ],
+    "model": "fixture-model",
+    "tools": [
+      {
+        "description": "Pretend to write",
+        "id": "fixture.write",
+        "inputJsonSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "properties": {
+            "message": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "message",
+          ],
+          "type": "object",
+        },
+        "name": "fixture_write",
+      },
+    ],
+  },
+]
+`;

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="171" viewBox="0 0 880 171" role="img">
+<rect width="880" height="171" rx="12" fill="#141e1a" stroke="#26332e"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="440" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#9aaba3">tavi mcp logs</text>
+<line x1="0" y1="36" x2="880" y2="36" stroke="#26332e"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#e6efea">2026-11-07T16:36:46.346Z state running</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#e6efea">2026-11-07T16:36:46.583Z connected (legacy) in 236 ms</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#e6efea">2026-11-07T16:36:46.586Z call list_notes ok 245 ms input 44136fa355b3</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#e6efea">2026-11-07T16:36:50.819Z call read_note ok 1 ms input 4e4acf12fe7e</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#e6efea">2026-11-07T16:37:08.705Z call add_note ok 2 ms input fd375e2fad1a</tspan></text>
+</g>
+</svg>

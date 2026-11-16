@@ -1,0 +1,1526 @@
+{
+ "station_locator_url": "https://afdc.energy.gov/stations/",
+ "total_results": 232,
+ "station_counts": {
+  "total": 694,
+  "fuels": {
+   "BD": {
+    "total": 0
+   },
+   "E85": {
+    "total": 0
+   },
+   "ELEC": {
+    "total": 694,
+    "stations": {
+     "total": 232
+    }
+   },
+   "HY": {
+    "total": 0
+   },
+   "LNG": {
+    "total": 0
+   },
+   "CNG": {
+    "total": 0
+   },
+   "LPG": {
+    "total": 0
+   },
+   "RD": {
+    "total": 0
+   }
+  }
+ },
+ "latitude": 30.27,
+ "longitude": -97.74,
+ "location_country": null,
+ "precision": null,
+ "offset": 0,
+ "fuel_stations": [
+  {
+   "access_code": "public",
+   "access_days_time": null,
+   "access_detail_code": null,
+   "cards_accepted": null,
+   "date_last_confirmed": "2026-10-17",
+   "expected_date": null,
+   "fuel_type_code": "ELEC",
+   "groups_with_access_code": "Public",
+   "id": 455731,
+   "maximum_vehicle_class": null,
+   "open_date": "2026-03-18",
+   "owner_type_code": null,
+   "related_stations": [],
+   "restricted_access": false,
+   "status_code": "E",
+   "funding_sources": null,
+   "facility_type": null,
+   "station_name": "301 E 8th St",
+   "station_phone": "800-636-0986",
+   "updated_at": "2026-10-17T06:33:35Z",
+   "geocode_status": "GPS",
+   "latitude": 30.269034,
+   "longitude": -97.739266,
+   "city": "Austin",
+   "country": "US",
+   "intersection_directions": null,
+   "plus4": null,
+   "state": "TX",
+   "street_address": "301 E 8th St",
+   "zip": "78701",
+   "bd_blends": null,
+   "cng_dispenser_num": null,
+   "cng_fill_type_code": null,
+   "cng_has_rng": null,
+   "cng_psi": null,
+   "cng_renewable_source": null,
+   "cng_total_compression": null,
+   "cng_total_storage": null,
+   "cng_vehicle_class": null,
+   "e85_blender_pump": null,
+   "e85_other_ethanol_blends": null,
+   "ev_connector_types": [
+    "J1772COMBO"
+   ],
+   "ev_dc_fast_num": 8,
+   "ev_level1_evse_num": null,
+   "ev_level2_evse_num": null,
+   "ev_network": "CHARGELAB",
+   "ev_network_web": "https://chargelab.co",
+   "ev_other_evse": null,
+   "ev_pricing": null,
+   "ev_renewable_source": null,
+   "ev_workplace_charging": false,
+   "hy_is_retail": null,
+   "hy_pressures": null,
+   "hy_standards": null,
+   "hy_status_link": null,
+   "lng_has_rng": null,
+   "lng_renewable_source": null,
+   "lng_vehicle_class": null,
+   "lpg_nozzle_types": null,
+   "lpg_primary": null,
+   "ng_fill_type_code": null,
+   "ng_psi": null,
+   "ng_vehicle_class": null,
+   "rd_blended_with_biodiesel": null,
+   "rd_blends": null,
+   "rd_blends_fr": null,
+   "rd_max_biodiesel_level": null,
+   "nps_unit_name": null,
+   "access_days_time_fr": null,
+   "intersection_directions_fr": null,
+   "bd_blends_fr": null,
+   "groups_with_access_code_fr": "Public",
+   "ev_pricing_fr": null,
+   "ev_charging_units": [
+    {
+     "network": "CHARGELAB",
+     "connectors": {
+      "J1772": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": 60.0,
+       "port_count": 1
+      }
+     },
+     "port_count": 1,
+     "charging_level": "dc_fast",
+     "funding_sources": []
+    },
+    {
+     "network": "CHARGELAB",
+     "connectors": {
+      "J1772": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": 60.0,
+       "port_count": 1
+      }
+     },
+     "port_count": 1,
+     "charging_level": "dc_fast",
+     "funding_sources": []
+    },
+    {
+     "network": "CHARGELAB",
+     "connectors": {
+      "J1772": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": 120.0,
+       "port_count": 1
+      }
+     },
+     "port_count": 1,
+     "charging_level": "dc_fast",
+     "funding_sources": []
+    },
+    {
+     "network": "CHARGELAB",
+     "connectors": {
+      "J1772": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": 120.0,
+       "port_count": 1
+      }
+     },
+     "port_count": 1,
+     "charging_level": "dc_fast",
+     "funding_sources": []
+    },
+    {
+     "network": "CHARGELAB",
+     "connectors": {
+      "J1772": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": 60.0,
+       "port_count": 1
+      }
+     },
+     "port_count": 1,
+     "charging_level": "dc_fast",
+     "funding_sources": []
+    },
+    {
+     "network": "CHARGELAB",
+     "connectors": {
+      "J1772": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": 60.0,
+       "port_count": 1
+      }
+     },
+     "port_count": 1,
+     "charging_level": "dc_fast",
+     "funding_sources": []
+    },
+    {
+     "network": "CHARGELAB",
+     "connectors": {
+      "J1772": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": 120.0,
+       "port_count": 1
+      }
+     },
+     "port_count": 1,
+     "charging_level": "dc_fast",
+     "funding_sources": []
+    },
+    {
+     "network": "CHARGELAB",
+     "connectors": {
+      "J1772": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": 120.0,
+       "port_count": 1
+      }
+     },
+     "port_count": 1,
+     "charging_level": "dc_fast",
+     "funding_sources": []
+    }
+   ],
+   "ev_network_ids": {
+    "station": [
+     "125-99f7b8e29718450abcc9cf2f0f78f4e1"
+    ],
+    "posts": [
+     "19e6c83d-23a0-4983-9d01-dde4170eea1b**1",
+     "19e6c83d-23a0-4983-9d01-dde4170eea1b**2",
+     "935a7daa-a270-43be-b4bf-ca9e4132d9ea**1",
+     "935a7daa-a270-43be-b4bf-ca9e4132d9ea**2",
+     "93fab793-7f7c-43af-8f56-e2d5efb4d137**1",
+     "93fab793-7f7c-43af-8f56-e2d5efb4d137**2",
+     "efe05255-b167-4f2c-9250-a09f2180ecba**1",
+     "efe05255-b167-4f2c-9250-a09f2180ecba**2"
+    ]
+   },
+   "distance": 0.07971,
+   "distance_km": 0.12828
+  },
+  {
+   "access_code": "public",
+   "access_days_time": "24 hours daily",
+   "access_detail_code": null,
+   "cards_accepted": null,
+   "date_last_confirmed": "2026-10-17",
+   "expected_date": null,
+   "fuel_type_code": "ELEC",
+   "groups_with_access_code": "Public",
+   "id": 322175,
+   "maximum_vehicle_class": null,
+   "open_date": "2023-12-07",
+   "owner_type_code": null,
+   "related_stations": [],
+   "restricted_access": false,
+   "status_code": "E",
+   "funding_sources": null,
+   "facility_type": null,
+   "station_name": "AUSTIN CENTRE AUSTIN CENTER 1",
+   "station_phone": "888-758-4389",
+   "updated_at": "2026-10-17T02:43:59Z",
+   "geocode_status": "GPS",
+   "latitude": 30.268846,
+   "longitude": -97.740768,
+   "city": "Austin",
+   "country": "US",
+   "intersection_directions": null,
+   "plus4": null,
+   "state": "TX",
+   "street_address": "701 Brazos St",
+   "zip": "78701",
+   "bd_blends": null,
+   "cng_dispenser_num": null,
+   "cng_fill_type_code": null,
+   "cng_has_rng": null,
+   "cng_psi": null,
+   "cng_renewable_source": null,
+   "cng_total_compression": null,
+   "cng_total_storage": null,
+   "cng_vehicle_class": null,
+   "e85_blender_pump": null,
+   "e85_other_ethanol_blends": null,
+   "ev_connector_types": [
+    "J1772"
+   ],
+   "ev_dc_fast_num": null,
+   "ev_level1_evse_num": null,
+   "ev_level2_evse_num": 2,
+   "ev_network": "ChargePoint Network",
+   "ev_network_web": "https://www.chargepoint.com",
+   "ev_other_evse": null,
+   "ev_pricing": null,
+   "ev_renewable_source": null,
+   "ev_workplace_charging": false,
+   "hy_is_retail": null,
+   "hy_pressures": null,
+   "hy_standards": null,
+   "hy_status_link": null,
+   "lng_has_rng": null,
+   "lng_renewable_source": null,
+   "lng_vehicle_class": null,
+   "lpg_nozzle_types": null,
+   "lpg_primary": null,
+   "ng_fill_type_code": null,
+   "ng_psi": null,
+   "ng_vehicle_class": null,
+   "rd_blended_with_biodiesel": null,
+   "rd_blends": null,
+   "rd_blends_fr": null,
+   "rd_max_biodiesel_level": null,
+   "nps_unit_name": null,
+   "access_days_time_fr": null,
+   "intersection_directions_fr": null,
+   "bd_blends_fr": null,
+   "groups_with_access_code_fr": "Public",
+   "ev_pricing_fr": null,
+   "ev_charging_units": [
+    {
+     "network": "ChargePoint Network",
+     "connectors": {
+      "J1772": {
+       "power_kw": 6.5,
+       "port_count": 1
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": null,
+       "port_count": 0
+      }
+     },
+     "port_count": 1,
+     "charging_level": "2",
+     "funding_sources": []
+    },
+    {
+     "network": "ChargePoint Network",
+     "connectors": {
+      "J1772": {
+       "power_kw": 6.5,
+       "port_count": 1
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": null,
+       "port_count": 0
+      }
+     },
+     "port_count": 1,
+     "charging_level": "2",
+     "funding_sources": []
+    }
+   ],
+   "ev_network_ids": {
+    "station": [
+     "USCPIL13291441"
+    ],
+    "posts": [
+     "22636141",
+     "22636151"
+    ]
+   },
+   "distance": 0.0918,
+   "distance_km": 0.14774
+  },
+  {
+   "access_code": "public",
+   "access_days_time": "24 hours daily",
+   "access_detail_code": null,
+   "cards_accepted": null,
+   "date_last_confirmed": "2026-10-17",
+   "expected_date": null,
+   "fuel_type_code": "ELEC",
+   "groups_with_access_code": "Public",
+   "id": 171545,
+   "maximum_vehicle_class": null,
+   "open_date": "2021-01-27",
+   "owner_type_code": null,
+   "related_stations": [],
+   "restricted_access": false,
+   "status_code": "E",
+   "funding_sources": null,
+   "facility_type": null,
+   "station_name": "PIE AE PUB-STDAVIDSST2",
+   "station_phone": "888-758-4389",
+   "updated_at": "2026-10-17T01:43:59Z",
+   "geocode_status": "GPS",
+   "latitude": 30.268895,
+   "longitude": -97.739056,
+   "city": "Austin",
+   "country": "US",
+   "intersection_directions": null,
+   "plus4": null,
+   "state": "TX",
+   "street_address": "710 Trinity St",
+   "zip": "78701",
+   "bd_blends": null,
+   "cng_dispenser_num": null,
+   "cng_fill_type_code": null,
+   "cng_has_rng": null,
+   "cng_psi": null,
+   "cng_renewable_source": null,
+   "cng_total_compression": null,
+   "cng_total_storage": null,
+   "cng_vehicle_class": null,
+   "e85_blender_pump": null,
+   "e85_other_ethanol_blends": null,
+   "ev_connector_types": [
+    "J1772"
+   ],
+   "ev_dc_fast_num": null,
+   "ev_level1_evse_num": null,
+   "ev_level2_evse_num": 2,
+   "ev_network": "ChargePoint Network",
+   "ev_network_web": "https://www.chargepoint.com",
+   "ev_other_evse": null,
+   "ev_pricing": null,
+   "ev_renewable_source": null,
+   "ev_workplace_charging": false,
+   "hy_is_retail": null,
+   "hy_pressures": null,
+   "hy_standards": null,
+   "hy_status_link": null,
+   "lng_has_rng": null,
+   "lng_renewable_source": null,
+   "lng_vehicle_class": null,
+   "lpg_nozzle_types": null,
+   "lpg_primary": null,
+   "ng_fill_type_code": null,
+   "ng_psi": null,
+   "ng_vehicle_class": null,
+   "rd_blended_with_biodiesel": null,
+   "rd_blends": null,
+   "rd_blends_fr": null,
+   "rd_max_biodiesel_level": null,
+   "nps_unit_name": null,
+   "access_days_time_fr": null,
+   "intersection_directions_fr": null,
+   "bd_blends_fr": null,
+   "groups_with_access_code_fr": "Public",
+   "ev_pricing_fr": null,
+   "ev_charging_units": [
+    {
+     "network": "ChargePoint Network",
+     "connectors": {
+      "J1772": {
+       "power_kw": 6.5,
+       "port_count": 1
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": null,
+       "port_count": 0
+      }
+     },
+     "port_count": 1,
+     "charging_level": "2",
+     "funding_sources": []
+    },
+    {
+     "network": "ChargePoint Network",
+     "connectors": {
+      "J1772": {
+       "power_kw": 6.5,
+       "port_count": 1
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": null,
+       "port_count": 0
+      }
+     },
+     "port_count": 1,
+     "charging_level": "2",
+     "funding_sources": []
+    }
+   ],
+   "ev_network_ids": {
+    "station": [
+     "USCPIL2054791"
+    ],
+    "posts": [
+     "2442511",
+     "2442521"
+    ]
+   },
+   "distance": 0.09476,
+   "distance_km": 0.1525
+  },
+  {
+   "access_code": "public",
+   "access_days_time": "24 hours daily",
+   "access_detail_code": null,
+   "cards_accepted": null,
+   "date_last_confirmed": "2026-10-17",
+   "expected_date": null,
+   "fuel_type_code": "ELEC",
+   "groups_with_access_code": "Public",
+   "id": 322176,
+   "maximum_vehicle_class": null,
+   "open_date": "2023-12-07",
+   "owner_type_code": null,
+   "related_stations": [],
+   "restricted_access": false,
+   "status_code": "E",
+   "funding_sources": null,
+   "facility_type": null,
+   "station_name": "AUSTIN CENTRE AUSTIN CENTER 2",
+   "station_phone": "888-758-4389",
+   "updated_at": "2026-10-17T02:43:59Z",
+   "geocode_status": "GPS",
+   "latitude": 30.268782,
+   "longitude": -97.740868,
+   "city": "Austin",
+   "country": "US",
+   "intersection_directions": null,
+   "plus4": null,
+   "state": "TX",
+   "street_address": "205 E 7th St",
+   "zip": "78701",
+   "bd_blends": null,
+   "cng_dispenser_num": null,
+   "cng_fill_type_code": null,
+   "cng_has_rng": null,
+   "cng_psi": null,
+   "cng_renewable_source": null,
+   "cng_total_compression": null,
+   "cng_total_storage": null,
+   "cng_vehicle_class": null,
+   "e85_blender_pump": null,
+   "e85_other_ethanol_blends": null,
+   "ev_connector_types": [
+    "J1772"
+   ],
+   "ev_dc_fast_num": null,
+   "ev_level1_evse_num": null,
+   "ev_level2_evse_num": 2,
+   "ev_network": "ChargePoint Network",
+   "ev_network_web": "https://www.chargepoint.com",
+   "ev_other_evse": null,
+   "ev_pricing": null,
+   "ev_renewable_source": null,
+   "ev_workplace_charging": false,
+   "hy_is_retail": null,
+   "hy_pressures": null,
+   "hy_standards": null,
+   "hy_status_link": null,
+   "lng_has_rng": null,
+   "lng_renewable_source": null,
+   "lng_vehicle_class": null,
+   "lpg_nozzle_types": null,
+   "lpg_primary": null,
+   "ng_fill_type_code": null,
+   "ng_psi": null,
+   "ng_vehicle_class": null,
+   "rd_blended_with_biodiesel": null,
+   "rd_blends": null,
+   "rd_blends_fr": null,
+   "rd_max_biodiesel_level": null,
+   "nps_unit_name": null,
+   "access_days_time_fr": null,
+   "intersection_directions_fr": null,
+   "bd_blends_fr": null,
+   "groups_with_access_code_fr": "Public",
+   "ev_pricing_fr": null,
+   "ev_charging_units": [
+    {
+     "network": "ChargePoint Network",
+     "connectors": {
+      "J1772": {
+       "power_kw": 6.5,
+       "port_count": 1
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": null,
+       "port_count": 0
+      }
+     },
+     "port_count": 1,
+     "charging_level": "2",
+     "funding_sources": []
+    },
+    {
+     "network": "ChargePoint Network",
+     "connectors": {
+      "J1772": {
+       "power_kw": 6.5,
+       "port_count": 1
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": null,
+       "port_count": 0
+      }
+     },
+     "port_count": 1,
+     "charging_level": "2",
+     "funding_sources": []
+    }
+   ],
+   "ev_network_ids": {
+    "station": [
+     "USCPIL13291461"
+    ],
+    "posts": [
+     "22636171",
+     "22636181"
+    ]
+   },
+   "distance": 0.09865,
+   "distance_km": 0.15876
+  },
+  {
+   "access_code": "public",
+   "access_days_time": "24 hours daily",
+   "access_detail_code": null,
+   "cards_accepted": null,
+   "date_last_confirmed": "2026-10-17",
+   "expected_date": null,
+   "fuel_type_code": "ELEC",
+   "groups_with_access_code": "Public",
+   "id": 41272,
+   "maximum_vehicle_class": null,
+   "open_date": "2015-10-02",
+   "owner_type_code": null,
+   "related_stations": [],
+   "restricted_access": false,
+   "status_code": "E",
+   "funding_sources": null,
+   "facility_type": null,
+   "station_name": "PIE AE PUB-STDAVIDSST1",
+   "station_phone": "888-758-4389",
+   "updated_at": "2026-10-17T01:54:24Z",
+   "geocode_status": "GPS",
+   "latitude": 30.268887,
+   "longitude": -97.738936,
+   "city": "Austin",
+   "country": "US",
+   "intersection_directions": "By main entrance, parking garage on Trinity ST.",
+   "plus4": null,
+   "state": "TX",
+   "street_address": "710 Trinity St",
+   "zip": "78701",
+   "bd_blends": null,
+   "cng_dispenser_num": null,
+   "cng_fill_type_code": null,
+   "cng_has_rng": null,
+   "cng_psi": null,
+   "cng_renewable_source": null,
+   "cng_total_compression": null,
+   "cng_total_storage": null,
+   "cng_vehicle_class": null,
+   "e85_blender_pump": null,
+   "e85_other_ethanol_blends": null,
+   "ev_connector_types": [
+    "J1772"
+   ],
+   "ev_dc_fast_num": null,
+   "ev_level1_evse_num": null,
+   "ev_level2_evse_num": 2,
+   "ev_network": "ChargePoint Network",
+   "ev_network_web": "https://www.chargepoint.com",
+   "ev_other_evse": null,
+   "ev_pricing": null,
+   "ev_renewable_source": null,
+   "ev_workplace_charging": false,
+   "hy_is_retail": null,
+   "hy_pressures": null,
+   "hy_standards": null,
+   "hy_status_link": null,
+   "lng_has_rng": null,
+   "lng_renewable_source": null,
+   "lng_vehicle_class": null,
+   "lpg_nozzle_types": null,
+   "lpg_primary": null,
+   "ng_fill_type_code": null,
+   "ng_psi": null,
+   "ng_vehicle_class": null,
+   "rd_blended_with_biodiesel": null,
+   "rd_blends": null,
+   "rd_blends_fr": null,
+   "rd_max_biodiesel_level": null,
+   "nps_unit_name": null,
+   "access_days_time_fr": null,
+   "intersection_directions_fr": null,
+   "bd_blends_fr": null,
+   "groups_with_access_code_fr": "Public",
+   "ev_pricing_fr": null,
+   "ev_charging_units": [
+    {
+     "network": "ChargePoint Network",
+     "connectors": {
+      "J1772": {
+       "power_kw": 6.5,
+       "port_count": 1
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": null,
+       "port_count": 0
+      }
+     },
+     "port_count": 1,
+     "charging_level": "2",
+     "funding_sources": []
+    },
+    {
+     "network": "ChargePoint Network",
+     "connectors": {
+      "J1772": {
+       "power_kw": 6.5,
+       "port_count": 1
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": null,
+       "port_count": 0
+      }
+     },
+     "port_count": 1,
+     "charging_level": "2",
+     "funding_sources": []
+    }
+   ],
+   "ev_network_ids": {
+    "station": [
+     "USCPIL5443411"
+    ],
+    "posts": [
+     "22880961",
+     "22880971"
+    ]
+   },
+   "distance": 0.09962,
+   "distance_km": 0.16032
+  },
+  {
+   "access_code": "public",
+   "access_days_time": "24 hours daily",
+   "access_detail_code": null,
+   "cards_accepted": null,
+   "date_last_confirmed": "2026-10-17",
+   "expected_date": null,
+   "fuel_type_code": "ELEC",
+   "groups_with_access_code": "Public",
+   "id": 422034,
+   "maximum_vehicle_class": null,
+   "open_date": "2025-09-11",
+   "owner_type_code": null,
+   "related_stations": [],
+   "restricted_access": false,
+   "status_code": "E",
+   "funding_sources": null,
+   "facility_type": null,
+   "station_name": "600 CONGRESS EV 5",
+   "station_phone": "888-758-4389",
+   "updated_at": "2026-10-17T03:36:25Z",
+   "geocode_status": "GPS",
+   "latitude": 30.268736,
+   "longitude": -97.743011,
+   "city": "Austin",
+   "country": "US",
+   "intersection_directions": null,
+   "plus4": null,
+   "state": "TX",
+   "street_address": "614 Congress Ave.",
+   "zip": "78701",
+   "bd_blends": null,
+   "cng_dispenser_num": null,
+   "cng_fill_type_code": null,
+   "cng_has_rng": null,
+   "cng_psi": null,
+   "cng_renewable_source": null,
+   "cng_total_compression": null,
+   "cng_total_storage": null,
+   "cng_vehicle_class": null,
+   "e85_blender_pump": null,
+   "e85_other_ethanol_blends": null,
+   "ev_connector_types": [
+    "J1772"
+   ],
+   "ev_dc_fast_num": null,
+   "ev_level1_evse_num": null,
+   "ev_level2_evse_num": 1,
+   "ev_network": "ChargePoint Network",
+   "ev_network_web": "https://www.chargepoint.com",
+   "ev_other_evse": null,
+   "ev_pricing": null,
+   "ev_renewable_source": null,
+   "ev_workplace_charging": false,
+   "hy_is_retail": null,
+   "hy_pressures": null,
+   "hy_standards": null,
+   "hy_status_link": null,
+   "lng_has_rng": null,
+   "lng_renewable_source": null,
+   "lng_vehicle_class": null,
+   "lpg_nozzle_types": null,
+   "lpg_primary": null,
+   "ng_fill_type_code": null,
+   "ng_psi": null,
+   "ng_vehicle_class": null,
+   "rd_blended_with_biodiesel": null,
+   "rd_blends": null,
+   "rd_blends_fr": null,
+   "rd_max_biodiesel_level": null,
+   "nps_unit_name": null,
+   "access_days_time_fr": null,
+   "intersection_directions_fr": null,
+   "bd_blends_fr": null,
+   "groups_with_access_code_fr": "Public",
+   "ev_pricing_fr": null,
+   "ev_charging_units": [
+    {
+     "network": "ChargePoint Network",
+     "connectors": {
+      "J1772": {
+       "power_kw": 7.7,
+       "port_count": 1
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": null,
+       "port_count": 0
+      }
+     },
+     "port_count": 1,
+     "charging_level": "2",
+     "funding_sources": []
+    }
+   ],
+   "ev_network_ids": {
+    "station": [
+     "USCPIL17848761"
+    ],
+    "posts": [
+     "27851231"
+    ]
+   },
+   "distance": 0.19998,
+   "distance_km": 0.32184
+  },
+  {
+   "access_code": "public",
+   "access_days_time": "24 hours daily",
+   "access_detail_code": null,
+   "cards_accepted": null,
+   "date_last_confirmed": "2026-10-17",
+   "expected_date": null,
+   "fuel_type_code": "ELEC",
+   "groups_with_access_code": "Public",
+   "id": 422038,
+   "maximum_vehicle_class": null,
+   "open_date": "2025-09-11",
+   "owner_type_code": null,
+   "related_stations": [],
+   "restricted_access": false,
+   "status_code": "E",
+   "funding_sources": null,
+   "facility_type": null,
+   "station_name": "600 CONGRESS EV 1",
+   "station_phone": "888-758-4389",
+   "updated_at": "2026-10-17T03:36:26Z",
+   "geocode_status": "GPS",
+   "latitude": 30.268622,
+   "longitude": -97.743064,
+   "city": "Austin",
+   "country": "US",
+   "intersection_directions": null,
+   "plus4": null,
+   "state": "TX",
+   "street_address": "600 Congress Ave.",
+   "zip": "78701",
+   "bd_blends": null,
+   "cng_dispenser_num": null,
+   "cng_fill_type_code": null,
+   "cng_has_rng": null,
+   "cng_psi": null,
+   "cng_renewable_source": null,
+   "cng_total_compression": null,
+   "cng_total_storage": null,
+   "cng_vehicle_class": null,
+   "e85_blender_pump": null,
+   "e85_other_ethanol_blends": null,
+   "ev_connector_types": [
+    "J1772"
+   ],
+   "ev_dc_fast_num": null,
+   "ev_level1_evse_num": null,
+   "ev_level2_evse_num": 1,
+   "ev_network": "ChargePoint Network",
+   "ev_network_web": "https://www.chargepoint.com",
+   "ev_other_evse": null,
+   "ev_pricing": null,
+   "ev_renewable_source": null,
+   "ev_workplace_charging": false,
+   "hy_is_retail": null,
+   "hy_pressures": null,
+   "hy_standards": null,
+   "hy_status_link": null,
+   "lng_has_rng": null,
+   "lng_renewable_source": null,
+   "lng_vehicle_class": null,
+   "lpg_nozzle_types": null,
+   "lpg_primary": null,
+   "ng_fill_type_code": null,
+   "ng_psi": null,
+   "ng_vehicle_class": null,
+   "rd_blended_with_biodiesel": null,
+   "rd_blends": null,
+   "rd_blends_fr": null,
+   "rd_max_biodiesel_level": null,
+   "nps_unit_name": null,
+   "access_days_time_fr": null,
+   "intersection_directions_fr": null,
+   "bd_blends_fr": null,
+   "groups_with_access_code_fr": "Public",
+   "ev_pricing_fr": null,
+   "ev_charging_units": [
+    {
+     "network": "ChargePoint Network",
+     "connectors": {
+      "J1772": {
+       "power_kw": 7.7,
+       "port_count": 1
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": null,
+       "port_count": 0
+      }
+     },
+     "port_count": 1,
+     "charging_level": "2",
+     "funding_sources": []
+    }
+   ],
+   "ev_network_ids": {
+    "station": [
+     "USCPIL17848881"
+    ],
+    "posts": [
+     "27851381"
+    ]
+   },
+   "distance": 0.20633,
+   "distance_km": 0.33206
+  },
+  {
+   "access_code": "public",
+   "access_days_time": "24 hours daily",
+   "access_detail_code": null,
+   "cards_accepted": null,
+   "date_last_confirmed": "2026-10-17",
+   "expected_date": null,
+   "fuel_type_code": "ELEC",
+   "groups_with_access_code": "Public",
+   "id": 420158,
+   "maximum_vehicle_class": null,
+   "open_date": "2025-08-20",
+   "owner_type_code": null,
+   "related_stations": [],
+   "restricted_access": false,
+   "status_code": "E",
+   "funding_sources": null,
+   "facility_type": null,
+   "station_name": "600 CONGRESS EV 6",
+   "station_phone": "888-758-4389",
+   "updated_at": "2026-10-17T03:36:25Z",
+   "geocode_status": "GPS",
+   "latitude": 30.268666,
+   "longitude": -97.74316,
+   "city": "Austin",
+   "country": "US",
+   "intersection_directions": null,
+   "plus4": null,
+   "state": "TX",
+   "street_address": "600 Congress Ave.",
+   "zip": "78701",
+   "bd_blends": null,
+   "cng_dispenser_num": null,
+   "cng_fill_type_code": null,
+   "cng_has_rng": null,
+   "cng_psi": null,
+   "cng_renewable_source": null,
+   "cng_total_compression": null,
+   "cng_total_storage": null,
+   "cng_vehicle_class": null,
+   "e85_blender_pump": null,
+   "e85_other_ethanol_blends": null,
+   "ev_connector_types": [
+    "J1772"
+   ],
+   "ev_dc_fast_num": null,
+   "ev_level1_evse_num": null,
+   "ev_level2_evse_num": 1,
+   "ev_network": "ChargePoint Network",
+   "ev_network_web": "https://www.chargepoint.com",
+   "ev_other_evse": null,
+   "ev_pricing": null,
+   "ev_renewable_source": null,
+   "ev_workplace_charging": false,
+   "hy_is_retail": null,
+   "hy_pressures": null,
+   "hy_standards": null,
+   "hy_status_link": null,
+   "lng_has_rng": null,
+   "lng_renewable_source": null,
+   "lng_vehicle_class": null,
+   "lpg_nozzle_types": null,
+   "lpg_primary": null,
+   "ng_fill_type_code": null,
+   "ng_psi": null,
+   "ng_vehicle_class": null,
+   "rd_blended_with_biodiesel": null,
+   "rd_blends": null,
+   "rd_blends_fr": null,
+   "rd_max_biodiesel_level": null,
+   "nps_unit_name": null,
+   "access_days_time_fr": null,
+   "intersection_directions_fr": null,
+   "bd_blends_fr": null,
+   "groups_with_access_code_fr": "Public",
+   "ev_pricing_fr": null,
+   "ev_charging_units": [
+    {
+     "network": "ChargePoint Network",
+     "connectors": {
+      "J1772": {
+       "power_kw": 7.7,
+       "port_count": 1
+      },
+      "J3271": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "TESLA": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "CHADEMO": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA515": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA520": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "NEMA1450": {
+       "power_kw": null,
+       "port_count": 0
+      },
+      "J1772COMBO": {
+       "power_kw": null,
+       "port_count": 0
+      }
+     },
+     "port_count": 1,
+     "charging_level": "2",
+     "funding_sources": []
+    }
+   ],
+   "ev_network_ids": {
+    "station": [
+     "USCPIL17848711"
+    ],
+    "posts": [
+     "27851161"
+    ]
+   },
+   "distance": 0.2101,
+   "distance_km": 0.33812
+  }
+ ]
+}

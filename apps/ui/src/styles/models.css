@@ -1,0 +1,442 @@
+/* ---------- Models page ---------- */
+
+/* No connection yet: one call to action instead of an empty page. */
+.empty-state {
+  align-items: flex-start;
+  padding: var(--space-7);
+  background: hsl(var(--card));
+}
+
+.empty-state h2 {
+  margin: 0;
+  font-size: var(--text-2xl);
+}
+
+.empty-state > button {
+  align-self: flex-start;
+}
+
+.empty-state p {
+  margin: 0 0 var(--space-2);
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-md);
+  max-width: var(--measure);
+}
+
+/* Roles and connections: a card each (`.section-card`), one row per slot. */
+.section-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  padding: var(--space-3-5) var(--space-5) var(--space-2-5);
+}
+
+.section-card-head h2,
+.section-card-head h3,
+.soul-pane-head h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.role-list,
+.connection-list {
+  list-style: none;
+  margin-block: 0;
+  padding: 0;
+}
+
+.role-row,
+.connection-item {
+  display: grid;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  border-top: var(--border-width) solid var(--line-faint);
+}
+
+/* Fixed outer columns, so every row's target lines up whatever its buttons. */
+.role-row {
+  grid-template-columns: var(--width-role-label) minmax(0, 1fr) var(--width-role-target);
+}
+
+.role-row-workspace {
+  background: hsl(var(--primary) / var(--tint-subtle));
+  border-top-color: var(--line);
+  border-bottom: var(--border-width) solid var(--line);
+}
+
+.role-row-workspace + .role-row {
+  border-top: 0;
+}
+
+.role-name {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  text-transform: capitalize;
+}
+
+.role-target {
+  font-size: var(--text-md);
+}
+
+.role-target > .badge {
+  align-self: flex-start;
+}
+
+.role-problem {
+  font-size: var(--text-sm);
+  color: hsl(var(--warning));
+}
+
+.target-name {
+  overflow-wrap: anywhere;
+}
+
+.target-model {
+  font-weight: var(--weight-medium);
+}
+
+.target-name .muted {
+  font-size: var(--text-sm);
+}
+
+.role-actions,
+.connection-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-1-5);
+}
+
+/* Connections: a health dot, name and host, then their actions. */
+.section-card + .section-card {
+  margin-top: var(--space-5);
+}
+
+.role-source-default .role-target {
+  font-size: var(--text-base);
+}
+
+.connection-item {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.connection-title .badge {
+  margin: 0;
+  font-weight: var(--weight-medium);
+}
+
+.connection-info > .muted {
+  font-size: var(--text-sm);
+}
+
+/* Native video per model. */
+.video-models {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.video-models > summary {
+  cursor: pointer;
+}
+
+.video-model-list {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.video-model {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.video-analyser-chains {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.video-analyser-chains dt {
+  font-weight: var(--weight-medium);
+}
+
+.video-analyser-chains dd {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.connection-dot {
+  width: var(--size-dot-lg);
+  height: var(--size-dot-lg);
+  border-radius: var(--radius-round);
+}
+
+.connection-dot-ok {
+  background: hsl(var(--positive));
+}
+
+.connection-dot-warn {
+  background: hsl(var(--warning));
+}
+
+/* The rows answer to the list's width, not the window's: beside the sidebar on
+   a tablet the card is narrow while the window is not. */
+.role-list {
+  container-type: inline-size;
+}
+
+@container (max-width: 640px) {
+  .role-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .role-target {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+@media (--phone) {
+  .connection-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .connection-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+}
+
+/* The model picker and connection dialogs. */
+.modal-wide {
+  width: min(var(--width-dialog-wide), calc(100% - var(--space-8)));
+}
+
+.picker-intro {
+  margin: 0 0 var(--space-3);
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-md);
+}
+
+.picker-chain {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3-5);
+  margin-bottom: var(--space-3);
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius);
+  background: hsl(var(--muted) / var(--alpha-half));
+}
+
+.picker-slot {
+  display: grid;
+  grid-template-columns: var(--width-label) minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--text-md);
+}
+
+/* The uppercase label of a slot or a fact, a size up from `.eyebrow`. */
+.picker-slot-label,
+.summary-grid dt {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: hsl(var(--muted-foreground));
+}
+
+.picker-fallbacks {
+  margin: 0;
+  padding-left: var(--space-5);
+  display: grid;
+  gap: var(--space-0-5);
+}
+
+.picker-fallbacks > li {
+  padding-left: var(--space-0-5);
+}
+
+.picker-fallbacks > li > .target-name {
+  display: inline;
+}
+
+.picker-fallback-actions {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: var(--space-1-5);
+}
+
+.picker-filters {
+  margin-bottom: var(--space-2);
+}
+
+.picker-filters > input {
+  flex: 1 1 var(--width-search);
+}
+
+.picker-filters > .select-trigger {
+  flex: 0 1 var(--basis-select);
+}
+
+.picker-list {
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius);
+  max-height: 44dvh;
+  overflow-y: auto;
+}
+
+.picker-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-right: var(--space-2);
+  border-top: var(--border-width) solid var(--line-fainter);
+}
+
+.picker-row:first-child {
+  border-top: 0;
+}
+
+.picker-row:hover {
+  background: hsl(var(--accent) / var(--alpha-muted));
+}
+
+.picker-row-chosen {
+  background: hsl(var(--primary) / var(--tint-medium));
+}
+
+.picker-row-unavailable .picker-model {
+  opacity: var(--opacity-soft);
+}
+
+.picker-choice {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  min-width: 0;
+  padding: var(--space-2) 0 var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+
+.picker-model {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.picker-model-name {
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+}
+
+.picker-model-meta {
+  font-variant-numeric: tabular-nums;
+}
+
+.picker-badges {
+  display: flex;
+  flex: none;
+}
+
+.picker-more {
+  margin: var(--space-1-5) 0 0;
+  font-size: var(--text-sm);
+}
+
+/* Test sits at the start of the actions row, away from Cancel and Save. */
+.modal-content .actions > .picker-test {
+  margin-right: auto;
+}
+
+.provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-min-sm), 1fr));
+  gap: var(--space-2);
+}
+
+.provider-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  width: 100%;
+  height: 100%;
+  padding: var(--space-3) var(--space-3-5);
+  text-align: left;
+  white-space: normal;
+}
+
+.provider-tile:hover:enabled {
+  border-color: hsl(var(--primary) / var(--alpha-muted));
+}
+
+.provider-tile-name {
+  font-weight: var(--weight-semibold);
+}
+
+.provider-tile-meta {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  color: hsl(var(--muted-foreground));
+  overflow-wrap: anywhere;
+}
+
+.provider-tile-tags .badge {
+  font-size: var(--text-xs);
+}
+
+.connection-form {
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 0;
+}
+
+.connection-form-lead > button {
+  margin-left: calc(-1 * var(--space-2));
+}
+
+.connection-advanced > summary {
+  cursor: pointer;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: hsl(var(--muted-foreground));
+}
+
+.connection-advanced > .settings-fields {
+  margin-top: var(--space-3);
+}
+
+.connection-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+}
+
+/* A checkbox and its label on one line. */
+.connection-flags > label,
+.memory-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+}
+
+.danger-zone {
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--line-soft);
+}
+
+.danger-zone p {
+  margin: 0 0 var(--space-2);
+}
+
+.danger-zone-actions {
+  display: flex;
+  gap: var(--space-2);
+}

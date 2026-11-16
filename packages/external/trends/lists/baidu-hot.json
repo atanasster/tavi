@@ -1,0 +1,13 @@
+{
+  "recordId": "baidu-hot",
+  "url": "https://top.baidu.com/api/board?platform=wise&tab=realtime",
+  "extract": {
+    "mode": "json",
+    "path": "$.data.cards[0].content[0].content[*]"
+  },
+  "map": {
+    "title": "word",
+    "url": "url",
+    "rank": "index"
+  }
+}

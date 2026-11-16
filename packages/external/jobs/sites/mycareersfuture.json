@@ -1,0 +1,32 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "mycareersfuture",
+  "name": "MyCareersFuture",
+  "countries": [
+    "SG"
+  ],
+  "hosts": [
+    "www.mycareersfuture.gov.sg"
+  ],
+  "kind": "jobs-board",
+  "access": {
+    "mode": "assist-only",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Its terms grant a personal licence and forbid caching and storing its content without written permission.",
+    "termsUrl": "https://www.mycareersfuture.gov.sg/terms-of-use",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "JobPosting"
+    ]
+  },
+  "notes": "Read for the chat only: nothing it shows is kept, but the one posting you save yourself."
+}

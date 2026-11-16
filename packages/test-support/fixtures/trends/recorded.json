@@ -1,0 +1,45 @@
+{
+  "note": "When each folder's answers were recorded from the live source, and which source answered. The requests are the named adapters' own, as their tests make them; no credential was used. A test fails once a recording is over 180 days old.",
+  "recordings": {
+    "arxiv": {
+      "recordedAt": "2026-10-17",
+      "sources": "arxiv"
+    },
+    "bluesky": {
+      "recordedAt": "2026-10-17",
+      "sources": "bluesky-search, bluesky-trends"
+    },
+    "gdelt-doc": {
+      "recordedAt": "2026-10-17",
+      "sources": "gdelt-doc"
+    },
+    "gtrends-rss": {
+      "recordedAt": "2026-10-17",
+      "sources": "gtrends-rss"
+    },
+    "hn-algolia": {
+      "recordedAt": "2026-10-17",
+      "sources": "hn-algolia"
+    },
+    "mastodon": {
+      "recordedAt": "2026-10-17",
+      "sources": "mastodon-trends"
+    },
+    "rss": {
+      "recordedAt": "2026-10-17",
+      "sources": "rss-europe, rss-americas"
+    },
+    "spikes": {
+      "recordedAt": "2026-10-17",
+      "sources": "wikipedia-pageviews, hn-algolia (daily series for the spike set)"
+    },
+    "wikidata": {
+      "recordedAt": "2026-10-17",
+      "sources": "wikidata"
+    },
+    "wikipedia-pageviews": {
+      "recordedAt": "2026-10-17",
+      "sources": "wikipedia-pageviews"
+    }
+  }
+}

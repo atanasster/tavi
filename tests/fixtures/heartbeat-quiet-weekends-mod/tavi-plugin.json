@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "fixture.quietweekends",
+  "version": "1.0.0",
+  "name": "Quiet weekends (test fixture)",
+  "description": "A test-only mod: holds urgent heartbeat items for the morning summary on the days it is told to keep quiet.",
+  "entry": "index.mjs",
+  "mods": {
+    "abi": "tavi.mods/1",
+    "hooks": [
+      { "event": "heartbeat.item", "disclosure": "Holds urgent heartbeat items for the morning summary at weekends." }
+    ]
+  },
+  "config": {
+    "days": { "type": "string", "description": "The quiet days, such as Sat,Sun (the default)" },
+    "hold": { "type": "string", "description": "Hold back every item whose key starts with this" }
+  }
+}

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="304" viewBox="0 0 880 304" role="img">
+<rect width="880" height="304" rx="12" fill="#141e1a" stroke="#26332e"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="440" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#9aaba3">tavi run</text>
+<line x1="0" y1="36" x2="880" y2="36" stroke="#26332e"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#e6efea">[approval] Run “npm install --prefer-offline is-number@7.0.0” in the sandbox {"command":"npm install</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#e6efea"> --prefer-offline is-number@7.0.0"}</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#e6efea">[approval] approved by --approval approve</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#e6efea">[attempt] replaced attempt-mw6n5ak9-d: resuming after the decision</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#e6efea">[tool] sandbox.run ← {"command":"npm install --prefer-offline is-number@7.0.0"}</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#e6efea">[tool] sandbox.run → {"session":{"sessionId":"sandbox-run-2","state":"completed"},"exitCode":0,"stdo</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#e6efea">ut":"\nadded 1 package in 919ms\n","stderr":"","truncated":false,"tier":"full","mechanism":"seatbelt</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#e6efea">","violations":[{"kind":"read","target":"~/Library/Preferences/ByHost/.GlobalPreferences.3F941F51-AC</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#e6efea">B5-53FF-838D-EE41DF96D151.plist"},{"kind":"read","target":"~/Library/Preferences/.GlobalP… (2532.9ms</tspan></text>
+<text x="20" y="241.0" xml:space="preserve"><tspan fill="#e6efea">)</tspan></text>
+<text x="20" y="260.0" xml:space="preserve"><tspan fill="#e6efea">The package `is-number@7.0.0` was installed successfully using `npm install --prefer-offline is-numb</tspan></text>
+<text x="20" y="279.0" xml:space="preserve"><tspan fill="#e6efea">er@7.0.0` without requesting any network host permissions.</tspan></text>
+</g>
+</svg>

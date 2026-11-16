@@ -1,0 +1,380 @@
+/* The design tokens: Pine & Sun. A cool, faintly green ground with white
+   cards and pine-green ink in light mode; deep forest with mint in dark. The
+   sun is the one warm accent, kept for what needs the operator (a waiting
+   approval, the dot on the wordmark's i); it is a fill, never text on a card.
+   Every colour is an HSL triplet so a surface can take an alpha
+   (`hsl(var(--primary) / 10%)`); no gradients — a surface is one colour, and
+   depth is a tone, a hairline border or a shadow. The dark block restates only
+   the colours and shadows; every other token holds in both themes. */
+:root {
+  color-scheme: light dark;
+  --background: 120 14% 96%;
+  --foreground: 157 25% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 157 25% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 157 25% 10%;
+  --primary: 163 55% 27%;
+  --primary-foreground: 150 40% 98%;
+  --secondary: 150 16% 92%;
+  --secondary-foreground: 157 25% 10%;
+  --muted: 150 14% 93%;
+  --muted-foreground: 152 7% 35%;
+  --accent: 150 16% 92%;
+  --accent-foreground: 157 25% 10%;
+  --destructive: 0 70% 45%;
+  --destructive-foreground: 0 0% 100%;
+  --positive: 152 55% 26%;
+  --warning: 30 90% 28%;
+  --info: 205 78% 32%;
+  /* The sun: a fill with ink on it, and its soft halo. */
+  --sun: 39 81% 54%;
+  --sun-foreground: 157 25% 10%;
+  --sun-soft: 40 85% 88%;
+  --border: 152 6% 48%;
+  --input: 152 6% 48%;
+  --ring: 163 55% 27%;
+  /* The mark keeps one look in both themes, as an app icon does: pine, its
+     leaf, and the sun. */
+  --mark: 163 55% 27%;
+  --mark-leaf: 150 40% 98%;
+  --mark-sun: 39 81% 54%;
+  --radius: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-xs: 4px;
+  --radius-2xs: 3px;
+  --radius-xl: 12px;
+  /* The composer: a soft, lifted box. */
+  --radius-composer: 20px;
+  --radius-full: 9999px;
+  --radius-round: 50%;
+  --shadow-2xs: 0 1px rgb(0 0 0 / 5%);
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 5%);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px -1px rgb(0 0 0 / 10%);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -4px rgb(0 0 0 / 10%);
+  /* Ink-tinted shadows follow the theme through --foreground. */
+  --shadow-faint: 0 1px 2px hsl(var(--foreground) / 4%);
+  --shadow-float: 0 8px 24px hsl(var(--foreground) / 12%);
+  /* Hairlines: the border colour at the few strengths a divider or edge takes. */
+  --line-strong: hsl(var(--border) / 70%);
+  --line-firm: hsl(var(--border) / 60%);
+  --line: hsl(var(--border) / 50%);
+  --line-soft: hsl(var(--border) / 40%);
+  --line-faint: hsl(var(--border) / 30%);
+  --line-fainter: hsl(var(--border) / 25%);
+  --line-faintest: hsl(var(--border) / 15%);
+  --focus-ring: 0 0 0 2px hsl(var(--ring));
+  --focus-ring-thin: 0 0 0 1px hsl(var(--ring));
+  /* A ring drawn inside an element's edge, and a stripe drawn as a shadow. */
+  --ring-warning: inset 0 0 0 2px hsl(var(--warning));
+  --shadow-inset-stripe: inset var(--stripe-width) 0 0 hsl(var(--primary));
+  /* A coloured stripe down a card's or a quote's edge. */
+  --stripe-width: 3px;
+  --stripe-width-lg: 4px;
+  --stripe-width-xl: 5px;
+  /* Strokes: a hairline border, a bullet's ring, a heavier rule (a key's
+     base, a tab's underline, a chevron's strokes), an outline (a focus ring,
+     a control mode) and a thin one, the gap a focus outline keeps from its
+     edge, and a link's underline below its text. */
+  --border-width: 1px;
+  --border-width-mid: 1.5px;
+  --border-width-thick: 2px;
+  --outline-width: 2px;
+  --outline-width-thin: 1px;
+  --focus-offset: 2px;
+  --underline-offset: 3px;
+  --overlay: rgb(0 0 0 / 50%);
+  /* A colour's tint behind a selected row, a notice or a tone's card:
+     `hsl(var(--primary) / var(--tint-medium))`. */
+  --tint-subtle: 6%;
+  --tint-soft: 8%;
+  --tint-medium: 10%;
+  --tint-strong: 14%;
+  --tint-heavy: 22%;
+  /* A colour at part strength: a hover fill, a soft border, a muted fill:
+     `hsl(var(--primary) / var(--alpha-hover))`. */
+  --alpha-faint: 40%;
+  --alpha-half: 50%;
+  --alpha-muted: 60%;
+  --alpha-strong: 70%;
+  --alpha-firm: 80%;
+  --alpha-hover: 90%;
+  /* An element's own opacity: a resting dot, a dimmed row, a disabled control. */
+  --opacity-faint: 0.4;
+  --opacity-disabled: 0.5;
+  --opacity-soft: 0.6;
+  --opacity-muted: 0.7;
+  --icon-size: 18px;
+  --icon-size-sm: 16px;
+  --icon-size-xs: 13px;
+  --icon-size-2xs: 10px;
+  --control-height: 36px;
+  --control-height-sm: 32px;
+  --control-height-xs: 24px;
+  --control-height-search: 26px;
+  --control-height-tab: 28px;
+  --control-height-view: 30px;
+  /* Fields match the button so a field and its action line up in a row. */
+  --field-height: var(--control-height);
+  /* Bars: the top bar, and the sidebar's and the transcript's header bars. */
+  --header-height: 56px;
+  --bar-height: 48px;
+  /* Fixed sizes: a collapsed panel's rail, a target a thumb can hit, the
+     square behind a letter or a glyph, and a status dot. The chat panel's
+     rail is --size-rail; the sessions sidebar's rail is as wide as the bars
+     above it (--size-sidebar-rail), so the two rails differ by design. */
+  --size-rail: 44px;
+  --size-sidebar-rail: var(--bar-height);
+  --size-touch: 44px;
+  --size-touch-row: 48px;
+  --size-avatar-xs: 22px;
+  --size-avatar-sm: 24px;
+  --size-avatar: 28px;
+  --size-avatar-md: 30px;
+  --size-avatar-lg: 56px;
+  --size-dot: 6px;
+  --size-dot-md: 7px;
+  --size-dot-lg: 8px;
+  /* A count pill, a timeline node, a switch, a sheet's grip, a resizer's
+     hit zone, a scrollbar, a disclosure chevron and a bar chart's floor. */
+  --size-count-sm: 16px;
+  --size-count: 18px;
+  --size-node: 11px;
+  --size-node-column: 20px;
+  --size-node-column-sm: 16px;
+  --size-switch-width: 40px;
+  --size-switch-thumb: 20px;
+  --size-grip: 36px;
+  --size-grip-thick: 4px;
+  --size-grip-zone: 20px;
+  --size-resizer: 6px;
+  --size-resizer-row: 8px;
+  --size-scrollbar: 8px;
+  --size-chevron: 6px;
+  --size-working: 14px;
+  /* The wordmark's sun dot, in the wordmark's own units. */
+  --size-tittle: 0.18em;
+  --size-bar-min: 3px;
+  /* Time columns: a row's clock on the Center and Schedule, on a phone,
+     and the narrower one in the coming-up list. */
+  --time-column: 52px;
+  --time-column-narrow: 48px;
+  --time-column-phone: 44px;
+  /* Widths: the page columns, the transcript column, dialogs, sheets and
+     popovers, and the fixed columns of a few grids. */
+  --width-prose: 44rem;
+  --width-welcome: 60rem;
+  --width-welcome-rail: 15rem;
+  --column: 880px;
+  --width-page: 920px;
+  --width-page-wide: 1080px;
+  --width-page-xwide: 1240px;
+  --width-dialog: 480px;
+  --width-dialog-wide: 720px;
+  --width-bubble: 720px;
+  --width-sheet: 560px;
+  --width-toast: 380px;
+  --width-worker-view: 440px;
+  --width-popover: 320px;
+  --width-popover-sm: 280px;
+  --width-popover-min: 220px;
+  --width-info-popover: 290px;
+  --width-rail-column: 300px;
+  --width-search: 220px;
+  --width-select-max: 240px;
+  --width-select-min: 140px;
+  --width-role-label: 240px;
+  --width-role-target: 150px;
+  --width-label: 80px;
+  --width-table-min: 600px;
+  --width-cell-max: 340px;
+  --width-thumb: 10rem;
+  --width-thumb-md: 12rem;
+  --width-thumb-wide: 32rem;
+  /* Widths, mostly in the text's own units: a chip's cap, a menu beside it,
+     a key cap's floor, a field sized to its digits, a flex item's basis, and
+     a line of prose or an address held to a readable measure. */
+  --width-chip: 16em;
+  --width-chip-wide: 18em;
+  --width-menu: 28em;
+  --width-menu-wide: 32em;
+  --width-key: 1.75em;
+  --width-field-ch-sm: 8ch;
+  --width-field-ch: 12ch;
+  --basis-title: 10em;
+  --basis-tool-name: 14rem;
+  --basis-select: 180px;
+  --basis-heading: 240px;
+  --basis-list: 320px;
+  --measure-narrow: 24ch;
+  --measure-sm: 40ch;
+  --measure: 56ch;
+  /* A card grid's narrowest card. */
+  --card-min-xs: 140px;
+  --card-min-sm: 190px;
+  --card-min-md: 240px;
+  --card-min: 260px;
+  --card-min-lg: 280px;
+  --card-min-tile: 12rem;
+  --card-min-tile-md: 15rem;
+  --card-min-tile-lg: 16rem;
+  /* Heights: a chart strip, text areas, and the cap on a scrolling block. */
+  --height-strip: 72px;
+  --height-textarea-sm: 56px;
+  --height-textarea: 64px;
+  --height-textarea-lg: 96px;
+  --height-scroll-sm: 240px;
+  --height-scroll: 320px;
+  --height-scroll-lg: 560px;
+  --height-clip-xs: 8rem;
+  --height-clip-sm: 10rem;
+  --height-clip: 20rem;
+  --height-clip-md: 24rem;
+  --height-clip-lg: 28rem;
+  --height-clip-xl: 32rem;
+  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* The display face, used with restraint: the wordmark, Welcome's title and a page's title. */
+  --font-display: "Bricolage Grotesque Variable", "Bricolage Grotesque", var(--font-sans);
+  /* The system's own face, for a plugin's frame, which cannot load Inter. */
+  --font-system: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Roboto Mono", monospace;
+  /* Type scale; the root is --text-md, so 1rem = 15px. Text reads at 12px
+     or larger; --text-2xs is only a count pill's figures. */
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 12.5px;
+  --text-meta: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 16px;
+  --text-xl: 17px;
+  /* An answer's prose. */
+  --text-answer: 15.5px;
+  --text-2xl: 18px;
+  --text-3xl: 22px;
+  --text-4xl: 26px;
+  --text-5xl: 40px;
+  /* Sizes relative to the text around them: an answer's headings, and code
+     set a touch smaller than its sentence. */
+  --text-rel-h1: 1.45em;
+  --text-rel-h2: 1.25em;
+  --text-rel-h3: 1.1em;
+  --text-rel-h4: 1em;
+  --text-rel-sm: 0.92em;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-strong: 550;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --leading-none: 1;
+  --leading-tight: 1.3;
+  --leading-snug: 1.4;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+  --leading-4: 16px;
+  --leading-4-5: 18px;
+  --leading-5: 20px;
+  --tracking-tighter: -0.02em;
+  --tracking-tight: -0.01em;
+  --tracking-wide: 0.04em;
+  --tracking-wider: 0.06em;
+  --tracking-widest: 0.08em;
+  /* Spacing on a 2px/4px grid: --space-N is N × 4px; --space-px is the
+     single pixel of an optical nudge (`calc(var(--space-1) + var(--space-px))`). */
+  --space-px: 1px;
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-3-5: 14px;
+  --space-4: 16px;
+  --space-4-5: 18px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  /* A chat turn's trailing padding and the gap after it: the memory chip under a turn reads both. */
+  --space-turn-pad: var(--space-6);
+  --space-turn-gap: var(--space-8);
+  --duration-fast: 100ms;
+  --duration-base: 120ms;
+  --duration-slow: 160ms;
+  /* A looping pulse, and the breath of the working dots (each dot starts
+     --duration-slow after the one before). The name is a plugin token
+     (PLUGIN_UI_THEME_TOKENS), kept from when the dots bounced. */
+  --duration-pulse: 1.6s;
+  --duration-bounce: 1.4s;
+  /* A one-shot ripple, as where a click landed. */
+  --duration-ping: 600ms;
+  /* A card settling into place as it arrives. */
+  --duration-settle: 240ms;
+  --ease-standard: ease;
+  --ease-out: ease-out;
+  --ease-in-out: ease-in-out;
+  --ease-linear: linear;
+  /* How far a card rises as it settles into place. */
+  --nudge-settle: 5px;
+  /* Stacking layers, lowest first. */
+  --z-raised: 1;
+  --z-rail: 3;
+  --z-drawer: 4;
+  --z-overlay: 5;
+  --z-sheet: 10;
+  --z-toast: 40;
+  --z-takeover: 60;
+  --z-takeover-dialog: 61;
+  --z-popover: 100;
+  /* Code highlighting in an answer: keyword, string, number, comment, title. */
+  --code-keyword: 280 55% 40%;
+  --code-string: 152 55% 26%;
+  --code-number: 20 80% 34%;
+  --code-comment: 152 7% 35%;
+  --code-title: 205 78% 32%;
+  /* QR code: always dark modules on a white ground in both themes. */
+  --qr-paper: 0 0% 100%;
+  --qr-ink: 0 0% 0%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: 160 24% 7%;
+    --foreground: 150 21% 93%;
+    --card: 160 21% 11%;
+    --card-foreground: 150 21% 93%;
+    --popover: 160 21% 11%;
+    --popover-foreground: 150 21% 93%;
+    --primary: 158 56% 64%;
+    --primary-foreground: 160 24% 7%;
+    --secondary: 160 18% 16%;
+    --secondary-foreground: 150 21% 93%;
+    --muted: 160 17% 15%;
+    --muted-foreground: 153 10% 67%;
+    --accent: 160 18% 16%;
+    --accent-foreground: 150 21% 93%;
+    --destructive: 0 75% 68%;
+    --destructive-foreground: 160 24% 7%;
+    --positive: 158 60% 60%;
+    --warning: 43 96% 65%;
+    --info: 199 89% 65%;
+    --sun: 40 89% 66%;
+    --sun-foreground: 160 24% 7%;
+    --sun-soft: 40 45% 20%;
+    --border: 155 9% 46%;
+    --input: 155 9% 46%;
+    --ring: 158 56% 64%;
+    --code-keyword: 285 70% 76%;
+    --code-string: 158 60% 66%;
+    --code-number: 28 90% 70%;
+    --code-comment: 153 10% 62%;
+    --code-title: 199 89% 70%;
+    --shadow-2xs: 0 1px rgb(0 0 0 / 25%);
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 30%);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 35%), 0 1px 2px -1px rgb(0 0 0 / 35%);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 45%), 0 4px 6px -4px rgb(0 0 0 / 45%);
+  }
+}

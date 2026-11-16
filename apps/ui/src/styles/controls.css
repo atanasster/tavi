@@ -1,0 +1,776 @@
+/* The control primitives, ported from ai-finance
+   (`components/ui/{button,input,card,select}.tsx`): buttons, fields, the
+   dropdown, tooltips, segmented and underlined tabs, a flat card, and the
+   utilities. Imported before the layouts so a component class can specialise
+   a base control. */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* The base button is ai-finance's `outline` variant: a hairline, no fill. */
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1-5);
+  align-self: center;
+  flex-shrink: 0;
+  max-width: 100%;
+  min-height: var(--control-height);
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-5);
+  border: var(--border-width) solid hsl(var(--input));
+  border-radius: var(--radius);
+  background: transparent;
+  color: hsl(var(--foreground));
+  padding: var(--space-1-5) var(--space-3-5);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--duration-base), border-color var(--duration-base), color var(--duration-base);
+}
+
+:where(button):hover:enabled:not(:where([aria-disabled="true"])) {
+  background: hsl(var(--secondary));
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+.button-sm {
+  min-height: var(--control-height-sm);
+  padding: var(--space-1) var(--space-2-5);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-sm);
+}
+
+.ghost {
+  border-color: transparent;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+}
+
+.ghost:hover:enabled:not(:where([aria-disabled="true"])),
+.ghost.active,
+.ghost[aria-expanded="true"] {
+  color: hsl(var(--foreground));
+  background: hsl(var(--secondary) / var(--alpha-half));
+}
+
+.button-secondary {
+  background: hsl(var(--secondary));
+  border-color: var(--line-strong);
+  color: hsl(var(--secondary-foreground));
+}
+
+.button-secondary:hover:enabled {
+  background: hsl(var(--secondary) / var(--alpha-firm));
+}
+
+.button-primary {
+  background: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-weight: var(--weight-semibold);
+  box-shadow: var(--shadow-xs);
+}
+
+.button-primary:hover:enabled {
+  background: hsl(var(--primary) / var(--alpha-hover));
+  border-color: hsl(var(--primary) / var(--alpha-hover));
+}
+
+.button-danger {
+  background: hsl(var(--destructive));
+  border-color: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+  font-weight: var(--weight-semibold);
+  box-shadow: var(--shadow-xs);
+}
+
+.button-danger:hover:enabled {
+  background: hsl(var(--destructive) / var(--alpha-hover));
+  border-color: hsl(var(--destructive) / var(--alpha-hover));
+}
+
+/* A destructive action that is not the page's main one: outlined in red
+   (`button.danger`), or red text with no outline (`.button-danger-ghost`). */
+.danger {
+  color: hsl(var(--destructive));
+}
+
+button.danger {
+  border-color: hsl(var(--destructive) / var(--alpha-half));
+}
+
+button.danger:hover:enabled {
+  background: hsl(var(--destructive) / var(--tint-medium));
+}
+
+.button-danger-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: hsl(var(--destructive));
+}
+
+.button-danger-ghost:hover:enabled {
+  background: hsl(var(--destructive) / var(--tint-soft));
+}
+
+/* A button drawn as something else — a row, a tab, a title, a bar: the
+   outline, fill and padding of the base button taken off. Its hover stays
+   whatever the component gives it. */
+.button-bare {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+/* A bare button that reads as a link: the text, underlined on hover. It is
+   bare by itself, so a link without `.button-bare` is never drawn as a button.
+   At least 24px tall (WCAG 2.5.8): a target a pointer can hit. */
+.button-link {
+  min-height: var(--size-avatar-sm);
+  padding: var(--space-0-5) 0;
+  border: 0;
+  background: none;
+  color: hsl(var(--foreground));
+  text-align: left;
+  text-decoration: none;
+}
+
+/* The Home checklist's steps: links in the link colour, underlined, so they read as steps to open. */
+.onboarding-checklist-rows .button-link {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+
+.button-link:hover {
+  background: none;
+  text-decoration: underline;
+}
+
+button[aria-disabled="true"] {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+/* Fields: as tall as a button, on the page background, a two-pixel ring when focused. */
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea) {
+  min-width: 0;
+  min-height: var(--field-height);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid hsl(var(--input));
+  border-radius: var(--radius-sm);
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-size: var(--text-md);
+  line-height: var(--leading-5);
+}
+
+:where(input, select, textarea):focus-visible {
+  /* Transparent, not none: forced-colors mode drops the ring's shadow and draws this outline instead. */
+  outline: var(--outline-width) solid transparent;
+  box-shadow: var(--focus-ring);
+  border-color: hsl(var(--ring));
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: hsl(var(--muted-foreground));
+  opacity: 1;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  flex: none;
+  accent-color: hsl(var(--primary));
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+  margin: 0;
+}
+
+/* Icon-only controls share the same target size, alignment, and theme colours. */
+.button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height);
+  height: var(--control-height);
+  padding: 0;
+}
+
+.button-icon.button-sm {
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
+}
+
+/* The extra-small icon button of a panel head or a list row's actions. */
+.button-icon.button-xs {
+  width: var(--control-height-xs);
+  height: var(--control-height-xs);
+  border-radius: var(--radius-sm);
+}
+
+/* On a touch screen a small icon button is still a target a thumb can hit. */
+@media (hover: none) and (pointer: coarse) {
+  .button-icon.button-sm,
+  .button-icon.button-xs {
+    width: var(--size-touch);
+    height: var(--size-touch);
+  }
+}
+
+/* Lucide's grid: 24 units, a 2-unit round stroke in the current colour. */
+.icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-sm {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}
+
+.button-icon[aria-pressed="true"] {
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / var(--tint-medium));
+}
+
+.tooltip-trigger {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  align-self: center;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: var(--z-popover);
+  max-width: min(var(--width-popover-sm), calc(100vw - var(--space-4)));
+  padding: var(--space-1-5) var(--space-2-5);
+  border-radius: var(--radius-sm);
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+  box-shadow: var(--shadow-sm);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-snug);
+  overflow-wrap: anywhere;
+  pointer-events: auto;
+}
+
+/* Application dropdowns share the fields' surfaces and focus treatment. */
+.select-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: var(--width-select-min);
+  min-height: var(--field-height);
+  text-align: left;
+  font-weight: var(--weight-regular);
+  background: hsl(var(--background));
+  box-shadow: var(--shadow-xs);
+}
+
+.select-trigger > span:last-child {
+  display: flex;
+  color: hsl(var(--muted-foreground));
+  flex: none;
+}
+
+/* What floats over the page — a dropdown, a popover, a dialog: the popover
+   surface, a hairline, the large shadow. */
+.surface-popover {
+  border: var(--border-width) solid hsl(var(--border));
+  border-radius: var(--radius);
+  background: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  box-shadow: var(--shadow-lg);
+}
+
+.select-content {
+  z-index: var(--z-popover);
+  display: flex;
+  flex-direction: column;
+  min-width: var(--radix-select-trigger-width);
+  max-width: min(var(--width-dialog), calc(100vw - var(--space-6)));
+  max-height: min(var(--height-scroll), var(--radix-select-content-available-height));
+  overflow: hidden;
+}
+
+.select-options {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--space-1);
+}
+
+.select-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-8);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-md);
+  line-height: var(--leading-5);
+  cursor: default;
+  outline: var(--outline-width) solid transparent;
+  outline-offset: calc(-1 * var(--outline-width));
+  overflow-wrap: anywhere;
+}
+
+/* The option keyboard focus is on (or a row menu's item under the pointer): the tint
+   alone is too faint to find, so it is ringed too. */
+.select-option[data-highlighted],
+.row-menu-item:hover,
+.row-menu-item:focus-visible {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+  outline-color: hsl(var(--ring));
+}
+
+.select-option[data-disabled] {
+  opacity: var(--opacity-disabled);
+  pointer-events: none;
+}
+
+.select-check {
+  position: absolute;
+  left: var(--space-2);
+  display: flex;
+  color: hsl(var(--primary));
+}
+
+.select-scroll {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-0-5);
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--popover));
+}
+
+.select-search {
+  padding: var(--space-1-5) var(--space-1-5) var(--space-1);
+  border-bottom: var(--border-width) solid var(--line-soft);
+  background: hsl(var(--popover));
+  flex: none;
+}
+
+.select-search-box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  height: var(--control-height-search);
+  padding: 0 var(--space-2);
+  background: hsl(var(--secondary) / var(--alpha-muted));
+  border: var(--border-width) solid hsl(var(--input));
+  border-radius: var(--radius-sm);
+  transition: border-color var(--duration-fast), background var(--duration-fast);
+}
+
+.select-search-box:focus-within {
+  background: hsl(var(--background));
+  border-color: hsl(var(--ring));
+  box-shadow: var(--focus-ring-thin);
+}
+
+.select-search-box .icon {
+  width: var(--icon-size-xs);
+  height: var(--icon-size-xs);
+  color: hsl(var(--muted-foreground));
+  flex: none;
+  opacity: var(--opacity-muted);
+}
+
+.select-search-input,
+.select-search-input:focus-visible {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: var(--text-sm);
+  line-height: var(--leading-4);
+  color: hsl(var(--foreground));
+  outline: none;
+}
+
+.select-search-input::placeholder {
+  color: hsl(var(--muted-foreground));
+  opacity: 1;
+}
+
+.select-search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* The least target a pointer is promised (24px), inside the 26px box. */
+  width: var(--control-height-xs);
+  height: var(--control-height-xs);
+  min-height: var(--control-height-xs);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  border-radius: var(--radius-round);
+  transition: opacity var(--duration-fast), background var(--duration-fast), color var(--duration-fast);
+}
+
+.select-search-clear .icon {
+  width: var(--icon-size-2xs);
+  height: var(--icon-size-2xs);
+}
+
+.select-search-clear:hover {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+
+.select-empty {
+  padding: var(--space-3) var(--space-2);
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-sm);
+}
+
+/* A segmented control: its segments on a tinted track, the current one lifted
+   onto a card. */
+.segmented {
+  gap: var(--space-0-5);
+  padding: var(--space-0-5);
+  border-radius: var(--radius);
+  background: hsl(var(--secondary));
+}
+
+.segment {
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Lifted onto a card, and edged: the card alone is too faint against the track. A segment that is a page's link is
+   chosen by its aria-current, as the top nav's. */
+.segment[aria-current="page"],
+.segment.active {
+  border: var(--border-width) solid hsl(var(--input));
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  box-shadow: var(--shadow-xs);
+}
+
+/* A summary that opens its details: the UA marker swapped for a chevron that
+   turns, which survives the summary being made a flex row. */
+.disclosure {
+  list-style: none;
+  cursor: pointer;
+}
+
+.disclosure::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure::before {
+  content: "";
+  flex: none;
+  width: var(--size-chevron);
+  height: var(--size-chevron);
+  border-right: var(--border-width-thick) solid hsl(var(--muted-foreground));
+  border-bottom: var(--border-width-thick) solid hsl(var(--muted-foreground));
+  transform: rotate(-45deg);
+  transition: transform var(--duration-base);
+}
+
+[open] > .disclosure::before {
+  transform: rotate(45deg);
+}
+
+/* A summary standing alone (not styled by its panel): a row, so the chevron has a box to draw in. */
+summary.disclosure {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Under an approval's buttons: a quiet line, not another control competing with them. */
+.approval-explain > summary {
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  color: hsl(var(--muted-foreground));
+}
+
+.approval-explain > .notice {
+  margin-top: var(--space-1-5);
+}
+
+.plugins-core > summary {
+  margin-block: var(--space-4) var(--space-2);
+  font-weight: var(--weight-semibold);
+}
+
+/* Tabs over a panel: plain labels on a hairline, the current one underlined. */
+.tabs-underline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-0-5);
+  border-bottom: var(--border-width) solid var(--line-fainter);
+}
+
+.tabs-underline [role="tab"] {
+  padding: var(--space-1-5) var(--space-2-5);
+  border-bottom: var(--border-width-thick) solid transparent;
+  border-radius: 0;
+  /* Outranks the base button's hover fill: a tab marks its state with its underline. */
+  background: none;
+  font-size: var(--text-base);
+  color: hsl(var(--muted-foreground));
+}
+
+.tabs-underline [role="tab"][aria-selected="true"] {
+  border-bottom-color: hsl(var(--primary));
+  color: hsl(var(--foreground));
+}
+
+/* A card, as ai-finance draws one: hairline, card surface, the faintest
+   shadow. A flat card (.card-flat) is the same surface with a softer
+   hairline and no shadow. */
+.card,
+.settings-panel,
+.settings .row,
+.section-card,
+.welcome-card,
+.welcome-pairing,
+.card-flat,
+.center-card {
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius-lg);
+  background: hsl(var(--card));
+}
+
+.card,
+.settings-panel,
+.settings .row,
+.section-card,
+.welcome-card,
+.welcome-pairing {
+  color: hsl(var(--card-foreground));
+  box-shadow: var(--shadow-xs);
+}
+
+.card-flat,
+.center-card {
+  border-color: var(--line-soft);
+}
+
+/* ---------- Utilities ---------- */
+
+/* A row of items centred on one line, wrapping when it runs out of room. */
+.cluster,
+.actions,
+.composer-toolbar,
+.connection-form-lead,
+.center-card-top,
+.center-card-actions,
+.schedule-recurring-title,
+.center-head-actions,
+.center-from,
+.picker-filters,
+.center-row-meta,
+.soul-preview-for,
+.reminder-deliver label,
+.need-undo,
+.need-footer,
+.takeover-bar,
+.fill-review-download,
+.apps-filters,
+.apps-tool-choice,
+.pairing-command,
+.soul-skill-viewer > header,
+.soul-skill-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* A column of items a step apart. */
+.stack,
+.composer,
+.composer-box,
+.empty-state,
+.apps-connect-card,
+.apps-card,
+.apps-empty,
+.idea-card,
+.welcome-detected,
+.welcome-card,
+.welcome-pairing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* One line, clipped with an ellipsis. */
+.truncate,
+.select-trigger > span:first-child,
+.round .actions button,
+.attachment-list li span,
+.idea-chip {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Secondary text — a count, a time, a detail line: muted, a step under the
+   body size (each named for the --text-* step it takes). */
+.meta-sm {
+  font-size: var(--text-sm);
+  color: hsl(var(--muted-foreground));
+}
+
+.meta {
+  font-size: var(--text-meta);
+  color: hsl(var(--muted-foreground));
+}
+
+.meta-base {
+  font-size: var(--text-base);
+  color: hsl(var(--muted-foreground));
+}
+
+/* A small uppercase label over a group or a value. */
+.eyebrow {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+/* A list laid out as rows, a grid or a strip, not as bullets. */
+.list-reset,
+.folder-roots,
+.folder-files ul,
+.folder-picker ul,
+.chat-panel-waiting ul,
+.memory-card-items,
+.memory-used-items,
+.apps-grid,
+.welcome-cards {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The cadence field every schedule, routine, reminder and the heartbeat share:
+   rows that wrap at any width, day chips, the next runs and what is missing. */
+.cadence,
+.cadence-days {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.cadence > legend,
+.cadence-days > legend {
+  padding: 0;
+  margin-bottom: var(--space-1-5);
+  font-weight: var(--weight-strong);
+}
+
+.cadence-row,
+.cadence-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1-5) var(--space-3);
+}
+
+.cadence-chips {
+  gap: var(--space-1-5);
+}
+
+.cadence-option,
+.cadence-inline,
+.cadence-time {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-weight: var(--weight-regular);
+}
+
+.cadence-day {
+  min-width: var(--size-avatar-md);
+  justify-content: center;
+}
+
+.cadence-label {
+  font-weight: var(--weight-strong);
+}
+
+.cadence-preview ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+}
+
+.cadence-problems {
+  color: hsl(var(--destructive));
+  font-size: var(--text-base);
+}
+
+/* Empty, it stays in the page for what it will announce, but takes no row of the field. */
+.cadence-problems:empty {
+  position: absolute;
+}
+
+.cadence-trigger {
+  display: grid;
+  gap: var(--space-1-5);
+}
+
+.cadence-trigger > button {
+  justify-self: start;
+}
+
+/* Forced colors (Windows High Contrast) drop box-shadows and backgrounds, so a
+   ring drawn by either is gone there: the boxes that draw their field's focus
+   draw an outline instead, in the system's own colours. */
+@media (forced-colors: active) {
+  .composer-box:focus-within,
+  .select-search-box:focus-within,
+  .center-search:focus-within {
+    outline: var(--outline-width) solid CanvasText;
+    outline-offset: var(--focus-offset);
+  }
+
+  .select-option[data-highlighted] {
+    outline-color: Highlight;
+  }
+}

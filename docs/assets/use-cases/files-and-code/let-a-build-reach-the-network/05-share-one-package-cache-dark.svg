@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="285" viewBox="0 0 880 285" role="img">
+<rect width="880" height="285" rx="12" fill="#141e1a" stroke="#26332e"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="440" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#9aaba3">tavi run</text>
+<line x1="0" y1="36" x2="880" y2="36" stroke="#26332e"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#e6efea">[approval] Run “npm install is-number@7.0.0” in the sandbox {"command":"npm install is-number@7.0.0"</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#e6efea">}</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#e6efea">[approval] approved by --approval approve</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#e6efea">[attempt] replaced attempt-mw6n4v3w-4: resuming after the decision</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#e6efea">[tool] sandbox.run ← {"command":"npm install is-number@7.0.0"}</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#e6efea">[tool] sandbox.run → {"session":{"sessionId":"sandbox-run-1","state":"completed"},"exitCode":0,"stdo</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#e6efea">ut":"\nadded 1 package, and audited 2 packages in 1s\n\nfound 0 vulnerabilities\n","stderr":"npm not</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#e6efea">ice\nnpm notice New major version of npm available! 10.9.9 -&gt; 12.2.2\nnpm notice Changelog: https://</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#e6efea">github.com/npm/cli/releases/tag/v12.2.2\nnpm notice To update run: npm install -g npm@12.2.2\nnpm no</tspan></text>
+<text x="20" y="241.0" xml:space="preserve"><tspan fill="#e6efea">tice\n","truncated":f… (4479.7ms)</tspan></text>
+<text x="20" y="260.0" xml:space="preserve"><tspan fill="#e6efea">`is-number@7.0.0` has been installed successfully via `npm install is-number@7.0.0`.</tspan></text>
+</g>
+</svg>

@@ -1,0 +1,54 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "ats-greenhouse",
+  "name": "Greenhouse",
+  "countries": [
+    "*"
+  ],
+  "hosts": [
+    "boards.greenhouse.io",
+    "job-boards.greenhouse.io"
+  ],
+  "kind": "ats",
+  "access": {
+    "mode": "stage",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "An employer's application form on Greenhouse. Tavi fills the fields it may and stops before the final control, which the person presses.",
+    "termsUrl": "https://job-boards.greenhouse.io/anthropic/jobs/4461450008",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 12,
+    "pagesPerDay": 60,
+    "minIntervalMs": 2000
+  },
+  "stage": {
+    "fillable": [
+      "name",
+      "first_name",
+      "last_name",
+      "email",
+      "phone",
+      "location",
+      "links",
+      "work_history",
+      "education",
+      "cv_upload",
+      "cover_letter",
+      "custom_answer"
+    ],
+    "finalStep": {
+      "labels": [
+        "Submit application"
+      ],
+      "urlPatterns": [],
+      "selectors": [
+        "button[type=submit]"
+      ]
+    },
+    "perDay": 10
+  },
+  "notes": "The top \"Apply\" is a type=button scroll to the form, not a submit."
+}

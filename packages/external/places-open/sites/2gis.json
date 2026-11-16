@@ -1,0 +1,39 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "twogis",
+  "name": "2GIS",
+  "countries": [
+    "RU",
+    "KZ",
+    "AE",
+    "CY",
+    "EG"
+  ],
+  "hosts": [
+    "2gis.ru",
+    "2gis.kz",
+    "2gis.ae",
+    "2gis.com"
+  ],
+  "kind": "directory",
+  "access": {
+    "mode": "read",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "2GIS publishes a places API; its place pages carry schedules and rating statistics. No ban on reading found.",
+    "termsUrl": "https://law.2gis.ru/licensing-agreement",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "LocalBusiness"
+    ]
+  },
+  "notes": "Tavi reads 2GIS place pages for hours and ratings, at a few pages a task."
+}

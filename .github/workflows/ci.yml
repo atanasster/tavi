@@ -1,0 +1,223 @@
+# Build, typecheck, lint and test on every push to main and every pull request, in parallel
+# jobs, on Linux and (the `windows` and `windows-arm` jobs) native Windows, x64 and arm64. Tests that need a real browser, sandbox or remote site (`pnpm run test:real`,
+# local only) skip here, as do browser tests without Chromium, but for the browser mini-web
+# suite, which runs against local fixture pages in its own job; the sandbox matrix is
+# sandbox.yml.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # A newer push to a pull request replaces its run; every run on main completes.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # The token is not needed after checkout; do not leave it in .git/config for install scripts.
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: 12.16.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.21.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Known vulnerabilities in what ships (production dependencies), high or critical; accepted advisories
+      # are listed with their reason under `auditConfig` in pnpm-workspace.yaml.
+      - run: pnpm audit --prod --audit-level high
+      # Formatting and lint rules (biome.jsonc): fails on any unformatted file or finding.
+      - run: pnpm run lint
+      - run: pnpm run build
+      - run: pnpm run typecheck
+      # Unused files, exports and dependencies (knip.jsonc), and literal values in the canvas stylesheets.
+      - run: pnpm run knip
+      # Runtime dependencies that only tests import (they would ship to every install).
+      - run: pnpm exec knip --production --include dependencies
+      - run: pnpm run lint:css
+
+  test-cli:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: 12.16.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.21.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec turbo run test --filter=@tavi/cli
+
+  test-packages:
+    # The engines minimum, the active LTS and the current release: `engines` allows every later Node.
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22.21.0, 24, 26]
+    name: test-packages (node ${{ matrix.node }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: 12.16.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec turbo run test --filter='!@tavi/cli'
+      # The web bundle budget (tests/ui-bundle.test.ts) measures the canvas's build, and fails in CI without one.
+      - run: pnpm exec turbo run build --filter=@tavi/ui
+      - name: Repository-wide tests
+        run: pnpm exec vitest run
+
+  browser-miniweb:
+    # The browser's guards against real Chromium on local fixture pages (no remote site), and
+    # the per-action timing bench, recorded for comparison but never failing the run on wall time.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: 12.16.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.21.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @tavi/plugin-browser exec playwright install --with-deps chromium
+      # A suite whose Chromium fails to start skips every case: zero cases run is a failure here.
+      - name: Mini-web suite
+        run: |
+          pnpm exec vitest run tests/integration/browser-miniweb.real.test.ts --reporter=default --reporter=json --outputFile.json=miniweb.json
+          jq -e '.numTotalTests > 0 and .numPendingTests == 0 and .numTodoTests == 0' miniweb.json
+        env:
+          TAVI_REAL_TESTS: "1"
+      # The adapter and the packages it imports, built: the bench runs the built adapter under plain node.
+      - run: pnpm exec turbo run build --filter=@tavi/plugin-browser
+      - name: Timing bench (recorded)
+        continue-on-error: true
+        run: node evals/browser/timing.ts --iterations 5
+
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: 12.16.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.21.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Release gate (the packed, installed CLI)
+        run: pnpm run test:release
+
+  windows:
+    # Native Windows: install, lint, build, typecheck, knip, then the repository gates and every
+    # workspace's unit tests in four shards (one Node per test file is slow on NTFS). Tests that
+    # need POSIX skip here, each named with its reason in @tavi/test-support's POSIX_ONLY. The
+    # workspace tests do not fail the job until its first run has named every such file there.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    name: windows (shard ${{ matrix.shard }}/4)
+    runs-on: windows-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: 12.16.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.21.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      # Once, not per shard: the same on every shard.
+      - if: matrix.shard == 1
+        run: pnpm run lint
+      - if: matrix.shard == 1
+        run: pnpm run typecheck
+      - if: matrix.shard == 1
+        run: pnpm run knip
+      - name: Repository gates (shard ${{ matrix.shard }}/4)
+        run: pnpm exec vitest run --project tavi-monorepo --shard=${{ matrix.shard }}/4
+      - name: Workspace unit tests (shard ${{ matrix.shard }}/4)
+        continue-on-error: true
+        run: pnpm exec vitest run --project "@tavi/*" --shard=${{ matrix.shard }}/4
+
+  windows-arm:
+    # Windows 11 on Arm: the native modules (koffi, better-sqlite3, the keyring) load from their arm64
+    # builds, then build, typecheck and the repository gates; the workspace tests run in the `windows` job.
+    name: windows-arm
+    runs-on: windows-11-arm
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: 12.16.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.21.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - name: Native modules load (arm64)
+        run: |
+          pnpm --filter @tavi/node-kit exec node -e "require('koffi').load('kernel32.dll')"
+          pnpm --filter @tavi/runtime exec node -e "new (require('better-sqlite3'))(':memory:').close(); require('@napi-rs/keyring')"
+      - run: pnpm run typecheck
+      - name: Repository gates
+        run: pnpm exec vitest run --project tavi-monorepo
+
+  secrets:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # .gitleaks.toml's [[allowlists]] needs gitleaks 8.25 or later; the action's default is older.
+          GITLEAKS_VERSION: 8.30.1
+          # Commenting on a pull request needs pull-requests: write, which this workflow does not grant.
+          GITLEAKS_ENABLE_COMMENTS: false

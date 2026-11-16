@@ -1,0 +1,3152 @@
+{
+  "objects": [
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_admissions_1",
+      "tbl_name": "tavi_admissions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_agent_definitions_1",
+      "tbl_name": "tavi_agent_definitions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_agent_delegation_admissions_1",
+      "tbl_name": "tavi_agent_delegation_admissions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_agent_mailbox_1",
+      "tbl_name": "tavi_agent_mailbox",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_agent_revisions_1",
+      "tbl_name": "tavi_agent_revisions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_agent_wait_intents_1",
+      "tbl_name": "tavi_agent_wait_intents",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_approval_links_1",
+      "tbl_name": "tavi_approval_links",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_approval_round_deliveries_1",
+      "tbl_name": "tavi_approval_round_deliveries",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_approval_rounds_1",
+      "tbl_name": "tavi_approval_rounds",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_approval_rounds_2",
+      "tbl_name": "tavi_approval_rounds",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_approvals_1",
+      "tbl_name": "tavi_approvals",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_artifacts_1",
+      "tbl_name": "tavi_artifacts",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_browser_sessions_1",
+      "tbl_name": "tavi_browser_sessions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_cancellations_1",
+      "tbl_name": "tavi_cancellations",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_channel_purges_1",
+      "tbl_name": "tavi_channel_purges",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_channel_rooms_1",
+      "tbl_name": "tavi_channel_rooms",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_chat_instructions_1",
+      "tbl_name": "tavi_chat_instructions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_chat_notices_1",
+      "tbl_name": "tavi_chat_notices",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_chat_steers_1",
+      "tbl_name": "tavi_chat_steers",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_checkpoint_blobs_1",
+      "tbl_name": "tavi_checkpoint_blobs",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_checkpoint_receipts_1",
+      "tbl_name": "tavi_checkpoint_receipts",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_collector_settings_1",
+      "tbl_name": "tavi_collector_settings",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_context_projections_1",
+      "tbl_name": "tavi_context_projections",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_effects_1",
+      "tbl_name": "tavi_effects",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_evidence_sources_1",
+      "tbl_name": "tavi_evidence_sources",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_executions_1",
+      "tbl_name": "tavi_executions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_gate_observations_1",
+      "tbl_name": "tavi_gate_observations",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_heartbeat_instructions_1",
+      "tbl_name": "tavi_heartbeat_instructions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_heartbeat_items_1",
+      "tbl_name": "tavi_heartbeat_items",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_heartbeat_signals_1",
+      "tbl_name": "tavi_heartbeat_signals",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_heartbeat_ticks_1",
+      "tbl_name": "tavi_heartbeat_ticks",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_heartbeats_1",
+      "tbl_name": "tavi_heartbeats",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_idea_feedback_1",
+      "tbl_name": "tavi_idea_feedback",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_idea_runs_1",
+      "tbl_name": "tavi_idea_runs",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_idea_settings_1",
+      "tbl_name": "tavi_idea_settings",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_ideas_1",
+      "tbl_name": "tavi_ideas",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_lineage_edges_1",
+      "tbl_name": "tavi_lineage_edges",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_lineage_edges_2",
+      "tbl_name": "tavi_lineage_edges",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_mcp_notices_1",
+      "tbl_name": "tavi_mcp_notices",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_mcp_tools_1",
+      "tbl_name": "tavi_mcp_tools",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_mcp_tree_index_1",
+      "tbl_name": "tavi_mcp_tree_index",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_mcp_versions_1",
+      "tbl_name": "tavi_mcp_versions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_memory_deletions_1",
+      "tbl_name": "tavi_memory_deletions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_memory_fts_map_1",
+      "tbl_name": "tavi_memory_fts_map",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_memory_marks_1",
+      "tbl_name": "tavi_memory_marks",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_memory_prompts_1",
+      "tbl_name": "tavi_memory_prompts",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_memory_prompts_2",
+      "tbl_name": "tavi_memory_prompts",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_memory_prompts_3",
+      "tbl_name": "tavi_memory_prompts",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_memory_records_1",
+      "tbl_name": "tavi_memory_records",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_memory_reviews_1",
+      "tbl_name": "tavi_memory_reviews",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_memory_revisions_1",
+      "tbl_name": "tavi_memory_revisions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_memory_revisions_2",
+      "tbl_name": "tavi_memory_revisions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_memory_scope_generations_1",
+      "tbl_name": "tavi_memory_scope_generations",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_memory_vector_failures_1",
+      "tbl_name": "tavi_memory_vector_failures",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_memory_vectors_1",
+      "tbl_name": "tavi_memory_vectors",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_messaging_connections_1",
+      "tbl_name": "tavi_messaging_connections",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_messaging_conversation_tasks_1",
+      "tbl_name": "tavi_messaging_conversation_tasks",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_messaging_deliveries_1",
+      "tbl_name": "tavi_messaging_deliveries",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_messaging_grants_1",
+      "tbl_name": "tavi_messaging_grants",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_messaging_grants_2",
+      "tbl_name": "tavi_messaging_grants",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_messaging_identity_bindings_1",
+      "tbl_name": "tavi_messaging_identity_bindings",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_messaging_inbound_activity_1",
+      "tbl_name": "tavi_messaging_inbound_activity",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_messaging_inbox_1",
+      "tbl_name": "tavi_messaging_inbox",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_messaging_outbox_1",
+      "tbl_name": "tavi_messaging_outbox",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_meta_1",
+      "tbl_name": "tavi_meta",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_model_catalog_1",
+      "tbl_name": "tavi_model_catalog",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_model_connections_1",
+      "tbl_name": "tavi_model_connections",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_model_price_sheets_1",
+      "tbl_name": "tavi_model_price_sheets",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_model_roles_1",
+      "tbl_name": "tavi_model_roles",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_model_workspace_defaults_1",
+      "tbl_name": "tavi_model_workspace_defaults",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_need_deliveries_1",
+      "tbl_name": "tavi_need_deliveries",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_onboarding_steps_1",
+      "tbl_name": "tavi_onboarding_steps",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_pending_reject_reasons_1",
+      "tbl_name": "tavi_pending_reject_reasons",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_plugin_hook_prunes_1",
+      "tbl_name": "tavi_plugin_hook_prunes",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_plugin_settings_1",
+      "tbl_name": "tavi_plugin_settings",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_plugin_state_1",
+      "tbl_name": "tavi_plugin_state",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_plugin_versions_1",
+      "tbl_name": "tavi_plugin_versions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_projects_1",
+      "tbl_name": "tavi_projects",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_provider_attempt_requests_1",
+      "tbl_name": "tavi_provider_attempt_requests",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_provider_attempts_1",
+      "tbl_name": "tavi_provider_attempts",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_provider_operations_1",
+      "tbl_name": "tavi_provider_operations",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_reminders_1",
+      "tbl_name": "tavi_reminders",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_reminders_2",
+      "tbl_name": "tavi_reminders",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_reports_1",
+      "tbl_name": "tavi_reports",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_router_budget_totals_1",
+      "tbl_name": "tavi_router_budget_totals",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_router_configurations_1",
+      "tbl_name": "tavi_router_configurations",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_router_decisions_1",
+      "tbl_name": "tavi_router_decisions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_attempts_1",
+      "tbl_name": "tavi_routine_attempts",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_attempts_2",
+      "tbl_name": "tavi_routine_attempts",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_blob_refs_1",
+      "tbl_name": "tavi_routine_blob_refs",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_commands_1",
+      "tbl_name": "tavi_routine_commands",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_conversations_1",
+      "tbl_name": "tavi_routine_conversations",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_coverage_1",
+      "tbl_name": "tavi_routine_coverage",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_delivery_jobs_1",
+      "tbl_name": "tavi_routine_delivery_jobs",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_delivery_jobs_2",
+      "tbl_name": "tavi_routine_delivery_jobs",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_delivery_targets_1",
+      "tbl_name": "tavi_routine_delivery_targets",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_details_1",
+      "tbl_name": "tavi_routine_details",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_evaluations_1",
+      "tbl_name": "tavi_routine_evaluations",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_evaluations_2",
+      "tbl_name": "tavi_routine_evaluations",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_events_1",
+      "tbl_name": "tavi_routine_events",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_events_2",
+      "tbl_name": "tavi_routine_events",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_grants_1",
+      "tbl_name": "tavi_routine_grants",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_grants_2",
+      "tbl_name": "tavi_routine_grants",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_operations_1",
+      "tbl_name": "tavi_routine_operations",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_quality_1",
+      "tbl_name": "tavi_routine_quality",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_revisions_1",
+      "tbl_name": "tavi_routine_revisions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_runs_1",
+      "tbl_name": "tavi_routine_runs",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_runs_2",
+      "tbl_name": "tavi_routine_runs",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_sources_1",
+      "tbl_name": "tavi_routine_sources",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_staging_1",
+      "tbl_name": "tavi_routine_staging",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_staging_2",
+      "tbl_name": "tavi_routine_staging",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_standing_answers_1",
+      "tbl_name": "tavi_routine_standing_answers",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_state_1",
+      "tbl_name": "tavi_routine_state",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_triggers_1",
+      "tbl_name": "tavi_routine_triggers",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routine_triggers_2",
+      "tbl_name": "tavi_routine_triggers",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_routines_1",
+      "tbl_name": "tavi_routines",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_schedules_1",
+      "tbl_name": "tavi_schedules",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_schema_migrations_1",
+      "tbl_name": "tavi_schema_migrations",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_search_providers_1",
+      "tbl_name": "tavi_search_providers",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_session_grants_1",
+      "tbl_name": "tavi_session_grants",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_site_recipes_1",
+      "tbl_name": "tavi_site_recipes",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_site_usage_1",
+      "tbl_name": "tavi_site_usage",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_skill_activation_history_1",
+      "tbl_name": "tavi_skill_activation_history",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_skill_activations_1",
+      "tbl_name": "tavi_skill_activations",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_skill_rollout_allowlist_1",
+      "tbl_name": "tavi_skill_rollout_allowlist",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_skill_rollout_allowlist_2",
+      "tbl_name": "tavi_skill_rollout_allowlist",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_skill_uses_1",
+      "tbl_name": "tavi_skill_uses",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_skill_versions_1",
+      "tbl_name": "tavi_skill_versions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_tainted_host_writes_1",
+      "tbl_name": "tavi_tainted_host_writes",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_task_findings_1",
+      "tbl_name": "tavi_task_findings",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_task_folders_1",
+      "tbl_name": "tavi_task_folders",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_task_history_fts_map_1",
+      "tbl_name": "tavi_task_history_fts_map",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_task_memory_use_1",
+      "tbl_name": "tavi_task_memory_use",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_task_prompt_pins_1",
+      "tbl_name": "tavi_task_prompt_pins",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_task_prompt_snapshots_1",
+      "tbl_name": "tavi_task_prompt_snapshots",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_task_routes_1",
+      "tbl_name": "tavi_task_routes",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_task_tool_calls_1",
+      "tbl_name": "tavi_task_tool_calls",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_tasks_1",
+      "tbl_name": "tavi_tasks",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_tool_disclosures_1",
+      "tbl_name": "tavi_tool_disclosures",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_tool_rules_1",
+      "tbl_name": "tavi_tool_rules",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_transcript_entries_1",
+      "tbl_name": "tavi_transcript_entries",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_workspace_settings_1",
+      "tbl_name": "tavi_workspace_settings",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tavi_workspace_system_prompts_1",
+      "tbl_name": "tavi_workspace_system_prompts",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "tavi_admissions_created_idx",
+      "tbl_name": "tavi_admissions",
+      "sql": "CREATE INDEX tavi_admissions_created_idx ON tavi_admissions (created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_admissions_key_idx",
+      "tbl_name": "tavi_admissions",
+      "sql": "CREATE UNIQUE INDEX tavi_admissions_key_idx ON tavi_admissions (task_id, operation_key)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_admissions_start_idx",
+      "tbl_name": "tavi_admissions",
+      "sql": "CREATE INDEX tavi_admissions_start_idx ON tavi_admissions(task_id, kind, created_at, admission_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_admissions_state_idx",
+      "tbl_name": "tavi_admissions",
+      "sql": "CREATE INDEX tavi_admissions_state_idx ON tavi_admissions (state, created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_agent_definitions_workspace_idx",
+      "tbl_name": "tavi_agent_definitions",
+      "sql": "CREATE INDEX tavi_agent_definitions_workspace_idx ON tavi_agent_definitions (workspace_id, name)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_agent_delegation_admissions_worker_task_uidx",
+      "tbl_name": "tavi_agent_delegation_admissions",
+      "sql": "CREATE UNIQUE INDEX tavi_agent_delegation_admissions_worker_task_uidx\n  ON tavi_agent_delegation_admissions (worker_task_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_agent_mailbox_correlation_idx",
+      "tbl_name": "tavi_agent_mailbox",
+      "sql": "CREATE INDEX tavi_agent_mailbox_correlation_idx\n  ON tavi_agent_mailbox (correlation_id) WHERE correlation_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_agent_mailbox_recipient_idx",
+      "tbl_name": "tavi_agent_mailbox",
+      "sql": "CREATE INDEX tavi_agent_mailbox_recipient_idx\n  ON tavi_agent_mailbox (recipient_task_id, delivery_state, created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_agent_mailbox_retention_idx",
+      "tbl_name": "tavi_agent_mailbox",
+      "sql": "CREATE INDEX tavi_agent_mailbox_retention_idx\n  ON tavi_agent_mailbox (workspace_id, retention_state, delivery_state)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_agent_wait_intents_active_correlation_uidx",
+      "tbl_name": "tavi_agent_wait_intents",
+      "sql": "CREATE UNIQUE INDEX tavi_agent_wait_intents_active_correlation_uidx\n  ON tavi_agent_wait_intents (task_id, correlation_id)\n  WHERE state = 'active' AND correlation_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_agent_wait_intents_active_task_uidx",
+      "tbl_name": "tavi_agent_wait_intents",
+      "sql": "CREATE UNIQUE INDEX tavi_agent_wait_intents_active_task_uidx\n  ON tavi_agent_wait_intents (task_id)\n  WHERE state = 'active'"
+    },
+    {
+      "type": "index",
+      "name": "tavi_agent_wait_intents_deadline_idx",
+      "tbl_name": "tavi_agent_wait_intents",
+      "sql": "CREATE INDEX tavi_agent_wait_intents_deadline_idx\n  ON tavi_agent_wait_intents (state, deadline_at) WHERE state = 'active'"
+    },
+    {
+      "type": "index",
+      "name": "tavi_agent_wait_intents_resume_pending_idx",
+      "tbl_name": "tavi_agent_wait_intents",
+      "sql": "CREATE INDEX tavi_agent_wait_intents_resume_pending_idx ON tavi_agent_wait_intents (settled_at) WHERE resume_pending = 1"
+    },
+    {
+      "type": "index",
+      "name": "tavi_agent_wait_intents_settled_idx",
+      "tbl_name": "tavi_agent_wait_intents",
+      "sql": "CREATE INDEX tavi_agent_wait_intents_settled_idx ON tavi_agent_wait_intents (settled_at DESC) WHERE state = 'settled'"
+    },
+    {
+      "type": "index",
+      "name": "tavi_agent_wait_intents_task_idx",
+      "tbl_name": "tavi_agent_wait_intents",
+      "sql": "CREATE INDEX tavi_agent_wait_intents_task_idx ON tavi_agent_wait_intents (task_id, state)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_approval_events_task_idx",
+      "tbl_name": "tavi_approval_events",
+      "sql": "CREATE INDEX tavi_approval_events_task_idx ON tavi_approval_events (task_id, steps)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_approval_links_question_idx",
+      "tbl_name": "tavi_approval_links",
+      "sql": "CREATE INDEX tavi_approval_links_question_idx ON tavi_approval_links (kind, wait_id) WHERE wait_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_approval_links_round_idx",
+      "tbl_name": "tavi_approval_links",
+      "sql": "CREATE INDEX tavi_approval_links_round_idx ON tavi_approval_links (task_id, kind, steps)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_approval_round_deliveries_connection_idx",
+      "tbl_name": "tavi_approval_round_deliveries",
+      "sql": "CREATE INDEX tavi_approval_round_deliveries_connection_idx ON tavi_approval_round_deliveries (connection_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_approval_rounds_expiry_idx",
+      "tbl_name": "tavi_approval_rounds",
+      "sql": "CREATE INDEX tavi_approval_rounds_expiry_idx ON tavi_approval_rounds (expires_at) WHERE settled_at IS NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_approvals_decided_idx",
+      "tbl_name": "tavi_approvals",
+      "sql": "CREATE INDEX tavi_approvals_decided_idx ON tavi_approvals (decided_at DESC, approval_id DESC) WHERE decided_at IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_approvals_round_idx",
+      "tbl_name": "tavi_approvals",
+      "sql": "CREATE UNIQUE INDEX tavi_approvals_round_idx ON tavi_approvals (task_id, steps, call_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_approvals_state_idx",
+      "tbl_name": "tavi_approvals",
+      "sql": "CREATE INDEX tavi_approvals_state_idx ON tavi_approvals (state, created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_artifacts_derived_from_idx",
+      "tbl_name": "tavi_artifacts",
+      "sql": "CREATE INDEX tavi_artifacts_derived_from_idx ON tavi_artifacts (derived_from) WHERE derived_from IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_artifacts_fold_idx",
+      "tbl_name": "tavi_artifacts",
+      "sql": "CREATE INDEX tavi_artifacts_fold_idx ON tavi_artifacts (run_id, created_at) WHERE fold IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_artifacts_pending_review_idx",
+      "tbl_name": "tavi_artifacts",
+      "sql": "CREATE INDEX tavi_artifacts_pending_review_idx ON tavi_artifacts (workspace_id, created_at) WHERE review_state = 'pending'"
+    },
+    {
+      "type": "index",
+      "name": "tavi_artifacts_preview_idx",
+      "tbl_name": "tavi_artifacts",
+      "sql": "CREATE INDEX tavi_artifacts_preview_idx ON tavi_artifacts (run_id, created_at) WHERE preview IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_artifacts_purpose_idx",
+      "tbl_name": "tavi_artifacts",
+      "sql": "CREATE INDEX tavi_artifacts_purpose_idx ON tavi_artifacts (purpose, created_at) WHERE purpose IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_artifacts_reviewed_idx",
+      "tbl_name": "tavi_artifacts",
+      "sql": "CREATE INDEX tavi_artifacts_reviewed_idx ON tavi_artifacts (workspace_id, reviewed_at DESC) WHERE reviewed_at IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_artifacts_run_idx",
+      "tbl_name": "tavi_artifacts",
+      "sql": "CREATE INDEX tavi_artifacts_run_idx ON tavi_artifacts (run_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_artifacts_scope_idx",
+      "tbl_name": "tavi_artifacts",
+      "sql": "CREATE INDEX tavi_artifacts_scope_idx ON tavi_artifacts (workspace_id, created_at DESC)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_artifacts_task_review_idx",
+      "tbl_name": "tavi_artifacts",
+      "sql": "CREATE INDEX tavi_artifacts_task_review_idx ON tavi_artifacts(run_id, review_state)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_browser_sessions_opened_idx",
+      "tbl_name": "tavi_browser_sessions",
+      "sql": "CREATE INDEX tavi_browser_sessions_opened_idx ON tavi_browser_sessions (opened_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_browser_sessions_task_idx",
+      "tbl_name": "tavi_browser_sessions",
+      "sql": "CREATE INDEX tavi_browser_sessions_task_idx ON tavi_browser_sessions (task_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_browser_sessions_thumbnail_idx",
+      "tbl_name": "tavi_browser_sessions",
+      "sql": "CREATE INDEX tavi_browser_sessions_thumbnail_idx ON tavi_browser_sessions (thumbnail_artifact_id) WHERE thumbnail_artifact_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_browser_sessions_workspace_idx",
+      "tbl_name": "tavi_browser_sessions",
+      "sql": "CREATE INDEX tavi_browser_sessions_workspace_idx ON tavi_browser_sessions (workspace_id, opened_at DESC)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_channel_purges_due_idx",
+      "tbl_name": "tavi_channel_purges",
+      "sql": "CREATE INDEX tavi_channel_purges_due_idx ON tavi_channel_purges (state, purge_after)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_chat_notices_source_idx",
+      "tbl_name": "tavi_chat_notices",
+      "sql": "CREATE UNIQUE INDEX tavi_chat_notices_source_idx ON tavi_chat_notices (task_id, source_key)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_chat_notices_task_idx",
+      "tbl_name": "tavi_chat_notices",
+      "sql": "CREATE INDEX tavi_chat_notices_task_idx ON tavi_chat_notices (task_id, after_seq, created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_chat_steers_message_idx",
+      "tbl_name": "tavi_chat_steers",
+      "sql": "CREATE UNIQUE INDEX tavi_chat_steers_message_idx ON tavi_chat_steers (task_id, message_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_chat_steers_open_idx",
+      "tbl_name": "tavi_chat_steers",
+      "sql": "CREATE INDEX tavi_chat_steers_open_idx ON tavi_chat_steers (task_id, state, created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_delegation_parent_idx",
+      "tbl_name": "tavi_agent_delegation_admissions",
+      "sql": "CREATE INDEX tavi_delegation_parent_idx ON tavi_agent_delegation_admissions(workspace_id, parent_task_id, worker_task_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_delegation_root_idx",
+      "tbl_name": "tavi_agent_delegation_admissions",
+      "sql": "CREATE INDEX tavi_delegation_root_idx ON tavi_agent_delegation_admissions(workspace_id, root_task_id, worker_task_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_effects_state_idx",
+      "tbl_name": "tavi_effects",
+      "sql": "CREATE INDEX tavi_effects_state_idx ON tavi_effects (state, updated_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_effects_task_idx",
+      "tbl_name": "tavi_effects",
+      "sql": "CREATE INDEX tavi_effects_task_idx ON tavi_effects (task_id, created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_effects_tool_idx",
+      "tbl_name": "tavi_effects",
+      "sql": "CREATE INDEX tavi_effects_tool_idx ON tavi_effects (tool_id, created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_evidence_revision_idx",
+      "tbl_name": "tavi_evidence_sources",
+      "sql": "CREATE INDEX tavi_evidence_revision_idx ON tavi_evidence_sources (revision_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_evidence_scope_idx",
+      "tbl_name": "tavi_evidence_sources",
+      "sql": "CREATE INDEX tavi_evidence_scope_idx ON tavi_evidence_sources (scope_key, revocation_status)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_executions_lease_idx",
+      "tbl_name": "tavi_executions",
+      "sql": "CREATE INDEX tavi_executions_lease_idx ON tavi_executions (state, lease_expires_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_executions_state_idx",
+      "tbl_name": "tavi_executions",
+      "sql": "CREATE INDEX tavi_executions_state_idx ON tavi_executions (task_id, state)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_gate_observations_created_idx",
+      "tbl_name": "tavi_gate_observations",
+      "sql": "CREATE INDEX tavi_gate_observations_created_idx ON tavi_gate_observations (created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_heartbeat_items_button_idx",
+      "tbl_name": "tavi_heartbeat_items",
+      "sql": "CREATE INDEX tavi_heartbeat_items_button_idx ON tavi_heartbeat_items (button_token)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_heartbeat_items_key_idx",
+      "tbl_name": "tavi_heartbeat_items",
+      "sql": "CREATE UNIQUE INDEX tavi_heartbeat_items_key_idx ON tavi_heartbeat_items (workspace_id, principal_id, item_key)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_heartbeat_items_told_idx",
+      "tbl_name": "tavi_heartbeat_items",
+      "sql": "CREATE INDEX tavi_heartbeat_items_told_idx ON tavi_heartbeat_items (workspace_id, principal_id, last_told_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_heartbeat_ticks_scope_idx",
+      "tbl_name": "tavi_heartbeat_ticks",
+      "sql": "CREATE INDEX tavi_heartbeat_ticks_scope_idx ON tavi_heartbeat_ticks (workspace_id, principal_id, created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_heartbeat_ticks_task_idx",
+      "tbl_name": "tavi_heartbeat_ticks",
+      "sql": "CREATE INDEX tavi_heartbeat_ticks_task_idx ON tavi_heartbeat_ticks (task_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_heartbeats_due_idx",
+      "tbl_name": "tavi_heartbeats",
+      "sql": "CREATE INDEX tavi_heartbeats_due_idx ON tavi_heartbeats (enabled, next_tick_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_idea_feedback_scope_idx",
+      "tbl_name": "tavi_idea_feedback",
+      "sql": "CREATE INDEX tavi_idea_feedback_scope_idx ON tavi_idea_feedback (workspace_id, signal, at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_idea_runs_scope_idx",
+      "tbl_name": "tavi_idea_runs",
+      "sql": "CREATE INDEX tavi_idea_runs_scope_idx ON tavi_idea_runs (workspace_id, started_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_ideas_active_key_idx",
+      "tbl_name": "tavi_ideas",
+      "sql": "CREATE UNIQUE INDEX tavi_ideas_active_key_idx ON tavi_ideas (workspace_id, idea_key) WHERE status = 'active'"
+    },
+    {
+      "type": "index",
+      "name": "tavi_ideas_key_idx",
+      "tbl_name": "tavi_ideas",
+      "sql": "CREATE INDEX tavi_ideas_key_idx ON tavi_ideas (workspace_id, idea_key)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_ideas_seeded_task_idx",
+      "tbl_name": "tavi_ideas",
+      "sql": "CREATE INDEX tavi_ideas_seeded_task_idx ON tavi_ideas (seeded_task_id) WHERE seeded_task_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_ideas_status_idx",
+      "tbl_name": "tavi_ideas",
+      "sql": "CREATE INDEX tavi_ideas_status_idx ON tavi_ideas (workspace_id, status, expires_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_lineage_to_idx",
+      "tbl_name": "tavi_lineage_edges",
+      "sql": "CREATE INDEX tavi_lineage_to_idx ON tavi_lineage_edges (to_revision_id, derived_freshness)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_mcp_notices_open",
+      "tbl_name": "tavi_mcp_notices",
+      "sql": "CREATE UNIQUE INDEX tavi_mcp_notices_open ON tavi_mcp_notices (plugin_id, kind) WHERE decided_at IS NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_mcp_tools_id_idx",
+      "tbl_name": "tavi_mcp_tools",
+      "sql": "CREATE UNIQUE INDEX tavi_mcp_tools_id_idx ON tavi_mcp_tools (plugin_id, version, tool_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_active_preference_idx",
+      "tbl_name": "tavi_memory_records",
+      "sql": "CREATE UNIQUE INDEX tavi_memory_active_preference_idx\n  ON tavi_memory_records (scope_key, preference_key)\n  WHERE kind = 'preference' AND status = 'approved' AND valid_to IS NULL AND preference_key IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_chat_notes_idx",
+      "tbl_name": "tavi_memory_records",
+      "sql": "CREATE INDEX tavi_memory_chat_notes_idx ON tavi_memory_records (run_id) WHERE scope_kind = 'run_local' AND durable = 1"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_content_key_idx",
+      "tbl_name": "tavi_memory_records",
+      "sql": "CREATE INDEX tavi_memory_content_key_idx ON tavi_memory_records (scope_key, kind, content_key)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_deletions_record_idx",
+      "tbl_name": "tavi_memory_deletions",
+      "sql": "CREATE INDEX tavi_memory_deletions_record_idx ON tavi_memory_deletions (record_id, requested_at DESC, deletion_id DESC)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_deletions_scope_idx",
+      "tbl_name": "tavi_memory_deletions",
+      "sql": "CREATE INDEX tavi_memory_deletions_scope_idx ON tavi_memory_deletions (scope_key, deletion_generation DESC)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_expiry_idx",
+      "tbl_name": "tavi_memory_records",
+      "sql": "CREATE INDEX tavi_memory_expiry_idx ON tavi_memory_records (expiry_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_marks_kind_idx",
+      "tbl_name": "tavi_memory_marks",
+      "sql": "CREATE INDEX tavi_memory_marks_kind_idx ON tavi_memory_marks (kind, task_id, at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_origin_task_idx",
+      "tbl_name": "tavi_memory_records",
+      "sql": "CREATE INDEX tavi_memory_origin_task_idx ON tavi_memory_records (origin_task_id) WHERE origin_task_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_principal_idx",
+      "tbl_name": "tavi_memory_records",
+      "sql": "CREATE INDEX tavi_memory_principal_idx ON tavi_memory_records (principal_id, workspace_id, status)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_prompts_record_idx",
+      "tbl_name": "tavi_memory_prompts",
+      "sql": "CREATE INDEX tavi_memory_prompts_record_idx ON tavi_memory_prompts (record_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_prompts_settled_idx",
+      "tbl_name": "tavi_memory_prompts",
+      "sql": "CREATE INDEX tavi_memory_prompts_settled_idx ON tavi_memory_prompts (settled_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_records_topic_idx",
+      "tbl_name": "tavi_memory_records",
+      "sql": "CREATE INDEX tavi_memory_records_topic_idx ON tavi_memory_records (kind, topic_key)\n  WHERE topic_key IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_reviews_record_idx",
+      "tbl_name": "tavi_memory_reviews",
+      "sql": "CREATE INDEX tavi_memory_reviews_record_idx ON tavi_memory_reviews (record_id, decided_at DESC)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_revision_record_idx",
+      "tbl_name": "tavi_memory_revisions",
+      "sql": "CREATE INDEX tavi_memory_revision_record_idx ON tavi_memory_revisions (record_id, revision_number DESC)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_scope_idx",
+      "tbl_name": "tavi_memory_records",
+      "sql": "CREATE INDEX tavi_memory_scope_idx ON tavi_memory_records (scope_key, status, kind)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_validity_idx",
+      "tbl_name": "tavi_memory_records",
+      "sql": "CREATE INDEX tavi_memory_validity_idx ON tavi_memory_records (status, valid_from, valid_to)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_memory_vectors_model_idx",
+      "tbl_name": "tavi_memory_vectors",
+      "sql": "CREATE INDEX tavi_memory_vectors_model_idx ON tavi_memory_vectors (model_key)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_messaging_connections_workspace",
+      "tbl_name": "tavi_messaging_connections",
+      "sql": "CREATE INDEX tavi_messaging_connections_workspace ON tavi_messaging_connections (workspace_id, created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_messaging_conversation_tasks_active_idx",
+      "tbl_name": "tavi_messaging_conversation_tasks",
+      "sql": "CREATE UNIQUE INDEX tavi_messaging_conversation_tasks_active_idx ON tavi_messaging_conversation_tasks (connection_id, external_conversation_id) WHERE active = 1"
+    },
+    {
+      "type": "index",
+      "name": "tavi_messaging_conversation_tasks_task_idx",
+      "tbl_name": "tavi_messaging_conversation_tasks",
+      "sql": "CREATE INDEX tavi_messaging_conversation_tasks_task_idx ON tavi_messaging_conversation_tasks (task_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_messaging_deliveries_effect_idx",
+      "tbl_name": "tavi_messaging_deliveries",
+      "sql": "CREATE INDEX tavi_messaging_deliveries_effect_idx ON tavi_messaging_deliveries (effect_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_messaging_deliveries_status_idx",
+      "tbl_name": "tavi_messaging_deliveries",
+      "sql": "CREATE INDEX tavi_messaging_deliveries_status_idx ON tavi_messaging_deliveries (status, status_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_messaging_inbound_activity_idx",
+      "tbl_name": "tavi_messaging_inbound_activity",
+      "sql": "CREATE INDEX tavi_messaging_inbound_activity_idx ON tavi_messaging_inbound_activity (workspace_id, received_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_messaging_inbox_state_idx",
+      "tbl_name": "tavi_messaging_inbox",
+      "sql": "CREATE INDEX tavi_messaging_inbox_state_idx ON tavi_messaging_inbox (connection_id, state)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_messaging_outbox_pending_idx",
+      "tbl_name": "tavi_messaging_outbox",
+      "sql": "CREATE INDEX tavi_messaging_outbox_pending_idx ON tavi_messaging_outbox (connection_id, state)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_messaging_outbox_sent_idx",
+      "tbl_name": "tavi_messaging_outbox",
+      "sql": "CREATE INDEX tavi_messaging_outbox_sent_idx ON tavi_messaging_outbox (connection_id, created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_messaging_outbox_state_created_idx",
+      "tbl_name": "tavi_messaging_outbox",
+      "sql": "CREATE INDEX tavi_messaging_outbox_state_created_idx ON tavi_messaging_outbox (state, created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_model_catalog_state_idx",
+      "tbl_name": "tavi_model_catalog",
+      "sql": "CREATE INDEX tavi_model_catalog_state_idx ON tavi_model_catalog (connection_id, state)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_model_prices_target",
+      "tbl_name": "tavi_model_price_sheets",
+      "sql": "CREATE INDEX tavi_model_prices_target ON tavi_model_price_sheets(connection_id, model, effective_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_need_deliveries_message_idx",
+      "tbl_name": "tavi_need_deliveries",
+      "sql": "CREATE INDEX tavi_need_deliveries_message_idx ON tavi_need_deliveries (connection_id, chat_id, provider_message_id) WHERE provider_message_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_need_deliveries_token_idx",
+      "tbl_name": "tavi_need_deliveries",
+      "sql": "CREATE INDEX tavi_need_deliveries_token_idx ON tavi_need_deliveries (token)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_onboarding_events_workspace",
+      "tbl_name": "tavi_onboarding_events",
+      "sql": "CREATE INDEX tavi_onboarding_events_workspace ON tavi_onboarding_events (workspace_id, step_kind)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_onboarding_verifications_subject_idx",
+      "tbl_name": "tavi_onboarding_verifications",
+      "sql": "CREATE UNIQUE INDEX tavi_onboarding_verifications_subject_idx ON tavi_onboarding_verifications (workspace_id, subject, COALESCE(role, ''), subject_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_pending_reject_reasons_expiry_idx",
+      "tbl_name": "tavi_pending_reject_reasons",
+      "sql": "CREATE INDEX tavi_pending_reject_reasons_expiry_idx ON tavi_pending_reject_reasons (expires_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_plugin_hook_events_kind_idx",
+      "tbl_name": "tavi_plugin_hook_events",
+      "sql": "CREATE INDEX tavi_plugin_hook_events_kind_idx ON tavi_plugin_hook_events (plugin_id, kind, event_seq)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_plugin_hook_events_plugin_idx",
+      "tbl_name": "tavi_plugin_hook_events",
+      "sql": "CREATE INDEX tavi_plugin_hook_events_plugin_idx ON tavi_plugin_hook_events (plugin_id, event_seq)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_plugin_hook_events_task_idx",
+      "tbl_name": "tavi_plugin_hook_events",
+      "sql": "CREATE INDEX tavi_plugin_hook_events_task_idx ON tavi_plugin_hook_events (task_id, kind, event, created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_projects_enabled_idx",
+      "tbl_name": "tavi_projects",
+      "sql": "CREATE INDEX tavi_projects_enabled_idx ON tavi_projects (workspace_id, enabled, project_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_provider_attempt_requests_run",
+      "tbl_name": "tavi_provider_attempt_requests",
+      "sql": "CREATE INDEX tavi_provider_attempt_requests_run ON tavi_provider_attempt_requests (run_id, started_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_provider_attempts_run",
+      "tbl_name": "tavi_provider_attempts",
+      "sql": "CREATE INDEX tavi_provider_attempts_run ON tavi_provider_attempts(run_id, started_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_provider_attempts_run_state",
+      "tbl_name": "tavi_provider_attempts",
+      "sql": "CREATE INDEX tavi_provider_attempts_run_state ON tavi_provider_attempts (run_id, state, started_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_provider_attempts_state",
+      "tbl_name": "tavi_provider_attempts",
+      "sql": "CREATE INDEX tavi_provider_attempts_state ON tavi_provider_attempts(state, started_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_provider_operations_state",
+      "tbl_name": "tavi_provider_operations",
+      "sql": "CREATE INDEX tavi_provider_operations_state ON tavi_provider_operations(state, owner_session)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_receipts_checkpoint_idx",
+      "tbl_name": "tavi_checkpoint_receipts",
+      "sql": "CREATE UNIQUE INDEX tavi_receipts_checkpoint_idx\n  ON tavi_checkpoint_receipts (thread_id, checkpoint_namespace, checkpoint_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_receipts_task_idx",
+      "tbl_name": "tavi_checkpoint_receipts",
+      "sql": "CREATE INDEX tavi_receipts_task_idx ON tavi_checkpoint_receipts (task_id, recorded_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_reminder_fires_pending",
+      "tbl_name": "tavi_reminder_fires",
+      "sql": "CREATE INDEX tavi_reminder_fires_pending ON tavi_reminder_fires (outcome, fire_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_reminder_fires_retry",
+      "tbl_name": "tavi_reminder_fires",
+      "sql": "CREATE INDEX tavi_reminder_fires_retry ON tavi_reminder_fires (retry_at) WHERE retry_at IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_reminder_fires_token",
+      "tbl_name": "tavi_reminder_fires",
+      "sql": "CREATE UNIQUE INDEX tavi_reminder_fires_token ON tavi_reminder_fires (token) WHERE token IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_reminders_due",
+      "tbl_name": "tavi_reminders",
+      "sql": "CREATE INDEX tavi_reminders_due ON tavi_reminders (status, next_fire_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_reminders_todos",
+      "tbl_name": "tavi_reminders",
+      "sql": "CREATE INDEX tavi_reminders_todos ON tavi_reminders (workspace_id, todo_status, created_at, reminder_id) WHERE kind = 'todo'"
+    },
+    {
+      "type": "index",
+      "name": "tavi_reminders_workspace",
+      "tbl_name": "tavi_reminders",
+      "sql": "CREATE INDEX tavi_reminders_workspace ON tavi_reminders (workspace_id, created_at, reminder_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_reports_history_idx",
+      "tbl_name": "tavi_reports",
+      "sql": "CREATE INDEX tavi_reports_history_idx ON tavi_reports (workspace_id, generated_at DESC)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_routine_blob_refs_artifact_idx",
+      "tbl_name": "tavi_routine_blob_refs",
+      "sql": "CREATE INDEX tavi_routine_blob_refs_artifact_idx ON tavi_routine_blob_refs (artifact_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_routine_blob_refs_routine_idx",
+      "tbl_name": "tavi_routine_blob_refs",
+      "sql": "CREATE INDEX tavi_routine_blob_refs_routine_idx ON tavi_routine_blob_refs (routine_id, pinned)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_routine_delivery_due_idx",
+      "tbl_name": "tavi_routine_delivery_jobs",
+      "sql": "CREATE INDEX tavi_routine_delivery_due_idx ON tavi_routine_delivery_jobs(status, not_before)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_routine_delivery_jobs_run_idx",
+      "tbl_name": "tavi_routine_delivery_jobs",
+      "sql": "CREATE INDEX tavi_routine_delivery_jobs_run_idx ON tavi_routine_delivery_jobs (run_id, created_at, job_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_routine_details_routine_idx",
+      "tbl_name": "tavi_routine_details",
+      "sql": "CREATE INDEX tavi_routine_details_routine_idx ON tavi_routine_details (routine_id, created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_routine_details_run_idx",
+      "tbl_name": "tavi_routine_details",
+      "sql": "CREATE INDEX tavi_routine_details_run_idx ON tavi_routine_details (run_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_routine_quality_cache_idx",
+      "tbl_name": "tavi_routine_quality",
+      "sql": "CREATE INDEX tavi_routine_quality_cache_idx ON tavi_routine_quality(workspace_id,principal_id,fingerprint,status)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_routine_runs_failed_idx",
+      "tbl_name": "tavi_routine_runs",
+      "sql": "CREATE INDEX tavi_routine_runs_failed_idx ON tavi_routine_runs (workspace_id, status, ended_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_routine_runs_history_idx",
+      "tbl_name": "tavi_routine_runs",
+      "sql": "CREATE INDEX tavi_routine_runs_history_idx ON tavi_routine_runs(routine_id, claimed_at DESC, run_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_routine_runs_local_day_idx",
+      "tbl_name": "tavi_routine_runs",
+      "sql": "CREATE INDEX tavi_routine_runs_local_day_idx ON tavi_routine_runs (routine_id, json_extract(data_json, '$.localDay'))"
+    },
+    {
+      "type": "index",
+      "name": "tavi_routine_runs_pending_idx",
+      "tbl_name": "tavi_routine_runs",
+      "sql": "CREATE INDEX tavi_routine_runs_pending_idx ON tavi_routine_runs (claimed_at, run_id) WHERE status IN ('queued','interrupted')"
+    },
+    {
+      "type": "index",
+      "name": "tavi_routine_runs_task_idx",
+      "tbl_name": "tavi_routine_runs",
+      "sql": "CREATE INDEX tavi_routine_runs_task_idx ON tavi_routine_runs (task_id) WHERE task_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_routine_sources_run_idx",
+      "tbl_name": "tavi_routine_sources",
+      "sql": "CREATE INDEX tavi_routine_sources_run_idx ON tavi_routine_sources(run_id, source_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_routines_scope_idx",
+      "tbl_name": "tavi_routines",
+      "sql": "CREATE INDEX tavi_routines_scope_idx ON tavi_routines(workspace_id, principal_id, updated_at, routine_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_schedule_fires_recent_idx",
+      "tbl_name": "tavi_schedule_fires",
+      "sql": "CREATE INDEX tavi_schedule_fires_recent_idx ON tavi_schedule_fires (schedule_id, at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_schedules_due_idx",
+      "tbl_name": "tavi_schedules",
+      "sql": "CREATE INDEX tavi_schedules_due_idx ON tavi_schedules (next_run_at) WHERE enabled = 1"
+    },
+    {
+      "type": "index",
+      "name": "tavi_schedules_email_trigger_idx",
+      "tbl_name": "tavi_schedules",
+      "sql": "CREATE INDEX tavi_schedules_email_trigger_idx ON tavi_schedules (\n  (CASE WHEN json_valid(email_trigger_json) THEN json_extract(email_trigger_json, '$.connectionId') END), name\n) WHERE email_trigger_json IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_schedules_name_uidx",
+      "tbl_name": "tavi_schedules",
+      "sql": "CREATE UNIQUE INDEX tavi_schedules_name_uidx ON tavi_schedules (workspace_id, name)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_session_grants_task_idx",
+      "tbl_name": "tavi_session_grants",
+      "sql": "CREATE INDEX tavi_session_grants_task_idx ON tavi_session_grants (task_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_skill_activation_history_idx",
+      "tbl_name": "tavi_skill_activation_history",
+      "sql": "CREATE INDEX tavi_skill_activation_history_idx ON tavi_skill_activation_history (scope_key, skill_id, at DESC)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_skill_rollout_allowlist_triple_idx",
+      "tbl_name": "tavi_skill_rollout_allowlist",
+      "sql": "CREATE INDEX tavi_skill_rollout_allowlist_triple_idx ON tavi_skill_rollout_allowlist (scope_key, skill_id, version)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_skill_uses_recent_idx",
+      "tbl_name": "tavi_skill_uses",
+      "sql": "CREATE INDEX tavi_skill_uses_recent_idx ON tavi_skill_uses (scope_key, used_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_skill_uses_skill_idx",
+      "tbl_name": "tavi_skill_uses",
+      "sql": "CREATE INDEX tavi_skill_uses_skill_idx ON tavi_skill_uses (scope_key, skill_id, used_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_skill_versions_scope_idx",
+      "tbl_name": "tavi_skill_versions",
+      "sql": "CREATE INDEX tavi_skill_versions_scope_idx ON tavi_skill_versions (scope_key, skill_id, review_state)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_tainted_host_writes_file",
+      "tbl_name": "tavi_tainted_host_writes",
+      "sql": "CREATE INDEX tavi_tainted_host_writes_file ON tavi_tainted_host_writes (dev, ino)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_tainted_host_writes_task",
+      "tbl_name": "tavi_tainted_host_writes",
+      "sql": "CREATE INDEX tavi_tainted_host_writes_task ON tavi_tainted_host_writes (task_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_task_findings_kind_idx",
+      "tbl_name": "tavi_task_findings",
+      "sql": "CREATE INDEX tavi_task_findings_kind_idx ON tavi_task_findings (task_id, kind, seq)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_task_memory_use_recent_idx",
+      "tbl_name": "tavi_task_memory_use",
+      "sql": "CREATE INDEX tavi_task_memory_use_recent_idx ON tavi_task_memory_use (task_id, last_used_at DESC)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_task_prompt_snapshots_workspace_idx",
+      "tbl_name": "tavi_task_prompt_snapshots",
+      "sql": "CREATE INDEX tavi_task_prompt_snapshots_workspace_idx ON tavi_task_prompt_snapshots(workspace_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_task_tool_calls_tool_idx",
+      "tbl_name": "tavi_task_tool_calls",
+      "sql": "CREATE INDEX tavi_task_tool_calls_tool_idx ON tavi_task_tool_calls (tool_id, created_at)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_tasks_created_idx",
+      "tbl_name": "tavi_tasks",
+      "sql": "CREATE INDEX tavi_tasks_created_idx ON tavi_tasks (created_at DESC)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_tasks_creation_key_idx",
+      "tbl_name": "tavi_tasks",
+      "sql": "CREATE UNIQUE INDEX tavi_tasks_creation_key_idx\n    ON tavi_tasks (workspace_id, principal_id, operation_key)\n    WHERE operation_key IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_tasks_home_idx",
+      "tbl_name": "tavi_tasks",
+      "sql": "CREATE UNIQUE INDEX tavi_tasks_home_idx ON tavi_tasks (workspace_id, principal_id) WHERE chat_kind = 'home'"
+    },
+    {
+      "type": "index",
+      "name": "tavi_tasks_parent_chat_idx",
+      "tbl_name": "tavi_tasks",
+      "sql": "CREATE INDEX tavi_tasks_parent_chat_idx ON tavi_tasks (parent_chat_id) WHERE parent_chat_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "tavi_tasks_private_idx",
+      "tbl_name": "tavi_tasks",
+      "sql": "CREATE INDEX tavi_tasks_private_idx ON tavi_tasks (memory_mode) WHERE memory_mode = 'private'"
+    },
+    {
+      "type": "index",
+      "name": "tavi_tasks_session_idx",
+      "tbl_name": "tavi_tasks",
+      "sql": "CREATE INDEX tavi_tasks_session_idx ON tavi_tasks(workspace_id, updated_at DESC, task_id DESC)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_tasks_summary_pending_idx",
+      "tbl_name": "tavi_tasks",
+      "sql": "CREATE INDEX tavi_tasks_summary_pending_idx ON tavi_tasks (updated_at, task_id) WHERE summary_state = 'pending'"
+    },
+    {
+      "type": "index",
+      "name": "tavi_tasks_thread_idx",
+      "tbl_name": "tavi_tasks",
+      "sql": "CREATE INDEX tavi_tasks_thread_idx ON tavi_tasks (thread_id)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_tasks_workspace_idx",
+      "tbl_name": "tavi_tasks",
+      "sql": "CREATE INDEX tavi_tasks_workspace_idx ON tavi_tasks (workspace_id, created_at DESC)"
+    },
+    {
+      "type": "index",
+      "name": "tavi_transcript_entries_admission_idx",
+      "tbl_name": "tavi_transcript_entries",
+      "sql": "CREATE UNIQUE INDEX tavi_transcript_entries_admission_idx ON tavi_transcript_entries (task_id, admission_id) WHERE admission_id IS NOT NULL"
+    },
+    {
+      "type": "table",
+      "name": "sqlite_sequence",
+      "tbl_name": "sqlite_sequence",
+      "sql": "CREATE TABLE sqlite_sequence(name,seq)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_admissions",
+      "tbl_name": "tavi_admissions",
+      "sql": "CREATE TABLE tavi_admissions (\n    admission_id  TEXT PRIMARY KEY,\n    task_id       TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n    operation_key TEXT NOT NULL,\n    kind          TEXT NOT NULL,\n    intent        TEXT NOT NULL,\n    intent_hash   TEXT NOT NULL,\n    state         TEXT NOT NULL,\n    -- Durable outcome, so replaying a committed or suspended admission returns a\n    -- known result instead of re-running the graph.\n    result        TEXT,\n    created_at    TEXT NOT NULL,\n    updated_at    TEXT NOT NULL\n  , instructions_revision INTEGER, prompt_pin INTEGER)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_agent_definitions",
+      "tbl_name": "tavi_agent_definitions",
+      "sql": "CREATE TABLE tavi_agent_definitions (\n  agent_id       TEXT NOT NULL,\n  workspace_id   TEXT NOT NULL,\n  name           TEXT NOT NULL,\n  description    TEXT,\n  system_prompt  TEXT NOT NULL,\n  enabled        INTEGER NOT NULL DEFAULT 1,\n  created_at     TEXT NOT NULL,\n  updated_at     TEXT NOT NULL,\n  PRIMARY KEY (workspace_id, agent_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_agent_delegation_admissions",
+      "tbl_name": "tavi_agent_delegation_admissions",
+      "sql": "CREATE TABLE tavi_agent_delegation_admissions (\n  workspace_id       TEXT NOT NULL,\n  principal_id        TEXT NOT NULL,\n  operation_key         TEXT NOT NULL,\n  worker_task_id          TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  worker_agent_id           TEXT NOT NULL,\n  created_at                 TEXT NOT NULL, shared_memory_record_ids TEXT, depth INTEGER NOT NULL DEFAULT 1, budget TEXT, agent_definition_id TEXT, parent_task_id TEXT, root_task_id TEXT, held_channel TEXT CHECK (held_channel IS NULL OR held_channel IN ('messaging')), front_end TEXT CHECK (front_end IS NULL OR front_end IN ('web', 'ipc')), held_connection_id TEXT,\n  PRIMARY KEY (workspace_id, principal_id, operation_key)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_agent_mailbox",
+      "tbl_name": "tavi_agent_mailbox",
+      "sql": "CREATE TABLE tavi_agent_mailbox (\n  message_id          TEXT PRIMARY KEY,\n  protocol_version     INTEGER NOT NULL,\n  workspace_id          TEXT NOT NULL,\n  sender_agent_id        TEXT NOT NULL,\n  -- Deliberately no REFERENCES/CASCADE from sender_task_id: a delivered\n  -- envelope is the recipient's durable record, and the sender's own task\n  -- being deleted should not retroactively delete mail it already sent\n  -- (unlike recipient_task_id below, whose row this envelope belongs to).\n  sender_task_id          TEXT NOT NULL,\n  recipient_agent_id       TEXT NOT NULL,\n  recipient_task_id         TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  kind                       TEXT NOT NULL CHECK (kind IN ('message','request','reply','progress','result')),\n  correlation_id             TEXT,\n  causation_id                TEXT,\n  created_at                   TEXT NOT NULL,\n  expires_at                    TEXT,\n  -- Defense in depth only: the real 2-KiB UTF-8 bound is enforced by\n  -- AgentEnvelopeSchema's TextEncoder-based refine before a row ever\n  -- reaches here. SQLite's length() counts characters, not UTF-8 bytes, so\n  -- this bound is deliberately looser (4 bytes/char worst case) rather than\n  -- an exact match — it exists only to catch a writer that bypassed schema\n  -- validation entirely, not to duplicate the byte-exact application rule.\n  content                        TEXT CHECK (content IS NULL OR length(content) <= 2048),\n  artifact_id                     TEXT REFERENCES tavi_artifacts(artifact_id),\n  delivery_state                   TEXT NOT NULL\n    CHECK (delivery_state IN ('pending','delivered','acknowledged','expired','rejected','cancelled','dead-letter')),\n  retention_state                   TEXT NOT NULL DEFAULT 'active'\n    CHECK (retention_state IN ('active','archived','tombstoned')),\n  lease_id                            TEXT,\n  lease_expires_at                     TEXT\n, label_json TEXT)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_agent_revisions",
+      "tbl_name": "tavi_agent_revisions",
+      "sql": "CREATE TABLE tavi_agent_revisions (\n workspace_id TEXT NOT NULL, principal_id TEXT NOT NULL, agent_id TEXT NOT NULL, revision INTEGER NOT NULL,\n name TEXT NOT NULL, instructions TEXT NOT NULL, hash TEXT NOT NULL, author TEXT NOT NULL, created_at TEXT NOT NULL,\n PRIMARY KEY(workspace_id, principal_id, agent_id, revision)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_agent_wait_intents",
+      "tbl_name": "tavi_agent_wait_intents",
+      "sql": "CREATE TABLE tavi_agent_wait_intents (\n  wait_id                TEXT PRIMARY KEY,\n  task_id                 TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  correlation_id            TEXT,\n  waiting_on_worker_task_id   TEXT,\n  deadline_at                  TEXT NOT NULL,\n  state                         TEXT NOT NULL CHECK (state IN ('prepared','active','settled')),\n  settled_outcome_json            TEXT\n, choices_json TEXT, settled_at TEXT, resume_pending INTEGER NOT NULL DEFAULT 0, settled_by TEXT, settled_via TEXT, question TEXT, handoff_json TEXT, connect_json TEXT)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_approval_events",
+      "tbl_name": "tavi_approval_events",
+      "sql": "CREATE TABLE tavi_approval_events (\n  event_id    INTEGER PRIMARY KEY AUTOINCREMENT,\n  task_id     TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  steps       INTEGER NOT NULL,\n  kind        TEXT NOT NULL,\n  via         TEXT,\n  actor       TEXT,\n  detail_json TEXT,\n  at          TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_approval_links",
+      "tbl_name": "tavi_approval_links",
+      "sql": "CREATE TABLE tavi_approval_links (\n  token_hash TEXT PRIMARY KEY,\n  task_id    TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  kind       TEXT NOT NULL CHECK (kind IN ('round', 'question')),\n  steps      INTEGER,\n  wait_id    TEXT,\n  choice     TEXT NOT NULL,\n  expires_at TEXT NOT NULL,\n  used_at    TEXT,\n  created_at TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_approval_round_deliveries",
+      "tbl_name": "tavi_approval_round_deliveries",
+      "sql": "CREATE TABLE tavi_approval_round_deliveries (\n  task_id          TEXT NOT NULL,\n  steps            INTEGER NOT NULL,\n  connection_id    TEXT NOT NULL,\n  role             TEXT NOT NULL CHECK (role IN ('card', 'notice')),\n  destination_json TEXT NOT NULL,\n  message_ids_json TEXT NOT NULL,\n  text             TEXT NOT NULL,\n  created_at       TEXT NOT NULL,\n  PRIMARY KEY (task_id, steps, connection_id, role),\n  FOREIGN KEY (task_id, steps) REFERENCES tavi_approval_rounds (task_id, steps) ON DELETE CASCADE\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_approval_rounds",
+      "tbl_name": "tavi_approval_rounds",
+      "sql": "CREATE TABLE tavi_approval_rounds (\n  task_id          TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  steps            INTEGER NOT NULL,\n  token            TEXT NOT NULL UNIQUE,\n  workspace_id     TEXT NOT NULL,\n  connection_id    TEXT,\n  conversation_id  TEXT,\n  message_ids_json TEXT NOT NULL,\n  expires_at       TEXT,\n  settled_at       TEXT,\n  created_at       TEXT NOT NULL, risk TEXT, call_scopes_json TEXT,\n  PRIMARY KEY (task_id, steps)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_approvals",
+      "tbl_name": "tavi_approvals",
+      "sql": "CREATE TABLE tavi_approvals (\n  approval_id  TEXT PRIMARY KEY,\n  task_id      TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  admission_id TEXT NOT NULL,\n  tool_id      TEXT NOT NULL,\n  call_id      TEXT NOT NULL,\n  inputs       TEXT NOT NULL,\n  inputs_hash  TEXT NOT NULL,\n  state        TEXT NOT NULL,\n  decided_by   TEXT,\n  decided_at   TEXT,\n  note         TEXT,\n  created_at   TEXT NOT NULL,\n  updated_at   TEXT NOT NULL\n, steps INTEGER NOT NULL)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_artifacts",
+      "tbl_name": "tavi_artifacts",
+      "sql": "CREATE TABLE tavi_artifacts (\n  artifact_id    TEXT PRIMARY KEY,\n  workspace_id   TEXT NOT NULL,\n  run_id         TEXT,\n  relative_path  TEXT NOT NULL,\n  content_type   TEXT NOT NULL,\n  byte_size      INTEGER NOT NULL,\n  sha256         TEXT NOT NULL,\n  created_at     TEXT NOT NULL\n, review_state TEXT NOT NULL DEFAULT 'approved', reviewed_by TEXT, reviewed_at TEXT, review_note TEXT, purpose TEXT CHECK (purpose IS NULL OR purpose IN ('thumbnail')), untrusted INTEGER NOT NULL DEFAULT 0 CHECK (untrusted IN (0, 1)), file_name TEXT, folder_copy TEXT CHECK (folder_copy IN ('downloads', 'reports')), fold TEXT CHECK (fold IS NULL OR fold IN ('summary', 'epoch')), label_json TEXT, preview TEXT CHECK (preview IS NULL OR preview IN ('pdf-fill', 'pdf-render', 'video-frame', 'video-sheet', 'video-pose')), derived_from TEXT)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_browser_sessions",
+      "tbl_name": "tavi_browser_sessions",
+      "sql": "CREATE TABLE tavi_browser_sessions (\n session_id TEXT PRIMARY KEY,\n workspace_id TEXT NOT NULL,\n task_id TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n opened_at TEXT NOT NULL,\n closed_at TEXT,\n close_reason TEXT,\n last_url TEXT,\n last_title TEXT,\n thumbnail_artifact_id TEXT REFERENCES tavi_artifacts (artifact_id) ON DELETE SET NULL,\n pages INTEGER NOT NULL DEFAULT 0 CHECK (pages >= 0)\n, opened_by_call_id TEXT, inactive_since TEXT)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_browser_visits",
+      "tbl_name": "tavi_browser_visits",
+      "sql": "CREATE TABLE tavi_browser_visits (\n session_id TEXT NOT NULL REFERENCES tavi_browser_sessions (session_id) ON DELETE CASCADE,\n seq INTEGER NOT NULL CHECK (seq >= 1),\n url TEXT NOT NULL,\n title TEXT,\n at TEXT NOT NULL,\n PRIMARY KEY (session_id, seq)\n) WITHOUT ROWID"
+    },
+    {
+      "type": "table",
+      "name": "tavi_cancellations",
+      "tbl_name": "tavi_cancellations",
+      "sql": "CREATE TABLE tavi_cancellations (\n  task_id      TEXT PRIMARY KEY REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  requested_by TEXT NOT NULL,\n  reason       TEXT NOT NULL,\n  requested_at TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_center_versions",
+      "tbl_name": "tavi_center_versions",
+      "sql": "CREATE TABLE tavi_center_versions (\n scope TEXT NOT NULL,\n kind TEXT NOT NULL,\n version INTEGER NOT NULL CHECK (version >= 0),\n PRIMARY KEY (scope, kind)\n) WITHOUT ROWID"
+    },
+    {
+      "type": "table",
+      "name": "tavi_channel_ingress",
+      "tbl_name": "tavi_channel_ingress",
+      "sql": "CREATE TABLE tavi_channel_ingress (\n      singleton   INTEGER PRIMARY KEY CHECK (singleton = 1),\n      host        TEXT NOT NULL,\n      port        INTEGER NOT NULL CHECK (port BETWEEN 1 AND 65535),\n      public_url  TEXT,\n      updated_at  TEXT NOT NULL\n    )"
+    },
+    {
+      "type": "table",
+      "name": "tavi_channel_purges",
+      "tbl_name": "tavi_channel_purges",
+      "sql": "CREATE TABLE tavi_channel_purges (\n  connection_id TEXT PRIMARY KEY,\n  workspace_id  TEXT NOT NULL,\n  provider_id   TEXT NOT NULL,\n  account_ref   TEXT NOT NULL,\n  requested_at  TEXT NOT NULL,\n  purge_after   TEXT NOT NULL,\n  state         TEXT NOT NULL CHECK (state IN ('scheduled', 'cancelled', 'running', 'done')),\n  counts_json   TEXT,\n  finished_at   TEXT\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_channel_rooms",
+      "tbl_name": "tavi_channel_rooms",
+      "sql": "CREATE TABLE tavi_channel_rooms (\n  connection_id   TEXT NOT NULL,\n  conversation_id TEXT NOT NULL,\n  workspace_id    TEXT NOT NULL,\n  label           TEXT NOT NULL,\n  trigger_json    TEXT NOT NULL,\n  members         TEXT NOT NULL CHECK (members IN ('bound', 'operator-only')),\n  context         TEXT NOT NULL DEFAULT 'off' CHECK (context IN ('off', 'recent')),\n  intro_state     TEXT NOT NULL CHECK (intro_state IN ('pending', 'sent', 'uncertain')),\n  created_at      TEXT NOT NULL,\n  updated_at      TEXT NOT NULL,\n  disabled_at     TEXT, auto_thread INTEGER NOT NULL DEFAULT 0 CHECK (auto_thread IN (0, 1)),\n  PRIMARY KEY (connection_id, conversation_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_chat_instructions",
+      "tbl_name": "tavi_chat_instructions",
+      "sql": "CREATE TABLE tavi_chat_instructions (\n  task_id     TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  revision    INTEGER NOT NULL CHECK (revision >= 1),\n  text        TEXT NOT NULL,\n  author      TEXT NOT NULL,\n  recorded_at TEXT NOT NULL,\n  PRIMARY KEY (task_id, revision)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_chat_notices",
+      "tbl_name": "tavi_chat_notices",
+      "sql": "CREATE TABLE \"tavi_chat_notices\" (\n  notice_id         TEXT PRIMARY KEY,\n  task_id           TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  source_key        TEXT NOT NULL,\n  kind              TEXT NOT NULL CHECK (kind IN ('run-result', 'run-settled', 'side-chat-settled', 'earlier-chats', 'reminder', 'conversation', 'epoch', 'folder', 'heartbeat', 'memory', 'mcp')),\n  source_task_id    TEXT,\n  title             TEXT NOT NULL,\n  summary           TEXT NOT NULL,\n  after_seq         INTEGER NOT NULL CHECK (after_seq >= 0),\n  read_by           TEXT,\n  created_at        TEXT NOT NULL,\n  artifact_id       TEXT,\n  heartbeat_item_id TEXT\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_chat_steers",
+      "tbl_name": "tavi_chat_steers",
+      "sql": "CREATE TABLE tavi_chat_steers (\n  steer_id        TEXT PRIMARY KEY,\n  task_id         TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  message_id      TEXT NOT NULL,\n  conversation_id TEXT NOT NULL,\n  text            TEXT NOT NULL,\n  state           TEXT NOT NULL CHECK (state IN ('pending', 'claimed', 'consumed', 'queued')),\n  admission_id    TEXT,\n  created_at      TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_checkpoint_blobs",
+      "tbl_name": "tavi_checkpoint_blobs",
+      "sql": "CREATE TABLE tavi_checkpoint_blobs (\n  thread_id     TEXT NOT NULL,\n  checkpoint_ns TEXT NOT NULL DEFAULT '',\n  channel       TEXT NOT NULL,\n  version       TEXT NOT NULL,\n  type          TEXT NOT NULL,\n  blob          BLOB NOT NULL,\n  PRIMARY KEY (thread_id, checkpoint_ns, channel, version)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_checkpoint_receipts",
+      "tbl_name": "tavi_checkpoint_receipts",
+      "sql": "CREATE TABLE \"tavi_checkpoint_receipts\" (\n  receipt_id           TEXT PRIMARY KEY,\n  task_id              TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  thread_id            TEXT NOT NULL,\n  checkpoint_namespace TEXT NOT NULL DEFAULT '',\n  checkpoint_id        TEXT NOT NULL,\n  admission_id         TEXT,\n  source               TEXT NOT NULL,\n  recorded_at          TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_collector_settings",
+      "tbl_name": "tavi_collector_settings",
+      "sql": "CREATE TABLE tavi_collector_settings (\n  workspace_id                TEXT PRIMARY KEY,\n  google_service_account_ref  TEXT,\n  lookback_days               INTEGER,\n  news_feed_urls_json         TEXT,\n  news_max_items              INTEGER,\n  news_search_credential_ref  TEXT,\n  updated_at                  TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_context_projections",
+      "tbl_name": "tavi_context_projections",
+      "sql": "CREATE TABLE tavi_context_projections (\n    task_id TEXT NOT NULL REFERENCES tavi_tasks(task_id) ON DELETE CASCADE,\n    attempt_id TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY(task_id, attempt_id)\n  )"
+    },
+    {
+      "type": "table",
+      "name": "tavi_effects",
+      "tbl_name": "tavi_effects",
+      "sql": "CREATE TABLE tavi_effects (\n  effect_key   TEXT PRIMARY KEY,\n  task_id      TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  admission_id TEXT NOT NULL,\n  tool_id      TEXT NOT NULL,\n  inputs       TEXT NOT NULL,\n  inputs_hash  TEXT NOT NULL,\n  approval_id  TEXT,\n  state        TEXT NOT NULL,\n  receipt      TEXT,\n  error        TEXT,\n  created_at   TEXT NOT NULL,\n  updated_at   TEXT NOT NULL\n, label_json TEXT)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_evidence_sources",
+      "tbl_name": "tavi_evidence_sources",
+      "sql": "CREATE TABLE tavi_evidence_sources (\n  source_id         TEXT PRIMARY KEY,\n  scope_key         TEXT NOT NULL,\n  record_id         TEXT,\n  revision_id       TEXT,\n  conversation_id   TEXT,\n  message_id        TEXT,\n  artifact_id       TEXT,\n  operator_input    INTEGER NOT NULL DEFAULT 0 CHECK (operator_input IN (0,1)),\n  observed_at       TEXT NOT NULL,\n  content_hash      TEXT NOT NULL,\n  capture_basis     TEXT NOT NULL,\n  retention_policy  TEXT NOT NULL,\n  revocation_status TEXT NOT NULL CHECK (revocation_status IN ('active','revoked')),\n  access_revoked_at TEXT,\n  claimed_author    TEXT\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_executions",
+      "tbl_name": "tavi_executions",
+      "sql": "CREATE TABLE tavi_executions (\n  task_id           TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  generation        INTEGER NOT NULL,\n  owner_session     TEXT NOT NULL,\n  admission_id      TEXT NOT NULL,\n  state             TEXT NOT NULL,\n  started_at        TEXT NOT NULL,\n  heartbeat_at      TEXT NOT NULL,\n  lease_expires_at  TEXT NOT NULL,\n  ended_at          TEXT,\n  -- A termination decision is auditable: who decided, and on what basis.\n  terminated_reason TEXT,\n  terminated_by     TEXT,\n  PRIMARY KEY (task_id, generation)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_gate_observations",
+      "tbl_name": "tavi_gate_observations",
+      "sql": "CREATE TABLE tavi_gate_observations (\n  task_id           TEXT NOT NULL,\n  call_id           TEXT NOT NULL,\n  tool_id           TEXT NOT NULL,\n  effect            TEXT NOT NULL CHECK (effect IN ('read-only', 'mutating', 'external')),\n  sink              TEXT,\n  decision_enforced TEXT NOT NULL CHECK (decision_enforced IN ('allow', 'ask', 'deny')),\n  decision_observed TEXT NOT NULL CHECK (decision_observed IN ('allow', 'ask', 'deny')),\n  gate_reason       TEXT NOT NULL,\n  created_at        TEXT NOT NULL,\n  PRIMARY KEY (task_id, call_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_heartbeat_instructions",
+      "tbl_name": "tavi_heartbeat_instructions",
+      "sql": "CREATE TABLE tavi_heartbeat_instructions (\n  workspace_id TEXT NOT NULL,\n  principal_id TEXT NOT NULL,\n  revision     INTEGER NOT NULL,\n  text         TEXT NOT NULL,\n  author       TEXT NOT NULL,\n  created_at   TEXT NOT NULL,\n  PRIMARY KEY (workspace_id, principal_id, revision)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_heartbeat_items",
+      "tbl_name": "tavi_heartbeat_items",
+      "sql": "CREATE TABLE tavi_heartbeat_items (\n  item_id              TEXT PRIMARY KEY,\n  workspace_id         TEXT NOT NULL,\n  principal_id         TEXT NOT NULL,\n  item_key             TEXT NOT NULL,\n  hash                 TEXT NOT NULL,\n  signal_keys_json     TEXT NOT NULL DEFAULT '[]',\n  urgency              TEXT NOT NULL CHECK (urgency IN ('now', 'later')),\n  title                TEXT NOT NULL,\n  body                 TEXT,\n  sources_json         TEXT NOT NULL DEFAULT '[]',\n  instruction_line     INTEGER,\n  proposed_action_json TEXT,\n  state                TEXT NOT NULL CHECK (state IN ('told', 'resolved', 'muted', 'snoozed', 'filtered')),\n  snoozed_until        TEXT,\n  feedback             TEXT CHECK (feedback IN ('up', 'down')),\n  button_token         TEXT,\n  first_told_at        TEXT NOT NULL,\n  last_told_at         TEXT NOT NULL,\n  updated_at           TEXT NOT NULL\n, held_back INTEGER NOT NULL DEFAULT 0 CHECK (held_back IN (0, 1)), digested_at TEXT)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_heartbeat_signals",
+      "tbl_name": "tavi_heartbeat_signals",
+      "sql": "CREATE TABLE tavi_heartbeat_signals (\n  workspace_id  TEXT NOT NULL,\n  principal_id  TEXT NOT NULL,\n  signal_key    TEXT NOT NULL,\n  hash          TEXT NOT NULL,\n  source        TEXT NOT NULL,\n  first_seen_at TEXT NOT NULL,\n  last_seen_at  TEXT NOT NULL,\n  PRIMARY KEY (workspace_id, principal_id, signal_key)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_heartbeat_ticks",
+      "tbl_name": "tavi_heartbeat_ticks",
+      "sql": "CREATE TABLE tavi_heartbeat_ticks (\n  tick_id             TEXT PRIMARY KEY,\n  workspace_id        TEXT NOT NULL,\n  principal_id        TEXT NOT NULL,\n  kind                TEXT CHECK (kind IN ('signal', 'deep', 'digest', 'window')),\n  wake_reason         TEXT CHECK (wake_reason IN ('interval', 'signal', 'event', 'manual', 'catch-up')),\n  outcome             TEXT NOT NULL CHECK (outcome IN ('skipped', 'deferred', 'quiet', 'quiet:withheld', 'reported', 'failed', 'delivered')),\n  reason              TEXT,\n  pause_reason        TEXT CHECK (pause_reason IN ('user', 'budget', 'failures', 'provider')),\n  provider_id         TEXT,\n  task_id             TEXT,\n  items_now           INTEGER NOT NULL DEFAULT 0,\n  items_later         INTEGER NOT NULL DEFAULT 0,\n  items_retracted     INTEGER NOT NULL DEFAULT 0,\n  inputs_json         TEXT,\n  hook_decisions_json TEXT,\n  tokens              INTEGER NOT NULL DEFAULT 0,\n  cache_read_tokens   INTEGER NOT NULL DEFAULT 0,\n  cost_usd            REAL,\n  duration_ms         INTEGER NOT NULL DEFAULT 0,\n  error               TEXT,\n  provider_dev        INTEGER NOT NULL DEFAULT 0 CHECK (provider_dev IN (0, 1)),\n  created_at          TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_heartbeats",
+      "tbl_name": "tavi_heartbeats",
+      "sql": "CREATE TABLE tavi_heartbeats (\n  workspace_id       TEXT NOT NULL,\n  principal_id       TEXT NOT NULL,\n  enabled            INTEGER NOT NULL DEFAULT 0 CHECK (enabled IN (0, 1)),\n  config_json        TEXT NOT NULL,\n  revision           INTEGER NOT NULL DEFAULT 1 CHECK (revision >= 1),\n  paused_reason      TEXT CHECK (paused_reason IN ('user', 'budget', 'failures', 'provider')),\n  paused_until       TEXT,\n  next_tick_at       TEXT,\n  last_deep_tick_at  TEXT,\n  last_tick_at       TEXT,\n  memo               TEXT,\n  offer_dismissed_at TEXT,\n  created_at         TEXT NOT NULL,\n  updated_at         TEXT NOT NULL, provider_since TEXT, forgot_usage_json TEXT,\n  PRIMARY KEY (workspace_id, principal_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_idea_feedback",
+      "tbl_name": "tavi_idea_feedback",
+      "sql": "CREATE TABLE tavi_idea_feedback (\n  feedback_id   TEXT PRIMARY KEY,\n  workspace_id  TEXT NOT NULL,\n  idea_id       TEXT,\n  idea_key      TEXT,\n  category      TEXT CHECK (category IN ('productivity', 'work', 'learning', 'health-home', 'travel', 'shopping', 'people')),\n  basis_ref     TEXT,\n  signal        TEXT NOT NULL CHECK (signal IN ('tried', 'edited', 'done', 'ignored', 'not-now', 'not-interested', 'mute-category', 'unmute-category', 'exclude-basis', 'include-basis', 'more-like-this')),\n  edited_prompt TEXT,\n  at            TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_idea_runs",
+      "tbl_name": "tavi_idea_runs",
+      "sql": "CREATE TABLE tavi_idea_runs (\n  run_id       TEXT PRIMARY KEY,\n  workspace_id TEXT NOT NULL,\n  trigger      TEXT NOT NULL CHECK (trigger IN ('schedule', 'refresh')),\n  started_at   TEXT NOT NULL,\n  finished_at  TEXT,\n  outcome      TEXT NOT NULL CHECK (outcome IN ('running', 'generated', 'unchanged', 'skipped', 'failed')),\n  reason       TEXT,\n  inputs_hash  TEXT,\n  generated    INTEGER NOT NULL DEFAULT 0 CHECK (generated >= 0),\n  dropped      INTEGER NOT NULL DEFAULT 0 CHECK (dropped >= 0),\n  tokens       INTEGER NOT NULL DEFAULT 0 CHECK (tokens >= 0),\n  usd          REAL NOT NULL DEFAULT 0 CHECK (usd >= 0)\n, provider_id TEXT)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_idea_settings",
+      "tbl_name": "tavi_idea_settings",
+      "sql": "CREATE TABLE tavi_idea_settings (\n  workspace_id  TEXT PRIMARY KEY,\n  settings_json TEXT NOT NULL CHECK (json_valid(settings_json)),\n  brief         TEXT NOT NULL DEFAULT '',\n  updated_at    TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_ideas",
+      "tbl_name": "tavi_ideas",
+      "sql": "CREATE TABLE tavi_ideas (\n  idea_id           TEXT PRIMARY KEY,\n  workspace_id      TEXT NOT NULL,\n  run_id            TEXT NOT NULL,\n  idea_key          TEXT NOT NULL,\n  use_case          TEXT,\n  category          TEXT NOT NULL CHECK (category IN ('productivity', 'work', 'learning', 'health-home', 'travel', 'shopping', 'people')),\n  icon              TEXT NOT NULL,\n  title             TEXT NOT NULL,\n  pitch             TEXT NOT NULL,\n  label             TEXT NOT NULL,\n  prompt            TEXT NOT NULL,\n  basis_json        TEXT NOT NULL CHECK (json_valid(basis_json)),\n  uses_json         TEXT NOT NULL CHECK (json_valid(uses_json)),\n  recurring_cadence TEXT CHECK (recurring_cadence IN ('daily', 'weekly', 'monthly')),\n  score             REAL NOT NULL CHECK (score >= 0 AND score <= 1),\n  status            TEXT NOT NULL CHECK (status IN ('active', 'tried', 'done', 'snoozed', 'dismissed', 'expired')),\n  pinned            INTEGER NOT NULL DEFAULT 0 CHECK (pinned IN (0, 1)),\n  shown_runs        INTEGER NOT NULL DEFAULT 1 CHECK (shown_runs >= 0),\n  created_at        TEXT NOT NULL,\n  updated_at        TEXT NOT NULL,\n  expires_at        TEXT NOT NULL,\n  snoozed_until     TEXT, provider_id TEXT NOT NULL DEFAULT 'tavi.ideasagent', last_shown_at TEXT, seeded_task_id TEXT, prepared_task_id TEXT, prepared_text TEXT, prepared_at TEXT,\n  CHECK (status <> 'snoozed' OR snoozed_until IS NOT NULL)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_lineage_edges",
+      "tbl_name": "tavi_lineage_edges",
+      "sql": "CREATE TABLE tavi_lineage_edges (\n  edge_id                 TEXT PRIMARY KEY,\n  from_revision_id        TEXT NOT NULL,\n  to_revision_id          TEXT NOT NULL,\n  claim_id                TEXT,\n  dependency_kind         TEXT NOT NULL CHECK (dependency_kind IN ('contains','requires','background')),\n  derived_freshness       TEXT NOT NULL CHECK (derived_freshness IN ('clean','dirty','blocked')),\n  freshness_reason        TEXT,\n  affected_source_ids_json TEXT NOT NULL DEFAULT '[]',\n  last_validated_generation INTEGER NOT NULL DEFAULT 0,\n  UNIQUE (from_revision_id, to_revision_id, dependency_kind)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_mcp_notices",
+      "tbl_name": "tavi_mcp_notices",
+      "sql": "CREATE TABLE tavi_mcp_notices (\n  notice_id      TEXT PRIMARY KEY,\n  plugin_id      TEXT NOT NULL,\n  kind           TEXT NOT NULL CHECK (kind IN ('drift', 'login', 'scope', 'failed', 'budget')),\n  detail_json    TEXT NOT NULL,\n  created_at     TEXT NOT NULL,\n  updated_at     TEXT NOT NULL,\n  delivered_json TEXT NOT NULL DEFAULT '{}',\n  decided_at     TEXT,\n  decided_by     TEXT\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_mcp_tools",
+      "tbl_name": "tavi_mcp_tools",
+      "sql": "CREATE TABLE tavi_mcp_tools (\n  plugin_id          TEXT NOT NULL,\n  version            TEXT NOT NULL,\n  name               TEXT NOT NULL,\n  tool_id            TEXT NOT NULL,\n  approved_def_hash  TEXT,\n  approved_def_json  TEXT,\n  observed_def_hash  TEXT NOT NULL,\n  observed_def_json  TEXT NOT NULL,\n  suggested_effect   TEXT NOT NULL CHECK (suggested_effect IN ('read-only', 'mutating', 'external')),\n  suggested_min_risk TEXT CHECK (suggested_min_risk IN ('low', 'medium', 'high', 'critical')),\n  effect             TEXT CHECK (effect IN ('read-only', 'mutating', 'external')),\n  min_risk           TEXT CHECK (min_risk IN ('low', 'medium', 'high', 'critical')),\n  arg_floors_json    TEXT,\n  timeout_ms         INTEGER CHECK (timeout_ms IS NULL OR (timeout_ms >= 1000 AND timeout_ms <= 600000)),\n  ask_tainted        INTEGER NOT NULL DEFAULT 0 CHECK (ask_tainted IN (0, 1)),\n  doubtful           INTEGER NOT NULL DEFAULT 0 CHECK (doubtful IN (0, 1)),\n  flagged            INTEGER NOT NULL DEFAULT 0 CHECK (flagged IN (0, 1)),\n  state              TEXT NOT NULL CHECK (state IN ('pending', 'approved', 'withheld', 'disabled', 'removed', 'rejected')),\n  reviewed_by        TEXT,\n  reviewed_at        TEXT,\n  PRIMARY KEY (plugin_id, version, name),\n  FOREIGN KEY (plugin_id, version) REFERENCES tavi_plugin_versions (plugin_id, version) ON DELETE CASCADE\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_mcp_tree_index",
+      "tbl_name": "tavi_mcp_tree_index",
+      "sql": "CREATE TABLE tavi_mcp_tree_index (\n  plugin_id TEXT NOT NULL,\n  version   TEXT NOT NULL,\n  path      TEXT NOT NULL,\n  size      INTEGER NOT NULL CHECK (size >= 0),\n  mtime_ms  REAL NOT NULL,\n  ctime_ms  REAL NOT NULL,\n  ino       INTEGER NOT NULL,\n  sha256    TEXT NOT NULL,\n  PRIMARY KEY (plugin_id, version, path),\n  FOREIGN KEY (plugin_id, version) REFERENCES tavi_plugin_versions (plugin_id, version) ON DELETE CASCADE\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_mcp_versions",
+      "tbl_name": "tavi_mcp_versions",
+      "sql": "CREATE TABLE tavi_mcp_versions (\n  plugin_id            TEXT NOT NULL,\n  version              TEXT NOT NULL,\n  sandbox_state        TEXT NOT NULL CHECK (sandbox_state IN ('srt', 'nested', 'none')),\n  transport            TEXT NOT NULL CHECK (transport IN ('stdio', 'http')),\n  era_prior_json       TEXT,\n  http_mode            TEXT CHECK (http_mode IN ('streamable', 'sse')),\n  external_path        TEXT,\n  external_sha256      TEXT,\n  interpreter_path     TEXT,\n  interpreter_sha256   TEXT,\n  server_info_json     TEXT,\n  instructions_text    TEXT,\n  instructions_hash    TEXT,\n  capabilities_json    TEXT,\n  tree_index_stale     INTEGER NOT NULL DEFAULT 0 CHECK (tree_index_stale IN (0, 1)),\n  added_from_workspace TEXT,\n  probed_at            TEXT,\n  probed_by            TEXT,\n  approved_at          TEXT,\n  approved_by          TEXT,\n  PRIMARY KEY (plugin_id, version),\n  FOREIGN KEY (plugin_id, version) REFERENCES tavi_plugin_versions (plugin_id, version) ON DELETE CASCADE\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_memory_deletions",
+      "tbl_name": "tavi_memory_deletions",
+      "sql": "CREATE TABLE tavi_memory_deletions (\n  deletion_id         TEXT PRIMARY KEY,\n  record_id           TEXT NOT NULL,\n  scope_key           TEXT NOT NULL,\n  deletion_generation INTEGER NOT NULL,\n  requested_by        TEXT NOT NULL,\n  reason              TEXT NOT NULL,\n  requested_at        TEXT NOT NULL,\n  cleanup_status      TEXT NOT NULL CHECK (cleanup_status IN ('pending','complete')),\n  cleaned_at          TEXT\n, pending_providers_json TEXT)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_memory_fts",
+      "tbl_name": "tavi_memory_fts",
+      "sql": "CREATE VIRTUAL TABLE tavi_memory_fts USING fts5(\n  title,\n  body,\n  keys,\n  tokenize = \"unicode61 remove_diacritics 2\"\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_memory_fts_map",
+      "tbl_name": "tavi_memory_fts_map",
+      "sql": "CREATE TABLE tavi_memory_fts_map (\n  row_id      INTEGER PRIMARY KEY AUTOINCREMENT,\n  revision_id TEXT NOT NULL UNIQUE\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_memory_fts_stem",
+      "tbl_name": "tavi_memory_fts_stem",
+      "sql": "CREATE VIRTUAL TABLE tavi_memory_fts_stem USING fts5(\n  title,\n  body,\n  keys,\n  tokenize = \"porter unicode61 remove_diacritics 2\"\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_memory_marks",
+      "tbl_name": "tavi_memory_marks",
+      "sql": "CREATE TABLE tavi_memory_marks (\n  task_id TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  kind    TEXT NOT NULL CHECK (kind IN ('review', 'flush', 'digest', 'consolidate', 'fresh')),\n  mark    TEXT NOT NULL,\n  at      TEXT NOT NULL,\n  PRIMARY KEY (task_id, kind, mark)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_memory_prompts",
+      "tbl_name": "tavi_memory_prompts",
+      "sql": "CREATE TABLE tavi_memory_prompts (\n  token        TEXT PRIMARY KEY,\n  notice_id    TEXT NOT NULL REFERENCES tavi_chat_notices (notice_id) ON DELETE CASCADE,\n  workspace_id TEXT NOT NULL,\n  principal_id TEXT NOT NULL,\n  record_id    TEXT NOT NULL,\n  task_id      TEXT NOT NULL,\n  number       INTEGER NOT NULL CHECK (number >= 1),\n  created_at   TEXT NOT NULL,\n  settled_at   TEXT,\n  UNIQUE (notice_id, record_id),\n  UNIQUE (notice_id, number)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_memory_records",
+      "tbl_name": "tavi_memory_records",
+      "sql": "CREATE TABLE tavi_memory_records (\n  record_id            TEXT PRIMARY KEY,\n  scope_key            TEXT NOT NULL,\n  scope_kind           TEXT NOT NULL CHECK (scope_kind IN\n                         ('personal','personal_workspace','personal_agent','shared_workspace','run_local')),\n  principal_id         TEXT NOT NULL,\n  workspace_id         TEXT,\n  agent_id             TEXT,\n  run_id               TEXT,\n  kind                 TEXT NOT NULL CHECK (kind IN ('preference','fact','lesson','summary')),\n  status               TEXT NOT NULL CHECK (status IN\n                         ('proposed','approved','rejected','superseded','revoked','expired','deleted')),\n  sensitivity          TEXT NOT NULL CHECK (sensitivity IN ('normal','sensitive')),\n  preference_key       TEXT,\n  current_revision_id  TEXT,\n  valid_from           TEXT,\n  valid_to             TEXT,\n  expiry_at            TEXT,\n  confidence           REAL,\n  confidence_basis     TEXT,\n  supersedes_record_id TEXT,\n  revocation_generation INTEGER NOT NULL DEFAULT 0,\n  recorded_at          TEXT NOT NULL,\n  updated_at           TEXT NOT NULL\n, topic_key TEXT, durable INTEGER NOT NULL DEFAULT 0 CHECK (durable IN (0, 1) AND (durable = 0 OR scope_kind = 'run_local')), origin_task_id TEXT, content_key TEXT, local_origin INTEGER NOT NULL DEFAULT 0 CHECK (local_origin IN (0, 1)))"
+    },
+    {
+      "type": "table",
+      "name": "tavi_memory_reviews",
+      "tbl_name": "tavi_memory_reviews",
+      "sql": "CREATE TABLE tavi_memory_reviews (\n  review_id             TEXT PRIMARY KEY,\n  record_id             TEXT NOT NULL,\n  revision_id           TEXT NOT NULL,\n  revision_hash         TEXT NOT NULL,\n  reviewer_principal_id TEXT NOT NULL,\n  decision              TEXT NOT NULL CHECK (decision IN ('approved','rejected')),\n  reason                TEXT,\n  decided_at            TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_memory_revisions",
+      "tbl_name": "tavi_memory_revisions",
+      "sql": "CREATE TABLE tavi_memory_revisions (\n  revision_id       TEXT PRIMARY KEY,\n  record_id         TEXT NOT NULL REFERENCES tavi_memory_records(record_id) ON DELETE CASCADE,\n  revision_number   INTEGER NOT NULL,\n  schema_version    INTEGER NOT NULL,\n  title             TEXT,\n  body              TEXT,\n  artifact_id       TEXT,\n  content_hash      TEXT NOT NULL,\n  author            TEXT NOT NULL,\n  source_ids_json   TEXT NOT NULL DEFAULT '[]',\n  observed_at       TEXT,\n  recorded_at       TEXT NOT NULL,\n  sensitivity       TEXT NOT NULL CHECK (sensitivity IN ('normal','sensitive')),\n  preference_key    TEXT,\n  preference_type   TEXT CHECK (preference_type IN ('string','number','boolean','json')),\n  preference_value  TEXT, status TEXT NOT NULL DEFAULT 'active'\n  CHECK (status IN ('active','superseded','revoked')), superseded_by_revision_id TEXT, valid_from TEXT, valid_to TEXT, provenance_json TEXT, keywords_json TEXT NOT NULL DEFAULT '[]',\n  UNIQUE (record_id, revision_number)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_memory_scope_generations",
+      "tbl_name": "tavi_memory_scope_generations",
+      "sql": "CREATE TABLE tavi_memory_scope_generations (\n  scope_key            TEXT PRIMARY KEY,\n  revocation_generation INTEGER NOT NULL DEFAULT 0\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_memory_vector_failures",
+      "tbl_name": "tavi_memory_vector_failures",
+      "sql": "CREATE TABLE tavi_memory_vector_failures (\n  revision_id TEXT NOT NULL REFERENCES tavi_memory_revisions (revision_id) ON DELETE CASCADE,\n  model_key   TEXT NOT NULL,\n  failures    INTEGER NOT NULL CHECK (failures > 0),\n  failed_at   TEXT NOT NULL,\n  PRIMARY KEY (revision_id, model_key)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_memory_vectors",
+      "tbl_name": "tavi_memory_vectors",
+      "sql": "CREATE TABLE tavi_memory_vectors (\n  revision_id TEXT NOT NULL REFERENCES tavi_memory_revisions (revision_id) ON DELETE CASCADE,\n  model_key   TEXT NOT NULL,\n  dims        INTEGER NOT NULL CHECK (dims > 0),\n  vector      BLOB NOT NULL,\n  created_at  TEXT NOT NULL,\n  PRIMARY KEY (revision_id, model_key)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_messaging_connections",
+      "tbl_name": "tavi_messaging_connections",
+      "sql": "CREATE TABLE tavi_messaging_connections (\n      connection_id         TEXT PRIMARY KEY,\n      provider_id           TEXT NOT NULL,\n      workspace_id          TEXT NOT NULL,\n      label                 TEXT,\n      account_identity      TEXT NOT NULL,\n      settings_json         TEXT NOT NULL,\n      credential_refs_json  TEXT NOT NULL,\n      enabled               INTEGER NOT NULL CHECK (enabled IN (0, 1)),\n      config_revision       INTEGER NOT NULL CHECK (config_revision >= 1),\n      auth_state            TEXT NOT NULL CHECK (auth_state IN ('none', 'connected', 'expired', 'revoked', 'needs-consent')),\n      created_at            TEXT NOT NULL,\n      updated_at            TEXT NOT NULL\n    , deleted_at TEXT)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_messaging_conversation_tasks",
+      "tbl_name": "tavi_messaging_conversation_tasks",
+      "sql": "CREATE TABLE \"tavi_messaging_conversation_tasks\" (\n  connection_id            TEXT NOT NULL,\n  external_conversation_id TEXT NOT NULL,\n  epoch                    INTEGER NOT NULL DEFAULT 0 CHECK (epoch >= 0),\n  active                   INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),\n  task_id                  TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  created_at               TEXT NOT NULL,\n  reply_to_json            TEXT,\n  reset_at                 TEXT, withdrawn_at TEXT, provider_id TEXT, conversation_kind TEXT CHECK (conversation_kind IS NULL OR conversation_kind IN ('direct', 'group', 'thread')),\n  PRIMARY KEY (connection_id, external_conversation_id, epoch)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_messaging_deliveries",
+      "tbl_name": "tavi_messaging_deliveries",
+      "sql": "CREATE TABLE tavi_messaging_deliveries (\n  connection_id TEXT NOT NULL,\n  provider_message_id TEXT NOT NULL,\n  effect_id TEXT NOT NULL,\n  status TEXT CHECK (status IS NULL OR status IN ('delivered', 'read', 'bounced', 'failed')),\n  status_at TEXT,\n  detail TEXT,\n  PRIMARY KEY (connection_id, provider_message_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_messaging_grants",
+      "tbl_name": "tavi_messaging_grants",
+      "sql": "CREATE TABLE tavi_messaging_grants (\n  grant_id      TEXT PRIMARY KEY,\n  workspace_id  TEXT NOT NULL,\n  connection_id TEXT NOT NULL,\n  scope_kind    TEXT NOT NULL CHECK (scope_kind IN ('room', 'contact')),\n  scope_id      TEXT NOT NULL,\n  tool_id       TEXT NOT NULL,\n  mode          TEXT NOT NULL CHECK (mode IN ('allow', 'deny')),\n  created_by    TEXT NOT NULL,\n  created_at    TEXT NOT NULL,\n  expires_at    TEXT,\n  revoked_at    TEXT,\n  UNIQUE (connection_id, scope_kind, scope_id, tool_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_messaging_identity_bindings",
+      "tbl_name": "tavi_messaging_identity_bindings",
+      "sql": "CREATE TABLE tavi_messaging_identity_bindings (\n  connection_id       TEXT NOT NULL,\n  external_sender_id     TEXT NOT NULL,\n  workspace_id               TEXT NOT NULL,\n  principal_id                   TEXT NOT NULL,\n  approved_by                        TEXT NOT NULL,\n  created_at                             TEXT NOT NULL, display_name TEXT, trust_unverified_by TEXT, trust_unverified_at TEXT,\n  PRIMARY KEY (connection_id, external_sender_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_messaging_inbound_activity",
+      "tbl_name": "tavi_messaging_inbound_activity",
+      "sql": "CREATE TABLE tavi_messaging_inbound_activity (\n  connection_id        TEXT NOT NULL,\n  conversation_key     TEXT NOT NULL,\n  workspace_id         TEXT NOT NULL,\n  sender_principal_id  TEXT NOT NULL,\n  provider_event_id    TEXT NOT NULL,\n  task_id              TEXT,\n  received_at          TEXT NOT NULL,\n  PRIMARY KEY (connection_id, conversation_key)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_messaging_inbox",
+      "tbl_name": "tavi_messaging_inbox",
+      "sql": "CREATE TABLE tavi_messaging_inbox (\n  connection_id       TEXT NOT NULL,\n  provider_event_id      TEXT NOT NULL,\n  kind                       TEXT NOT NULL,\n  payload_json                  TEXT NOT NULL,\n  state                            TEXT NOT NULL CHECK (state IN ('received','processed')),\n  received_at                        TEXT NOT NULL, replay_claimed_at TEXT,\n  PRIMARY KEY (connection_id, provider_event_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_messaging_outbox",
+      "tbl_name": "tavi_messaging_outbox",
+      "sql": "CREATE TABLE tavi_messaging_outbox (\n  effect_id       TEXT PRIMARY KEY,\n  connection_id      TEXT NOT NULL,\n  message_json          TEXT NOT NULL,\n  state                    TEXT NOT NULL CHECK (state IN ('pending','resolved')),\n  outcome_json                TEXT,\n  created_at                     TEXT NOT NULL,\n  resolved_at                     TEXT\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_meta",
+      "tbl_name": "tavi_meta",
+      "sql": "CREATE TABLE tavi_meta (\n  key        TEXT PRIMARY KEY,\n  value      TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_model_catalog",
+      "tbl_name": "tavi_model_catalog",
+      "sql": "CREATE TABLE tavi_model_catalog (\n  connection_id  TEXT NOT NULL,\n  model_id       TEXT NOT NULL,\n  display_name   TEXT,\n  provenance     TEXT NOT NULL CHECK (provenance IN ('catalog', 'manual', 'live')),\n  state          TEXT NOT NULL CHECK (state IN ('available', 'capable', 'unavailable')),\n  capabilities_json TEXT NOT NULL DEFAULT '[]',\n  discovered_at  TEXT, context_window INTEGER, max_tokens INTEGER,\n  PRIMARY KEY (connection_id, model_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_model_connections",
+      "tbl_name": "tavi_model_connections",
+      "sql": "CREATE TABLE \"tavi_model_connections\" (\n  connection_id  TEXT PRIMARY KEY,\n  label          TEXT NOT NULL,\n  kind           TEXT NOT NULL CHECK (kind IN ('openai-compatible', 'anthropic-messages')),\n  base_url       TEXT NOT NULL,\n  credential_ref TEXT NOT NULL,\n  default_model  TEXT,\n  headers_json   TEXT,\n  local_only     INTEGER NOT NULL DEFAULT 0 CHECK (local_only IN (0, 1)),\n  created_at     TEXT NOT NULL,\n  updated_at     TEXT NOT NULL,\n  provider_binding_json TEXT,\n  pdf_input TEXT CHECK (pdf_input IS NULL OR pdf_input IN ('none', 'openai-file')),\n  pdf_engine TEXT CHECK (pdf_engine IS NULL OR pdf_engine IN ('pdf-text', 'mistral-ocr', 'native')),\n  video_models TEXT CHECK (video_models IS NULL OR json_valid(video_models)),\n  wire_api TEXT CHECK (wire_api IS NULL OR wire_api IN ('chat', 'responses'))\n, stream_first_byte_seconds INTEGER, stream_idle_seconds INTEGER)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_model_price_sheets",
+      "tbl_name": "tavi_model_price_sheets",
+      "sql": "CREATE TABLE tavi_model_price_sheets (\n  revision TEXT PRIMARY KEY,\n  connection_id TEXT NOT NULL,\n  model TEXT NOT NULL,\n  effective_at TEXT NOT NULL,\n  data TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_model_roles",
+      "tbl_name": "tavi_model_roles",
+      "sql": "CREATE TABLE \"tavi_model_roles\" (\n  workspace_id   TEXT NOT NULL,\n  role           TEXT NOT NULL CHECK (role IN ('main', 'extraction', 'compaction', 'fast', 'embedding')),\n  connection_id  TEXT NOT NULL,\n  model          TEXT NOT NULL,\n  fallback_json  TEXT NOT NULL DEFAULT '[]',\n  updated_at     TEXT NOT NULL,\n  PRIMARY KEY (workspace_id, role)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_model_workspace_defaults",
+      "tbl_name": "tavi_model_workspace_defaults",
+      "sql": "CREATE TABLE tavi_model_workspace_defaults (\n  workspace_id   TEXT PRIMARY KEY,\n  connection_id  TEXT NOT NULL,\n  model          TEXT NOT NULL,\n  updated_at     TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_need_deliveries",
+      "tbl_name": "tavi_need_deliveries",
+      "sql": "CREATE TABLE tavi_need_deliveries (\n  wait_id             TEXT NOT NULL REFERENCES tavi_agent_wait_intents (wait_id) ON DELETE CASCADE,\n  task_id             TEXT NOT NULL,\n  connection_id       TEXT NOT NULL,\n  destination_json    TEXT NOT NULL,\n  provider_message_id TEXT,\n  text                TEXT NOT NULL,\n  token               TEXT NOT NULL,\n  selected_json       TEXT NOT NULL,\n  created_at          TEXT NOT NULL, chat_id TEXT, thread_id TEXT,\n  PRIMARY KEY (wait_id, connection_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_onboarding",
+      "tbl_name": "tavi_onboarding",
+      "sql": "CREATE TABLE tavi_onboarding (\n  id                     INTEGER PRIMARY KEY CHECK (id = 1),\n  provider_id            TEXT,\n  first_seen_at          TEXT,\n  completed_at           TEXT,\n  dismissed_at           TEXT,\n  dismissed_flow_version INTEGER,\n  flow_version           INTEGER\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_onboarding_events",
+      "tbl_name": "tavi_onboarding_events",
+      "sql": "CREATE TABLE tavi_onboarding_events (\n  id           INTEGER PRIMARY KEY AUTOINCREMENT,\n  workspace_id TEXT NOT NULL,\n  step_kind    TEXT NOT NULL,\n  event        TEXT NOT NULL CHECK (event IN ('reached', 'skipped', 'failed')),\n  error_code   TEXT,\n  at           TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_onboarding_steps",
+      "tbl_name": "tavi_onboarding_steps",
+      "sql": "CREATE TABLE tavi_onboarding_steps (\n  workspace_id TEXT NOT NULL,\n  step_kind    TEXT NOT NULL,\n  state        TEXT CHECK (state IS NULL OR state IN ('skipped', 'seen', 'completed', 'self-managed')),\n  created_ref  TEXT,\n  at           TEXT NOT NULL,\n  PRIMARY KEY (workspace_id, step_kind)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_onboarding_verifications",
+      "tbl_name": "tavi_onboarding_verifications",
+      "sql": "CREATE TABLE tavi_onboarding_verifications (\n  workspace_id        TEXT NOT NULL,\n  subject             TEXT NOT NULL CHECK (subject IN ('model', 'search')),\n  role                TEXT CHECK (role IS NULL OR role IN ('main', 'fast')),\n  subject_id          TEXT NOT NULL,\n  model               TEXT,\n  base_url            TEXT,\n  credential_revision TEXT,\n  ok                  INTEGER NOT NULL CHECK (ok IN (0, 1)),\n  tools_ok            INTEGER CHECK (tools_ok IS NULL OR tools_ok IN (0, 1)),\n  error_code          TEXT,\n  at                  TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_pending_reject_reasons",
+      "tbl_name": "tavi_pending_reject_reasons",
+      "sql": "CREATE TABLE tavi_pending_reject_reasons (\n  reason_key        TEXT PRIMARY KEY,\n  token             TEXT NOT NULL,\n  workspace_id      TEXT NOT NULL,\n  principal_id      TEXT NOT NULL,\n  caller            TEXT NOT NULL,\n  reply_target_json TEXT NOT NULL,\n  expires_at        TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_plugin_hook_events",
+      "tbl_name": "tavi_plugin_hook_events",
+      "sql": "CREATE TABLE tavi_plugin_hook_events (\n  event_seq     INTEGER PRIMARY KEY AUTOINCREMENT,\n  plugin_id     TEXT NOT NULL,\n  kind          TEXT NOT NULL CHECK (kind IN ('decision', 'failure')),\n  event         TEXT NOT NULL,\n  tool          TEXT,\n  task_id       TEXT,\n  workspace_id  TEXT,\n  rule_id       TEXT,\n  detail        TEXT NOT NULL,\n  created_at    TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_plugin_hook_prunes",
+      "tbl_name": "tavi_plugin_hook_prunes",
+      "sql": "CREATE TABLE tavi_plugin_hook_prunes (\n  plugin_id TEXT NOT NULL,\n  kind      TEXT NOT NULL CHECK (kind IN ('decision', 'failure')),\n  PRIMARY KEY (plugin_id, kind)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_plugin_settings",
+      "tbl_name": "tavi_plugin_settings",
+      "sql": "CREATE TABLE tavi_plugin_settings (\n  plugin_id      TEXT PRIMARY KEY,\n  enabled        INTEGER NOT NULL CHECK (enabled IN (0, 1)),\n  active_version TEXT,\n  config_json    TEXT NOT NULL,\n  updated_by     TEXT NOT NULL,\n  updated_at     TEXT NOT NULL\n, instances_json TEXT NOT NULL DEFAULT '[]')"
+    },
+    {
+      "type": "table",
+      "name": "tavi_plugin_state",
+      "tbl_name": "tavi_plugin_state",
+      "sql": "CREATE TABLE tavi_plugin_state (\n  plugin_id   TEXT NOT NULL,\n  namespace   TEXT NOT NULL,\n  value_json  TEXT NOT NULL,\n  updated_at  TEXT NOT NULL,\n  PRIMARY KEY (plugin_id, namespace)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_plugin_versions",
+      "tbl_name": "tavi_plugin_versions",
+      "sql": "CREATE TABLE tavi_plugin_versions (\n  plugin_id     TEXT NOT NULL,\n  version       TEXT NOT NULL,\n  content_hash  TEXT NOT NULL,\n  manifest_json TEXT NOT NULL,\n  review_state  TEXT NOT NULL CHECK (review_state IN ('proposed', 'approved', 'rejected')),\n  installed_by  TEXT NOT NULL,\n  installed_at  TEXT NOT NULL,\n  reviewed_by   TEXT,\n  reviewed_at   TEXT, isolation TEXT CHECK (isolation IS NULL OR isolation IN ('process', 'in-process')),\n  PRIMARY KEY (plugin_id, version)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_projects",
+      "tbl_name": "tavi_projects",
+      "sql": "CREATE TABLE tavi_projects (\n  workspace_id              TEXT NOT NULL,\n  project_id                TEXT NOT NULL,\n  name                      TEXT,\n  ga4_property_id           TEXT,\n  gsc_site_url              TEXT,\n  gcp_billing_project_id    TEXT,\n  gcp_billing_table         TEXT,\n  stripe_credential_ref     TEXT,\n  keywords_json             TEXT,\n  language                  TEXT,\n  region                    TEXT,\n  enabled                   INTEGER NOT NULL DEFAULT 1,\n  created_at                TEXT NOT NULL,\n  updated_at                TEXT NOT NULL,\n  PRIMARY KEY (workspace_id, project_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_provider_attempt_requests",
+      "tbl_name": "tavi_provider_attempt_requests",
+      "sql": "CREATE TABLE tavi_provider_attempt_requests (\n  call_id TEXT PRIMARY KEY,\n  run_id TEXT NOT NULL,\n  started_at TEXT NOT NULL,\n  request TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_provider_attempts",
+      "tbl_name": "tavi_provider_attempts",
+      "sql": "CREATE TABLE tavi_provider_attempts (\n  call_id TEXT PRIMARY KEY,\n  run_id TEXT NOT NULL,\n  attempt_id TEXT NOT NULL,\n  owner_session TEXT NOT NULL,\n  state TEXT NOT NULL,\n  started_at TEXT NOT NULL,\n  data TEXT NOT NULL\n, purpose TEXT, input_tokens INTEGER)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_provider_operations",
+      "tbl_name": "tavi_provider_operations",
+      "sql": "CREATE TABLE tavi_provider_operations (\n  run_id TEXT NOT NULL, attempt_id TEXT NOT NULL, owner_session TEXT NOT NULL,\n  state TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY (run_id, attempt_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_reminder_fires",
+      "tbl_name": "tavi_reminder_fires",
+      "sql": "CREATE TABLE tavi_reminder_fires (\n reminder_id TEXT NOT NULL REFERENCES tavi_reminders (reminder_id) ON DELETE CASCADE,\n fire_at TEXT NOT NULL,\n occurrence TEXT NOT NULL CHECK (occurrence IN ('event', 'notice', 'once', 'repeat')),\n notice_offset TEXT,\n fired_at TEXT,\n outcome TEXT NOT NULL CHECK (outcome IN ('pending', 'delivered', 'delivered-in-app', 'missed', 'failed', 'snoozed')),\n late INTEGER NOT NULL DEFAULT 0 CHECK (late IN (0, 1)),\n task_id TEXT,\n acknowledged_at TEXT,\n snoozed_until TEXT, attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0), retry_at TEXT, retry_until TEXT, token TEXT,\n PRIMARY KEY (reminder_id, fire_at)\n) WITHOUT ROWID"
+    },
+    {
+      "type": "table",
+      "name": "tavi_reminders",
+      "tbl_name": "tavi_reminders",
+      "sql": "CREATE TABLE tavi_reminders (\n reminder_id TEXT PRIMARY KEY,\n workspace_id TEXT NOT NULL,\n principal_id TEXT NOT NULL,\n text TEXT NOT NULL,\n prompt TEXT,\n when_json TEXT NOT NULL,\n timezone TEXT NOT NULL,\n deliver_to_json TEXT NOT NULL,\n status TEXT NOT NULL CHECK (status IN ('active', 'paused', 'done', 'cancelled')),\n next_fire_at TEXT,\n last_fired_at TEXT,\n schedule_cursor_at TEXT NOT NULL,\n created_by TEXT NOT NULL CHECK (created_by IN ('agent', 'user')),\n origin_task_id TEXT,\n operation_key TEXT NOT NULL,\n created_at TEXT NOT NULL,\n updated_at TEXT NOT NULL, label_json TEXT, kind TEXT NOT NULL DEFAULT 'reminder' CHECK (kind IN ('reminder', 'todo')), todo_status TEXT CHECK (todo_status IN ('open', 'done')), list TEXT, notes TEXT, due TEXT, completed_at TEXT,\n UNIQUE (workspace_id, principal_id, operation_key)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_reports",
+      "tbl_name": "tavi_reports",
+      "sql": "CREATE TABLE tavi_reports (\n  report_id     TEXT PRIMARY KEY,\n  workspace_id  TEXT NOT NULL,\n  run_id        TEXT NOT NULL,\n  artifact_id   TEXT NOT NULL,\n  period_start  TEXT NOT NULL,\n  period_end    TEXT NOT NULL,\n  generated_at  TEXT NOT NULL,\n  bytes         INTEGER NOT NULL,\n  pages         INTEGER,\n  projects_json TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_router_budget_totals",
+      "tbl_name": "tavi_router_budget_totals",
+      "sql": "CREATE TABLE tavi_router_budget_totals (\n  workspace_id TEXT NOT NULL, principal_id TEXT NOT NULL, task_key TEXT NOT NULL, micros INTEGER NOT NULL,\n  PRIMARY KEY(workspace_id, principal_id, task_key)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_router_configurations",
+      "tbl_name": "tavi_router_configurations",
+      "sql": "CREATE TABLE tavi_router_configurations (\n  workspace_id TEXT NOT NULL, principal_id TEXT NOT NULL, revision INTEGER NOT NULL, data TEXT NOT NULL,\n  PRIMARY KEY(workspace_id, principal_id, revision)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_router_decisions",
+      "tbl_name": "tavi_router_decisions",
+      "sql": "CREATE TABLE tavi_router_decisions (\n  task_id TEXT NOT NULL REFERENCES tavi_tasks(task_id) ON DELETE CASCADE,\n  operation_id TEXT NOT NULL, turn_id TEXT NOT NULL, owner_session TEXT NOT NULL, generation INTEGER NOT NULL,\n  reserved_micros INTEGER NOT NULL, charged_micros INTEGER NOT NULL, data TEXT NOT NULL,\n  PRIMARY KEY(task_id, operation_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_attempts",
+      "tbl_name": "tavi_routine_attempts",
+      "sql": "CREATE TABLE tavi_routine_attempts (\n attempt_id TEXT PRIMARY KEY, run_id TEXT NOT NULL REFERENCES tavi_routine_runs(run_id), generation INTEGER NOT NULL,\n owner_epoch TEXT NOT NULL, status TEXT NOT NULL, started_at TEXT NOT NULL, ended_at TEXT, heartbeat_at TEXT NOT NULL, data_json TEXT NOT NULL,\n UNIQUE(run_id, generation)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_blob_refs",
+      "tbl_name": "tavi_routine_blob_refs",
+      "sql": "CREATE TABLE tavi_routine_blob_refs (\n routine_id TEXT NOT NULL REFERENCES tavi_routines(routine_id), run_id TEXT NOT NULL REFERENCES tavi_routine_runs(run_id),\n artifact_id TEXT NOT NULL REFERENCES tavi_artifacts(artifact_id), hash TEXT NOT NULL, pinned INTEGER NOT NULL,\n PRIMARY KEY(run_id, artifact_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_commands",
+      "tbl_name": "tavi_routine_commands",
+      "sql": "CREATE TABLE tavi_routine_commands (\n workspace_id TEXT NOT NULL, principal_id TEXT NOT NULL, operation_key TEXT NOT NULL, request_hash TEXT NOT NULL, result_json TEXT NOT NULL,\n PRIMARY KEY(workspace_id,principal_id,operation_key)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_conversations",
+      "tbl_name": "tavi_routine_conversations",
+      "sql": "CREATE TABLE tavi_routine_conversations (\n workspace_id TEXT NOT NULL, principal_id TEXT NOT NULL, conversation_id TEXT NOT NULL,\n routine_id TEXT NOT NULL REFERENCES tavi_routines(routine_id), updated_at TEXT NOT NULL,\n PRIMARY KEY(workspace_id,principal_id,conversation_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_coverage",
+      "tbl_name": "tavi_routine_coverage",
+      "sql": "CREATE TABLE tavi_routine_coverage (\n run_id TEXT PRIMARY KEY REFERENCES tavi_routine_runs(run_id), searches INTEGER NOT NULL DEFAULT 0,\n failures INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_delivery_jobs",
+      "tbl_name": "tavi_routine_delivery_jobs",
+      "sql": "CREATE TABLE tavi_routine_delivery_jobs (\n job_id TEXT PRIMARY KEY, run_id TEXT NOT NULL REFERENCES tavi_routine_runs(run_id), effect_id TEXT NOT NULL UNIQUE,\n status TEXT NOT NULL, not_before TEXT NOT NULL, expires_at TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,\n data_json TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_delivery_targets",
+      "tbl_name": "tavi_routine_delivery_targets",
+      "sql": "CREATE TABLE tavi_routine_delivery_targets (\n target_id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL, principal_id TEXT NOT NULL, target_json TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_details",
+      "tbl_name": "tavi_routine_details",
+      "sql": "CREATE TABLE tavi_routine_details (\n detail_id TEXT PRIMARY KEY, routine_id TEXT NOT NULL REFERENCES tavi_routines(routine_id), run_id TEXT, hash TEXT NOT NULL,\n payload TEXT, byte_size INTEGER NOT NULL, created_at TEXT NOT NULL, pruned_at TEXT\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_evaluations",
+      "tbl_name": "tavi_routine_evaluations",
+      "sql": "CREATE TABLE tavi_routine_evaluations (\n evaluation_id TEXT PRIMARY KEY, routine_id TEXT NOT NULL REFERENCES tavi_routines(routine_id), revision INTEGER NOT NULL,\n status TEXT NOT NULL, detail TEXT NOT NULL, created_at TEXT NOT NULL, finished_at TEXT,\n UNIQUE(routine_id, revision)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_events",
+      "tbl_name": "tavi_routine_events",
+      "sql": "CREATE TABLE tavi_routine_events (\n routine_id TEXT NOT NULL REFERENCES tavi_routines(routine_id), sequence INTEGER NOT NULL, event_id TEXT NOT NULL UNIQUE,\n run_id TEXT, attempt_id TEXT, kind TEXT NOT NULL, at TEXT NOT NULL, envelope_json TEXT NOT NULL, detail_id TEXT, detail_hash TEXT,\n previous_hash TEXT NOT NULL, event_hash TEXT NOT NULL, PRIMARY KEY(routine_id, sequence)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_grants",
+      "tbl_name": "tavi_routine_grants",
+      "sql": "CREATE TABLE tavi_routine_grants (\n grant_id TEXT PRIMARY KEY,\n run_id TEXT NOT NULL UNIQUE REFERENCES tavi_routine_runs(run_id),\n routine_id TEXT NOT NULL REFERENCES tavi_routines(routine_id),\n workspace_id TEXT NOT NULL, principal_id TEXT NOT NULL,\n revision INTEGER NOT NULL, policy_revision INTEGER NOT NULL, mode TEXT NOT NULL,\n grant_json TEXT NOT NULL, grant_hash TEXT NOT NULL,\n created_at TEXT NOT NULL, revoked_at TEXT, revoked_reason TEXT\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_operations",
+      "tbl_name": "tavi_routine_operations",
+      "sql": "CREATE TABLE tavi_routine_operations (\n workspace_id TEXT NOT NULL, principal_id TEXT NOT NULL, operation_key TEXT NOT NULL, kind TEXT NOT NULL,\n request_hash TEXT NOT NULL, routine_id TEXT NOT NULL REFERENCES tavi_routines(routine_id), revision INTEGER NOT NULL,\n PRIMARY KEY(workspace_id, principal_id, operation_key, kind)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_quality",
+      "tbl_name": "tavi_routine_quality",
+      "sql": "CREATE TABLE tavi_routine_quality (\n evaluation_id TEXT PRIMARY KEY REFERENCES tavi_routine_evaluations(evaluation_id),\n workspace_id TEXT NOT NULL, principal_id TEXT NOT NULL, fingerprint TEXT NOT NULL,\n owner_epoch TEXT NOT NULL, status TEXT NOT NULL, data_json TEXT NOT NULL, updated_at TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_revisions",
+      "tbl_name": "tavi_routine_revisions",
+      "sql": "CREATE TABLE tavi_routine_revisions (\n routine_id TEXT NOT NULL REFERENCES tavi_routines(routine_id), revision INTEGER NOT NULL,\n snapshot_json TEXT NOT NULL, hash TEXT NOT NULL, author TEXT NOT NULL, change_summary TEXT NOT NULL, created_at TEXT NOT NULL, provenance_json TEXT,\n PRIMARY KEY(routine_id, revision)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_runs",
+      "tbl_name": "tavi_routine_runs",
+      "sql": "CREATE TABLE tavi_routine_runs (\n run_id TEXT PRIMARY KEY, routine_id TEXT NOT NULL REFERENCES tavi_routines(routine_id), workspace_id TEXT NOT NULL, principal_id TEXT NOT NULL,\n occurrence_key TEXT NOT NULL, trigger_id TEXT, revision INTEGER NOT NULL, snapshot_json TEXT NOT NULL,\n mode TEXT NOT NULL, status TEXT NOT NULL, generation INTEGER NOT NULL DEFAULT 0, task_id TEXT,\n scheduled_for TEXT, claimed_at TEXT NOT NULL, started_at TEXT, ended_at TEXT, data_json TEXT NOT NULL, grant_id TEXT,\n UNIQUE(routine_id, occurrence_key)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_sources",
+      "tbl_name": "tavi_routine_sources",
+      "sql": "CREATE TABLE tavi_routine_sources (\n source_id TEXT PRIMARY KEY, run_id TEXT NOT NULL REFERENCES tavi_routine_runs(run_id),\n workspace_id TEXT NOT NULL, source_json TEXT NOT NULL, created_at TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_staging",
+      "tbl_name": "tavi_routine_staging",
+      "sql": "CREATE TABLE tavi_routine_staging (\n stage_id TEXT PRIMARY KEY, run_id TEXT NOT NULL REFERENCES tavi_routine_runs(run_id),\n artifact_id TEXT NOT NULL, kind TEXT NOT NULL, relative_path TEXT NOT NULL, stage_path TEXT NOT NULL,\n hash TEXT NOT NULL, byte_size INTEGER NOT NULL, content_type TEXT NOT NULL, status TEXT NOT NULL,\n created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(run_id,kind)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_standing_answers",
+      "tbl_name": "tavi_routine_standing_answers",
+      "sql": "CREATE TABLE tavi_routine_standing_answers (\n  routine_id   TEXT NOT NULL REFERENCES tavi_routines(routine_id) ON DELETE CASCADE,\n  question_key TEXT NOT NULL,\n  question     TEXT NOT NULL,\n  answers_json TEXT NOT NULL,\n  created_by   TEXT NOT NULL,\n  created_at   TEXT NOT NULL,\n  PRIMARY KEY (routine_id, question_key)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_state",
+      "tbl_name": "tavi_routine_state",
+      "sql": "CREATE TABLE tavi_routine_state (\n routine_id TEXT PRIMARY KEY REFERENCES tavi_routines(routine_id), version INTEGER NOT NULL,\n state_json TEXT NOT NULL, research_failures INTEGER NOT NULL DEFAULT 0, delivery_failures INTEGER NOT NULL DEFAULT 0,\n research_blocked_since TEXT, delivery_blocked_since TEXT, heartbeat_at TEXT\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routine_triggers",
+      "tbl_name": "tavi_routine_triggers",
+      "sql": "CREATE TABLE tavi_routine_triggers (\n routine_id TEXT NOT NULL REFERENCES tavi_routines(routine_id), trigger_id TEXT NOT NULL,\n schedule_id TEXT NOT NULL UNIQUE REFERENCES tavi_schedules(schedule_id), spec_json TEXT NOT NULL, consumed INTEGER NOT NULL DEFAULT 0, adopted_snapshot TEXT,\n PRIMARY KEY(routine_id, trigger_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_routines",
+      "tbl_name": "tavi_routines",
+      "sql": "CREATE TABLE tavi_routines (\n routine_id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL, principal_id TEXT NOT NULL,\n name TEXT NOT NULL, version INTEGER NOT NULL, active_revision INTEGER, latest_revision INTEGER NOT NULL,\n status TEXT NOT NULL, conversation_id TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_schedule_fires",
+      "tbl_name": "tavi_schedule_fires",
+      "sql": "CREATE TABLE \"tavi_schedule_fires\" (\n  schedule_id   TEXT NOT NULL,\n  fire_time     TEXT NOT NULL,\n  outcome_kind  TEXT NOT NULL CHECK (outcome_kind IN ('succeeded','failed','skipped')),\n  outcome       TEXT NOT NULL,\n  reason_code   TEXT NOT NULL CHECK (reason_code IN ('ok','undelivered','quiet','unchanged','failed','timeout','budget','waiting','asked','missed','overlap','disk','disabled','orphaned','manual','webhook','webhook-refused','watch','email','email-refused','retry','paused','stopped')),\n  task_id       TEXT,\n  at            TEXT NOT NULL,\n  retry_count   INTEGER NOT NULL DEFAULT 0 CHECK (retry_count >= 0)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_schedules",
+      "tbl_name": "tavi_schedules",
+      "sql": "CREATE TABLE tavi_schedules (\n  schedule_id               TEXT PRIMARY KEY,\n  workspace_id              TEXT NOT NULL,\n  principal_id              TEXT NOT NULL,\n  name                      TEXT NOT NULL,\n  prompt                    TEXT NOT NULL,\n  spec_json                 TEXT NOT NULL,\n  missed_run_policy         TEXT NOT NULL,\n  auto_approve_tools_json   TEXT NOT NULL,\n  alert_json                TEXT,\n  enabled                   INTEGER NOT NULL DEFAULT 1,\n  next_run_at               TEXT,\n  last_run_at               TEXT,\n  last_run_task_id          TEXT,\n  last_outcome              TEXT,\n  consecutive_failures      INTEGER NOT NULL DEFAULT 0,\n  created_at                TEXT NOT NULL,\n  updated_at                TEXT NOT NULL\n, agent_id TEXT, human_checkpoints TEXT, deliver_to TEXT CHECK (deliver_to IS NULL OR deliver_to IN ('home')), max_run_minutes INTEGER CHECK (max_run_minutes IS NULL OR max_run_minutes BETWEEN 1 AND 1440), notify TEXT CHECK (notify IS NULL OR notify IN ('when-sent','if-changed')), last_delivered_hash TEXT, retry_count INTEGER NOT NULL DEFAULT 0 CHECK (retry_count >= 0), retry_of_fire_time TEXT, paused_reason TEXT CHECK (paused_reason IS NULL OR paused_reason IN ('failures')), max_tokens INTEGER CHECK (max_tokens IS NULL OR max_tokens BETWEEN 1000 AND 100000000), precheck_json TEXT, precheck_state_json TEXT, webhook_secret_hash TEXT CHECK (webhook_secret_hash IS NULL OR length(webhook_secret_hash) = 64), webhook_signing_key_enc TEXT, webhook_since TEXT, watch INTEGER NOT NULL DEFAULT 0 CHECK (watch IN (0, 1)), email_trigger_json TEXT, folder_path TEXT)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_schema_migrations",
+      "tbl_name": "tavi_schema_migrations",
+      "sql": "CREATE TABLE tavi_schema_migrations (\n  migration_id TEXT PRIMARY KEY,\n  applied_at   TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_search_providers",
+      "tbl_name": "tavi_search_providers",
+      "sql": "CREATE TABLE tavi_search_providers (\n  provider_id    TEXT PRIMARY KEY,\n  kind           TEXT NOT NULL CHECK (kind IN ('tavily', 'brave', 'serper', 'searxng')),\n  credential_ref TEXT,\n  base_url       TEXT,\n  enabled        INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),\n  created_at     TEXT NOT NULL,\n  updated_at     TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_session_grants",
+      "tbl_name": "tavi_session_grants",
+      "sql": "CREATE TABLE tavi_session_grants (\n  grant_id     TEXT PRIMARY KEY,\n  task_id      TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  workspace_id TEXT NOT NULL,\n  tool_id      TEXT NOT NULL,\n  grant_json   TEXT NOT NULL,\n  created_at   TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_site_recipes",
+      "tbl_name": "tavi_site_recipes",
+      "sql": "CREATE TABLE tavi_site_recipes (\n workspace_id TEXT NOT NULL,\n host TEXT NOT NULL,\n steps_json TEXT NOT NULL,\n results INTEGER NOT NULL CHECK (results >= 0),\n uses INTEGER NOT NULL CHECK (uses >= 1),\n updated_at TEXT NOT NULL, replay INTEGER NOT NULL DEFAULT 0 CHECK (replay IN (0, 1)),\n PRIMARY KEY (workspace_id, host)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_site_usage",
+      "tbl_name": "tavi_site_usage",
+      "sql": "CREATE TABLE tavi_site_usage (\n workspace_id TEXT NOT NULL,\n profile TEXT NOT NULL,\n day TEXT NOT NULL,\n pages INTEGER NOT NULL DEFAULT 0 CHECK (pages >= 0),\n final_steps INTEGER NOT NULL DEFAULT 0 CHECK (final_steps >= 0),\n PRIMARY KEY (workspace_id, profile, day)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_skill_activation_history",
+      "tbl_name": "tavi_skill_activation_history",
+      "sql": "CREATE TABLE \"tavi_skill_activation_history\" (\n  history_id       TEXT PRIMARY KEY,\n  scope_key         TEXT NOT NULL,\n  skill_id          TEXT NOT NULL,\n  previous_version   TEXT,\n  new_version        TEXT,\n  reason             TEXT NOT NULL CHECK (reason IN ('activate','rollback','disable')),\n  actor               TEXT NOT NULL,\n  at                  TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_skill_activations",
+      "tbl_name": "tavi_skill_activations",
+      "sql": "CREATE TABLE \"tavi_skill_activations\" (\n  scope_key       TEXT NOT NULL,\n  skill_id        TEXT NOT NULL,\n  active_version   TEXT NOT NULL,\n  activated_by     TEXT NOT NULL,\n  activated_at     TEXT NOT NULL,\n  PRIMARY KEY (scope_key, skill_id),\n  FOREIGN KEY (scope_key, skill_id, active_version) REFERENCES \"tavi_skill_versions\"(scope_key, skill_id, version)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_skill_rollout_allowlist",
+      "tbl_name": "tavi_skill_rollout_allowlist",
+      "sql": "CREATE TABLE tavi_skill_rollout_allowlist (\n  entry_id       TEXT PRIMARY KEY,\n  scope_key      TEXT NOT NULL,\n  skill_id       TEXT NOT NULL,\n  version        TEXT NOT NULL,\n  task_id        TEXT NOT NULL,\n  authorized_by  TEXT NOT NULL,\n  authorized_at  TEXT NOT NULL,\n  UNIQUE (scope_key, skill_id, version, task_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_skill_uses",
+      "tbl_name": "tavi_skill_uses",
+      "sql": "CREATE TABLE tavi_skill_uses (\n  scope_key  TEXT NOT NULL,\n  task_id    TEXT NOT NULL,\n  skill_id   TEXT NOT NULL,\n  version    TEXT NOT NULL,\n  source     TEXT NOT NULL CHECK (source IN ('chat','routine')),\n  used_at    TEXT NOT NULL,\n  PRIMARY KEY (scope_key, skill_id, task_id, version, source)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_skill_versions",
+      "tbl_name": "tavi_skill_versions",
+      "sql": "CREATE TABLE \"tavi_skill_versions\" (\n  skill_id             TEXT NOT NULL,\n  version               TEXT NOT NULL,\n  content_hash          TEXT NOT NULL,\n  parent_version         TEXT,\n  scope_key              TEXT NOT NULL,\n  manifest_json           TEXT NOT NULL,\n  supported_runtime_versions_json TEXT NOT NULL DEFAULT '[]',\n  supported_tool_contract_versions_json TEXT NOT NULL DEFAULT '[]',\n  provenance             TEXT NOT NULL,\n  review_state            TEXT NOT NULL CHECK (review_state IN ('proposed','approved','rejected')),\n  package_artifact_id     TEXT NOT NULL REFERENCES tavi_artifacts(artifact_id),\n  imported_by             TEXT NOT NULL,\n  imported_at             TEXT NOT NULL,\n  reviewed_by             TEXT,\n  reviewed_at             TEXT,\n  PRIMARY KEY (scope_key, skill_id, version)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_tainted_host_writes",
+      "tbl_name": "tavi_tainted_host_writes",
+      "sql": "CREATE TABLE tavi_tainted_host_writes (\n  path         TEXT NOT NULL,\n  sha256       TEXT NOT NULL,\n  dev          TEXT,\n  ino          TEXT,\n  workspace_id TEXT NOT NULL,\n  task_id      TEXT,\n  written_at   TEXT NOT NULL,\n  PRIMARY KEY (path, sha256)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_task_findings",
+      "tbl_name": "tavi_task_findings",
+      "sql": "CREATE TABLE tavi_task_findings (\n task_id TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n seq INTEGER NOT NULL CHECK (seq >= 1),\n workspace_id TEXT NOT NULL,\n kind TEXT NOT NULL,\n record_json TEXT NOT NULL,\n source_url TEXT,\n created_at TEXT NOT NULL,\n PRIMARY KEY (task_id, seq)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_task_folders",
+      "tbl_name": "tavi_task_folders",
+      "sql": "CREATE TABLE tavi_task_folders (\n  task_id      TEXT PRIMARY KEY REFERENCES tavi_tasks(task_id) ON DELETE CASCADE,\n  workspace_id TEXT NOT NULL,\n  primary_kind TEXT NOT NULL CHECK (primary_kind IN ('managed','host')),\n  primary_path TEXT,\n  attachments_json TEXT NOT NULL DEFAULT '[]',\n  revision     INTEGER NOT NULL DEFAULT 1,\n  updated_at   TEXT NOT NULL\n, tainted_at TEXT)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_task_history_fts",
+      "tbl_name": "tavi_task_history_fts",
+      "sql": "CREATE VIRTUAL TABLE tavi_task_history_fts USING fts5(\n  body,\n  content = '',\n  contentless_delete = 1,\n  tokenize = \"trigram\"\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_task_history_fts_map",
+      "tbl_name": "tavi_task_history_fts_map",
+      "sql": "CREATE TABLE tavi_task_history_fts_map (\n  row_id       INTEGER PRIMARY KEY AUTOINCREMENT,\n  admission_id TEXT NOT NULL UNIQUE\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_task_memory_use",
+      "tbl_name": "tavi_task_memory_use",
+      "sql": "CREATE TABLE tavi_task_memory_use (\n  task_id           TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  record_id         TEXT NOT NULL,\n  first_used_at     TEXT NOT NULL,\n  last_used_at      TEXT NOT NULL,\n  last_admission_id TEXT NOT NULL,\n  PRIMARY KEY (task_id, record_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_task_prompt_pins",
+      "tbl_name": "tavi_task_prompt_pins",
+      "sql": "CREATE TABLE tavi_task_prompt_pins (\n  task_id           TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  pin               INTEGER NOT NULL CHECK (pin > 0),\n  source            TEXT NOT NULL CHECK (source IN ('workspace', 'builtin')),\n  text              TEXT NOT NULL,\n  hash              TEXT NOT NULL,\n  settings_revision INTEGER CHECK (settings_revision IS NULL OR settings_revision >= 0),\n  template_version  TEXT,\n  bound_at          TEXT NOT NULL,\n  CHECK (source <> 'workspace' OR (settings_revision IS NOT NULL AND template_version IS NULL)),\n  CHECK (source <> 'builtin' OR (settings_revision IS NULL AND template_version IS NOT NULL)),\n  PRIMARY KEY (task_id, pin)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_task_prompt_snapshots",
+      "tbl_name": "tavi_task_prompt_snapshots",
+      "sql": "CREATE TABLE tavi_task_prompt_snapshots (\n task_id TEXT PRIMARY KEY REFERENCES tavi_tasks(task_id) ON DELETE CASCADE,\n workspace_id TEXT NOT NULL,\n source TEXT NOT NULL CHECK (source IN ('workspace', 'builtin', 'explicit')),\n text TEXT NOT NULL,\n hash TEXT NOT NULL,\n settings_revision INTEGER CHECK (settings_revision IS NULL OR settings_revision >= 0),\n template_version TEXT,\n bound_at TEXT NOT NULL,\n -- Mirrors the Zod discriminated union as far as SQL states it, as a second line\n -- rather than a replacement: a row which cannot describe any source the schema\n -- knows never lands. That the hash is the hash of the text is the reader's check\n -- (readTaskPromptSnapshot refuses the row as INTERNAL), not the table's.\n CHECK (source <> 'workspace' OR settings_revision IS NOT NULL),\n CHECK (source <> 'builtin' OR template_version IS NOT NULL),\n CHECK (source <> 'explicit' OR (settings_revision IS NULL AND template_version IS NULL))\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_task_routes",
+      "tbl_name": "tavi_task_routes",
+      "sql": "CREATE TABLE tavi_task_routes (\n  task_id TEXT PRIMARY KEY REFERENCES tavi_tasks(task_id) ON DELETE CASCADE, data TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_task_tool_calls",
+      "tbl_name": "tavi_task_tool_calls",
+      "sql": "CREATE TABLE tavi_task_tool_calls (\n  task_id TEXT NOT NULL REFERENCES tavi_tasks(task_id) ON DELETE CASCADE,\n  steps INTEGER NOT NULL,\n  call_id TEXT NOT NULL, tool_id TEXT, created_at TEXT,\n  PRIMARY KEY(task_id, steps, call_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_tasks",
+      "tbl_name": "tavi_tasks",
+      "sql": "CREATE TABLE \"tavi_tasks\" (\n  task_id        TEXT PRIMARY KEY,\n  workspace_id  TEXT NOT NULL,\n  principal_id  TEXT NOT NULL,\n  thread_id     TEXT NOT NULL,\n  status        TEXT NOT NULL,\n  final_text    TEXT,\n  operation_key TEXT,\n  created_at    TEXT NOT NULL,\n  updated_at    TEXT NOT NULL\n, checkpoint_namespace TEXT NOT NULL DEFAULT '', origin TEXT, origin_schedule_id TEXT, tool_count INTEGER, execution_policy_json TEXT, title TEXT, summary TEXT, summary_state TEXT CHECK (summary_state IN ('pending', 'done', 'failed', 'skipped')), summarized_at TEXT, title_override TEXT, chat_kind TEXT CHECK (chat_kind IN ('home', 'side', 'worker', 'run')), parent_chat_id TEXT, transcript_seq_floor INTEGER, rewind_admission_ids TEXT, memory_mode TEXT CHECK (memory_mode IN ('off', 'private')), memory_on_at TEXT, summary_input_hash TEXT)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_tool_disclosures",
+      "tbl_name": "tavi_tool_disclosures",
+      "sql": "CREATE TABLE tavi_tool_disclosures (\n  task_id TEXT NOT NULL REFERENCES tavi_tasks(task_id) ON DELETE CASCADE, attempt_id TEXT NOT NULL, data TEXT NOT NULL,\n  PRIMARY KEY(task_id, attempt_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_tool_rule_seeds",
+      "tbl_name": "tavi_tool_rule_seeds",
+      "sql": "CREATE TABLE tavi_tool_rule_seeds (\n workspace_id TEXT NOT NULL,\n rule_id TEXT NOT NULL,\n seeded_at TEXT NOT NULL,\n PRIMARY KEY (workspace_id, rule_id)\n) WITHOUT ROWID"
+    },
+    {
+      "type": "table",
+      "name": "tavi_tool_rules",
+      "tbl_name": "tavi_tool_rules",
+      "sql": "CREATE TABLE tavi_tool_rules (\n  workspace_id TEXT NOT NULL,\n  rule_id      TEXT NOT NULL,\n  tool_pattern TEXT NOT NULL,\n  decision     TEXT NOT NULL CHECK (decision IN ('allow', 'ask', 'deny')),\n  rule_json    TEXT NOT NULL,\n  created_at   TEXT NOT NULL,\n  PRIMARY KEY (workspace_id, rule_id)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_transcript_entries",
+      "tbl_name": "tavi_transcript_entries",
+      "sql": "CREATE TABLE tavi_transcript_entries (\n  task_id      TEXT NOT NULL REFERENCES tavi_tasks (task_id) ON DELETE CASCADE,\n  seq          INTEGER NOT NULL CHECK (seq > 0),\n  admission_id TEXT,\n  turn_json    TEXT NOT NULL,\n  created_at   TEXT NOT NULL,\n  PRIMARY KEY (task_id, seq)\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_workspace_settings",
+      "tbl_name": "tavi_workspace_settings",
+      "sql": "CREATE TABLE tavi_workspace_settings (\n workspace_id TEXT PRIMARY KEY,\n settings_json TEXT NOT NULL,\n revision INTEGER NOT NULL CHECK (revision >= 0),\n actor TEXT,\n updated_at TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "tavi_workspace_system_prompts",
+      "tbl_name": "tavi_workspace_system_prompts",
+      "sql": "CREATE TABLE tavi_workspace_system_prompts (\n workspace_id TEXT PRIMARY KEY,\n text TEXT,\n revision INTEGER NOT NULL CHECK (revision >= 0),\n last_operation TEXT CHECK (last_operation IS NULL OR last_operation IN ('set', 'reset')),\n previous_revision INTEGER CHECK (previous_revision IS NULL OR previous_revision >= 0),\n actor TEXT,\n hash TEXT,\n updated_at TEXT NOT NULL,\n -- The hash describes the stored text, so the two cannot disagree in the row.\n CHECK ((text IS NULL) = (hash IS NULL))\n)"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_admissions_history_delete",
+      "tbl_name": "tavi_admissions",
+      "sql": "CREATE TRIGGER tavi_admissions_history_delete AFTER DELETE ON tavi_admissions\nBEGIN\n  DELETE FROM tavi_task_history_fts WHERE rowid = (SELECT row_id FROM tavi_task_history_fts_map WHERE admission_id = OLD.admission_id);\n  DELETE FROM tavi_task_history_fts_map WHERE admission_id = OLD.admission_id;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_admissions_history_insert",
+      "tbl_name": "tavi_admissions",
+      "sql": "CREATE TRIGGER tavi_admissions_history_insert AFTER INSERT ON tavi_admissions\nBEGIN\n  INSERT INTO tavi_task_history_fts_map (admission_id) VALUES (NEW.admission_id);\n  INSERT INTO tavi_task_history_fts (rowid, body)\n    SELECT row_id, COALESCE(CASE WHEN json_valid(NEW.intent) THEN CASE WHEN json_type(NEW.intent) = 'object' THEN concat_ws(' — ',\n    CASE WHEN json_type(NEW.intent, '$.prompt') = 'text' THEN json_extract(NEW.intent, '$.prompt') END,\n    CASE WHEN json_type(NEW.intent, '$.finalText') = 'text' THEN json_extract(NEW.intent, '$.finalText') END) END END, '') || ' ' || COALESCE(CASE WHEN json_valid(NEW.result) THEN CASE WHEN json_type(NEW.result) = 'object' THEN concat_ws(' — ',\n    CASE WHEN json_type(NEW.result, '$.prompt') = 'text' THEN json_extract(NEW.result, '$.prompt') END,\n    CASE WHEN json_type(NEW.result, '$.finalText') = 'text' THEN json_extract(NEW.result, '$.finalText') END) END END, '') FROM tavi_task_history_fts_map WHERE admission_id = NEW.admission_id;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_admissions_history_update",
+      "tbl_name": "tavi_admissions",
+      "sql": "CREATE TRIGGER tavi_admissions_history_update AFTER UPDATE OF intent, result ON tavi_admissions\n  WHEN OLD.intent IS NOT NEW.intent OR OLD.result IS NOT NEW.result\nBEGIN\n  DELETE FROM tavi_task_history_fts WHERE rowid = (SELECT row_id FROM tavi_task_history_fts_map WHERE admission_id = NEW.admission_id);\n  INSERT INTO tavi_task_history_fts (rowid, body)\n    SELECT row_id, COALESCE(CASE WHEN json_valid(NEW.intent) THEN CASE WHEN json_type(NEW.intent) = 'object' THEN concat_ws(' — ',\n    CASE WHEN json_type(NEW.intent, '$.prompt') = 'text' THEN json_extract(NEW.intent, '$.prompt') END,\n    CASE WHEN json_type(NEW.intent, '$.finalText') = 'text' THEN json_extract(NEW.intent, '$.finalText') END) END END, '') || ' ' || COALESCE(CASE WHEN json_valid(NEW.result) THEN CASE WHEN json_type(NEW.result) = 'object' THEN concat_ws(' — ',\n    CASE WHEN json_type(NEW.result, '$.prompt') = 'text' THEN json_extract(NEW.result, '$.prompt') END,\n    CASE WHEN json_type(NEW.result, '$.finalText') = 'text' THEN json_extract(NEW.result, '$.finalText') END) END END, '') FROM tavi_task_history_fts_map WHERE admission_id = NEW.admission_id;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_admissions_summary_continued",
+      "tbl_name": "tavi_admissions",
+      "sql": "CREATE TRIGGER tavi_admissions_summary_continued AFTER INSERT ON tavi_admissions\n  WHEN NEW.kind IN ('start', 'reply')\nBEGIN\n  UPDATE tavi_tasks SET summary_state = 'pending'\n    WHERE task_id = NEW.task_id AND summary_state IS NOT 'pending' AND status IS NOT 'cancelled' AND chat_kind IS NOT 'home';\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_agent_wait_intents_center_delete",
+      "tbl_name": "tavi_agent_wait_intents",
+      "sql": "CREATE TRIGGER tavi_agent_wait_intents_center_delete AFTER DELETE ON tavi_agent_wait_intents BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'question', 1 FROM (SELECT (SELECT t.workspace_id FROM tavi_tasks t WHERE t.task_id = OLD.task_id) AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_agent_wait_intents_center_insert",
+      "tbl_name": "tavi_agent_wait_intents",
+      "sql": "CREATE TRIGGER tavi_agent_wait_intents_center_insert AFTER INSERT ON tavi_agent_wait_intents BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'question', 1 FROM (SELECT (SELECT t.workspace_id FROM tavi_tasks t WHERE t.task_id = NEW.task_id) AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_agent_wait_intents_center_update",
+      "tbl_name": "tavi_agent_wait_intents",
+      "sql": "CREATE TRIGGER tavi_agent_wait_intents_center_update AFTER UPDATE ON tavi_agent_wait_intents BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'question', 1 FROM (SELECT (SELECT t.workspace_id FROM tavi_tasks t WHERE t.task_id = NEW.task_id) AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_approvals_center_delete",
+      "tbl_name": "tavi_approvals",
+      "sql": "CREATE TRIGGER tavi_approvals_center_delete AFTER DELETE ON tavi_approvals BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'approval', 1 FROM (SELECT (SELECT t.workspace_id FROM tavi_tasks t WHERE t.task_id = OLD.task_id) AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_approvals_center_insert",
+      "tbl_name": "tavi_approvals",
+      "sql": "CREATE TRIGGER tavi_approvals_center_insert AFTER INSERT ON tavi_approvals BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'approval', 1 FROM (SELECT (SELECT t.workspace_id FROM tavi_tasks t WHERE t.task_id = NEW.task_id) AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_approvals_center_update",
+      "tbl_name": "tavi_approvals",
+      "sql": "CREATE TRIGGER tavi_approvals_center_update AFTER UPDATE ON tavi_approvals BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'approval', 1 FROM (SELECT (SELECT t.workspace_id FROM tavi_tasks t WHERE t.task_id = NEW.task_id) AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_artifacts_center_delete",
+      "tbl_name": "tavi_artifacts",
+      "sql": "CREATE TRIGGER tavi_artifacts_center_delete AFTER DELETE ON tavi_artifacts WHEN OLD.purpose IS NULL BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'review', 1 FROM (SELECT OLD.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_artifacts_center_insert",
+      "tbl_name": "tavi_artifacts",
+      "sql": "CREATE TRIGGER tavi_artifacts_center_insert AFTER INSERT ON tavi_artifacts WHEN NEW.purpose IS NULL BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'review', 1 FROM (SELECT NEW.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_artifacts_center_update",
+      "tbl_name": "tavi_artifacts",
+      "sql": "CREATE TRIGGER tavi_artifacts_center_update AFTER UPDATE ON tavi_artifacts WHEN NEW.purpose IS NULL BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'review', 1 FROM (SELECT NEW.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_browser_sessions_center_delete",
+      "tbl_name": "tavi_browser_sessions",
+      "sql": "CREATE TRIGGER tavi_browser_sessions_center_delete AFTER DELETE ON tavi_browser_sessions BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'browser', 1 FROM (SELECT OLD.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_browser_sessions_center_insert",
+      "tbl_name": "tavi_browser_sessions",
+      "sql": "CREATE TRIGGER tavi_browser_sessions_center_insert AFTER INSERT ON tavi_browser_sessions BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'browser', 1 FROM (SELECT NEW.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_browser_sessions_center_update",
+      "tbl_name": "tavi_browser_sessions",
+      "sql": "CREATE TRIGGER tavi_browser_sessions_center_update AFTER UPDATE ON tavi_browser_sessions BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'browser', 1 FROM (SELECT NEW.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_browser_visits_center_delete",
+      "tbl_name": "tavi_browser_visits",
+      "sql": "CREATE TRIGGER tavi_browser_visits_center_delete AFTER DELETE ON tavi_browser_visits BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'browser', 1 FROM (SELECT (SELECT s.workspace_id FROM tavi_browser_sessions s WHERE s.session_id = OLD.session_id) AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_browser_visits_center_insert",
+      "tbl_name": "tavi_browser_visits",
+      "sql": "CREATE TRIGGER tavi_browser_visits_center_insert AFTER INSERT ON tavi_browser_visits BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'browser', 1 FROM (SELECT (SELECT s.workspace_id FROM tavi_browser_sessions s WHERE s.session_id = NEW.session_id) AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_browser_visits_center_update",
+      "tbl_name": "tavi_browser_visits",
+      "sql": "CREATE TRIGGER tavi_browser_visits_center_update AFTER UPDATE ON tavi_browser_visits BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'browser', 1 FROM (SELECT (SELECT s.workspace_id FROM tavi_browser_sessions s WHERE s.session_id = NEW.session_id) AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_memory_records_center_delete",
+      "tbl_name": "tavi_memory_records",
+      "sql": "CREATE TRIGGER tavi_memory_records_center_delete AFTER DELETE ON tavi_memory_records BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'memory', 1 FROM (SELECT CASE WHEN OLD.scope_kind = 'run_local' THEN NULL WHEN OLD.scope_kind = 'shared_workspace' THEN OLD.workspace_id ELSE 'p:' || OLD.principal_id END AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_memory_records_center_insert",
+      "tbl_name": "tavi_memory_records",
+      "sql": "CREATE TRIGGER tavi_memory_records_center_insert AFTER INSERT ON tavi_memory_records BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'memory', 1 FROM (SELECT CASE WHEN NEW.scope_kind = 'run_local' THEN NULL WHEN NEW.scope_kind = 'shared_workspace' THEN NEW.workspace_id ELSE 'p:' || NEW.principal_id END AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_memory_records_center_update",
+      "tbl_name": "tavi_memory_records",
+      "sql": "CREATE TRIGGER tavi_memory_records_center_update AFTER UPDATE ON tavi_memory_records BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'memory', 1 FROM (SELECT CASE WHEN NEW.scope_kind = 'run_local' THEN NULL WHEN NEW.scope_kind = 'shared_workspace' THEN NEW.workspace_id ELSE 'p:' || NEW.principal_id END AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_memory_revisions_center_delete",
+      "tbl_name": "tavi_memory_revisions",
+      "sql": "CREATE TRIGGER tavi_memory_revisions_center_delete AFTER DELETE ON tavi_memory_revisions BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'memory', 1 FROM (SELECT (SELECT CASE WHEN m.scope_kind = 'run_local' THEN NULL WHEN m.scope_kind = 'shared_workspace' THEN m.workspace_id ELSE 'p:' || m.principal_id END FROM tavi_memory_records m WHERE m.record_id = OLD.record_id) AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_memory_revisions_center_insert",
+      "tbl_name": "tavi_memory_revisions",
+      "sql": "CREATE TRIGGER tavi_memory_revisions_center_insert AFTER INSERT ON tavi_memory_revisions BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'memory', 1 FROM (SELECT (SELECT CASE WHEN m.scope_kind = 'run_local' THEN NULL WHEN m.scope_kind = 'shared_workspace' THEN m.workspace_id ELSE 'p:' || m.principal_id END FROM tavi_memory_records m WHERE m.record_id = NEW.record_id) AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_memory_revisions_center_update",
+      "tbl_name": "tavi_memory_revisions",
+      "sql": "CREATE TRIGGER tavi_memory_revisions_center_update AFTER UPDATE ON tavi_memory_revisions BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'memory', 1 FROM (SELECT (SELECT CASE WHEN m.scope_kind = 'run_local' THEN NULL WHEN m.scope_kind = 'shared_workspace' THEN m.workspace_id ELSE 'p:' || m.principal_id END FROM tavi_memory_records m WHERE m.record_id = NEW.record_id) AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_plugin_settings_center_delete",
+      "tbl_name": "tavi_plugin_settings",
+      "sql": "CREATE TRIGGER tavi_plugin_settings_center_delete AFTER DELETE ON tavi_plugin_settings BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'plugin', 1 FROM (SELECT '*' AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_plugin_settings_center_insert",
+      "tbl_name": "tavi_plugin_settings",
+      "sql": "CREATE TRIGGER tavi_plugin_settings_center_insert AFTER INSERT ON tavi_plugin_settings BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'plugin', 1 FROM (SELECT '*' AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_plugin_settings_center_update",
+      "tbl_name": "tavi_plugin_settings",
+      "sql": "CREATE TRIGGER tavi_plugin_settings_center_update AFTER UPDATE ON tavi_plugin_settings BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'plugin', 1 FROM (SELECT '*' AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_plugin_versions_center_delete",
+      "tbl_name": "tavi_plugin_versions",
+      "sql": "CREATE TRIGGER tavi_plugin_versions_center_delete AFTER DELETE ON tavi_plugin_versions BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'plugin', 1 FROM (SELECT '*' AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_plugin_versions_center_insert",
+      "tbl_name": "tavi_plugin_versions",
+      "sql": "CREATE TRIGGER tavi_plugin_versions_center_insert AFTER INSERT ON tavi_plugin_versions BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'plugin', 1 FROM (SELECT '*' AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_plugin_versions_center_update",
+      "tbl_name": "tavi_plugin_versions",
+      "sql": "CREATE TRIGGER tavi_plugin_versions_center_update AFTER UPDATE ON tavi_plugin_versions BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'plugin', 1 FROM (SELECT '*' AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_provider_attempt_requests_cascade",
+      "tbl_name": "tavi_provider_attempts",
+      "sql": "CREATE TRIGGER tavi_provider_attempt_requests_cascade AFTER DELETE ON tavi_provider_attempts BEGIN\n  DELETE FROM tavi_provider_attempt_requests WHERE call_id = OLD.call_id;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_reminder_fires_center_delete",
+      "tbl_name": "tavi_reminder_fires",
+      "sql": "CREATE TRIGGER tavi_reminder_fires_center_delete AFTER DELETE ON tavi_reminder_fires BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'reminder', 1 FROM (SELECT (SELECT m.workspace_id FROM tavi_reminders m WHERE m.reminder_id = OLD.reminder_id) AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_reminder_fires_center_insert",
+      "tbl_name": "tavi_reminder_fires",
+      "sql": "CREATE TRIGGER tavi_reminder_fires_center_insert AFTER INSERT ON tavi_reminder_fires BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'reminder', 1 FROM (SELECT (SELECT m.workspace_id FROM tavi_reminders m WHERE m.reminder_id = NEW.reminder_id) AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_reminder_fires_center_update",
+      "tbl_name": "tavi_reminder_fires",
+      "sql": "CREATE TRIGGER tavi_reminder_fires_center_update AFTER UPDATE ON tavi_reminder_fires BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'reminder', 1 FROM (SELECT (SELECT m.workspace_id FROM tavi_reminders m WHERE m.reminder_id = NEW.reminder_id) AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_reminders_center_delete",
+      "tbl_name": "tavi_reminders",
+      "sql": "CREATE TRIGGER tavi_reminders_center_delete AFTER DELETE ON tavi_reminders BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'reminder', 1 FROM (SELECT OLD.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_reminders_center_insert",
+      "tbl_name": "tavi_reminders",
+      "sql": "CREATE TRIGGER tavi_reminders_center_insert AFTER INSERT ON tavi_reminders BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'reminder', 1 FROM (SELECT NEW.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_reminders_center_update",
+      "tbl_name": "tavi_reminders",
+      "sql": "CREATE TRIGGER tavi_reminders_center_update AFTER UPDATE ON tavi_reminders BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'reminder', 1 FROM (SELECT NEW.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_router_task_delete",
+      "tbl_name": "tavi_tasks",
+      "sql": "CREATE TRIGGER tavi_router_task_delete AFTER DELETE ON tavi_tasks BEGIN\n  DELETE FROM tavi_router_budget_totals WHERE task_key=OLD.task_id AND workspace_id=OLD.workspace_id AND principal_id=OLD.principal_id;\n  DELETE FROM tavi_provider_attempts WHERE run_id=OLD.task_id;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_routines_center_delete",
+      "tbl_name": "tavi_routines",
+      "sql": "CREATE TRIGGER tavi_routines_center_delete AFTER DELETE ON tavi_routines BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'routine', 1 FROM (SELECT OLD.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_routines_center_insert",
+      "tbl_name": "tavi_routines",
+      "sql": "CREATE TRIGGER tavi_routines_center_insert AFTER INSERT ON tavi_routines BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'routine', 1 FROM (SELECT NEW.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_routines_center_update",
+      "tbl_name": "tavi_routines",
+      "sql": "CREATE TRIGGER tavi_routines_center_update AFTER UPDATE ON tavi_routines BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'routine', 1 FROM (SELECT NEW.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_schedules_center_delete",
+      "tbl_name": "tavi_schedules",
+      "sql": "CREATE TRIGGER tavi_schedules_center_delete AFTER DELETE ON tavi_schedules BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'schedule', 1 FROM (SELECT OLD.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_schedules_center_insert",
+      "tbl_name": "tavi_schedules",
+      "sql": "CREATE TRIGGER tavi_schedules_center_insert AFTER INSERT ON tavi_schedules BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'schedule', 1 FROM (SELECT NEW.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_schedules_center_update",
+      "tbl_name": "tavi_schedules",
+      "sql": "CREATE TRIGGER tavi_schedules_center_update AFTER UPDATE ON tavi_schedules BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'schedule', 1 FROM (SELECT NEW.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_skill_activations_center_delete",
+      "tbl_name": "tavi_skill_activations",
+      "sql": "CREATE TRIGGER tavi_skill_activations_center_delete AFTER DELETE ON tavi_skill_activations BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version) VALUES (OLD.scope_key, 'skill', 1)\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_skill_activations_center_insert",
+      "tbl_name": "tavi_skill_activations",
+      "sql": "CREATE TRIGGER tavi_skill_activations_center_insert AFTER INSERT ON tavi_skill_activations BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version) VALUES (NEW.scope_key, 'skill', 1)\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_skill_activations_center_update",
+      "tbl_name": "tavi_skill_activations",
+      "sql": "CREATE TRIGGER tavi_skill_activations_center_update AFTER UPDATE ON tavi_skill_activations BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version) VALUES (NEW.scope_key, 'skill', 1)\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_skill_versions_center_delete",
+      "tbl_name": "tavi_skill_versions",
+      "sql": "CREATE TRIGGER tavi_skill_versions_center_delete AFTER DELETE ON tavi_skill_versions BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version) VALUES (OLD.scope_key, 'skill', 1)\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_skill_versions_center_insert",
+      "tbl_name": "tavi_skill_versions",
+      "sql": "CREATE TRIGGER tavi_skill_versions_center_insert AFTER INSERT ON tavi_skill_versions BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version) VALUES (NEW.scope_key, 'skill', 1)\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_skill_versions_center_update",
+      "tbl_name": "tavi_skill_versions",
+      "sql": "CREATE TRIGGER tavi_skill_versions_center_update AFTER UPDATE ON tavi_skill_versions BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version) VALUES (NEW.scope_key, 'skill', 1)\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_tasks_center_delete",
+      "tbl_name": "tavi_tasks",
+      "sql": "CREATE TRIGGER tavi_tasks_center_delete AFTER DELETE ON tavi_tasks BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'task', 1 FROM (SELECT OLD.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_tasks_center_insert",
+      "tbl_name": "tavi_tasks",
+      "sql": "CREATE TRIGGER tavi_tasks_center_insert AFTER INSERT ON tavi_tasks BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'task', 1 FROM (SELECT NEW.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_tasks_center_update",
+      "tbl_name": "tavi_tasks",
+      "sql": "CREATE TRIGGER tavi_tasks_center_update AFTER UPDATE ON tavi_tasks BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version)\n  SELECT s, 'task', 1 FROM (SELECT NEW.workspace_id AS s) WHERE s IS NOT NULL\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_tasks_summary_finished",
+      "tbl_name": "tavi_tasks",
+      "sql": "CREATE TRIGGER tavi_tasks_summary_finished AFTER UPDATE OF status ON tavi_tasks\n  WHEN NEW.status IN ('completed', 'failed', 'stopped', 'cancelled') AND NEW.status IS NOT OLD.status AND NEW.chat_kind IS NOT 'home'\nBEGIN\n  UPDATE tavi_tasks SET summary_state = 'pending' WHERE task_id = NEW.task_id AND summary_state IS NOT 'pending';\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_workspace_settings_center_insert",
+      "tbl_name": "tavi_workspace_settings",
+      "sql": "CREATE TRIGGER tavi_workspace_settings_center_insert AFTER INSERT ON tavi_workspace_settings WHEN (CASE WHEN json_valid(NEW.settings_json) THEN json_extract(NEW.settings_json, '$.uiRoles') END) IS NOT NULL OR (CASE WHEN json_valid(NEW.settings_json) THEN json_extract(NEW.settings_json, '$.uiPlacements') END) IS NOT NULL BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version) VALUES (NEW.workspace_id, 'plugin', 1)\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_workspace_settings_center_update",
+      "tbl_name": "tavi_workspace_settings",
+      "sql": "CREATE TRIGGER tavi_workspace_settings_center_update AFTER UPDATE ON tavi_workspace_settings\nWHEN (CASE WHEN json_valid(NEW.settings_json) THEN json_extract(NEW.settings_json, '$.uiRoles') END) IS NOT (CASE WHEN json_valid(OLD.settings_json) THEN json_extract(OLD.settings_json, '$.uiRoles') END)\n  OR (CASE WHEN json_valid(NEW.settings_json) THEN json_extract(NEW.settings_json, '$.uiPlacements') END) IS NOT (CASE WHEN json_valid(OLD.settings_json) THEN json_extract(OLD.settings_json, '$.uiPlacements') END) BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version) VALUES (NEW.workspace_id, 'plugin', 1)\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    }
+  ],
+  "rows": {
+    "sqlite_sequence": [
+      {
+        "name": "tavi_task_history_fts_map",
+        "seq": 0
+      }
+    ],
+    "tavi_meta": [
+      {
+        "key": "profile.format",
+        "value": "tavi-1",
+        "updated_at": "<timestamp>"
+      }
+    ],
+    "tavi_onboarding": [
+      {
+        "id": 1,
+        "provider_id": null,
+        "first_seen_at": null,
+        "completed_at": null,
+        "dismissed_at": null,
+        "dismissed_flow_version": null,
+        "flow_version": null
+      }
+    ],
+    "tavi_schema_migrations": [
+      {
+        "migration_id": "0001_baseline",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0002_anthropic_messages_connections",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0003_task_summary_input_hash",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0004_memory_fts_stem",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0005_memory_fts_keywords",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0006_memory_fts_secure_delete",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0007_site_recipe_replay",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0008_skill_versions_scoped",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0009_skills_center_versions",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0010_skill_uses",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0011_todos",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0012_schedule_fires",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0013_schedule_max_run",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0014_schedule_notify",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0015_schedule_retry_pause",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0016_schedule_max_tokens",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0017_routine_run_local_day",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0018_schedule_precheck",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0019_schedule_webhook",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0020_schedule_watch",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0021_schedule_email_trigger",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0022_routine_runs_pending",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0023_model_connection_stream_timeouts",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0024_hot_query_indexes",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0025_task_history_fts",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0026_schedule_email_trigger_index",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0027_checkpoint_blobs",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0028_schedule_folder",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0029_stopped_task_summary",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0030_schedule_fire_stopped",
+        "applied_at": "<timestamp>"
+      }
+    ]
+  }
+}

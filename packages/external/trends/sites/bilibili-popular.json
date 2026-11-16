@@ -1,0 +1,58 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "bilibili-popular",
+  "name": "Bilibili popular",
+  "countries": [
+    "CN"
+  ],
+  "hosts": [
+    "www.bilibili.com"
+  ],
+  "kind": "trending",
+  "access": {
+    "mode": "assist-only",
+    "navigate": false,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Bilibili's terms (§5.6(3)) bar automated means of reading the service, and its API host disallows all robots, so Tavi is not to open it.",
+    "termsUrl": "https://www.bilibili.com/protocal/licence.html",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 3,
+    "pagesPerDay": 10,
+    "minIntervalMs": 10000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "ItemList",
+      "ListItem",
+      "SocialMediaPosting",
+      "NewsArticle",
+      "DiscussionForumPosting",
+      "VideoObject"
+    ],
+    "resultSchema": {
+      "type": "object",
+      "properties": {
+        "rank": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "metric": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "title",
+        "url"
+      ]
+    }
+  },
+  "notes": "Turned on, this profile stops Tavi's browser opening Bilibili, and if you open www.bilibili.com/v/popular/all yourself, Tavi reads that page for the chat only: nothing from it is kept, relayed with ingest or counted."
+}

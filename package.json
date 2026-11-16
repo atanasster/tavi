@@ -1,0 +1,65 @@
+{
+  "name": "tavi-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tavi \u2014 local-first agent application (monorepo root)",
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "packageManager": "pnpm@12.16.1",
+  "engines": {
+    "node": ">=22.21.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck && tsc --noEmit -p tsconfig.tests.json && tsc --noEmit -p tsconfig.guides.json",
+    "lint": "biome ci --error-on-warnings .",
+    "format": "biome format --write .",
+    "lint:css": "turbo run lint:css",
+    "knip": "knip",
+    "test": "turbo run test && vitest run",
+    "check": "pnpm run lint && pnpm run typecheck && pnpm run test",
+    "test:real": "node ./scripts/with-env.mjs TAVI_REAL_TESTS=1 -- pnpm run test",
+    "test:release": "node ./scripts/with-env.mjs TAVI_RELEASE_INSTALL=1 -- pnpm exec vitest run tests/release.test.ts",
+    "test:guides": "node ./scripts/test-guides.mjs",
+    "docs:indexes": "node ./scripts/docs/guide-indexes.mjs",
+    "tavi": "node ./scripts/tavi.mjs",
+    "notices": "node ./scripts/third-party-notices.mjs"
+  },
+  "bin": {
+    "tavi": "./apps/cli/dist/executable.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:",
+    "@cantoo/fontkit": "catalog:",
+    "@cantoo/pdf-lib": "catalog:",
+    "@langchain/langgraph-checkpoint-sqlite": "catalog:",
+    "@tavi/agent-host": "workspace:*",
+    "@tavi/contracts": "workspace:*",
+    "@tavi/node-kit": "workspace:*",
+    "@tavi/plugin-defaults": "workspace:*",
+    "@tavi/plugin-kit": "workspace:*",
+    "@tavi/plugin-pdf": "workspace:*",
+    "@tavi/plugin-sandbox": "workspace:*",
+    "@tavi/plugin-video": "workspace:*",
+    "@tavi/plugin-worker": "workspace:*",
+    "@tavi/test-support": "workspace:*",
+    "@tavi/video-pose": "workspace:*",
+    "@types/better-sqlite3": "catalog:",
+    "@types/node": "catalog:",
+    "better-sqlite3": "catalog:",
+    "jscpd": "catalog:",
+    "knip": "catalog:",
+    "turbo": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

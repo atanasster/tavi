@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": {
+    "format": "bundled-esm",
+    "packages": []
+  },
+  "id": "acme.modguard",
+  "version": "1.0.0",
+  "name": "Mod guard fixture",
+  "description": "Exercises every hook event end to end.",
+  "entry": "index.mjs",
+  "mods": {
+    "abi": "tavi.mods/1",
+    "hooks": [
+      {
+        "event": "prompt.submit",
+        "disclosure": "Adds a note to each prompt."
+      },
+      {
+        "event": "tool.check",
+        "match": {
+          "tools": [
+            "plan.update"
+          ]
+        },
+        "disclosure": "Refuses a plan step that says delete."
+      },
+      {
+        "event": "tool.call",
+        "match": {
+          "tools": [
+            "plan.update"
+          ]
+        },
+        "disclosure": "Watches plan updates."
+      },
+      {
+        "event": "tool.result",
+        "match": {
+          "tools": [
+            "plan.update"
+          ]
+        },
+        "disclosure": "Reads plan update results."
+      },
+      {
+        "event": "turn.start",
+        "disclosure": "Counts turns."
+      },
+      {
+        "event": "model.step",
+        "disclosure": "Counts model calls."
+      },
+      {
+        "event": "turn.complete",
+        "disclosure": "Reads token usage."
+      }
+    ]
+  }
+}

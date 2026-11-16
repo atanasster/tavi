@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "acme.telegramhook",
+  "version": "0.1.0",
+  "name": "Telegram over webhooks",
+  "description": "Takes the telegram provider id from the built-in tavi.telegram: the Bot API's webhooks in, sendMessage out.",
+  "entry": "index.mjs",
+  "provides": ["channel"],
+  "channelAbi": 1,
+  "channels": [
+    {
+      "providerId": "telegram",
+      "label": "Telegram (webhooks)",
+      "kind": "chat",
+      "description": "Chat with the agent through a Telegram bot whose updates arrive by webhook.",
+      "settings": [
+        { "key": "botUsername", "label": "Bot username", "type": "string", "required": true, "pattern": "[A-Za-z][A-Za-z0-9_]{4,31}" },
+        { "key": "apiBaseUrl", "label": "API address", "type": "string", "default": "https://api.telegram.org" }
+      ],
+      "auth": {
+        "kind": "secrets",
+        "fields": [
+          { "key": "token", "label": "Bot token", "help": "From @BotFather." },
+          { "key": "webhookSecret", "label": "Webhook secret", "help": "The secret_token you pass to setWebhook." }
+        ]
+      },
+      "sender": {
+        "label": "Telegram user ID",
+        "placeholder": "123456789",
+        "pattern": "[1-9]\\d{0,19}",
+        "normalize": "none",
+        "authentication": "provider"
+      },
+      "target": { "label": "Chat ID", "placeholder": "123456789", "pattern": "-?[1-9]\\d{0,19}", "normalize": "none" },
+      "ingress": [{ "name": "webhook", "methods": ["POST"], "scope": "connection", "maxBodyBytes": 1048576 }],
+      "sendRate": { "perMinute": 1800, "perTargetPerMinute": 60 },
+      "account": { "setting": "botUsername" },
+      "proves": ["messaging"],
+      "retention": "purge-on-remove",
+      "hosts": ["api.telegram.org"],
+      "pairing": { "deepLinkTemplate": "https://t.me/{account}?start={code}", "openLabel": "Open in Telegram" },
+      "setupHelp": "Point the bot at this connection's webhook address: setWebhook with url=<public address>/hooks/<connection id>/webhook and secret_token=<the webhook secret>."
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "name": "@tavi/plugin-trends",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/external/trends"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "description": "trends.radar: an external plugin, built to one bundle with its manifest, that tracks topics across free trend sources, tests their velocity in code and raises spikes on the heartbeat",
+  "files": [
+    "dist-plugin"
+  ],
+  "scripts": {
+    "build": "tsdown && node scripts/assemble.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tavi/domain-kit": "workspace:*",
+    "@tavi/plugin-types": "workspace:*",
+    "@tavi/trends-kit": "workspace:*"
+  },
+  "devDependencies": {
+    "@tavi/contracts": "workspace:*",
+    "@tavi/plugin-kit": "workspace:*",
+    "@tavi/test-support": "workspace:*",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "zod": "catalog:"
+  }
+}

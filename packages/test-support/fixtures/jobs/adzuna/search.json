@@ -1,0 +1,42 @@
+{
+ "__CLASS__": "Adzuna::API::Response::JobSearchResults",
+ "count": 2,
+ "mean": 74000.5,
+ "results": [
+  {
+   "__CLASS__": "Adzuna::API::Response::Job",
+   "id": "4870001001",
+   "adref": "eyJhbGciOiJIUzI1NiJ9.example-one",
+   "title": "Senior <strong>Backend</strong> Engineer (Go)",
+   "description": "We are hiring a senior backend engineer to build payment services in <strong>Go</strong> and Postgres on Kubernetes. Hybrid, two days a week in our Berlin office…",
+   "redirect_url": "https://www.adzuna.de/land/ad/4870001001?se=example&utm_medium=api&utm_source=example&v=example",
+   "created": "2026-10-14T08:12:00Z",
+   "company": { "__CLASS__": "Adzuna::API::Response::Company", "display_name": "Example Payments GmbH" },
+   "location": { "__CLASS__": "Adzuna::API::Response::Location", "display_name": "Berlin, Deutschland", "area": ["Deutschland", "Berlin", "Berlin"] },
+   "latitude": 52.52,
+   "longitude": 13.405,
+   "salary_min": 80000,
+   "salary_max": 95000,
+   "salary_is_predicted": "0",
+   "contract_time": "full_time",
+   "contract_type": "permanent",
+   "category": { "__CLASS__": "Adzuna::API::Response::Category", "label": "IT-Stellen", "tag": "it-jobs" }
+  },
+  {
+   "__CLASS__": "Adzuna::API::Response::Job",
+   "id": "4870001002",
+   "adref": "eyJhbGciOiJIUzI1NiJ9.example-two",
+   "title": "Backend Developer",
+   "description": "Join our team as a backend developer working with Python and Django on our logistics platform…",
+   "redirect_url": "https://www.adzuna.de/land/ad/4870001002?se=example&utm_medium=api&utm_source=example&v=example",
+   "created": "2026-10-12T15:40:00Z",
+   "company": { "__CLASS__": "Adzuna::API::Response::Company", "display_name": "Example Logistics AG" },
+   "location": { "__CLASS__": "Adzuna::API::Response::Location", "display_name": "Hamburg, Deutschland", "area": ["Deutschland", "Hamburg", "Hamburg"] },
+   "salary_min": 61234.56,
+   "salary_max": 61234.56,
+   "salary_is_predicted": "1",
+   "contract_time": "full_time",
+   "category": { "__CLASS__": "Adzuna::API::Response::Category", "label": "IT-Stellen", "tag": "it-jobs" }
+  }
+ ]
+}

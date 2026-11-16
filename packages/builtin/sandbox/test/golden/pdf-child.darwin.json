@@ -1,0 +1,21 @@
+{
+  "network": {
+    "allowedDomains": [],
+    "deniedDomains": [],
+    "strictAllowlist": true
+  },
+  "filesystem": {
+    "denyRead": [
+      "/home/person",
+      "/srv/tavi-data"
+    ],
+    "allowRead": [],
+    "allowWrite": [],
+    "denyWrite": [
+      "/private/tmp/claude",
+      "/tmp/claude",
+      "/home/person/.npm/_logs",
+      "/home/person/.claude/debug"
+    ]
+  }
+}

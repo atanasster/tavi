@@ -1,0 +1,136 @@
+{
+ "posts": [
+  {
+   "uri": "at://did:plc:examplepost0/app.bsky.feed.post/3my34nqgfiutv",
+   "cid": "bafyreih2r3ptdfxb7nqstc4kdqt2k6ncpxtkmj7f62zbwb3cu6vf6wxa6u",
+   "author": {
+    "did": "did:plc:examplepost0",
+    "handle": "poster0.bsky.social",
+    "displayName": "Poster 0",
+    "labels": [],
+    "createdAt": "2026-04-22T04:37:00.951Z"
+   },
+   "record": {
+    "$type": "app.bsky.feed.post",
+    "createdAt": "2026-10-17T12:45:21Z",
+    "langs": [
+     "en"
+    ],
+    "text": "5/14\nEven assuming exciting breakthroughs in battery tech on the horizon (like sodium-ion, solid-state, or iron-air), comparing the plant-level cost (LCOE) of renewables to nuclear misses Total System Cost:"
+   },
+   "bookmarkCount": 0,
+   "replyCount": 1,
+   "repostCount": 0,
+   "likeCount": 0,
+   "quoteCount": 0,
+   "indexedAt": "2026-10-17T12:45:21.956Z",
+   "labels": []
+  },
+  {
+   "uri": "at://did:plc:examplepost1/app.bsky.feed.post/3my343ubp6nrz",
+   "cid": "bafyreichuas3selcqxljg4gtyqwwnox4rkllzz5ole22mb7kiastetjgve",
+   "author": {
+    "did": "did:plc:examplepost1",
+    "handle": "poster1.bsky.social",
+    "displayName": "Poster 1",
+    "labels": [],
+    "createdAt": "2026-04-22T04:37:00.951Z"
+   },
+   "record": {
+    "$type": "app.bsky.feed.post",
+    "createdAt": "2026-10-17T12:35:21Z",
+    "langs": [
+     "en"
+    ],
+    "text": "5/14\nEven assuming exciting breakthroughs in battery tech on the horizon (like sodium-ion, solid-state, or iron-air), comparing the plant-level cost (LCOE) of renewables to nuclear misses Total System Cost:"
+   },
+   "bookmarkCount": 0,
+   "replyCount": 1,
+   "repostCount": 0,
+   "likeCount": 0,
+   "quoteCount": 0,
+   "indexedAt": "2026-10-17T12:35:21.859Z",
+   "labels": []
+  },
+  {
+   "uri": "at://did:plc:examplepost2/app.bsky.feed.post/3my343tdzvtqw",
+   "cid": "bafyreifqybl5sbvz3xt3bmm3vpihliteoevyejp5b7gurqvxgttfjrccoy",
+   "author": {
+    "did": "did:plc:examplepost2",
+    "handle": "poster2.bsky.social",
+    "displayName": "Poster 2",
+    "labels": [],
+    "createdAt": "2026-04-22T04:37:00.951Z"
+   },
+   "record": {
+    "$type": "app.bsky.feed.post",
+    "createdAt": "2026-10-17T12:35:20Z",
+    "langs": [
+     "en"
+    ],
+    "text": "5/14\nEven assuming exciting breakthroughs in battery tech on the horizon (like sodium-ion, solid-state, or iron-air), comparing the plant-level cost (LCOE) of renewables to nuclear misses Total System Cost:"
+   },
+   "bookmarkCount": 0,
+   "replyCount": 1,
+   "repostCount": 0,
+   "likeCount": 0,
+   "quoteCount": 0,
+   "indexedAt": "2026-10-17T12:35:20.961Z",
+   "labels": []
+  },
+  {
+   "uri": "at://did:plc:examplepost3/app.bsky.feed.post/3my32pluekv2t",
+   "cid": "bafyreify4fujsn2v6ryiekecc5rdide3slo3zxtx47lz6gl5npr7w7tww4",
+   "author": {
+    "did": "did:plc:examplepost3",
+    "handle": "poster3.bsky.social",
+    "displayName": "Poster 3",
+    "labels": [],
+    "createdAt": "2026-10-11T09:05:36.353Z"
+   },
+   "record": {
+    "$type": "app.bsky.feed.post",
+    "createdAt": "2026-10-17T12:10:36.256Z",
+    "langs": [
+     "en"
+    ],
+    "text": "China starts the first gigawatt-hour line for all-solid-state batteries\n\nhttps://autonews.gasgoo.com/articles/market-industry/greater-bay-technology-commissions-gwh-scale-all-solid-state-battery-production-line-2110549317063766016"
+   },
+   "bookmarkCount": 0,
+   "replyCount": 0,
+   "repostCount": 0,
+   "likeCount": 0,
+   "quoteCount": 0,
+   "indexedAt": "2026-10-17T12:10:37.052Z",
+   "labels": []
+  },
+  {
+   "uri": "at://did:plc:examplepost4/app.bsky.feed.post/3my2yzjbmhw2h",
+   "cid": "bafyreiaeezotlhgyff5l42qaybldk6ykdqrtp4i2bwyerzjhtas3pigmdm",
+   "author": {
+    "did": "did:plc:examplepost4",
+    "handle": "poster4.bsky.social",
+    "displayName": "Poster 4",
+    "labels": [],
+    "createdAt": "2026-04-22T04:37:00.951Z"
+   },
+   "record": {
+    "$type": "app.bsky.feed.post",
+    "createdAt": "2026-10-17T11:40:21Z",
+    "langs": [
+     "en"
+    ],
+    "text": "5/14\nEven assuming exciting breakthroughs in battery tech on the horizon (like sodium-ion, solid-state, or iron-air), comparing the plant-level cost (LCOE) of renewables to nuclear misses Total System Cost:"
+   },
+   "bookmarkCount": 0,
+   "replyCount": 1,
+   "repostCount": 0,
+   "likeCount": 0,
+   "quoteCount": 0,
+   "indexedAt": "2026-10-17T11:40:22.062Z",
+   "labels": []
+  }
+ ],
+ "cursor": "eyJzIjpbMTc5MjIzNzIyMTAwMCwiZGlkOnBsYzo2dW1wMnRwNXR0ZjZvbnNzbnFvc2I3ZDUiLCIzbXkyeXpqYm1odzJoIl19",
+ "hitsTotal": 8092
+}

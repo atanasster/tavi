@@ -1,0 +1,1319 @@
+{
+  "policy": {
+    "filesystem": {
+      "allowRead": [
+        "<root>/host-primary/data/chats/default/t1",
+        "<root>/host-primary/work/project"
+      ],
+      "allowWrite": [
+        "<root>/host-primary/data/chats/default/t1",
+        "<root>/host-primary/work/project"
+      ],
+      "denyRead": [
+        "/Users/Shared",
+        "/Volumes",
+        "/media",
+        "/mnt",
+        "<root>/host-primary/data",
+        "<root>/host-primary/home",
+        "<root>/host-primary/home/.age",
+        "<root>/host-primary/home/.aws",
+        "<root>/host-primary/home/.azure",
+        "<root>/host-primary/home/.bash_history",
+        "<root>/host-primary/home/.bash_profile",
+        "<root>/host-primary/home/.bashrc",
+        "<root>/host-primary/home/.cargo/credentials",
+        "<root>/host-primary/home/.cargo/credentials.toml",
+        "<root>/host-primary/home/.composer/auth.json",
+        "<root>/host-primary/home/.config/1Password",
+        "<root>/host-primary/home/.config/Bitwarden CLI",
+        "<root>/host-primary/home/.config/NuGet",
+        "<root>/host-primary/home/.config/composer/auth.json",
+        "<root>/host-primary/home/.config/doctl",
+        "<root>/host-primary/home/.config/fly",
+        "<root>/host-primary/home/.config/gcloud",
+        "<root>/host-primary/home/.config/gh",
+        "<root>/host-primary/home/.config/heroku",
+        "<root>/host-primary/home/.config/op",
+        "<root>/host-primary/home/.config/railway",
+        "<root>/host-primary/home/.config/sops",
+        "<root>/host-primary/home/.docker",
+        "<root>/host-primary/home/.fly",
+        "<root>/host-primary/home/.gem/credentials",
+        "<root>/host-primary/home/.git-credentials",
+        "<root>/host-primary/home/.gitconfig",
+        "<root>/host-primary/home/.gnupg",
+        "<root>/host-primary/home/.gradle/gradle.properties",
+        "<root>/host-primary/home/.kube",
+        "<root>/host-primary/home/.m2/settings-security.xml",
+        "<root>/host-primary/home/.m2/settings.xml",
+        "<root>/host-primary/home/.netlify",
+        "<root>/host-primary/home/.netrc",
+        "<root>/host-primary/home/.npmrc",
+        "<root>/host-primary/home/.nuget/NuGet",
+        "<root>/host-primary/home/.passage",
+        "<root>/host-primary/home/.profile",
+        "<root>/host-primary/home/.pulumi",
+        "<root>/host-primary/home/.pypirc",
+        "<root>/host-primary/home/.sops",
+        "<root>/host-primary/home/.ssh",
+        "<root>/host-primary/home/.supabase",
+        "<root>/host-primary/home/.terraform.d",
+        "<root>/host-primary/home/.turso",
+        "<root>/host-primary/home/.vault-token",
+        "<root>/host-primary/home/.vercel",
+        "<root>/host-primary/home/.wrangler",
+        "<root>/host-primary/home/.zprofile",
+        "<root>/host-primary/home/.zsh_history",
+        "<root>/host-primary/home/.zshenv",
+        "<root>/host-primary/home/.zshrc",
+        "<root>/host-primary/home/Library/Keychains",
+        "<root>/host-primary/tmp",
+        "<root>/host-primary/tmp/tavi-501",
+        "<root>/host-primary/work"
+      ],
+      "denyWrite": [
+        "/tmp/claude",
+        "<root>/host-primary/data/*.json",
+        "<root>/host-primary/data/*.key",
+        "<root>/host-primary/data/*.pre-restore-*",
+        "<root>/host-primary/data/*.sqlite*",
+        "<root>/host-primary/data/artifacts",
+        "<root>/host-primary/data/browser-profiles",
+        "<root>/host-primary/data/browser-scratch",
+        "<root>/host-primary/data/cache",
+        "<root>/host-primary/data/channels",
+        "<root>/host-primary/data/chats/default/other",
+        "<root>/host-primary/data/chats/default/t1/downloads",
+        "<root>/host-primary/data/credentials",
+        "<root>/host-primary/data/credentials.key",
+        "<root>/host-primary/data/logs",
+        "<root>/host-primary/data/owner.*",
+        "<root>/host-primary/data/plugins",
+        "<root>/host-primary/data/projects.json",
+        "<root>/host-primary/data/provider-bindings.key",
+        "<root>/host-primary/data/runtime",
+        "<root>/host-primary/data/sandbox-ca",
+        "<root>/host-primary/data/sandbox-home",
+        "<root>/host-primary/data/tavi.sqlite",
+        "<root>/host-primary/data/ui",
+        "<root>/host-primary/data/web-providers.json",
+        "<root>/host-primary/home/.age",
+        "<root>/host-primary/home/.aws",
+        "<root>/host-primary/home/.azure",
+        "<root>/host-primary/home/.bash_history",
+        "<root>/host-primary/home/.bash_login",
+        "<root>/host-primary/home/.bash_logout",
+        "<root>/host-primary/home/.bash_profile",
+        "<root>/host-primary/home/.bashrc",
+        "<root>/host-primary/home/.cargo/bin",
+        "<root>/host-primary/home/.cargo/credentials",
+        "<root>/host-primary/home/.cargo/credentials.toml",
+        "<root>/host-primary/home/.claude/debug",
+        "<root>/host-primary/home/.composer/auth.json",
+        "<root>/host-primary/home/.config/1Password",
+        "<root>/host-primary/home/.config/Bitwarden CLI",
+        "<root>/host-primary/home/.config/Code - Insiders/User/keybindings.json",
+        "<root>/host-primary/home/.config/Code - Insiders/User/profiles",
+        "<root>/host-primary/home/.config/Code - Insiders/User/settings.json",
+        "<root>/host-primary/home/.config/Code - Insiders/User/tasks.json",
+        "<root>/host-primary/home/.config/Code/User/keybindings.json",
+        "<root>/host-primary/home/.config/Code/User/profiles",
+        "<root>/host-primary/home/.config/Code/User/settings.json",
+        "<root>/host-primary/home/.config/Code/User/tasks.json",
+        "<root>/host-primary/home/.config/Cursor/User/keybindings.json",
+        "<root>/host-primary/home/.config/Cursor/User/profiles",
+        "<root>/host-primary/home/.config/Cursor/User/settings.json",
+        "<root>/host-primary/home/.config/Cursor/User/tasks.json",
+        "<root>/host-primary/home/.config/NuGet",
+        "<root>/host-primary/home/.config/VSCodium/User/keybindings.json",
+        "<root>/host-primary/home/.config/VSCodium/User/profiles",
+        "<root>/host-primary/home/.config/VSCodium/User/settings.json",
+        "<root>/host-primary/home/.config/VSCodium/User/tasks.json",
+        "<root>/host-primary/home/.config/alacritty",
+        "<root>/host-primary/home/.config/autostart",
+        "<root>/host-primary/home/.config/composer/auth.json",
+        "<root>/host-primary/home/.config/direnv",
+        "<root>/host-primary/home/.config/doctl",
+        "<root>/host-primary/home/.config/environment.d",
+        "<root>/host-primary/home/.config/fish",
+        "<root>/host-primary/home/.config/fly",
+        "<root>/host-primary/home/.config/gcloud",
+        "<root>/host-primary/home/.config/gh",
+        "<root>/host-primary/home/.config/ghostty",
+        "<root>/host-primary/home/.config/git",
+        "<root>/host-primary/home/.config/heroku",
+        "<root>/host-primary/home/.config/hypr",
+        "<root>/host-primary/home/.config/i3",
+        "<root>/host-primary/home/.config/kitty",
+        "<root>/host-primary/home/.config/mise",
+        "<root>/host-primary/home/.config/nvim",
+        "<root>/host-primary/home/.config/op",
+        "<root>/host-primary/home/.config/railway",
+        "<root>/host-primary/home/.config/sops",
+        "<root>/host-primary/home/.config/starship.toml",
+        "<root>/host-primary/home/.config/sway",
+        "<root>/host-primary/home/.config/systemd/user",
+        "<root>/host-primary/home/.config/tmux",
+        "<root>/host-primary/home/.config/wezterm",
+        "<root>/host-primary/home/.docker",
+        "<root>/host-primary/home/.fly",
+        "<root>/host-primary/home/.gem/credentials",
+        "<root>/host-primary/home/.git-credentials",
+        "<root>/host-primary/home/.gitconfig",
+        "<root>/host-primary/home/.gnupg",
+        "<root>/host-primary/home/.gradle/gradle.properties",
+        "<root>/host-primary/home/.ipython/profile_default/startup",
+        "<root>/host-primary/home/.kube",
+        "<root>/host-primary/home/.local/bin",
+        "<root>/host-primary/home/.m2/settings-security.xml",
+        "<root>/host-primary/home/.m2/settings.xml",
+        "<root>/host-primary/home/.netlify",
+        "<root>/host-primary/home/.netrc",
+        "<root>/host-primary/home/.npm/_logs",
+        "<root>/host-primary/home/.npmrc",
+        "<root>/host-primary/home/.nuget/NuGet",
+        "<root>/host-primary/home/.passage",
+        "<root>/host-primary/home/.profile",
+        "<root>/host-primary/home/.pulumi",
+        "<root>/host-primary/home/.pypirc",
+        "<root>/host-primary/home/.sops",
+        "<root>/host-primary/home/.ssh",
+        "<root>/host-primary/home/.supabase",
+        "<root>/host-primary/home/.terraform.d",
+        "<root>/host-primary/home/.tmux.conf",
+        "<root>/host-primary/home/.turso",
+        "<root>/host-primary/home/.vault-token",
+        "<root>/host-primary/home/.vercel",
+        "<root>/host-primary/home/.wezterm.lua",
+        "<root>/host-primary/home/.wrangler",
+        "<root>/host-primary/home/.zlogin",
+        "<root>/host-primary/home/.zlogout",
+        "<root>/host-primary/home/.zprofile",
+        "<root>/host-primary/home/.zsh_history",
+        "<root>/host-primary/home/.zshenv",
+        "<root>/host-primary/home/.zshrc",
+        "<root>/host-primary/home/Library/Application Support/Code - Insiders/User/keybindings.json",
+        "<root>/host-primary/home/Library/Application Support/Code - Insiders/User/profiles",
+        "<root>/host-primary/home/Library/Application Support/Code - Insiders/User/settings.json",
+        "<root>/host-primary/home/Library/Application Support/Code - Insiders/User/tasks.json",
+        "<root>/host-primary/home/Library/Application Support/Code/User/keybindings.json",
+        "<root>/host-primary/home/Library/Application Support/Code/User/profiles",
+        "<root>/host-primary/home/Library/Application Support/Code/User/settings.json",
+        "<root>/host-primary/home/Library/Application Support/Code/User/tasks.json",
+        "<root>/host-primary/home/Library/Application Support/Cursor/User/keybindings.json",
+        "<root>/host-primary/home/Library/Application Support/Cursor/User/profiles",
+        "<root>/host-primary/home/Library/Application Support/Cursor/User/settings.json",
+        "<root>/host-primary/home/Library/Application Support/Cursor/User/tasks.json",
+        "<root>/host-primary/home/Library/Application Support/VSCodium/User/keybindings.json",
+        "<root>/host-primary/home/Library/Application Support/VSCodium/User/profiles",
+        "<root>/host-primary/home/Library/Application Support/VSCodium/User/settings.json",
+        "<root>/host-primary/home/Library/Application Support/VSCodium/User/tasks.json",
+        "<root>/host-primary/home/Library/Application Support/iTerm2/Scripts/AutoLaunch",
+        "<root>/host-primary/home/Library/Keychains",
+        "<root>/host-primary/home/Library/LaunchAgents",
+        "<root>/host-primary/tmp",
+        "<root>/host-primary/tmp/tavi-501"
+      ],
+      "protectedNames": [
+        {
+          "root": "<root>/host-primary/data/chats/default/t1",
+          "names": [
+            ".bash_login",
+            ".bash_profile",
+            ".bashrc",
+            ".claude/agents",
+            ".claude/commands",
+            ".claude/hooks",
+            ".claude/settings.json",
+            ".claude/settings.local.json",
+            ".claude/skills",
+            ".codex",
+            ".cursor",
+            ".envrc",
+            ".gemini",
+            ".gitconfig",
+            ".gitmodules",
+            ".helix",
+            ".husky",
+            ".idea",
+            ".lefthook.yml",
+            ".mcp.json",
+            ".mise.toml",
+            ".pre-commit-config.yaml",
+            ".profile",
+            ".ripgreprc",
+            ".vscode",
+            ".zed",
+            ".zlogin",
+            ".zprofile",
+            ".zshrc",
+            "lefthook.yml",
+            "mise.toml"
+          ],
+          "rootNames": [
+            ".git/commondir",
+            ".git/config",
+            ".git/config.worktree",
+            ".git/hooks",
+            ".git/info/attributes",
+            "HEAD"
+          ]
+        },
+        {
+          "root": "<root>/host-primary/work/project",
+          "names": [
+            ".bash_login",
+            ".bash_profile",
+            ".bashrc",
+            ".cargo/config",
+            ".cargo/config.toml",
+            ".claude/agents",
+            ".claude/commands",
+            ".claude/hooks",
+            ".claude/settings.json",
+            ".claude/settings.local.json",
+            ".claude/skills",
+            ".codex",
+            ".config/mise",
+            ".config/mise.toml",
+            ".cursor",
+            ".devcontainer",
+            ".envrc",
+            ".gemini",
+            ".git",
+            ".git/commondir",
+            ".git/config",
+            ".git/config.worktree",
+            ".git/hooks",
+            ".git/info/attributes",
+            ".gitconfig",
+            ".gitmodules",
+            ".helix",
+            ".husky",
+            ".idea",
+            ".lefthook.yml",
+            ".mcp.json",
+            ".mise.local.toml",
+            ".mise.toml",
+            ".mise/config.toml",
+            ".npmrc",
+            ".pnpmfile.cjs",
+            ".pre-commit-config.yaml",
+            ".profile",
+            ".ripgreprc",
+            ".tool-versions",
+            ".vscode",
+            ".yarn/plugins",
+            ".yarn/releases",
+            ".yarnrc",
+            ".yarnrc.yml",
+            ".zed",
+            ".zlogin",
+            ".zprofile",
+            ".zshrc",
+            "bunfig.toml",
+            "lefthook.yml",
+            "mise.local.toml",
+            "mise.toml",
+            "mise/config.toml"
+          ],
+          "rootNames": [
+            "HEAD"
+          ]
+        }
+      ]
+    },
+    "network": {
+      "allow": false
+    },
+    "resources": {
+      "timeoutMs": 120000,
+      "maxOutputBytes": 65536
+    },
+    "local": {}
+  },
+  "compiled": {
+    "network": {
+      "allowedDomains": [],
+      "deniedDomains": [],
+      "strictAllowlist": true
+    },
+    "filesystem": {
+      "denyRead": [
+        "/Users/Shared",
+        "/Volumes",
+        "/media",
+        "/mnt",
+        "<root>/host-primary/data",
+        "<root>/host-primary/home",
+        "<root>/host-primary/home/.age",
+        "<root>/host-primary/home/.aws",
+        "<root>/host-primary/home/.azure",
+        "<root>/host-primary/home/.bash_history",
+        "<root>/host-primary/home/.bash_profile",
+        "<root>/host-primary/home/.bashrc",
+        "<root>/host-primary/home/.cargo/credentials",
+        "<root>/host-primary/home/.cargo/credentials.toml",
+        "<root>/host-primary/home/.composer/auth.json",
+        "<root>/host-primary/home/.config/1Password",
+        "<root>/host-primary/home/.config/Bitwarden CLI",
+        "<root>/host-primary/home/.config/NuGet",
+        "<root>/host-primary/home/.config/composer/auth.json",
+        "<root>/host-primary/home/.config/doctl",
+        "<root>/host-primary/home/.config/fly",
+        "<root>/host-primary/home/.config/gcloud",
+        "<root>/host-primary/home/.config/gh",
+        "<root>/host-primary/home/.config/heroku",
+        "<root>/host-primary/home/.config/op",
+        "<root>/host-primary/home/.config/railway",
+        "<root>/host-primary/home/.config/sops",
+        "<root>/host-primary/home/.docker",
+        "<root>/host-primary/home/.fly",
+        "<root>/host-primary/home/.gem/credentials",
+        "<root>/host-primary/home/.git-credentials",
+        "<root>/host-primary/home/.gitconfig",
+        "<root>/host-primary/home/.gnupg",
+        "<root>/host-primary/home/.gradle/gradle.properties",
+        "<root>/host-primary/home/.kube",
+        "<root>/host-primary/home/.m2/settings-security.xml",
+        "<root>/host-primary/home/.m2/settings.xml",
+        "<root>/host-primary/home/.netlify",
+        "<root>/host-primary/home/.netrc",
+        "<root>/host-primary/home/.npmrc",
+        "<root>/host-primary/home/.nuget/NuGet",
+        "<root>/host-primary/home/.passage",
+        "<root>/host-primary/home/.profile",
+        "<root>/host-primary/home/.pulumi",
+        "<root>/host-primary/home/.pypirc",
+        "<root>/host-primary/home/.sops",
+        "<root>/host-primary/home/.ssh",
+        "<root>/host-primary/home/.supabase",
+        "<root>/host-primary/home/.terraform.d",
+        "<root>/host-primary/home/.turso",
+        "<root>/host-primary/home/.vault-token",
+        "<root>/host-primary/home/.vercel",
+        "<root>/host-primary/home/.wrangler",
+        "<root>/host-primary/home/.zprofile",
+        "<root>/host-primary/home/.zsh_history",
+        "<root>/host-primary/home/.zshenv",
+        "<root>/host-primary/home/.zshrc",
+        "<root>/host-primary/home/Library/Keychains",
+        "<root>/host-primary/tmp",
+        "<root>/host-primary/tmp/tavi-501",
+        "<root>/host-primary/work"
+      ],
+      "allowRead": [
+        "<root>/host-primary/data/chats/default/t1",
+        "<root>/host-primary/work/project",
+        "<srt-helpers>"
+      ],
+      "allowWrite": [
+        "<root>/host-primary/data/chats/default/t1",
+        "<root>/host-primary/work/project"
+      ],
+      "denyWrite": [
+        {
+          "path": "/tmp/claude",
+          "literal": true
+        },
+        {
+          "path": "<owner-home>/.claude/debug",
+          "literal": true
+        },
+        {
+          "path": "<owner-home>/.npm/_logs",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/artifacts",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/browser-profiles",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/browser-scratch",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/cache",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/channels",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/other",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.bash_login",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.bash_profile",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.bashrc",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.claude/agents",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.claude/commands",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.claude/hooks",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.claude/settings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.claude/settings.local.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.claude/skills",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.codex",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.cursor",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.envrc",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.gemini",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.git/commondir",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.git/config",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.git/config.worktree",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.git/hooks",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.git/info/attributes",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.gitconfig",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.gitmodules",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.helix",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.husky",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.idea",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.lefthook.yml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.mcp.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.mise.toml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.pre-commit-config.yaml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.profile",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.ripgreprc",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.vscode",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.zed",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.zlogin",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.zprofile",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/.zshrc",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/HEAD",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/downloads",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/lefthook.yml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/chats/default/t1/mise.toml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/credentials",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/credentials.key",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/logs",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/plugins",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/projects.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/provider-bindings.key",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/runtime",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/sandbox-ca",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/sandbox-home",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/tavi.sqlite",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/ui",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/data/web-providers.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.age",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.aws",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.azure",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.bash_history",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.bash_login",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.bash_logout",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.bash_profile",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.bashrc",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.cargo/bin",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.cargo/credentials",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.cargo/credentials.toml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.claude/debug",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.composer/auth.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/1Password",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/Bitwarden CLI",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/Code - Insiders/User/keybindings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/Code - Insiders/User/profiles",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/Code - Insiders/User/settings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/Code - Insiders/User/tasks.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/Code/User/keybindings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/Code/User/profiles",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/Code/User/settings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/Code/User/tasks.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/Cursor/User/keybindings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/Cursor/User/profiles",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/Cursor/User/settings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/Cursor/User/tasks.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/NuGet",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/VSCodium/User/keybindings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/VSCodium/User/profiles",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/VSCodium/User/settings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/VSCodium/User/tasks.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/alacritty",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/autostart",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/composer/auth.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/direnv",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/doctl",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/environment.d",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/fish",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/fly",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/gcloud",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/gh",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/ghostty",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/git",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/heroku",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/hypr",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/i3",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/kitty",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/mise",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/nvim",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/op",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/railway",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/sops",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/starship.toml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/sway",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/systemd/user",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/tmux",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.config/wezterm",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.docker",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.fly",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.gem/credentials",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.git-credentials",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.gitconfig",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.gnupg",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.gradle/gradle.properties",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.ipython/profile_default/startup",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.kube",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.local/bin",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.m2/settings-security.xml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.m2/settings.xml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.netlify",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.netrc",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.npm/_logs",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.npmrc",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.nuget/NuGet",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.passage",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.profile",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.pulumi",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.pypirc",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.sops",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.ssh",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.supabase",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.terraform.d",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.tmux.conf",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.turso",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.vault-token",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.vercel",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.wezterm.lua",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.wrangler",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.zlogin",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.zlogout",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.zprofile",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.zsh_history",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.zshenv",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/.zshrc",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/Code - Insiders/User/keybindings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/Code - Insiders/User/profiles",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/Code - Insiders/User/settings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/Code - Insiders/User/tasks.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/Code/User/keybindings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/Code/User/profiles",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/Code/User/settings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/Code/User/tasks.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/Cursor/User/keybindings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/Cursor/User/profiles",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/Cursor/User/settings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/Cursor/User/tasks.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/VSCodium/User/keybindings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/VSCodium/User/profiles",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/VSCodium/User/settings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/VSCodium/User/tasks.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Application Support/iTerm2/Scripts/AutoLaunch",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/Keychains",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/home/Library/LaunchAgents",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/tmp",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.bash_login",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.bash_profile",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.bashrc",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.cargo/config",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.cargo/config.toml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.claude/agents",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.claude/commands",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.claude/hooks",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.claude/settings.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.claude/settings.local.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.claude/skills",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.codex",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.config/mise",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.config/mise.toml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.cursor",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.devcontainer",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.envrc",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.gemini",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.git",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.gitconfig",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.gitmodules",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.helix",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.husky",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.idea",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.lefthook.yml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.mcp.json",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.mise.local.toml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.mise.toml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.mise/config.toml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.npmrc",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.pnpmfile.cjs",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.pre-commit-config.yaml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.profile",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.ripgreprc",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.tool-versions",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.vscode",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.yarn/plugins",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.yarn/releases",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.yarnrc",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.yarnrc.yml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.zed",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.zlogin",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.zprofile",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/.zshrc",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/HEAD",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/bunfig.toml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/lefthook.yml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/mise.local.toml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/mise.toml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/mise/config.toml",
+          "literal": true
+        },
+        {
+          "path": "<root>/host-primary/work/project/sub/.git",
+          "literal": true
+        }
+      ]
+    }
+  }
+}

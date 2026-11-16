@@ -1,0 +1,80 @@
+{
+  "name": "@tavi/plugin-mailgun",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/builtin/mailgun"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "description": "Real Mailgun MessagingConnectorPort adapter: outbound send, inbound signature verification/parsing, and a node:http webhook handler",
+  "exports": {
+    "./channel": {
+      "development": "./src/channel.ts",
+      "types": "./dist/channel.d.mts",
+      "import": "./dist/channel.mjs"
+    },
+    "./connector": {
+      "development": "./src/connector.ts",
+      "types": "./dist/connector.d.mts",
+      "import": "./dist/connector.mjs"
+    },
+    "./inbound": {
+      "development": "./src/inbound.ts",
+      "types": "./dist/inbound.d.mts",
+      "import": "./dist/inbound.mjs"
+    },
+    "./webhook": {
+      "development": "./src/webhook.ts",
+      "types": "./dist/webhook.d.mts",
+      "import": "./dist/webhook.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tavi/channel-kit": "workspace:*",
+    "@tavi/contracts": "workspace:*",
+    "@tavi/node-kit": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      "./channel": {
+        "types": "./dist/channel.d.mts",
+        "import": "./dist/channel.mjs"
+      },
+      "./connector": {
+        "types": "./dist/connector.d.mts",
+        "import": "./dist/connector.mjs"
+      },
+      "./inbound": {
+        "types": "./dist/inbound.d.mts",
+        "import": "./dist/inbound.mjs"
+      },
+      "./webhook": {
+        "types": "./dist/webhook.d.mts",
+        "import": "./dist/webhook.mjs"
+      },
+      "./package.json": "./package.json"
+    }
+  }
+}

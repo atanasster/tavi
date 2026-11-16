@@ -1,0 +1,33 @@
+{
+  "recordId": "ptt-board",
+  "url": "https://www.ptt.cc/bbs/{pttBoard}/index.html",
+  "extract": {
+    "mode": "anchors",
+    "href": "^/bbs/[A-Za-z0-9_-]+/M\\.\\d+\\.A\\.[0-9A-F]{3}\\.html$"
+  },
+  "map": {
+    "title": "title"
+  },
+  "settings": [
+    {
+      "name": "pttBoard",
+      "default": "Stock",
+      "pattern": "[A-Za-z0-9_-]{2,20}"
+    }
+  ],
+  "cookies": [
+    {
+      "name": "over18",
+      "value": "1",
+      "assertion": "I am 18 or older, and PTT may show me its 18+ boards",
+      "setting": "pttAdultBoards"
+    }
+  ],
+  "refusedWhen": [
+    {
+      "marker": "ask/over18",
+      "reason": "an 18+ board: turn on pttAdultBoards, your own age assertion, to read it",
+      "unless": "pttAdultBoards"
+    }
+  ]
+}

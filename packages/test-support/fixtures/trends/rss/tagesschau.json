@@ -1,0 +1,101 @@
+{
+ "news": [
+  {
+   "sophoraId": "merz-junge-union-104",
+   "externalId": "423b2cb2-ba2c-44a9-ad79-be53563d7410",
+   "title": "\"Es gibt auch für mich Grenzen\"",
+   "date": "2026-10-17T13:57:58.578+02:00",
+   "topline": "Merz bei der Jungen Union",
+   "firstSentence": "Beim \"Deutschlandtag\" der Jungen Union findet Kanzler Merz deutliche Worte in Richtung SPD.",
+   "shareURL": "https://www.tagesschau.de/inland/innenpolitik/merz-junge-union-104.html",
+   "ressort": "inland",
+   "breakingNews": false,
+   "type": "story"
+  },
+  {
+   "sophoraId": "schweitzer-rente-kompromiss-100",
+   "externalId": "073b733e-512e-4a2c-a486-38f39807de03",
+   "title": "Schweitzer setzt auf Kompromiss bei der Rente",
+   "date": "2026-10-17T03:50:50.145+02:00",
+   "topline": "Uneinigkeiten in der Koalition",
+   "firstSentence": "Insbesondere über die \"Rente mit 63\" müssten noch \"politische Debatten stattfinden\", so der SPD-Politiker.",
+   "shareURL": "https://www.tagesschau.de/inland/schweitzer-rente-kompromiss-100.html",
+   "ressort": "inland",
+   "breakingNews": false,
+   "type": "story"
+  },
+  {
+   "sophoraId": "usa-russland-ukraine-sanktionen-100",
+   "externalId": "eba9235c-dcbd-4657-82ca-360186181d68",
+   "title": "Trump setzt geplante Sanktionen gegen Russland aus",
+   "date": "2026-10-17T14:07:08.394+02:00",
+   "topline": "\"Nationales Interesse\" ",
+   "firstSentence": "Erst macht der US-Präsident einen umstrittenen Diesel-Deal mit Moskau, nun setzt Trump Sanktionen aus.",
+   "shareURL": "https://www.tagesschau.de/ausland/amerika/usa-russland-ukraine-sanktionen-100.html",
+   "ressort": "ausland",
+   "breakingNews": false,
+   "type": "story"
+  },
+  {
+   "sophoraId": "bilger-tankrabatt-100",
+   "externalId": "414f4f28-943d-4e3d-9541-d94433e08ddb",
+   "title": "Bilger hält weitere Entlastungen für möglich",
+   "date": "2026-10-17T11:38:09.630+02:00",
+   "topline": "Nach dem Ende des \"Tankrabatts\"",
+   "firstSentence": "Verkehrsminister Bilger hält nach dem Auslaufen des \"Tankrabatts\" weitere gezielte Entlastungen für möglich.",
+   "shareURL": "https://www.tagesschau.de/inland/bilger-tankrabatt-100.html",
+   "ressort": "inland",
+   "breakingNews": false,
+   "type": "story"
+  },
+  {
+   "sophoraId": "papst-krankenhaus-op-100",
+   "externalId": "77cfdb96-c860-4c1a-9ba1-0499a309b749",
+   "title": "Papst kann Krankenhaus wieder verlassen",
+   "date": "2026-10-17T13:13:34.369+02:00",
+   "topline": "Nach Operation an der Lunge",
+   "firstSentence": "Papst Leo XIV. kann wenige Tage nach seiner Krebsoperation laut Vatikan das Krankenhaus wieder verlassen. ",
+   "shareURL": "https://www.tagesschau.de/ausland/europa/papst-krankenhaus-op-100.html",
+   "ressort": "ausland",
+   "breakingNews": false,
+   "type": "story"
+  },
+  {
+   "sophoraId": "zacharia-sprecherin-trump-100",
+   "externalId": "15017ffc-4fe6-4ab6-82b9-147f627c05e2",
+   "title": "Trumps neue Sprecherin räumt ihren Posten wieder",
+   "date": "2026-10-16T21:42:41.936+02:00",
+   "topline": "Kurze Amtszeit von Zacharia",
+   "firstSentence": "Die Juristin war wegen falscher Angaben zu ihrem Lebenslauf unter Druck geraten.",
+   "shareURL": "https://www.tagesschau.de/ausland/amerika/zacharia-sprecherin-trump-100.html",
+   "ressort": "ausland",
+   "breakingNews": false,
+   "type": "story"
+  },
+  {
+   "sophoraId": "un-generalsekretaer-wahl-100",
+   "externalId": "68816ff1-4333-47f0-90fb-e405c647d111",
+   "title": "Weiterhin keine Guterres-Nachfolge in Sicht",
+   "date": "2026-10-17T06:56:34.966+02:00",
+   "topline": "Wahl von UN-Generalsekretär",
+   "firstSentence": "Auch bei der sechsten Probeabstimmung fielen alle Bewerber für die Nachfolge für des UN-Generalsekretärs durch.",
+   "shareURL": "https://www.tagesschau.de/ausland/amerika/un-generalsekretaer-wahl-100.html",
+   "ressort": "ausland",
+   "breakingNews": false,
+   "type": "story"
+  },
+  {
+   "sophoraId": "brasilien-amazonas-abholzung-tiefstand-100",
+   "externalId": "89cc0c24-3689-4fdf-9d1d-e2b087649190",
+   "title": "Amazonas-Abholzung auf historischem Tiefstand",
+   "date": "2026-10-17T02:05:19.162+02:00",
+   "topline": "Regenwald in Brasilien",
+   "firstSentence": "Die Regierung Brasiliens sieht den Rückgang als Verdienst von Präsident Lula, der gerade im Wahlkampf ist.",
+   "shareURL": "https://www.tagesschau.de/ausland/amerika/brasilien-amazonas-abholzung-tiefstand-100.html",
+   "ressort": "ausland",
+   "breakingNews": false,
+   "type": "story"
+  }
+ ],
+ "type": "news"
+}

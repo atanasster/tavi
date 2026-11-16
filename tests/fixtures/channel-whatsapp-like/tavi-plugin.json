@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "fixture.walike",
+  "version": "1.0.0",
+  "name": "WhatsApp-like (test fixture)",
+  "description": "A test-only channel modelled on Meta's WhatsApp Cloud API, proving the channel seam can carry it.",
+  "entry": "index.mjs",
+  "provides": ["channel"],
+  "channelAbi": 1,
+  "channels": [
+    {
+      "providerId": "wa-like",
+      "label": "WhatsApp-like",
+      "kind": "chat",
+      "description": "A chat channel shaped like the WhatsApp Cloud API (test fixture).",
+      "settings": [
+        { "key": "phoneNumberId", "label": "Phone number ID", "type": "string", "required": true, "pattern": "\\d{1,32}" },
+        { "key": "apiBaseUrl", "label": "API address", "type": "string", "default": "https://graph.facebook.com/v20.0" }
+      ],
+      "auth": {
+        "kind": "secrets",
+        "fields": [
+          { "key": "accessToken", "label": "Access token" },
+          { "key": "appSecret", "label": "App secret" },
+          { "key": "verifyToken", "label": "Webhook verify token" }
+        ]
+      },
+      "sender": { "label": "Phone number", "placeholder": "+15551234567", "pattern": "\\+[1-9]\\d{6,14}", "normalize": "e164", "authentication": "provider" },
+      "target": { "label": "Phone number", "placeholder": "+15551234567", "pattern": "\\+[1-9]\\d{6,14}", "normalize": "e164" },
+      "ingress": [{ "name": "webhook", "methods": ["GET", "POST"], "scope": "provider", "maxBodyBytes": 1048576 }],
+      "media": { "inboundMaxBytes": 16777216, "mimeTypes": ["image/*", "audio/*", "application/pdf"] },
+      "sendRate": { "perMinute": 600, "perTargetPerMinute": 60 },
+      "account": { "setting": "phoneNumberId" },
+      "setupHelp": "A test fixture: never connect it to a real number."
+    }
+  ],
+  "capabilities": [],
+  "tools": [],
+  "config": {}
+}

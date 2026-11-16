@@ -1,0 +1,33 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "indeed",
+  "name": "Indeed",
+  "countries": [
+    "*"
+  ],
+  "hosts": [
+    "indeed.com",
+    "*.indeed.com"
+  ],
+  "kind": "jobs-board",
+  "access": {
+    "mode": "assist-only",
+    "navigate": false,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Indeed's terms ban automating Indeed Apply outside its official vendors, and its robots.txt disallows ClaudeBot.",
+    "termsUrl": "https://www.indeed.com/legal",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "JobPosting"
+    ]
+  },
+  "notes": "Tavi never browses Indeed. It reads a job page you opened yourself, for the chat, and you may save that one posting. Your Indeed job-alert emails are the other way in."
+}

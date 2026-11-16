@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // The root entry and the browser entry compile with no host
+    // library at all: a `Buffer`, a `process` or a `node:*` import is a type
+    // error here, not a surprise in a browser bundle.
+    "types": []
+  },
+  // Contracts' own structural declarations of the few WHATWG globals the
+  // platform-neutral code names (`TextEncoder`, `AbortSignal`, …): the same host
+  // surface contracts compiles against, and nothing more. Timers are not in it:
+  // the root takes a `Scheduler` from its host entry instead.
+  "include": ["src/**/*.ts", "../contracts/src/globals.d.ts"],
+  "exclude": ["src/node.ts", "src/node/**"]
+}

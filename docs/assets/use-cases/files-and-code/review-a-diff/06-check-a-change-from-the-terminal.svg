@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1216" height="741" viewBox="0 0 1216 741" role="img">
+<rect width="1216" height="741" rx="12" fill="#ffffff" stroke="#d9e0dc"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="608" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#52605a">tavi chat</text>
+<line x1="0" y1="36" x2="1216" y2="36" stroke="#d9e0dc"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#1f6b55">❯ Write a file called plan.md in this chat's folder with three lines: Monday: gym, Tuesday: swim, Wednesday: rest.</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#8c5a07">  fs.write completed</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#132620">I have created `plan.md` in this chat's folder with the requested three lines:</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#132620">```markdown</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#132620">Monday: gym</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#132620">Tuesday: swim</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#132620">Wednesday: rest</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#132620">```</tspan></text>
+<text x="20" y="241.0" xml:space="preserve"><tspan fill="#1f6b55">❯ In plan.md, change Tuesday: swim to Tuesday: run.</tspan></text>
+<text x="20" y="260.0" xml:space="preserve"><tspan fill="#8c5a07">  fs.edit completed</tspan></text>
+<text x="20" y="279.0" xml:space="preserve"><tspan fill="#132620">I have updated `plan.md` to change Tuesday's entry to yoga:</tspan></text>
+<text x="20" y="298.0" xml:space="preserve"></text>
+<text x="20" y="317.0" xml:space="preserve"><tspan fill="#132620">```markdown</tspan></text>
+<text x="20" y="336.0" xml:space="preserve"><tspan fill="#132620">Monday: gym</tspan></text>
+<text x="20" y="355.0" xml:space="preserve"><tspan fill="#132620">Tuesday: yoga</tspan></text>
+<text x="20" y="374.0" xml:space="preserve"><tspan fill="#132620">Wednesday: rest</tspan></text>
+<text x="20" y="393.0" xml:space="preserve"><tspan fill="#132620">```</tspan></text>
+<text x="20" y="412.0" xml:space="preserve"><tspan fill="#8c5a07">… type to continue Home</tspan></text>
+<text x="20" y="431.0" xml:space="preserve"><tspan fill="#1f6b55">❯ In plan.md, change Wednesday: rest to Wednesday: walk.</tspan></text>
+<text x="20" y="450.0" xml:space="preserve"><tspan fill="#8c5a07">⏸ Round 6 needs approval:</tspan></text>
+<text x="20" y="469.0" xml:space="preserve"><tspan fill="#8c5a07">  • fs.edit — Edit plan.md [medium risk]</tspan></text>
+<text x="20" y="488.0" xml:space="preserve"><tspan fill="#8c5a07">      --- plan.md</tspan></text>
+<text x="20" y="507.0" xml:space="preserve"><tspan fill="#8c5a07">      +++ plan.md</tspan></text>
+<text x="20" y="526.0" xml:space="preserve"><tspan fill="#8c5a07">      @@ -1,3 +1,3 @@</tspan></text>
+<text x="20" y="545.0" xml:space="preserve"><tspan fill="#8c5a07">       Monday: gym</tspan></text>
+<text x="20" y="564.0" xml:space="preserve"><tspan fill="#8c5a07">       Tuesday: yoga</tspan></text>
+<text x="20" y="583.0" xml:space="preserve"><tspan fill="#8c5a07">      -Wednesday: rest</tspan></text>
+<text x="20" y="602.0" xml:space="preserve"><tspan fill="#8c5a07">      +Wednesday: walk</tspan></text>
+<text x="20" y="621.0" xml:space="preserve"><tspan fill="#8c5a07">        “plan.md” from your message</tspan></text>
+<text x="20" y="640.0" xml:space="preserve"><tspan fill="#8c5a07">      Flagged: changes a file</tspan></text>
+<text x="20" y="659.0" xml:space="preserve"><tspan fill="#8c5a07">  y approves it, s until tomorrow, a always (a workspace rule), n rejects it, N rejects with a reason — or decide it in another terminal:</tspan></text>
+<text x="20" y="678.0" xml:space="preserve"><tspan fill="#8c5a07">tavi approvals approve|reject task-mw038y8l-1</tspan></text>
+<text x="20" y="697.0" xml:space="preserve"><tspan fill="#132620" opacity="0.62">⏸ round 6: y approves it, s until tomorrow, a always (a workspace rule), n rejects it, N rejects with a reason</tspan></text>
+<text x="20" y="716.0" xml:space="preserve"><tspan fill="#132620">❯ █</tspan></text>
+</g>
+</svg>

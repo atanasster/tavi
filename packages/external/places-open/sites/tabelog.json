@@ -1,0 +1,32 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "tabelog",
+  "name": "Tabelog",
+  "countries": [
+    "JP"
+  ],
+  "hosts": [
+    "tabelog.com"
+  ],
+  "kind": "reviews",
+  "access": {
+    "mode": "assist-only",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Tabelog's rules ban copying and commercial use, and its robots.txt blocks AI crawlers: personal viewing in your session only.",
+    "termsUrl": "https://tabelog.com/help/rules/",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "Restaurant"
+    ]
+  },
+  "notes": "Tavi may open and read Tabelog pages for the chat; it never keeps reviews or extracts them to findings."
+}

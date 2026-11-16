@@ -1,0 +1,8 @@
+{
+  "country": "CN",
+  "order": [
+    "baidu-hot",
+    "wikipedia-pageviews",
+    "gdelt-doc"
+  ]
+}

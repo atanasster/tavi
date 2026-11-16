@@ -1,0 +1,38 @@
+{
+ "backend": {
+  "titles": ["Backend Engineer", "Software Engineer"],
+  "skills": [{ "label": "Go", "years": 6 }, { "label": "Python", "years": 8 }, { "label": "PostgreSQL", "years": 7 }, { "label": "Kubernetes", "years": 4 }, { "label": "AWS", "years": 5 }, { "label": "Docker" }, { "label": "gRPC" }, { "label": "Kafka" }],
+  "seniority": "senior",
+  "places": [],
+  "remote": "only",
+  "remoteRegions": ["US"],
+  "salaryFloor": { "currency": "USD", "amount": 160000, "period": "YEAR" },
+  "employmentTypes": ["FULL_TIME"],
+  "exclusions": { "companies": ["Evil Corp"], "keywords": ["crypto"] },
+  "needsSponsorship": []
+ },
+ "nurse": {
+  "titles": ["Pflegefachkraft", "Registered Nurse", "Krankenpfleger"],
+  "skills": [{ "label": "Nursing", "years": 9 }, { "label": "Intensive care", "years": 4 }, { "label": "Patient care" }, { "label": "German" }, { "label": "Shift work" }, { "label": "Wound care" }],
+  "seniority": "mid",
+  "places": [{ "country": "DE", "city": "Berlin", "lat": 52.52, "lon": 13.405, "radiusKm": 25 }],
+  "remote": "no",
+  "remoteRegions": [],
+  "salaryFloor": { "currency": "EUR", "amount": 3500, "period": "MONTH" },
+  "employmentTypes": ["FULL_TIME", "PART_TIME"],
+  "exclusions": { "companies": [], "keywords": [] },
+  "needsSponsorship": []
+ },
+ "marketing": {
+  "titles": ["Marketing Manager"],
+  "skills": [{ "label": "SEO" }, { "label": "Paid search" }, { "label": "Content marketing" }, { "label": "HubSpot" }, { "label": "Google Analytics" }, { "label": "Campaign management" }, { "label": "Budget management" }, { "label": "B2B marketing" }],
+  "seniority": "manager",
+  "places": [{ "country": "GB", "city": "London", "lat": 51.5074, "lon": -0.1278, "radiusKm": 30 }],
+  "remote": "open",
+  "remoteRegions": ["GB"],
+  "salaryFloor": { "currency": "GBP", "amount": 55000, "period": "YEAR" },
+  "employmentTypes": ["FULL_TIME"],
+  "exclusions": { "companies": [], "keywords": [] },
+  "needsSponsorship": ["US"]
+ }
+}

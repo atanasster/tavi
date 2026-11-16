@@ -1,0 +1,46 @@
+{
+  "name": "@tavi/test-support",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/test-support"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "description": "Test helpers the suites share: temporary directories, polling waits, free ports, CLI output capture, an OpenAI-compatible stub, site fixture servers, a fake Discord, a prompt-prefix continuity check, fixture model, messaging and sandbox ports, a built plugin in a confined worker, the domains' recorded fixtures, and in-memory repositories. A development dependency of tests only",
+  "exports": {
+    ".": "./src/index.ts",
+    "./discord": "./src/discord.ts",
+    "./fakes": "./src/fakes.ts",
+    "./fixtures": "./src/fixtures.ts",
+    "./messaging": "./src/messaging.ts",
+    "./openai-stub": "./src/openai-stub.ts",
+    "./plugin-worker": "./src/plugin-worker.ts",
+    "./prefix": "./src/prefix.ts",
+    "./routine-templates": "./src/routine-templates.ts",
+    "./sandbox": "./src/sandbox.ts",
+    "./site": "./src/site.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@langchain/langgraph-checkpoint-sqlite": "catalog:",
+    "@tavi/contracts": "workspace:*",
+    "better-sqlite3": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

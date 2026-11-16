@@ -1,0 +1,27 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "nhs-gp",
+  "name": "NHS GP services",
+  "countries": [
+    "GB"
+  ],
+  "hosts": [
+    "www.nhs.uk"
+  ],
+  "kind": "health",
+  "access": {
+    "mode": "none",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "The NHS App is the path to book a GP appointment; Tavi gives the link and does not browse or book.",
+    "termsUrl": "https://www.nhs.uk/our-policies/terms-and-conditions/",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "notes": "Use the NHS App or your GP practice's own booking. Turned on, this profile stops Tavi on every www.nhs.uk page, not only GP booking: leave it off to let Tavi read NHS pages."
+}

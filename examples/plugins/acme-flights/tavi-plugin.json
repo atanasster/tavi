@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "acme.flights",
+  "version": "0.1.0",
+  "name": "ACME fares",
+  "description": "Stands in for the built-in tavi.flights: searches ACME's fixed fare sheet, with no network, and proves travel to Ideas.",
+  "entry": "index.mjs",
+  "tools": [
+    {
+      "name": "search",
+      "effect": "read-only",
+      "description": "Search ACME's fare sheet for flights between two airports (IATA codes) on a date, cheapest first",
+      "proves": ["travel"],
+      "untrustedOutput": false,
+      "sink": "none"
+    }
+  ]
+}

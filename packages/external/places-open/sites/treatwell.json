@@ -1,0 +1,47 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "treatwell",
+  "name": "Treatwell",
+  "countries": [
+    "GB",
+    "IE",
+    "DE",
+    "AT",
+    "ES",
+    "IT",
+    "FR",
+    "NL"
+  ],
+  "hosts": [
+    "*.treatwell.co.uk",
+    "*.treatwell.ie",
+    "*.treatwell.de",
+    "*.treatwell.at",
+    "*.treatwell.es",
+    "*.treatwell.it",
+    "*.treatwell.fr",
+    "*.treatwell.nl"
+  ],
+  "kind": "booking",
+  "access": {
+    "mode": "assist-only",
+    "navigate": false,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Treatwell's terms §8.4.3 ban any automated system or software to extract content.",
+    "termsUrl": "https://www.treatwell.es/en/info/terms-of-use/",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "LocalBusiness",
+      "BeautySalon"
+    ]
+  },
+  "notes": "You book on Treatwell yourself; Tavi reads only a page you opened, for the chat. Each country's site and its subdomains are covered; a bare treatwell domain redirects to its www site."
+}

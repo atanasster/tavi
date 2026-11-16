@@ -1,0 +1,90 @@
+{
+ "recIdStr": "5563437411397349529",
+ "trends": [
+  {
+   "topic": "05af68c3e9d9",
+   "displayName": "No Kings protests October 17",
+   "description": "Indivisible and 50501 plan rallies in San Jose, Fresno and Santa Rosa urging early voting.",
+   "link": "/profile/did:plc:example/feed/05af68c3e9d9",
+   "startedAt": "2026-10-08T16:34:21.225866+00:00",
+   "postCount": 5412,
+   "status": "trending",
+   "category": "politics",
+   "actors": [
+    {
+     "did": "did:plc:example0",
+     "handle": "example0.bsky.social",
+     "displayName": "Example 0"
+    }
+   ]
+  },
+  {
+   "topic": "d515cb68f7b0",
+   "displayName": "Trump exempts Russia from sanctions",
+   "description": "An executive order sidesteps Congress's law named after Senator Lindsey Graham.",
+   "link": "/profile/did:plc:example/feed/d515cb68f7b0",
+   "startedAt": "2026-10-17T02:04:19.684489+00:00",
+   "postCount": 3334,
+   "status": "cooling",
+   "category": "politics",
+   "actors": [
+    {
+     "did": "did:plc:example1",
+     "handle": "example1.bsky.social",
+     "displayName": "Example 1"
+    }
+   ]
+  },
+  {
+   "topic": "db73de315c10",
+   "displayName": "Shortest job tenure stories",
+   "description": "After a press secretary's quick firing, people share the briefest jobs they have ever held.",
+   "link": "/profile/did:plc:example/feed/db73de315c10",
+   "startedAt": "2026-10-16T18:54:26.332782+00:00",
+   "postCount": 4701,
+   "status": "cooling",
+   "category": "culture",
+   "actors": [
+    {
+     "did": "did:plc:example2",
+     "handle": "example2.bsky.social",
+     "displayName": "Example 2"
+    }
+   ]
+  },
+  {
+   "topic": "88c97b622a65",
+   "displayName": "Frivolous purchases with $25 million",
+   "description": "People share the silly things they would buy if they suddenly became ultra rich.",
+   "link": "/profile/did:plc:example/feed/88c97b622a65",
+   "startedAt": "2026-10-16T20:54:19.324091+00:00",
+   "postCount": 3222,
+   "status": "cooling",
+   "category": "culture",
+   "actors": [
+    {
+     "did": "did:plc:example3",
+     "handle": "example3.bsky.social",
+     "displayName": "Example 3"
+    }
+   ]
+  },
+  {
+   "topic": "56473f8b11dc",
+   "displayName": "BirdOfTheDay sunrise and sunset theme",
+   "description": "Atlantic Birding's daily photo prompt asks for birds at dawn, with dusk shots as the alternate.",
+   "link": "/profile/did:plc:example/feed/56473f8b11dc",
+   "startedAt": "2026-10-06T06:44:21.651483+00:00",
+   "postCount": 2814,
+   "status": "cooling",
+   "category": "culture",
+   "actors": [
+    {
+     "did": "did:plc:example4",
+     "handle": "example4.bsky.social",
+     "displayName": "Example 4"
+    }
+   ]
+  }
+ ]
+}

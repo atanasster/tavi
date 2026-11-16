@@ -1,0 +1,1 @@
+{ "status": 429, "headers": { "retry-after": "2", "x-ratelimit-bucket": "abcd1234", "x-ratelimit-limit": "5", "x-ratelimit-remaining": "0", "x-ratelimit-reset-after": "1.5", "x-ratelimit-scope": "user" }, "body": { "message": "You are being rate limited.", "retry_after": 1.5, "global": false } }

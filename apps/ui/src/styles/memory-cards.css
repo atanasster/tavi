@@ -1,0 +1,65 @@
+/* A memory card in the transcript: its records, each with its actions. */
+.memory-card {
+  display: grid;
+  gap: var(--space-1);
+}
+.memory-card-heading {
+  font-weight: var(--weight-semibold);
+}
+.memory-card-items {
+  display: grid;
+  gap: var(--space-2);
+}
+.memory-card-item {
+  display: grid;
+  gap: var(--space-1);
+}
+.memory-card-excerpt {
+  color: hsl(var(--muted-foreground));
+}
+.memory-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.memory-card-edit {
+  display: grid;
+  gap: var(--space-1);
+}
+/* What an answer used: a quiet chip under it that opens to the records, each with Forget and Correct. */
+.memory-used {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+}
+/* Right after its turn, the chip belongs to that answer: it sits up under the
+   answer's actions, and the space that sets turns apart comes after it. */
+.run + .memory-used {
+  margin-top: calc(-1 * (var(--space-turn-gap) + var(--space-turn-pad) - var(--space-2)));
+  margin-bottom: var(--space-turn-gap);
+}
+.memory-used-chip {
+  color: hsl(var(--muted-foreground));
+}
+.memory-used-items {
+  display: grid;
+  gap: var(--space-2);
+}
+.memory-used-item {
+  display: grid;
+  gap: var(--space-1);
+}
+.memory-used-title {
+  font-weight: var(--weight-semibold);
+}
+.heartbeat-item {
+  display: grid;
+  gap: var(--space-1);
+}
+.heartbeat-item-title {
+  font-weight: var(--weight-semibold);
+}
+.heartbeat-items > li {
+  padding-block: var(--space-2);
+  border-bottom: var(--border-width) solid var(--line);
+}

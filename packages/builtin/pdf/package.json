@@ -1,0 +1,64 @@
+{
+  "name": "@tavi/plugin-pdf",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "atanasster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atanasster/tavi.git",
+    "directory": "packages/builtin/pdf"
+  },
+  "homepage": "https://github.com/atanasster/tavi#readme",
+  "bugs": {
+    "url": "https://github.com/atanasster/tavi/issues"
+  },
+  "type": "module",
+  "description": "Reading PDFs and filling PDF forms in a single-use, confined parser child: PDFium (WASM) reads, patched @cantoo/pdf-lib writes",
+  "exports": {
+    "./host": {
+      "development": "./src/host.ts",
+      "types": "./dist/host.d.mts",
+      "import": "./dist/host.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "assets"
+  ],
+  "scripts": {
+    "build": "tsdown && pnpm --workspace-root run notices . dist/THIRD-PARTY-NOTICES.txt \"Third-party software bundled into child.mjs and pdfium.wasm.\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tavi/child-kit": "workspace:*",
+    "@tavi/contracts": "workspace:*",
+    "@tavi/node-kit": "workspace:*"
+  },
+  "devDependencies": {
+    "@cantoo/fontkit": "catalog:",
+    "@cantoo/pdf-lib": "catalog:",
+    "@embedpdf/pdfium": "2.15.1",
+    "@types/emscripten": "1.41.6",
+    "html-entities": "2.6.0",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      "./host": {
+        "types": "./dist/host.d.mts",
+        "import": "./dist/host.mjs"
+      },
+      "./package.json": "./package.json"
+    }
+  },
+  "taviBundled": [
+    "@cantoo/fontkit",
+    "@cantoo/pdf-lib",
+    "@embedpdf/pdfium",
+    "html-entities"
+  ]
+}

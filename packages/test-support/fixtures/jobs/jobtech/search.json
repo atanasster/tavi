@@ -1,0 +1,317 @@
+{
+ "total": {
+  "value": 327
+ },
+ "positions": 471,
+ "hits": [
+  {
+   "relevance": 1.0,
+   "id": "31574200",
+   "external_id": null,
+   "original_id": null,
+   "label": [],
+   "webpage_url": "https://arbetsformedlingen.se/platsbanken/annonser/31574200",
+   "logo_url": null,
+   "headline": "Backend Developer",
+   "application_deadline": "2026-11-13T23:59:59",
+   "number_of_vacancies": 1,
+   "description": {
+    "text": "Uppdrag: Senior Backend Developer / Solution Architect\nOm rollen\n Vår kund söker en senior Backend Developer / Solution Architect som kombinerar hands-on utveckling med lösningsarkitektur. Du designar och bygger backendtjänster och integrationer, och förstår verksamhetens behov tillräckligt väl för att översätta dem till pragmatiska tekniska lösningar.\nDu blir en del av en modern digital miljö där nya lösningar, backendarkitekturer och integrationer tas fram för verksamhetskritiska processer. Du är med genom hela kedjan, från design och tekniska vägval till implementation och drift, och har goda möjligheter att påverka hur det tekniska landskapet utformas i en miljö där mycket byggs och vidareutvecklas från grunden.\nAnsvarsområden\nDesigna och bygga backendtjänster och integrationer.\nFatta och driva tekniska vägval och bidra med arkitekturperspektiv i utvecklingsarbetet.\nDelta i arbetet från design och implementation till drift.\nSamarbeta nära både utvecklare och verksamhet och omsätta behov till tekniska lösningar.\nStötta och coacha andra utvecklare.\n\nKrav och kompetenser\nStark erfarenhet av Java, Kotlin eller liknande tekniker.\nGedigen erfarenhet av backendutveckling, API:er och integrationer.\nGod förståelse för mikrotjänster, messaging och event-driven arkitektur.\nErfarenhet av systemdesign, inklusive att definiera servicegränser och integrationer.\nPraktisk erfarenhet av CI/CD, molnmiljöer och DevOps.\nErfarenhet av felsökning och drift av produktionssystem.\nPragmatiskt arbetssätt med förmåga att undvika onödig komplexitet.\n\nMeriterande\nErfarenhet av Kotlin och Spring.\n\nPersonliga egenskaper\n Du är en praktiskt lagd senior utvecklare som vill kombinera stark utvecklarkompetens med ett arkitektoniskt perspektiv och vara med hela vägen från design till implementation och drift. Rollen passar inte en renodlad arkitekt.\nSenioritet\n Senior nivå.",
+    "text_formatted": "<p><strong>Uppdrag: Senior Backend Developer / Solution Architect</strong></p><p><strong>Om rollen</strong></p><p> Vår kund söker en senior Backend Developer / Solution Architect som kombinerar hands-on utveckling med lösningsarkitektur. Du designar och bygger backendtjänster och integrationer, och förstår verksamhetens behov tillräckligt väl för att översätta dem till pragmatiska tekniska lösningar.</p><p>Du blir en del av en modern digital miljö där nya lösningar, backendarkitekturer och integrationer tas fram för verksamhetskritiska processer. Du är med genom hela kedjan, från design och tekniska vägval till implementation och drift, och har goda möjligheter att påverka hur det tekniska landskapet utformas i en miljö där mycket byggs och vidareutvecklas från grunden.</p><p><strong>Ansvarsområden</strong></p><ul><li>Designa och bygga backendtjänster och integrationer.</li><li>Fatta och driva tekniska vägval och bidra med arkitekturperspektiv i utvecklingsarbetet.</li><li>Delta i arbetet från design och implementation till drift.</li><li>Samarbeta nära både utvecklare och verksamhet och omsätta behov till tekniska lösningar.</li><li>Stötta och coacha andra utvecklare.</li></ul><p><strong>Krav och kompetenser</strong></p><ul><li>Stark erfarenhet av Java, Kotlin eller liknande tekniker.</li><li>Gedigen erfarenhet av backendutveckling, API:er och integrationer.</li><li>God förståelse för mikrotjänster, messaging och event-driven arkitektur.</li><li>Erfarenhet av systemdesign, inklusive att definiera servicegränser och integrationer.</li><li>Praktisk erfarenhet av CI/CD, molnmiljöer och DevOps.</li><li>Erfarenhet av felsökning och drift av produktionssystem.</li><li>Pragmatiskt arbetssätt med förmåga att undvika onödig komplexitet.</li></ul><p><strong>Meriterande</strong></p><ul><li>Erfarenhet av Kotlin och Spring.</li></ul><p><strong>Personliga egenskaper</strong></p><p> Du är en praktiskt lagd senior utvecklare som vill kombinera stark utvecklarkompetens med ett arkitektoniskt perspektiv och vara med hela vägen från design till implementation och drift. Rollen passar inte en renodlad arkitekt.</p>",
+    "company_information": null,
+    "needs": null,
+    "requirements": null,
+    "conditions": null
+   },
+   "employment_type": {
+    "concept_id": "sTu5_NBQ_udq",
+    "label": "Tidsbegränsad anställning",
+    "legacy_ams_taxonomy_id": null
+   },
+   "salary_type": {
+    "concept_id": "oG8G_9cW_nRf",
+    "label": "Fast månads- vecko- eller timlön",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "salary_description": null,
+   "duration": {
+    "concept_id": "gJRb_akA_95y",
+    "label": "6 månader – upp till 12 månader",
+    "legacy_ams_taxonomy_id": "0"
+   },
+   "working_hours_type": {
+    "concept_id": "6YE1_gAC_R2G",
+    "label": "Heltid",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "scope_of_work": {
+    "min": 100,
+    "max": 100
+   },
+   "access": null,
+   "employer": {
+    "phone_number": null,
+    "email": null,
+    "url": null,
+    "organization_number": "5593220733",
+    "name": "Rasulson Consulting AB",
+    "workplace": "Rasulson Consulting AB"
+   },
+   "application_details": {
+    "information": null,
+    "reference": null,
+    "email": "recruiter@example.com",
+    "via_af": false,
+    "url": "https://app.teamtailor.com/companies/zhttps://app.teamtailor.com/companies/zbu-mmYIt10@eu/jobs/8520094/stagesbu-mmYIt10@eu/jobs/8436137/stages",
+    "other": null
+   },
+   "experience_required": true,
+   "access_to_own_car": false,
+   "driving_license_required": false,
+   "driving_license": null,
+   "occupation": {
+    "concept_id": "fg7B_yov_smw",
+    "label": "Systemutvecklare/Programmerare",
+    "legacy_ams_taxonomy_id": "2419"
+   },
+   "occupation_group": {
+    "concept_id": "DJh5_yyF_hEM",
+    "label": "Mjukvaru- och systemutvecklare m.fl.",
+    "legacy_ams_taxonomy_id": "2512"
+   },
+   "occupation_field": {
+    "concept_id": "apaJ_2ja_LuF",
+    "label": "Data/IT",
+    "legacy_ams_taxonomy_id": "3"
+   },
+   "workplace_model": {
+    "concept_id": "ZxwM_gtz_n61",
+    "label": "Arbete på plats"
+   },
+   "workplace_address": {
+    "municipality": "Stockholm",
+    "municipality_code": "0180",
+    "municipality_concept_id": "AvNB_uwa_6n6",
+    "region": "Stockholms län",
+    "region_code": "01",
+    "region_concept_id": "CifL_Rzy_Mku",
+    "country": "Sverige",
+    "country_code": "199",
+    "country_concept_id": "i46j_HmG_v64",
+    "street_address": null,
+    "postcode": null,
+    "city": null,
+    "coordinates": [
+     null,
+     null
+    ]
+   },
+   "workplace_addresses": [
+    {
+     "municipality": "Stockholm",
+     "municipality_code": "0180",
+     "municipality_concept_id": "AvNB_uwa_6n6",
+     "region": "Stockholms län",
+     "region_code": "01",
+     "region_concept_id": "CifL_Rzy_Mku",
+     "country": "Sverige",
+     "country_code": "199",
+     "country_concept_id": "i46j_HmG_v64",
+     "street_address": null,
+     "postcode": null,
+     "city": null,
+     "coordinates": [
+      null,
+      null
+     ]
+    }
+   ],
+   "must_have": {
+    "skills": [],
+    "languages": [
+     {
+      "weight": 10,
+      "concept_id": "NVxJ_hLg_TYS",
+      "label": "Engelska",
+      "legacy_ams_taxonomy_id": "283"
+     }
+    ],
+    "work_experiences": [],
+    "education": [],
+    "education_level": []
+   },
+   "nice_to_have": {
+    "skills": [],
+    "languages": [
+     {
+      "weight": 5,
+      "concept_id": "zSLA_vw2_FXN",
+      "label": "Svenska",
+      "legacy_ams_taxonomy_id": "502"
+     }
+    ],
+    "work_experiences": [
+     {
+      "weight": 5,
+      "concept_id": "fg7B_yov_smw",
+      "label": "Systemutvecklare/Programmerare",
+      "legacy_ams_taxonomy_id": "2419"
+     }
+    ],
+    "education": [],
+    "education_level": []
+   },
+   "application_contacts": [],
+   "publication_date": "2026-10-09T00:00:00",
+   "last_publication_date": "2026-11-13T23:59:59",
+   "removed": false,
+   "removed_date": null,
+   "source_type": "VIA_ANNONSERA",
+   "timestamp": 1791494230677
+  },
+  {
+   "relevance": 1.0,
+   "id": "31455334",
+   "external_id": null,
+   "original_id": null,
+   "label": [],
+   "webpage_url": "https://arbetsformedlingen.se/platsbanken/annonser/31455334",
+   "logo_url": null,
+   "headline": "Backend Developer",
+   "application_deadline": "2027-03-08T23:59:59",
+   "number_of_vacancies": 1,
+   "description": {
+    "text": "Därför är detta jobb för dig För att du älskar att skapa system som är effektiva, kostnadseffektiva och använder en modern teknikstack, och du ser dig själv som en väsentlig del av teamet där din och teamets vision blir verklighet i molnet. Du vill göra skillnad genom att bidra med perspektiv, färdigheter och erfarenhet till olika branscher och miljöer.\nBygg en karriär du kan vara stolt över  Som en del av vårt team kan din resa ta olika vägar när du utvecklar system tillsammans med våra kunder. Arbetet sker in-house i team från våra egna lokaler – alltid med målet att leverera resultat av hög kvalitet. Du kan till exempel skapa en IoT-plattform, utveckla en applikation för sensorhantering inom MedTech, eller bygga en dataplattform för industriell produktion. Exakt vilket projekt du kommer att arbeta med vet vi först när du har blivit en del av Knightec Group, och det är just den variationen och möjligheten att själv välja projekt som gör arbetet här så spännande!\nDu kommer att arbeta inom affärsområdet Software & Cloud som hjälper kunder att utveckla framtidssäkra, storskaliga dator- och mjukvarusystem över hela IT-landskapet – från elektroniska enheter och nätverk till datadrivna företagsapplikationer med stöd av AI och molntjänster.\nArbetsuppgifter\n\nDesigna, utveckla och optimera backend-lösningar med fokus på molntjänster.\n\n\nImplementera microservices för att säkerställa skalbara och effektiva system.\n\n\nUtveckla och underhålla API:er för integration mellan system.\n\n\nArbeta med datalagring och informationshantering.\n\n\nSamarbeta med front-end utvecklare, data engineers och andra för att skapa integrerade system.\n\n\nBidra med nya idéer och håll dig uppdaterad om de senaste teknologierna.\n\n\nKvalifikationer\n\n2-3 års erfarenhet av backend-utveckling i Java, C#, Kotlin eller motsvarande.\n\n\nIntresse av att jobba med molntjänster som AWS eller Azure.\n\n\nGoda kommunikationsfärdigheter och vana att arbeta i team.\n\n\nMinimum en kandidatexamen inom datateknik eller liknande.\n\n\n",
+    "text_formatted": "<p><strong>Därför är detta jobb för dig</strong> För att du älskar att skapa system som är effektiva, kostnadseffektiva och använder en modern teknikstack, och du ser dig själv som en väsentlig del av teamet där din och teamets vision blir verklighet i molnet. Du vill göra skillnad genom att bidra med perspektiv, färdigheter och erfarenhet till olika branscher och miljöer.</p><p><strong>Bygg en karriär du kan vara stolt över </strong> Som en del av vårt team kan din resa ta olika vägar när du utvecklar system tillsammans med våra kunder. Arbetet sker in-house i team från våra egna lokaler – alltid med målet att leverera resultat av hög kvalitet. Du kan till exempel skapa en IoT-plattform, utveckla en applikation för sensorhantering inom MedTech, eller bygga en dataplattform för industriell produktion. Exakt vilket projekt du kommer att arbeta med vet vi först när du har blivit en del av Knightec Group, och det är just den variationen och möjligheten att själv välja projekt som gör arbetet här så spännande!</p><p>Du kommer att arbeta inom affärsområdet Software &amp; Cloud som hjälper kunder att utveckla framtidssäkra, storskaliga dator- och mjukvarusystem över hela IT-landskapet – från elektroniska enheter och nätverk till datadrivna företagsapplikationer med stöd av AI och molntjänster.</p><p><strong>Arbetsuppgifter</strong></p><ul><li><p>Designa, utveckla och optimera backend-lösningar med fokus på molntjänster.</p></li><li><p>Implementera microservices för att säkerställa skalbara och effektiva system.</p></li><li><p>Utveckla och underhålla API:er för integration mellan system.</p></li><li><p>Arbeta med datalagring och informationshantering.</p></li><li><p>Samarbeta med front-end utvecklare, data engineers och andra för att skapa integrerade system.</p></li><li><p>Bidra med nya idéer och håll dig uppdaterad om de senaste teknologierna.</p></li></ul><p><strong>Kvalifikationer</strong></p><ul><li><p>2-3 års erfarenhet av backend-utveckling i Java, C#, Kotlin eller motsvarande.</p>",
+    "company_information": null,
+    "needs": null,
+    "requirements": null,
+    "conditions": null
+   },
+   "employment_type": {
+    "concept_id": "PFZr_Syz_cUq",
+    "label": "Vanlig anställning",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "salary_type": {
+    "concept_id": "oG8G_9cW_nRf",
+    "label": "Fast månads- vecko- eller timlön",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "salary_description": null,
+   "duration": {
+    "concept_id": "a7uU_j21_mkL",
+    "label": "Tills vidare",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "working_hours_type": {
+    "concept_id": "6YE1_gAC_R2G",
+    "label": "Heltid",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "scope_of_work": {
+    "min": 100,
+    "max": 100
+   },
+   "access": null,
+   "employer": {
+    "phone_number": null,
+    "email": null,
+    "url": "https://career.knightecgroup.com",
+    "organization_number": "5564030996",
+    "name": "Knightec Group Software and Cloud AB",
+    "workplace": "Knightec Group Sweden"
+   },
+   "application_details": {
+    "information": null,
+    "reference": "teamtailor-8350822-2186669",
+    "email": null,
+    "via_af": false,
+    "url": "https://career.knightecgroup.com/jobs/8350822-backend-developer/applications/new?promotion=2186669-arbetsformedlingen",
+    "other": null
+   },
+   "experience_required": true,
+   "access_to_own_car": false,
+   "driving_license_required": false,
+   "driving_license": null,
+   "occupation": {
+    "concept_id": "rQds_YGd_quU",
+    "label": "Mjukvaruutvecklare",
+    "legacy_ams_taxonomy_id": "80"
+   },
+   "occupation_group": {
+    "concept_id": "DJh5_yyF_hEM",
+    "label": "Mjukvaru- och systemutvecklare m.fl.",
+    "legacy_ams_taxonomy_id": "2512"
+   },
+   "occupation_field": {
+    "concept_id": "apaJ_2ja_LuF",
+    "label": "Data/IT",
+    "legacy_ams_taxonomy_id": "3"
+   },
+   "workplace_model": {
+    "concept_id": null,
+    "label": null
+   },
+   "workplace_address": {
+    "municipality": "Sundsvall",
+    "municipality_code": "2281",
+    "municipality_concept_id": "dJbx_FWY_tK6",
+    "region": "Västernorrlands län",
+    "region_code": "22",
+    "region_concept_id": "NvUF_SP1_1zo",
+    "country": "Sverige",
+    "country_code": "199",
+    "country_concept_id": "i46j_HmG_v64",
+    "street_address": "Centralgatan 4",
+    "postcode": "85232",
+    "city": "Sundsvall",
+    "coordinates": [
+     17.3080081149981,
+     62.39160501761
+    ]
+   },
+   "workplace_addresses": [
+    {
+     "municipality": "Sundsvall",
+     "municipality_code": "2281",
+     "municipality_concept_id": "dJbx_FWY_tK6",
+     "region": "Västernorrlands län",
+     "region_code": "22",
+     "region_concept_id": "NvUF_SP1_1zo",
+     "country": "Sverige",
+     "country_code": "199",
+     "country_concept_id": "i46j_HmG_v64",
+     "street_address": "Centralgatan 4",
+     "postcode": "85232",
+     "city": "Sundsvall",
+     "coordinates": [
+      17.3080081149981,
+      62.39160501761
+     ]
+    }
+   ],
+   "must_have": {
+    "skills": [],
+    "languages": [],
+    "work_experiences": [],
+    "education": [],
+    "education_level": []
+   },
+   "nice_to_have": {
+    "skills": [],
+    "languages": [],
+    "work_experiences": [],
+    "education": [],
+    "education_level": []
+   },
+   "application_contacts": [],
+   "publication_date": "2026-09-09T10:38:10",
+   "last_publication_date": "2027-03-08T23:59:59",
+   "removed": false,
+   "removed_date": null,
+   "source_type": "VIA_JOBPOSTING",
+   "timestamp": 1788943090105
+  }
+ ]
+}

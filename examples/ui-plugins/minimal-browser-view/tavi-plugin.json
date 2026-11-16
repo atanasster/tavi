@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "example.browserview",
+  "version": "1.0.0",
+  "name": "Minimal browser view",
+  "description": "The smallest replacement for the built-in browser view: the agent's page as a picture, and its address.",
+  "ui": {
+    "abi": "tavi.ui/1",
+    "contributions": [
+      {
+        "id": "live",
+        "role": "browser-view",
+        "title": "Browser (minimal)",
+        "document": "live.html",
+        "channels": ["browser.live"],
+        "placements": [
+          { "slot": "chat.panel.top", "show": "while-active", "height": { "min": 120, "default": 200, "max": 400 } },
+          { "slot": "chat.panel.tab" }
+        ],
+        "disclosure": "Receives live images of the pages the agent browses, and the address of each page."
+      }
+    ]
+  }
+}

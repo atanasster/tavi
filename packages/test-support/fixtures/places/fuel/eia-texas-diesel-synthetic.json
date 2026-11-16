@@ -1,0 +1,4 @@
+{"note": "synthetic: shaped as EIA API v2's petroleum/pri/gnd/data answer; no key to record with",
+ "response": {"total": "1", "dateFormat": "YYYY-MM-DD", "frequency": "weekly", "data": [
+  {"period": "2026-10-12", "duoarea": "STX", "area-name": "TEXAS", "product": "EPD2D", "product-name": "No 2 Diesel", "process": "PTE", "process-name": "Retail Sales", "series": "EMD_EPD2D_PTE_STX_DPG", "series-description": "Texas No 2 Diesel Retail Prices (Dollars per Gallon)", "value": "3.512", "units": "$/GAL"}
+ ]}}

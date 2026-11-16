@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/YB3xWWC8kNJ9s1FA3ZPLPJum+MQ</id>
+  <title>arXiv Query: search_query=all:"solid state battery" AND submittedDate:"202610080000 TO 202610152359"&amp;id_list=&amp;start=0&amp;max_results=3</title>
+  <updated>2026-10-17T13:12:11Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=all:%22solid+state+battery%22+AND+submittedDate:%22202610080000+TO+202610152359%22&amp;start=0&amp;max_results=3&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>3</opensearch:itemsPerPage>
+  <opensearch:totalResults>1</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2610.15986v1</id>
+    <title>Extreme anharmonicity determines the superionic transition in the prototypical antifluorite Li$_2$O</title>
+    <updated>2026-10-11T23:39:00Z</updated>
+    <link href="https://arxiv.org/abs/2610.15986v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2610.15986v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Superionic conductors are promising electrolyte candidates for all-solid-state batteries, thanks to their liquid-like ionic mobility. In the prototypical lithium-ion oxide superionic conductor with antifluorite structure, the high-temperature transition to the fast-ion regime has long been attributed to volume-driven harmonic phonon softening. However, this quasi-harmonic picture neglects the strong lattice anharmonicity inherent to the fast-ion regime, leaving the microscopic origin of the transition unresolved. Here, we apply non-perturbative lattice dynamics combined with a first-principles-accurate machine-learning interatomic potential to study the phase transition in Li$_2$O. We demonstrate that anharmonicity, rather than volume expansion alone as commonly assumed, plays the decisive role in determining the transition temperature and the underlying mechanism. Finally, we analyze the spectral properties using the time-dependent self-consistent harmonic approximation, revealing the breakdown of the quasi-particle picture in this material. The spectral function and the infrared response provide signtures of the phase transition that can be investigated experimentally using inelastic neutron or X-ray scattering and infrared spectroscopy. All these results establish the extreme anharmonicity of Li$_2$O near the superionic regime and provide a lattice-dynamic framework for understanding and engineering the fast-ion transition in this type of materials.</summary>
+    <category term="cond-mat.mtrl-sci" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-10-11T23:39:00Z</published>
+    <arxiv:primary_category term="cond-mat.mtrl-sci"/>
+    <author>
+      <name>Author 0</name>
+    </author>
+    <author>
+      <name>Author 1</name>
+    </author>
+    <author>
+      <name>Author 2</name>
+    </author>
+    <author>
+      <name>Author 3</name>
+    </author>
+  </entry>
+</feed>

@@ -1,0 +1,86 @@
+{
+  // Unused files, exports and dependencies across the workspace: `pnpm run knip`,
+  // and the typecheck job in CI. Each package's entry points come from its
+  // package.json (`exports`, `bin`, scripts) and the tsdown, Vite and Vitest
+  // plugins; only what those cannot see is listed here.
+  //
+  // What a package's entry point exports is its API and is not reported, used
+  // in the repository or not (knip's default; `includeEntryExports` stays off):
+  // the plugin-author surfaces `@tavi/contracts`, `@tavi/plugin-kit` and
+  // `@tavi/plugin-types`, and the `@tavi/test-support` helpers. An export read
+  // only through a module namespace (`Object.entries(module)`), which knip
+  // cannot follow, carries a `@public` JSDoc tag that says who reads it.
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  // Declarations for the external plugins' fixture-site server.mjs, read by their TypeScript tests.
+  "ignore": ["packages/external/*/test/**/server.d.mts"],
+  // Operating-system tools the code and tests spawn, never npm packages.
+  // `notices` is the root's own script (`pnpm --workspace-root run notices`), which knip reads as a binary.
+  "ignoreBinaries": [
+    "chflags",
+    "du",
+    "ffmpeg",
+    "jq",
+    "ldd",
+    "llama-server",
+    "lsattr",
+    "mkfifo",
+    "notices",
+    "pgrep",
+    "pkill",
+    "reg",
+    "sandbox-exec",
+    "say",
+    "script",
+    "systemd-run"
+  ],
+  // Named aliases in the plugin-author contract (`RunIdSchema` for `IdSchema`,
+  // `DEFAULT_TASK_POLICY` for `UNATTENDED_TASK_POLICY`, ...): each name says what
+  // a caller means, so both stay exported.
+  "ignoreIssues": {
+    "packages/contracts/src/{artifact-list,execution-policy,ids,memory,system-prompts}.ts": ["duplicates"]
+  },
+  "workspaces": {
+    ".": {
+      // The repository-wide tests, the eval suites (run through their tests) and the maintenance scripts.
+      "entry": ["tests/**/*.test.ts", "evals/**/*.ts", "scripts/**/*.{mjs,ts}"],
+      "project": ["tests/**/*.ts", "evals/**/*.ts", "scripts/**/*.{mjs,ts}"]
+    },
+    "apps/cli": {
+      // Fixture servers and mods the tests start by path, as child processes or plugin entries.
+      "entry": ["test/fixtures/**/*.mjs"]
+    },
+    "apps/ui": {
+      "ignoreDependencies": [
+        // Imported from styles/index.css, which knip does not read.
+        "@fontsource-variable/inter",
+        "@fontsource-variable/bricolage-grotesque"
+      ]
+    },
+    "packages/builtin/browser": {
+      // Playwright launches these by path as the confined Chromium and its in-sandbox shim.
+      "entry": ["bin/*.mjs"]
+    },
+    "packages/builtin/desktop": {
+      // The Xcode compiler `build:helper` runs to build the native helper, never an npm package.
+      "ignoreBinaries": ["swiftc"]
+    },
+    "packages/builtin/pdf": {
+      // Crashing, hanging and misbehaving parser children the tests start by path.
+      "entry": ["test/fixtures/*.mjs"],
+      // @embedpdf/pdfium's declarations reference the emscripten types without depending on them.
+      "ignoreDependencies": ["@types/emscripten"]
+    },
+    "packages/builtin/worker": {
+      // Plugin entries and a hostile worker the tests load by path.
+      "entry": ["test/fixtures/**/*.mjs"]
+    },
+    "packages/jobs-kit": {
+      // Rebuilds assets/skills.json from the ESCO and O*NET downloads; run by hand (docs/JOBS.md).
+      "entry": ["scripts/build-skills.mjs"]
+    },
+    "packages/pdf-ocr": {
+      // scripts/assets.mjs copies their wasm and model files into dist/ by resolved path.
+      "ignoreDependencies": ["tesseract.js-core", "@tesseract.js-data/eng"]
+    }
+  }
+}

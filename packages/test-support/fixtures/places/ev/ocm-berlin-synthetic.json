@@ -1,0 +1,136 @@
+{
+ "note": "synthetic: hand-made in Open Charge Map's documented v3 POI shape (its API needs a key)",
+ "pois": [
+  {
+   "ID": 100001,
+   "UUID": "11111111-2222-3333-4444-555555555555",
+   "DataProviderID": 1,
+   "DataProvider": {
+    "ID": 1,
+    "Title": "Open Charge Map Contributors",
+    "License": "Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)"
+   },
+   "OperatorInfo": {
+    "ID": 3534,
+    "Title": "Allego"
+   },
+   "UsageType": {
+    "ID": 1,
+    "Title": "Public"
+   },
+   "StatusType": {
+    "ID": 50,
+    "IsOperational": true,
+    "Title": "Operational"
+   },
+   "AddressInfo": {
+    "ID": 100001,
+    "Title": "Alexanderplatz Charging",
+    "AddressLine1": "Alexanderstraße 1",
+    "Town": "Berlin",
+    "Postcode": "10178",
+    "Country": {
+     "ISOCode": "DE",
+     "Title": "Germany"
+    },
+    "Latitude": 52.5219,
+    "Longitude": 13.4132,
+    "Distance": 0.6,
+    "DistanceUnit": 1
+   },
+   "Connections": [
+    {
+     "ID": 1,
+     "ConnectionTypeID": 33,
+     "ConnectionType": {
+      "ID": 33,
+      "Title": "CCS (Type 2)"
+     },
+     "PowerKW": 150,
+     "Quantity": 2
+    },
+    {
+     "ID": 2,
+     "ConnectionTypeID": 25,
+     "ConnectionType": {
+      "ID": 25,
+      "Title": "Type 2 (Socket Only)"
+     },
+     "PowerKW": 22,
+     "Quantity": 2
+    }
+   ],
+   "NumberOfPoints": 4,
+   "DateLastVerified": "2026-09-30T10:00:00Z"
+  },
+  {
+   "ID": 100002,
+   "UUID": "22222222-3333-4444-5555-666666666666",
+   "DataProviderID": 2,
+   "DataProvider": {
+    "ID": 2,
+    "Title": "A national registry",
+    "License": "Open Data Commons Open Database License (ODbL)"
+   },
+   "StatusType": {
+    "ID": 50,
+    "IsOperational": true,
+    "Title": "Operational"
+   },
+   "AddressInfo": {
+    "ID": 100002,
+    "Title": "Rosenthaler Platz",
+    "AddressLine1": "Rosenthaler Str. 2",
+    "Town": "Berlin",
+    "Postcode": "10119",
+    "Country": {
+     "ISOCode": "DE",
+     "Title": "Germany"
+    },
+    "Latitude": 52.5297,
+    "Longitude": 13.4015,
+    "Distance": 1.0,
+    "DistanceUnit": 1
+   },
+   "Connections": [
+    {
+     "ID": 3,
+     "ConnectionTypeID": 25,
+     "PowerKW": 11,
+     "Quantity": 2
+    }
+   ],
+   "NumberOfPoints": 2,
+   "DateLastVerified": "2025-01-10T10:00:00Z"
+  },
+  {
+   "ID": 100003,
+   "UUID": "33333333-4444-5555-6666-777777777777",
+   "DataProviderID": 1,
+   "StatusType": {
+    "ID": 100,
+    "IsOperational": false,
+    "Title": "Not Operational"
+   },
+   "AddressInfo": {
+    "ID": 100003,
+    "Title": "Closed charger",
+    "Town": "Berlin",
+    "Country": {
+     "ISOCode": "DE"
+    },
+    "Latitude": 52.52,
+    "Longitude": 13.41
+   },
+   "Connections": [
+    {
+     "ID": 4,
+     "ConnectionTypeID": 33,
+     "PowerKW": 50,
+     "Quantity": 1
+    }
+   ],
+   "NumberOfPoints": 1
+  }
+ ]
+}

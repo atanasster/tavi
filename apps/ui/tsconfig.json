@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // A page: the DOM's library, React's JSX, and no Node.
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": []
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "test/**/*.ts", "test/**/*.tsx", "*.config.ts"],
+  // The root tsconfig.tests.json checks it: it imports the repository's vitest.config.ts, which a declaration
+  // build of this package (tsdown's dts) would otherwise emit beside its source at the repository root.
+  "exclude": ["vitest.config.ts"]
+}

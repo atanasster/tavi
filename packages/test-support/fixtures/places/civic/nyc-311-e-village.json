@@ -1,0 +1,196 @@
+[
+ {
+  "unique_key": "70763046",
+  "created_date": "2026-10-16T01:26:09.000",
+  "closed_date": "2026-10-16T01:35:51.000",
+  "complaint_type": "Noise - Commercial",
+  "descriptor": "Loud Talking",
+  "status": "Closed",
+  "latitude": "40.72705631581876",
+  "longitude": "-73.98774751639284"
+ },
+ {
+  "unique_key": "70770318",
+  "created_date": "2026-10-16T00:14:43.000",
+  "closed_date": "2026-10-16T01:12:09.000",
+  "complaint_type": "Noise - Residential",
+  "descriptor": "Loud Music/Party",
+  "status": "Closed",
+  "latitude": "40.73291620633039",
+  "longitude": "-73.98630675370705"
+ },
+ {
+  "unique_key": "70765955",
+  "created_date": "2026-10-15T23:17:20.000",
+  "closed_date": "2026-10-16T00:01:26.000",
+  "complaint_type": "Noise - Residential",
+  "descriptor": "Loud Music/Party",
+  "status": "Closed",
+  "latitude": "40.727851981498254",
+  "longitude": "-73.98508830404744"
+ },
+ {
+  "unique_key": "70764540",
+  "created_date": "2026-10-15T22:44:47.000",
+  "complaint_type": "Lost Property",
+  "descriptor": "Bag/Wallet",
+  "status": "In Progress",
+  "latitude": "40.73101953301406",
+  "longitude": "-73.98591024906226"
+ },
+ {
+  "unique_key": "70770397",
+  "created_date": "2026-10-15T22:20:28.000",
+  "complaint_type": "Consumer Complaint",
+  "descriptor": "Locksmith",
+  "status": "In Progress",
+  "latitude": "40.726384004749",
+  "longitude": "-73.98929542046977"
+ },
+ {
+  "unique_key": "70771713",
+  "created_date": "2026-10-15T21:45:01.000",
+  "closed_date": "2026-10-15T21:45:43.000",
+  "complaint_type": "Noise - Residential",
+  "descriptor": "Loud Music/Party",
+  "status": "Closed",
+  "latitude": "40.72889262385044",
+  "longitude": "-73.98838579753928"
+ },
+ {
+  "unique_key": "70767024",
+  "created_date": "2026-10-15T21:28:07.000",
+  "complaint_type": "Noise",
+  "descriptor": "Construction",
+  "status": "In Progress",
+  "latitude": "40.730054005252036",
+  "longitude": "-73.99262869551946"
+ },
+ {
+  "unique_key": "70765601",
+  "created_date": "2026-10-15T21:24:58.000",
+  "complaint_type": "Noise",
+  "descriptor": "Construction",
+  "status": "In Progress",
+  "latitude": "40.730054005252036",
+  "longitude": "-73.99262869551946"
+ },
+ {
+  "unique_key": "70770099",
+  "created_date": "2026-10-15T21:17:30.000",
+  "closed_date": "2026-10-15T21:42:21.000",
+  "complaint_type": "Noise - Residential",
+  "descriptor": "Loud Music/Party",
+  "status": "Closed",
+  "latitude": "40.73287010004129",
+  "longitude": "-73.99226756089064"
+ },
+ {
+  "unique_key": "70765360",
+  "created_date": "2026-10-15T20:59:03.000",
+  "complaint_type": "Dirty Condition",
+  "descriptor": "Trash",
+  "status": "In Progress",
+  "latitude": "40.72992742829445",
+  "longitude": "-73.9887031274958"
+ },
+ {
+  "unique_key": "70768875",
+  "created_date": "2026-10-15T20:12:00.000",
+  "closed_date": "2026-10-15T20:30:31.000",
+  "complaint_type": "Noise - Residential",
+  "descriptor": "Loud Music/Party",
+  "status": "Closed",
+  "latitude": "40.72889262385044",
+  "longitude": "-73.98838579753928"
+ },
+ {
+  "unique_key": "70771188",
+  "created_date": "2026-10-15T20:04:00.000",
+  "closed_date": "2026-10-16T00:40:00.000",
+  "complaint_type": "Traffic Signal Condition",
+  "descriptor": "Controller",
+  "status": "Closed",
+  "latitude": "40.73321311099892",
+  "longitude": "-73.99111288120781"
+ },
+ {
+  "unique_key": "70768188",
+  "created_date": "2026-10-15T19:44:55.000",
+  "closed_date": "2026-10-15T21:46:08.000",
+  "complaint_type": "Encampment",
+  "descriptor": "N/A",
+  "status": "Closed",
+  "latitude": "40.73087401628553",
+  "longitude": "-73.98554946753104"
+ },
+ {
+  "unique_key": "70764512",
+  "created_date": "2026-10-15T19:43:24.000",
+  "complaint_type": "Food Establishment",
+  "descriptor": "Rodents/Insects/Garbage",
+  "status": "In Progress",
+  "latitude": "40.72567864904427",
+  "longitude": "-73.989811455131"
+ },
+ {
+  "unique_key": "70763043",
+  "created_date": "2026-10-15T19:30:17.000",
+  "closed_date": "2026-10-15T20:16:19.000",
+  "complaint_type": "Illegal Parking",
+  "descriptor": "Blocked Bike Lane",
+  "status": "Closed",
+  "latitude": "40.72995509867461",
+  "longitude": "-73.99126485478797"
+ },
+ {
+  "unique_key": "70774045",
+  "created_date": "2026-10-15T18:44:13.000",
+  "closed_date": "2026-10-15T21:43:02.000",
+  "complaint_type": "Encampment",
+  "descriptor": "N/A",
+  "status": "Closed",
+  "latitude": "40.73140101781334",
+  "longitude": "-73.98561790812586"
+ },
+ {
+  "unique_key": "70766721",
+  "created_date": "2026-10-15T18:42:22.000",
+  "closed_date": "2026-10-15T21:42:59.000",
+  "complaint_type": "Encampment",
+  "descriptor": "N/A",
+  "status": "Closed",
+  "latitude": "40.728288728152876",
+  "longitude": "-73.98790604104992"
+ },
+ {
+  "unique_key": "70771710",
+  "created_date": "2026-10-15T18:37:58.000",
+  "closed_date": "2026-10-15T20:30:32.000",
+  "complaint_type": "Noise - Street/Sidewalk",
+  "descriptor": "Loud Music/Party",
+  "status": "Closed",
+  "latitude": "40.72889262385044",
+  "longitude": "-73.98838579753928"
+ },
+ {
+  "unique_key": "70771707",
+  "created_date": "2026-10-15T18:37:04.000",
+  "closed_date": "2026-10-15T19:05:41.000",
+  "complaint_type": "Illegal Parking",
+  "descriptor": "Parking Permit Improper Use",
+  "status": "Closed",
+  "latitude": "40.72614811975899",
+  "longitude": "-73.99123649085863"
+ },
+ {
+  "unique_key": "70765299",
+  "created_date": "2026-10-15T18:29:42.000",
+  "closed_date": "2026-10-15T21:46:07.000",
+  "complaint_type": "Encampment",
+  "descriptor": "N/A",
+  "status": "Closed",
+  "latitude": "40.73140101781334",
+  "longitude": "-73.98561790812586"
+ }
+]

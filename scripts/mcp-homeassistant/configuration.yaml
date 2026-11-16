@@ -1,0 +1,35 @@
+homeassistant:
+  name: Tavi test home
+  time_zone: UTC
+  unit_system: metric
+  latitude: 0
+  longitude: 0
+  elevation: 0
+http:
+api:
+config:
+conversation:
+assist_pipeline:
+input_boolean:
+  hallway_on: { name: Hallway on }
+  kitchen_on: { name: Kitchen on }
+  front_door_locked: { name: Front door locked, initial: true }
+template:
+  - light:
+      - name: Hallway light
+        unique_id: tavi_hallway_light
+        state: "{{ is_state('input_boolean.hallway_on', 'on') }}"
+        turn_on: { action: input_boolean.turn_on, target: { entity_id: input_boolean.hallway_on } }
+        turn_off: { action: input_boolean.turn_off, target: { entity_id: input_boolean.hallway_on } }
+      - name: Kitchen light
+        unique_id: tavi_kitchen_light
+        state: "{{ is_state('input_boolean.kitchen_on', 'on') }}"
+        turn_on: { action: input_boolean.turn_on, target: { entity_id: input_boolean.kitchen_on } }
+        turn_off: { action: input_boolean.turn_off, target: { entity_id: input_boolean.kitchen_on } }
+    lock:
+      - name: Front door
+        unique_id: tavi_front_door
+        state: "{{ 'locked' if is_state('input_boolean.front_door_locked', 'on') else 'unlocked' }}"
+        lock: { action: input_boolean.turn_on, target: { entity_id: input_boolean.front_door_locked } }
+        unlock: { action: input_boolean.turn_off, target: { entity_id: input_boolean.front_door_locked } }
+script: !include scripts.yaml

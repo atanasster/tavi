@@ -1,0 +1,50 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "ats-ashby",
+  "name": "Ashby",
+  "countries": [
+    "*"
+  ],
+  "hosts": [
+    "jobs.ashbyhq.com"
+  ],
+  "kind": "ats",
+  "access": {
+    "mode": "stage",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "An employer's application form on Ashby. Tavi fills the fields it may and stops before the final control, which the person presses.",
+    "termsUrl": "https://jobs.ashbyhq.com/openai/8fb1615c-34bf-47c4-a1d1-b7b2f836bbd3/application",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 12,
+    "pagesPerDay": 60,
+    "minIntervalMs": 2000
+  },
+  "stage": {
+    "fillable": [
+      "name",
+      "first_name",
+      "last_name",
+      "email",
+      "phone",
+      "location",
+      "links",
+      "work_history",
+      "education",
+      "cv_upload",
+      "cover_letter",
+      "custom_answer"
+    ],
+    "finalStep": {
+      "labels": [
+        "Submit Application"
+      ],
+      "urlPatterns": []
+    },
+    "perDay": 10
+  },
+  "notes": "Some posts add a \"personally completed this application\" certification, which only the person answers."
+}

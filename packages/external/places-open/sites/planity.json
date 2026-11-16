@@ -1,0 +1,52 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "planity",
+  "name": "Planity",
+  "countries": [
+    "FR",
+    "BE"
+  ],
+  "hosts": [
+    "www.planity.com"
+  ],
+  "kind": "booking",
+  "access": {
+    "mode": "stage",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Planity has no API and no ban on a person's own agent was found. Tavi fills the booking's contact fields and stops before the final control, which you press.",
+    "termsUrl": "https://www.planity.com/cgu",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "LocalBusiness",
+      "BeautySalon",
+      "HairSalon"
+    ]
+  },
+  "stage": {
+    "fillable": [
+      "name",
+      "email",
+      "phone",
+      "date",
+      "time",
+      "notes"
+    ],
+    "finalStep": {
+      "labels": [
+        "Confirmer le rendez-vous"
+      ],
+      "urlPatterns": []
+    },
+    "perDay": 5
+  },
+  "notes": "Planity books hair, beauty and wellness appointments in France and Belgium. Its final-step labels were not checked on the live site here."
+}

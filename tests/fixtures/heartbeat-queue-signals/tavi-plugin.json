@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "fixture.queue",
+  "version": "1.0.0",
+  "name": "Job queue signals (test fixture)",
+  "description": "A test-only heartbeat signal source: each failed job in a JSON feed is a signal.",
+  "entry": "index.mjs",
+  "provides": ["heartbeat-signals"],
+  "heartbeatSignals": { "abi": "tavi.heartbeat/1", "sources": ["queue"] },
+  "config": { "feed": { "type": "string", "description": "The JSON feed's path: a list of { id, name, status, at }", "required": true } }
+}

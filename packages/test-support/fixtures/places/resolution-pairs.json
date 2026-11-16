@@ -1,0 +1,1154 @@
+[
+ {
+  "note": "same shop, legal suffix and offset 12 m",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/1",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Eurohaus Autowerkstatt",
+   "lat": 30.27,
+   "lon": -97.74,
+   "categories": [
+    "car_repair"
+   ],
+   "phone": "+1 512 555 0101"
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov1",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Eurohaus Autowerkstatt LLC",
+   "lat": 30.2701,
+   "lon": -97.7401,
+   "categories": [
+    "auto repair"
+   ],
+   "phone": "(512) 555-0101",
+   "country": "US"
+  }
+ },
+ {
+  "note": "same bakery, accents differ",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/2",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Chambelland",
+   "lat": 48.8641,
+   "lon": 2.3777,
+   "categories": [
+    "bakery"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov2",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Chambelland Boulangerie",
+   "lat": 48.8642,
+   "lon": 2.3778,
+   "categories": [
+    "bakery"
+   ]
+  }
+ },
+ {
+  "note": "same cafe, word order",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/3",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Café de Flore",
+   "lat": 48.854,
+   "lon": 2.3326,
+   "categories": [
+    "cafe"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov3",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Flore Café",
+   "lat": 48.8541,
+   "lon": 2.3327,
+   "categories": [
+    "cafe"
+   ]
+  }
+ },
+ {
+  "note": "same tailor, phone ties it 40 m apart",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/4",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Stitch & Mend",
+   "lat": 51.512,
+   "lon": -0.13,
+   "categories": [
+    "tailor"
+   ],
+   "phone": "020 7946 0011",
+   "country": "GB"
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov4",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Stitch and Mend Alterations",
+   "lat": 51.5123,
+   "lon": -0.1303,
+   "categories": [
+    "tailor"
+   ],
+   "phone": "+44 20 7946 0011"
+  }
+ },
+ {
+  "note": "same dentist, website ties",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/5",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Riverside Dental",
+   "lat": 30.26,
+   "lon": -97.75,
+   "categories": [
+    "dentist"
+   ],
+   "website": "https://www.riversidedental.example.com/"
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov5",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Riverside Dental Care",
+   "lat": 30.2602,
+   "lon": -97.7502,
+   "categories": [
+    "dentist"
+   ],
+   "website": "riversidedental.example.com"
+  }
+ },
+ {
+  "note": "same hospital 180 m apart (large venue)",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "way/6",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "St. David's Medical Center",
+   "lat": 30.284,
+   "lon": -97.734,
+   "categories": [
+    "hospital"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov6",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "St David's Medical Center",
+   "lat": 30.2855,
+   "lon": -97.7345,
+   "categories": [
+    "hospital"
+   ]
+  }
+ },
+ {
+  "note": "same restaurant, The prefix",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/7",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "The Golden Fork",
+   "lat": 40.73,
+   "lon": -73.99,
+   "categories": [
+    "restaurant"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov7",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Golden Fork",
+   "lat": 40.7301,
+   "lon": -73.9901,
+   "categories": [
+    "restaurant"
+   ]
+  }
+ },
+ {
+  "note": "same pharmacy, GmbH",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/8",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Apotheke am Markt",
+   "lat": 52.52,
+   "lon": 13.405,
+   "categories": [
+    "pharmacy"
+   ],
+   "phone": "030 1234567",
+   "country": "DE"
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov8",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Apotheke am Markt GmbH",
+   "lat": 52.5201,
+   "lon": 13.4051,
+   "categories": [
+    "pharmacy"
+   ],
+   "phone": "+49 30 1234567"
+  }
+ },
+ {
+  "note": "same garage, typo",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/9",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Bavarian Motor Werks",
+   "lat": 30.3,
+   "lon": -97.7,
+   "categories": [
+    "car_repair"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov9",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Bavarian Motor Works",
+   "lat": 30.3001,
+   "lon": -97.7001,
+   "categories": [
+    "car repair"
+   ]
+  }
+ },
+ {
+  "note": "same bistro 60 m apart",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/10",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Noglu",
+   "lat": 48.871,
+   "lon": 2.342,
+   "categories": [
+    "restaurant"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov10",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Noglu",
+   "lat": 48.8715,
+   "lon": 2.3423,
+   "categories": [
+    "restaurant"
+   ]
+  }
+ },
+ {
+  "note": "same vet, phone formats",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/11",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Oak Hill Animal Clinic",
+   "lat": 30.23,
+   "lon": -97.85,
+   "categories": [
+    "veterinary"
+   ],
+   "phone": "512-555-0177",
+   "country": "US"
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov11",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Oak Hill Animal Clinic",
+   "lat": 30.2302,
+   "lon": -97.8501,
+   "categories": [
+    "veterinarian"
+   ],
+   "phone": "+15125550177"
+  }
+ },
+ {
+  "note": "same kennel",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/12",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Camp Bow Wow Austin",
+   "lat": 30.4,
+   "lon": -97.73,
+   "categories": [
+    "animal_boarding"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov12",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Camp Bow Wow",
+   "lat": 30.4001,
+   "lon": -97.7302,
+   "categories": [
+    "pet boarding"
+   ]
+  }
+ },
+ {
+  "note": "same fuel station, brand words",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/13",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Aral Tankstelle",
+   "lat": 48.14,
+   "lon": 11.56,
+   "categories": [
+    "fuel"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov13",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Aral",
+   "lat": 48.1401,
+   "lon": 11.5601,
+   "categories": [
+    "gas station"
+   ]
+  }
+ },
+ {
+  "note": "same museum 200 m apart",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "way/14",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Musée du Louvre",
+   "lat": 48.8606,
+   "lon": 2.3376,
+   "categories": [
+    "museum"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov14",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Louvre Museum",
+   "lat": 48.8611,
+   "lon": 2.336,
+   "categories": [
+    "museum"
+   ],
+   "website": "https://www.louvre.fr"
+  }
+ },
+ {
+  "note": "same salon, & vs and",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/15",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Cut & Colour",
+   "lat": 51.5,
+   "lon": -0.12,
+   "categories": [
+    "hairdresser"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov15",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Cut and Colour",
+   "lat": 51.5001,
+   "lon": -0.1201,
+   "categories": [
+    "hairdresser"
+   ]
+  }
+ },
+ {
+  "note": "same clinic, Ltd",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/16",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Harley Physio",
+   "lat": 51.52,
+   "lon": -0.148,
+   "categories": [
+    "physiotherapist"
+   ],
+   "phone": "020 7946 0222",
+   "country": "GB"
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov16",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Harley Physio Ltd",
+   "lat": 51.5201,
+   "lon": -0.1481,
+   "categories": [
+    "physiotherapy"
+   ],
+   "phone": "+442079460222"
+  }
+ },
+ {
+  "note": "same ramen shop, Japanese name with romaji? same script",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/17",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "一蘭 渋谷店",
+   "lat": 35.661,
+   "lon": 139.701,
+   "categories": [
+    "restaurant"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov17",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "一蘭 渋谷店",
+   "lat": 35.6611,
+   "lon": 139.7011,
+   "categories": [
+    "restaurant"
+   ]
+  }
+ },
+ {
+  "note": "same diner, abbreviation St.",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/18",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Joe's Diner",
+   "lat": 40.74,
+   "lon": -73.98,
+   "categories": [
+    "restaurant"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov18",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Joes Diner",
+   "lat": 40.7401,
+   "lon": -73.9801,
+   "categories": [
+    "diner"
+   ]
+  }
+ },
+ {
+  "note": "same mechanic, inc + phone",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/19",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Precision German Auto",
+   "lat": 30.35,
+   "lon": -97.71,
+   "categories": [
+    "car_repair"
+   ],
+   "phone": "512 555 0144",
+   "country": "US"
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov19",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Precision German Auto, Inc.",
+   "lat": 30.3504,
+   "lon": -97.7104,
+   "categories": [
+    "auto repair"
+   ],
+   "phone": "+1 (512) 555-0144"
+  }
+ },
+ {
+  "note": "same bakery 30 m, different case",
+  "same": true,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/20",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "MAISON KAYSER",
+   "lat": 48.85,
+   "lon": 2.34,
+   "categories": [
+    "bakery"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov20",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Maison Kayser",
+   "lat": 48.8502,
+   "lon": 2.3401,
+   "categories": [
+    "bakery"
+   ]
+  }
+ },
+ {
+  "note": "two branches of a chain 400 m apart",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/21",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Starbucks",
+   "lat": 30.267,
+   "lon": -97.743,
+   "categories": [
+    "cafe"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov21",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Starbucks",
+   "lat": 30.27,
+   "lon": -97.741,
+   "categories": [
+    "cafe"
+   ]
+  }
+ },
+ {
+  "note": "chain branches 120 m apart with different phones",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/22",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Starbucks",
+   "lat": 30.267,
+   "lon": -97.743,
+   "categories": [
+    "cafe"
+   ],
+   "phone": "512 555 0300",
+   "country": "US"
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov22",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Starbucks",
+   "lat": 30.268,
+   "lon": -97.7431,
+   "categories": [
+    "cafe"
+   ],
+   "phone": "+1 512 555 0301"
+  }
+ },
+ {
+  "note": "neighbours in one building",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/23",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Sunrise Nails",
+   "lat": 30.265,
+   "lon": -97.745,
+   "categories": [
+    "beauty"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov23",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Golden Dragon Restaurant",
+   "lat": 30.265,
+   "lon": -97.745,
+   "categories": [
+    "restaurant"
+   ]
+  }
+ },
+ {
+  "note": "dentist and doctor in one building",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/24",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Smile Dental",
+   "lat": 51.53,
+   "lon": -0.1,
+   "categories": [
+    "dentist"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov24",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Northside Medical Practice",
+   "lat": 51.53,
+   "lon": -0.1001,
+   "categories": [
+    "doctors"
+   ]
+  }
+ },
+ {
+  "note": "same name, different cities",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/25",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Riverside Dental",
+   "lat": 30.26,
+   "lon": -97.75,
+   "categories": [
+    "dentist"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov25",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Riverside Dental",
+   "lat": 29.42,
+   "lon": -98.49,
+   "categories": [
+    "dentist"
+   ]
+  }
+ },
+ {
+  "note": "similar names next door, different trades",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/26",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Austin Auto Glass",
+   "lat": 30.31,
+   "lon": -97.72,
+   "categories": [
+    "car_repair"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov26",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Austin Auto Spa",
+   "lat": 30.3101,
+   "lon": -97.7201,
+   "categories": [
+    "car wash"
+   ]
+  }
+ },
+ {
+  "note": "pharmacy and bakery same street 80 m",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/27",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Apotheke am Markt",
+   "lat": 52.52,
+   "lon": 13.405,
+   "categories": [
+    "pharmacy"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov27",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Bäckerei am Markt",
+   "lat": 52.5207,
+   "lon": 13.4052,
+   "categories": [
+    "bakery"
+   ]
+  }
+ },
+ {
+  "note": "two tailors 90 m apart",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/28",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Quick Alterations",
+   "lat": 51.513,
+   "lon": -0.131,
+   "categories": [
+    "tailor"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov28",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Savile Tailoring",
+   "lat": 51.5138,
+   "lon": -0.1312,
+   "categories": [
+    "tailor"
+   ]
+  }
+ },
+ {
+  "note": "same phone chain hotline, far apart",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/29",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Speedy Locksmith Downtown",
+   "lat": 30.27,
+   "lon": -97.74,
+   "categories": [
+    "locksmith"
+   ],
+   "phone": "512 555 0999",
+   "country": "US"
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov29",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Speedy Locksmith North",
+   "lat": 30.45,
+   "lon": -97.7,
+   "categories": [
+    "locksmith"
+   ],
+   "phone": "+1 512 555 0999"
+  }
+ },
+ {
+  "note": "café and bookshop sharing a corner",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/30",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Corner Café",
+   "lat": 48.855,
+   "lon": 2.345,
+   "categories": [
+    "cafe"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov30",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Corner Books",
+   "lat": 48.855,
+   "lon": 2.3451,
+   "categories": [
+    "books"
+   ]
+  }
+ },
+ {
+  "note": "two vets 140 m apart",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/31",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Oak Hill Animal Clinic",
+   "lat": 30.23,
+   "lon": -97.85,
+   "categories": [
+    "veterinary"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov31",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Pet Care Vets",
+   "lat": 30.2312,
+   "lon": -97.8502,
+   "categories": [
+    "veterinarian"
+   ]
+  }
+ },
+ {
+  "note": "fuel stations across a junction, different brands",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/32",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Aral",
+   "lat": 48.14,
+   "lon": 11.56,
+   "categories": [
+    "fuel"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov32",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Shell",
+   "lat": 48.1405,
+   "lon": 11.5603,
+   "categories": [
+    "gas station"
+   ]
+  }
+ },
+ {
+  "note": "restaurant and its sister bar next door",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/33",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Golden Fork",
+   "lat": 40.73,
+   "lon": -73.99,
+   "categories": [
+    "restaurant"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov33",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Silver Spoon Bar",
+   "lat": 40.73,
+   "lon": -73.9901,
+   "categories": [
+    "bar"
+   ]
+  }
+ },
+ {
+  "note": "same brand, other side of town with website tie",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/34",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Mr. Tire",
+   "lat": 30.2,
+   "lon": -97.8,
+   "categories": [
+    "car_repair"
+   ],
+   "website": "https://mrtire.example.com"
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov34",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Mr. Tire",
+   "lat": 30.42,
+   "lon": -97.68,
+   "categories": [
+    "tire shop"
+   ],
+   "website": "https://www.mrtire.example.com"
+  }
+ },
+ {
+  "note": "doctor's office and pharmacy same name prefix",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/35",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Northside Medical Practice",
+   "lat": 51.53,
+   "lon": -0.1,
+   "categories": [
+    "doctors"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov35",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Northside Pharmacy",
+   "lat": 51.5301,
+   "lon": -0.1001,
+   "categories": [
+    "pharmacy"
+   ]
+  }
+ },
+ {
+  "note": "two branches of a bakery chain 300 m",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/36",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Paul",
+   "lat": 48.87,
+   "lon": 2.33,
+   "categories": [
+    "bakery"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov36",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Paul",
+   "lat": 48.8727,
+   "lon": 2.33,
+   "categories": [
+    "bakery"
+   ]
+  }
+ },
+ {
+  "note": "salon and barber in one arcade",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/37",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Cut & Colour",
+   "lat": 51.5,
+   "lon": -0.12,
+   "categories": [
+    "hairdresser"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov37",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Gentlemen's Barber",
+   "lat": 51.5,
+   "lon": -0.1201,
+   "categories": [
+    "barber"
+   ]
+  }
+ },
+ {
+  "note": "same name different phone 100 m",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/38",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Lucky Star",
+   "lat": 40.715,
+   "lon": -73.997,
+   "categories": [
+    "restaurant"
+   ],
+   "phone": "212 555 0101",
+   "country": "US"
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov38",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Lucky Star",
+   "lat": 40.7159,
+   "lon": -73.9971,
+   "categories": [
+    "restaurant"
+   ],
+   "phone": "+1 212 555 0199"
+  }
+ },
+ {
+  "note": "museum and its café",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/39",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Café Marly",
+   "lat": 48.8616,
+   "lon": 2.3352,
+   "categories": [
+    "cafe"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov39",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "Musée du Louvre",
+   "lat": 48.8611,
+   "lon": 2.336,
+   "categories": [
+    "museum"
+   ]
+  }
+ },
+ {
+  "note": "garage and parts shop",
+  "same": false,
+  "a": {
+   "source": "osm",
+   "sourceId": "node/40",
+   "licence": "ODbL-1.0",
+   "attribution": "© OpenStreetMap contributors",
+   "name": "Precision German Auto",
+   "lat": 30.35,
+   "lon": -97.71,
+   "categories": [
+    "car_repair"
+   ]
+  },
+  "b": {
+   "source": "overture",
+   "sourceId": "ov40",
+   "licence": "CDLA-Permissive-2.0",
+   "attribution": "Overture Maps Foundation",
+   "name": "German Auto Parts Depot",
+   "lat": 30.3501,
+   "lon": -97.7102,
+   "categories": [
+    "auto parts"
+   ]
+  }
+ }
+]

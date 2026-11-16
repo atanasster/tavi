@@ -1,0 +1,35 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "naver-place",
+  "name": "Naver Place",
+  "countries": [
+    "KR"
+  ],
+  "hosts": [
+    "map.naver.com",
+    "m.place.naver.com",
+    "pcmap.place.naver.com"
+  ],
+  "kind": "directory",
+  "access": {
+    "mode": "assist-only",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Naver's terms revised 2026-09-07 ban AI input and caching: personal viewing only.",
+    "termsUrl": "https://policy.naver.com/rules/service.html",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "LocalBusiness",
+      "Restaurant"
+    ]
+  },
+  "notes": "Tavi may open and read a Naver Place page for the chat; it keeps and extracts nothing."
+}

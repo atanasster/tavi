@@ -1,0 +1,54 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "zocdoc",
+  "name": "Zocdoc",
+  "countries": [
+    "US"
+  ],
+  "hosts": [
+    "www.zocdoc.com"
+  ],
+  "kind": "health",
+  "access": {
+    "mode": "stage",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Zocdoc's API and MCP server are partner-gated, so booking is in your own session. Tavi fills the contact fields and stops before the final control, which you press.",
+    "termsUrl": "https://www.zocdoc.com/",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "signIn": {
+    "required": true,
+    "handoffNote": "Sign in to Zocdoc yourself; Tavi never types a password."
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "Physician",
+      "MedicalBusiness"
+    ]
+  },
+  "stage": {
+    "fillable": [
+      "name",
+      "email",
+      "phone",
+      "date",
+      "time",
+      "visit_reason"
+    ],
+    "finalStep": {
+      "labels": [
+        "Confirm appointment"
+      ],
+      "urlPatterns": []
+    },
+    "perDay": 5
+  },
+  "notes": "Its terms page refuses scripts (403 on 2026-10-17), so they were not read from here. Medical history, symptoms and insurance ids are yours to fill. Its final-step labels were not checked on the live site here."
+}

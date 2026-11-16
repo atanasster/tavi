@@ -1,0 +1,75 @@
+{
+  "reviewedAt": "2026-10-17",
+  "excluded": [
+    {
+      "id": "zhihu",
+      "name": "Zhihu",
+      "reason": "Its terms forbid use of its content by language models."
+    },
+    {
+      "id": "xiaohongshu",
+      "name": "Xiaohongshu (RedNote)",
+      "reason": "Needs a login; its robots.txt disallows everything; scraping it has been prosecuted."
+    },
+    {
+      "id": "telegram",
+      "name": "Telegram channels",
+      "reason": "Its terms ban deploying AI on its content."
+    },
+    {
+      "id": "line-news",
+      "name": "LINE NEWS",
+      "reason": "Its robots.txt disallows Claude's crawlers."
+    },
+    {
+      "id": "naver-news-ranking",
+      "name": "Naver news ranking",
+      "reason": "Its robots.txt prohibits use for retrieval-augmented generation."
+    },
+    {
+      "id": "naver-search",
+      "name": "Naver Search API",
+      "reason": "Its terms ban feeding results to AI."
+    },
+    {
+      "id": "tiktok",
+      "name": "TikTok",
+      "reason": "Its Research API is for academic and non-profit researchers only, and it has no other usable trend API."
+    },
+    {
+      "id": "linkedin",
+      "name": "LinkedIn",
+      "reason": "Its User Agreement bans scraping and bots, and it has no post-search API."
+    },
+    {
+      "id": "hn-firebase",
+      "name": "Hacker News (Firebase API)",
+      "reason": "Not excluded by its terms: left out because Algolia's search reads the same stories with counts and history."
+    },
+    {
+      "id": "kaskus-hot",
+      "name": "Kaskus hot threads",
+      "reason": "Not excluded by its terms: its page draws its thread list in the browser, so there is no list in it for the worker to read."
+    },
+    {
+      "id": "sharechat-trending",
+      "name": "ShareChat trending",
+      "reason": "Not excluded by its terms: its trending page carries no list in its HTML or JSON-LD, so there is nothing for the worker to read without a browser."
+    },
+    {
+      "id": "x",
+      "name": "X (counts and recent search)",
+      "reason": "Pay-per-use: Tavi uses no paid service."
+    },
+    {
+      "id": "yandex-wordstat",
+      "name": "Yandex Wordstat",
+      "reason": "Billed per request through Yandex Cloud: Tavi uses no paid service."
+    },
+    {
+      "id": "tavily-news",
+      "name": "Tavily news search",
+      "reason": "Billed past its free credits: Tavi uses no paid service."
+    }
+  ]
+}

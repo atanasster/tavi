@@ -1,0 +1,51 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "ats-successfactors",
+  "name": "SAP SuccessFactors",
+  "countries": [
+    "*"
+  ],
+  "hosts": [
+    "*.successfactors.com",
+    "*.successfactors.eu"
+  ],
+  "kind": "ats",
+  "access": {
+    "mode": "stage",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "An employer's application form on SAP SuccessFactors. Tavi fills the fields it may and stops before the final control, which the person presses.",
+    "termsUrl": "https://userapps.support.sap.com/sap/support/knowledge/en/2317819",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 12,
+    "pagesPerDay": 60,
+    "minIntervalMs": 2000
+  },
+  "stage": {
+    "fillable": [
+      "name",
+      "first_name",
+      "last_name",
+      "email",
+      "phone",
+      "location",
+      "links",
+      "work_history",
+      "education",
+      "cv_upload",
+      "cover_letter",
+      "custom_answer"
+    ],
+    "finalStep": {
+      "labels": [
+        "Apply"
+      ],
+      "urlPatterns": []
+    },
+    "perDay": 10
+  },
+  "notes": "\"Apply\" is the final submit (SAP KBA 2317819), so every \"Apply\" on its hosts is left to the person, the listing's included."
+}

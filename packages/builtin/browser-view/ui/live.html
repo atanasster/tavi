@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Browser</title>
+<link rel="stylesheet" href="plugin-base.css">
+<link rel="stylesheet" href="live.css">
+<script type="module" src="live.js"></script>
+</head>
+<body>
+<main class="view" aria-label="The agent's browser">
+  <header class="chrome">
+    <span class="chip" data-chip>Waiting</span>
+    <span class="address">
+      <span class="host" data-host></span><span class="path" data-path></span>
+      <span class="title" data-title></span>
+    </span>
+    <label class="switcher" data-switcher hidden>
+      <span class="visually-hidden">Session</span>
+      <select data-sessions></select>
+    </label>
+    <span class="actions">
+      <button type="button" data-transcript disabled>Open in transcript</button>
+      <button type="button" data-expand>Expand</button>
+    </span>
+  </header>
+  <div class="stage" data-stage>
+    <img data-frame alt="" hidden>
+    <div class="letter" data-letter aria-hidden="true"></div>
+    <div class="box" data-box hidden></div>
+    <div class="pulse" data-pulse hidden></div>
+    <p class="notice" data-notice hidden></p>
+  </div>
+  <p class="visually-hidden" role="status" aria-live="polite" data-announce></p>
+</main>
+</body>
+</html>

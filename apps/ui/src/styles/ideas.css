@@ -1,0 +1,197 @@
+/* The Ideas tab: a header, "For you", the sections, the footer. One column on a phone.
+   The page scrolls inside the main column, as Settings and the Center do, so the
+   cards stay above the bottom bar; the side padding centres the reading column. */
+.ideas-page {
+  flex: 1;
+  min-height: 0;
+  /* The containing block of its `.visually-hidden` labels, as `.runs` is. */
+  position: relative;
+  overflow-y: auto;
+  padding: var(--space-6) max(var(--space-7), (100% - var(--width-page-wide)) / 2 + var(--space-7)) var(--space-12);
+}
+
+.ideas-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.ideas-title {
+  flex: 1 1 var(--basis-heading);
+  min-width: 0;
+}
+
+.ideas-title h1 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-semibold);
+}
+
+.ideas-head-actions {
+  display: flex;
+  gap: var(--space-1-5);
+}
+
+.ideas-tune {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.ideas-section {
+  margin-top: var(--space-6);
+}
+
+.ideas-section h2 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.ideas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-min-lg), 1fr));
+  gap: var(--space-3);
+}
+
+.idea-card {
+  min-width: 0;
+}
+
+.idea-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.idea-card-head h3 {
+  flex: 1;
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+.idea-icon {
+  display: inline-flex;
+  flex: none;
+  color: hsl(var(--muted-foreground));
+}
+
+.idea-pitch {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.idea-meta {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: hsl(var(--muted-foreground));
+  overflow-wrap: anywhere;
+}
+
+.idea-meta .button-link {
+  color: inherit;
+  font-size: inherit;
+  text-decoration: underline;
+}
+
+.idea-actions {
+  display: flex;
+  gap: var(--space-1-5);
+  margin-top: auto;
+}
+
+.ideas-more {
+  margin-top: var(--space-2);
+}
+
+.ideas-empty {
+  margin-top: var(--space-6);
+}
+
+.ideas-foot {
+  margin-top: var(--space-8);
+  text-align: center;
+}
+
+@media (--phone) {
+  .ideas-page {
+    padding: var(--space-4) var(--space-4) var(--space-10);
+  }
+
+  .ideas-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A card's ⋯ menu: a list of plain buttons under the card's corner. */
+.idea-menu {
+  position: relative;
+  flex: none;
+}
+
+.idea-menu-panel {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: var(--z-popover);
+  display: grid;
+  gap: var(--space-1);
+  min-width: var(--width-popover-min);
+  max-width: min(var(--width-popover), 80vw);
+  padding: var(--space-2) var(--space-3);
+  background: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+}
+
+/* Left-aligned as the canvas's other menus are, a two-line item too. */
+.idea-menu-panel .button-link {
+  justify-content: flex-start;
+  padding: var(--space-1) 0;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+
+.ideas-settings .item-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1-5) 0;
+}
+
+.ideas-settings .item-row > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The empty chat's suggestions: a row of chips that wraps, and the way to the tab. */
+.idea-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1-5);
+  margin: var(--space-2) 0;
+}
+
+/* Hidden while something is typed, kept mounted so clearing the box does not ask for them again. */
+.idea-chips[hidden] {
+  display: none;
+}
+
+/* A chip looks pressable: a pill with an edge, not plain text beside a link. */
+.idea-chip {
+  max-width: 100%;
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius-full);
+  padding-inline: var(--space-3);
+}

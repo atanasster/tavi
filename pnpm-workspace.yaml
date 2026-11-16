@@ -1,0 +1,84 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "packages/builtin/*"
+  - "packages/external/*"
+
+# One pinned version per dependency used by more than one workspace: no duplicate
+# schema or service-token identities, and one place to bump each.
+catalog:
+  "@anthropic-ai/sandbox-runtime": 0.0.83
+  "@biomejs/biome": 2.6.2
+  "@cantoo/fontkit": 2.0.12
+  "@cantoo/pdf-lib": 2.11.1
+  "@langchain/langgraph-checkpoint-sqlite": 1.1.0
+  "@types/better-sqlite3": 9.6.0
+  "@types/node": 26.6.6
+  "@types/react": 19.3.0
+  "@types/ws": 8.18.2
+  better-sqlite3: 13.1.1
+  hyparquet: 1.31.5
+  jscpd: 5.4.2
+  jsdom: 30.1.3
+  knip: 6.42.1
+  react: 19.3.1
+  tsdown: 0.23.1
+  turbo: 2.11.10
+  typescript: 7.0.2
+  vitest: 5.0.5
+  ws: 8.22.0
+  zod: 4.6.7
+
+# Pins published inside pnpm's minimumReleaseAge gate: explicit, reviewed
+# versions (security fixes, or a bump the plan in hand calls for), never
+# floating ranges. Drop an entry once it has aged out.
+minimumReleaseAgeExclude:
+  - node-forge@1.4.2
+  - "@anthropic-ai/sandbox-runtime@0.0.83"
+  - playwright-core@1.65.1
+  - playwright@1.65.1
+  - koffi@3.3.8
+
+# `pnpm install` refuses a Node.js below `engines.node` instead of installing
+# for it and failing later.
+engineStrict: true
+
+# No dependency runs an install script: better-sqlite3 13 ships prebuilt
+# binaries for every platform Tavi supports. A dependency that needs one is
+# approved under `allowBuilds` (pnpm 11 replaced `onlyBuiltDependencies`, which
+# pnpm 12 ignores without saying so).
+
+patchedDependencies:
+  '@cantoo/pdf-lib@2.11.1': patches/@cantoo__pdf-lib@2.11.1.patch
+
+overrides:
+  '@ai-sdk/provider': 4.0.34
+  '@ai-sdk/provider-utils': 5.0.68
+  # Security floors for transitive dependencies whose parents pin older ranges
+  # (`pnpm audit`): undici 7 under the AI SDK and 8 under jsdom, node-forge under the sandbox
+  # runtime, KaTeX under remark-math, and the dev toolchain's source-map-js and
+  # fast-uri. zod 4 and jsdom are forced to their catalog pins wherever a tool
+  # (knip, vitest's optional jsdom peer) resolves its own.
+  'undici@7': 7.30.1
+  'undici@8': 8.12.3
+  node-forge: 1.4.2
+  katex: 0.19.0
+  source-map-js: 1.2.2
+  fast-uri: 3.1.9
+  'zod@4': 'catalog:'
+  jsdom: 'catalog:'
+  # The LangGraph SQLite saver (tests compare our checkpoint SQL with it) asks
+  # for better-sqlite3 12: one native build, the catalog's, serves both.
+  '@langchain/langgraph-checkpoint-sqlite>better-sqlite3': 'catalog:'
+  # LangGraph's SDK auto-installs its optional React peer: the workspace's React, not a second copy.
+  '@langchain/langgraph-sdk>react': 'catalog:'
+  '@langchain/langgraph-sdk>react-dom': 19.3.1
+
+# Advisories `pnpm audit` (CI's gate) accepts, each with the reason it does not
+# reach Tavi. Remove an entry when its package ships a fix.
+auditConfig:
+  ignoreGhsas:
+    # zod 3 under @anthropic-ai/sandbox-runtime (no patched 3.x): memory
+    # exhaustion validating oversized collections. The runtime validates only
+    # the sandbox config Tavi writes and its own local decider messages.
+    - GHSA-mrhx-c7xc-m3w5

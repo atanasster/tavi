@@ -1,0 +1,141 @@
+/* Tavi's theme tokens for a UI plugin's page: every variable the canvas
+   passes in `init` and `theme` (PLUGIN_UI_THEME_TOKENS), with the canvas's
+   own values, light and dark, so a page looks right before the host's arrive
+   or outside the host altogether. The host's values, set on the root element,
+   win over these. Colours are HSL components: `hsl(var(--primary))`,
+   `hsl(var(--primary) / var(--tint-medium))`; a hairline is `var(--line)`.
+   Link it before the page's own stylesheet.
+
+   Generated from apps/ui/src/styles/tokens.css by scripts/plugin-base.mjs
+   in the Tavi repository; do not edit. */
+:root {
+  color-scheme: light dark;
+  --background: 120 14% 96%;
+  --foreground: 157 25% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 157 25% 10%;
+  --primary: 163 55% 27%;
+  --primary-foreground: 150 40% 98%;
+  --secondary: 150 16% 92%;
+  --muted: 150 14% 93%;
+  --muted-foreground: 152 7% 35%;
+  --accent: 150 16% 92%;
+  --destructive: 0 70% 45%;
+  --positive: 152 55% 26%;
+  --warning: 30 90% 28%;
+  --info: 205 78% 32%;
+  --border: 152 6% 48%;
+  --ring: 163 55% 27%;
+  --font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Roboto Mono", monospace;
+  --radius: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-xs: 4px;
+  --radius-2xs: 3px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 12.5px;
+  --text-meta: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 16px;
+  --text-xl: 17px;
+  --text-2xl: 18px;
+  --text-3xl: 22px;
+  --text-4xl: 26px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-strong: 550;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-3-5: 14px;
+  --space-4: 16px;
+  --space-4-5: 18px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --font-system: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --text-5xl: 40px;
+  --leading-none: 1;
+  --leading-tight: 1.3;
+  --leading-snug: 1.4;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+  --leading-4: 16px;
+  --leading-4-5: 18px;
+  --leading-5: 20px;
+  --duration-fast: 100ms;
+  --duration-base: 120ms;
+  --duration-slow: 160ms;
+  --duration-pulse: 1.6s;
+  --duration-bounce: 1.4s;
+  --duration-ping: 600ms;
+  --ease-standard: ease;
+  --ease-out: ease-out;
+  --ease-in-out: ease-in-out;
+  --line-strong: hsl(var(--border) / 70%);
+  --line-firm: hsl(var(--border) / 60%);
+  --line: hsl(var(--border) / 50%);
+  --line-soft: hsl(var(--border) / 40%);
+  --line-faint: hsl(var(--border) / 30%);
+  --line-fainter: hsl(var(--border) / 25%);
+  --line-faintest: hsl(var(--border) / 15%);
+  --tint-subtle: 6%;
+  --tint-soft: 8%;
+  --tint-medium: 10%;
+  --tint-strong: 14%;
+  --tint-heavy: 22%;
+  --alpha-faint: 40%;
+  --alpha-half: 50%;
+  --alpha-muted: 60%;
+  --alpha-strong: 70%;
+  --alpha-firm: 80%;
+  --alpha-hover: 90%;
+  --opacity-faint: 0.4;
+  --opacity-disabled: 0.5;
+  --opacity-soft: 0.6;
+  --opacity-muted: 0.7;
+  --radius-round: 50%;
+  --icon-size: 18px;
+  --icon-size-sm: 16px;
+  --icon-size-xs: 13px;
+  --icon-size-2xs: 10px;
+  --stripe-width: 3px;
+  --stripe-width-lg: 4px;
+  --border-width: 1px;
+  --border-width-thick: 2px;
+  --outline-width: 2px;
+  --space-px: 1px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: 160 24% 7%;
+    --foreground: 150 21% 93%;
+    --card: 160 21% 11%;
+    --card-foreground: 150 21% 93%;
+    --primary: 158 56% 64%;
+    --primary-foreground: 160 24% 7%;
+    --secondary: 160 18% 16%;
+    --muted: 160 17% 15%;
+    --muted-foreground: 153 10% 67%;
+    --accent: 160 18% 16%;
+    --destructive: 0 75% 68%;
+    --positive: 158 60% 60%;
+    --warning: 43 96% 65%;
+    --info: 199 89% 65%;
+    --border: 155 9% 46%;
+    --ring: 158 56% 64%;
+  }
+}

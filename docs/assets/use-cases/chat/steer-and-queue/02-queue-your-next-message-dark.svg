@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="456" viewBox="0 0 880 456" role="img">
+<rect width="880" height="456" rx="12" fill="#141e1a" stroke="#26332e"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="440" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#9aaba3">tavi chat</text>
+<line x1="0" y1="36" x2="880" y2="36" stroke="#26332e"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#6fd9b4">❯ Search the web for the opening hours of Belem Tower, then answer in one line.</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#f5c75a">  web_search completed</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#6fd9b4">❯ Also include Jeronimos Monastery. (sent into the turn)</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#f5c75a">  web_search completed</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#f5c75a">  web_search completed</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#e6efea">Both Belém Tower and Jerónimos Monastery are open Tuesday through Sunday from 9:30 AM to 5:30 PM</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#e6efea">(last entry at 5:00 PM), and are closed on Mondays.</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#f5c75a">… type to continue Home</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#6fd9b4">❯ Search the web for the opening hours of the Oceanario in Lisbon, then answer in one line.</tspan></text>
+<text x="20" y="241.0" xml:space="preserve"><tspan fill="#f5c75a">… queued: sends after this turn</tspan></text>
+<text x="20" y="260.0" xml:space="preserve"><tspan fill="#e6efea" opacity="0.62">⏺ web_search({"query":"Oceanario de Lisboa opening hours"}) ✓ 2.6 s</tspan></text>
+<text x="20" y="279.0" xml:space="preserve"><tspan fill="#e6efea" opacity="0.62">  ⎿ {"content":"The Oceanário de Lisboa is open every day from 10 AM to 8 P…</tspan></text>
+<text x="20" y="298.0" xml:space="preserve"><tspan fill="#e6efea">The Oceanário de Lisboa is open daily from 10:00 AM to 8:00 PM, with last entry at 7:00 PM.</tspan></text>
+<text x="20" y="317.0" xml:space="preserve"><tspan fill="#6fd9b4">❯ Now the same for the Gulbenkian Museum, in one line.</tspan></text>
+<text x="20" y="336.0" xml:space="preserve"><tspan fill="#e6efea" opacity="0.62">⏺ web_search({"query":"Gulbenkian Museum Lisbon opening hours"}) ✓ 2.2 s</tspan></text>
+<text x="20" y="355.0" xml:space="preserve"><tspan fill="#e6efea" opacity="0.62">  ⎿ {"content":"The Calouste Gulbenkian Museum in Lisbon is open from 10:00…</tspan></text>
+<text x="20" y="374.0" xml:space="preserve"><tspan fill="#e6efea">The Calouste Gulbenkian Museum is open Wednesday through Monday from 10:00 AM to 6:00 PM (extended</tspan></text>
+<text x="20" y="393.0" xml:space="preserve"><tspan fill="#e6efea">to 9:00 PM on Saturdays, last entry 30 minutes before closing), and is closed on Tuesdays.</tspan></text>
+<text x="20" y="412.0" xml:space="preserve"><tspan fill="#e6efea" opacity="0.62">✓ Done. Type to continue it (/side for a side chat), or Ctrl-C to quit. · ⚠ Read search results (/t…</tspan></text>
+<text x="20" y="431.0" xml:space="preserve"><tspan fill="#e6efea">❯ █</tspan></text>
+</g>
+</svg>

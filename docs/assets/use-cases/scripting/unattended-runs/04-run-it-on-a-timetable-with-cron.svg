@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1048" height="342" viewBox="0 0 1048 342" role="img">
+<rect width="1048" height="342" rx="12" fill="#ffffff" stroke="#d9e0dc"/>
+<circle cx="22" cy="18" r="6" fill="#e5675e"/><circle cx="42" cy="18" r="6" fill="#e9a62b"/><circle cx="62" cy="18" r="6" fill="#5bbd72"/>
+<text x="524" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#52605a">crontab: tavi run --approval deny</text>
+<line x1="0" y1="36" x2="1048" y2="36" stroke="#d9e0dc"/>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#132620">[tool] sandbox.run ← {"command":"git log -n 3 --oneline"}</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#132620">[tool] sandbox.run → {"session":{"sessionId":"sandbox-run-4","state":"completed"},"exitCode":0,"stdout":"96e5569 Add a c</tspan></text>
+<text x="20" y="108.0" xml:space="preserve"><tspan fill="#132620">hangelog\n46b4ce3 Add the README\n","stderr":"","truncated":false,"tier":"full","mechanism":"seatbelt","violations":[],"</tspan></text>
+<text x="20" y="127.0" xml:space="preserve"><tspan fill="#132620">violationsComplete":true,"ranAs":["git","log","-n","3","--oneline"]} (354.5ms)</tspan></text>
+<text x="20" y="146.0" xml:space="preserve"><tspan fill="#132620">[tool] sandbox.run ← {"command":"git log --oneline"}</tspan></text>
+<text x="20" y="165.0" xml:space="preserve"><tspan fill="#132620">[tool] sandbox.run → {"session":{"sessionId":"sandbox-run-5","state":"completed"},"exitCode":0,"stdout":"96e5569 Add a c</tspan></text>
+<text x="20" y="184.0" xml:space="preserve"><tspan fill="#132620">hangelog\n46b4ce3 Add the README\n","stderr":"","truncated":false,"tier":"full","mechanism":"seatbelt","violations":[],"</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#132620">violationsComplete":true,"ranAs":["git","log","--oneline"]} (343.4ms)</tspan></text>
+<text x="20" y="222.0" xml:space="preserve"><tspan fill="#132620">The repository only contains two commits:</tspan></text>
+<text x="20" y="241.0" xml:space="preserve"></text>
+<text x="20" y="260.0" xml:space="preserve"><tspan fill="#132620">```</tspan></text>
+<text x="20" y="279.0" xml:space="preserve"><tspan fill="#132620">96e5569 Add a changelog</tspan></text>
+<text x="20" y="298.0" xml:space="preserve"><tspan fill="#132620">46b4ce3 Add the README</tspan></text>
+<text x="20" y="317.0" xml:space="preserve"><tspan fill="#132620">```</tspan></text>
+</g>
+</svg>

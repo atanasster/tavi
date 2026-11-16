@@ -1,0 +1,2397 @@
+[
+ {
+  "id": "09fadd72-cff7-4ed1-bd35-c5645166613c",
+  "confidence": 0.9924664258956909,
+  "websites": [
+   "http://www.acetailors.com/"
+  ],
+  "phones": [
+   "+15124789965"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": null
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "724A N Lamar Blvd",
+    "locality": "Austin",
+    "postcode": "78703",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Ace Tailors"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "189723325369",
+    "update_time": "2026-09-14T00:00:00.000Z",
+    "confidence": 0.9832587242126465,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-09-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "a23069db-a21b-4d18-a690-e301842b09da",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "home_service",
+  "taxonomy": {
+   "primary": "sewing_and_alterations",
+   "hierarchy": [
+    "services_and_business",
+    "home_service",
+    "sewing_and_alterations"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.75308990478516,
+   "xmax": -97.7530746459961,
+   "ymin": 30.273698806762695,
+   "ymax": 30.27370262145996
+  }
+ },
+ {
+  "id": "c56a817b-fdaf-45d5-b622-31ff821900d2",
+  "confidence": 0.75,
+  "websites": [
+   "tailoredreteam.com"
+  ],
+  "phones": [
+   "15128882221"
+  ],
+  "addresses": [
+   {
+    "freeform": "507 Walsh St",
+    "locality": "Austin",
+    "postcode": "78703-5251",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Tailored Real Estate Team"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "BrightQuery",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "99343268",
+    "update_time": "2026-09-17T20:01:51.007Z",
+    "confidence": 0.75,
+    "provider": "brightquery",
+    "resource": "brightquery",
+    "version": "2026-09-08"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "real_estate_service",
+  "taxonomy": {
+   "primary": "real_estate_agent",
+   "hierarchy": [
+    "services_and_business",
+    "real_estate_service",
+    "real_estate_agent"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.75765991210938,
+   "xmax": -97.75764465332031,
+   "ymin": 30.272159576416016,
+   "ymax": 30.27216339111328
+  }
+ },
+ {
+  "id": "532e4357-757f-4598-9da3-e36b84753dd6",
+  "confidence": 0.9902192950248718,
+  "websites": [
+   "http://www.capitolcleanerstx.com/"
+  ],
+  "phones": [
+   "+15124454505"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": null
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "1408 S 1st St",
+    "locality": "Austin",
+    "postcode": "78704",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Capitol Cleaners & Tailors"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "103153508644430",
+    "update_time": "2026-09-14T00:00:00.000Z",
+    "confidence": 0.9800271391868591,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-09-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "190c18c9-5f55-4c2b-91d2-45fd2d30cf40",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "laundry_service",
+  "taxonomy": {
+   "primary": "dry_cleaning",
+   "hierarchy": [
+    "services_and_business",
+    "laundry_service",
+    "dry_cleaning"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.75502014160156,
+   "xmax": -97.7550048828125,
+   "ymin": 30.250505447387695,
+   "ymax": 30.25050926208496
+  }
+ },
+ {
+  "id": "4bc772b2-0507-4553-9aa0-fee04323c53a",
+  "confidence": 0.9902192950248718,
+  "websites": [
+   "http://www.austinalterations.net/"
+  ],
+  "phones": [
+   "+15124767474"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": null
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "700 N Lamar Blvd",
+    "locality": "Austin",
+    "postcode": "78703",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Austin Alterations"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "133560673360907",
+    "update_time": "2026-09-14T00:00:00.000Z",
+    "confidence": 0.9604285955429077,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-09-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "92bca373-a363-4c14-9af7-23530e3c744e",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "home_service",
+  "taxonomy": {
+   "primary": "sewing_and_alterations",
+   "hierarchy": [
+    "services_and_business",
+    "home_service",
+    "sewing_and_alterations"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.75335693359375,
+   "xmax": -97.75334167480469,
+   "ymin": 30.2730770111084,
+   "ymax": 30.273080825805664
+  }
+ },
+ {
+  "id": "72a295d0-8ce3-4d9d-a34a-784fe6118279",
+  "confidence": 0.9199122190475464,
+  "phones": [
+   "+17372225010"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": null
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "914 W Mary St",
+    "locality": "Austin",
+    "postcode": "78704",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "J&B Alterations and Cleaners"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "113685683341248",
+    "update_time": "2026-09-14T00:00:00.000Z",
+    "confidence": 0.728291392326355,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-09-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "34477378-eff2-4061-949c-e8379941cd04",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "home_service",
+  "taxonomy": {
+   "primary": "sewing_and_alterations",
+   "hierarchy": [
+    "services_and_business",
+    "home_service",
+    "sewing_and_alterations"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.76189422607422,
+   "xmax": -97.76187896728516,
+   "ymin": 30.24831199645996,
+   "ymax": 30.248315811157227
+  }
+ },
+ {
+  "id": "8ec70ba5-c272-4891-b045-87a64e28b9cb",
+  "confidence": 0.95,
+  "websites": [
+   "https://cathyscleaners.net"
+  ],
+  "phones": [
+   "15127043608"
+  ],
+  "addresses": [
+   {
+    "freeform": "2906 San Gabriel St",
+    "locality": "Austin",
+    "postcode": "78705-3564",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Cathy's Cleaners And Alterations."
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "BrightQuery",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "86748000",
+    "update_time": "2026-09-17T20:01:51.007Z",
+    "confidence": 0.95,
+    "provider": "brightquery",
+    "resource": "brightquery",
+    "version": "2026-09-08"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "laundry_service",
+  "taxonomy": {
+   "primary": "dry_cleaning",
+   "hierarchy": [
+    "services_and_business",
+    "laundry_service",
+    "dry_cleaning"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.74764251708984,
+   "xmax": -97.74762725830078,
+   "ymin": 30.298328399658203,
+   "ymax": 30.29833221435547
+  }
+ },
+ {
+  "id": "12497d7d-a347-4da8-ba42-ba241523c8be",
+  "confidence": 0.9324626725912094,
+  "websites": [
+   "https://matokbakery.com/"
+  ],
+  "phones": [
+   "+15104801481"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": null
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "2300 S Lamar Blvd #102",
+    "locality": "Austin",
+    "postcode": "78704",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Matok Bakery"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "1041773525679062",
+    "update_time": "2026-09-14T00:00:00.000Z",
+    "confidence": 0.7063594460487366,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-09-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "81e940fa-9dfd-4ee1-a1a6-33dc719015ff",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "casual_eatery",
+  "taxonomy": {
+   "primary": "bakery",
+   "hierarchy": [
+    "food_and_drink",
+    "casual_eatery",
+    "bakery"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77461242675781,
+   "xmax": -97.77459716796875,
+   "ymin": 30.2477970123291,
+   "ymax": 30.247800827026367
+  }
+ },
+ {
+  "id": "af7e3744-afe2-481a-9df8-cb4430216020",
+  "confidence": 0.9199122190475464,
+  "websites": [
+   "https://www.moonlightbakery.com"
+  ],
+  "phones": [
+   "15124621302"
+  ],
+  "addresses": [
+   {
+    "freeform": "2300 S Lamar Blvd  Ste 102",
+    "locality": "Austin",
+    "postcode": "78704-4968",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Moonlight Bakery"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "BrightQuery",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "98529107",
+    "update_time": "2026-09-17T20:01:51.007Z",
+    "confidence": 0.95,
+    "provider": "brightquery",
+    "resource": "brightquery",
+    "version": "2026-09-08"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "636ff3fe-dea4-4213-95b2-24108a524c4e",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "casual_eatery",
+  "taxonomy": {
+   "primary": "bakery",
+   "hierarchy": [
+    "food_and_drink",
+    "casual_eatery",
+    "bakery"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77478790283203,
+   "xmax": -97.77477264404297,
+   "ymin": 30.24749183654785,
+   "ymax": 30.247495651245117
+  }
+ },
+ {
+  "id": "47b293e1-c483-4222-8360-6e17eb828150",
+  "confidence": 0.9199122190475464,
+  "websites": [
+   "http://www.carvel.com/"
+  ],
+  "phones": [
+   "(512) 476-2867"
+  ],
+  "addresses": [
+   {
+    "freeform": "218 S Lamar Blvd",
+    "locality": "Austin",
+    "postcode": "78704",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Carvel Ice Cream and Bakery"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "Foursquare",
+    "license": "Apache-2.0",
+    "record_id": "4f44896219836ed00194be9b",
+    "update_time": "2025-07-03T00:00:00.000",
+    "confidence": 0.77,
+    "provider": "foursquare",
+    "resource": "foursquare",
+    "version": "2026-04-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "ec74141e-af68-4423-837d-7226fd9919c6",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "casual_eatery",
+  "taxonomy": {
+   "primary": "ice_cream_shop",
+   "hierarchy": [
+    "food_and_drink",
+    "casual_eatery",
+    "dessert_shop",
+    "ice_cream_shop"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.75801086425781,
+   "xmax": -97.75799560546875,
+   "ymin": 30.263498306274414,
+   "ymax": 30.26350212097168
+  }
+ },
+ {
+  "id": "831e5a5b-4796-4b07-9bfd-ea64fe75395f",
+  "confidence": 0.7054253220558167,
+  "websites": [
+   "http://www.tarrytownvet.com/"
+  ],
+  "phones": [
+   "+15125002468"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": null
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "2301 Lake Austin Blvd",
+    "locality": "Austin",
+    "postcode": "78703",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Tarrytown Veterinary Clinic"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "773786192488491",
+    "update_time": "2026-09-14T00:00:00.000Z",
+    "confidence": 0.7054253220558167,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-09-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "6e7b2c1d-db45-4643-806c-502d81e8454b",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "animal_or_pet_service",
+  "taxonomy": {
+   "primary": "veterinarian",
+   "hierarchy": [
+    "lifestyle_services",
+    "animal_or_pet_service",
+    "veterinary_care",
+    "veterinarian"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77179718017578,
+   "xmax": -97.77178192138672,
+   "ymin": 30.277360916137695,
+   "ymax": 30.27736473083496
+  }
+ },
+ {
+  "id": "e0144ef2-aed3-4903-b3e3-1d0256e23d22",
+  "confidence": 0.9902192950248718,
+  "websites": [
+   "http://www.westlynnvet.com"
+  ],
+  "phones": [
+   "+15124828600"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": null
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "709 W Lynn St",
+    "locality": "Austin",
+    "postcode": "78703",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "West Lynn Veterinary Clinic"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "143308962356275",
+    "update_time": "2026-09-14T00:00:00.000Z",
+    "confidence": 0.9910517334938049,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-09-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "6f43428f-13b6-4ae8-92f0-2c7fd8c56fd0",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "animal_or_pet_service",
+  "taxonomy": {
+   "primary": "veterinarian",
+   "hierarchy": [
+    "lifestyle_services",
+    "animal_or_pet_service",
+    "veterinary_care",
+    "veterinarian"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.76119995117188,
+   "xmax": -97.76118469238281,
+   "ymin": 30.276588439941406,
+   "ymax": 30.276592254638672
+  }
+ },
+ {
+  "id": "ebfc1706-40b5-4ff2-b5a0-257cf9a2c904",
+  "confidence": 0.9199122190475464,
+  "websites": [
+   "https://vgpvet.com/"
+  ],
+  "phones": [
+   "8005770120"
+  ],
+  "addresses": [
+   {
+    "freeform": "211 Walter Seaholm Dr Ste 200",
+    "locality": "Austin",
+    "postcode": "78701",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Veterinary Growth Partners"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "Microsoft",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "1125899910308569",
+    "update_time": "2025-10-02T02:24:06.900Z",
+    "confidence": 0.85,
+    "provider": "microsoft",
+    "resource": "microsoft",
+    "version": "2025-10-20"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "b608e628-6adb-43b3-b66f-a643995c2c43",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "animal_or_pet_service",
+  "taxonomy": {
+   "primary": "veterinarian",
+   "hierarchy": [
+    "lifestyle_services",
+    "animal_or_pet_service",
+    "veterinary_care",
+    "veterinarian"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.75306701660156,
+   "xmax": -97.7530517578125,
+   "ymin": 30.267494201660156,
+   "ymax": 30.267498016357422
+  }
+ },
+ {
+  "id": "ed60fc7a-93ae-48b4-9f24-237761b1b367",
+  "confidence": 0.9902192950248718,
+  "websites": [
+   "https://www.myidealdental.com/south-lamar/?utm_source=facebook&utm_medium=listings&utm_campaign=websiteurl"
+  ],
+  "phones": [
+   "+15123378226"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": "Ideal Dental"
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "2330 S Lamar Blvd",
+    "locality": "Austin",
+    "postcode": "78704-5264",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Ideal Dental South Lamar"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "1074203529404882",
+    "update_time": "2026-09-14T00:00:00.000Z",
+    "confidence": 0.9958177208900452,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-09-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "7f651d91-ea52-452f-8b3a-1b61ae02992e",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "dental_clinic",
+  "taxonomy": {
+   "primary": "dental_clinic",
+   "hierarchy": [
+    "health_care",
+    "outpatient_care_facility",
+    "dental_clinic"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77632904052734,
+   "xmax": -97.77631378173828,
+   "ymin": 30.247272491455078,
+   "ymax": 30.247276306152344
+  }
+ },
+ {
+  "id": "8b9f9bc2-2380-4da0-9b59-e24cb4a0a73a",
+  "confidence": 0.9199122190475464,
+  "websites": [
+   "http://www.saustindentist.com"
+  ],
+  "addresses": [
+   {
+    "freeform": "2504 Lake Austin Blvd",
+    "locality": "Austin",
+    "postcode": "78703-4455",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Lake Austin Family Dental, Pllc"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "BrightQuery",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "384536799",
+    "update_time": "2026-09-17T20:01:51.007Z",
+    "confidence": 0.95,
+    "provider": "brightquery",
+    "resource": "brightquery",
+    "version": "2026-09-08"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "f623c40a-ca3a-4978-935f-1e6dda6ec7de",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "health_care",
+  "taxonomy": {
+   "primary": "health_care",
+   "hierarchy": [
+    "health_care"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77335357666016,
+   "xmax": -97.7733383178711,
+   "ymin": 30.279083251953125,
+   "ymax": 30.27908706665039
+  }
+ },
+ {
+  "id": "1dfea0d1-896f-4771-9266-487dda9fbdbf",
+  "confidence": 0.77,
+  "websites": [
+   "http://www.lakeaustindental.com"
+  ],
+  "phones": [
+   "(512) 320-8060"
+  ],
+  "addresses": [
+   {
+    "freeform": "1717 W 6th St",
+    "locality": "Austin",
+    "postcode": "78703",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Lake Austin Dental"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "Foursquare",
+    "license": "Apache-2.0",
+    "record_id": "4c89020b944e224bb2e02085",
+    "update_time": "2025-10-17T00:00:00.000",
+    "confidence": 0.77,
+    "provider": "foursquare",
+    "resource": "foursquare",
+    "version": "2026-04-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   }
+  ],
+  "operating_status": null,
+  "basic_category": "dental_clinic",
+  "taxonomy": {
+   "primary": "dental_clinic",
+   "hierarchy": [
+    "health_care",
+    "outpatient_care_facility",
+    "dental_clinic"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.76521301269531,
+   "xmax": -97.76519775390625,
+   "ymin": 30.27581787109375,
+   "ymax": 30.275821685791016
+  }
+ },
+ {
+  "id": "064b69c2-d1ac-4c5e-af2c-b945c5a5dd61",
+  "confidence": 0.4774201512336731,
+  "phones": [
+   "+15124455566"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": null
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "2129 Goodrich Ave",
+    "locality": "Austin",
+    "postcode": "78704",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Bluebonnet Auto Repair"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "169613453053981",
+    "update_time": "2026-09-14T00:00:00.000Z",
+    "confidence": 0.4774201512336731,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-09-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   }
+  ],
+  "operating_status": null,
+  "basic_category": "automotive_service",
+  "taxonomy": {
+   "primary": "automotive_repair",
+   "hierarchy": [
+    "travel_and_transportation",
+    "vehicle_service",
+    "automotive_service",
+    "automotive_repair"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77359008789062,
+   "xmax": -97.77357482910156,
+   "ymin": 30.247974395751953,
+   "ymax": 30.24797821044922
+  }
+ },
+ {
+  "id": "d3b6a8bc-9111-4939-829b-6b05713e820a",
+  "confidence": 0.9199122190475464,
+  "websites": [
+   "http://www.kennyhillsautowerks.com/Location.html"
+  ],
+  "phones": [
+   "+15124450101"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": null
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "2127 Goodrich Ave",
+    "locality": "Austin",
+    "postcode": "78704-4005",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Hill's Kenny Autowerks"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "136407719742207",
+    "update_time": "2026-09-14T00:00:00.000Z",
+    "confidence": 0.9252921342849731,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-09-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "8ca7a313-7aad-4124-936e-1e2f61dce45c",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "automotive_service",
+  "taxonomy": {
+   "primary": "automotive_repair",
+   "hierarchy": [
+    "travel_and_transportation",
+    "vehicle_service",
+    "automotive_service",
+    "automotive_repair"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77363586425781,
+   "xmax": -97.77362060546875,
+   "ymin": 30.2481746673584,
+   "ymax": 30.248178482055664
+  }
+ },
+ {
+  "id": "c760fac0-6027-4700-abc1-8713ba74f5f1",
+  "confidence": 0.9199122190475464,
+  "websites": [
+   "https://accent-auto-inc.yeeq.io"
+  ],
+  "phones": [
+   "+15124449999"
+  ],
+  "addresses": [
+   {
+    "freeform": "2340 S Lamar Blvd",
+    "locality": "Austin",
+    "postcode": "78704-4727",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Accent Auto"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "BrightQuery",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "106852349",
+    "update_time": "2026-09-17T20:01:51.007Z",
+    "confidence": 0.55,
+    "provider": "brightquery",
+    "resource": "brightquery",
+    "version": "2026-09-08"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "f4a0506a-2e3c-48d4-a67c-27e21faa769e",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "auto_dealer",
+  "taxonomy": {
+   "primary": "auto_dealer",
+   "hierarchy": [
+    "shopping",
+    "vehicle_dealer",
+    "auto_dealer"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77677917480469,
+   "xmax": -97.77676391601562,
+   "ymin": 30.247283935546875,
+   "ymax": 30.24728775024414
+  }
+ },
+ {
+  "id": "3b3d86d9-8b2f-4c64-99fd-ccc661b3e10a",
+  "confidence": 0.9583381414413452,
+  "websites": [
+   "https://coffeesock.com"
+  ],
+  "phones": [
+   "15124978020"
+  ],
+  "addresses": [
+   {
+    "freeform": "2228 S Lamar Blvd  Bldg B",
+    "locality": "Austin",
+    "postcode": "78704-4924",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Coffeesock"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "BrightQuery",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "87631588",
+    "update_time": "2026-09-17T20:01:51.007Z",
+    "confidence": 0.95,
+    "provider": "brightquery",
+    "resource": "brightquery",
+    "version": "2026-09-08"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "d9cd6943-8e7a-40d8-ae0d-dfa195e1be94",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "manufacturer",
+  "taxonomy": {
+   "primary": "manufacturer",
+   "hierarchy": [
+    "services_and_business",
+    "b2b_service",
+    "manufacturer"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77374267578125,
+   "xmax": -97.77372741699219,
+   "ymin": 30.24778938293457,
+   "ymax": 30.247793197631836
+  }
+ },
+ {
+  "id": "94f437fd-6917-478e-b0d0-8291da769683",
+  "confidence": 0.9199122190475464,
+  "websites": [
+   "https://iriebean.com"
+  ],
+  "addresses": [
+   {
+    "freeform": "2310 S Lamar Blvd  Ste 102",
+    "locality": "Austin",
+    "postcode": "78704-5166",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Irie Bean Coffee & Wine Bar"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "BrightQuery",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "86186908",
+    "update_time": "2026-09-17T20:01:51.007Z",
+    "confidence": 0.95,
+    "provider": "brightquery",
+    "resource": "brightquery",
+    "version": "2026-09-08"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "7b07fc93-b3db-46c6-bdde-87f2d23acbad",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "coffee_shop",
+  "taxonomy": {
+   "primary": "coffee_shop",
+   "hierarchy": [
+    "food_and_drink",
+    "non_alcoholic_beverage_venue",
+    "coffee_shop"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77503967285156,
+   "xmax": -97.7750244140625,
+   "ymin": 30.24751091003418,
+   "ymax": 30.247514724731445
+  }
+ },
+ {
+  "id": "52d714d2-f1ac-45ef-b04a-55ef161171b2",
+  "confidence": 0.9583381414413452,
+  "websites": [
+   "https://www.mahacoffeeaustin.com"
+  ],
+  "phones": [
+   "15122701786"
+  ],
+  "addresses": [
+   {
+    "freeform": "2324 S Lamar Blvd",
+    "locality": "Austin",
+    "postcode": "78704-4982",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Maha Coffee 78704"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "BrightQuery",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "101800280",
+    "update_time": "2026-09-17T20:01:51.007Z",
+    "confidence": 0.95,
+    "provider": "brightquery",
+    "resource": "brightquery",
+    "version": "2026-09-08"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "4b0b9fc7-8e0c-4f23-9e2f-23e6ec993335",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "coffee_shop",
+  "taxonomy": {
+   "primary": "coffee_shop",
+   "hierarchy": [
+    "food_and_drink",
+    "non_alcoholic_beverage_venue",
+    "coffee_shop"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77617645263672,
+   "xmax": -97.77616119384766,
+   "ymin": 30.247472763061523,
+   "ymax": 30.24747657775879
+  }
+ },
+ {
+  "id": "e5c71370-9dd0-4ca6-8eff-26a488dfbeb1",
+  "confidence": 0.9902192950248718,
+  "websites": [
+   "https://www.walgreens.com",
+   "https://www.walgreens.com/locator/walgreens-2501+s+lamar+blvd-austin-tx-78704/id=1933"
+  ],
+  "phones": [
+   "+15124437534"
+  ],
+  "addresses": [
+   {
+    "freeform": "2501 S Lamar Blvd",
+    "locality": "Austin",
+    "postcode": "78704",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Walgreens Pharmacy"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "DAC",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "overture:places:place:9001093911",
+    "update_time": "2026-08-11T20:47:18.614Z",
+    "confidence": 1,
+    "provider": "dac",
+    "resource": "dac",
+    "version": "2026-08-10"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "fc9f7457-2b47-4613-bc97-2e9f3e0e2058",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "pharmacy_and_drug_store",
+  "taxonomy": {
+   "primary": "pharmacy",
+   "hierarchy": [
+    "shopping",
+    "specialty_store",
+    "pharmacy_and_drug_store",
+    "pharmacy"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.7778091430664,
+   "xmax": -97.77779388427734,
+   "ymin": 30.246047973632812,
+   "ymax": 30.246051788330078
+  }
+ },
+ {
+  "id": "114d2cc5-ac96-4314-8576-009e578c532b",
+  "confidence": 0.9902192950248718,
+  "websites": [
+   "https://www.cvs.com/store-locator/landing"
+  ],
+  "phones": [
+   "+15124771261"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": "CVS Pharmacy"
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "2610 Lake Austin Blvd",
+    "locality": "Austin",
+    "postcode": "78703",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "CVS Pharmacy"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "350799308109763",
+    "update_time": "2026-09-14T00:00:00.000Z",
+    "confidence": 0.9584994316101074,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-09-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "e11d4a2d-fb6a-461a-80a6-5e292feb6b30",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "pharmacy_and_drug_store",
+  "taxonomy": {
+   "primary": "pharmacy",
+   "hierarchy": [
+    "shopping",
+    "specialty_store",
+    "pharmacy_and_drug_store",
+    "pharmacy"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77510070800781,
+   "xmax": -97.77508544921875,
+   "ymin": 30.28154182434082,
+   "ymax": 30.281545639038086
+  }
+ },
+ {
+  "id": "8e4b3f3d-b2c8-400b-b962-14a4c12bd7e4",
+  "confidence": 0.95,
+  "websites": [
+   "https://heb.com"
+  ],
+  "phones": [
+   "15124742001"
+  ],
+  "addresses": [
+   {
+    "freeform": "2652 Lake Austin Blvd",
+    "locality": "Austin",
+    "postcode": "78703-4429",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "H-e-b Pharmacy"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "BrightQuery",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "86926324",
+    "update_time": "2026-09-17T20:01:51.007Z",
+    "confidence": 0.95,
+    "provider": "brightquery",
+    "resource": "brightquery",
+    "version": "2026-09-08"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "pharmacy_and_drug_store",
+  "taxonomy": {
+   "primary": "pharmacy",
+   "hierarchy": [
+    "shopping",
+    "specialty_store",
+    "pharmacy_and_drug_store",
+    "pharmacy"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77638244628906,
+   "xmax": -97.7763671875,
+   "ymin": 30.283151626586914,
+   "ymax": 30.28315544128418
+  }
+ },
+ {
+  "id": "2019613b-ead9-4c06-8d48-7302af2153f4",
+  "confidence": 0.9199122190475464,
+  "websites": [
+   "https://www.anthonyslaundryaustin.com"
+  ],
+  "phones": [
+   "15124721616"
+  ],
+  "addresses": [
+   {
+    "freeform": "1113 W Lynn St",
+    "locality": "Austin",
+    "postcode": "78703-3951",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Anthony's Laundry And Dry Cleaners"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "BrightQuery",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "107151153",
+    "update_time": "2026-09-17T20:01:51.007Z",
+    "confidence": 0.95,
+    "provider": "brightquery",
+    "resource": "brightquery",
+    "version": "2026-09-08"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "16f95cf7-0afb-434a-a5c3-c135e975d1b8",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "laundry_service",
+  "taxonomy": {
+   "primary": "laundry_service",
+   "hierarchy": [
+    "services_and_business",
+    "laundry_service"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.75908660888672,
+   "xmax": -97.75907135009766,
+   "ymin": 30.27985954284668,
+   "ymax": 30.279863357543945
+  }
+ },
+ {
+  "id": "d30b5673-ba64-4e99-9064-ade722bffc43",
+  "confidence": 0.7764652967453003,
+  "phones": [
+   "+15124415481"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": null
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "1977 Anita Dr",
+    "locality": "Austin",
+    "postcode": "78704-2815",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Laundry Mat"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "192015968286866",
+    "update_time": "2026-09-14T00:00:00.000Z",
+    "confidence": 0.7764652967453003,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-09-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   }
+  ],
+  "operating_status": null,
+  "basic_category": "laundry_service",
+  "taxonomy": {
+   "primary": "laundromat",
+   "hierarchy": [
+    "services_and_business",
+    "laundry_service",
+    "laundromat"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77179718017578,
+   "xmax": -97.77178192138672,
+   "ymin": 30.254627227783203,
+   "ymax": 30.25463104248047
+  }
+ },
+ {
+  "id": "30c6efc2-b111-4268-a974-8cbb37b24de1",
+  "confidence": 0.9902192950248718,
+  "phones": [
+   "+15122066330"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": null
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "1701 Bluebonnet Ln",
+    "locality": "Austin",
+    "postcode": "78704",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Michael A Laundromat"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "214178935259585",
+    "update_time": "2026-09-14T00:00:00.000Z",
+    "confidence": 0.8894286155700684,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-09-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "d0a24eee-9cbc-481f-a2b7-04f876319c86",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "laundry_service",
+  "taxonomy": {
+   "primary": "laundromat",
+   "hierarchy": [
+    "services_and_business",
+    "laundry_service",
+    "laundromat"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77197265625,
+   "xmax": -97.77195739746094,
+   "ymin": 30.25449562072754,
+   "ymax": 30.254499435424805
+  }
+ },
+ {
+  "id": "e0a86d06-c70e-4155-8ec8-928f444335e9",
+  "confidence": 0.9722161889076233,
+  "websites": [
+   "http://www.shagaustin.com"
+  ],
+  "phones": [
+   "15128517424"
+  ],
+  "addresses": [
+   {
+    "freeform": "2203 S Lamar Blvd",
+    "locality": "Austin",
+    "postcode": "78704-4923",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Shag Salon"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "BrightQuery",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "99258941",
+    "update_time": "2026-09-17T20:01:51.007Z",
+    "confidence": 0.75,
+    "provider": "brightquery",
+    "resource": "brightquery",
+    "version": "2026-09-08"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "eae380ff-77da-4698-91e4-f41a77abcf37",
+    "update_time": "2026-07-13T15:52:52Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-07-13"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "personal_or_beauty_service",
+  "taxonomy": {
+   "primary": "hair_salon",
+   "hierarchy": [
+    "lifestyle_services",
+    "personal_or_beauty_service",
+    "hair_salon"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77336883544922,
+   "xmax": -97.77335357666016,
+   "ymin": 30.247112274169922,
+   "ymax": 30.247116088867188
+  }
+ },
+ {
+  "id": "2371f0cf-209d-4e1c-a214-013e61137ec1",
+  "confidence": 0.9902192950248718,
+  "websites": [
+   "http://swoon.is/"
+  ],
+  "phones": [
+   "+15123628883"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": null
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "2310 S Lamar Blvd Ste 103",
+    "locality": "Austin",
+    "postcode": "78704",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "SWOON salon"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "265181077212548",
+    "update_time": "2026-09-14T00:00:00.000Z",
+    "confidence": 0.9916579127311707,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-09-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "e031a123-f72b-4a3f-bf32-a36bdb820810",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "personal_or_beauty_service",
+  "taxonomy": {
+   "primary": "hair_salon",
+   "hierarchy": [
+    "lifestyle_services",
+    "personal_or_beauty_service",
+    "hair_salon"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77505493164062,
+   "xmax": -97.77503967285156,
+   "ymin": 30.247554779052734,
+   "ymax": 30.24755859375
+  }
+ },
+ {
+  "id": "3841bba4-082a-4c51-aeac-43f90c148d95",
+  "confidence": 0.9199122190475464,
+  "websites": [
+   "http://www.joseluissalon.com/"
+  ],
+  "phones": [
+   "+15124741146"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": "Jose Luis Salon & Boutique"
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "1717 W 6th St",
+    "locality": "Austin",
+    "postcode": "78703-4702",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Jose Luis Salon"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "1896081130621693",
+    "update_time": "2026-09-14T00:00:00.000Z",
+    "confidence": 0.9918559789657593,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-09-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   },
+   {
+    "property": "/properties/operating_status",
+    "dataset": "Overture-signals",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "01a8f04c-e99f-4be5-9057-1adfd25bd68e",
+    "update_time": "2026-09-14T15:43:16Z",
+    "confidence": 1,
+    "provider": "overture",
+    "resource": "operating_status_signal",
+    "version": "2026-09-14"
+   }
+  ],
+  "operating_status": "open",
+  "basic_category": "personal_or_beauty_service",
+  "taxonomy": {
+   "primary": "beauty_salon",
+   "hierarchy": [
+    "lifestyle_services",
+    "personal_or_beauty_service",
+    "beauty_salon"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.76516723632812,
+   "xmax": -97.76515197753906,
+   "ymin": 30.27602767944336,
+   "ymax": 30.276031494140625
+  }
+ },
+ {
+  "id": "2db0a02c-165e-46be-b318-b881f1d5d7df",
+  "confidence": 0.9885,
+  "websites": [
+   "http://www.faithfannett.com"
+  ],
+  "phones": [
+   "5124446781"
+  ],
+  "addresses": [
+   {
+    "freeform": "2701 S Lamar Blvd",
+    "locality": "Austin",
+    "postcode": "78704-4707",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Faith United Methodist Church"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "BrightQuery",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "89117188",
+    "update_time": "2026-09-17T20:01:51.007Z",
+    "confidence": 0.95,
+    "provider": "brightquery",
+    "resource": "brightquery",
+    "version": "2026-09-08"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   }
+  ],
+  "operating_status": "permanently_closed",
+  "basic_category": "christian_place_of_worship",
+  "taxonomy": {
+   "primary": "methodist_place_of_worship",
+   "hierarchy": [
+    "cultural_and_historic",
+    "place_of_worship",
+    "christian_place_of_worship",
+    "protestant_place_of_worship",
+    "methodist_place_of_worship"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77983856201172,
+   "xmax": -97.77982330322266,
+   "ymin": 30.244213104248047,
+   "ymax": 30.244216918945312
+  }
+ },
+ {
+  "id": "00f6bedc-b28c-4e1c-8406-00e1f091cd83",
+  "confidence": 0.2941605746746063,
+  "websites": [
+   "http://www.bnidfw.com/tx-austin-bni-synergy-springs/index.php"
+  ],
+  "brand": {
+   "wikidata": null,
+   "names": {
+    "primary": null
+   }
+  },
+  "addresses": [
+   {
+    "freeform": "2701 S Lamar Blvd",
+    "locality": "Austin",
+    "postcode": "78704-4707",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "BNI Synergy Springs - Austin, TX"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "meta",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": "544288042301137",
+    "update_time": "2026-08-24T00:00:00.000Z",
+    "confidence": 0.2941605746746063,
+    "provider": "meta",
+    "resource": "meta",
+    "version": "2026-08-24"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   }
+  ],
+  "operating_status": null,
+  "basic_category": "event_or_party_service",
+  "taxonomy": {
+   "primary": "party_and_event_planning",
+   "hierarchy": [
+    "services_and_business",
+    "event_or_party_service",
+    "party_and_event_planning"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77969360351562,
+   "xmax": -97.77967834472656,
+   "ymin": 30.2442569732666,
+   "ymax": 30.244260787963867
+  }
+ },
+ {
+  "id": "09da34e4-f846-4329-8353-855ae5298b2e",
+  "confidence": 0.77,
+  "websites": [
+   "http://annastoydepot.com"
+  ],
+  "phones": [
+   "(512) 447-8697"
+  ],
+  "addresses": [
+   {
+    "freeform": "2620 S Lamar Blvd #B",
+    "locality": "Austin",
+    "postcode": "78704",
+    "region": "TX",
+    "country": "US"
+   }
+  ],
+  "names": {
+   "primary": "Anna's Toy Depot"
+  },
+  "sources": [
+   {
+    "property": "",
+    "dataset": "Foursquare",
+    "license": "Apache-2.0",
+    "record_id": "4b61b850f964a520ac1e2ae3",
+    "update_time": "2024-02-27T00:00:00.000",
+    "confidence": 0.77,
+    "provider": "foursquare",
+    "resource": "foursquare",
+    "version": "2026-04-14"
+   },
+   {
+    "property": "/properties/confidence",
+    "dataset": "Overture",
+    "license": "CDLA-Permissive-2.0",
+    "record_id": null,
+    "update_time": "2026-09-17T22:52:12Z",
+    "confidence": null,
+    "provider": "overture",
+    "resource": "confidence_calculation",
+    "version": "2026-09-17"
+   }
+  ],
+  "operating_status": null,
+  "basic_category": "toys_and_games_store",
+  "taxonomy": {
+   "primary": "toy_store",
+   "hierarchy": [
+    "shopping",
+    "specialty_store",
+    "toys_and_games_store",
+    "toy_store"
+   ]
+  },
+  "bbox": {
+   "xmin": -97.77986907958984,
+   "xmax": -97.77985382080078,
+   "ymin": 30.245878219604492,
+   "ymax": 30.245882034301758
+  }
+ }
+]

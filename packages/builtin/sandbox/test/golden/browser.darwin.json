@@ -1,0 +1,53 @@
+{
+  "args": [
+    "<host-process>",
+    "--request",
+    "<policy-file>"
+  ],
+  "written": {
+    "config": {
+      "network": {
+        "allowedDomains": [
+          "*"
+        ],
+        "deniedDomains": [],
+        "strictAllowlist": true,
+        "allowUnixSockets": [
+          "/srv/tavi-data/browser-scratch/s1"
+        ]
+      },
+      "filesystem": {
+        "denyRead": [
+          "/home/person",
+          "/srv/tavi-data"
+        ],
+        "allowRead": [
+          "<node>",
+          "<srt-helpers>",
+          "/opt/ms-playwright",
+          "/srv/tavi-data/browser-scratch/s1"
+        ],
+        "allowWrite": [
+          "/srv/tavi-data/browser-scratch/s1"
+        ],
+        "denyWrite": [
+          "/private/tmp/claude",
+          "/tmp/claude",
+          "/home/person/.npm/_logs",
+          "/home/person/.claude/debug"
+        ]
+      }
+    },
+    "grants": [
+      "*"
+    ],
+    "line": "'/usr/bin/env' 'TMPDIR=/srv/tavi-data/browser-scratch/s1/.tmp' '/usr/bin/node' '/opt/tavi/chromium-shim.mjs' '/opt/ms-playwright/chromium_headless_shell/chrome-linux/headless_shell'",
+    "cwd": "/srv/tavi-data/browser-scratch/s1",
+    "env": {
+      "HOME": "/srv/tavi-data/browser-scratch/s1",
+      "TMPDIR": "/srv/tavi-data/browser-scratch/s1/.tmp",
+      "PATH": "/usr/bin:/bin"
+    },
+    "inheritEnv": false
+  }
+}

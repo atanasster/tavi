@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "acme.units",
+  "version": "0.1.0",
+  "name": "Units",
+  "description": "Converts distances, weights and temperatures.",
+  "entry": "index.mjs",
+  "tools": [{ "name": "convert", "effect": "read-only", "description": "Convert a value between km/mi, kg/lb or C/F" }]
+}

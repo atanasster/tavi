@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": {
+    "format": "bundled-esm",
+    "packages": []
+  },
+  "id": "discord.channel",
+  "version": "0.1.1",
+  "name": "Discord",
+  "description": "Discord as a channel: DMs with your bot, and the server channels you list as rooms. Built on Discord's official bot API (Gateway and REST).",
+  "entry": "index.mjs",
+  "isolation": "in-process",
+  "provides": ["channel"],
+  "channelAbi": 2,
+  "channels": [
+    {
+      "app": {
+        "name": "Discord",
+        "summary": "Chat with Tavi in Discord DMs and the server channels you choose, through a bot you create.",
+        "category": "chat",
+        "publisher": "Discord",
+        "dataClass": "personal",
+        "scopes": []
+      },
+      "providerId": "discord",
+      "proves": ["messaging"],
+      "label": "Discord",
+      "kind": "chat",
+      "icon": {
+        "name": "message-circle"
+      },
+      "description": "Chat with the agent through your own Discord bot.",
+      "settings": [],
+      "auth": {
+        "kind": "secrets",
+        "fields": [
+          {
+            "key": "token",
+            "label": "Bot token",
+            "help": "Discord Developer Portal → your application → Bot → Reset Token. Turn Public Bot off."
+          }
+        ]
+      },
+      "sender": {
+        "label": "Discord user ID",
+        "placeholder": "123456789012345678",
+        "pattern": "[1-9]\\d{16,19}",
+        "normalize": "none",
+        "authentication": "provider"
+      },
+      "target": {
+        "label": "Channel ID, or dm:<user ID>",
+        "placeholder": "123456789012345678",
+        "pattern": "(dm:)?[1-9]\\d{16,19}",
+        "normalize": "none"
+      },
+      "sendRate": {
+        "perMinute": 600,
+        "perTargetPerMinute": 30
+      },
+      "media": {
+        "inboundMaxBytes": 26214400,
+        "mimeTypes": [
+          "image/*",
+          "application/pdf",
+          "text/plain",
+          "audio/*",
+          "video/mp4",
+          "video/quicktime",
+          "video/webm",
+          "video/3gpp",
+          "video/x-matroska"
+        ]
+      },
+      "groups": {
+        "unboundSenders": "drop",
+        "unlistedRooms": "drop",
+        "defaultTrigger": ["mention", "reply", "thread", "command", "picked"]
+      },
+      "hosts": ["discord.com", "gateway.discord.gg", "*.discord.gg", "cdn.discordapp.com", "media.discordapp.net"],
+      "retention": "purge-on-remove",
+      "setupHelp": "Create an application at discord.com/developers, add a bot, turn Public Bot off, paste its token. Open the invite link Tavi shows, DM the bot, allow your user ID in Allowed people, then add rooms.",
+      "setupLinks": [{ "label": "Open the Developer Portal", "url": "https://discord.com/developers/applications" }]
+    }
+  ],
+  "capabilities": [],
+  "tools": [],
+  "config": {}
+}

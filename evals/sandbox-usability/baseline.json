@@ -1,0 +1,2694 @@
+{
+  "cases": 177,
+  "untainted": {
+    "allow": 69,
+    "ask": 105,
+    "deny": 3,
+    "askEveryTime": 9
+  },
+  "tainted": {
+    "allow": 69,
+    "ask": 105,
+    "deny": 3,
+    "askEveryTime": 9
+  },
+  "promptsPer100": 59.3,
+  "decisions": {
+    "explore-ls": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-ls-la": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-ls-la-src": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-pwd": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-cat-readme-md": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-head-n-50-src-index-ts": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-tail-n-20-log-txt": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-wc-l-src-index-ts": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-stat-package-json": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-file-package-json": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-du-sh": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-df-h": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-tree-src": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-tree-l-2": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-which-node": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-basename-src-index-ts": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-dirname-src-index-ts": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-realpath": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-uname-a": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-whoami": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-id": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-date": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-echo-hello": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-printf-s-n-a-b": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-cut-d-f1-data-csv": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "explore-sort-data-txt": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-sort-u-data-txt": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-uniq-data-txt": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-diff-a-txt-b-txt": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-cmp-a-bin-b-bin": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-jq-name-package-json": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-tr-a-z-a-z": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "explore-true": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "search-grep-rn-todo-src": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "search-grep-rn-foo-bar-src": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "search-grep-c-error-log-txt": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "search-rg-todo": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "search-rg-n-fn-main-src": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "search-rg-files": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "search-find-name-ts": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "search-find-src-type-f-newer-package-json": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "search-find-maxdepth-2-type-d": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "git-inspect-git-status": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "git-inspect-git-status-short": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "git-inspect-git-diff": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "git-inspect-git-diff-stat": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "git-inspect-git-diff-head-1": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "git-inspect-git-log-oneline-20": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "git-inspect-git-log-p-1": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "git-inspect-git-show-head": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "git-inspect-git-show-stat-head": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "git-inspect-git-branch": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "git-inspect-git-branch-a": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "git-inspect-git-branch-show-current": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "git-inspect-git-rev-parse-head": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "git-inspect-git-ls-files": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "git-inspect-git-blame-src-index-ts": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "pipeline-ls-wc-l-readme-md": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "pipeline-grep-rn-todo-src-head-20": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "pipeline-cat-data-csv-sort-uniq-c": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "pipeline-find-name-py-xargs-wc-l": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "pipeline-git-log-oneline-head-5": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "pipeline-ls-wc-l": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "pipeline-cat-package-json-jq-scripts": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "build-test-npm-test": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-npm-run-build": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-npm-run-lint": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-pnpm-test": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-pnpm-run-build": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-pnpm-vitest-run": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-yarn-test": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-npx-tsc-noemit": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-tsc-b": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-node-test": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-pytest": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-pytest-q-tests": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-python3-m-pytest-x": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-cargo-build": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-cargo-test": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-cargo-check": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-cargo-clippy": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-go-build": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-go-test": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-go-vet": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-make": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-make-test": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-mvn-q-test": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-gradlew-test": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "build-test-bundle-exec-rspec": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "install-npm-install": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "install-npm-ci": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "install-pnpm-install": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "install-yarn-install": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "install-pip-install-r-requirements-txt": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "install-pip-install-requests": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "install-uv-sync": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "install-poetry-install": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "install-cargo-fetch": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "install-go-mod-download": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "install-bundle-install": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "toolchain-node-version": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "toolchain-python3-version": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "toolchain-cargo-version": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "toolchain-rustc-version": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "toolchain-go-version": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "toolchain-ruby-version": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "toolchain-pyenv-which-python": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "toolchain-java-version": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "scripting-python3-c-print-1-1": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "scripting-node-e-console-log-1": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "scripting-python3-script-py": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "scripting-node-script-js": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "scripting-ruby-e-puts-1": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "stdin-python3": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "stdin-sh": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "stdin-bash-s": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "stdin-jq-name": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "stdin-wc-l": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "stdin-sort": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "stdin-cat": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "stdin-node": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "mutate-mkdir-p-build": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "mutate-touch-notes-md": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "mutate-cp-a-txt-b-txt": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "mutate-mv-a-txt-b-txt": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "mutate-rm-notes-md": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "mutate-rm-rf-build": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "mutate-rm-rf-node-modules": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "mutate-sed-i-s-a-b-file-txt": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "mutate-chmod-x-run-sh": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "mutate-ln-s-a-b": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "mutate-git-add": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "mutate-git-commit-m-wip": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "mutate-git-checkout-b-feature": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "mutate-git-stash": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "redirect-echo-hi-notes-txt": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "redirect-echo-hi-notes-txt-2": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "redirect-ls-dev-null": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "redirect-grep-rn-x-src-2-dev-null": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "redirect-sort-o-out-txt-data-txt": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "redirect-tree-o-out-txt": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "redirect-uniq-in-txt-out-txt": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "redirect-cat-a-txt-package-json": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "network-curl-https-example-com": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "network-wget-https-example-com-file": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "network-git-clone-https-github-com-x-y": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "network-git-fetch": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "network-git-pull": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "network-git-push": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "network-ssh-host": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "network-pip-download-requests": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "opaque-echo-whoami": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "high"
+      }
+    },
+    "opaque-eval-ls": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "opaque-ls-pwd": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "high"
+      }
+    },
+    "opaque-for-f-in-ts-do-wc-l-f-done": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "high"
+      }
+    },
+    "opaque-if-true-then-ls-fi": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "high"
+      }
+    },
+    "opaque-bash-c-ls-wc": {
+      "untainted": {
+        "decision": "allow",
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "allow",
+        "risk": "high"
+      }
+    },
+    "opaque-cat-eof": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "high"
+      }
+    },
+    "escape-find-exec-rm": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "escape-find-delete": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "escape-git-c-core-pager-sh-c-id-log": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "high"
+      }
+    },
+    "escape-rg-pre-x-todo": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "escape-env-sudo-ls": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "critical"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "critical"
+      }
+    },
+    "escape-sudo-ls": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "critical"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "critical"
+      }
+    },
+    "escape-curl-https-x-example-sh": {
+      "untainted": {
+        "decision": "deny",
+        "risk": "high"
+      },
+      "tainted": {
+        "decision": "deny",
+        "risk": "high"
+      }
+    },
+    "escape-rm-rf": {
+      "untainted": {
+        "decision": "deny",
+        "risk": "high"
+      },
+      "tainted": {
+        "decision": "deny",
+        "risk": "high"
+      }
+    },
+    "escape-rm-rf-2": {
+      "untainted": {
+        "decision": "deny",
+        "risk": "high"
+      },
+      "tainted": {
+        "decision": "deny",
+        "risk": "high"
+      }
+    },
+    "escape-cat-etc-passwd": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "escape-cat-ssh-id-rsa": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "escape-env-curl-https-x": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "escape-nice-curl-https-x": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "escape-xcrun-curl-https-x": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "escape-echo-hi--x": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once"
+        ],
+        "risk": "high"
+      }
+    },
+    "escape-git-branch-d-main": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "escape-git-branch-new-branch": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "pty-python-openpty": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    },
+    "ipc-unix-socket-in-tmpdir": {
+      "untainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session",
+          "always"
+        ],
+        "risk": "medium"
+      },
+      "tainted": {
+        "decision": "ask",
+        "scopes": [
+          "once",
+          "session"
+        ],
+        "risk": "high"
+      }
+    }
+  }
+}

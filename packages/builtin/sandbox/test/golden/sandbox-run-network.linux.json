@@ -1,0 +1,37 @@
+{
+  "network": {
+    "allowedDomains": [
+      "pypi.org",
+      "*.pythonhosted.org",
+      "api.example.com:443"
+    ],
+    "deniedDomains": [],
+    "strictAllowlist": true
+  },
+  "filesystem": {
+    "denyRead": [
+      "/home/person",
+      "/srv/tavi-data"
+    ],
+    "allowRead": [
+      "/srv/tavi-data/chats/default/t1"
+    ],
+    "allowWrite": [
+      "/srv/tavi-data/chats/default/t1"
+    ],
+    "denyWrite": [
+      {
+        "path": "/tmp/claude",
+        "literal": true
+      },
+      {
+        "path": "/home/person/.npm/_logs",
+        "literal": true
+      },
+      {
+        "path": "/home/person/.claude/debug",
+        "literal": true
+      }
+    ]
+  }
+}

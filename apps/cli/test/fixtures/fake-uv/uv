@@ -1,0 +1,8 @@
+#!/bin/sh
+# A pretend uv for test/mcp-pypi.test.ts. It is one fixed file because macOS
+# assesses each new executable at its first exec (syspolicyd, which may ask
+# Apple online) and holds the process until it answers, for longer than a
+# test runs when the network or the queue is slow; a file it has seen once
+# runs at once. Each test's answers are a script in $FAKE_UV, sourced here
+# by this shell (never exec'd as a file of its own) with uv's own arguments.
+. "$FAKE_UV/uv.sh"

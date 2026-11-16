@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "acme.mailgunlite",
+  "version": "0.1.0",
+  "name": "Email through Mailgun (lite)",
+  "description": "Takes the mailgun provider id from the built-in tavi.mailgun: a signed inbound route in, the Messages API out, text only.",
+  "entry": "index.mjs",
+  "provides": ["channel"],
+  "channelAbi": 1,
+  "channels": [
+    {
+      "providerId": "mailgun",
+      "label": "Email (Mailgun lite)",
+      "kind": "email",
+      "description": "Email the agent through a Mailgun domain whose inbound route forwards to this connection.",
+      "settings": [
+        {
+          "key": "domain",
+          "label": "Sending domain",
+          "type": "string",
+          "required": true,
+          "pattern": "(?=.{1,253}$)[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?"
+        },
+        {
+          "key": "from",
+          "label": "Sender address",
+          "type": "string",
+          "help": "An address on the sending domain; tavi@<domain> when empty."
+        },
+        {
+          "key": "apiBaseUrl",
+          "label": "API address",
+          "type": "string",
+          "default": "https://api.mailgun.net/v3",
+          "help": "https://api.eu.mailgun.net/v3 for an EU domain."
+        }
+      ],
+      "auth": {
+        "kind": "secrets",
+        "fields": [
+          { "key": "apiKey", "label": "API key", "help": "Mailgun → API Security → a sending key for this domain." },
+          { "key": "webhookSigningKey", "label": "Webhook signing key", "help": "Mailgun → Webhooks → HTTP webhook signing key." }
+        ]
+      },
+      "sender": {
+        "label": "Email address",
+        "placeholder": "person@example.com",
+        "pattern": "[^\\s<>@]+@[^\\s<>@]+\\.[^\\s<>@]+",
+        "normalize": "lowercase",
+        "authentication": "per-message"
+      },
+      "target": {
+        "label": "Email address",
+        "placeholder": "person@example.com",
+        "pattern": "[^\\s<>@]+@[^\\s<>@]+\\.[^\\s<>@]+",
+        "normalize": "lowercase"
+      },
+      "ingress": [{ "name": "inbound", "methods": ["POST"], "scope": "connection", "maxBodyBytes": 1048576 }],
+      "sendRate": { "perMinute": 300, "perTargetPerMinute": 20 },
+      "account": { "setting": "from", "fallback": "tavi@{domain}" },
+      "retention": "purge-on-remove",
+      "hosts": ["api.mailgun.net", "api.eu.mailgun.net"],
+      "setupHelp": "Add a Mailgun inbound route whose action forwards to this connection's webhook address (<public address>/hooks/<connection id>/inbound), and allow each sender's address in Allowed people. Text only: mail with attachments is not taken."
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "resourceType": "Bundle",
+  "type": "searchset",
+  "timestamp": "2026-10-17T08:11:32.253+00:00",
+  "meta": {
+    "lastUpdated": "2026-10-17T08:11:32.253+00:00",
+    "versionId": "3079dcbd-d7da-4a13-ace1-edc9e17438a7"
+  },
+  "entry": [
+    {
+      "fullUrl": "https://fhir.humana.com/api/Practitioner/095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8",
+      "search": {
+        "mode": "match"
+      },
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "095b72d91a2522f9edcfe106d79f9c02ce16bf538e52b46c34e59c16e7bcd6c8",
+        "identifier": [
+          {
+            "system": "http://hl7.org/fhir/sid/us-npi",
+            "value": "1003268079"
+          }
+        ],
+        "active": true,
+        "name": [
+          {
+            "text": "Reed, Casey L DO",
+            "family": "Reed",
+            "given": [
+              "Casey",
+              "Reed"
+            ]
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "5125550103",
+            "use": "work"
+          },
+          {
+            "system": "fax",
+            "value": "5125550104",
+            "use": "work"
+          },
+          {
+            "system": "url",
+            "value": "http://www.setonfamilyofdoctors.com",
+            "use": "work"
+          },
+          {
+            "system": "phone",
+            "value": "5125550105",
+            "use": "work"
+          }
+        ],
+        "gender": "male",
+        "communication": [
+          {
+            "coding": [
+              {
+                "display": "English"
+              }
+            ]
+          }
+        ],
+        "meta": {
+          "versionId": "1197ee79-6635-436a-bf6d-62d65314acae",
+          "lastUpdated": "2026-10-14T14:29:46.859+00:00"
+        }
+      }
+    }
+  ],
+  "total": 1,
+  "link": [
+    {
+      "relation": "self",
+      "url": "https://fhir.humana.com/api/Practitioner?identifier=http%3A%2F%2Fhl7.org%2Ffhir%2Fsid%2Fus-npi%7C1003268079&_total=estimate&_count=20&_skip=0"
+    }
+  ],
+  "id": "b7d90588-4250-4b7e-94ae-2abecff1280d"
+}

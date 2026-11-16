@@ -1,0 +1,65 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "thefork",
+  "name": "TheFork",
+  "countries": [
+    "FR",
+    "IT",
+    "ES",
+    "GB",
+    "NL"
+  ],
+  "hosts": [
+    "www.thefork.com",
+    "www.thefork.fr",
+    "www.thefork.it",
+    "www.thefork.es",
+    "www.thefork.co.uk",
+    "www.thefork.nl"
+  ],
+  "kind": "booking",
+  "access": {
+    "mode": "stage",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "TheFork's booking widget; no ban on a person's own agent was found. Tavi fills the booking's contact and party fields and stops before the final control, which you press.",
+    "termsUrl": "https://www.thefork.com/",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "Restaurant",
+      "ReserveAction"
+    ]
+  },
+  "stage": {
+    "fillable": [
+      "name",
+      "email",
+      "phone",
+      "party_size",
+      "date",
+      "time",
+      "notes"
+    ],
+    "finalStep": {
+      "labels": [
+        "Confirm my booking",
+        "Confirm booking",
+        "Confirmer ma réservation",
+        "Conferma prenotazione",
+        "Confirmar reserva",
+        "Reservering bevestigen"
+      ],
+      "urlPatterns": []
+    },
+    "perDay": 5
+  },
+  "notes": "Its terms page refuses scripts (403 on 2026-10-17), so they were not read from here. Its final-step labels were not checked on the live site here."
+}

@@ -1,0 +1,26 @@
+# Every text file is LF in the repository and in every checkout, Windows
+# included: patches apply byte for byte (patches/*.patch), shell scripts run
+# under bash, and fixtures compare as written.
+* text=auto eol=lf
+*.patch text eol=lf
+*.sh text eol=lf
+
+# Binary: never converted or diffed as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.mp4 binary
+*.wasm binary
+*.pdf binary
+*.zip binary
+*.mcpb binary
+*.xlsx binary
+*.docx binary
+*.sqlite binary
+*.node binary

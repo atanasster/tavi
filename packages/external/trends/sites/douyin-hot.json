@@ -1,0 +1,58 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "douyin-hot",
+  "name": "Douyin hot list",
+  "countries": [
+    "CN"
+  ],
+  "hosts": [
+    "www.douyin.com"
+  ],
+  "kind": "trending",
+  "access": {
+    "mode": "assist-only",
+    "navigate": false,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "Douyin's terms (§2.4, §5.1) bar automated tools from reading or operating the service, even in your session, so Tavi is not to open it.",
+    "termsUrl": "https://www.douyin.com/agreements",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 3,
+    "pagesPerDay": 10,
+    "minIntervalMs": 10000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "ItemList",
+      "ListItem",
+      "SocialMediaPosting",
+      "NewsArticle",
+      "DiscussionForumPosting",
+      "VideoObject"
+    ],
+    "resultSchema": {
+      "type": "object",
+      "properties": {
+        "rank": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "metric": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "title",
+        "url"
+      ]
+    }
+  },
+  "notes": "Turned on, this profile stops Tavi's browser opening Douyin, and if you open www.douyin.com/hot yourself, Tavi reads that page for the chat only: nothing from it is kept, relayed with ingest or counted."
+}

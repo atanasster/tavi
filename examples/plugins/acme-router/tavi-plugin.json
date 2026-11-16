@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "acme.router",
+  "version": "0.1.0",
+  "name": "Keyword router",
+  "description": "A routing provider with no model and no network: it picks tools, memories and skills by the words they share with the task, and the fast model for a short task.",
+  "entry": "index.mjs",
+  "isolation": "in-process",
+  "provides": ["router"],
+  "router": {
+    "features": ["model", "tools", "memory", "skills"],
+    "batch": true,
+    "pricing": { "connectionId": "plugin:acme.router", "model": "keywords-1" }
+  }
+}

@@ -1,0 +1,3 @@
+body { margin: 0; font: var(--text-base) var(--font-system); background: hsl(var(--card)); color: hsl(var(--foreground)); }
+p { margin: var(--space-1) var(--space-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+img { display: block; max-width: 100%; max-height: calc(100vh - var(--space-7)); margin: 0 auto; }

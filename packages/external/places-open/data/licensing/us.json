@@ -1,0 +1,142 @@
+{
+  "country": "US",
+  "rows": [
+    {
+      "jurisdiction": "US-TX",
+      "profession": "auto_repair",
+      "regime": "not_licensed",
+      "access": "none",
+      "note": "Texas does not license auto mechanics or repair shops: TDLR has no mechanic licence and ASE certification is voluntary. DPS licenses only vehicle inspection stations.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "US-TX",
+      "profession": "electrician",
+      "regime": "licensed",
+      "regulator": "Texas Department of Licensing and Regulation (TDLR)",
+      "access": "api",
+      "source": "tdlr",
+      "licenseTypes": [
+        "ELECTRIC"
+      ],
+      "ruleUrl": "https://catalog.data.gov/dataset/tdlr-all-licenses",
+      "note": "TDLR licenses electricians and electrical contractors; matched by licence type in TDLR's All Licenses dataset. TDLR's own search is the record.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "US-TX",
+      "profession": "hvac",
+      "regime": "licensed",
+      "regulator": "Texas Department of Licensing and Regulation (TDLR)",
+      "access": "api",
+      "source": "tdlr",
+      "licenseTypes": [
+        "A/C",
+        "AIR CONDITIONING"
+      ],
+      "ruleUrl": "https://catalog.data.gov/dataset/tdlr-all-licenses",
+      "note": "TDLR licenses air conditioning and refrigeration contractors; matched by licence type in TDLR's All Licenses dataset.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "US-TX",
+      "profession": "tailor",
+      "regime": "not_licensed",
+      "access": "none",
+      "note": "Tailoring and alterations are not licensed.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "US-CA",
+      "profession": "auto_repair",
+      "regime": "registered_business",
+      "regulator": "Bureau of Automotive Repair (BAR), Department of Consumer Affairs",
+      "access": "web",
+      "verifyUrl": "https://search.dca.ca.gov/",
+      "ruleUrl": "https://www.bar.ca.gov/",
+      "note": "California's Bureau of Automotive Repair registers repair shops (Automotive Repair Dealers); check the shop's registration in DCA's license search.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "US-CA",
+      "profession": "contractor",
+      "regime": "licensed",
+      "regulator": "Contractors State License Board (CSLB)",
+      "access": "web",
+      "verifyUrl": "https://www.cslb.ca.gov/OnlineServices/CheckLicenseII/CheckLicense.aspx",
+      "ruleUrl": "https://www.cslb.ca.gov/onlineservices/dataportal/",
+      "note": "CSLB licenses contractors. Its master list is a monthly download behind a form, too big for the worker, so a licence is checked on CSLB's Instant License Check.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "US-CA",
+      "profession": "electrician",
+      "regime": "licensed",
+      "regulator": "Contractors State License Board (CSLB)",
+      "access": "web",
+      "verifyUrl": "https://www.cslb.ca.gov/OnlineServices/CheckLicenseII/CheckLicense.aspx",
+      "ruleUrl": "https://www.cslb.ca.gov/onlineservices/dataportal/",
+      "note": "An electrical contracting business holds a CSLB contractor licence, checked on CSLB's Instant License Check. Individual electricians are certified separately by the state's Department of Industrial Relations, which this check does not cover.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "US-CA",
+      "profession": "handyman",
+      "regime": "unknown",
+      "regulator": "Contractors State License Board (CSLB)",
+      "access": "none",
+      "note": "Small jobs under CSLB's value threshold need no contractor licence (unverified here): ask the job's value, then check CSLB for anything above it.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "US-CA",
+      "profession": "tailor",
+      "regime": "not_licensed",
+      "access": "none",
+      "note": "Tailoring and alterations are not licensed.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "US-FL",
+      "profession": "contractor",
+      "regime": "licensed",
+      "regulator": "Department of Business and Professional Regulation (DBPR)",
+      "access": "web",
+      "verifyUrl": "https://www.myfloridalicense.com/wl11.asp",
+      "note": "Florida's DBPR licenses construction contractors; checked on its license search.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "US-FL",
+      "profession": "electrician",
+      "regime": "licensed",
+      "regulator": "Department of Business and Professional Regulation (DBPR)",
+      "access": "web",
+      "verifyUrl": "https://www.myfloridalicense.com/wl11.asp",
+      "note": "Florida's DBPR licenses electrical contractors; checked on its license search.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "US-NY",
+      "profession": "auto_repair",
+      "regime": "registered_business",
+      "regulator": "New York State DMV",
+      "access": "web",
+      "verifyUrl": "https://dmv.ny.gov/business/open-repair-or-body-shop",
+      "ruleUrl": "https://dmv.ny.gov/business/open-repair-or-body-shop",
+      "note": "New York's DMV registers repair and body shops.",
+      "reviewedAt": "2026-10-17"
+    },
+    {
+      "jurisdiction": "US-MI",
+      "profession": "auto_repair",
+      "regime": "licensed",
+      "regulator": "Michigan Secretary of State",
+      "access": "web",
+      "verifyUrl": "https://www.michigan.gov/sos/faqs/industry-services/mechanics",
+      "ruleUrl": "https://www.michigan.gov/sos/faqs/industry-services/mechanics",
+      "note": "Michigan's Secretary of State certifies mechanics.",
+      "reviewedAt": "2026-10-17"
+    }
+  ]
+}

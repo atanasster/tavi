@@ -1,0 +1,516 @@
+/* Soul & memory: two panes side by side from
+   --wide (960 px), stacked below; nothing in either scrolls the page sideways. */
+.center-main > .soul {
+  max-width: var(--width-page-xwide);
+}
+
+.soul-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+@media (--wide) {
+  .soul-split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.soul-pane {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.soul-pane-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  padding: var(--space-3-5) var(--space-4);
+  border-bottom: var(--border-width) solid var(--line-fainter);
+}
+
+.soul-pane-head > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.soul-glyph {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--size-avatar-md);
+  height: var(--size-avatar-md);
+  border-radius: var(--radius);
+  background: hsl(var(--primary) / var(--tint-strong));
+  color: hsl(var(--primary));
+}
+
+.soul-glyph-memory {
+  background: hsl(var(--info) / var(--tint-strong));
+  color: hsl(var(--info));
+}
+
+.soul-figure,
+.soul-layer-len,
+.editor-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.soul-chat-notes {
+  margin: var(--space-6) var(--space-4) 0;
+}
+
+.soul-chat-notes h2 {
+  font-size: var(--text-lg);
+  margin: 0 0 var(--space-1);
+}
+
+.soul-chat-notes-list {
+  margin: var(--space-2) 0 0;
+}
+
+.soul-chat-notes-list li {
+  flex-wrap: wrap;
+  font-size: var(--text-base);
+}
+
+.soul-chat-note {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The row and its panel control, without the follow-ups below them. */
+.center-row-wrap {
+  position: relative;
+}
+
+/* Room for the panel control, so the meta line and the mark never run under it. */
+.center-row.with-panel {
+  padding-right: var(--space-10);
+}
+
+/* At the row's top right, beside its mark: the way into the chat with its
+   panel. It appears on hover or focus, as a session's actions do; on a touch
+   screen there is no hover, so it always shows. The tooltip's trigger is what
+   is placed, so the tooltip anchors on the button rather than on the empty
+   spot the button left in the flow. */
+.center-row-wrap > .tooltip-trigger {
+  position: absolute;
+  top: var(--space-1-5);
+  right: var(--space-1-5);
+  opacity: 0;
+  transition: opacity var(--duration-base);
+}
+
+.center-row-wrap:hover > .tooltip-trigger,
+.center-row-wrap:focus-within > .tooltip-trigger {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .center-row-wrap > .tooltip-trigger {
+    opacity: 1;
+  }
+}
+
+.soul-layers-status {
+  margin: var(--space-3) var(--space-4);
+}
+
+.soul-preview-for {
+  margin: var(--space-3) var(--space-4) 0;
+  font-size: var(--text-sm);
+  color: hsl(var(--muted-foreground));
+}
+
+.soul-layers {
+  display: grid;
+  padding: var(--space-2) var(--space-4);
+}
+
+.soul-layer {
+  display: grid;
+  grid-template-columns: var(--icon-size) minmax(0, 1fr) auto;
+  gap: var(--space-2-5);
+  align-items: start;
+  padding: var(--space-2) 0;
+  font-size: var(--text-base);
+}
+
+.soul-layer-bullet {
+  justify-self: center;
+  width: var(--icon-size-2xs);
+  height: var(--icon-size-2xs);
+  margin-top: var(--space-1);
+  border: var(--border-width-mid) solid hsl(var(--primary));
+  border-radius: var(--radius-2xs);
+  background: hsl(var(--primary));
+}
+
+.soul-layer.off {
+  color: hsl(var(--muted-foreground));
+}
+
+.soul-layer.off .soul-layer-bullet {
+  border-color: hsl(var(--border));
+  background: none;
+}
+
+.soul-layer.off .soul-layer-label {
+  text-decoration: line-through;
+  text-decoration-color: hsl(var(--muted-foreground) / var(--alpha-strong));
+}
+
+.soul-layer-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.soul-layer-name small {
+  display: block;
+  font-size: var(--text-sm);
+  color: hsl(var(--muted-foreground));
+}
+
+.soul-layer-len {
+  white-space: nowrap;
+}
+
+.soul-layer-detail summary {
+  font-size: var(--text-sm);
+  cursor: pointer;
+  color: hsl(var(--primary));
+}
+
+.soul-layer-detail pre,
+.soul-layer-detail p,
+.soul-shipped {
+  max-height: var(--height-clip);
+  margin: var(--space-1-5) 0 0;
+  font-size: var(--text-sm);
+}
+
+.soul-editor {
+  border-top: var(--border-width) solid var(--line-fainter);
+}
+
+.soul-tabs {
+  padding: var(--space-2) var(--space-3) 0;
+}
+
+.soul-panel {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  min-width: 0;
+}
+
+.soul-pane-sub,
+.soul-note,
+.soul-status,
+.memory-hint {
+  margin: 0;
+}
+
+.soul-form,
+.soul-form form,
+.memory-form {
+  display: grid;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+
+.soul-form textarea,
+.memory-form textarea,
+.memory-form input:not([type="checkbox"]),
+.memory-form select,
+.soul-form select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.soul-form textarea {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  line-height: var(--leading-relaxed);
+}
+
+.soul-form p,
+.editor-count {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.soul-form .failure:empty {
+  display: none;
+}
+
+.memory-status,
+.memory-search,
+.memory-others,
+.memory-settings {
+  margin: var(--space-3) var(--space-4) 0;
+}
+
+/* The memory Settings card: two switches, and the limits under More. */
+.memory-settings-list li,
+.memory-settings-limits p {
+  margin: var(--space-2) 0 0;
+}
+
+/* Keep without asking: a borderless group of three ticks. */
+.memory-settings-keep {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.memory-settings-keep legend {
+  padding: 0;
+}
+
+.memory-settings-more summary {
+  margin-top: var(--space-2);
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
+.memory-settings-limits input[type="number"] {
+  width: var(--width-field-ch-sm);
+}
+
+.memory-proposals-more {
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2-5);
+  font-size: var(--text-sm);
+}
+
+.memory-others {
+  margin-bottom: var(--space-3-5);
+}
+
+.memory-search .center-search {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.memory-search .center-search input {
+  width: 100%;
+}
+
+.memory-proposals {
+  margin: var(--space-3) var(--space-4) 0;
+  padding: var(--space-3);
+}
+
+.memory-proposals h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: hsl(var(--warning));
+}
+
+.memory-proposals h3:focus {
+  outline: none;
+}
+
+.memory-proposals ul,
+.memory-group ul {
+  display: grid;
+}
+
+.memory-proposal,
+.memory-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1-5) var(--space-2-5);
+  align-items: start;
+  padding: var(--space-2) 0;
+  border-bottom: var(--border-width) solid var(--line-faintest);
+  font-size: var(--text-md);
+}
+
+.memory-proposal:last-child,
+.memory-row:last-child {
+  border-bottom: 0;
+}
+
+.memory-row > .memory-form,
+.memory-row > .memory-confirm,
+.memory-row > .memory-row-note {
+  grid-column: 1 / -1;
+}
+
+.memory-row-main {
+  min-width: 0;
+}
+
+.memory-group {
+  padding: var(--space-1) var(--space-4) var(--space-2);
+}
+
+.memory-group h3 {
+  display: flex;
+  justify-content: space-between;
+  margin: var(--space-3) 0 var(--space-0-5);
+}
+
+.memory-text {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.memory-text p,
+.memory-row-note {
+  margin: 0;
+}
+
+.memory-title {
+  font-weight: var(--weight-medium);
+}
+
+.memory-body {
+  white-space: pre-wrap;
+}
+
+.memory-masked {
+  font-family: var(--font-mono);
+  letter-spacing: var(--tracking-widest);
+  color: hsl(var(--muted-foreground));
+}
+
+.memory-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  margin-top: var(--space-0-5);
+  font-size: var(--text-sm);
+  color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
+}
+
+.memory-scope {
+  padding: 0 var(--space-1-5);
+  border-radius: var(--radius-sm);
+  background: hsl(var(--muted));
+  font-size: var(--text-xs);
+  color: hsl(var(--foreground));
+}
+
+.memory-remember {
+  margin: var(--space-3) var(--space-4) 0;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--line-soft);
+  border-radius: var(--radius-lg);
+}
+
+.memory-form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--card-min-xs), 1fr));
+  gap: var(--space-2);
+}
+
+.memory-form-row > span {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+@media (--phone) {
+  .memory-proposal,
+  .memory-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .memory-actions {
+    justify-content: flex-start;
+  }
+}
+
+.soul-skills {
+  margin: var(--space-6) var(--space-4) 0;
+}
+
+.soul-skills h2 {
+  font-size: var(--text-lg);
+  margin: 0 0 var(--space-1);
+}
+
+.soul-skills-list > li,
+.soul-skill {
+  margin: var(--space-2) 0 0;
+}
+
+.soul-skill {
+  padding: var(--space-3) var(--space-4);
+}
+
+.soul-skill-viewer {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) var(--space-4);
+}
+
+/* A sha256 is one 64-character word: it wraps inside the card at phone width rather than running off it. */
+.soul-skill-hash {
+  overflow-wrap: anywhere;
+}
+
+.soul-skill-body {
+  max-height: var(--height-clip-xl);
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: var(--text-sm);
+}
+
+.soul-skill-diff .diff-added {
+  background: hsl(var(--positive) / var(--tint-strong));
+}
+
+.soul-skill-diff .diff-removed {
+  background: hsl(var(--warning) / var(--tint-strong));
+  text-decoration: line-through;
+}
+
+/* A proposal filed after its turn read untrusted content: named before any decision. */
+.skill-untrusted {
+  margin: var(--space-2) 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: hsl(var(--warning) / var(--tint-strong));
+}
+
+.soul-skill-edit,
+.soul-skill-feedback {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+}
+
+.soul-skill-edit textarea,
+.soul-skill-feedback textarea {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.soul-skill-trace {
+  margin: var(--space-2) 0;
+}
+
+.soul-skill-trace-calls {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-sm);
+  word-break: break-word;
+}
+
+.soul-skill-trace-calls [data-status="failed"] {
+  color: hsl(var(--warning));
+}

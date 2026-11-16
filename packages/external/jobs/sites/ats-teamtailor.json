@@ -1,0 +1,53 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "ats-teamtailor",
+  "name": "Teamtailor",
+  "countries": [
+    "*"
+  ],
+  "hosts": [
+    "*.teamtailor.com"
+  ],
+  "kind": "ats",
+  "access": {
+    "mode": "stage",
+    "navigate": true,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "An employer's application form on Teamtailor. Tavi fills the fields it may and stops before the final control, which the person presses.",
+    "termsUrl": "https://career.teamtailor.com/jobs/8118064-uk-account-executive-smb",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 12,
+    "pagesPerDay": 60,
+    "minIntervalMs": 2000
+  },
+  "stage": {
+    "fillable": [
+      "name",
+      "first_name",
+      "last_name",
+      "email",
+      "phone",
+      "location",
+      "links",
+      "work_history",
+      "education",
+      "cv_upload",
+      "cover_letter",
+      "custom_answer"
+    ],
+    "finalStep": {
+      "labels": [
+        "Submit application"
+      ],
+      "urlPatterns": [],
+      "selectors": [
+        "input[name=commit]"
+      ]
+    },
+    "perDay": 10
+  },
+  "notes": "The form records keystrokes, pastes and device signals."
+}

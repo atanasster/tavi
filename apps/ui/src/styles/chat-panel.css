@@ -1,0 +1,481 @@
+/* ---------- The chat panel ---------- */
+
+/* This chat's sections: a 44px rail when closed, a
+   resizable column when open. Docked at 1280px and wider; narrower, it lies
+   over the transcript so the chat keeps its width; at 720px, a bottom sheet. */
+.body {
+  position: relative;
+}
+
+.chat-panel-rail {
+  width: var(--size-rail);
+  border-left: var(--border-width) solid var(--line-faint);
+}
+
+.chat-panel-rail-item,
+.chat-panel-rail-toggle,
+.chat-panel-tab {
+  position: relative;
+}
+
+/* The rail's items carry their own badges; only the phone's lone button needs this one. */
+.chat-panel-any {
+  display: none;
+}
+
+.chat-panel-count,
+.chat-panel-dot {
+  position: absolute;
+  top: var(--space-0-5);
+  right: var(--space-0-5);
+  pointer-events: none;
+}
+
+.chat-panel-count {
+  min-width: var(--size-count-sm);
+  height: var(--size-count-sm);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-full);
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-4);
+  text-align: center;
+}
+
+.chat-panel-dot {
+  width: var(--size-dot-md);
+  height: var(--size-dot-md);
+  border-radius: var(--radius-round);
+  background: hsl(var(--primary));
+}
+
+.chat-panel {
+  width: var(--chat-panel-width);
+  border-left: var(--border-width) solid var(--line-faint);
+}
+
+/* The phone sheet's grip; hidden where the panel is a column. */
+.chat-panel-grip {
+  display: none;
+  flex: none;
+  width: var(--size-touch);
+  height: var(--size-grip-zone);
+  margin: var(--space-1) auto 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+
+.chat-panel-grip::before {
+  content: "";
+  display: block;
+  width: var(--size-grip);
+  height: var(--size-grip-thick);
+  margin: var(--space-2) auto;
+  border-radius: var(--radius-full);
+  background: hsl(var(--border));
+}
+
+.chat-panel-resizer {
+  left: calc(var(--size-resizer) / -2);
+}
+
+.chat-panel-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2-5) var(--space-3) var(--space-1-5) var(--space-4);
+}
+
+.chat-panel-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+
+.chat-panel-title h2 {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.chat-panel-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.chat-panel-name h2 {
+  min-width: 0;
+}
+
+.chat-panel-rename {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.chat-panel-rename input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.chat-panel-tabs {
+  flex: none;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  margin: var(--space-1) var(--space-3) 0;
+  background: hsl(var(--muted));
+}
+
+.chat-panel-tab {
+  height: var(--control-height-tab);
+}
+
+.chat-panel-tab:hover {
+  color: hsl(var(--foreground));
+}
+
+.chat-panel-section {
+  flex: none;
+  margin: var(--space-3-5) var(--space-4) var(--space-1);
+}
+
+.chat-panel-body {
+  flex: 1;
+  min-height: 0;
+  /* The containing block of its `.visually-hidden` labels, as `.runs` is. */
+  position: relative;
+  overflow-y: auto;
+  padding: 0 var(--space-4) var(--space-4);
+  font-size: var(--text-base);
+}
+
+/* UI plugins in the chat panel: the
+   chat.panel.top slot between the header and the tab strip, and a contributed
+   tab's frame, which takes the body's whole height. */
+.chat-panel-top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: 0 var(--space-4) var(--space-2);
+}
+
+/* On the phone sheet the slot shows only at full height. */
+.chat-panel-top-item.sheet-hidden {
+  display: none;
+}
+
+.chat-panel-top-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--control-height-sm);
+}
+
+/* A quiet heading over a slot or a message. */
+.chat-panel-top-title,
+.message-heading {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: hsl(var(--muted-foreground));
+}
+
+.chat-panel-top-frame,
+.chat-panel-plugin-frame {
+  display: block;
+  width: 100%;
+}
+
+.chat-panel-top-frame[hidden] {
+  display: none;
+}
+
+/* A plugin's frame: a hairline box on the card surface. */
+.chat-panel-top-frame,
+.chat-panel-plugin-frame,
+.welcome-frame {
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius);
+  background: hsl(var(--card));
+}
+
+.chat-panel-top-resizer {
+  height: var(--size-resizer-row);
+  margin-top: calc(-1 * var(--space-0-5));
+  cursor: row-resize;
+  border-radius: var(--radius-sm);
+}
+
+.chat-panel-top-resizer:hover,
+.chat-panel-top-resizer:focus-visible {
+  background: hsl(var(--primary) / var(--tint-heavy));
+}
+
+.chat-panel-plugin-body {
+  display: flex;
+  padding-bottom: var(--space-2);
+}
+
+.chat-panel-plugin-frame {
+  flex: 1;
+  min-height: var(--height-scroll-sm);
+}
+
+.chat-panel-plugin-tab {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.chat-panel-plugin-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
+/* The browser tab shown large: the same frame, moved over the page, so its
+   stream carries on without reloading. */
+.chat-panel-plugin-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet);
+  background: var(--overlay);
+}
+
+.chat-panel-plugin-tab.expanded {
+  position: fixed;
+  inset: var(--space-6);
+  z-index: calc(var(--z-sheet) + 1);
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius);
+  background: hsl(var(--background));
+  box-shadow: var(--shadow-lg);
+}
+
+@media (--phone) {
+  .chat-panel-plugin-tab.expanded {
+    inset: 0;
+    border-radius: 0;
+  }
+}
+
+.chat-panel-plugin-icon {
+  display: block;
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}
+
+.chat-panel-body h4 {
+  margin: var(--space-4) 0 var(--space-1-5);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: hsl(var(--muted-foreground));
+}
+
+.chat-panel-body ul {
+  padding-left: var(--space-4-5);
+}
+
+.chat-panel-center {
+  margin-top: var(--space-2);
+}
+
+.chat-panel-waiting {
+  margin: var(--space-1) 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+}
+
+.chat-panel-waiting h4 {
+  margin-top: 0;
+  color: hsl(var(--foreground));
+}
+
+.chat-panel-day h4 .muted {
+  font-weight: var(--weight-regular);
+}
+
+.chat-panel-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-0-5);
+  width: calc(100% + 2 * var(--space-2));
+  padding: var(--space-1-5) var(--space-2);
+  margin: 0 calc(-1 * var(--space-2));
+  border-radius: var(--radius-sm);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.chat-panel-item {
+  cursor: pointer;
+}
+
+button.chat-panel-item:hover {
+  background: hsl(var(--muted));
+}
+
+.chat-panel-item-title {
+  max-width: 100%;
+}
+
+/* A run of decisions on one tool, folded: a row that opens to its decisions. */
+.chat-panel-fold > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.chat-panel-fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.chat-panel-fold > summary:hover {
+  background: hsl(var(--muted));
+}
+
+.chat-panel-fold-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+
+.chat-panel-fold[open] .chat-panel-fold-title::before {
+  transform: rotate(45deg);
+}
+
+.chat-panel-fold > .chat-panel-timeline {
+  margin-inline-start: var(--space-2);
+  padding-inline-start: var(--space-2);
+  border-inline-start: var(--border-width) solid hsl(var(--border));
+}
+
+.chat-panel-inherited summary {
+  cursor: pointer;
+  font-weight: var(--weight-semibold);
+  padding: var(--space-1) 0;
+}
+
+.chat-panel-body .chat-panel-records {
+  list-style: none;
+  margin: var(--space-1) 0 0;
+  padding: 0;
+}
+
+.chat-panel-records li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  padding: var(--space-1-5) 0;
+  border-bottom: var(--border-width) solid var(--line-soft);
+}
+
+.chat-panel-editor textarea {
+  width: 100%;
+  min-height: var(--height-textarea-lg);
+  resize: vertical;
+  font: inherit;
+  font-size: var(--text-base);
+}
+
+.chat-panel-editor .actions {
+  gap: var(--space-1-5);
+  margin: var(--space-1-5) 0 var(--space-2-5);
+}
+
+.chat-panel-pill {
+  display: inline-block;
+  padding: var(--space-px) var(--space-2);
+  border-radius: var(--radius-full);
+  background: hsl(var(--primary) / var(--tint-strong));
+  color: hsl(var(--primary));
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.chat-panel-count-text {
+  float: right;
+}
+
+.chat-panel-count-text.over {
+  color: hsl(var(--destructive));
+}
+
+.chat-panel-add {
+  display: flex;
+  gap: var(--space-1-5);
+  margin-top: var(--space-1-5);
+}
+
+.chat-panel-add input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: var(--text-base);
+}
+
+.chat-panel-budget.warn {
+  color: hsl(var(--warning));
+}
+
+.chat-panel-body .soul-layers {
+  padding: var(--space-1) 0;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--text-base);
+  margin: var(--space-3) 0;
+}
+
+.facts dt {
+  color: hsl(var(--muted-foreground));
+}
+
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+/* Between the phone and the docked width: over the transcript, not beside it. */
+@media (--overlay) {
+  .chat-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-drawer);
+    max-width: calc(100% - var(--space-12));
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-panel-resizer::after,
+  .chat-panel {
+    transition: none;
+  }
+}

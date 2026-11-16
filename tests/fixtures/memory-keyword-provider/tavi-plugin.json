@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "fixture.memorykeywords",
+  "version": "1.0.0",
+  "name": "Keyword memory (test fixture)",
+  "description": "A test-only memory provider with no model: it ranks the memories it is handed by the words they share with the query, and drafts a fact from a message that starts with \"remember that\".",
+  "entry": "index.mjs",
+  "provides": ["memory"],
+  "memory": { "abi": "tavi.memory/1", "capabilities": ["recall", "capture"], "index": "host", "receives": ["records", "conversation"] }
+}

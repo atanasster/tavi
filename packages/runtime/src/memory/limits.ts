@@ -1,0 +1,1 @@
+export const MEMORY_EXPORT_HARD_CAP = 2_000;

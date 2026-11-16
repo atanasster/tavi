@@ -1,0 +1,61 @@
+# Tavi's tests hold deliberate fake secrets (sequential alphabets, stub keys) to
+# exercise redaction and credential handling: real ones never belong in this
+# repository. Each fake is allowlisted by its value, and only inside a test
+# folder, so a real key pasted into a test is still reported. Run `gitleaks dir .`
+# (or `gitleaks git`) before a push.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Built output and local state"
+paths = [
+  '''(^|/)dist(-plugin)?/''',
+  '''(^|/)node_modules/''',
+  '''(^|/)\.tavi[^/]*/''',
+  '''(^|/)\.claude/''',
+]
+
+[[allowlists]]
+description = "Recorded public responses: Open311 service-request tokens and Discord interaction tokens of a test application"
+paths = [
+  '''^packages/places-kit/test/fixtures/civic/open311-sf\.json$''',
+  '''^packages/test-support/fixtures/places/civic/open311-sf\.json$''',
+  '''^packages/external/discord/test/fixtures/interaction-button-(member|owner)\.json$''',
+]
+
+[[allowlists]]
+description = "The fake secrets tests use, inside test folders only"
+condition = "AND"
+paths = ['''(^|/)tests?/''']
+regexTarget = "secret"
+regexes = [
+  '''^sk_live_SUPERSECRET$''',
+  '''^[rs]k_(live|test)_51H8abcdefghijklmnop$''',
+  '''^glpat-abcdefghij0123456789$''',
+  '''^AKIAABCDEFGHIJKLMNOP$''',
+  '''^ASIAY34FZKBOKMUTVV7A$''',
+  '''^eyJhbGciOiJIUzI1NiJ9\.eyJzdWIiOiIxMjM0NTY3ODkwIn0\.''',
+  '''^xoxb-1234567890-abcdefghij$''',
+  '''^(sk-proj-)?9f8a7b6c5d4e3f2a1b2c3d4e5f6a7b8c$''',
+  '''^sk-or-v1-(minted-7d1e|planted)$''',
+  '''^sk-live-abcdef123456$''',
+  '''^tok_9f8e7d6c5b4a$''',
+  '''^acme\.key\.tmp-9f3a1b2c4d5e$''',
+  '''^MTIz\.Gw\.s3cret$''',
+  '''^my-own-key$''',
+  # A bare JWT header, and operation keys the generic rule reads as keys.
+  '''^eyJhbGciOiJIUzI1NiJ9$''',
+  '''^op-ceiling-turn-[0-9]$''',
+  # A made-up Discord guild ID in the guide redaction test.
+  '''^987654321098765432$''',
+  # Base64 of "interaction:7600…", the Discord fixtures' interaction tokens.
+  '''^aW50ZXJhY3Rpb246NzYwMDAwMDAwMDAwMDAwMDA[A-Za-z0-9]$''',
+  # RFC 6455's sample Sec-WebSocket-Key.
+  '''^dGhlIHNhbXBsZSBub25jZQ==$''',
+  # A key-chord name that the generic rule reads as a key.
+  '''^Shift\+ArrowLeft$''',
+]
+
+[[allowlists]]
+description = "The approval-round token alphabet, not a key"
+regexes = ['''abcdefghijkmnpqrstuvwxyz23456789''']

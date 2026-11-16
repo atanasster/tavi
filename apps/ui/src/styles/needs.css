@@ -1,0 +1,495 @@
+/* ---- Needs: a question a task asks ----
+   Context before controls; a warning stripe so it is seen before it is read;
+   option rows a thumb can hit; a receipt that keeps its place once settled. */
+.need {
+  position: relative;
+  display: grid;
+  gap: var(--space-2-5);
+  margin: var(--space-3) 0;
+  padding: var(--space-3-5) var(--space-4) var(--space-3-5) var(--space-5);
+  border: var(--border-width) solid hsl(var(--border));
+  border-radius: var(--radius-lg);
+  background: hsl(var(--card));
+  box-shadow: var(--shadow-faint);
+}
+
+.need::before {
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  background: hsl(var(--warning));
+}
+
+.need-compact {
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+  padding: var(--space-2-5) var(--space-3) var(--space-2-5) var(--space-4);
+}
+
+.need-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+  color: hsl(var(--muted-foreground));
+}
+
+.need-kind {
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: hsl(var(--warning));
+}
+
+.need-asker {
+  font-weight: var(--weight-regular);
+  text-transform: none;
+  letter-spacing: 0;
+  color: hsl(var(--muted-foreground));
+}
+
+.need-deadline {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.need-deadline-urgent {
+  color: hsl(var(--warning));
+  font-weight: var(--weight-semibold);
+}
+
+.need-deadline-past {
+  color: hsl(var(--muted-foreground));
+}
+
+.need-question-text {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  overflow-wrap: anywhere;
+}
+
+.need-compact .need-question-text {
+  font-size: var(--text-md);
+}
+
+.need-context {
+  margin: calc(-1 * var(--space-1)) 0 0;
+}
+
+.need-options {
+  display: grid;
+  gap: 0;
+  border: var(--border-width) solid hsl(var(--border));
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.need-option {
+  display: grid;
+  grid-template-columns: var(--size-avatar-sm) 1fr auto;
+  align-items: start;
+  gap: var(--space-1) var(--space-2-5);
+  width: 100%;
+  min-height: var(--size-touch);
+  margin: 0;
+  padding: var(--space-2-5) var(--space-3);
+  border-radius: 0;
+  border-top: var(--border-width) solid hsl(var(--border));
+  text-align: left;
+  font-weight: var(--weight-regular);
+  cursor: pointer;
+}
+
+.need-option:first-child {
+  border-top: 0;
+}
+
+label.need-option {
+  grid-template-columns: var(--size-avatar-sm) var(--size-avatar-sm) 1fr auto;
+}
+
+.need-option:hover:enabled,
+label.need-option:hover {
+  background: hsl(var(--secondary) / var(--alpha-muted));
+}
+
+.need-option:focus-visible,
+label.need-option:focus-within {
+  outline: var(--outline-width) solid hsl(var(--ring));
+  outline-offset: calc(-1 * var(--outline-width));
+}
+
+.need-option-picked,
+label.need-option:has(input:checked) {
+  background: hsl(var(--primary) / var(--tint-soft));
+}
+
+.need-option-number {
+  display: inline-grid;
+  place-items: center;
+  width: var(--size-avatar-xs);
+  height: var(--size-avatar-xs);
+  border: var(--border-width) solid hsl(var(--border));
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--muted-foreground));
+}
+
+.need-option-text {
+  display: grid;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.need-option-label {
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.need-option-tag {
+  align-self: center;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  color: hsl(var(--positive));
+}
+
+.need-undo {
+  position: relative;
+  padding: var(--space-2) var(--space-2-5) var(--space-2-5);
+  border-radius: var(--radius);
+  background: hsl(var(--secondary) / var(--alpha-muted));
+  font-size: var(--text-base);
+  overflow: hidden;
+}
+
+.need-undo-bar {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: var(--stripe-width);
+  background: hsl(var(--primary));
+  transform-origin: left;
+  animation: need-undo var(--ease-linear) forwards;
+}
+
+@keyframes need-undo {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+.need-own {
+  display: grid;
+  gap: var(--space-1-5);
+}
+
+/* A label over its field. */
+.need-own label,
+.center-reason {
+  display: grid;
+  gap: var(--space-1-5);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+}
+
+.need-own textarea {
+  width: 100%;
+  min-height: var(--height-textarea-sm);
+  resize: vertical;
+}
+
+.need-own-open {
+  justify-self: start;
+}
+
+.need-footer,
+.takeover-bar {
+  justify-content: space-between;
+}
+
+.need-footer-notes {
+  display: grid;
+  gap: var(--space-0-5);
+}
+
+.need-footer kbd {
+  margin-left: var(--space-1-5);
+}
+
+.need-blocked,
+.need-status {
+  margin: 0;
+  font-size: var(--text-base);
+}
+
+.need-receipt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1);
+  margin: var(--space-2) 0;
+  padding: var(--space-1-5) var(--space-3);
+  border-left: var(--stripe-width) solid hsl(var(--border));
+  font-size: var(--text-base);
+  color: hsl(var(--muted-foreground));
+  animation: need-settle var(--duration-slow) var(--ease-out);
+}
+
+.need-receipt strong {
+  color: hsl(var(--foreground));
+}
+
+.need-receipt-answered {
+  border-left-color: hsl(var(--positive));
+}
+
+.need-receipt-answered > .icon {
+  color: hsl(var(--positive));
+}
+
+.need-receipt > .icon,
+.need-kind > .icon,
+.need-option-tag > .icon {
+  align-self: center;
+}
+
+.need-receipt-expired {
+  border-left-color: hsl(var(--warning) / var(--alpha-muted));
+}
+
+.need-receipt-meta {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes need-settle {
+  from { opacity: 0; transform: translateY(calc(-1 * var(--space-0-5))); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .need-undo-bar,
+  .need-receipt {
+    animation: none;
+  }
+}
+
+@media (--phone) {
+  .need-option {
+    min-height: var(--size-touch-row);
+  }
+
+  .need-footer > .button-primary {
+    flex: 1 1 100%;
+    min-height: var(--size-touch);
+  }
+}
+
+/* A question in the inbox: the card is the inbox card, not a card inside one. */
+.center-card-question::before {
+  background: hsl(var(--warning));
+}
+
+.center-card-question > .need {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.center-card-question > .need::before {
+  display: none;
+}
+
+.center-card-question > .need-receipt {
+  margin: 0;
+}
+
+.center-group-head {
+  list-style: none;
+  margin: var(--space-3) 0 calc(-1 * var(--space-1));
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: hsl(var(--muted-foreground));
+}
+
+/* A card filtered out stays mounted (its undo, its half-typed answer), unseen. */
+.center-cards > [hidden] {
+  display: none;
+}
+
+/* What left the queue while the page was open: folded, one line each. */
+.center-resolved {
+  margin: var(--space-2) 0 var(--space-4);
+  font-size: var(--text-base);
+  color: hsl(var(--muted-foreground));
+}
+
+.center-resolved summary {
+  cursor: pointer;
+  font-weight: var(--weight-medium);
+}
+
+.center-resolved ul {
+  margin: var(--space-1-5) 0 0;
+  padding-left: var(--space-4-5);
+}
+
+/* An inbox round's details and reason. */
+.center-card-calls label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1-5);
+  cursor: pointer;
+}
+
+.center-card-details summary {
+  cursor: pointer;
+  font-size: var(--text-base);
+  color: hsl(var(--muted-foreground));
+}
+
+.center-card-call pre {
+  max-height: var(--height-scroll-sm);
+  overflow: auto;
+  margin: var(--space-1) 0 var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: hsl(var(--secondary) / var(--alpha-muted));
+  font-size: var(--text-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.center-reason textarea {
+  width: 100%;
+}
+
+/* The chat panel's Waiting on you: each item goes to it, a question is answered in place. */
+.chat-panel-waiting ul {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.chat-panel-waiting-item {
+  justify-content: flex-start;
+  width: 100%;
+  text-align: left;
+  color: hsl(var(--foreground));
+}
+
+.chat-panel-waiting .need {
+  margin: var(--space-1) 0;
+}
+
+/* A routine run waiting on the reader, above its record. */
+.routine-waiting {
+  margin: var(--space-3) 0 var(--space-4);
+}
+
+.routine-waiting h3 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-md);
+}
+
+/* A need from elsewhere, said on the page: one at a time, out of the way. */
+.need-toast {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: var(--z-toast);
+  display: grid;
+  gap: var(--space-2);
+  width: min(var(--width-toast), calc(100vw - var(--space-8)));
+  max-height: min(70vh, var(--height-scroll-lg));
+  overflow: auto;
+  padding: var(--space-3) var(--space-3-5);
+  border: var(--border-width) solid hsl(var(--border));
+  border-left: var(--stripe-width-lg) solid hsl(var(--warning));
+  border-radius: var(--radius-lg);
+  background: hsl(var(--card));
+  box-shadow: var(--shadow-float);
+  animation: need-settle var(--duration-slow) var(--ease-out);
+}
+
+.need-toast-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+}
+
+.need-toast .need {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+.need-toast .need::before {
+  display: none;
+}
+
+.need-toast-body {
+  margin: 0;
+  font-size: var(--text-base);
+}
+
+.need-toast-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.need-offer p {
+  margin: 0;
+  font-size: var(--text-base);
+}
+
+@media (--phone) {
+  .need-toast {
+    right: var(--space-2);
+    left: var(--space-2);
+    bottom: var(--space-2);
+    width: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .need-toast {
+    animation: none;
+  }
+}
+
+/* The inbox's keys, said once under its filters. */
+.center-keys {
+  margin: var(--space-1) 0;
+}
+
+.center-keys kbd {
+  font-size: var(--text-xs);
+}
+
+/* A touch screen with no keyboard has no use for them. */
+@media (hover: none) and (pointer: coarse) {
+  .center-keys {
+    display: none;
+  }
+}
+
+/* The page's ring, rounded to the question it marks. */
+.need-question-text:focus-visible {
+  border-radius: var(--radius-sm);
+}
+
+@media (--phone) {
+  .center-card-actions .button-sm,
+  .need-undo .button-sm,
+  .need-toast-actions .button-sm,
+  .button-sm.need-own-open {
+    min-height: var(--size-touch);
+  }
+}

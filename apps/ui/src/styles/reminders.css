@@ -1,0 +1,123 @@
+/* ---------- Reminders: Schedule's rows, the form, a reminder's page, the rail's cards ---------- */
+
+.center-origin-reminder {
+  --tone: var(--warning);
+}
+
+.schedule-item-reminder .schedule-node i {
+  border-color: hsl(var(--warning));
+  border-radius: var(--radius-2xs);
+}
+
+.schedule-kind-reminder {
+  color: hsl(var(--warning));
+}
+
+.schedule-sub .reminder-origin::before {
+  content: " · ";
+}
+
+.reminder-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+}
+
+.reminder-origin a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.reminder-form {
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
+}
+
+.reminder-form .center-subhead {
+  margin-top: 0;
+}
+
+.reminder-kinds,
+.reminder-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.reminder-kind,
+.reminder-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.reminder-label {
+  font-weight: var(--weight-strong);
+}
+
+.reminder-notices ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  margin: var(--space-1-5) 0;
+}
+
+.reminder-deliver {
+  font-size: var(--text-base);
+  color: hsl(var(--muted-foreground));
+}
+
+.reminder-deliver label {
+  color: hsl(var(--foreground));
+}
+
+.reminder-deliver p {
+  margin: var(--space-1-5) 0 0;
+}
+
+.reminder-done > summary {
+  cursor: pointer;
+  margin-top: var(--space-6);
+}
+
+.reminder-fires li {
+  padding: var(--space-1-5) 0;
+  border-bottom: var(--border-width) solid var(--line-faintest);
+  font-size: var(--text-base);
+}
+
+.reminder-fires time {
+  font-weight: var(--weight-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.reminder-fire-missed .reminder-outcome,
+.reminder-fire-failed .reminder-outcome {
+  color: hsl(var(--warning));
+}
+
+.reminder-actions {
+  margin-bottom: var(--space-3);
+}
+
+.reminder-cards ul {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.reminder-card {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2-5) var(--space-3);
+  font-size: var(--text-base);
+}
+
+.reminder-card-text {
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.reminder-card-actions {
+  margin-top: var(--space-1);
+}

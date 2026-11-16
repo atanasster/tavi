@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tavi banner</title>
+<!--
+  The README's banner, drawn with the canvas's own mark, faces and Pine & Sun
+  tokens (apps/ui/src/ui/TaviMark.tsx, apps/ui/src/styles/tokens.css).
+  scripts/docs/render-assets.mjs fills the font URLs and renders it in light
+  and dark to docs/assets/brand/.
+-->
+<style>
+  @font-face { font-family: "Bricolage Grotesque Variable"; src: url("{{BRICOLAGE}}") format("woff2"); font-weight: 200 800; }
+  @font-face { font-family: "Inter Variable"; src: url("{{INTER}}") format("woff2"); font-weight: 100 900; }
+  :root {
+    --background: 120 14% 96%;
+    --card: 0 0% 100%;
+    --foreground: 157 25% 10%;
+    --muted-foreground: 152 7% 35%;
+    --primary: 163 55% 27%;
+    --sun: 39 81% 54%;
+    --sun-soft: 40 85% 88%;
+    --hairline: 152 12% 86%;
+    --mark: 163 55% 27%;
+    --mark-leaf: 150 40% 98%;
+    --mark-sun: 39 81% 54%;
+  }
+  :root[data-theme="dark"] {
+    --background: 160 24% 7%;
+    --card: 160 21% 11%;
+    --foreground: 150 21% 93%;
+    --muted-foreground: 153 10% 67%;
+    --primary: 158 56% 64%;
+    --sun: 40 89% 66%;
+    --sun-soft: 40 40% 22%;
+    --hairline: 160 14% 20%;
+  }
+  html, body { margin: 0; }
+  body {
+    width: 1280px;
+    height: 320px;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: "Inter Variable", system-ui, sans-serif;
+    overflow: hidden;
+  }
+  .banner {
+    position: relative;
+    box-sizing: border-box;
+    height: 100%;
+    padding: 0 88px;
+    display: flex;
+    align-items: center;
+    gap: 44px;
+  }
+  /* A quiet ring of the sun behind the mark: tone, not a gradient. */
+  .halo {
+    position: absolute;
+    left: 56px;
+    top: 50%;
+    width: 232px;
+    height: 232px;
+    margin-top: -116px;
+    border-radius: 50%;
+    background: hsl(var(--sun-soft) / 55%);
+  }
+  .mark { position: relative; width: 168px; height: 168px; flex: none; }
+  .mark .bubble { fill: hsl(var(--mark)); }
+  .mark .stem { fill: none; stroke: hsl(var(--mark-leaf)); stroke-width: 3.4; stroke-linecap: round; }
+  .mark .leaf { fill: hsl(var(--mark-leaf)); }
+  .mark .sun { fill: hsl(var(--mark-sun)); }
+  .words { position: relative; }
+  .wordmark {
+    font-family: "Bricolage Grotesque Variable", sans-serif;
+    font-size: 112px;
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1;
+    color: hsl(var(--primary));
+  }
+  .wordmark-i { position: relative; display: inline-block; }
+  .wordmark-i::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 0.08em;
+    width: 0.18em;
+    height: 0.18em;
+    border-radius: 50%;
+    background: hsl(var(--sun));
+    transform: translateX(-50%);
+  }
+  .tagline {
+    margin-top: 14px;
+    font-family: "Bricolage Grotesque Variable", sans-serif;
+    font-size: 34px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .surfaces {
+    margin-top: 18px;
+    display: flex;
+    gap: 10px;
+    font-size: 17px;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+  }
+  /* A glimpse of the canvas: a prompt, an answer and an approval waiting on its sun dot. */
+  .glimpse {
+    position: absolute;
+    right: 72px;
+    top: 50%;
+    width: 340px;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 15px;
+  }
+  .bubble-you {
+    align-self: flex-end;
+    padding: 9px 14px;
+    border-radius: 16px 16px 4px 16px;
+    background: hsl(var(--primary) / 14%);
+  }
+  .card {
+    padding: 12px 14px;
+    border: 1px solid hsl(var(--hairline));
+    border-radius: 14px;
+    background: hsl(var(--card));
+    box-shadow: 0 6px 18px hsl(160 30% 10% / 8%);
+  }
+  .card .title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  .card .dot { width: 10px; height: 10px; border-radius: 50%; background: hsl(var(--sun)); box-shadow: 0 0 0 5px hsl(var(--sun) / 22%); }
+  .card .detail { margin-top: 4px; color: hsl(var(--muted-foreground)); }
+  .card .actions { margin-top: 10px; display: flex; gap: 8px; }
+  .card .actions span { padding: 5px 12px; border-radius: 999px; border: 1px solid hsl(var(--hairline)); font-weight: 500; }
+  .card .actions .primary { background: hsl(var(--primary)); border-color: transparent; color: hsl(var(--card)); }
+  .surfaces span {
+    padding: 6px 14px;
+    border: 1px solid hsl(var(--hairline));
+    border-radius: 999px;
+    background: hsl(var(--card));
+  }
+</style>
+</head>
+<body>
+  <div class="banner">
+    <div class="halo"></div>
+    <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
+      <path class="bubble" d="M22 10H42C49.7 10 56 16.3 56 24V34C56 41.7 49.7 48 42 48H27L17.6 55.2C16.9 55.7 16 55.2 16 54.4V46.7C11.3 44.6 8 39.7 8 34V24C8 16.3 14.3 10 22 10Z"/>
+      <path class="stem" d="M32 41V27"/>
+      <path class="leaf" d="M32 31.5C25.6 31.5 21.8 27.8 21.8 21.6 28 21.6 32 25.3 32 31.5Z"/>
+      <path class="sun" d="M32 27.6C32 21.6 35.8 17.6 42.2 17.6 42.2 23.6 38.2 27.6 32 27.6Z"/>
+    </svg>
+    <div class="words">
+      <div class="wordmark">tav<span class="wordmark-i">ı</span></div>
+      <div class="tagline">Your local-first personal agent</div>
+      <div class="surfaces"><span>Terminal</span><span>Web canvas</span><span>Telegram · Gmail · Discord</span></div>
+    </div>
+    <div class="glimpse" aria-hidden="true">
+      <div class="bubble-you">Book a table near the office for Friday</div>
+      <div class="card">I found three places with a table at 19:30.</div>
+      <div class="card">
+        <div class="title"><span class="dot"></span>Allow the browser on opentable.com?</div>
+        <div class="detail">Fills the form, stops before you confirm</div>
+        <div class="actions"><span class="primary">Allow once</span><span>Deny</span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

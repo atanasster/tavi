@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 2,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "fixture.memoryindex",
+  "version": "1.0.0",
+  "name": "In-memory index (test fixture)",
+  "description": "A test-only memory provider with no model: it keeps an index of its own in memory, fed by sync, and ranks it by the words a record shares with the query.",
+  "entry": "index.mjs",
+  "provides": ["memory"],
+  "memory": { "abi": "tavi.memory/1", "capabilities": ["recall"], "index": "own", "receives": ["records", "conversation"] }
+}

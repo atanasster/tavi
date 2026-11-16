@@ -1,0 +1,32 @@
+{
+  "abi": "tavi.sites/1",
+  "id": "arbeitsagentur",
+  "name": "Bundesagentur für Arbeit Jobbörse",
+  "countries": [
+    "DE"
+  ],
+  "hosts": [
+    "www.arbeitsagentur.de"
+  ],
+  "kind": "jobs-board",
+  "access": {
+    "mode": "assist-only",
+    "navigate": false,
+    "watchable": false,
+    "robots": "respect",
+    "reason": "The BA's terms (§2a(3)) forbid robots, web spiders and using its interfaces to collect data.",
+    "termsUrl": "https://www.arbeitsagentur.de/nutzungsbedingungen",
+    "reviewedAt": "2026-10-17"
+  },
+  "budget": {
+    "pagesPerTask": 8,
+    "pagesPerDay": 40,
+    "minIntervalMs": 3000
+  },
+  "extract": {
+    "jsonLdTypes": [
+      "JobPosting"
+    ]
+  },
+  "notes": "You browse the Jobbörse yourself; Tavi reads a page you opened, for the chat."
+}

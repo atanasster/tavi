@@ -1,0 +1,993 @@
+[
+ {
+  "id": "b01",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "b01",
+   "url": "https://jobs.example.com/b01",
+   "title": "Senior Backend Engineer",
+   "company": "Acme",
+   "locations": [
+    "Remote - US"
+   ],
+   "descriptionText": "About the role\nYou will build payment services.\nRequirements\n- 5+ years with Go or Python\n- PostgreSQL and Kubernetes in production\n- AWS\nNice to have\n- Kafka\n- Terraform",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "USD",
+    "min": 170000,
+    "max": 200000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   }
+  },
+  "labels": {
+   "backend": "fits",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "b02",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "b02",
+   "url": "https://jobs.example.com/b02",
+   "title": "Backend Engineer (Python)",
+   "company": "Beta",
+   "locations": [
+    "Remote"
+   ],
+   "descriptionText": "About the role\nYou will build payment services.\nRequirements\n- 5+ years with Go or Python\n- PostgreSQL and Kubernetes in production\n- AWS\nNice to have\n- Kafka\n- Terraform",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "USD",
+    "min": 180000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   }
+  },
+  "labels": {
+   "backend": "maybe",
+   "nurse": "no",
+   "marketing": "maybe"
+  }
+ },
+ {
+  "id": "b03",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "b03",
+   "url": "https://jobs.example.com/b03",
+   "title": "Staff Software Engineer",
+   "company": "Gamma",
+   "locations": [
+    "San Francisco, CA"
+   ],
+   "descriptionText": "About the role\nYou will build payment services.\nRequirements\n- 5+ years with Go or Python\n- PostgreSQL and Kubernetes in production\n- AWS\nNice to have\n- Kafka\n- Terraform",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "USD",
+    "min": 220000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "workplace": "onsite"
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "b04",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "b04",
+   "url": "https://jobs.example.com/b04",
+   "title": "Senior Go Engineer",
+   "company": "Evil Corp",
+   "locations": [
+    "Remote - US"
+   ],
+   "descriptionText": "About the role\nYou will build payment services.\nRequirements\n- 5+ years with Go or Python\n- PostgreSQL and Kubernetes in production\n- AWS\nNice to have\n- Kafka\n- Terraform",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "USD",
+    "min": 200000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   }
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "b05",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "b05",
+   "url": "https://jobs.example.com/b05",
+   "title": "Backend Engineer, Payments",
+   "company": "Delta",
+   "locations": [
+    "Remote - US"
+   ],
+   "descriptionText": "About the role\nYou will build payment services.\nRequirements\n- 5+ years with Go or Python\n- PostgreSQL and Kubernetes in production\n- AWS\nNice to have\n- Kafka\n- Terraform\nYou will build our crypto exchange.",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "USD",
+    "min": 190000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   }
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "b06",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "b06",
+   "url": "https://jobs.example.com/b06",
+   "title": "Senior Backend Engineer",
+   "company": "Epsilon",
+   "locations": [
+    "Remote - US"
+   ],
+   "descriptionText": "About the role\nYou will build payment services.\nRequirements\n- 5+ years with Go or Python\n- PostgreSQL and Kubernetes in production\n- AWS\nNice to have\n- Kafka\n- Terraform",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "USD",
+    "min": 120000,
+    "max": 150000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   }
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "b07",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "b07",
+   "url": "https://jobs.example.com/b07",
+   "title": "Backend Engineer",
+   "company": "Zeta",
+   "locations": [
+    "Remote - US"
+   ],
+   "descriptionText": "About the role\nYou will build payment services.\nRequirements\n- 5+ years with Go or Python\n- PostgreSQL and Kubernetes in production\n- AWS\nNice to have\n- Kafka\n- Terraform",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture"
+  },
+  "labels": {
+   "backend": "fits",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "b08",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "b08",
+   "url": "https://jobs.example.com/b08",
+   "title": "Backend Engineer",
+   "company": "Eta",
+   "locations": [
+    "Remote - US"
+   ],
+   "descriptionText": "About the role\nYou will build payment services.\nRequirements\n- 5+ years with Go or Python\n- PostgreSQL and Kubernetes in production\n- AWS\nNice to have\n- Kafka\n- Terraform",
+   "employmentType": "Contract",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "USD",
+    "min": 180000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   }
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "b09",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "b09",
+   "url": "https://jobs.example.com/b09",
+   "title": "Senior Platform Engineer",
+   "company": "Theta",
+   "locations": [
+    "Remote, Worldwide"
+   ],
+   "descriptionText": "About the role\nYou will build payment services.\nRequirements\n- 5+ years with Go or Python\n- PostgreSQL and Kubernetes in production\n- AWS\nNice to have\n- Kafka\n- Terraform",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "USD",
+    "min": 175000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   }
+  },
+  "labels": {
+   "backend": "fits",
+   "nurse": "no",
+   "marketing": "fits"
+  }
+ },
+ {
+  "id": "b10",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "b10",
+   "url": "https://jobs.example.com/b10",
+   "title": "Software Engineer, Backend",
+   "company": "Iota",
+   "locations": [
+    "Remote - US"
+   ],
+   "descriptionText": "About the role\nYou will build payment services.\nRequirements\n- 5+ years with Go or Python\n- PostgreSQL and Kubernetes in production\n- AWS\nNice to have\n- Kafka\n- Terraform\nThe salary range is $165,000 - $185,000 per year.",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture"
+  },
+  "labels": {
+   "backend": "fits",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "b11",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "b11",
+   "url": "https://jobs.example.com/b11",
+   "title": "Senior Backend Engineer",
+   "company": "Kappa",
+   "locations": [
+    "Remote - US"
+   ],
+   "descriptionText": "About the role\nYou will build payment services.\nRequirements\n- 5+ years with Go or Python\n- PostgreSQL and Kubernetes in production\n- AWS\nNice to have\n- Kafka\n- Terraform",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "USD",
+    "min": 170000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "validThrough": "2026-10-01T00:00:00Z"
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "b12",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "b12",
+   "url": "https://jobs.example.com/b12",
+   "title": "Backend Engineer",
+   "company": "Lambda",
+   "locations": [
+    "Remote (EMEA)"
+   ],
+   "descriptionText": "About the role\nYou will build payment services.\nRequirements\n- 5+ years with Go or Python\n- PostgreSQL and Kubernetes in production\n- AWS\nNice to have\n- Kafka\n- Terraform",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "USD",
+    "min": 170000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   }
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "fits"
+  }
+ },
+ {
+  "id": "b13",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "b13",
+   "url": "https://jobs.example.com/b13",
+   "title": "Senior Backend Engineer (Go, Kubernetes)",
+   "company": "Mu",
+   "locations": [
+    "Remote - US"
+   ],
+   "descriptionText": "About the role\nYou will build payment services.\nRequirements\n- 5+ years with Go or Python\n- PostgreSQL and Kubernetes in production\n- AWS\nNice to have\n- Kafka\n- Terraform",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "USD",
+    "min": 185000,
+    "max": 210000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   }
+  },
+  "labels": {
+   "backend": "fits",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "b14",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "b14",
+   "url": "https://jobs.example.com/b14",
+   "title": "Data Engineer",
+   "company": "Nu",
+   "locations": [
+    "Remote - US"
+   ],
+   "descriptionText": "Requirements\n- Python, Spark and Airflow\n- SQL and dbt",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "USD",
+    "min": 175000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   }
+  },
+  "labels": {
+   "backend": "fits",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "n01",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "n01",
+   "url": "https://jobs.example.com/n01",
+   "title": "Pflegefachkraft (m/w/d) Intensivstation",
+   "company": "Klinik Mitte",
+   "locations": [
+    "Berlin, Germany"
+   ],
+   "descriptionText": "Ihre Aufgaben\nVersorgung der Patienten auf der Intensivstation.\nIhr Profil\n- Examen als Pflegefachkraft\n- Erfahrung in der Intensivpflege\n- Bereitschaft zum Schichtdienst\n- Sehr gute Deutschkenntnisse",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "EUR",
+    "min": 3900,
+    "period": "MONTH",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "workplace": "onsite"
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "fits",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "n02",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "n02",
+   "url": "https://jobs.example.com/n02",
+   "title": "Gesundheits- und Krankenpfleger (m/w/d)",
+   "company": "Klinikum Potsdam",
+   "locations": [
+    "Potsdam, Germany"
+   ],
+   "descriptionText": "Ihre Aufgaben\nVersorgung der Patienten auf der Intensivstation.\nIhr Profil\n- Examen als Pflegefachkraft\n- Erfahrung in der Intensivpflege\n- Bereitschaft zum Schichtdienst\n- Sehr gute Deutschkenntnisse",
+   "employmentType": "Teilzeit",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "EUR",
+    "min": 3600,
+    "period": "MONTH",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "workplace": "onsite"
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "maybe",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "n03",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "n03",
+   "url": "https://jobs.example.com/n03",
+   "title": "Registered Nurse",
+   "company": "St Example Hospital",
+   "locations": [
+    "London, UK"
+   ],
+   "descriptionText": "Requirements\n- NMC registration\n- Patient care and wound care",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "GBP",
+    "min": 35000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "workplace": "onsite"
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "n04",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "n04",
+   "url": "https://jobs.example.com/n04",
+   "title": "Pflegefachkraft Altenpflege (m/w/d)",
+   "company": "Seniorenheim Am Park",
+   "locations": [
+    "Berlin, Germany"
+   ],
+   "descriptionText": "Ihre Aufgaben\nVersorgung der Patienten auf der Intensivstation.\nIhr Profil\n- Examen als Pflegefachkraft\n- Erfahrung in der Intensivpflege\n- Bereitschaft zum Schichtdienst\n- Sehr gute Deutschkenntnisse",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "EUR",
+    "min": 3100,
+    "period": "MONTH",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "workplace": "onsite"
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "n05",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "n05",
+   "url": "https://jobs.example.com/n05",
+   "title": "Pflegefachkraft (m/w/d)",
+   "company": "Klinik Nord",
+   "locations": [],
+   "descriptionText": "Ihre Aufgaben\nVersorgung der Patienten auf der Intensivstation.\nIhr Profil\n- Examen als Pflegefachkraft\n- Erfahrung in der Intensivpflege\n- Bereitschaft zum Schichtdienst\n- Sehr gute Deutschkenntnisse",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "EUR",
+    "min": 4000,
+    "period": "MONTH",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "workplace": "onsite",
+   "places": [
+    {
+     "country": "DE",
+     "city": "Hamburg",
+     "lat": 53.5511,
+     "lon": 9.9937
+    }
+   ]
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "n06",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "n06",
+   "url": "https://jobs.example.com/n06",
+   "title": "Pflegefachkraft (m/w/d)",
+   "company": "Pflegedienst Kreuzberg",
+   "locations": [
+    "Berlin, Germany"
+   ],
+   "descriptionText": "Ihre Aufgaben\nVersorgung der Patienten auf der Intensivstation.\nIhr Profil\n- Examen als Pflegefachkraft\n- Erfahrung in der Intensivpflege\n- Bereitschaft zum Schichtdienst\n- Sehr gute Deutschkenntnisse",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "workplace": "onsite"
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "fits",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "n07",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "n07",
+   "url": "https://jobs.example.com/n07",
+   "title": "Pflegefachkraft (m/w/d) Aushilfe",
+   "company": "Klinik West",
+   "locations": [
+    "Berlin, Germany"
+   ],
+   "descriptionText": "Ihre Aufgaben\nVersorgung der Patienten auf der Intensivstation.\nIhr Profil\n- Examen als Pflegefachkraft\n- Erfahrung in der Intensivpflege\n- Bereitschaft zum Schichtdienst\n- Sehr gute Deutschkenntnisse",
+   "employmentType": "befristet",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "EUR",
+    "min": 3800,
+    "period": "MONTH",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "workplace": "onsite"
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "n08",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "n08",
+   "url": "https://jobs.example.com/n08",
+   "title": "Pflegeberatung (m/w/d) im Homeoffice",
+   "company": "Kasse Digital",
+   "locations": [
+    "Remote"
+   ],
+   "descriptionText": "Ihre Aufgaben\nVersorgung der Patienten auf der Intensivstation.\nIhr Profil\n- Examen als Pflegefachkraft\n- Erfahrung in der Intensivpflege\n- Bereitschaft zum Schichtdienst\n- Sehr gute Deutschkenntnisse",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture"
+  },
+  "labels": {
+   "backend": "maybe",
+   "nurse": "no",
+   "marketing": "maybe"
+  }
+ },
+ {
+  "id": "n09",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "n09",
+   "url": "https://jobs.example.com/n09",
+   "title": "Pflegefachkraft (m/w/d)",
+   "company": "Vivantes Example",
+   "locations": [
+    "Berlin, Germany"
+   ],
+   "descriptionText": "Ihre Aufgaben\nVersorgung der Patienten auf der Intensivstation.\nIhr Profil\n- Examen als Pflegefachkraft\n- Erfahrung in der Intensivpflege\n- Bereitschaft zum Schichtdienst\n- Sehr gute Deutschkenntnisse",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "EUR",
+    "min": 4100,
+    "period": "MONTH",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "workplace": "onsite"
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "fits",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "n10",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "n10",
+   "url": "https://jobs.example.com/n10",
+   "title": "Fachkrankenpfleger Intensivpflege (m/w/d)",
+   "company": "Klinik Spandau",
+   "locations": [],
+   "descriptionText": "Ihre Aufgaben\nVersorgung der Patienten auf der Intensivstation.\nIhr Profil\n- Examen als Pflegefachkraft\n- Erfahrung in der Intensivpflege\n- Bereitschaft zum Schichtdienst\n- Sehr gute Deutschkenntnisse",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "EUR",
+    "min": 4300,
+    "period": "MONTH",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "workplace": "onsite",
+   "places": [
+    {
+     "country": "DE",
+     "city": "Berlin",
+     "lat": 52.5355,
+     "lon": 13.1976
+    }
+   ]
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "fits",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "m01",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "m01",
+   "url": "https://jobs.example.com/m01",
+   "title": "Marketing Manager",
+   "company": "Example Ltd",
+   "locations": [
+    "Hybrid - London, UK"
+   ],
+   "descriptionText": "What you'll do\nRun our B2B campaigns.\nRequirements\n- SEO and paid search\n- HubSpot and Google Analytics\n- Budget management\nNice to have\n- Content marketing",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "GBP",
+    "min": 60000,
+    "max": 70000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "places": [
+    {
+     "country": "GB",
+     "city": "London",
+     "lat": 51.515,
+     "lon": -0.09
+    }
+   ]
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "fits"
+  }
+ },
+ {
+  "id": "m02",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "m02",
+   "url": "https://jobs.example.com/m02",
+   "title": "Senior Marketing Manager",
+   "company": "Remote Co",
+   "locations": [
+    "Remote - UK"
+   ],
+   "descriptionText": "What you'll do\nRun our B2B campaigns.\nRequirements\n- SEO and paid search\n- HubSpot and Google Analytics\n- Budget management\nNice to have\n- Content marketing",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "GBP",
+    "min": 65000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   }
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "fits"
+  }
+ },
+ {
+  "id": "m03",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "m03",
+   "url": "https://jobs.example.com/m03",
+   "title": "Marketing Manager",
+   "company": "North Ltd",
+   "locations": [
+    "Manchester, UK"
+   ],
+   "descriptionText": "What you'll do\nRun our B2B campaigns.\nRequirements\n- SEO and paid search\n- HubSpot and Google Analytics\n- Budget management\nNice to have\n- Content marketing",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "GBP",
+    "min": 58000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "workplace": "onsite"
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "maybe"
+  }
+ },
+ {
+  "id": "m04",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "m04",
+   "url": "https://jobs.example.com/m04",
+   "title": "Marketing Manager",
+   "company": "Thrift Ltd",
+   "locations": [
+    "London, UK"
+   ],
+   "descriptionText": "What you'll do\nRun our B2B campaigns.\nRequirements\n- SEO and paid search\n- HubSpot and Google Analytics\n- Budget management\nNice to have\n- Content marketing",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "GBP",
+    "min": 45000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "workplace": "onsite"
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "m05",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "m05",
+   "url": "https://jobs.example.com/m05",
+   "title": "Growth Marketing Manager",
+   "company": "Big Apple Inc",
+   "locations": [
+    "New York, NY"
+   ],
+   "descriptionText": "What you'll do\nRun our B2B campaigns.\nRequirements\n- SEO and paid search\n- HubSpot and Google Analytics\n- Budget management\nNice to have\n- Content marketing\nWe cannot sponsor visas.",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "USD",
+    "min": 120000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "workplace": "onsite"
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "m06",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "m06",
+   "url": "https://jobs.example.com/m06",
+   "title": "Marketing Manager (Freelance)",
+   "company": "Agency Ltd",
+   "locations": [
+    "London, UK"
+   ],
+   "descriptionText": "What you'll do\nRun our B2B campaigns.\nRequirements\n- SEO and paid search\n- HubSpot and Google Analytics\n- Budget management\nNice to have\n- Content marketing",
+   "employmentType": "Freelance",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "GBP",
+    "min": 70000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "workplace": "onsite"
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ },
+ {
+  "id": "m07",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "m07",
+   "url": "https://jobs.example.com/m07",
+   "title": "Content Marketing Manager",
+   "company": "Words Ltd",
+   "locations": [
+    "Hybrid - London, UK"
+   ],
+   "descriptionText": "What you'll do\nRun our B2B campaigns.\nRequirements\n- SEO and paid search\n- HubSpot and Google Analytics\n- Budget management\nNice to have\n- Content marketing",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture"
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "fits"
+  }
+ },
+ {
+  "id": "m08",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "m08",
+   "url": "https://jobs.example.com/m08",
+   "title": "Head of Marketing",
+   "company": "Euro SaaS",
+   "locations": [
+    "Remote (Europe)"
+   ],
+   "descriptionText": "What you'll do\nRun our B2B campaigns.\nRequirements\n- SEO and paid search\n- HubSpot and Google Analytics\n- Budget management\nNice to have\n- Content marketing",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "GBP",
+    "min": 80000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   }
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "fits"
+  }
+ },
+ {
+  "id": "m09",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "m09",
+   "url": "https://jobs.example.com/m09",
+   "title": "Marketing Manager",
+   "company": "Old Post Ltd",
+   "locations": [
+    "London, UK"
+   ],
+   "descriptionText": "What you'll do\nRun our B2B campaigns.\nRequirements\n- SEO and paid search\n- HubSpot and Google Analytics\n- Budget management\nNice to have\n- Content marketing",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-09-01T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "GBP",
+    "min": 60000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   },
+   "workplace": "onsite"
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "fits"
+  }
+ },
+ {
+  "id": "m10",
+  "raw": {
+   "source": "fixture",
+   "sourceRef": "m10",
+   "url": "https://jobs.example.com/m10",
+   "title": "Marketing Manager",
+   "company": "US Remote Inc",
+   "locations": [
+    "Remote - US"
+   ],
+   "descriptionText": "What you'll do\nRun our B2B campaigns.\nRequirements\n- SEO and paid search\n- HubSpot and Google Analytics\n- Budget management\nNice to have\n- Content marketing\nWe are unable to sponsor visas.",
+   "employmentType": "FULL_TIME",
+   "postedAt": "2026-10-14T09:00:00Z",
+   "attribution": "fixture",
+   "salary": {
+    "currency": "USD",
+    "min": 130000,
+    "period": "YEAR",
+    "basis": "gross",
+    "origin": "stated"
+   }
+  },
+  "labels": {
+   "backend": "no",
+   "nurse": "no",
+   "marketing": "no"
+  }
+ }
+]

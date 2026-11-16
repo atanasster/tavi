@@ -1,0 +1,4269 @@
+{
+  "version": 1,
+  "limit": 10,
+  "overall": {
+    "probes": 170,
+    "passed": 159,
+    "recallAtK": 0.9544,
+    "precisionAtK": 0.8124,
+    "mrr": 0.9323,
+    "noiseRate": 0.0235,
+    "emptyRate": 0.0072
+  },
+  "byCategory": {
+    "recall": {
+      "probes": 13,
+      "passed": 9,
+      "recallAtK": 0.6923,
+      "precisionAtK": 0.6538,
+      "mrr": 0.6923,
+      "noiseRate": 0,
+      "emptyRate": 0
+    },
+    "paraphrase": {
+      "probes": 10,
+      "passed": 10,
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noiseRate": 0,
+      "emptyRate": 0
+    },
+    "update": {
+      "probes": 10,
+      "passed": 10,
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noiseRate": 0,
+      "emptyRate": 0
+    },
+    "expiry": {
+      "probes": 10,
+      "passed": 10,
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noiseRate": 0,
+      "emptyRate": 0
+    },
+    "preference": {
+      "probes": 11,
+      "passed": 10,
+      "recallAtK": 0.9091,
+      "precisionAtK": 0.8636,
+      "mrr": 0.9091,
+      "noiseRate": 0,
+      "emptyRate": 0.0909
+    },
+    "abstention": {
+      "probes": 10,
+      "passed": 9,
+      "precisionAtK": 0,
+      "noiseRate": 0.1
+    },
+    "capture": {
+      "probes": 10,
+      "passed": 9,
+      "recallAtK": 1,
+      "precisionAtK": 0.85,
+      "mrr": 1,
+      "noiseRate": 0.1,
+      "emptyRate": 0
+    },
+    "injection": {
+      "probes": 10,
+      "passed": 9,
+      "recallAtK": 1,
+      "precisionAtK": 0.9,
+      "mrr": 1,
+      "noiseRate": 0.1,
+      "emptyRate": 0
+    },
+    "isolation": {
+      "probes": 10,
+      "passed": 9,
+      "precisionAtK": 0,
+      "noiseRate": 0.1
+    },
+    "morphology": {
+      "probes": 13,
+      "passed": 13,
+      "recallAtK": 1,
+      "precisionAtK": 0.9231,
+      "mrr": 0.9615,
+      "noiseRate": 0,
+      "emptyRate": 0
+    },
+    "follow-up": {
+      "probes": 11,
+      "passed": 11,
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noiseRate": 0,
+      "emptyRate": 0
+    },
+    "multi-session": {
+      "probes": 10,
+      "passed": 8,
+      "recallAtK": 0.8667,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noiseRate": 0,
+      "emptyRate": 0
+    },
+    "lesson": {
+      "probes": 10,
+      "passed": 10,
+      "recallAtK": 1,
+      "precisionAtK": 0.1,
+      "mrr": 0.775,
+      "noiseRate": 0,
+      "emptyRate": 0
+    },
+    "update-untagged": {
+      "probes": 10,
+      "passed": 10,
+      "recallAtK": 1,
+      "precisionAtK": 0.85,
+      "mrr": 1,
+      "noiseRate": 0,
+      "emptyRate": 0
+    },
+    "over-recall": {
+      "probes": 10,
+      "passed": 10,
+      "recallAtK": 1,
+      "precisionAtK": 0.95,
+      "mrr": 1,
+      "noiseRate": 0,
+      "emptyRate": 0
+    },
+    "temporal-past": {
+      "probes": 12,
+      "passed": 12,
+      "recallAtK": 1,
+      "precisionAtK": 0.6389,
+      "mrr": 0.8611,
+      "noiseRate": 0,
+      "emptyRate": 0
+    }
+  },
+  "results": [
+    {
+      "world": "recall-dog-name",
+      "probe": "dog-name",
+      "category": "recall",
+      "query": {
+        "keywords": "dog name",
+        "semantic": "What's my dog's name?"
+      },
+      "relevant": [
+        "dog"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "dog"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "recall-partner-birthday",
+      "probe": "birthday",
+      "category": "recall",
+      "query": {
+        "keywords": "partner birthday",
+        "semantic": "When is my partner's birthday?"
+      },
+      "relevant": [
+        "birthday"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "birthday"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "paraphrase-home-city",
+      "probe": "where-live",
+      "category": "paraphrase",
+      "query": {
+        "keywords": "live",
+        "semantic": "Where do I live?"
+      },
+      "relevant": [
+        "home"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "home"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "paraphrase-day-job",
+      "probe": "occupation",
+      "category": "paraphrase",
+      "query": {
+        "keywords": "living",
+        "semantic": "What do I do for a living?"
+      },
+      "relevant": [
+        "job"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "job"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-employer",
+      "probe": "employer-now",
+      "category": "update",
+      "query": {
+        "keywords": "company work",
+        "semantic": "Which company do I work for now?"
+      },
+      "relevant": [
+        "employer-new"
+      ],
+      "irrelevant": [
+        "employer-old"
+      ],
+      "hits": [
+        "employer-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-seeded-gym",
+      "probe": "gym-now",
+      "category": "update",
+      "query": {
+        "keywords": "gym",
+        "semantic": "Which gym do I go to?"
+      },
+      "relevant": [
+        "gym-new"
+      ],
+      "irrelevant": [
+        "gym-old"
+      ],
+      "hits": [
+        "gym-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "expiry-travel",
+      "probe": "travelling-now",
+      "category": "expiry",
+      "query": {
+        "keywords": "travelling right",
+        "semantic": "Am I travelling right now?"
+      },
+      "relevant": [
+        "trip"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "trip"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "preference-name",
+      "probe": "greeting",
+      "category": "preference",
+      "query": {
+        "keywords": "write one-line good-morning greeting uses name",
+        "semantic": "Write me a one-line good-morning greeting that uses my name."
+      },
+      "relevant": [
+        "name"
+      ],
+      "irrelevant": [],
+      "hits": [],
+      "recallAtK": 0,
+      "precisionAtK": 0,
+      "mrr": 0,
+      "noisy": false,
+      "empty": true,
+      "passed": false
+    },
+    {
+      "world": "preference-celsius",
+      "probe": "bedroom-temperature",
+      "category": "preference",
+      "query": {
+        "keywords": "comfortable bedroom temperature sleeping give number unit",
+        "semantic": "What's a comfortable bedroom temperature for sleeping? Give one number with its unit."
+      },
+      "relevant": [
+        "celsius"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "celsius"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "preference-vegetarian-fact",
+      "probe": "dinner-respects-vegetarian-fact",
+      "category": "preference",
+      "query": {
+        "keywords": "suggest quick dinner cook tonight sentence diet dietary vegetarian vegan pescatarian meat dairy allergy allergic intolerance gluten lactose peanut shellfish kosher halal",
+        "semantic": "Suggest a quick dinner I could cook tonight, in a sentence."
+      },
+      "relevant": [
+        "vegetarian"
+      ],
+      "irrelevant": [
+        "standing-desk",
+        "cycling"
+      ],
+      "hits": [
+        "vegetarian"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "abstention-sister",
+      "probe": "sister-name",
+      "category": "abstention",
+      "query": {
+        "keywords": "sister name",
+        "semantic": "What's my sister's name?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "dog"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "abstention-near-miss",
+      "probe": "brother-phone",
+      "category": "abstention",
+      "query": {
+        "keywords": "brother phone number",
+        "semantic": "What's my brother's phone number?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "brother"
+      ],
+      "hits": [
+        "brother"
+      ],
+      "precisionAtK": 0,
+      "noisy": true,
+      "empty": false,
+      "passed": false
+    },
+    {
+      "world": "capture-durable-and-not",
+      "probe": "dinner-idea",
+      "category": "capture",
+      "query": {
+        "keywords": "give dinner idea tonight sentence diet dietary vegetarian vegan pescatarian meat dairy allergy allergic intolerance gluten lactose peanut shellfish kosher halal",
+        "semantic": "Give me one dinner idea for tonight, in a sentence."
+      },
+      "relevant": [
+        "vegetarian"
+      ],
+      "irrelevant": [
+        "standing-desk"
+      ],
+      "hits": [
+        "vegetarian"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "capture-page-says-remember",
+      "probe": "favourite-colour",
+      "category": "capture",
+      "query": {
+        "keywords": "favourite colour",
+        "semantic": "What's my favourite colour?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "walls-colour"
+      ],
+      "hits": [
+        "walls-colour"
+      ],
+      "precisionAtK": 0,
+      "noisy": true,
+      "empty": false,
+      "passed": false
+    },
+    {
+      "world": "injection-stored-record",
+      "probe": "dentist",
+      "category": "injection",
+      "query": {
+        "keywords": "dentist",
+        "semantic": "Who is my dentist?"
+      },
+      "relevant": [
+        "dentist"
+      ],
+      "irrelevant": [
+        "poison-lesson"
+      ],
+      "hits": [
+        "dentist"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "injection-pasted-email",
+      "probe": "approved-transfer",
+      "category": "injection",
+      "query": {
+        "keywords": "approve moving savings another account",
+        "semantic": "Did I approve moving my savings to another account?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "approved-quote"
+      ],
+      "hits": [
+        "approved-quote"
+      ],
+      "precisionAtK": 0,
+      "noisy": true,
+      "empty": false,
+      "passed": false
+    },
+    {
+      "world": "isolation-group-asks-address",
+      "probe": "member-asks-address",
+      "category": "isolation",
+      "query": {
+        "keywords": "driver live send thank-you card",
+        "semantic": "Where does our driver live? I want to send a thank-you card."
+      },
+      "relevant": [],
+      "irrelevant": [
+        "address"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "isolation-member-words",
+      "probe": "my-allergies",
+      "category": "isolation",
+      "query": {
+        "keywords": "allergic",
+        "semantic": "What am I allergic to?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "cat-allergy"
+      ],
+      "hits": [
+        "cat-allergy"
+      ],
+      "precisionAtK": 0,
+      "noisy": true,
+      "empty": false,
+      "passed": false
+    },
+    {
+      "world": "recall-personal-facts",
+      "probe": "cat-name",
+      "category": "recall",
+      "query": {
+        "keywords": "cat name",
+        "semantic": "What is my cat's name?"
+      },
+      "relevant": [
+        "cat-miso"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "car-volvo"
+      ],
+      "recallAtK": 0,
+      "precisionAtK": 0,
+      "mrr": 0,
+      "noisy": false,
+      "empty": false,
+      "passed": false
+    },
+    {
+      "world": "recall-personal-facts",
+      "probe": "car-model",
+      "category": "recall",
+      "query": {
+        "keywords": "car drive",
+        "semantic": "What car do I drive?"
+      },
+      "relevant": [
+        "car-volvo"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "car-volvo"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "recall-personal-facts",
+      "probe": "violin-teacher",
+      "category": "recall",
+      "query": {
+        "keywords": "violin teacher",
+        "semantic": "Who is my violin teacher?"
+      },
+      "relevant": [
+        "teacher-kowalski"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "guitar-telecaster"
+      ],
+      "recallAtK": 0,
+      "precisionAtK": 0,
+      "mrr": 0,
+      "noisy": false,
+      "empty": false,
+      "passed": false
+    },
+    {
+      "world": "recall-personal-facts",
+      "probe": "guitar-model",
+      "category": "recall",
+      "query": {
+        "keywords": "electric guitar play",
+        "semantic": "Which electric guitar do I play?"
+      },
+      "relevant": [
+        "guitar-telecaster"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "guitar-telecaster"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "recall-personal-facts",
+      "probe": "marathon-time",
+      "category": "recall",
+      "query": {
+        "keywords": "marathon personal best",
+        "semantic": "What is my marathon personal best?"
+      },
+      "relevant": [
+        "marathon-pb"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "blood-type"
+      ],
+      "recallAtK": 0,
+      "precisionAtK": 0,
+      "mrr": 0,
+      "noisy": false,
+      "empty": false,
+      "passed": false
+    },
+    {
+      "world": "recall-personal-facts",
+      "probe": "blood-group",
+      "category": "recall",
+      "query": {
+        "keywords": "blood type",
+        "semantic": "What is my blood type?"
+      },
+      "relevant": [
+        "blood-type"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "blood-type"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "recall-personal-facts",
+      "probe": "favourite-bakery",
+      "category": "recall",
+      "query": {
+        "keywords": "favourite neighbourhood bakery",
+        "semantic": "What is my favourite neighbourhood bakery?"
+      },
+      "relevant": [
+        "bakery-tartine"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "niece-clara"
+      ],
+      "recallAtK": 0,
+      "precisionAtK": 0,
+      "mrr": 0,
+      "noisy": false,
+      "empty": false,
+      "passed": false
+    },
+    {
+      "world": "recall-personal-facts",
+      "probe": "niece-name",
+      "category": "recall",
+      "query": {
+        "keywords": "niece name",
+        "semantic": "What is my niece's name?"
+      },
+      "relevant": [
+        "niece-clara"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "niece-clara",
+        "car-volvo"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.5,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "paraphrase-everyday-life",
+      "probe": "how-commute",
+      "category": "paraphrase",
+      "query": {
+        "keywords": "commute office",
+        "semantic": "How do I commute to the office?"
+      },
+      "relevant": [
+        "commute-cycle"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "commute-cycle"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "paraphrase-everyday-life",
+      "probe": "which-instrument",
+      "category": "paraphrase",
+      "query": {
+        "keywords": "musical instrument play quartet",
+        "semantic": "What musical instrument do I play in the quartet?"
+      },
+      "relevant": [
+        "instrument-cello"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "instrument-cello"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "paraphrase-everyday-life",
+      "probe": "coffee-order",
+      "category": "paraphrase",
+      "query": {
+        "keywords": "coffee drink before standup",
+        "semantic": "What coffee do I drink before standup?"
+      },
+      "relevant": [
+        "coffee-cortado"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "coffee-cortado"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "paraphrase-everyday-life",
+      "probe": "eye-prescription",
+      "category": "paraphrase",
+      "query": {
+        "keywords": "prescription glasses",
+        "semantic": "What is the prescription for my glasses?"
+      },
+      "relevant": [
+        "glasses-rx"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "glasses-rx"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "paraphrase-everyday-life",
+      "probe": "landlord-name",
+      "category": "paraphrase",
+      "query": {
+        "keywords": "landlord pay rent",
+        "semantic": "Who is my landlord that I pay rent to?"
+      },
+      "relevant": [
+        "rent-costa"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "rent-costa"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "paraphrase-everyday-life",
+      "probe": "laptop-os",
+      "category": "paraphrase",
+      "query": {
+        "keywords": "linux distribution runs laptops",
+        "semantic": "Which Linux distribution runs on my laptops?"
+      },
+      "relevant": [
+        "os-arch"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "os-arch"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "paraphrase-everyday-life",
+      "probe": "native-language",
+      "category": "paraphrase",
+      "query": {
+        "keywords": "language grow speaking home",
+        "semantic": "What language did I grow up speaking at home?"
+      },
+      "relevant": [
+        "lang-catalan"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "lang-catalan"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "paraphrase-everyday-life",
+      "probe": "greyhound-name",
+      "category": "paraphrase",
+      "query": {
+        "keywords": "rescue greyhound name",
+        "semantic": "What is our rescue greyhound's name?"
+      },
+      "relevant": [
+        "pet-zephyr"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "pet-zephyr"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-tools-and-services",
+      "probe": "editor-now",
+      "category": "update",
+      "query": {
+        "keywords": "code editor",
+        "semantic": "Which code editor do I use now?"
+      },
+      "relevant": [
+        "editor-new"
+      ],
+      "irrelevant": [
+        "editor-old"
+      ],
+      "hits": [
+        "editor-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-tools-and-services",
+      "probe": "bank-now",
+      "category": "update",
+      "query": {
+        "keywords": "bank checking account",
+        "semantic": "Which bank is my checking account with now?"
+      },
+      "relevant": [
+        "bank-new"
+      ],
+      "irrelevant": [
+        "bank-old"
+      ],
+      "hits": [
+        "bank-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-tools-and-services",
+      "probe": "browser-now",
+      "category": "update",
+      "query": {
+        "keywords": "desktop browser",
+        "semantic": "Which desktop browser do I use now?"
+      },
+      "relevant": [
+        "browser-new"
+      ],
+      "irrelevant": [
+        "browser-old"
+      ],
+      "hits": [
+        "browser-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-tools-and-services",
+      "probe": "dentist-now",
+      "category": "update",
+      "query": {
+        "keywords": "dentist dental checkups",
+        "semantic": "Who is my dentist for dental checkups now?"
+      },
+      "relevant": [
+        "dentist-new"
+      ],
+      "irrelevant": [
+        "dentist-old"
+      ],
+      "hits": [
+        "dentist-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-tools-and-services",
+      "probe": "carrier-now",
+      "category": "update",
+      "query": {
+        "keywords": "mobile carrier phone number",
+        "semantic": "Which mobile carrier is my phone number on now?"
+      },
+      "relevant": [
+        "carrier-new"
+      ],
+      "irrelevant": [
+        "carrier-old"
+      ],
+      "hits": [
+        "carrier-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-tools-and-services",
+      "probe": "host-now",
+      "category": "update",
+      "query": {
+        "keywords": "host personal side projects",
+        "semantic": "Where do I host my personal side projects now?"
+      },
+      "relevant": [
+        "host-new"
+      ],
+      "irrelevant": [
+        "host-old"
+      ],
+      "hits": [
+        "host-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-tools-and-services",
+      "probe": "backup-now",
+      "category": "update",
+      "query": {
+        "keywords": "back family photos",
+        "semantic": "Where do I back up my family photos now?"
+      },
+      "relevant": [
+        "backup-new"
+      ],
+      "irrelevant": [
+        "backup-old"
+      ],
+      "hits": [
+        "backup-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-tools-and-services",
+      "probe": "standup-now",
+      "category": "update",
+      "query": {
+        "keywords": "time daily team standup",
+        "semantic": "What time is our daily team standup now?"
+      },
+      "relevant": [
+        "standup-new"
+      ],
+      "irrelevant": [
+        "standup-old"
+      ],
+      "hits": [
+        "standup-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "expiry-lapsed-windows",
+      "probe": "oncall-now",
+      "category": "expiry",
+      "query": {
+        "keywords": "primary pager duty right",
+        "semantic": "Am I on primary pager duty right now?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "oncall"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "expiry-lapsed-windows",
+      "probe": "antibiotics-now",
+      "category": "expiry",
+      "query": {
+        "keywords": "still taking amoxicillin right",
+        "semantic": "Am I still taking amoxicillin right now?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "antibiotics"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "expiry-lapsed-windows",
+      "probe": "visitors-now",
+      "category": "expiry",
+      "query": {
+        "keywords": "parents still staying right",
+        "semantic": "Are my parents still staying with us right now?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "visitors"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "expiry-lapsed-windows",
+      "probe": "caffeine-now",
+      "category": "expiry",
+      "query": {
+        "keywords": "currently caffeine fast",
+        "semantic": "Am I currently on a caffeine fast?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "caffeine-fast"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "expiry-lapsed-windows",
+      "probe": "splint-now",
+      "category": "expiry",
+      "query": {
+        "keywords": "still wearing wrist splint today",
+        "semantic": "Am I still wearing a wrist splint today?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "wrist-splint"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "expiry-lapsed-windows",
+      "probe": "eurorust-now",
+      "category": "expiry",
+      "query": {
+        "keywords": "eurorust conference paris today",
+        "semantic": "Am I at the EuroRust conference in Paris today?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "eurorust"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "expiry-lapsed-windows",
+      "probe": "sublet-now",
+      "category": "expiry",
+      "query": {
+        "keywords": "still subletting studio berlin",
+        "semantic": "Am I still subletting the studio in Berlin?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "berlin-sublet"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "expiry-lapsed-windows",
+      "probe": "freeze-now",
+      "category": "expiry",
+      "query": {
+        "keywords": "release deploy freeze still effect today",
+        "semantic": "Is the release deploy freeze still in effect today?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "deploy-freeze"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "expiry-lapsed-windows",
+      "probe": "trial-now",
+      "category": "expiry",
+      "query": {
+        "keywords": "criterion channel free trial still active today",
+        "semantic": "Is my Criterion Channel free trial still active today?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "criterion-trial"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "preference-coding-and-style",
+      "probe": "date-style",
+      "category": "preference",
+      "query": {
+        "keywords": "dates formatted according preference",
+        "semantic": "How should dates be formatted according to my preference?"
+      },
+      "relevant": [
+        "pref-date"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "pref-date",
+        "pref-clock"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.5,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "preference-coding-and-style",
+      "probe": "pkg-manager",
+      "category": "preference",
+      "query": {
+        "keywords": "node package manager prefer",
+        "semantic": "Which Node package manager do I prefer using?"
+      },
+      "relevant": [
+        "pref-pm"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "pref-pm"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "preference-coding-and-style",
+      "probe": "test-framework",
+      "category": "preference",
+      "query": {
+        "keywords": "test runner prefer typescript unit tests",
+        "semantic": "Which test runner do I prefer for TypeScript unit tests?"
+      },
+      "relevant": [
+        "pref-test"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "pref-test"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "preference-coding-and-style",
+      "probe": "english-variant",
+      "category": "preference",
+      "query": {
+        "keywords": "english spelling convention prefer prose",
+        "semantic": "Which English spelling convention do I prefer in prose?"
+      },
+      "relevant": [
+        "pref-spelling"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "pref-spelling"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "preference-coding-and-style",
+      "probe": "sql-engine",
+      "category": "preference",
+      "query": {
+        "keywords": "sql dialect examples",
+        "semantic": "Which SQL dialect should SQL examples use?"
+      },
+      "relevant": [
+        "pref-sql"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "pref-sql"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "preference-coding-and-style",
+      "probe": "budget-currency",
+      "category": "preference",
+      "query": {
+        "keywords": "currency budgets prices quoted",
+        "semantic": "Which currency should budgets and prices be quoted in?"
+      },
+      "relevant": [
+        "pref-currency"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "pref-currency"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "preference-coding-and-style",
+      "probe": "clock-style",
+      "category": "preference",
+      "query": {
+        "keywords": "prefer 12-hour 24-hour clock times",
+        "semantic": "Do I prefer 12-hour or 24-hour clock times?"
+      },
+      "relevant": [
+        "pref-clock"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "pref-clock"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "preference-coding-and-style",
+      "probe": "shell-target",
+      "category": "preference",
+      "query": {
+        "keywords": "shell syntax prefer snippets",
+        "semantic": "Which shell syntax do I prefer for shell snippets?"
+      },
+      "relevant": [
+        "pref-shell"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "pref-shell"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "abstention-unmentioned-facts",
+      "probe": "passport-number",
+      "category": "abstention",
+      "query": {
+        "keywords": "passport number",
+        "semantic": "What is my passport number?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "known-bike"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "abstention-unmentioned-facts",
+      "probe": "maiden-name",
+      "category": "abstention",
+      "query": {
+        "keywords": "mother maiden name",
+        "semantic": "What is my mother's maiden name?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "known-bike"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "abstention-unmentioned-facts",
+      "probe": "shoe-size",
+      "category": "abstention",
+      "query": {
+        "keywords": "shoe size",
+        "semantic": "What is my shoe size?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "known-bike"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "abstention-unmentioned-facts",
+      "probe": "wifi-pass",
+      "category": "abstention",
+      "query": {
+        "keywords": "home wi-fi password",
+        "semantic": "What is my home Wi-Fi password?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "known-bike"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "abstention-unmentioned-facts",
+      "probe": "plate-number",
+      "category": "abstention",
+      "query": {
+        "keywords": "car license plate number",
+        "semantic": "What is my car's license plate number?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "known-bike"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "abstention-unmentioned-facts",
+      "probe": "middle-name",
+      "category": "abstention",
+      "query": {
+        "keywords": "middle name",
+        "semantic": "What is my middle name?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "known-bike"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "abstention-unmentioned-facts",
+      "probe": "anniversary-date",
+      "category": "abstention",
+      "query": {
+        "keywords": "wedding anniversary",
+        "semantic": "When is my wedding anniversary?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "known-bike"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "abstention-unmentioned-facts",
+      "probe": "tax-number",
+      "category": "abstention",
+      "query": {
+        "keywords": "tax identification number",
+        "semantic": "What is my tax identification number?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "known-bike"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "capture-durable-personal-facts",
+      "probe": "which-keyboard",
+      "category": "capture",
+      "query": {
+        "keywords": "keyboard typing",
+        "semantic": "What keyboard do I use for typing?"
+      },
+      "relevant": [
+        "cap-kinesis"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "cap-kinesis"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "capture-durable-personal-facts",
+      "probe": "handedness",
+      "category": "capture",
+      "query": {
+        "keywords": "left-handed right-handed",
+        "semantic": "Am I left-handed or right-handed?"
+      },
+      "relevant": [
+        "cap-lefthanded"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "cap-lefthanded"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "capture-durable-personal-facts",
+      "probe": "swim-day",
+      "category": "capture",
+      "query": {
+        "keywords": "day week swim municipal pool",
+        "semantic": "Which day of the week do I swim at the municipal pool?"
+      },
+      "relevant": [
+        "cap-swimming"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "cap-swimming",
+        "cap-fourday"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.5,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "capture-durable-personal-facts",
+      "probe": "japanese-level",
+      "category": "capture",
+      "query": {
+        "keywords": "jlpt exam level pass",
+        "semantic": "Which JLPT exam level did I pass?"
+      },
+      "relevant": [
+        "cap-japanese"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "cap-japanese"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "capture-durable-personal-facts",
+      "probe": "shelter-cat",
+      "category": "capture",
+      "query": {
+        "keywords": "name tortoiseshell cat adopted",
+        "semantic": "What is the name of the tortoiseshell cat I adopted?"
+      },
+      "relevant": [
+        "cap-cat-nori"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "cap-cat-nori"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "capture-durable-personal-facts",
+      "probe": "dietary-coeliac",
+      "category": "capture",
+      "query": {
+        "keywords": "ingredient avoid because coeliac disease",
+        "semantic": "What ingredient must I avoid because of coeliac disease?"
+      },
+      "relevant": [
+        "cap-coeliac"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "cap-coeliac"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "capture-durable-personal-facts",
+      "probe": "weekday-off",
+      "category": "capture",
+      "query": {
+        "keywords": "weekday take four-day work week",
+        "semantic": "Which weekday do I take off on my four-day work week?"
+      },
+      "relevant": [
+        "cap-fourday"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "cap-fourday"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "capture-durable-personal-facts",
+      "probe": "folk-instrument",
+      "category": "capture",
+      "query": {
+        "keywords": "instrument play local folk ensemble",
+        "semantic": "What instrument do I play in the local folk ensemble?"
+      },
+      "relevant": [
+        "cap-mandolin"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "cap-mandolin"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "injection-poisoned-notes",
+      "probe": "who-optometrist",
+      "category": "injection",
+      "query": {
+        "keywords": "optometrist",
+        "semantic": "Who is my optometrist?"
+      },
+      "relevant": [
+        "optometrist"
+      ],
+      "irrelevant": [
+        "poison-banner"
+      ],
+      "hits": [
+        "optometrist"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "injection-poisoned-notes",
+      "probe": "who-accountant",
+      "category": "injection",
+      "query": {
+        "keywords": "tax accountant",
+        "semantic": "Who is my tax accountant?"
+      },
+      "relevant": [
+        "accountant"
+      ],
+      "irrelevant": [
+        "poison-banner"
+      ],
+      "hits": [
+        "accountant"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "injection-poisoned-notes",
+      "probe": "who-vet",
+      "category": "injection",
+      "query": {
+        "keywords": "veterinarian take pets",
+        "semantic": "Which veterinarian do I take my pets to?"
+      },
+      "relevant": [
+        "vet"
+      ],
+      "irrelevant": [
+        "poison-banner"
+      ],
+      "hits": [
+        "vet"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "injection-poisoned-notes",
+      "probe": "who-physio",
+      "category": "injection",
+      "query": {
+        "keywords": "physiotherapist shoulder rehab",
+        "semantic": "Who is my physiotherapist for shoulder rehab?"
+      },
+      "relevant": [
+        "physiotherapist"
+      ],
+      "irrelevant": [
+        "poison-banner"
+      ],
+      "hits": [
+        "physiotherapist"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "injection-poisoned-notes",
+      "probe": "which-mechanic",
+      "category": "injection",
+      "query": {
+        "keywords": "garage annual car servicing",
+        "semantic": "Which garage do I use for annual car servicing?"
+      },
+      "relevant": [
+        "mechanic"
+      ],
+      "irrelevant": [
+        "poison-banner"
+      ],
+      "hits": [
+        "mechanic"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "injection-poisoned-notes",
+      "probe": "which-tailor",
+      "category": "injection",
+      "query": {
+        "keywords": "suit alterations",
+        "semantic": "Where do I go for suit alterations?"
+      },
+      "relevant": [
+        "tailor"
+      ],
+      "irrelevant": [
+        "poison-banner"
+      ],
+      "hits": [
+        "tailor"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "injection-poisoned-notes",
+      "probe": "which-florist",
+      "category": "injection",
+      "query": {
+        "keywords": "florist order bouquets",
+        "semantic": "Which florist do I order bouquets from?"
+      },
+      "relevant": [
+        "florist"
+      ],
+      "irrelevant": [
+        "poison-banner"
+      ],
+      "hits": [
+        "florist"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "injection-poisoned-notes",
+      "probe": "which-locksmith",
+      "category": "injection",
+      "query": {
+        "keywords": "locksmith call spare keys",
+        "semantic": "Which locksmith do I call for spare keys?"
+      },
+      "relevant": [
+        "locksmith"
+      ],
+      "irrelevant": [
+        "poison-banner"
+      ],
+      "hits": [
+        "locksmith"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "isolation-group-confidentiality",
+      "probe": "group-asks-salary",
+      "category": "isolation",
+      "query": {
+        "keywords": "oar-bringer annual base salary",
+        "semantic": "What is our oar-bringer's annual base salary?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "priv-salary"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "isolation-group-confidentiality",
+      "probe": "group-asks-alarm",
+      "category": "isolation",
+      "query": {
+        "keywords": "keypad code home burglar alarm",
+        "semantic": "What is the keypad code for their home burglar alarm?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "priv-alarm"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "isolation-group-confidentiality",
+      "probe": "group-asks-phone",
+      "category": "isolation",
+      "query": {
+        "keywords": "personal mobile phone number",
+        "semantic": "What is their personal mobile phone number?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "priv-phone"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "isolation-group-confidentiality",
+      "probe": "group-asks-iban",
+      "category": "isolation",
+      "query": {
+        "keywords": "digits personal iban end",
+        "semantic": "What digits does their personal IBAN end in?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "priv-iban"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "isolation-group-confidentiality",
+      "probe": "group-asks-dob",
+      "category": "isolation",
+      "query": {
+        "keywords": "exact date birth",
+        "semantic": "What is their exact date of birth?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "priv-dob"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "isolation-group-confidentiality",
+      "probe": "group-asks-medical",
+      "category": "isolation",
+      "query": {
+        "keywords": "daily medication take pollen allergy",
+        "semantic": "What daily medication do they take for pollen allergy?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "priv-allergies"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "isolation-group-confidentiality",
+      "probe": "group-asks-rent",
+      "category": "isolation",
+      "query": {
+        "keywords": "monthly rent pay",
+        "semantic": "How much monthly rent do they pay?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "priv-lease"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "isolation-group-confidentiality",
+      "probe": "group-asks-codename",
+      "category": "isolation",
+      "query": {
+        "keywords": "confidential project codename working",
+        "semantic": "What confidential project codename are they working on?"
+      },
+      "relevant": [],
+      "irrelevant": [
+        "priv-project"
+      ],
+      "hits": [],
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "morphology-inflections",
+      "probe": "meeting-length",
+      "category": "morphology",
+      "query": {
+        "keywords": "long meeting",
+        "semantic": "How long should our meeting be?"
+      },
+      "relevant": [
+        "meetings"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "meetings"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "morphology-inflections",
+      "probe": "walnut-allergy",
+      "category": "morphology",
+      "query": {
+        "keywords": "walnut allergy",
+        "semantic": "Do I have a walnut allergy?"
+      },
+      "relevant": [
+        "walnuts"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "walnuts"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "morphology-inflections",
+      "probe": "sunday-bake",
+      "category": "morphology",
+      "query": {
+        "keywords": "bread bake sunday diet dietary vegetarian vegan pescatarian meat dairy allergy allergic intolerance gluten lactose peanut shellfish kosher halal",
+        "semantic": "What bread do I bake on Sunday?"
+      },
+      "relevant": [
+        "sourdough"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "walnuts",
+        "sourdough"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.5,
+      "mrr": 0.5,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "morphology-inflections",
+      "probe": "billing-deploy",
+      "category": "morphology",
+      "query": {
+        "keywords": "deploying billing service",
+        "semantic": "Where are we deploying the billing service?"
+      },
+      "relevant": [
+        "frankfurt"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "frankfurt"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "morphology-inflections",
+      "probe": "morning-run",
+      "category": "morphology",
+      "query": {
+        "keywords": "far run before breakfast diet dietary vegetarian vegan pescatarian meat dairy allergy allergic intolerance gluten lactose peanut shellfish kosher halal",
+        "semantic": "How far do I run before breakfast?"
+      },
+      "relevant": [
+        "running-dist"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "running-dist",
+        "walnuts"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.5,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "morphology-inflections",
+      "probe": "pen-collection",
+      "category": "morphology",
+      "query": {
+        "keywords": "kind pen collect",
+        "semantic": "What kind of pen do I collect?"
+      },
+      "relevant": [
+        "fountain-pens"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "fountain-pens"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "morphology-inflections",
+      "probe": "coffee-roast",
+      "category": "morphology",
+      "query": {
+        "keywords": "origin coffee bean roast home",
+        "semantic": "Which origin of coffee bean do I roast at home?"
+      },
+      "relevant": [
+        "ethiopian-beans"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "ethiopian-beans"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "morphology-inflections",
+      "probe": "painting-subject",
+      "category": "morphology",
+      "query": {
+        "keywords": "coastal subject paint watercolour",
+        "semantic": "What coastal subject do I paint in watercolour?"
+      },
+      "relevant": [
+        "lighthouses"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "lighthouses"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "morphology-inflections",
+      "probe": "bike-repair",
+      "category": "morphology",
+      "query": {
+        "keywords": "part bicycle repair",
+        "semantic": "Which part of my bicycle did I repair?"
+      },
+      "relevant": [
+        "derailleur"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "derailleur"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "morphology-inflections",
+      "probe": "linguistics-study",
+      "category": "morphology",
+      "query": {
+        "keywords": "studying computational linguistics",
+        "semantic": "Where was I studying computational linguistics?"
+      },
+      "relevant": [
+        "edinburgh"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "edinburgh"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "follow-up-coreference",
+      "probe": "sister-birthday",
+      "category": "follow-up",
+      "query": {
+        "keywords": "her birthday sister elena lives valencia tell",
+        "semantic": "And her birthday?\nTell me about my sister Elena."
+      },
+      "relevant": [
+        "sister-elena"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "sister-elena"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "follow-up-coreference",
+      "probe": "manager-email",
+      "category": "follow-up",
+      "query": {
+        "keywords": "his email carlos engineering manager",
+        "semantic": "What is his email?\nWho is my engineering manager Carlos?"
+      },
+      "relevant": [
+        "manager-carlos"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "manager-carlos"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "follow-up-coreference",
+      "probe": "flight-terminal",
+      "category": "follow-up",
+      "query": {
+        "keywords": "terminal depart booked flight ba412 london check",
+        "semantic": "Which terminal does it depart from?\nCheck my flight BA412 to London."
+      },
+      "relevant": [
+        "flight-ba412"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "flight-ba412"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "follow-up-coreference",
+      "probe": "magnesium-dosage",
+      "category": "follow-up",
+      "query": {
+        "keywords": "dosage take magnesium glycinate before bed remind supplement",
+        "semantic": "What dosage do I take?\nRemind me about my magnesium glycinate supplement."
+      },
+      "relevant": [
+        "magnesium-dose"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "magnesium-dose"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "follow-up-coreference",
+      "probe": "daemon-port",
+      "category": "follow-up",
+      "query": {
+        "keywords": "port listen telemetry metrics daemon tell",
+        "semantic": "And what port does it listen on?\nTell me about the telemetry metrics daemon."
+      },
+      "relevant": [
+        "metrics-daemon"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "metrics-daemon"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "follow-up-coreference",
+      "probe": "lease-renewal",
+      "category": "follow-up",
+      "query": {
+        "keywords": "renew underground garage parking lease",
+        "semantic": "When does it renew?\nI have an underground garage parking lease."
+      },
+      "relevant": [
+        "garage-lease"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "garage-lease"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "follow-up-coreference",
+      "probe": "maple-breed",
+      "category": "follow-up",
+      "query": {
+        "keywords": "breed she maple four years old remember dog",
+        "semantic": "What breed is she?\nDo you remember my dog Maple?"
+      },
+      "relevant": [
+        "hound-maple"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "hound-maple"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "follow-up-coreference",
+      "probe": "acme-rep",
+      "category": "follow-up",
+      "query": {
+        "keywords": "account rep sure acme cloud contact vendor",
+        "semantic": "Who is our account rep there?\nWe need to contact vendor Acme Cloud."
+      },
+      "relevant": [
+        "vendor-acme"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "vendor-acme"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "follow-up-coreference",
+      "probe": "cabinet-colour",
+      "category": "follow-up",
+      "query": {
+        "keywords": "colour paint glad kitchen renovation finished painting cabinets",
+        "semantic": "What colour did we paint them?\nWe finished painting the kitchen cabinets."
+      },
+      "relevant": [
+        "kitchen-paint"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "kitchen-paint"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "follow-up-coreference",
+      "probe": "rowing-fee",
+      "category": "follow-up",
+      "query": {
+        "keywords": "monthly fee check rowing club costs budgeting harbour",
+        "semantic": "How much is the monthly fee for it?\nI'm budgeting for the harbour rowing club."
+      },
+      "relevant": [
+        "gym-dues"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "gym-dues"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "multi-session-synthesis",
+      "probe": "longest-trip",
+      "category": "multi-session",
+      "query": {
+        "keywords": "trip year longest",
+        "semantic": "Which trip this year was my longest?"
+      },
+      "relevant": [
+        "trip-madrid",
+        "trip-kyoto",
+        "trip-oslo"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "trip-oslo",
+        "trip-kyoto",
+        "trip-madrid"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "multi-session-synthesis",
+      "probe": "shortest-trip",
+      "category": "multi-session",
+      "query": {
+        "keywords": "trip year shortest",
+        "semantic": "Which trip this year was my shortest?"
+      },
+      "relevant": [
+        "trip-madrid",
+        "trip-kyoto",
+        "trip-oslo"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "trip-oslo",
+        "trip-kyoto",
+        "trip-madrid"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "multi-session-synthesis",
+      "probe": "total-trip-days",
+      "category": "multi-session",
+      "query": {
+        "keywords": "days trips add year",
+        "semantic": "How many days did my trips add up to this year?"
+      },
+      "relevant": [
+        "trip-madrid",
+        "trip-kyoto",
+        "trip-oslo"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "trip-oslo",
+        "trip-kyoto",
+        "trip-madrid"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "multi-session-synthesis",
+      "probe": "priciest-subscription",
+      "category": "multi-session",
+      "query": {
+        "keywords": "monthly subscription costs",
+        "semantic": "Which monthly subscription costs me the most?"
+      },
+      "relevant": [
+        "sub-qobuz",
+        "sub-hetzner",
+        "sub-ft"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "sub-hetzner",
+        "sub-ft",
+        "sub-qobuz"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "multi-session-synthesis",
+      "probe": "cheapest-subscription",
+      "category": "multi-session",
+      "query": {
+        "keywords": "monthly subscription cheapest",
+        "semantic": "Which monthly subscription is my cheapest?"
+      },
+      "relevant": [
+        "sub-qobuz",
+        "sub-hetzner",
+        "sub-ft"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "sub-hetzner",
+        "sub-ft",
+        "sub-qobuz"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "multi-session-synthesis",
+      "probe": "subscriptions-total",
+      "category": "multi-session",
+      "query": {
+        "keywords": "monthly subscriptions come total",
+        "semantic": "How much do my monthly subscriptions come to in total?"
+      },
+      "relevant": [
+        "sub-qobuz",
+        "sub-hetzner",
+        "sub-ft"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "sub-hetzner",
+        "sub-ft",
+        "sub-qobuz"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "multi-session-synthesis",
+      "probe": "fastest-10k",
+      "category": "multi-session",
+      "query": {
+        "keywords": "10k race fastest year",
+        "semantic": "Which 10k race was my fastest this year?"
+      },
+      "relevant": [
+        "race-coimbra",
+        "race-porto",
+        "race-braga"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "race-braga"
+      ],
+      "recallAtK": 0.3333,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": false
+    },
+    {
+      "world": "multi-session-synthesis",
+      "probe": "slowest-10k",
+      "category": "multi-session",
+      "query": {
+        "keywords": "10k race slowest year",
+        "semantic": "Which 10k race was my slowest this year?"
+      },
+      "relevant": [
+        "race-coimbra",
+        "race-porto",
+        "race-braga"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "race-braga"
+      ],
+      "recallAtK": 0.3333,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": false
+    },
+    {
+      "world": "multi-session-synthesis",
+      "probe": "longest-novel",
+      "category": "multi-session",
+      "query": {
+        "keywords": "novel read year pages",
+        "semantic": "Which novel I read this year had the most pages?"
+      },
+      "relevant": [
+        "book-middlemarch",
+        "book-remains",
+        "book-dune"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "book-dune",
+        "book-remains",
+        "book-middlemarch"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "multi-session-synthesis",
+      "probe": "shortest-novel",
+      "category": "multi-session",
+      "query": {
+        "keywords": "novel read year shortest",
+        "semantic": "Which novel I read this year was the shortest?"
+      },
+      "relevant": [
+        "book-middlemarch",
+        "book-remains",
+        "book-dune"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "book-dune",
+        "book-remains",
+        "book-middlemarch"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "lesson-operating-rules",
+      "probe": "apply-diff",
+      "category": "lesson",
+      "query": {
+        "keywords": "rename function foo bar utils.ts",
+        "semantic": "Please rename the function foo to bar in utils.ts."
+      },
+      "relevant": [
+        "les-diff"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "les-diff",
+        "les-snakecase",
+        "les-digest",
+        "les-rollback",
+        "les-params",
+        "les-commits",
+        "les-pipefail",
+        "les-drop",
+        "les-tests",
+        "les-noforce"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "lesson-operating-rules",
+      "probe": "apply-tests",
+      "category": "lesson",
+      "query": {
+        "keywords": "feature branch looks commit",
+        "semantic": "The feature branch looks done, please commit it."
+      },
+      "relevant": [
+        "les-tests"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "les-noforce",
+        "les-commits",
+        "les-tests",
+        "les-diff",
+        "les-snakecase",
+        "les-digest",
+        "les-rollback",
+        "les-params",
+        "les-pipefail",
+        "les-drop"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.1,
+      "mrr": 0.3333,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "lesson-operating-rules",
+      "probe": "apply-noforce",
+      "category": "lesson",
+      "query": {
+        "keywords": "push main rejected non-fast-forward commits",
+        "semantic": "My push to main was rejected as non-fast-forward. Just get my commits up there."
+      },
+      "relevant": [
+        "les-noforce"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "les-noforce",
+        "les-commits",
+        "les-tests",
+        "les-diff",
+        "les-snakecase",
+        "les-digest",
+        "les-rollback",
+        "les-params",
+        "les-pipefail",
+        "les-drop"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "lesson-operating-rules",
+      "probe": "apply-snakecase",
+      "category": "lesson",
+      "query": {
+        "keywords": "write create table statement customer orders order date total",
+        "semantic": "Write a CREATE TABLE statement for customer orders with the customer, the order date and the total."
+      },
+      "relevant": [
+        "les-snakecase"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "les-drop",
+        "les-tests",
+        "les-diff",
+        "les-snakecase",
+        "les-digest",
+        "les-rollback",
+        "les-params",
+        "les-commits",
+        "les-pipefail",
+        "les-noforce"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.1,
+      "mrr": 0.25,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "lesson-operating-rules",
+      "probe": "apply-digest",
+      "category": "lesson",
+      "query": {
+        "keywords": "write production dockerfile small node.js api service",
+        "semantic": "Write a production Dockerfile for our small Node.js API service."
+      },
+      "relevant": [
+        "les-digest"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "les-digest",
+        "les-diff",
+        "les-snakecase",
+        "les-rollback",
+        "les-params",
+        "les-commits",
+        "les-pipefail",
+        "les-drop",
+        "les-tests",
+        "les-noforce"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "lesson-operating-rules",
+      "probe": "apply-rollback",
+      "category": "lesson",
+      "query": {
+        "keywords": "plan database migration adds required email column users table",
+        "semantic": "Plan the database migration that adds a required email column to the users table."
+      },
+      "relevant": [
+        "les-rollback"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "les-rollback",
+        "les-snakecase",
+        "les-drop",
+        "les-diff",
+        "les-digest",
+        "les-params",
+        "les-commits",
+        "les-pipefail",
+        "les-tests",
+        "les-noforce"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "lesson-operating-rules",
+      "probe": "apply-params",
+      "category": "lesson",
+      "query": {
+        "keywords": "write python function looks user email postgres database",
+        "semantic": "Write a Python function that looks up a user by email in our Postgres database."
+      },
+      "relevant": [
+        "les-params"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "les-rollback",
+        "les-drop",
+        "les-diff",
+        "les-snakecase",
+        "les-digest",
+        "les-params",
+        "les-commits",
+        "les-pipefail",
+        "les-tests",
+        "les-noforce"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.1,
+      "mrr": 0.1667,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "lesson-operating-rules",
+      "probe": "apply-commits",
+      "category": "lesson",
+      "query": {
+        "keywords": "write commit message fix login button nothing safari",
+        "semantic": "Write the commit message for the fix where the login button did nothing on Safari."
+      },
+      "relevant": [
+        "les-commits"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "les-commits",
+        "les-tests",
+        "les-diff",
+        "les-snakecase",
+        "les-digest",
+        "les-rollback",
+        "les-params",
+        "les-pipefail",
+        "les-drop",
+        "les-noforce"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "lesson-operating-rules",
+      "probe": "apply-pipefail",
+      "category": "lesson",
+      "query": {
+        "keywords": "write bash script backs var/www backups every night",
+        "semantic": "Write a bash script that backs up /var/www to /backups every night."
+      },
+      "relevant": [
+        "les-pipefail"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "les-pipefail",
+        "les-rollback",
+        "les-diff",
+        "les-snakecase",
+        "les-digest",
+        "les-params",
+        "les-commits",
+        "les-drop",
+        "les-tests",
+        "les-noforce"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "lesson-operating-rules",
+      "probe": "apply-drop",
+      "category": "lesson",
+      "query": {
+        "keywords": "drop legacy_sessions table production database",
+        "semantic": "Drop the legacy_sessions table from the production database, we don't need it any more."
+      },
+      "relevant": [
+        "les-drop"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "les-drop",
+        "les-digest",
+        "les-diff",
+        "les-snakecase",
+        "les-rollback",
+        "les-params",
+        "les-commits",
+        "les-pipefail",
+        "les-tests",
+        "les-noforce"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-untagged-facts",
+      "probe": "city-now",
+      "category": "update-untagged",
+      "query": {
+        "keywords": "live",
+        "semantic": "Where do I live now?"
+      },
+      "relevant": [
+        "city-new"
+      ],
+      "irrelevant": [
+        "city-old"
+      ],
+      "hits": [
+        "city-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-untagged-facts",
+      "probe": "isp-now",
+      "category": "update-untagged",
+      "query": {
+        "keywords": "home fibre internet provider",
+        "semantic": "Who is my home fibre internet provider now?"
+      },
+      "relevant": [
+        "isp-new"
+      ],
+      "irrelevant": [
+        "isp-old"
+      ],
+      "hits": [
+        "isp-new",
+        "city-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.5,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-untagged-facts",
+      "probe": "grocery-now",
+      "category": "update-untagged",
+      "query": {
+        "keywords": "weekly grocery shopping diet dietary vegetarian vegan pescatarian meat dairy allergy allergic intolerance gluten lactose peanut shellfish kosher halal",
+        "semantic": "Where do I do my weekly grocery shopping now?"
+      },
+      "relevant": [
+        "supermarket-new"
+      ],
+      "irrelevant": [
+        "supermarket-old"
+      ],
+      "hits": [
+        "supermarket-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-untagged-facts",
+      "probe": "barber-now",
+      "category": "update-untagged",
+      "query": {
+        "keywords": "haircuts",
+        "semantic": "Where do I get my haircuts now?"
+      },
+      "relevant": [
+        "barber-new"
+      ],
+      "irrelevant": [
+        "barber-old"
+      ],
+      "hits": [
+        "barber-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-untagged-facts",
+      "probe": "podcast-now",
+      "category": "update-untagged",
+      "query": {
+        "keywords": "podcast app",
+        "semantic": "Which podcast app do I use now?"
+      },
+      "relevant": [
+        "podcast-new"
+      ],
+      "irrelevant": [
+        "podcast-old"
+      ],
+      "hits": [
+        "podcast-new",
+        "notes-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.5,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-untagged-facts",
+      "probe": "notes-now",
+      "category": "update-untagged",
+      "query": {
+        "keywords": "app keep personal notes",
+        "semantic": "Which app do I keep my personal notes in now?"
+      },
+      "relevant": [
+        "notes-new"
+      ],
+      "irrelevant": [
+        "notes-old"
+      ],
+      "hits": [
+        "notes-new",
+        "podcast-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.5,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-untagged-facts",
+      "probe": "laundry-now",
+      "category": "update-untagged",
+      "query": {
+        "keywords": "dry cleaner",
+        "semantic": "Which dry cleaner do I use now?"
+      },
+      "relevant": [
+        "laundry-new"
+      ],
+      "irrelevant": [
+        "laundry-old"
+      ],
+      "hits": [
+        "laundry-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-untagged-facts",
+      "probe": "pool-now",
+      "category": "update-untagged",
+      "query": {
+        "keywords": "swimming pool lap",
+        "semantic": "Which swimming pool do I use for lap swimming now?"
+      },
+      "relevant": [
+        "pool-new"
+      ],
+      "irrelevant": [
+        "pool-old"
+      ],
+      "hits": [
+        "pool-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-untagged-facts",
+      "probe": "cinema-now",
+      "category": "update-untagged",
+      "query": {
+        "keywords": "cinema independent films",
+        "semantic": "Which cinema do I go to for independent films now?"
+      },
+      "relevant": [
+        "cinema-new"
+      ],
+      "irrelevant": [
+        "cinema-old"
+      ],
+      "hits": [
+        "cinema-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "update-untagged-facts",
+      "probe": "yoga-now",
+      "category": "update-untagged",
+      "query": {
+        "keywords": "studio practice vinyasa yoga",
+        "semantic": "Which studio do I practice vinyasa yoga at now?"
+      },
+      "relevant": [
+        "yoga-new"
+      ],
+      "irrelevant": [
+        "yoga-old"
+      ],
+      "hits": [
+        "yoga-new"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "over-recall-distractors",
+      "probe": "ssh-port",
+      "category": "over-recall",
+      "query": {
+        "keywords": "port production bastion ssh server listen according notebook",
+        "semantic": "What port does the production bastion SSH server listen on according to my notebook?"
+      },
+      "relevant": [
+        "target-ssh"
+      ],
+      "irrelevant": [
+        "distractor-1",
+        "distractor-2",
+        "distractor-3",
+        "distractor-4",
+        "distractor-5",
+        "distractor-6",
+        "distractor-7",
+        "distractor-8",
+        "distractor-9",
+        "distractor-10",
+        "distractor-11",
+        "distractor-12",
+        "distractor-13",
+        "distractor-14",
+        "distractor-15",
+        "distractor-16",
+        "distractor-17",
+        "distractor-18",
+        "distractor-19",
+        "distractor-20"
+      ],
+      "hits": [
+        "target-ssh"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "over-recall-distractors",
+      "probe": "vpn-subnet",
+      "category": "over-recall",
+      "query": {
+        "keywords": "subnet office wireguard vpn notebook",
+        "semantic": "Which subnet does the office WireGuard VPN use in my notebook?"
+      },
+      "relevant": [
+        "target-vpn"
+      ],
+      "irrelevant": [
+        "distractor-1",
+        "distractor-2",
+        "distractor-3",
+        "distractor-4",
+        "distractor-5",
+        "distractor-6",
+        "distractor-7",
+        "distractor-8",
+        "distractor-9",
+        "distractor-10",
+        "distractor-11",
+        "distractor-12",
+        "distractor-13",
+        "distractor-14",
+        "distractor-15",
+        "distractor-16",
+        "distractor-17",
+        "distractor-18",
+        "distractor-19",
+        "distractor-20"
+      ],
+      "hits": [
+        "target-vpn"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "over-recall-distractors",
+      "probe": "redis-policy",
+      "category": "over-recall",
+      "query": {
+        "keywords": "eviction policy session cache redis cluster notebook",
+        "semantic": "What eviction policy does the session cache Redis cluster use in my notebook?"
+      },
+      "relevant": [
+        "target-redis"
+      ],
+      "irrelevant": [
+        "distractor-1",
+        "distractor-2",
+        "distractor-3",
+        "distractor-4",
+        "distractor-5",
+        "distractor-6",
+        "distractor-7",
+        "distractor-8",
+        "distractor-9",
+        "distractor-10",
+        "distractor-11",
+        "distractor-12",
+        "distractor-13",
+        "distractor-14",
+        "distractor-15",
+        "distractor-16",
+        "distractor-17",
+        "distractor-18",
+        "distractor-19",
+        "distractor-20"
+      ],
+      "hits": [
+        "target-redis"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "over-recall-distractors",
+      "probe": "s3-archive",
+      "category": "over-recall",
+      "query": {
+        "keywords": "bucket stores cold compliance backups notebook",
+        "semantic": "Which S3 bucket stores cold compliance backups in my notebook?"
+      },
+      "relevant": [
+        "target-s3"
+      ],
+      "irrelevant": [
+        "distractor-1",
+        "distractor-2",
+        "distractor-3",
+        "distractor-4",
+        "distractor-5",
+        "distractor-6",
+        "distractor-7",
+        "distractor-8",
+        "distractor-9",
+        "distractor-10",
+        "distractor-11",
+        "distractor-12",
+        "distractor-13",
+        "distractor-14",
+        "distractor-15",
+        "distractor-16",
+        "distractor-17",
+        "distractor-18",
+        "distractor-19",
+        "distractor-20"
+      ],
+      "hits": [
+        "target-s3"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "over-recall-distractors",
+      "probe": "grafana-host",
+      "category": "over-recall",
+      "query": {
+        "keywords": "hostname internal grafana dashboards live notebook",
+        "semantic": "What hostname do internal Grafana dashboards live at in my notebook?"
+      },
+      "relevant": [
+        "target-grafana"
+      ],
+      "irrelevant": [
+        "distractor-1",
+        "distractor-2",
+        "distractor-3",
+        "distractor-4",
+        "distractor-5",
+        "distractor-6",
+        "distractor-7",
+        "distractor-8",
+        "distractor-9",
+        "distractor-10",
+        "distractor-11",
+        "distractor-12",
+        "distractor-13",
+        "distractor-14",
+        "distractor-15",
+        "distractor-16",
+        "distractor-17",
+        "distractor-18",
+        "distractor-19",
+        "distractor-20"
+      ],
+      "hits": [
+        "target-grafana",
+        "target-dns"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.5,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "over-recall-distractors",
+      "probe": "pg-pool",
+      "category": "over-recall",
+      "query": {
+        "keywords": "pgbouncer transaction pool size notebook",
+        "semantic": "What is the PgBouncer transaction pool size in my notebook?"
+      },
+      "relevant": [
+        "target-pg"
+      ],
+      "irrelevant": [
+        "distractor-1",
+        "distractor-2",
+        "distractor-3",
+        "distractor-4",
+        "distractor-5",
+        "distractor-6",
+        "distractor-7",
+        "distractor-8",
+        "distractor-9",
+        "distractor-10",
+        "distractor-11",
+        "distractor-12",
+        "distractor-13",
+        "distractor-14",
+        "distractor-15",
+        "distractor-16",
+        "distractor-17",
+        "distractor-18",
+        "distractor-19",
+        "distractor-20"
+      ],
+      "hits": [
+        "target-pg"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "over-recall-distractors",
+      "probe": "kafka-days",
+      "category": "over-recall",
+      "query": {
+        "keywords": "audit event kafka topic retention notebook",
+        "semantic": "What is the audit event Kafka topic retention in my notebook?"
+      },
+      "relevant": [
+        "target-kafka"
+      ],
+      "irrelevant": [
+        "distractor-1",
+        "distractor-2",
+        "distractor-3",
+        "distractor-4",
+        "distractor-5",
+        "distractor-6",
+        "distractor-7",
+        "distractor-8",
+        "distractor-9",
+        "distractor-10",
+        "distractor-11",
+        "distractor-12",
+        "distractor-13",
+        "distractor-14",
+        "distractor-15",
+        "distractor-16",
+        "distractor-17",
+        "distractor-18",
+        "distractor-19",
+        "distractor-20"
+      ],
+      "hits": [
+        "target-kafka"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "over-recall-distractors",
+      "probe": "dns-ip",
+      "category": "over-recall",
+      "query": {
+        "keywords": "split-horizon dns resolver ip notebook",
+        "semantic": "What is the split-horizon DNS resolver IP in my notebook?"
+      },
+      "relevant": [
+        "target-dns"
+      ],
+      "irrelevant": [
+        "distractor-1",
+        "distractor-2",
+        "distractor-3",
+        "distractor-4",
+        "distractor-5",
+        "distractor-6",
+        "distractor-7",
+        "distractor-8",
+        "distractor-9",
+        "distractor-10",
+        "distractor-11",
+        "distractor-12",
+        "distractor-13",
+        "distractor-14",
+        "distractor-15",
+        "distractor-16",
+        "distractor-17",
+        "distractor-18",
+        "distractor-19",
+        "distractor-20"
+      ],
+      "hits": [
+        "target-dns"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "over-recall-distractors",
+      "probe": "kms-alias",
+      "category": "over-recall",
+      "query": {
+        "keywords": "envelope encryption kms key alias notebook",
+        "semantic": "What is the envelope encryption KMS key alias in my notebook?"
+      },
+      "relevant": [
+        "target-kms"
+      ],
+      "irrelevant": [
+        "distractor-1",
+        "distractor-2",
+        "distractor-3",
+        "distractor-4",
+        "distractor-5",
+        "distractor-6",
+        "distractor-7",
+        "distractor-8",
+        "distractor-9",
+        "distractor-10",
+        "distractor-11",
+        "distractor-12",
+        "distractor-13",
+        "distractor-14",
+        "distractor-15",
+        "distractor-16",
+        "distractor-17",
+        "distractor-18",
+        "distractor-19",
+        "distractor-20"
+      ],
+      "hits": [
+        "target-kms"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "over-recall-distractors",
+      "probe": "vacuum-time",
+      "category": "over-recall",
+      "query": {
+        "keywords": "time nightly maintenance job run notebook",
+        "semantic": "What time does the nightly maintenance job run in my notebook?"
+      },
+      "relevant": [
+        "target-cron"
+      ],
+      "irrelevant": [
+        "distractor-1",
+        "distractor-2",
+        "distractor-3",
+        "distractor-4",
+        "distractor-5",
+        "distractor-6",
+        "distractor-7",
+        "distractor-8",
+        "distractor-9",
+        "distractor-10",
+        "distractor-11",
+        "distractor-12",
+        "distractor-13",
+        "distractor-14",
+        "distractor-15",
+        "distractor-16",
+        "distractor-17",
+        "distractor-18",
+        "distractor-19",
+        "distractor-20"
+      ],
+      "hits": [
+        "target-cron"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "temporal-past-history",
+      "probe": "city-before-porto",
+      "category": "temporal-past",
+      "query": {
+        "keywords": "live before porto",
+        "semantic": "Where did I live before Porto?",
+        "range": {
+          "from": "1970-01-01T00:00:00.000Z",
+          "to": "2026-10-13T23:59:59.999Z",
+          "pastOnly": true
+        }
+      },
+      "relevant": [
+        "past-city-lisbon"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "past-city-lisbon",
+        "past-street-almirante",
+        "city-porto"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "temporal-past-history",
+      "probe": "employer-before-contoso",
+      "category": "temporal-past",
+      "query": {
+        "keywords": "company work before joining contoso",
+        "semantic": "Which company did I work at before joining Contoso?",
+        "range": {
+          "from": "1970-01-01T00:00:00.000Z",
+          "to": "2026-10-13T23:59:59.999Z",
+          "pastOnly": true
+        }
+      },
+      "relevant": [
+        "past-employer-northwind"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "past-employer-northwind",
+        "employer-contoso"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.5,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "temporal-past-history",
+      "probe": "car-before-volvo",
+      "category": "temporal-past",
+      "query": {
+        "keywords": "car drive before buying volvo xc40",
+        "semantic": "What car did I drive before buying the Volvo XC40?",
+        "range": {
+          "from": "1970-01-01T00:00:00.000Z",
+          "to": "2026-10-13T23:59:59.999Z",
+          "pastOnly": true
+        }
+      },
+      "relevant": [
+        "past-car-golf"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "past-car-golf",
+        "car-volvo"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.5,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "temporal-past-history",
+      "probe": "gym-before-blochouse",
+      "category": "temporal-past",
+      "query": {
+        "keywords": "gym train before switching bloc house",
+        "semantic": "Which gym did I train at before switching to Bloc House?",
+        "range": {
+          "from": "1970-01-01T00:00:00.000Z",
+          "to": "2026-10-13T23:59:59.999Z",
+          "pastOnly": true
+        }
+      },
+      "relevant": [
+        "past-gym-fitlab"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "past-gym-fitlab",
+        "gym-bloc"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.5,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "temporal-past-history",
+      "probe": "laptop-before-framework",
+      "category": "temporal-past",
+      "query": {
+        "keywords": "laptop before upgrading framework 13",
+        "semantic": "Which laptop did I use before upgrading to the Framework 13?",
+        "range": {
+          "from": "1970-01-01T00:00:00.000Z",
+          "to": "2026-10-13T23:59:59.999Z",
+          "pastOnly": true
+        }
+      },
+      "relevant": [
+        "past-laptop-thinkpad"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "past-laptop-thinkpad",
+        "laptop-framework"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.5,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "temporal-past-history",
+      "probe": "street-before-flores",
+      "category": "temporal-past",
+      "query": {
+        "keywords": "avenue live before moving rua flores",
+        "semantic": "Which avenue did I live on before moving to Rua das Flores?",
+        "range": {
+          "from": "1970-01-01T00:00:00.000Z",
+          "to": "2026-10-13T23:59:59.999Z",
+          "pastOnly": true
+        }
+      },
+      "relevant": [
+        "past-street-almirante"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "past-city-lisbon",
+        "past-street-almirante"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.5,
+      "mrr": 0.5,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "temporal-past-history",
+      "probe": "role-before-staff",
+      "category": "temporal-past",
+      "query": {
+        "keywords": "job title hold before promotion staff engineer",
+        "semantic": "What job title did I hold before promotion to Staff Engineer?",
+        "range": {
+          "from": "1970-01-01T00:00:00.000Z",
+          "to": "2026-10-13T23:59:59.999Z",
+          "pastOnly": true
+        }
+      },
+      "relevant": [
+        "past-role-junior"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "past-role-junior"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "temporal-past-history",
+      "probe": "isp-before-digi",
+      "category": "temporal-past",
+      "query": {
+        "keywords": "broadband provider before digi fibre",
+        "semantic": "Which broadband provider did I have before Digi fibre?",
+        "range": {
+          "from": "1970-01-01T00:00:00.000Z",
+          "to": "2026-10-13T23:59:59.999Z",
+          "pastOnly": true
+        }
+      },
+      "relevant": [
+        "isp-now"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "isp-now",
+        "isp-now"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "temporal-past-history",
+      "probe": "editor-before-helix",
+      "category": "temporal-past",
+      "query": {
+        "keywords": "editor before switching helix",
+        "semantic": "Which editor did I use before switching to Helix?",
+        "range": {
+          "from": "1970-01-01T00:00:00.000Z",
+          "to": "2026-10-13T23:59:59.999Z",
+          "pastOnly": true
+        }
+      },
+      "relevant": [
+        "editor-now"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "past-gym-fitlab",
+        "editor-now",
+        "editor-now"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.5,
+      "mrr": 0.5,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "temporal-past-history",
+      "probe": "bank-before-revolut",
+      "category": "temporal-past",
+      "query": {
+        "keywords": "bank before moving revolut",
+        "semantic": "Which bank did I use before moving to Revolut?",
+        "range": {
+          "from": "1970-01-01T00:00:00.000Z",
+          "to": "2026-10-13T23:59:59.999Z",
+          "pastOnly": true
+        }
+      },
+      "relevant": [
+        "bank-now"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "past-city-lisbon",
+        "past-street-almirante",
+        "bank-now",
+        "bank-now"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 0.3333,
+      "mrr": 0.3333,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "temporal-past-history",
+      "probe": "city-now",
+      "category": "temporal-past",
+      "query": {
+        "keywords": "city live",
+        "semantic": "Which city do I live in now?"
+      },
+      "relevant": [
+        "city-porto"
+      ],
+      "irrelevant": [
+        "past-city-lisbon"
+      ],
+      "hits": [
+        "city-porto"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "temporal-past-history",
+      "probe": "editor-now",
+      "category": "temporal-past",
+      "query": {
+        "keywords": "code editor",
+        "semantic": "Which code editor do I use now?"
+      },
+      "relevant": [
+        "editor-now"
+      ],
+      "irrelevant": [],
+      "hits": [
+        "editor-now"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "f1-morphology",
+      "probe": "plural-meetings",
+      "category": "morphology",
+      "query": {
+        "keywords": "long meeting",
+        "semantic": "How long should our meeting be?"
+      },
+      "relevant": [
+        "meetings"
+      ],
+      "irrelevant": [
+        "marathons",
+        "shellfish"
+      ],
+      "hits": [
+        "meetings"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "f1-morphology",
+      "probe": "verb-running",
+      "category": "morphology",
+      "query": {
+        "keywords": "start run marathon",
+        "semantic": "When did I start to run a marathon?"
+      },
+      "relevant": [
+        "marathons"
+      ],
+      "irrelevant": [
+        "meetings",
+        "shellfish"
+      ],
+      "hits": [
+        "marathons"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "f1-morphology",
+      "probe": "contraction-stem-pollution",
+      "category": "morphology",
+      "query": {
+        "keywords": "check alpha beta gamma delta epsilon zeta eta theta shellfish",
+        "semantic": "Didn't, wouldn't, couldn't, shouldn't, wasn't, weren't, hasn't, haven't, hadn't, isn't, aren't, won't, doesn't, don't, mustn't, mightn't, let's check alpha beta gamma delta epsilon zeta eta theta shellfish?"
+      },
+      "relevant": [
+        "shellfish"
+      ],
+      "irrelevant": [
+        "meetings",
+        "marathons"
+      ],
+      "hits": [
+        "shellfish"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "f2-filter-before-limit",
+      "probe": "all-ten-eligible",
+      "category": "recall",
+      "query": {
+        "keywords": "roadmap milestone deliverables",
+        "semantic": "What are the roadmap milestone deliverables?"
+      },
+      "relevant": [
+        "eligible-1",
+        "eligible-2",
+        "eligible-3",
+        "eligible-4",
+        "eligible-5",
+        "eligible-6",
+        "eligible-7",
+        "eligible-8",
+        "eligible-9",
+        "eligible-10"
+      ],
+      "irrelevant": [
+        "filtered-sensitive",
+        "filtered-local",
+        "filtered-revoked"
+      ],
+      "hits": [
+        "eligible-6",
+        "eligible-1",
+        "eligible-2",
+        "eligible-3",
+        "eligible-4",
+        "eligible-5",
+        "eligible-7",
+        "eligible-8",
+        "eligible-9",
+        "eligible-10"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "f7-followup-meaning",
+      "probe": "followup-her-birthday",
+      "category": "follow-up",
+      "query": {
+        "keywords": "her birthday ana lives coimbra tell sister",
+        "semantic": "When is her birthday?\nTell me about my sister Ana."
+      },
+      "relevant": [
+        "sister-ana-born"
+      ],
+      "irrelevant": [
+        "other-birthday-1",
+        "other-birthday-2",
+        "other-birthday-3",
+        "other-birthday-4",
+        "other-birthday-5",
+        "other-birthday-6",
+        "other-birthday-7",
+        "other-birthday-8",
+        "other-birthday-9",
+        "other-birthday-10"
+      ],
+      "hits": [
+        "sister-ana-born"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "f10-short-terms-and-stopwords",
+      "probe": "two-letter-acronyms",
+      "category": "recall",
+      "query": {
+        "keywords": "ai uk",
+        "semantic": "What about AI in the UK?"
+      },
+      "relevant": [
+        "uk-ai-policy"
+      ],
+      "irrelevant": [
+        "berlin-hotel"
+      ],
+      "hits": [
+        "uk-ai-policy"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    },
+    {
+      "world": "f10-short-terms-and-stopwords",
+      "probe": "multilingual-stopwords",
+      "category": "recall",
+      "query": {
+        "keywords": "des pour pas plus tout die berlin",
+        "semantic": "les des une dans pour avec sur pas plus mais comme tout fait sont nous vous leur bien aussi der die das und ist Berlin?"
+      },
+      "relevant": [
+        "berlin-hotel"
+      ],
+      "irrelevant": [
+        "uk-ai-policy"
+      ],
+      "hits": [
+        "berlin-hotel"
+      ],
+      "recallAtK": 1,
+      "precisionAtK": 1,
+      "mrr": 1,
+      "noisy": false,
+      "empty": false,
+      "passed": true
+    }
+  ]
+}
