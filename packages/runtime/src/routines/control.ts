@@ -13,6 +13,8 @@ import {
   ROUTINE_MIN_FREE_BYTES,
   standingAnswerKey,
   type RoutineCheckpoint,
+  type RoutineNewsReport,
+  type RoutineRun,
   RoutineCreateSchema,
   type RoutineDeliveryPatchSchema,
   type RoutineReportPatchSchema,
@@ -21,6 +23,7 @@ import {
   unsupportedRoutinePolicy,
   RoutinesPayloadSchema,
   TaviError,
+  routineCadenceLookback,
   routineDefaults,
   routineDefaultInstructions,
   routineTemplateIdOf,
@@ -41,7 +44,7 @@ import { routineGrantableTools } from "./grants.js";
 import type { RoutineExecutionService } from "./runs.js";
 import type { RoutineNewsService } from "./news.js";
 import type { RoutineDeliveryService } from "./delivery.js";
-import type { RoutinePublicationService } from "./publication.js";
+import { routineReportText, type RoutinePublicationService } from "./publication.js";
 /** The window `get` sums its routine's runs over. */
 const SEVEN_DAYS_MS = 7 * 86_400_000;
 /**
@@ -156,6 +159,11 @@ export class RoutineArtifactCache {
     this.#entries.delete(artifactId);
   }
 }
+/** The most of a report's text `inspect` returns. */
+const ROUTINE_REPORT_TEXT_MAX = 12_000;
+/** A report JSON larger than this is not read for `inspect`'s text. */
+const ROUTINE_REPORT_JSON_MAX = 4 * 1024 * 1024;
+
 export class RoutineControlService {
   private readonly artifactCache: RoutineArtifactCache;
   readonly options: RoutineControlOptions<{
@@ -171,6 +179,26 @@ export class RoutineControlService {
   }
   private get routines() {
     return this.options.routines;
+  }
+  /**
+   * A published run's report as text, clipped to `ROUTINE_REPORT_TEXT_MAX`: undefined when its artifact has expired,
+   * is damaged, or is not a report. Read whole: a report is small, and the 64 MiB guard is the download's.
+   */
+  #reportText(
+    workspaceId: string,
+    run: Pick<RoutineRun, "snapshot">,
+    artifactId: string,
+  ): { readonly text: string; readonly truncated: boolean } | undefined {
+    try {
+      const artifact = this.routines.store.getArtifact(artifactId);
+      if (!artifact || artifact.workspaceId !== workspaceId || artifact.byteSize > ROUTINE_REPORT_JSON_MAX) return undefined;
+      const bytes = this.routines.store.readArtifactBody(artifactId);
+      if (!bytes || sha256Hex(bytes) !== artifact.sha256) return undefined;
+      const text = routineReportText(JSON.parse(Buffer.from(bytes).toString("utf8")) as RoutineNewsReport, run.snapshot.report.template);
+      return { text: text.slice(0, ROUTINE_REPORT_TEXT_MAX), truncated: text.length > ROUTINE_REPORT_TEXT_MAX };
+    } catch {
+      return undefined;
+    }
   }
   /**
    * `topicNotice` while no run of the revision has published a report, and it can still be previewed. An
@@ -445,10 +473,13 @@ export class RoutineControlService {
               "NOT_CONFIGURED",
               "No model is configured for routines. Set a default model in Settings → Models (or `tavi models set-default`), then create the routine again.",
             );
+          const triggers = routineSetupTriggers(setup);
           create = RoutineCreateSchema.parse({
             ...defaults,
             report: {
               ...defaults.report,
+              // The window its cadence needs: a weekly routine reads its week.
+              ...routineCadenceLookback(triggers, new Date(this.now())),
               ...(setup.style === undefined ? {} : { style: setup.style }),
               ...(setup.delivery?.pdf === true ? { formats: ["in-app", "pdf"] } : {}),
             },
@@ -462,7 +493,7 @@ export class RoutineControlService {
               name: setup.name,
               instructions: setup.instructions ?? routineDefaultInstructions(defaults.report.templateVersion),
             },
-            triggers: routineSetupTriggers(setup),
+            triggers,
             // A retry pins what the first try did; only a new create resolves the skills' active versions.
             skills:
               this.routines.createdSkillPins(scope, required(input.operationKey, "Operation key")) ??
@@ -569,6 +600,8 @@ export class RoutineControlService {
       // The revision the run ran, and what its words may have come from.
       const provenance = this.routines.get(scope, run.routineId, run.revision).revision.provenance;
       const provenanceNote = routineProvenanceLine(provenance);
+      const published = publication.get(scope, runId);
+      const report = published === undefined ? undefined : this.#reportText(scope.workspaceId, run, published.reportArtifactId);
       return {
         run,
         ...(provenance === undefined ? {} : { provenance }),
@@ -576,7 +609,9 @@ export class RoutineControlService {
         grant: runs.grantFor(scope, runId),
         effectivePolicy: runs.effectiveGrantPolicy(scope, runId),
         deliveryHealth: health,
-        publication: publication.get(scope, runId) ?? null,
+        publication: published ?? null,
+        // The report itself, as text (what a text delivery sends): the chat that previewed the run can say what it found.
+        ...(report === undefined ? {} : { report }),
         deliveries: delivery.list(scope, runId),
         attempts: this.routines.store.handle
           .prepare(

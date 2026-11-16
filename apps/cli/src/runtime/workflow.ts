@@ -42,6 +42,7 @@ const LOCAL_UNKNOWN_WINDOW_TRIGGER_TOKENS = 6_000;
 export function composeWorkflow(composed: AskingContext) {
   const {
     localChatModels,
+    browserOffered,
     disabledBuiltins,
     FRESH_CONTEXT_MARK,
     SCHEDULE_QUESTION_RESERVE_MS,
@@ -232,7 +233,11 @@ export function composeWorkflow(composed: AskingContext) {
         // that names no agent behaves exactly as before, and one that does gets
         // its persona appended to the base instructions.
         // With the built-in agents (the browser worker) behind the workspace's own.
-        agentDefinitions: withBuiltinAgents(persistencePort.repositories.agents, !disabledBuiltins.has(BROWSER_ENGINE_PLUGIN_ID)),
+        agentDefinitions: withBuiltinAgents(
+          persistencePort.repositories.agents,
+          // The browser worker while the browser is on and its Chromium installed, as the browser's tools are offered.
+          disabledBuiltins.has(BROWSER_ENGINE_PLUGIN_ID) ? false : (browserOffered ?? true),
+        ),
         // The built-in browser worker's profile: its tools and its steps a turn —
         // only while the workspace has no `browser` definition of its own.
         // A heartbeat turn takes at most its own few steps.

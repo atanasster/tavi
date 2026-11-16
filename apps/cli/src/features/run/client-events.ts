@@ -71,6 +71,11 @@ export interface EventRendererOptions {
    * Text that could still become the marker is held until it cannot.
    */
   readonly quietMarker?: boolean;
+  /**
+   * The run's `--approval`: an automatic decision says which flag made it. Without it the flag is guessed from the
+   * outcome, which names `--approval deny` for a call `--approval approve` cannot cover (one a person must decide).
+   */
+  readonly approval?: "ask" | "approve" | "deny";
 }
 
 /** What a terminal prints for a fire's `[nothing to report]` answer (AUTOMATION.md). */
@@ -151,7 +156,7 @@ export function createEventRenderer(options: EventRendererOptions): {
           options.write(approvalText(event));
           break;
         case "approval.settled":
-          options.write(`[approval] ${settledText(event)}\n`);
+          options.write(`[approval] ${settledText(event, options.approval)}\n`);
           break;
         case "attempt.replaced":
           // On its own line: a failed-over call may have streamed half a line.
@@ -223,13 +228,19 @@ function approvalText(event: Extract<ClientEvent, { kind: "approval.required" }>
 }
 
 /** How a round was decided, and by whom: a run's own `--approval` policy by its flag, a schedule's by its name. */
-function settledText(event: Extract<ClientEvent, { kind: "approval.settled" }>): string {
+function settledText(event: Extract<ClientEvent, { kind: "approval.settled" }>, approval?: "ask" | "approve" | "deny"): string {
   const approved = event.decisions.filter((decision) => decision.approved).length;
   const denied = event.decisions.length - approved;
-  const verdict = denied === 0 ? "approved" : approved === 0 ? "denied" : `${approved} approved, ${denied} denied`;
   const decider = event.decidedBy;
+  if (decider.startsWith("auto:") && approval === "approve" && denied > 0) {
+    // `--approval approve` approves what it may; a call a person must decide (a form fill, a forget, a send shown
+    // whole) is refused, since nobody attends the run. Not `--approval deny`, which this run was not given.
+    const refused = "denied, as a person must decide it and nobody attends this run (--approval approve does not cover it)";
+    return approved === 0 ? refused : `${approved} approved by --approval approve, ${denied} ${refused}`;
+  }
+  const verdict = denied === 0 ? "approved" : approved === 0 ? "denied" : `${approved} approved, ${denied} denied`;
   const by = decider.startsWith("auto:")
-    ? `--approval ${denied === 0 ? "approve" : "deny"}`
+    ? `--approval ${approval === "approve" || approval === "deny" ? approval : denied === 0 ? "approve" : "deny"}`
     : decider.startsWith("schedule:")
       ? `the schedule ${terminalText(decider.slice("schedule:".length))}'s policy`
       : decider === "policy"

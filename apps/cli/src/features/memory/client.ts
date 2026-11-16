@@ -27,6 +27,7 @@ import {
   memoryProvenanceUntrusted,
   type MemoryProvenance,
   type MemoryRecord,
+  type MemoryRevision,
   type MemoryStatus,
   MEMORY_IPC_LIST_MAX,
   encodeMemoryListCursor,
@@ -87,13 +88,29 @@ const MEMORY_LIST_STATUSES: readonly Exclude<MemoryStatus, "deleted">[] = [
 function memoryRow(
   record: Pick<MemoryRecord, "recordId" | "status" | "kind" | "scope" | "sensitivity"> & {
     readonly provenance?: MemoryProvenance | undefined;
+    /** The owner's answer carries the record's title and body, unless it is redacted: the row ends on what it says. */
+    readonly title?: string | null;
+    readonly body?: string | null;
+    readonly redacted?: boolean;
   },
 ): string {
+  const said = record.redacted === true ? undefined : (record.title ?? record.body?.split("\n", 1)[0] ?? undefined);
+  const shown = said === undefined ? "" : terminalText(said).replace(/\s+/g, " ").trim();
   return (
     `${record.recordId}\t${record.status}\t${record.kind}\t${record.scope.kind}` +
     (record.sensitivity === "sensitive" ? "\t(sensitive)" : "") +
-    (memoryProvenanceUntrusted(record.provenance) ? "\t(from untrusted content)" : "")
+    (memoryProvenanceUntrusted(record.provenance) ? "\t(from untrusted content)" : "") +
+    (shown === "" ? "" : `\t${shown.length > 80 ? `${shown.slice(0, 79)}…` : shown}`)
   );
+}
+
+/** What a record's row says, as the owner's answer carries it: a sensitive record's words are withheld. */
+function saidOf(
+  record: Pick<MemoryRecord, "sensitivity">,
+  shown: Pick<MemoryRevision, "title" | "body"> | undefined,
+): { readonly title: string | null; readonly body: string | null; readonly redacted: boolean } {
+  if (record.sensitivity === "sensitive") return { title: null, body: null, redacted: true };
+  return { title: shown?.title ?? null, body: shown?.body ?? null, redacted: false };
 }
 
 /**
@@ -654,6 +671,13 @@ export async function memoryCommand(options: ResolvedDataDirectory<MemoryCommand
       // scope" read path, not silently narrow to personal — export's own
       // usage text promises "everything the principal may see".
       const explicitScope = options.scope === undefined ? undefined : target;
+      /** The revision a record shows: its approved one, or a proposal's newest. */
+      const shownRevisionOf = async (record: MemoryRecord): Promise<MemoryRevision | undefined> => {
+        const { revisions } = await service.history({ actor, recordId: record.recordId });
+        return record.currentRevisionId === undefined
+          ? revisions[0]
+          : revisions.find((revision) => revision.revisionId === record.currentRevisionId);
+      };
 
       switch (options.action) {
         case "list": {
@@ -677,7 +701,9 @@ export async function memoryCommand(options: ResolvedDataDirectory<MemoryCommand
             );
             return EXIT.ok;
           }
-          emit(io, options.format, records, (rows) => (rows.length === 0 ? "(no records)" : rows.map(memoryRow).join("\n")));
+          // Each with what it says, as the owner's list answers it.
+          const said = await Promise.all(records.map(async (record) => ({ ...record, ...saidOf(record, await shownRevisionOf(record)) })));
+          emit(io, options.format, records, () => (said.length === 0 ? "(no records)" : said.map(memoryRow).join("\n")));
           return EXIT.ok;
         }
         case "proposals": {
@@ -690,16 +716,14 @@ export async function memoryCommand(options: ResolvedDataDirectory<MemoryCommand
             ...(options.offset === undefined ? {} : { offset: options.offset }),
           });
           // Each with its shown revision's provenance, as the owner's list answers it.
+          const said = new Map<string, ReturnType<typeof saidOf>>();
           const rows = await Promise.all(
             records.map(async (record) => {
               // A proposal's shown revision is its newest, before any is current.
-              const { revisions } = await service.history({ actor, recordId: record.recordId });
-              const provenance = (
-                record.currentRevisionId === undefined
-                  ? revisions[0]
-                  : revisions.find((revision) => revision.revisionId === record.currentRevisionId)
-              )?.provenance;
+              const shown = await shownRevisionOf(record);
+              const provenance = shown?.provenance;
               const { updates, mayUpdate, similarTo, supersedes } = await service.related({ actor, recordId: record.recordId });
+              said.set(record.recordId, saidOf(record, shown));
               return {
                 ...record,
                 ...definedOnly({ provenance, updates, mayUpdate, similarTo }),
@@ -707,7 +731,9 @@ export async function memoryCommand(options: ResolvedDataDirectory<MemoryCommand
               };
             }),
           );
-          emit(io, options.format, rows, (value) => (value.length === 0 ? "(no records)" : value.map(memoryRow).join("\n")));
+          emit(io, options.format, rows, (value) =>
+            value.length === 0 ? "(no records)" : value.map((row) => memoryRow({ ...row, ...said.get(row.recordId) })).join("\n"),
+          );
           return EXIT.ok;
         }
         case "approve":

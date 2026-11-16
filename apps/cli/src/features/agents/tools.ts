@@ -100,13 +100,16 @@ export function spawnOperationKey(context: Pick<InvocationContext, "runId" | "tu
   return `spawn:${context.runId}:${digest}`;
 }
 
+/** The built-in general worker's id (`features/agents/builtin.ts`): a worker with no persona, for a task that is not browsing. */
+export const GENERAL_WORKER_AGENT_ID = "worker";
+
 const AgentSpawnInputSchema = z.object({
   agentDefinitionId: z
     .string()
     .min(1)
     .max(128)
     .describe(
-      "Reference to a workspace-configured agent identity; `browser` is built in: a worker that does one browsing task and answers with records",
+      "Reference to a workspace-configured agent identity. Built in: `worker`, a general worker for one self-contained task (a count, a summary, a calculation); `browser`, a worker that does one browsing task and answers with records, only while the browser can open",
     ),
   input: z.string().min(1).max(8_000).describe("The worker's initial prompt/task"),
   operationKey: z.string().min(1).max(256).describe("Idempotency key: retrying with the same key resolves the same worker"),
@@ -253,7 +256,7 @@ export function registerAgentTools(registry: ToolRegistry, agents: AgentCommunic
               .map((agent) => agent.agentId)
               .slice(0, 40);
             return {
-              refused: `No agent definition ${parsed.data.agentDefinitionId} is on here; the ones there are: ${known.join(", ") || "none"}`,
+              refused: `No agent definition ${parsed.data.agentDefinitionId} is on here; the ones there are: ${[...new Set([...known, GENERAL_WORKER_AGENT_ID])].join(", ")}`,
             };
           },
         }),

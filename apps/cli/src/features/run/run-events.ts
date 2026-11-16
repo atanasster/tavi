@@ -310,6 +310,7 @@ export function emitOutcomeEvents(
       ...definedOnly({
         question: outcome.waitInterrupt.question,
         choices: outcome.waitInterrupt.choices,
+        workerTaskId: wait.waitingOnWorkerTaskId,
         context: outcome.waitInterrupt.context,
         handoff: outcome.waitInterrupt.handoff,
         connect: outcome.waitInterrupt.connect,

@@ -484,7 +484,7 @@ an `agents:message:<agent-id>` grant for the agent they reach.
 | `routines.create` | mutating | persist | trusted | search | Save a research routine and a persistent specialist: daily at `at`, or on `triggers` (daily on chosen weekdays, or once at a time). |
 | `routines.get` | read-only | none | trusted | search | Read a routine, its revision and state. view: explain (where a revision's words came from), verify (its run ledger is intact) or readiness (can it run: resea… |
 | `routines.history` | read-only | none | trusted | search | List a routine's past runs. |
-| `routines.inspect` | read-only | none | untrusted | search | Inspect a run: its publication, deliveries and attempts. |
+| `routines.inspect` | read-only | none | untrusted | search | Inspect a run: its report as text (`report`), its publication (`gaps` says why a degraded run was degraded), deliveries and attempts. |
 | `routines.list` | read-only | none | trusted | search | List your routines. |
 | `routines.pause` | mutating | none | trusted | search | Pause a routine. |
 | `routines.preview` | mutating | none | untrusted | search | Run a routine as a preview, delivered nowhere. routines.inspect reads the run. |

@@ -460,6 +460,7 @@ function followSession(
   const renderer = createEventRenderer({
     format: options.format,
     write: io.stdout,
+    ...(options.approval === undefined ? {} : { approval: options.approval }),
     ...(options.quietMarker === true ? { quietMarker: true } : {}),
   });
   let subscriptionId: string | undefined;
@@ -480,6 +481,9 @@ function followSession(
    */
   let policyStopped: PolicyStopped | undefined;
   const endingFor = (event: ClientEvent): Ending | undefined => {
+    // A wait on a worker is no ending: the owner resumes the task when the worker answers (or the wait's deadline
+    // passes), on this same stream, so the answer is still to come here.
+    if (event.kind === "task.waiting" && event.workerTaskId !== undefined) return undefined;
     const ending = endingOf(event);
     if (ending?.kind !== "review" || !ownerReviews) return ending;
     return policyStopped !== undefined ? ending : undefined;
@@ -634,6 +638,13 @@ function followSession(
         break;
       case "task.review_required":
         ownerStopped(event.policyStopped);
+        break;
+      case "task.waiting":
+        if (event.workerTaskId !== undefined && options.format === "text")
+          io.stderr(
+            `[waiting] on worker task ${event.workerTaskId}; following until it answers (by ${event.deadlineAt}). ` +
+              "Ctrl-C detaches; the task goes on under the owner.\n",
+          );
         break;
       default:
         break;

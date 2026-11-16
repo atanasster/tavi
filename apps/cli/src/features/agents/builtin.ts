@@ -1,4 +1,4 @@
-import { AGENT_PAYLOAD_TOOL_ID } from "./tools.js";
+import { AGENT_PAYLOAD_TOOL_ID, GENERAL_WORKER_AGENT_ID } from "./tools.js";
 import type { AgentDefinition, AgentDefinitionRepositoryPort } from "@tavi/contracts";
 
 /**
@@ -43,9 +43,25 @@ export function browserWorkerUses(toolId: string, plugins: ReadonlySet<string> =
 /** When the built-ins were written: their definitions' fixed version. */
 const BUILTIN_AT = "2026-10-08T00:00:00.000Z";
 
-/** The built-in definition of `agentId` in `workspaceId`, if there is one. */
-function builtinAgent(workspaceId: string, agentId: string): AgentDefinition | undefined {
-  if (agentId !== BROWSER_WORKER_AGENT_ID) return undefined;
+const GENERAL_WORKER_PROMPT = `You are a worker. The chat that started you gave you one self-contained task: do it with the tools you were given, and answer with the result itself, short and complete.
+
+- Say what you could not do and why, rather than guessing.
+- Never invent a value you did not compute or read.`;
+
+/** The built-in definition of `agentId` in `workspaceId`, if there is one: the browser worker only while `browser`. */
+function builtinAgent(workspaceId: string, agentId: string, browser: boolean): AgentDefinition | undefined {
+  if (agentId === GENERAL_WORKER_AGENT_ID)
+    return {
+      agentId: GENERAL_WORKER_AGENT_ID,
+      workspaceId,
+      name: "Worker",
+      description: "Does one self-contained task the chat hands it and answers with the result",
+      systemPrompt: GENERAL_WORKER_PROMPT,
+      enabled: true,
+      createdAt: BUILTIN_AT,
+      updatedAt: BUILTIN_AT,
+    };
+  if (agentId !== BROWSER_WORKER_AGENT_ID || !browser) return undefined;
   return {
     agentId: BROWSER_WORKER_AGENT_ID,
     workspaceId,
@@ -60,12 +76,21 @@ function builtinAgent(workspaceId: string, agentId: string): AgentDefinition | u
 
 /**
  * `repository` with the built-ins resolvable by `get`, behind any definition the workspace has of its own. `browser`
- * false (the browser engine disabled) leaves the browser worker out: it would be told to browse with no browser.
+ * false (the browser engine disabled), or a check that answers false (its Chromium not installed), leaves the browser
+ * worker out: it would be told to browse with no browser. The general worker is always there.
  */
-export function withBuiltinAgents(repository: AgentDefinitionRepositoryPort, browser = true): AgentDefinitionRepositoryPort {
+export function withBuiltinAgents(
+  repository: AgentDefinitionRepositoryPort,
+  browser: boolean | (() => Promise<boolean>) = true,
+): AgentDefinitionRepositoryPort {
   return {
     ...repository,
     get: async (workspaceId, agentId) =>
-      (await repository.get(workspaceId, agentId)) ?? (browser ? builtinAgent(workspaceId, agentId) : undefined),
+      (await repository.get(workspaceId, agentId)) ??
+      builtinAgent(
+        workspaceId,
+        agentId,
+        agentId === BROWSER_WORKER_AGENT_ID && typeof browser === "function" ? await browser().catch(() => false) : browser !== false,
+      ),
   };
 }

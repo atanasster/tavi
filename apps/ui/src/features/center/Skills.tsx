@@ -91,18 +91,25 @@ export function SkillsPane({ revision }: { readonly revision: number }) {
               <ul className="list-reset">
                 {proposed.map((version) => (
                   <li key={`${version.skillId}@${version.version}`}>
-                    <VersionLine version={version} onOpen={() => setOpened({ skillId: version.skillId, version: version.version })} />
+                    <VersionLine
+                      review
+                      version={version}
+                      onOpen={() => setOpened({ skillId: version.skillId, version: version.version })}
+                    />
                   </li>
                 ))}
               </ul>
             </section>
           )}
           <ul className="list-reset soul-skills-list">
-            {entries.map((entry) => (
-              <li key={entry.skillId}>
-                <SkillRow entry={entry} onOpen={(version) => setOpened({ skillId: entry.skillId, version })} onDecide={decide} />
-              </li>
-            ))}
+            {/* A skill that is only a proposal so far waits above, and has no row of its own yet. */}
+            {entries
+              .filter((entry) => entry.versions.some((version) => version.reviewState !== "proposed"))
+              .map((entry) => (
+                <li key={entry.skillId}>
+                  <SkillRow entry={entry} onOpen={(version) => setOpened({ skillId: entry.skillId, version })} onDecide={decide} />
+                </li>
+              ))}
           </ul>
         </>
       )}
@@ -126,18 +133,52 @@ export function SkillsPane({ revision }: { readonly revision: number }) {
   );
 }
 
-function VersionLine({ version, onOpen }: { readonly version: SkillVersion; readonly onOpen: () => void }) {
+/** Where a version came from, in words: an agent's proposal, another author's archive, or the operator's own import. */
+function provenanceText(provenance: string): string {
+  if (provenance.startsWith("chat:")) return "proposed by Tavi in a chat";
+  if (provenance.startsWith("archive:")) return `imported from ${provenance.slice("archive:".length)}, another author's`;
+  return `from ${provenance}`;
+}
+
+/**
+ * One version: under *Waiting for review*, its name, where it came from and a *Review* button; in a skill's own list,
+ * its version and state. The button carries the version's full id either way, for a screen reader and a search.
+ */
+function VersionLine({
+  version,
+  onOpen,
+  review = false,
+}: {
+  readonly version: SkillVersion;
+  readonly onOpen: () => void;
+  readonly review?: boolean;
+}) {
+  const id = `${version.skillId}@${version.version}`;
   return (
     <span className="soul-skill-version">
-      <Button variant="ghost" size="sm" onClick={onOpen}>
-        {version.manifest.name} · {version.skillId}@{version.version}
+      {review ? (
+        <>
+          <strong>{version.manifest.name}</strong>{" "}
+        </>
+      ) : null}
+      <Button variant={review ? "secondary" : "ghost"} size="sm" onClick={onOpen}>
+        {review ? (
+          <>
+            Review<span className="visually-hidden"> {id}</span>
+          </>
+        ) : (
+          <>
+            <span className="visually-hidden">{version.skillId}@</span>
+            {version.version}
+          </>
+        )}
       </Button>
       <span className="muted">
         {" "}
-        {version.reviewState}
+        {review ? "" : `${version.reviewState} · `}
         {/* An agent's proposal waiting past 30 days: still yours to review, no longer counted against its cap. */}
-        {skillProposalExpired(version, new Date().toISOString()) ? " (expired)" : ""} · from {version.provenance}
-        {foreignProvenance(version.provenance) ? " (not yours)" : ""}
+        {provenanceText(version.provenance)}
+        {skillProposalExpired(version, new Date().toISOString()) ? " (expired)" : ""}
       </span>
     </span>
   );
@@ -152,10 +193,12 @@ function SkillRow({
   readonly onOpen: (version: string) => void;
   readonly onDecide: (decision: SkillDecision, activeVersion: string | undefined) => Promise<void>;
 }) {
+  // A proposal is listed once, under *Waiting for review*, not again here.
+  const decided = entry.versions.filter((version) => version.reviewState !== "proposed");
   return (
     <article className="soul-skill card-flat" aria-label={entry.name}>
       <header>
-        <strong>{entry.name}</strong> <span className="muted">{entry.skillId}</span>{" "}
+        <strong>{entry.name}</strong> {entry.skillId === entry.name ? null : <span className="muted">{entry.skillId}</span>}{" "}
         {entry.active === undefined ? <span className="muted">· not active</span> : <span>· active {entry.active}</span>}{" "}
         <span className="muted">· {skillUsageText(entry)}</span>
         {entry.unused ? <strong> · unused {SKILL_UNUSED_DAYS}+ days</strong> : null}
@@ -166,7 +209,7 @@ function SkillRow({
         )}
       </header>
       <ul className="list-reset">
-        {entry.versions.map((version) => (
+        {decided.map((version) => (
           <li key={version.version}>
             <VersionLine version={version} onOpen={() => onOpen(version.version)} />
           </li>

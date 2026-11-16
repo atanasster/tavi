@@ -301,6 +301,23 @@ describe("reviewing an agent's skill proposal", () => {
     expect(asked.filter((entry) => entry.payload["action"] === "approve")).toHaveLength(1);
   });
 
+  it("lists a proposal once, with a Review button, saying Tavi proposed it rather than 'not yours'", async () => {
+    const { client } = owner([proposal()]);
+    const page = await mount(
+      <InWorkspace client={client}>
+        <SkillsPane revision={0} />
+      </InWorkspace>,
+    );
+    const openers = [...page.querySelectorAll("button")].filter((candidate) =>
+      candidate.textContent?.includes("weekly-report@proposed-20261027120000"),
+    );
+    expect(openers).toHaveLength(1);
+    expect(openers[0]?.textContent).toMatch(/^Review/);
+    expect(page.textContent).toContain("proposed by Tavi in a chat");
+    expect(page.textContent).not.toContain("not yours");
+    expect(page.textContent).not.toContain("chat:chat-1");
+  });
+
   it("opens the proposal a chat card's Review asked for", async () => {
     const { client } = owner([
       proposal(),

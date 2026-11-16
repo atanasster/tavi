@@ -371,9 +371,21 @@
   margin-right: var(--space-0-5);
 }
 
-/* The scanned line: what this call touched, not what it is called. */
+/* The scanned line: what this call touched, not what it is called. It alone gives way in a narrow line (ellipsis):
+   the tool's name, its status and its time keep their words whole ("sandbox.r / un", "faile / d" otherwise). */
 .tool-headline {
+  flex: 1 1 auto;
   min-width: 0;
+}
+
+.tool summary > code,
+.tool summary > .badge,
+.tool summary > .tool-status,
+.tools summary > code,
+.tools summary > .badge,
+.tools summary > .tool-status {
+  flex: none;
+  white-space: nowrap;
 }
 
 /* What a call did, in words, where its family can say (past-chat search). */

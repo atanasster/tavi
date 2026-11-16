@@ -13,6 +13,7 @@ import {
   saveOwnerReadRoots,
 } from "../features/sandbox/host.js";
 import { DEFAULT_SANDBOX_OUTPUT_BYTES, readOwnerGitIdentity, registerSandboxTools } from "../features/sandbox/tools.js";
+import { warmXcrunCache } from "../features/sandbox/xcrun.js";
 import type { MemoryContext } from "./memory.js";
 
 /** How long `serve` waits for the sandbox's first probe before it starts anyway. */
@@ -67,6 +68,10 @@ export async function composeSandbox(composed: MemoryContext) {
   // Recorded for a command run without the owner (`tavi mcp add`'s probe), which denies the same folders.
   saveOwnerReadRoots(options);
   if (options.sandboxWarm === true) {
+    // macOS: xcrun's cache filled from here, so a sandboxed `python3` or `git` does not fail to write it on every run.
+    void warmXcrunCache().catch((error: unknown) =>
+      logger.warn("sandbox: xcrun's cache could not be filled", { error: errorMessage(error) }),
+    );
     // Bounded: a probe that hangs leaves the tier `checking`, and the first run probes again.
     const failed = (error: unknown): SandboxStatus => ({ tier: "unavailable", checks: [], cause: errorMessage(error) });
     const settled = await Promise.race([

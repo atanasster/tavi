@@ -544,7 +544,7 @@ A delegated agent's task shows the notes of the chat it works for, read-only.
 tavi memory proposals
 ```
 
-A row ends `(from untrusted content)` when the proposal was made after its chat read untrusted content: it needs a look, as a sensitive one does.
+A row (here and in `tavi memory list`) is the record's id, status, kind and scope, then `(sensitive)` and `(from untrusted content)` where they apply, then its title (or its first line) — none for a sensitive one. `(from untrusted content)` marks a proposal made after its chat read untrusted content: it needs a look, as a sensitive one does.
 
 `tavi memory review` walks the waiting proposals oldest first, showing each one's kind, where it would apply, its expiry, the chat it came from and how many sources it cites: `k` keeps it, `d` discards it, `e` asks for new words and keeps it in them, `s` skips it, `q` stops, and `v` shows a sensitive one's text. An update (A.2) shows "updates: <the kept one>" and takes `r` to replace it (for a fact, `k` to keep both) instead of `k` and `e`; a near duplicate shows "similar to: <the kept one>". It ends with what it did ("kept 1 · replaced 1 · discarded 1 · edited 1 · skipped 1"; "replaced" only when there were any).
 

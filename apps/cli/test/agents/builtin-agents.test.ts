@@ -27,6 +27,22 @@ describe("built-in agents", () => {
     expect(await agents.get("w2", "nobody")).toBeUndefined();
   });
 
+  it("always has a general worker, so a task that is not browsing is not handed to the browser worker", async () => {
+    const worker = await withBuiltinAgents(repository, false).get("w2", "worker");
+    expect(worker).toMatchObject({ agentId: "worker", name: "Worker", enabled: true });
+    expect(worker?.systemPrompt).not.toContain("browser");
+  });
+
+  it("leaves the browser worker out while its Chromium is not installed, and keeps the workspace's own", async () => {
+    let installed = false;
+    const agents = withBuiltinAgents(repository, async () => installed);
+    expect(await agents.get("w2", BROWSER_WORKER_AGENT_ID)).toBeUndefined();
+    expect(await agents.get("w1", "browser")).toBe(own);
+    installed = true;
+    expect(await agents.get("w2", BROWSER_WORKER_AGENT_ID)).toMatchObject({ name: "Browser worker" });
+    expect(await withBuiltinAgents(repository, false).get("w2", BROWSER_WORKER_AGENT_ID)).toBeUndefined();
+  });
+
   it("narrows the browser worker to the browser, its findings, flight search and page fetches", () => {
     for (const tool of [
       "browser.act",

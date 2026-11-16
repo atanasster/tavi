@@ -385,8 +385,8 @@ describe("memory on a live owner", () => {
       return captured.out().split("\n").filter(Boolean).sort();
     };
     const expected = [
-      `${plain.recordId}\tproposed\tfact\tpersonal`,
-      `${read.recordId}\tproposed\tfact\tpersonal\t(from untrusted content)`,
+      `${plain.recordId}\tproposed\tfact\tpersonal\tWalks to work`,
+      `${read.recordId}\tproposed\tfact\tpersonal\t(from untrusted content)\tPrefers deals.example`,
     ].sort();
     expect(await run()).toEqual(expected);
     await handles.pop()?.shutdown("offline next");
@@ -409,7 +409,8 @@ describe("memory on a live owner", () => {
 
     const proposals = await run("proposals");
     expect(proposals.code, proposals.err).toBe(EXIT.ok);
-    expect(proposals.out).toBe(`${proposal.recordId}\tproposed\tfact\tpersonal\n`);
+    // Each row ends on what the record says, so a list is read without a `show` per id.
+    expect(proposals.out).toBe(`${proposal.recordId}\tproposed\tfact\tpersonal\tWalks to work\n`);
 
     const remembered = await run("remember", "--body", "Takes the train on Fridays", "--scope", "workspace");
     expect(remembered.code, remembered.err).toBe(EXIT.ok);
@@ -423,7 +424,10 @@ describe("memory on a live owner", () => {
 
     const listed = await run("list");
     expect(listed.out.split("\n").filter(Boolean).sort()).toEqual(
-      [`${proposal.recordId}\tapproved\tfact\tpersonal`, `${record.recordId}\tapproved\tfact\tpersonal_workspace`].sort(),
+      [
+        `${proposal.recordId}\tapproved\tfact\tpersonal\tWalks to work`,
+        `${record.recordId}\tapproved\tfact\tpersonal_workspace\tTakes the train on Fridays`,
+      ].sort(),
     );
     const json = await run("list", "--format", "json", "--scope", "workspace");
     expect((JSON.parse(json.out) as MemoryItem[]).map((row) => row.recordId)).toEqual([record.recordId]);

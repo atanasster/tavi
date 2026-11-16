@@ -718,7 +718,9 @@ browsing task (a site, a set of dates) to a worker that answers with records, so
 a wide search runs as several workers whose results are compared. The worker is
 offered only the browser, findings, flight search, `web_fetch`, its plan and the
 plugin tools that ask for it (`browserWorker`), and has up to 40 steps a turn. A
-workspace's own `browser` agent replaces it, without those limits.
+workspace's own `browser` agent replaces it, without those limits. While
+Chromium is not installed the built-in is not there (`agents.spawn` names the
+agents that are), so a task for a worker goes to the general `worker` instead.
 
 ## Models
 

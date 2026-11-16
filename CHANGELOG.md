@@ -37,9 +37,40 @@ change behaviour or stored data.
   ("Use the browser to open nodejs.org/en/download"), so two pages on one site
   no longer look like the same question asked twice.
 - A call Tavi refused before it ran (a sandbox run asking for a domain it may
-  not ask for, a denied or unapproved call, a repeated one) had no line in the
-  chat or its Trajectory, so a reply that said "the sandbox refused the fetch"
-  looked made up. It now shows as a failed call, with what was asked.
+  not ask for, an unapproved call, a repeated one) had no line in the chat or
+  its Trajectory, so a reply that said "the sandbox refused the fetch" looked
+  made up. It now shows as a failed call, with what was asked. A call you denied
+  keeps its approval card, marked denied, and no call line: nothing ran.
+- A chat that handed a task to a worker could only name the browser worker,
+  the one built-in agent, so a vowel count went to the browser while Chromium
+  was missing. Every workspace now has a general `worker` agent, and the
+  browser worker is offered only while the browser can open.
+- On macOS every sandboxed `python3` (or `git`, `make`, …) printed
+  "couldn't create cache file … xcrun_db" to stderr, which the model then had
+  to explain. The owner fills xcrun's cache for these tools when it starts.
+- At narrow widths the chat's tool lines broke words mid-way ("sandbox.r un",
+  "faile d"): the tool name and its status keep whole, and the headline wraps.
+- `tavi run --approval approve` printed a call a person must decide (a form
+  fill, a forget) as "denied by --approval deny". It now says it was denied as
+  a person must decide it and nobody attends the run.
+- The skills list in Soul & memory showed a proposal twice, a skill's name
+  twice, a review button that looked like grey text, and "(not yours)" with a
+  raw `chat:task-…` id. A proposal shows once, under its skill, with a Review
+  button, and its source reads "proposed by Tavi in a chat".
+- A routine's run marked "degraded" said nowhere why: `routines.inspect` now
+  answers the reasons (`publication.gaps`) and the report itself as text, so
+  the chat can read it (it was refused as not found). A weekly or monthly
+  routine's report looks back over its whole period (up to 8 days), not only
+  the last 72 hours, so it no longer reports days it skipped as gaps.
+- `tavi run` under `tavi serve` exited with code 7 ("waiting on worker task")
+  while the chat waited on its worker, so the answer never showed. It now
+  follows the task until the worker answers and the chat replies.
+- `tavi tasks` and `tavi doctor` print text at a terminal (JSON in a pipe, or
+  with `--format json`): a task a line, and a summary of each check. `tavi
+  memory list` and `proposals` end each row with the record's title.
+- A rate-limited web search (429) was reported to the model as a call that
+  "may have run", so it checked and retried at once. A search the provider
+  refused ran nothing: it is now said to be retryable after a wait.
 
 ## 0.1.0 — first release
 

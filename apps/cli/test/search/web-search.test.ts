@@ -240,8 +240,17 @@ describe("the adapters", () => {
     };
     const brave = provider({ providerId: "brave", kind: "brave", credentialRef: "brave.apiKey" });
     expect(await refuse(brave, 401)).toMatchObject({ code: "NOT_AUTHORIZED", message: expect.stringContaining("refused the key (401)") });
-    expect(await refuse(brave, 429)).toMatchObject({ code: "UNAVAILABLE", message: expect.stringContaining("rate limited") });
-    expect(await refuse(brave, 502)).toMatchObject({ code: "UNAVAILABLE", message: expect.stringContaining("answered 502") });
+    // Each answered refusal ran nothing (`refused`), so the call is not reported as one that may have run.
+    expect(await refuse(brave, 429)).toMatchObject({
+      code: "UNAVAILABLE",
+      message: expect.stringContaining("rate limited"),
+      details: { refused: true, rateLimited: true },
+    });
+    expect(await refuse(brave, 502)).toMatchObject({
+      code: "UNAVAILABLE",
+      message: expect.stringContaining("answered 502"),
+      details: { refused: true },
+    });
     // A refused query keeps the provider's reason, so the model can reword it.
     const tavily = provider({ providerId: "tavily", kind: "tavily", credentialRef: "tavily.apiKey" });
     expect(

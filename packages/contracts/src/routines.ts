@@ -66,6 +66,37 @@ export function routineTriggerEnds(trigger: RoutineTrigger): boolean {
 }
 
 /** A trigger's first fire strictly after `after`, ISO-8601 UTC, through the engine schedules use; `null` once it has none (a fired one-off, an ended `until`). */
+/** The longest a report looks back: a week between runs, and a day to spare. */
+export const ROUTINE_LOOKBACK_MAX_HOURS = 192;
+
+/**
+ * A report window that covers the time between a routine's runs: the longest gap among its next dozen runs, at least
+ * a day, and widening a day past it (at least 72 hours, as before). A weekly routine's report reads its week; under
+ * the old fixed 24 hours, widened to at most 72, every weekly run reported an uncovered gap. One-off triggers alone
+ * keep the day.
+ */
+export function routineCadenceLookback(
+  triggers: readonly RoutineTrigger[],
+  now: Date,
+): { readonly lookbackHours: number; readonly widenLookbackMaxHours: number } {
+  const fires: number[] = [];
+  for (const trigger of triggers) {
+    if (trigger.kind !== "daily") continue;
+    let after = now;
+    for (let count = 0; count < 12; count += 1) {
+      const next = routineTriggerNext(trigger, after);
+      if (next === null) break;
+      fires.push(Date.parse(next));
+      after = new Date(next);
+    }
+  }
+  fires.sort((a, b) => a - b);
+  let gap = 0;
+  for (let index = 1; index < fires.length; index += 1) gap = Math.max(gap, (fires[index] as number) - (fires[index - 1] as number));
+  const lookbackHours = Math.min(ROUTINE_LOOKBACK_MAX_HOURS, Math.max(24, Math.ceil(gap / 3_600_000)));
+  return { lookbackHours, widenLookbackMaxHours: Math.min(ROUTINE_LOOKBACK_MAX_HOURS, Math.max(72, lookbackHours + 24)) };
+}
+
 export function routineTriggerNext(trigger: RoutineTrigger, after: Date): string | null {
   const spec = routineTriggerSpec(trigger);
   if (spec === undefined) return trigger.kind === "once" && new Date(trigger.runAt) > after ? trigger.runAt : null;
@@ -201,8 +232,8 @@ const RoutineReportFieldsSchema = z.strictObject({
    * when it is saved.
    */
   templateVersion: RoutineTemplateIdSchema,
-  lookbackHours: z.number().int().min(1).max(72),
-  widenLookbackMaxHours: z.number().int().min(1).max(72),
+  lookbackHours: z.number().int().min(1).max(ROUTINE_LOOKBACK_MAX_HOURS),
+  widenLookbackMaxHours: z.number().int().min(1).max(ROUTINE_LOOKBACK_MAX_HOURS),
   dedupWindowDays: z.number().int().min(1).max(30),
   onEmpty: z.enum(["notify_summary", "suppress_delivery", "widen_lookback"]),
   corroboration: z.enum(["two_independent", "allow_single_with_caveat"]),

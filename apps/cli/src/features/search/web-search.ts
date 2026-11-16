@@ -107,9 +107,16 @@ const results = (entries: unknown, map: (entry: Record<string, unknown>) => WebS
 export function createWebSearchAdapter(config: SearchProviderConfig, options: WebSearchAdapterOptions): WebSearchProvider {
   const doFetch = options.fetch ?? fetch;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  const fail = (code: "UNAVAILABLE" | "NOT_AUTHORIZED" | "NOT_CONFIGURED", message: string): TaviError =>
+  /** A search answered with an error status ran nothing: a retry repeats nothing. */
+  const REFUSED = { refused: true } as const;
+  const fail = (
+    code: "UNAVAILABLE" | "NOT_AUTHORIZED" | "NOT_CONFIGURED",
+    message: string,
+    /** The provider answered with a refusal: nothing ran (`refused`), and for a 429, a retry waits (`rateLimited`). */
+    answered?: { readonly refused: true; readonly rateLimited?: true },
+  ): TaviError =>
     new TaviError(code, `web search provider ${config.providerId} (${config.kind}): ${message}`, {
-      details: { providerId: config.providerId, kind: config.kind },
+      details: { providerId: config.providerId, kind: config.kind, ...answered },
     });
 
   /** The key, or `undefined` for a keyless provider; a keyed kind with none is refused, never sent an empty header. */
@@ -171,6 +178,7 @@ export function createWebSearchAdapter(config: SearchProviderConfig, options: We
         throw fail(
           "UNAVAILABLE",
           `answered ${response.status}${reason === undefined ? "" : `: ${scrubCredentialText(reason).slice(0, 200)}`}`,
+          REFUSED,
         );
       }
       // Best effort: the body is discarded; one already closed has nothing to cancel.
@@ -179,12 +187,13 @@ export function createWebSearchAdapter(config: SearchProviderConfig, options: We
         throw fail(
           "UNAVAILABLE",
           "the instance refused the request (403) — most likely `json` is missing from `search.formats` in its settings.yml",
+          REFUSED,
         );
       }
       if (response.status === 401 || response.status === 403)
-        throw fail("NOT_AUTHORIZED", `the provider refused the key (${response.status})`);
-      if (response.status === 429) throw fail("UNAVAILABLE", "rate limited (429); try again later");
-      throw fail("UNAVAILABLE", `answered ${response.status}`);
+        throw fail("NOT_AUTHORIZED", `the provider refused the key (${response.status})`, REFUSED);
+      if (response.status === 429) throw fail("UNAVAILABLE", "rate limited (429); try again later", { refused: true, rateLimited: true });
+      throw fail("UNAVAILABLE", `answered ${response.status}`, REFUSED);
     }
     let body: string | undefined;
     try {

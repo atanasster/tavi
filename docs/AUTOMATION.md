@@ -699,8 +699,14 @@ heartbeat, a worker or any other unattended run still waits for its worker.
   this chat" on a spawn covers more workers as that same agent, not any agent.
 - A worker is never a chat: it has no row in the chats list and takes no
   messages. Its questions and browser handoffs appear in the chat that spawned
-  it. Every workspace also has built-in agents; the `browser` agent is described in
-  [BROWSER.md](BROWSER.md#the-browser-worker).
+  it. Every workspace also has built-in agents: `worker`, which takes one
+  self-contained task (a calculation, a summary of files) with the chat's tools
+  and answers with the result, and `browser`, offered only while the browser can
+  open, described in [BROWSER.md](BROWSER.md#the-browser-worker). A workspace's
+  own agent of the same id replaces either.
+- `tavi run` follows a task that waits on its worker to the answer: the owner
+  resumes the task when the worker answers, and the run prints
+  `[waiting] on worker task …` meanwhile (Ctrl-C detaches).
 
 ## Projects and reports
 
@@ -1022,6 +1028,12 @@ other report and delivery field as the revision has it (a delivery `window` of
 `null` removes the window), and the merged report is still checked whole, so a
 change that would leave the widened window narrower than the lookback is
 refused. The model cannot set a report's plugin template; the owner pins it.
+A new routine's report window follows its cadence: `lookbackHours` is the
+longest gap between its runs (at least a day, at most 192 hours), and
+`widenLookbackMaxHours` a day past it (at least 72), so a weekly routine reads
+its whole week instead of reporting the days it missed as a gap. A run's
+`routines.inspect` answer carries the report as text (`report`), and a
+degraded run's publication names its gaps (`publication.gaps`).
 An edit or undo is checked against the revision it was read from
 (`expectedRevision`, the routine's `latestRevision`), not the routine's
 `version`, which an evaluation finishing also bumps: "create, then make it a

@@ -14,6 +14,7 @@ const IDENTITY_FIELDS = new Set([
   "pluginId",
   "stateKey",
   "childRunId",
+  "workerTaskId",
   "sessionId",
   "messageId",
   "workerAgentId",

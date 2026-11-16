@@ -44,6 +44,9 @@ const NODE_CHECKED_COMMANDS: ReadonlySet<ParsedCommand["command"]> = new Set(["s
 export { BUILD_ID };
 export { EXIT };
 
+/** Commands that print their text form at a terminal when no `--format` is given: a script piping them still gets JSON. */
+const TEXT_AT_A_TERMINAL: ReadonlySet<string> = new Set(["tasks", "doctor"]);
+
 export async function main(argv: readonly string[], options: MainOptions = {}): Promise<number> {
   const io = options.io ?? DEFAULT_IO;
   const runtimeFactory = options.runtimeFactory ?? defaultRuntimeFactory;
@@ -51,7 +54,8 @@ export async function main(argv: readonly string[], options: MainOptions = {}): 
   try {
     parsed = parseArgs(argv);
     // `--format text` holds for every command: a JSON-only answer is printed as text.
-    if (parsed.format === "text") markTextOutput(io);
+    // At a terminal, a command whose JSON is long and a person's to read prints text unless `--format json` asks.
+    if (parsed.format === "text" || (parsed.format === undefined && io.isTty && TEXT_AT_A_TERMINAL.has(parsed.command))) markTextOutput(io);
   } catch (error) {
     if (error instanceof UsageError) {
       // One line: what was wrong, the nearest valid name, and the help page; `--help` prints the page.

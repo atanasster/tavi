@@ -1,4 +1,4 @@
-import { emitError, emitJson } from "../../cli/output.js";
+import { emitError, emitJson, isTextOutput } from "../../cli/output.js";
 import { EXIT, configRefusalExit, refusalExit, reportFailure } from "../../cli/exit.js";
 import {
   type IpcPayload,
@@ -132,7 +132,8 @@ export async function listTasks(io: CliIo, explicit?: string, taskId?: string): 
     // when nobody is running. The task-id filter travels in the request
     // payload so an attached client gets the same single-task view a direct,
     // unattached invocation would.
-    const attached = await attachToOwner(dataDirectory, "tasks", taskId === undefined ? {} : { taskId }, io);
+    const print = (document: unknown): void => printTasks(io, document as Record<string, unknown>, taskId);
+    const attached = await attachToOwner(dataDirectory, "tasks", taskId === undefined ? {} : { taskId }, io, undefined, undefined, print);
     if (attached !== undefined) return attached;
     // The offline path's modules load only when no owner answers: an attached `tavi tasks` stays off the runtime.
     const { buildTaskDocument, buildTaskShowDocument } = await import("../doctor/reports.js");
@@ -150,12 +151,57 @@ export async function listTasks(io: CliIo, explicit?: string, taskId?: string): 
         io.stderr(`tasks failed: NOT_FOUND: Task ${taskId} does not exist\n`);
         return EXIT.unavailable;
       }
-      emitJson(io, document);
+      print(document);
       return EXIT.ok;
     });
   } catch (error) {
     return reportFailure(error, io, "could not read task history");
   }
+}
+
+/** `tavi tasks` as its text form at a terminal or under `--format text` (the list; one task stays a record), else JSON. */
+function printTasks(io: CliIo, document: Record<string, unknown>, taskId: string | undefined): void {
+  if (taskId === undefined && isTextOutput(io)) io.stdout(taskListText(document));
+  else emitJson(io, document);
+}
+
+const listOf = (value: unknown): readonly Record<string, unknown>[] =>
+  Array.isArray(value) ? value.filter((item): item is Record<string, unknown> => item !== null && typeof item === "object") : [];
+
+/** One line a task's own text is shown on: no control character or line break, clipped. */
+const lineOf = (value: unknown, max: number): string => {
+  const text = typeof value === "string" ? terminalText(value).replace(/\s+/g, " ").trim() : "";
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+};
+
+/**
+ * `tavi tasks` for a person: the most recent tasks, a line each — status, when, id, title — then what waits on
+ * them (approvals, unresolved effects, deliveries, expired leases), each a count with the command that shows it.
+ */
+export function taskListText(document: Record<string, unknown>): string {
+  const tasks = listOf(document["tasks"]);
+  const lines: string[] = [];
+  if (tasks.length === 0) lines.push("No tasks yet.");
+  else {
+    const width = Math.max(...tasks.map((task) => String(task["status"] ?? "").length));
+    for (const task of tasks) {
+      const status = String(task["status"] ?? "").padEnd(width);
+      const when = typeof task["updatedAt"] === "string" ? task["updatedAt"].slice(0, 16).replace("T", " ") : "";
+      const title = lineOf(task["title"], 70) || lineOf(task["summary"], 70) || lineOf(task["finalText"], 70);
+      lines.push(`${status}  ${when}  ${String(task["taskId"] ?? "")}${title === "" ? "" : `  ${title}`}`);
+    }
+  }
+  const counts: [unknown, string, string][] = [
+    [document["pendingApprovals"], "pending approval", "pending approvals"],
+    [document["unresolvedEffects"], "effect of unknown outcome", "effects of unknown outcome"],
+    [document["pendingDeliveries"], "delivery of unknown outcome", "deliveries of unknown outcome"],
+    [document["expiredLeases"], "expired lease", "expired leases"],
+    [document["cancellations"], "cancellation", "cancellations"],
+  ];
+  const waiting = counts.filter(([list]) => listOf(list).length > 0).map(([list, one, many]) => plural(listOf(list).length, one, many));
+  if (waiting.length > 0) lines.push("", `Also: ${waiting.join(", ")}.`);
+  lines.push("", "One task in full: tavi tasks <task-id>. Everything as JSON: tavi tasks --format json.");
+  return `${lines.join("\n")}\n`;
 }
 
 /**

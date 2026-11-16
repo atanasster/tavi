@@ -370,6 +370,19 @@ export async function dispatchTool(
         ...thrownLabel(definition, error),
       };
     }
+    // A provider that answered with a refusal (a rate limit, a refused request) did nothing: the call is rejected,
+    // and a later retry is safe, as for a sign-in.
+    if (error instanceof TaviError && error.details?.["refused"] === true) {
+      await effects.resolve({ effectKey, state: "rejected", error: detail, now: { execution: true } });
+      return {
+        ...base,
+        text: "",
+        output: failureOutput(undefined, detail, error),
+        isError: true,
+        ...(redacted === undefined ? {} : { redacted }),
+        ...thrownLabel(definition, error),
+      };
+    }
     // A thrown handler may or may not have reached the provider, so the outcome
     // is recorded as uncertain rather than rejected.
     await effects.resolve({
@@ -542,7 +555,9 @@ const RETRYABLE_FAILURES: ReadonlySet<string> = new Set(["UNAVAILABLE", "TIMEOUT
  * else — and whether a retry could help, so the model neither gives up on a
  * transient failure nor retries a permanent one. A call whose outcome is
  * `uncertain` — it may have reached the provider — is never called retryable:
- * a retry under a new call id could do the same thing twice.
+ * a retry under a new call id could do the same thing twice. A handler whose
+ * provider answered with a refusal says so (`details.refused`): nothing ran,
+ * so it is not uncertain; `details.rateLimited` says to wait before a retry.
  */
 export function failureOutput(
   signIn: ReturnType<typeof signInFailure>,
@@ -563,7 +578,13 @@ export function failureOutput(
   if (options.uncertain === true && RETRYABLE_FAILURES.has(code))
     return { error: code, detail, retryable: false, hint: "the call may have run: check whether it did before calling it again" };
   const retryable = RETRYABLE_FAILURES.has(code);
-  return { error: code, detail, retryable, ...(retryable ? { hint: "a later retry may succeed" } : {}) };
+  // A rate limit says when to come back, not that the arguments are wrong.
+  const hint = !retryable
+    ? undefined
+    : error instanceof TaviError && error.details?.["rateLimited"] === true
+      ? "rate limited: wait before calling it again, or say the search is unavailable for now"
+      : "a later retry may succeed";
+  return { error: code, detail, retryable, ...(hint === undefined ? {} : { hint }) };
 }
 
 /** An `INVALID_INPUT` output, one shape everywhere: its problems as a list, and as one line. */

@@ -39,6 +39,8 @@ export interface RoutinePublication {
   readonly pdfError: string | null;
   /** The report's first story title, or its title when it has none: what a run's history row shows of it. Absent on older publications. */
   readonly headline?: string;
+  /** Why a degraded run was degraded: its report's coverage gaps, at most 10. Absent on a complete report and on older publications. */
+  readonly gaps?: readonly string[];
 }
 /**
  * The boundaries a crash can land on, named so a test can stop there.
@@ -402,6 +404,8 @@ export class RoutinePublicationService {
         publishedAt: now,
         pdfError,
         headline: (report.stories[0]?.title ?? report.title).slice(0, 300),
+        // Kept with the run, so `routines.inspect` and the history can say why it was degraded.
+        ...(report.coverage.gaps.length === 0 ? {} : { gaps: report.coverage.gaps.slice(0, 10).map((gap) => gap.slice(0, 300)) }),
       };
       this.store.handle
         .prepare("UPDATE tavi_routine_runs SET data_json=? WHERE run_id=?")

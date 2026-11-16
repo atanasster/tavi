@@ -307,7 +307,8 @@ const ROUTINE_DESCRIPTIONS = {
   run: `Run a routine now; its report goes to its configured targets. routines.inspect reads the run.${LINKED}`,
   preview: `Run a routine as a preview, delivered nowhere. routines.inspect reads the run.${LINKED}`,
   history: `List a routine's past runs.${LINKED}`,
-  inspect: "Inspect a run: its publication, deliveries and attempts.",
+  inspect:
+    "Inspect a run: its report as text (`report`), its publication (`gaps` says why a degraded run was degraded), deliveries and attempts.",
   cancel_run: "Cancel a run: stop it if it is still running, and drop its deliveries not yet sent.",
   revoke_grant:
     "Revoke a run's pinned authority. The next research fetch and any pending delivery for that run fail closed; evidence already gathered and a report already published are untouched. Use when the operator wants to bound a run without cancelling it.",

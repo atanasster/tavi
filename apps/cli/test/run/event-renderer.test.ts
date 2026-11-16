@@ -109,6 +109,28 @@ describe("the text renderer", () => {
     );
   });
 
+  it("under --approval approve, says a refused call needed a person, never that --approval deny refused it", () => {
+    let written = "";
+    const renderer = createEventRenderer({ format: "text", write: (chunk) => void (written += chunk), approval: "approve" });
+    const settled = (approved: boolean[]) =>
+      event({
+        kind: "approval.settled",
+        steps: 1,
+        decidedBy: "auto:local",
+        decisions: approved.map((ok, index) => ({ callId: `call-${index}`, approved: ok })),
+      });
+    renderer.render(settled([false]));
+    renderer.render(settled([true, false]));
+    renderer.render(settled([true]));
+    expect(written).not.toContain("--approval deny");
+    expect(written.split("\n")).toEqual([
+      "[approval] denied, as a person must decide it and nobody attends this run (--approval approve does not cover it)",
+      "[approval] 1 approved by --approval approve, 1 denied, as a person must decide it and nobody attends this run (--approval approve does not cover it)",
+      "[approval] approved by --approval approve",
+      "",
+    ]);
+  });
+
   it("prints a schedule fire's quiet marker in words, and any other answer as it streams", () => {
     const rendered = (texts: readonly string[], end: "completed" | "tool") => {
       let written = "";

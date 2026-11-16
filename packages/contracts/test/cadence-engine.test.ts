@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { TaviError } from "../src/errors.js";
 import { reminderFireDisposition } from "../src/reminders.js";
-import { RoutineTriggerSchema, routineDeliveryWindowNotice, routineTriggerNext } from "../src/routines.js";
+import { RoutineTriggerSchema, routineCadenceLookback, routineDeliveryWindowNotice, routineTriggerNext } from "../src/routines.js";
 import {
   MISSED_RUN_GRACE_MS,
   ON_TIME_TOLERANCE_MS,
@@ -304,6 +304,34 @@ describe("a routine's triggers", () => {
     expect(routineTriggerNext({ id: "t", kind: "daily", at: "07:00", timezone: "Europe/Sofia", until: "2026-10-28" }, now)).toBeNull();
     expect(routineTriggerNext({ id: "o", kind: "once", runAt: "2026-10-29T08:00:00.000Z" }, now)).toBe("2026-10-29T08:00:00.000Z");
     expect(routineTriggerNext({ id: "o", kind: "once", runAt: "2026-10-27T08:00:00.000Z" }, now)).toBeNull();
+  });
+});
+
+describe("a routine's report window", () => {
+  const now = new Date("2026-10-28T12:00:00.000Z");
+
+  it("covers the time between runs: a day for a daily routine, the week for a weekly one", () => {
+    expect(routineCadenceLookback([{ id: "d", kind: "daily", at: "09:00", timezone: "Europe/Sofia" }], now)).toEqual({
+      lookbackHours: 24,
+      widenLookbackMaxHours: 72,
+    });
+    // Once a week: 168 hours, widening a day past it, so a weekly run reads its week rather than reporting a gap.
+    expect(routineCadenceLookback([{ id: "w", kind: "daily", at: "09:00", daysOfWeek: [1], timezone: "Europe/Sofia" }], now)).toEqual({
+      lookbackHours: 168,
+      widenLookbackMaxHours: 192,
+    });
+  });
+
+  it("keeps the day for one-off triggers, and never passes the ceiling", () => {
+    expect(routineCadenceLookback([{ id: "o", kind: "once", runAt: "2026-10-29T08:00:00.000Z" }], now)).toEqual({
+      lookbackHours: 24,
+      widenLookbackMaxHours: 72,
+    });
+    const monthly = routineCadenceLookback(
+      [{ id: "m", kind: "daily", at: "09:00", monthly: { nth: 1, weekday: 1 }, timezone: "UTC" }],
+      now,
+    );
+    expect(monthly).toEqual({ lookbackHours: 192, widenLookbackMaxHours: 192 });
   });
 });
 

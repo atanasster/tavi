@@ -384,6 +384,75 @@ it("says a routine has not been tried on its own topic until a run of it publish
   publication.publish(fence, report, state.version, f.delivery);
   expect(f.runs.get(scope, preview.runId).status).toBe("succeeded");
   expect(get().topicNotice).toBeUndefined();
+  // The chat that previewed it reads the report itself, as text; a complete report names no gaps.
+  const inspected = f.control.execute({ ...scope, action: "inspect", runId: preview.runId }) as {
+    report?: { text: string; truncated: boolean };
+    publication: { gaps?: readonly string[] } | null;
+  };
+  expect(inspected.report?.text).toContain("Release");
+  expect(inspected.report?.truncated).toBe(false);
+  expect(inspected.publication?.gaps).toBeUndefined();
+});
+it("says why a run was degraded: its report's gaps, kept with the publication", async () => {
+  const f = await fixture();
+  const draft = f.control.execute(f.create) as RoutineDetail;
+  await f.evaluation.drain();
+  const preview = f.runs.request(scope, draft.routine.routineId, "gappy", "preview");
+  const fence = f.runs.start(scope, preview.runId);
+  if (fence === undefined) throw new Error("Preview did not start");
+  const news = new RoutineNewsService(f.runs);
+  const source = news.capture(
+    fence,
+    "http.request",
+    { url: "https://example.com/model" },
+    {
+      ok: true,
+      body: `<meta property="article:published_time" content="${new Date(Date.now() - 3_600_000).toISOString()}"><p>Model One version 2 is now available.</p>`,
+    },
+  ) as { sourceId: string };
+  const report = news.select(
+    scope,
+    preview.runId,
+    {
+      stories: [
+        {
+          title: "Release",
+          releaseIdentity: "Model One version 2",
+          eventKind: "release",
+          claims: [{ text: "Model One version 2 is now available.", sourceId: source.sourceId }],
+        },
+        {
+          title: "Rumour",
+          releaseIdentity: "Model Two",
+          eventKind: "release",
+          claims: [{ text: "Model Two is coming.", sourceId: "src-never-fetched" }],
+        },
+      ],
+    },
+    nowTimestamp(),
+  );
+  expect(report.degraded).toBe(true);
+  const publication = new RoutinePublicationService(f.runs);
+  publication.stage(fence, "json", Buffer.from(canonicalRoutineJson(report)));
+  const state = f.store.handle.prepare("SELECT version FROM tavi_routine_state WHERE routine_id=?").get(draft.routine.routineId) as {
+    version: number;
+  };
+  publication.publish(fence, report, state.version, f.delivery);
+  expect(f.runs.get(scope, preview.runId).status).toBe("degraded");
+  const inspected = f.control.execute({ ...scope, action: "inspect", runId: preview.runId }) as {
+    publication: { gaps?: readonly string[] } | null;
+  };
+  expect(inspected.publication?.gaps).toEqual(report.coverage.gaps);
+  expect(inspected.publication?.gaps?.[0]).toMatch(/lacked eligible fetched support/);
+});
+it("sizes a new routine's report window to its cadence: a weekly one reads its week", async () => {
+  const f = await fixture();
+  const draft = f.control.execute({
+    ...f.create,
+    operationKey: "weekly",
+    setup: { ...f.create.setup, at: undefined, triggers: [{ id: "w", kind: "daily", at: "09:00", daysOfWeek: [1], timezone: "UTC" }] },
+  }) as RoutineDetail;
+  expect(draft.revision.snapshot.report).toMatchObject({ lookbackHours: 168, widenLookbackMaxHours: 192 });
 });
 it("says nothing about its topic for a model-release routine, whose setup check is asked its own objective", async () => {
   const f = await fixture();

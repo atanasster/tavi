@@ -53,7 +53,7 @@ export async function executeRun(runtime: TaviRuntime, options: RunCommandOption
   const operationKey = clientOperationKey(options.operationKey);
   // Rendered from the bus: the same stream an attached client receives, from
   // the one producer (the admission decorator), so the two cannot drift.
-  const view = foregroundStream(runtime, options.format, io);
+  const view = foregroundStream(runtime, options.format, io, options.approval);
   const { renderer, stream } = view;
 
   let runId = "pending-admission";
@@ -336,8 +336,8 @@ async function approveReviewOnce(
  * consumer otherwise. Its stream ends where it was, and the refusal is signalled
  * by exit 4 and stderr (`reportAdmitFailure`; docs/CLI.md, Output Formats).
  */
-export function foregroundStream(runtime: TaviRuntime, format: OutputFormat, io: CliIo) {
-  const renderer = createEventRenderer({ format, write: io.stdout });
+export function foregroundStream(runtime: TaviRuntime, format: OutputFormat, io: CliIo, approval?: "ask" | "approve" | "deny") {
+  const renderer = createEventRenderer({ format, write: io.stdout, ...(approval === undefined ? {} : { approval }) });
   const stream = createTaskStreamRenderer(runtime.runEventBus, (event) => renderer.render(event));
   return {
     renderer,

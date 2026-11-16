@@ -527,6 +527,30 @@ describe("attached run: edges", () => {
     expect(await attachToRunningTask(waiting.client, "task-1", follow(still.io))).toBe(EXIT.taskWaiting);
   });
 
+  it("follows a run through a wait on its worker to the answer the resumed turn gives", async () => {
+    const workerWait = event("task.waiting", { on: "worker task task-2 completing", deadlineAt: AT, workerTaskId: "task-2" });
+    const owner = fakeOwner((command) => (command === "run" ? ran([started(), workerWait]) : unplanned(command)));
+    const out = capture();
+    const following = runOnOwner(owner.client, { prompt: "p", operationKey: "op-1" }, follow(out.io));
+    await waitFor(() => out.stderr().includes("[waiting] on worker task task-2"));
+    owner.emit(
+      event("attempt.replaced", { supersededAttemptId: "attempt-0", reason: "resuming after the worker" }),
+      event("text.delta", { blockId: "b-1", text: "11 vowels" }),
+      event("task.completed", { finalText: "11 vowels" }),
+    );
+    expect(await following, out.stderr()).toBe(EXIT.ok);
+    expect(out.stdout()).toContain("11 vowels");
+    expect(out.stderr()).not.toContain("resolves on its own");
+
+    // A replay that ends on the worker wait keeps following too: the answer is still to come.
+    const replayed = fakeOwner((command) => (command === "subscribe" ? subscribed([started(), workerWait]) : unplanned(command)));
+    const again = capture();
+    const attached = attachToRunningTask(replayed.client, "task-1", follow(again.io));
+    await waitFor(() => again.stderr().includes("[waiting] on worker task task-2"));
+    replayed.emit(event("task.completed", { finalText: "11 vowels" }));
+    expect(await attached).toBe(EXIT.ok);
+  });
+
   it("asks only the round still open once the replay ends, and reports it without a terminal", async () => {
     const replay = [
       started(),

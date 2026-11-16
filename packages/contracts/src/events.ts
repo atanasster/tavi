@@ -326,6 +326,11 @@ export const ClientEventSchema = z.discriminatedUnion("kind", [
     question: z.string().max(EVENT_TEXT_BOUNDS.question).optional(),
     /** The question's choices, so an attached client can offer them. Additive. */
     choices: AskUserChoicesSchema.optional(),
+    /**
+     * The worker task the wait resolves on, for a wait on a worker (`agents.wait`): the owner resumes the task when
+     * the worker answers, so a following client keeps following rather than ending here. Additive.
+     */
+    workerTaskId: IdSchema.optional(),
     /** The wait's id, so a client can tell this question from the next and match its `wait.settled` (protocol v4). */
     waitId: WaitIdSchema,
     /** Why the question is asked. Additive. */

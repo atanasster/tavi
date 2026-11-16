@@ -143,3 +143,27 @@ describe("a sign-in error in dispatch", () => {
     expect(states).toEqual(["uncertain"]);
   });
 });
+
+describe("a provider's refusal in dispatch", () => {
+  it("rejects the effect of a rate-limited call, and tells the model to wait, never that the call may have run", async () => {
+    const { message, states } = await call(
+      () =>
+        new TaviError("UNAVAILABLE", "web search provider tavily (tavily): rate limited (429); try again later", {
+          details: { providerId: "tavily", kind: "tavily", refused: true, rateLimited: true },
+        }),
+    );
+    expect(message.output).toEqual({
+      error: "UNAVAILABLE",
+      detail: "web search provider tavily (tavily): rate limited (429); try again later",
+      retryable: true,
+      hint: "rate limited: wait before calling it again, or say the search is unavailable for now",
+    });
+    expect(states).toEqual(["rejected"]);
+  });
+
+  it("still calls a failure that says nothing of a refusal uncertain", async () => {
+    const { message, states } = await call(() => new TaviError("UNAVAILABLE", "the connection broke off"));
+    expect(message.output).toMatchObject({ retryable: false, hint: expect.stringContaining("may have run") });
+    expect(states).toEqual(["uncertain"]);
+  });
+});

@@ -189,12 +189,14 @@ export function createToolsNode(scope: WorkflowScope): WorkflowNode {
     };
     const { messages, prefetched, readOnlyTool } = round;
     /**
-     * A call refused before it ran (not disclosed, repeated, denied, cancelled, not approved): its answer to the model,
-     * and a failed call line for the person. Without the line the transcript and the trajectory never showed it, and a
-     * reply that named the refusal read as made up.
+     * A call refused before it ran (not disclosed, repeated, refused by policy, cancelled, not approved): its answer to
+     * the model, and a failed call line for the person. Without the line the transcript and the trajectory never showed
+     * it, and a reply that named the refusal read as made up. A call the person denied in its round is `shown` already,
+     * by that round's card, and is no call line: nothing ran.
      */
-    const refused = async (call: (typeof calls)[number], message: WorkflowMessage): Promise<void> => {
+    const refused = async (call: (typeof calls)[number], message: WorkflowMessage, shown = false): Promise<void> => {
       messages.push(message);
+      if (shown) return;
       const observer = observers.get(threadIdOf(config));
       await observer?.onToolEvent?.({
         ...toolIdentity,
@@ -278,15 +280,20 @@ export function createToolsNode(scope: WorkflowScope): WorkflowNode {
         }
         const denial = current.denials[call.id];
         if (denial !== undefined) {
-          await refused(call, {
-            id: `tool-${call.id}`,
-            role: "tool" as const,
-            text: "",
-            toolCallId: call.id,
-            toolName: call.name,
-            output: { denied: true, reason: denial },
-            isError: true,
-          });
+          await refused(
+            call,
+            {
+              id: `tool-${call.id}`,
+              role: "tool" as const,
+              text: "",
+              toolCallId: call.id,
+              toolName: call.name,
+              output: { denied: true, reason: denial },
+              isError: true,
+            },
+            // Denied in a round, its card says so, and by whom; refused by policy before any round, nothing does.
+            (await options.approvals.getForCall(current.runId, call.id, current.steps))?.state === "denied",
+          );
           continue;
         }
 
