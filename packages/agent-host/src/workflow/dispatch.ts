@@ -765,7 +765,10 @@ interface QuestionInputs {
  * Validate a complete tool call against the canonical Zod schema.
  *
  * Partial or interleaved arguments never reach this point: the transport only
- * emits a call when the model has produced a complete argument object.
+ * emits a call once the model has finished it. A finished call whose arguments
+ * are not JSON (a list without its brackets, say) arrives as the raw text,
+ * and is answered as that, with where it broke, so the model sends it again
+ * as an object rather than read "expected object, received string".
  */
 export function validateToolInput(
   registry: ToolRegistryPort,
@@ -779,8 +782,22 @@ export function validateToolInput(
   }
   const parsed = z.safeParse(schema, input);
   if (parsed.success) return { ok: true, value: parsed.data };
+  if (typeof input === "string") {
+    const detail = `the arguments are not one JSON object${notJson(input)}; send them again as a single JSON object, every string quoted and every list in [ ]`;
+    return { ok: false, detail, issues: [detail] };
+  }
   const issues = zodIssues(parsed.error, "<root>");
   return { ok: false, detail: issues.join("; "), issues };
+}
+
+/** Why raw arguments are not JSON, as `: <parser's reason>`; empty when they parse (a JSON string, say, not an object). */
+function notJson(text: string): string {
+  try {
+    JSON.parse(text);
+    return "";
+  } catch (error) {
+    return `: ${error instanceof Error ? error.message.slice(0, 200) : String(error)}`;
+  }
 }
 
 /**

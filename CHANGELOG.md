@@ -23,6 +23,10 @@ change behaviour or stored data.
   failed as a crash, the document was refused for a day, and
   `--pdf-allow-unconfined` had no effect. A PDF call now waits for that first
   answer.
+- A tool call whose arguments were not JSON (a model writing a list without
+  its brackets, say) was answered "expected object, received string". It is
+  now told the arguments are not one JSON object, where they broke, and to send
+  them again as one, so the model corrects the call on its retry.
 
 ## 0.1.0 — first release
 
