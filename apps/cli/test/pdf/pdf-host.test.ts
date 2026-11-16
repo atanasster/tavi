@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   PDF_LIMITS,
+  type PdfEnginePort,
   type PdfRefusedLaunch,
   type PdfWrapped,
   type ResourceLimitPort,
@@ -13,7 +14,7 @@ import {
 import { temporaryDirectories } from "@tavi/test-support";
 
 import { pdfConfinementFacts } from "../../src/features/doctor/reports.js";
-import { pdfConfinement, pdfOcrAssets, pdfSandbox } from "../../src/features/pdf/host.js";
+import { pdfConfinement, pdfOcrAssets, pdfSandbox, settledPdfEngine } from "../../src/features/pdf/host.js";
 import { ownerConfinement } from "../../src/features/sandbox/host.js";
 
 /** The owner's PDF wiring: the engine's confinement and the OCR add-on, found in one place. */
@@ -89,6 +90,95 @@ describe("the PDF engine's confinement", () => {
     expect(elsewhere.wrap(launch)).toEqual({ refused: "unconfined" });
     expect(pdfConfinement({ platform: "win32" })).toBe("refused");
     expect(pdfConfinement({ platform: "darwin", allowUnconfined: true })).toBe("srt");
+  });
+});
+
+describe("a PDF call while the sandbox is still checking", () => {
+  /** A host whose first check answers when `answer` is called; `checks` counts the probes started. */
+  function slowHost(): { readonly host: SandboxHostPort; readonly answer: (status: SandboxStatus) => void; readonly checks: () => number } {
+    let status: SandboxStatus = { tier: "checking", checks: [] };
+    let started = 0;
+    let answer: (status: SandboxStatus) => void = () => undefined;
+    const pending = new Promise<SandboxStatus>((resolve) => {
+      answer = (settled) => {
+        status = settled;
+        resolve(settled);
+      };
+    });
+    const host: SandboxHostPort = {
+      current: () => status,
+      check: () => {
+        started += 1;
+        return pending;
+      },
+      facts: async () => ({ platform: "linux", inContainer: false, appArmorRestrictsUserNamespaces: false, userNamespacesDisabled: false }),
+    };
+    return { host, answer: (settled) => answer(settled), checks: () => started };
+  }
+
+  /** An engine that records the host's tier at each call that would start a child. */
+  function recordingEngine(host: SandboxHostPort): { readonly engine: PdfEnginePort; readonly seen: string[] } {
+    const seen: string[] = [];
+    const engine = {
+      ocrAvailable: false,
+      run: async () => {
+        seen.push(`run:${host.current().tier}`);
+        return { ok: true } as never;
+      },
+      readWithOcr: async () => {
+        seen.push(`read:${host.current().tier}`);
+        return {} as never;
+      },
+      ocr: async () => {
+        seen.push(`ocr:${host.current().tier}`);
+        return {} as never;
+      },
+      coreFonts: () => [],
+      prewarm: () => {
+        seen.push(`prewarm:${host.current().tier}`);
+      },
+      close: async () => undefined,
+    } satisfies PdfEnginePort;
+    return { engine, seen };
+  }
+
+  it("waits on Linux for the first answer, one probe for every call, so a host without a sandbox is never tried with srt", async () => {
+    const { host, answer, checks } = slowHost();
+    const { engine, seen } = recordingEngine(host);
+    const settled = settledPdfEngine(engine, host, { platform: "linux" });
+    const calls = [settled.run({ op: "info" } as never, new Uint8Array()), settled.readWithOcr(new Uint8Array(), {}), settled.ocr([])];
+    settled.prewarm();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(seen).toEqual([]);
+    answer({ tier: "unavailable", checks: [], cause: "AppArmor" });
+    await Promise.all(calls);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(seen.sort()).toEqual(["ocr:unavailable", "prewarm:unavailable", "read:unavailable", "run:unavailable"]);
+    expect(checks()).toBe(1);
+    // Settled: later calls go straight through, with no probe.
+    await settled.run({ op: "info" } as never, new Uint8Array());
+    expect(checks()).toBe(1);
+  });
+
+  it("goes ahead as the tier stands once a hung probe outlasts its wait, and warms nothing after a close", async () => {
+    const { host, checks } = slowHost();
+    const { engine, seen } = recordingEngine(host);
+    const settled = settledPdfEngine(engine, host, { platform: "linux", waitMs: 30 });
+    settled.prewarm();
+    await settled.close();
+    await settled.run({ op: "info" } as never, new Uint8Array());
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(seen).toEqual(["run:checking"]);
+    expect(checks()).toBe(1);
+  });
+
+  it("passes calls straight through off Linux", async () => {
+    const { host, checks } = slowHost();
+    const { engine, seen } = recordingEngine(host);
+    expect(settledPdfEngine(engine, host, { platform: "darwin" })).toBe(engine);
+    await engine.run({ op: "info" } as never, new Uint8Array());
+    expect(seen).toEqual(["run:checking"]);
+    expect(checks()).toBe(0);
   });
 });
 

@@ -18,6 +18,11 @@ change behaviour or stored data.
 - A plugin worker whose proxy CA came due for renewal while it was starting
   was stopped as soon as it was ready, failing the call that started it. That
   call is answered first, and the worker restarts after it.
+- On Linux, a PDF read in the owner's first moments, before its sandbox check
+  had answered, was tried in the sandbox: on a host without a working one it
+  failed as a crash, the document was refused for a day, and
+  `--pdf-allow-unconfined` had no effect. A PDF call now waits for that first
+  answer.
 
 ## 0.1.0 — first release
 

@@ -104,7 +104,7 @@ export function pdfSandbox(dataDirectory: string, confinement: ConfinementPort, 
 export function pdfConfinement(options: Omit<PdfHostOptions, "limits"> = {}): "srt" | "refused" | "unconfined" {
   const platform = options.platform ?? process.platform;
   if (platform === "darwin") return "srt";
-  // As the wrap decides: srt unless the tier is `unavailable` (while it is still checking, srt is tried).
+  // As the wrap decides: srt unless the tier is `unavailable` (a call waits for the first answer; past that wait, srt is tried).
   if (platform === "linux" && options.host !== undefined && options.host.current().tier !== "unavailable") return "srt";
   return options.allowUnconfined === true ? "unconfined" : "refused";
 }
@@ -132,8 +132,78 @@ export function createPdfEngine(
   confinement: ConfinementPort,
   options: Omit<PdfHostOptions, "platform"> = {},
 ): PdfEnginePort {
-  return createPdfService({
+  const engine = createPdfService({
     sandbox: pdfSandbox(dataDirectory, confinement, options),
     ...(ocr === undefined ? {} : { ocr }),
   });
+  return options.host === undefined ? engine : settledPdfEngine(engine, options.host);
+}
+
+/** How long a PDF call waits for the sandbox's first answer before it goes ahead as the tier then stands. */
+const SETTLE_WAIT_MS = 20_000;
+
+/**
+ * The engine, holding a call that would start a child until the sandbox's first answer on Linux. While the host is
+ * still `checking`, the wrap tries srt: on a host whose sandbox does not work the child fails as a crash, and the
+ * document is refused for a day, though `--pdf-allow-unconfined` would have run it. Every call that arrives meanwhile
+ * waits for one shared probe, at most `waitMs`; elsewhere, and once settled, calls go straight through.
+ */
+export function settledPdfEngine(
+  engine: PdfEnginePort,
+  host: SandboxHostPort,
+  options: { readonly platform?: NodeJS.Platform; readonly waitMs?: number } = {},
+): PdfEnginePort {
+  if ((options.platform ?? process.platform) !== "linux") return engine;
+  const waitMs = options.waitMs ?? SETTLE_WAIT_MS;
+  let settling: Promise<void> | undefined;
+  let closed = false;
+  const settled = async (): Promise<void> => {
+    if (host.current().tier !== "checking") return;
+    settling ??= (async () => {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        // A probe that throws settles `unavailable` in the host; one that hangs leaves `checking`, and srt is tried.
+        await Promise.race([
+          host.check().catch(() => undefined),
+          new Promise<void>((done) => {
+            timer = setTimeout(done, waitMs);
+            timer.unref();
+          }),
+        ]);
+      } finally {
+        clearTimeout(timer);
+        settling = undefined;
+      }
+    })();
+    await settling;
+  };
+  return {
+    get ocrAvailable() {
+      return engine.ocrAvailable;
+    },
+    run: async (operation, document, fonts) => {
+      await settled();
+      return await engine.run(operation, document, fonts);
+    },
+    readWithOcr: async (document, readOptions) => {
+      await settled();
+      return await engine.readWithOcr(document, readOptions);
+    },
+    ocr: async (images, ocrOptions) => {
+      await settled();
+      return await engine.ocr(images, ocrOptions);
+    },
+    coreFonts: () => engine.coreFonts(),
+    prewarm: () => {
+      if (host.current().tier !== "checking") return engine.prewarm();
+      // Warmed once the tier is known, unless the engine was closed meanwhile.
+      void settled().then(() => {
+        if (!closed) engine.prewarm();
+      });
+    },
+    close: async () => {
+      closed = true;
+      await engine.close();
+    },
+  };
 }
