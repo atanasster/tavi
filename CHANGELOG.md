@@ -36,6 +36,10 @@ change behaviour or stored data.
 - The card asking to open the browser names the page, not only its site
   ("Use the browser to open nodejs.org/en/download"), so two pages on one site
   no longer look like the same question asked twice.
+- A call Tavi refused before it ran (a sandbox run asking for a domain it may
+  not ask for, a denied or unapproved call, a repeated one) had no line in the
+  chat or its Trajectory, so a reply that said "the sandbox refused the fetch"
+  looked made up. It now shows as a failed call, with what was asked.
 
 ## 0.1.0 — first release
 

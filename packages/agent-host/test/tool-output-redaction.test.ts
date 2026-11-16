@@ -181,6 +181,27 @@ describe("tool result redaction", () => {
     expect(seen.at(-1)).toContain("masked secret");
   });
 
+  it("shows the person a call it refused before it ran, as a failed call with its input", async () => {
+    const { registry } = setup();
+    const { model } = scriptedModel([{ id: "c1", name: "fixture.write", input: { value: "aws_access_key_id = [redacted:aws-key]" } }]);
+    const events: ToolDispatchEvent[] = [];
+    await adapter(model, registry).admit(
+      { context, operationKey: "op-refused", kind: "start", prompt: "write it back" },
+      {
+        onToolEvent: (event) => {
+          events.push(event);
+        },
+      },
+    );
+    // Without these the transcript and the trajectory had no line for it, and a reply naming the refusal read as made up.
+    expect(events.map((event) => [event.phase, event.callId, event.toolName])).toEqual([
+      ["started", "c1", "fixture.write"],
+      ["failed", "c1", "fixture.write"],
+    ]);
+    expect(events[0]?.input).toEqual({ value: "aws_access_key_id = [redacted:aws-key]" });
+    expect(events[1]?.message).toContain("masked secret");
+  });
+
   it("lets a read-only call carry a placeholder", async () => {
     const { registry, handled } = setup();
     const { model } = scriptedModel([{ id: "c1", name: "fixture.read", input: { value: "[redacted:aws-key]" } }]);

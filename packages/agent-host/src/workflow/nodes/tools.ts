@@ -188,6 +188,30 @@ export function createToolsNode(scope: WorkflowScope): WorkflowNode {
       parallelReads: undefined,
     };
     const { messages, prefetched, readOnlyTool } = round;
+    /**
+     * A call refused before it ran (not disclosed, repeated, denied, cancelled, not approved): its answer to the model,
+     * and a failed call line for the person. Without the line the transcript and the trajectory never showed it, and a
+     * reply that named the refusal read as made up.
+     */
+    const refused = async (call: (typeof calls)[number], message: WorkflowMessage): Promise<void> => {
+      messages.push(message);
+      const observer = observers.get(threadIdOf(config));
+      await observer?.onToolEvent?.({
+        ...toolIdentity,
+        phase: "started",
+        callId: call.id,
+        toolName: call.name,
+        input: observedInput(round, call.input),
+      });
+      await observer?.onToolEvent?.({
+        ...toolIdentity,
+        phase: "failed",
+        callId: call.id,
+        toolName: call.name,
+        message: JSON.stringify(message.output ?? "refused"),
+        durationMs: 0,
+      });
+    };
 
     try {
       for (const [index, call] of calls.entries()) {
@@ -195,7 +219,7 @@ export function createToolsNode(scope: WorkflowScope): WorkflowNode {
         if (index >= round.scannedUntil && calls.length - index > 1) await startEarlyRun(round, index);
         const disclosureRefusal = await toolDisclosureRefusal(current, call.name, call.input);
         if (disclosureRefusal !== undefined) {
-          messages.push({
+          await refused(call, {
             id: `tool-${current.steps}-${call.id}`,
             role: "tool",
             text: "",
@@ -241,7 +265,7 @@ export function createToolsNode(scope: WorkflowScope): WorkflowNode {
               throw new TaviError("INTERNAL", `the repeated-call question resumed unexpectedly for wait ${error.waitId}`);
             }
           }
-          messages.push({
+          await refused(call, {
             id: `tool-${current.steps}-${call.id}`,
             role: "tool",
             text: "",
@@ -254,7 +278,7 @@ export function createToolsNode(scope: WorkflowScope): WorkflowNode {
         }
         const denial = current.denials[call.id];
         if (denial !== undefined) {
-          messages.push({
+          await refused(call, {
             id: `tool-${call.id}`,
             role: "tool" as const,
             text: "",
@@ -272,7 +296,7 @@ export function createToolsNode(scope: WorkflowScope): WorkflowNode {
         // alone never authorizes one.
         const cancelled = await options.cancellations.get(current.runId);
         if (cancelled !== undefined) {
-          messages.push({
+          await refused(call, {
             id: `tool-${call.id}`,
             role: "tool" as const,
             text: "",
@@ -302,7 +326,7 @@ export function createToolsNode(scope: WorkflowScope): WorkflowNode {
         const unassessedHardDeny =
           verdict === undefined && definition?.assess !== undefined ? hardDenyOf(definition, call.input, toolInvocation) : undefined;
         if (verdict?.decision === "deny" || unassessedHardDeny !== undefined) {
-          messages.push({
+          await refused(call, {
             id: `tool-${call.id}`,
             role: "tool" as const,
             text: "",
@@ -325,7 +349,7 @@ export function createToolsNode(scope: WorkflowScope): WorkflowNode {
             normalized.ok &&
             approval.inputsHash === canonicalizeAdmission(normalized.value ?? null);
           if (!bound) {
-            messages.push({
+            await refused(call, {
               id: `tool-${call.id}`,
               role: "tool" as const,
               text: "",
