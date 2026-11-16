@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 import type { ClientEvent } from "@tavi/contracts";
 import { parseClientEvent } from "@tavi/contracts";
+import { chromiumInstalled } from "@tavi/plugin-browser/playwright";
 import { findFfmpeg } from "@tavi/plugin-video";
 import { capture, temporaryDirectories } from "@tavi/test-support";
 import { startOpenAiStub } from "@tavi/test-support/openai-stub";
@@ -162,12 +163,10 @@ describe("real prompt → model → tool → model result over real HTTP", () =>
           "agents_wait",
           "agents_read_payload",
           "sandbox_run",
-          "browser_create_session",
-          "browser_navigate",
-          "browser_observe",
-          "browser_act",
-          "browser_capture",
-          "browser_close",
+          // The browser's tools only while Chromium is installed: CI has none.
+          ...((await chromiumInstalled())
+            ? ["browser_create_session", "browser_navigate", "browser_observe", "browser_act", "browser_capture", "browser_close"]
+            : []),
           "messaging_send_to",
           "collect_daily",
           "projects_get",
