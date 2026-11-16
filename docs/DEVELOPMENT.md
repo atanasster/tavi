@@ -8,7 +8,7 @@ are in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Set up
 
-You need Node.js `>= 22.21.0`, pnpm `12.16.1` (`corepack enable`; the
+You need Node.js `>= 22.22.2`, pnpm `12.16.1` (`corepack enable`; the
 repository pins it in `packageManager`), and macOS, Linux or WSL2. Native
 Windows is not supported for running Tavi yet; to build and test there, see
 [WINDOWS](WINDOWS.md#install), which also needs the Microsoft Visual C++
@@ -473,7 +473,7 @@ or on a pull request labelled `sandbox-matrix`, not on every push.
 
 `.github/workflows/ci.yml` runs on every push to `main` and every pull
 request (a newer push to a pull request cancels its older run), on
-`ubuntu-24.04` (and, for the `windows` and `windows-arm` jobs, `windows-latest` and `windows-11-arm`) with Node 22.21.0
+`ubuntu-24.04` (and, for the `windows` and `windows-arm` jobs, `windows-latest` and `windows-11-arm`) with Node 22.22.2
 (the `engines` minimum) and pnpm 12.16.1, in parallel jobs, each with a time limit:
 
 ```mermaid
@@ -481,7 +481,7 @@ flowchart LR
   push["a push to main, or a pull request"] --> ci["ci.yml: parallel jobs on ubuntu-24.04 and windows-latest"]
   ci --> typecheck["typecheck: audit, lint, build, typecheck, knip"]
   ci --> cli["test-cli"]
-  ci --> packages["test-packages on Node 22.21.0, 24 and 26"]
+  ci --> packages["test-packages on Node 22.22.2, 24 and 26"]
   ci --> miniweb["browser-miniweb: real Chromium on fixture pages"]
   ci --> release["release: test:release"]
   ci --> windows["windows: four shards on windows-latest"]
@@ -496,7 +496,7 @@ flowchart LR
 | --- | --- |
 | `typecheck` | `pnpm audit --prod --audit-level high` (accepted advisories are listed, each with its reason, under `auditConfig` in `pnpm-workspace.yaml`), `pnpm run lint`, `pnpm run build`, then `pnpm run typecheck`, `pnpm run knip`, `knip --production --include dependencies` (a runtime dependency only tests import) and `pnpm run lint:css`. |
 | `test-cli` | `pnpm exec turbo run test --filter=@tavi/cli`. |
-| `test-packages` | Every other package's tests, a build of the canvas (for its bundle budget), then the repository-wide tests (`pnpm exec vitest run`), on Node 22.21.0, Node 24 and Node 26. |
+| `test-packages` | Every other package's tests, a build of the canvas (for its bundle budget), then the repository-wide tests (`pnpm exec vitest run`), on Node 22.22.2, Node 24 and Node 26. |
 | `browser-miniweb` | Installs Chromium, then runs the browser's guards against real Chromium on local fixture pages (`tests/integration/browser-miniweb.real.test.ts` with `TAVI_REAL_TESTS=1`; zero cases run is a failure), then records the per-action timing bench (`evals/browser/timing.ts`), which never fails the run. |
 | `release` | `pnpm run test:release`. |
 | `windows` | Native Windows, in four shards: `pnpm run build`, then on the first shard `pnpm run lint`, `pnpm run typecheck` and `pnpm run knip`, then a quarter of the repository-wide tests (`vitest run --project tavi-monorepo --shard=N/4`) and of every workspace's (`--project "@tavi/*"`, which does not fail the job until its first run has named every test file that needs POSIX). A test that needs POSIX skips there only through `needsPosix(import.meta.url)`, its file named with the reason in `POSIX_ONLY` (`@tavi/test-support`); `tests/posix-only.test.ts` holds the list's length, so after that first run it only shrinks. |

@@ -248,7 +248,7 @@ runtime: Seatbelt on macOS, bubblewrap on Linux), never inside Tavi:
 - it reaches **no network** unless granted domains (`--domain`), and then only
   those, through a proxy of its own: two servers running at once never reach
   each other's domains. A Node server gets `NODE_USE_ENV_PROXY=1`, which needs
-  Node 22.21 or later (Tavi's floor); a granted domain never runs unsandboxed;
+  Node 22.21 or later, which Tavi's floor already meets; a granted domain never runs unsandboxed;
 - its environment is built from scratch: `PATH` to the runtime, its own `HOME`
   and temporary folder, the locale, and the variables its manifest names.
 

@@ -5,7 +5,7 @@ open an issue first so we can agree on the approach.
 
 ## Set up
 
-You need Node.js `>= 22.21.0`, pnpm `12.16.1` and macOS, Linux or WSL2 (see the
+You need Node.js `>= 22.22.2`, pnpm `12.16.1` and macOS, Linux or WSL2 (see the
 README's requirements for the optional system tools).
 
 ```bash
@@ -29,7 +29,7 @@ pnpm run test:release   # the packed, installed CLI (packaging changes)
 
 CI (`.github/workflows/ci.yml`) runs Biome, the build, typecheck, knip (also
 `knip --production`, which fails on a runtime dependency only tests import), CSS
-lint, tests (the packages' on Node 22.21.0, 24 and 26), the browser's guards
+lint, tests (the packages' on Node 22.22.2, 24 and 26), the browser's guards
 against real Chromium on local fixture pages, the release gate and a gitleaks
 scan of the history on every pull request; the sandbox matrix runs on demand
 or with the `sandbox-matrix` label. [DEVELOPMENT.md](docs/DEVELOPMENT.md#ci)

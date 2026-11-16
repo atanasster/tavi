@@ -20,7 +20,7 @@ describe("node version floor", () => {
 
   it("compares versions part by part", () => {
     expect(nodeVersionReport("22.19.0")).toEqual({ version: "22.19.0", required: `>=${MIN_NODE_VERSION}`, ok: false });
-    expect(nodeVersionReport("22.21.0").ok).toBe(true);
+    expect(nodeVersionReport("22.22.2").ok).toBe(true);
     expect(nodeVersionReport("22.100.0").ok).toBe(true);
     expect(nodeVersionReport("24.0.0").ok).toBe(true);
     expect(nodeVersionReport("21.99.99").ok).toBe(false);

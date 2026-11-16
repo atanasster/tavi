@@ -16,7 +16,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="${OUT:-${TMPDIR:-/tmp}/tavi-mcp-sandbox-matrix}"
-IMAGE="tavi-mcp-sandbox-matrix:node22.21${DOCKER_PLATFORM:+-${DOCKER_PLATFORM//\//-}}"
+IMAGE="tavi-mcp-sandbox-matrix:node22.22${DOCKER_PLATFORM:+-${DOCKER_PLATFORM//\//-}}"
 WHICH="${1:-all}"
 SUITE="${2:-mcp}"
 case "$WHICH" in mac | linux | linux-bwrap | linux-refused | linux-nested | linux-cgroup | all) ;; *) echo "unknown case: $WHICH" >&2; exit 2 ;; esac
@@ -48,7 +48,7 @@ if [[ "$WHICH" == linux* || "$WHICH" == "all" ]]; then
   PLATFORM="${DOCKER_PLATFORM:+--platform=$DOCKER_PLATFORM}"
   # Linux packages and a Linux node_modules of its own, so this tree's (macOS) native modules stay untouched.
   docker build -q $PLATFORM -t "$IMAGE" - <<'DOCKERFILE' >/dev/null
-FROM node:22.21.0-bookworm
+FROM node:22.22.2-bookworm
 RUN apt-get update && apt-get install -y --no-install-recommends bubblewrap socat ripgrep procps && rm -rf /var/lib/apt/lists/*
 # Chromium's system libraries, for the confined browser's tests; the browser itself is in the module volume.
 RUN npx -y playwright@1.65.1 install-deps chromium && rm -rf /var/lib/apt/lists/*

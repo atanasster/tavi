@@ -1,5 +1,5 @@
 /** The oldest Node.js the CLI supports: the floor `engines.node` in its package.json declares. */
-export const MIN_NODE_VERSION = "22.21.0";
+export const MIN_NODE_VERSION = "22.22.2";
 
 /** `doctor`'s `node` section: the Node.js running the CLI, the floor, and whether it is met. */
 export interface NodeVersionReport {

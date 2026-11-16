@@ -14,7 +14,7 @@ install Tavi inside the distribution as on Linux (see the
 wsl --install
 ```
 
-- Inside the distribution install Node.js 22.21 or later, pnpm
+- Inside the distribution install Node.js 22.22.2 or later, pnpm
   (`corepack enable`), Git, and `bubblewrap`, `socat` and `ripgrep` for the
   sandbox. Clone into your Linux home (`cd ~`), not under `/mnt`, then run
   `tavi sandbox check`.
@@ -42,7 +42,7 @@ start and sandboxed tools are refused (below). A single foreground command
 works; for everything else, use WSL2.
 
 Tavi runs from a clone of this repository; there is no npm package or `winget`
-package yet. You need Node.js 22.21 or later (x64 or arm64), pnpm, Git, and the
+package yet. You need Node.js 22.22.2 or later (x64 or arm64), pnpm, Git, and the
 Microsoft Visual C++ runtime, which Tavi's native modules load:
 
 ```powershell

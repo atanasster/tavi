@@ -32,7 +32,7 @@ jobs:
           version: 12.16.1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 22.21.0
+          node-version: 22.22.2
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # Known vulnerabilities in what ships (production dependencies), high or critical; accepted advisories
@@ -60,7 +60,7 @@ jobs:
           version: 12.16.1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 22.21.0
+          node-version: 22.22.2
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec turbo run test --filter=@tavi/cli
@@ -70,7 +70,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [22.21.0, 24, 26]
+        node: [22.22.2, 24, 26]
     name: test-packages (node ${{ matrix.node }})
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -106,7 +106,7 @@ jobs:
           version: 12.16.1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 22.21.0
+          node-version: 22.22.2
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @tavi/plugin-browser exec playwright install --with-deps chromium
@@ -135,7 +135,7 @@ jobs:
           version: 12.16.1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 22.21.0
+          node-version: 22.22.2
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Release gate (the packed, installed CLI)
@@ -162,7 +162,7 @@ jobs:
           version: 12.16.1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 22.21.0
+          node-version: 22.22.2
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
@@ -194,7 +194,7 @@ jobs:
           version: 12.16.1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 22.21.0
+          node-version: 22.22.2
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build

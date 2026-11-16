@@ -7,7 +7,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/badge/licence-MIT-1f6b55"></a>
-  <img alt="Node.js 22.21 or later" src="https://img.shields.io/badge/node-%E2%89%A5%2022.21-1f6b55">
+  <img alt="Node.js 22.22 or later" src="https://img.shields.io/badge/node-%E2%89%A5%2022.22-1f6b55">
   <img alt="macOS, Linux and WSL2" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20WSL2-1f6b55">
   <img alt="No telemetry" src="https://img.shields.io/badge/telemetry-none-e9a62b">
 </p>
@@ -173,7 +173,7 @@ login, see [OPERATIONS](docs/OPERATIONS.md).
 
 | Need | What | For |
 | --- | --- | --- |
-| Required | Node.js `>= 22.21.0` | everything |
+| Required | Node.js `>= 22.22.2` | everything |
 | Required | pnpm `12.16.1` | building from the clone (`corepack enable`) |
 | Linux | bubblewrap, socat and ripgrep | the sandbox (macOS has one built in); `tavi sandbox check` says what is missing |
 | Optional | Chromium | the browser tools and PDF reports |

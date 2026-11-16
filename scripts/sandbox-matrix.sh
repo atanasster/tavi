@@ -30,7 +30,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 HERE="$ROOT/scripts/sandbox-matrix"
 REPORTS="${REPORTS:-$ROOT/reports/sandbox-matrix}"
 IMAGES="$HERE/images.conf"
-NODE_VERSION="22.21.0"
+NODE_VERSION="22.22.2"
 PNPM_VERSION="12.16.1"
 JOBS="typecheck macos-arm64 macos-x64 docker-default docker-nested docker-unconfined docker-cgroup arm64 ubuntu-24.04-restricted ubuntu-24.04-setup ubuntu-26.04 debian-12 fedora-latest unit"
 # Jobs whose failure is recorded but does not fail the run.

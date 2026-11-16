@@ -46,7 +46,11 @@ engineStrict: true
 # No dependency runs an install script: better-sqlite3 13 ships prebuilt
 # binaries for every platform Tavi supports. A dependency that needs one is
 # approved under `allowBuilds` (pnpm 11 replaced `onlyBuiltDependencies`, which
-# pnpm 12 ignores without saying so).
+# pnpm 12 ignores without saying so). koffi's script only looks for a prebuilt
+# binary, which its per-platform package (@koromix/koffi-*) already provides,
+# so it is declined: an unlisted script fails `pnpm install` in CI.
+allowBuilds:
+  koffi: false
 
 patchedDependencies:
   '@cantoo/pdf-lib@2.11.1': patches/@cantoo__pdf-lib@2.11.1.patch

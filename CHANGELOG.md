@@ -4,6 +4,13 @@ All notable changes to Tavi are recorded here. The project follows
 [Semantic Versioning](https://semver.org); before 1.0, a minor version may
 change behaviour or stored data.
 
+## Unreleased
+
+### Changed
+
+- The Node.js floor is now 22.22.2 (it was 22.21.0): the test toolchain's
+  jsdom needs it, and `pnpm install` refuses an older Node.
+
 ## 0.1.0 — first release
 
 The first release published under the MIT licence. Tavi runs from a clone of

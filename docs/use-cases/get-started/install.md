@@ -3,7 +3,7 @@
 Get Tavi from its repository, build it, and make `tavi` a command you can run from any folder. About ten minutes, most of it the build.
 
 > **Uses:** the repository's build (`pnpm`) · the `tavi` command · the sandbox check (`tavi sandbox check`)
-> **Before you start:** macOS, Linux or WSL2 (on Windows, see [Tavi on Windows](../../WINDOWS.md)) · Node.js 22.21 or later ([nodejs.org](https://nodejs.org)) · pnpm, through `corepack enable` · Git
+> **Before you start:** macOS, Linux or WSL2 (on Windows, see [Tavi on Windows](../../WINDOWS.md)) · Node.js 22.22.2 or later ([nodejs.org](https://nodejs.org)) · pnpm, through `corepack enable` · Git
 
 ## 1. Clone and build
 

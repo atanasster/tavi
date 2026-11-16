@@ -15,7 +15,7 @@
   },
   "type": "module",
   "engines": {
-    "node": ">=22.21.0"
+    "node": ">=22.22.2"
   },
   "description": "tavi \u2014 foreground run, serve and operational commands",
   "bin": {
