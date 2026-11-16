@@ -319,7 +319,17 @@ func getElementAtPoint(x: Double, y: Double) -> [String: Any]? {
 func systemFocusedElement() -> AXUIElement? {
   let systemWide = AXUIElementCreateSystemWide()
   configureMessagingTimeout(systemWide)
-  return axElement(systemWide, kAXFocusedUIElementAttribute)
+  if let element = axElement(systemWide, kAXFocusedUIElementAttribute) {
+    return element
+  }
+  // The system-wide query answers nothing for some apps (TextEdit with a focused document, on the Mac mini): the
+  // keys go to the app in front, so its own focused element is the one they reach.
+  guard let front = NSWorkspace.shared.frontmostApplication else {
+    return nil
+  }
+  let app = AXUIElementCreateApplication(front.processIdentifier)
+  configureMessagingTimeout(app)
+  return axElement(app, kAXFocusedUIElementAttribute)
 }
 
 func getFocusedElement() -> [String: Any]? {

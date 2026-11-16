@@ -83,6 +83,11 @@ change behaviour or stored data.
   in front was refused as "Target element or application could not be
   resolved". It now says where the keys would have gone (the app with focus,
   or the app in front when no focus can be read) and to bring the app forward.
+- On macOS, typing into TextEdit with its document focused and in front was
+  refused because the system-wide query for keyboard focus answered nothing.
+  The desktop helper now asks the app in front for its focused element when
+  that query is empty. Rebuild the helper (the refusal prints the commands)
+  to pick it up.
 - In a freshly started owner, a `desktop.act` before any `desktop.observe` was
   refused as "not granted desktop control in this workspace" for a granted
   app: its card read the grants before they were loaded. They are loaded then,
