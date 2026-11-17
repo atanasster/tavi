@@ -149,6 +149,37 @@ async function harness(
   return { runtime, sent, directory, messages: () => instances[0]?.sent ?? [], answered, edited, failEdits };
 }
 
+type ApprovalsDependencies = Parameters<typeof createChannelApprovals>[0];
+type SentMessage = Parameters<ApprovalsDependencies["messaging"]["send"]>[0];
+
+const textOf = (message: SentMessage): string => (message.parts[0] as { content: string }).content;
+
+/** Channel approvals whose every send is accepted and handed to `onSend`, on a fixed clock and fixed random bytes. */
+function sendingApprovals(
+  repositories: ApprovalsDependencies["repositories"],
+  onSend: (message: SentMessage) => void,
+  isLocalConnection: (connectionId: string) => boolean = () => false,
+): ReturnType<typeof createChannelApprovals> {
+  return createChannelApprovals({
+    repositories,
+    messaging: {
+      send: async (message) => {
+        onSend(message);
+        return { status: "accepted", retryable: false, parts: [] };
+      },
+      buildReplyDestination: (_connectionId, replyTo) => ({ chat: replyTo.externalConversationId }),
+      capabilitiesOf: () => undefined,
+      answerInteraction: async () => {},
+      editMessage: async () => false,
+    },
+    workflow: () => undefined,
+    scheduleOf: () => undefined,
+    isLocalConnection,
+    now: () => "2026-01-01T00:00:00.000Z",
+    fillRandom: (bytes) => bytes.fill(7),
+  });
+}
+
 function press(data: string, sender = "user-1"): InboundEvent {
   eventCounter += 1;
   return {
@@ -699,24 +730,11 @@ describe("announcing a review a channel's turn waits on", () => {
     try {
       const sentTo: { effectId: string; text: string }[] = [];
       const local = new Set<string>();
-      const channels = createChannelApprovals({
-        repositories: store.asPort().repositories,
-        messaging: {
-          send: async (message) => {
-            sentTo.push({ effectId: message.effectId, text: (message.parts[0] as { content: string }).content });
-            return { status: "accepted", retryable: false, parts: [] };
-          },
-          buildReplyDestination: (_connectionId, replyTo) => ({ chat: replyTo.externalConversationId }),
-          capabilitiesOf: () => undefined,
-          answerInteraction: async () => {},
-          editMessage: async () => false,
-        },
-        workflow: () => undefined,
-        scheduleOf: () => undefined,
-        isLocalConnection: (connectionId) => local.has(connectionId),
-        now: () => "2026-01-01T00:00:00.000Z",
-        fillRandom: (bytes) => bytes.fill(7),
-      });
+      const channels = sendingApprovals(
+        store.asPort().repositories,
+        (message) => sentTo.push({ effectId: message.effectId, text: textOf(message) }),
+        (connectionId) => local.has(connectionId),
+      );
       const review = (connectionId: string) => ({
         taskId: "task-1",
         steps: 4,
@@ -789,24 +807,9 @@ describe("announcing a delegated task's round", () => {
         createdAt: "2026-01-01T00:00:00.000Z",
       });
       const sentTo: { destination: unknown; text: string }[] = [];
-      const channels = createChannelApprovals({
-        repositories,
-        messaging: {
-          send: async (message) => {
-            sentTo.push({ destination: message.destination, text: (message.parts[0] as { content: string }).content });
-            return { status: "accepted", retryable: false, parts: [] };
-          },
-          buildReplyDestination: (_connectionId, replyTo) => ({ chat: replyTo.externalConversationId }),
-          capabilitiesOf: () => undefined,
-          answerInteraction: async () => {},
-          editMessage: async () => false,
-        },
-        workflow: () => undefined,
-        scheduleOf: () => undefined,
-        isLocalConnection: () => false,
-        now: () => "2026-01-01T00:00:00.000Z",
-        fillRandom: (bytes) => bytes.fill(7),
-      });
+      const channels = sendingApprovals(repositories, (message) =>
+        sentTo.push({ destination: message.destination, text: textOf(message) }),
+      );
       await channels.announceRound({
         taskId: "worker-task",
         steps: 1,
@@ -892,24 +895,7 @@ describe("a round's scopes in the approvals inbox", () => {
         });
       }
       const sent: unknown[] = [];
-      const channels = createChannelApprovals({
-        repositories,
-        messaging: {
-          send: async (message) => {
-            sent.push(message.destination);
-            return { status: "accepted", retryable: false, parts: [] };
-          },
-          buildReplyDestination: (_connectionId, target) => ({ chat: target.externalConversationId }),
-          capabilitiesOf: () => undefined,
-          answerInteraction: async () => {},
-          editMessage: async () => false,
-        },
-        workflow: () => undefined,
-        scheduleOf: () => undefined,
-        isLocalConnection: () => false,
-        now: () => "2026-01-01T00:00:00.000Z",
-        fillRandom: (bytes) => bytes.fill(7),
-      });
+      const channels = sendingApprovals(repositories, (message) => sent.push(message.destination));
       await channels.announceRound({
         taskId: "task-1",
         steps: 1,

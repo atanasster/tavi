@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ArtifactListRow } from "@tavi/contracts";
+import { useNearViewport } from "../../hooks/use-near-viewport.js";
 import { formatBytes } from "../../lib/format.js";
 import { readThumbnail } from "../center/browser-api.js";
 import { useWorkspace } from "../shell/Workspace.js";
@@ -100,22 +101,7 @@ export function HeldFilePicture({
   const { client, workspaceId } = useWorkspace();
   const shown = showsImage(row);
   const [src, setSrc] = useState<string>();
-  const [near, setNear] = useState(typeof IntersectionObserver === "undefined");
-  const frame = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!shown || near || frame.current === null) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setNear(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-    observer.observe(frame.current);
-    return () => observer.disconnect();
-  }, [shown, near]);
+  const [near, frame] = useNearViewport<HTMLDivElement>(shown);
   useEffect(() => {
     setSrc(undefined);
     if (!shown || !near) return;

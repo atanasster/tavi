@@ -74,8 +74,11 @@
   border-top: var(--border-width) solid var(--line-faint);
 }
 
-/* The page: the section's column and the rail, scrolling as one. */
-.center {
+/* A page of the main column that scrolls inside it (the Center, Ideas, Setup's
+   Welcome), so its cards stay above the bottom bar. */
+.center,
+.ideas-page,
+.welcome-page {
   flex: 1;
   min-height: 0;
   /* The containing block of its `.visually-hidden` labels, as `.runs` is. */
@@ -84,6 +87,10 @@
   /* The scrollbar's room is kept while the page is short too, so a centred
      column does not move sideways from one page to the next. */
   scrollbar-gutter: stable;
+}
+
+/* The page: the section's column and the rail, scrolling as one. */
+.center {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--width-rail-column);
 }

@@ -1,15 +1,7 @@
 /* The Ideas tab: a header, "For you", the sections, the footer. One column on a phone.
-   The page scrolls inside the main column, as Settings and the Center do, so the
-   cards stay above the bottom bar; the side padding centres the reading column. */
+   It scrolls inside the main column (center.css); the side padding centres the
+   reading column. */
 .ideas-page {
-  flex: 1;
-  min-height: 0;
-  /* The containing block of its `.visually-hidden` labels, as `.runs` is. */
-  position: relative;
-  overflow-y: auto;
-  /* The scrollbar's room is kept while the page is short too, so a centred
-     column does not move sideways from one page to the next. */
-  scrollbar-gutter: stable;
   padding: var(--space-6) max(var(--space-7), (100% - var(--width-page-wide)) / 2 + var(--space-7)) var(--space-12);
 }
 

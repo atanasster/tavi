@@ -245,6 +245,22 @@ const page = (client: SettingsClient, revision = 0) => (
     <SoulAndMemory summary={summary()} revision={revision} focusProposals={false} onProposalsFocused={() => undefined} />
   </InWorkspace>
 );
+/** The Command Center on one of two sections, with no handlers of its own: re-rendered to move between them. */
+const centerAt = (client: SettingsClient) => {
+  const feed: CenterFeed = { summary: summary(), error: undefined, revisions: {} };
+  return (section: "activity" | "identity") => (
+    <WorkspaceProvider client={client} workspaceId="default" timeZone={undefined}>
+      <CenterPage
+        section={section}
+        feed={feed}
+        onSection={() => undefined}
+        onOpenRoutine={() => undefined}
+        onOpenTask={() => Promise.resolve()}
+        onPermissions={() => undefined}
+      />
+    </WorkspaceProvider>
+  );
+};
 const sentOf = (sent: { command: string; payload: Record<string, unknown> }[], command: string, action: string) =>
   sent.filter((item) => item.command === command && item.payload["action"] === action).map((item) => item.payload);
 
@@ -1202,19 +1218,7 @@ describe("the Memory pane", () => {
 describe("the Command Center's one scroller", () => {
   it("starts a section at its top, not as far down as the last one was read (Mac mini UI check)", async () => {
     const { client } = owner({ approved: [], proposed: [] });
-    const feed: CenterFeed = { summary: summary(), error: undefined, revisions: {} };
-    const at = (section: "activity" | "identity") => (
-      <WorkspaceProvider client={client} workspaceId="default" timeZone={undefined}>
-        <CenterPage
-          section={section}
-          feed={feed}
-          onSection={() => undefined}
-          onOpenRoutine={() => undefined}
-          onOpenTask={() => Promise.resolve()}
-          onPermissions={() => undefined}
-        />
-      </WorkspaceProvider>
-    );
+    const at = centerAt(client);
     const view = await mount(at("activity"));
     const scroller = view.querySelector<HTMLElement>(".center") as HTMLElement;
     scroller.scrollTop = 500;
@@ -1265,19 +1269,7 @@ describe("the rail's memory proposals", () => {
 
   it("focus the proposals once: a later visit through the nav lands on the section only", async () => {
     const { client } = owner({ approved: [], proposed: [record("q1", { status: "proposed", body: "Prefers trains" })] });
-    const feed: CenterFeed = { summary: summary(), error: undefined, revisions: {} };
-    const at = (section: "activity" | "identity") => (
-      <WorkspaceProvider client={client} workspaceId="default" timeZone={undefined}>
-        <CenterPage
-          section={section}
-          feed={feed}
-          onSection={() => undefined}
-          onOpenRoutine={() => undefined}
-          onOpenTask={() => Promise.resolve()}
-          onPermissions={() => undefined}
-        />
-      </WorkspaceProvider>
-    );
+    const at = centerAt(client);
     const view = await mount(at("identity"));
     const need = [...view.querySelectorAll(".center-need")].find((item) =>
       item.textContent?.includes("memory proposal"),

@@ -23,7 +23,7 @@ import { afterAll, describe, expect, it } from "vitest";
  * jscpd binary has run once.
  */
 const SOURCE_CLONE_CEILING = 118;
-const TEST_CLONE_CEILING = 911;
+const TEST_CLONE_CEILING = 908;
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const directories = temporaryDirectories({ prefix: "tavi-jscpd-" });

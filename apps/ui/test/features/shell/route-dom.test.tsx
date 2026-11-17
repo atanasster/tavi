@@ -198,6 +198,52 @@ const currentTab = (page: HTMLElement, scope: string): string | undefined =>
 const sessionButton = (page: HTMLElement, text: string): Element | undefined =>
   [...page.querySelectorAll(".session")].find((button) => button.textContent?.includes(text));
 
+/** The one idea these tests offer: a fare watch, its prompt what Try it puts in the box. */
+function fareIdea() {
+  const at = "2026-10-19T10:00:00.000Z";
+  return {
+    id: "id-1",
+    workspaceId: "default",
+    runId: "run-1",
+    providerId: "tavi.ideasagent",
+    key: "travel.fare-watch",
+    category: "travel",
+    icon: "💡",
+    title: "I can watch fares",
+    pitch: "Fares.",
+    label: "Fares",
+    prompt: "Watch Sofia–Lisbon fares for May.",
+    basis: [{ kind: "general", ref: "general" }],
+    uses: [{ capability: "web", approval: false }],
+    score: 0.5,
+    status: "active",
+    pinned: false,
+    shownRuns: 0,
+    createdAt: at,
+    updatedAt: at,
+    expiresAt: at,
+  };
+}
+
+/** An owner offering `idea`: it lists it and answers Try it with its prompt; `asked` records each request. */
+function ideasOwner(idea: ReturnType<typeof fareIdea>, asked: string[] = []): SettingsClient & { features: readonly string[] } {
+  return {
+    features: ["ideas"],
+    request: async (command, payload) => {
+      const action = String((payload as Record<string, unknown>)["action"]);
+      asked.push(`${command} ${action}`);
+      if (command !== "ideas") return { ok: false, error: { code: "UNSUPPORTED", message: "no" } } as never;
+      return {
+        ok: true,
+        result:
+          action === "try"
+            ? { prompt: idea.prompt, idea }
+            : { ideas: [idea], mutedCategories: [], excludedBasis: [], provider: "tavi.ideasagent", providers: [] },
+      } as never;
+    },
+  };
+}
+
 describe("the page's address in the shell", () => {
   it("opens the route the address names, so a refresh is not always the chat", async () => {
     const settings = fakeNavigation("/settings/system-prompt");
@@ -626,45 +672,9 @@ describe("the chat panel in the address", () => {
   });
 
   it("offers Ideas only where the owner does, and Try it puts the prompt in a new chat's composer without sending it", async () => {
-    const at = "2026-10-19T10:00:00.000Z";
-    const idea = {
-      id: "id-1",
-      workspaceId: "default",
-      runId: "run-1",
-      providerId: "tavi.ideasagent",
-      key: "travel.fare-watch",
-      category: "travel",
-      icon: "💡",
-      title: "I can watch fares",
-      pitch: "Fares.",
-      label: "Fares",
-      prompt: "Watch Sofia–Lisbon fares for May.",
-      basis: [{ kind: "general", ref: "general" }],
-      uses: [{ capability: "web", approval: false }],
-      score: 0.5,
-      status: "active",
-      pinned: false,
-      shownRuns: 0,
-      createdAt: at,
-      updatedAt: at,
-      expiresAt: at,
-    };
+    const idea = fareIdea();
     const asked: string[] = [];
-    const owner: SettingsClient & { features: readonly string[] } = {
-      features: ["ideas"],
-      request: async (command, payload) => {
-        const action = String((payload as Record<string, unknown>)["action"]);
-        asked.push(`${command} ${action}`);
-        if (command !== "ideas") return { ok: false, error: { code: "UNSUPPORTED", message: "no" } } as never;
-        return {
-          ok: true,
-          result:
-            action === "try"
-              ? { prompt: idea.prompt, idea }
-              : { ideas: [idea], mutedCategories: [], excludedBasis: [], provider: "tavi.ideasagent", providers: [] },
-        } as never;
-      },
-    };
+    const owner = ideasOwner(idea, asked);
     const sent: string[] = [];
     const { store } = fakeStore({ connection: "ready", runs: [] });
     store.submit = (prompt) => void sent.push(prompt);
@@ -700,43 +710,8 @@ describe("the chat panel in the address", () => {
   });
 
   it("on a phone, Try it closes the chat's sheet so the prompt it put in the composer is in view", async () => {
-    const at = "2026-10-19T10:00:00.000Z";
-    const idea = {
-      id: "id-1",
-      workspaceId: "default",
-      runId: "run-1",
-      providerId: "tavi.ideasagent",
-      key: "travel.fare-watch",
-      category: "travel",
-      icon: "💡",
-      title: "I can watch fares",
-      pitch: "Fares.",
-      label: "Fares",
-      prompt: "Watch Sofia–Lisbon fares for May.",
-      basis: [{ kind: "general", ref: "general" }],
-      uses: [{ capability: "web", approval: false }],
-      score: 0.5,
-      status: "active",
-      pinned: false,
-      shownRuns: 0,
-      createdAt: at,
-      updatedAt: at,
-      expiresAt: at,
-    };
-    const owner: SettingsClient & { features: readonly string[] } = {
-      features: ["ideas"],
-      request: async (command, payload) => {
-        const action = String((payload as Record<string, unknown>)["action"]);
-        if (command !== "ideas") return { ok: false, error: { code: "UNSUPPORTED", message: "no" } } as never;
-        return {
-          ok: true,
-          result:
-            action === "try"
-              ? { prompt: idea.prompt, idea }
-              : { ideas: [idea], mutedCategories: [], excludedBasis: [], provider: "tavi.ideasagent", providers: [] },
-        } as never;
-      },
-    };
+    const idea = fareIdea();
+    const owner = ideasOwner(idea);
     const original = window.matchMedia;
     window.matchMedia = ((query: string) => ({
       matches: query.includes("720px"),
@@ -813,29 +788,7 @@ describe("the chat panel in the address", () => {
   });
 
   it("links a chat to an idea only while the idea's words are in the box, and never a private chat or Home", async () => {
-    const at = "2026-10-19T10:00:00.000Z";
-    const idea = {
-      id: "id-1",
-      workspaceId: "default",
-      runId: "run-1",
-      providerId: "tavi.ideasagent",
-      key: "travel.fare-watch",
-      category: "travel",
-      icon: "💡",
-      title: "I can watch fares",
-      pitch: "Fares.",
-      label: "Fares",
-      prompt: "Watch Sofia–Lisbon fares for May.",
-      basis: [{ kind: "general", ref: "general" }],
-      uses: [{ capability: "web", approval: false }],
-      score: 0.5,
-      status: "active",
-      pinned: false,
-      shownRuns: 0,
-      createdAt: at,
-      updatedAt: at,
-      expiresAt: at,
-    };
+    const idea = fareIdea();
     const asked: string[] = [];
     /** A chip's *Try it* waits here until the test lets it answer. */
     const tries: (() => void)[] = [];
@@ -932,29 +885,7 @@ describe("the chat panel in the address", () => {
     expect([...homePage.querySelectorAll(".idea-chips .idea-chip")].map((button) => button.textContent)).toEqual(["Search the web"]);
   });
   it("drops an idea with its words when the chat is left, links none the owner refused, and Try it opens a chat of its own", async () => {
-    const at = "2026-10-19T10:00:00.000Z";
-    const idea = {
-      id: "id-1",
-      workspaceId: "default",
-      runId: "run-1",
-      providerId: "tavi.ideasagent",
-      key: "travel.fare-watch",
-      category: "travel",
-      icon: "💡",
-      title: "I can watch fares",
-      pitch: "Fares.",
-      label: "Fares",
-      prompt: "Watch Sofia–Lisbon fares for May.",
-      basis: [{ kind: "general", ref: "general" }],
-      uses: [{ capability: "web", approval: false }],
-      score: 0.5,
-      status: "active",
-      pinned: false,
-      shownRuns: 0,
-      createdAt: at,
-      updatedAt: at,
-      expiresAt: at,
-    };
+    const idea = fareIdea();
     /** Each *Try it* waits here until the test answers it, as taken or refused. */
     const tries: ((ok: boolean) => void)[] = [];
     const owner: SettingsClient & { features: readonly string[] } = {

@@ -6,6 +6,7 @@ import { AppLink } from "../shell/AppLink.js";
 import { LIVE_POLL_MS, MINUTE_TICK_MS, useNow } from "../../hooks/use-poll.js";
 import { useOpenError } from "../../hooks/use-action.js";
 import { useLazyLoad } from "../../hooks/use-loaded.js";
+import { useNearViewport } from "../../hooks/use-near-viewport.js";
 import { taskPath } from "../shell/route.js";
 import type { Outcome, SettingsClient } from "../../lib/ipc.js";
 import { appendPage, refreshFirstPage, useOlderPage, type Paged } from "../../lib/paging.js";
@@ -101,22 +102,7 @@ function cachedThumbnail(client: SettingsClient, workspaceId: string, artifactId
 function Thumbnail({ artifactId, host }: { readonly artifactId: string | undefined; readonly host: string | null }) {
   const { client, workspaceId } = useWorkspace();
   const [src, setSrc] = useState<string>();
-  const [near, setNear] = useState(typeof IntersectionObserver === "undefined");
-  const frame = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (near || frame.current === null) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setNear(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-    observer.observe(frame.current);
-    return () => observer.disconnect();
-  }, [near]);
+  const [near, frame] = useNearViewport<HTMLDivElement>();
   useEffect(() => {
     if (artifactId === undefined) {
       setSrc(undefined);

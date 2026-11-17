@@ -1,14 +1,6 @@
 /* Setup's Welcome: a page of its own. One column that holds at 375 px; from
    960 px, the steps stand in a rail beside the card that holds the one shown. */
 .welcome-page {
-  flex: 1;
-  min-height: 0;
-  /* The containing block of its `.visually-hidden` labels, as `.runs` is. */
-  position: relative;
-  overflow-y: auto;
-  /* The scrollbar's room is kept while the page is short too, so a centred
-     column does not move sideways from one page to the next. */
-  scrollbar-gutter: stable;
   padding: var(--space-8) 0 var(--space-12);
 }
 .welcome {
