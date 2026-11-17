@@ -95,6 +95,22 @@ describe("desktop control on the owner", () => {
     expect(workspaces.portFor("w1")).not.toBe(workspaces.portFor("w2"));
   });
 
+  it("matches an app a call names only by name against a grant of its bundle id (Mac mini tests)", async () => {
+    let running = [{ bundleId: "com.apple.TextEdit", name: "TextEdit", pid: 1, active: true }];
+    const desktop = partialFake<DesktopPort>({ apps: async () => running });
+    const workspaces = createDesktopWorkspaces({ desktop, grantedApps: async () => ["com.apple.TextEdit"] });
+    await workspaces.refresh("w", "run-1");
+    // Before any observe the assessor knows only the name the call gives, as its bundle id too.
+    expect(workspaces.tierOf("w", { bundleId: "TextEdit", name: "TextEdit" })).toBe("full");
+    expect(workspaces.tierOf("w", { bundleId: "", name: "textedit" })).toBe("full");
+    // A name no running app has stays unresolved, and so ungranted.
+    expect(workspaces.tierOf("w", { bundleId: "Notes", name: "Notes" })).toBeUndefined();
+    // An app of that name with another bundle id is held to its own.
+    running = [{ bundleId: "com.example.TextEdit", name: "TextEdit", pid: 2, active: true }];
+    await workspaces.refresh("w", "run-1");
+    expect(workspaces.tierOf("w", { bundleId: "TextEdit", name: "TextEdit" })).toBeUndefined();
+  });
+
   it("stops every run that used desktop control at the abort hotkey, a card still pending too, and acts again in a later run", async () => {
     const acted: string[] = [];
     const desktop = partialFake<DesktopPort>({

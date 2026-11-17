@@ -91,6 +91,10 @@ change behaviour or stored data.
 - `desktop.act`'s report after typing or a key press read the field while the
   app was still taking the keys in, so "Hello from Tavi" came back as "Hello
   from". It now waits, briefly, for the field to settle before reading it.
+- With an app granted by its bundle id (`desktop.grantedApps =
+  com.apple.TextEdit`), a `desktop.act` that named it only as "TextEdit",
+  before any `desktop.observe`, was refused as "not granted desktop control in
+  this workspace". The name is now matched to the running app's bundle id.
 - In a freshly started owner, a `desktop.act` before any `desktop.observe` was
   refused as "not granted desktop control in this workspace" for a granted
   app: its card read the grants before they were loaded. They are loaded then,

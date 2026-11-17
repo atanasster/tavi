@@ -123,6 +123,21 @@ export function createDesktopWorkspaces(options: {
   readonly grantedApps: (workspaceId: string) => readonly string[];
 } {
   const grants = new Map<string, readonly string[]>();
+  // Running apps' bundle ids by lowercased name, learned as grants are read: a call that names only "TextEdit" is
+  // matched against a grant of "com.apple.TextEdit" (Mac mini tests). The gate resolves the real app before it acts.
+  const bundleIds = new Map<string, string>();
+  const learnApps = async (): Promise<void> => {
+    try {
+      for (const running of await options.desktop.apps()) bundleIds.set(running.name.trim().toLowerCase(), running.bundleId);
+    } catch {
+      // No helper, or no Accessibility: names stay unresolved, and the gate says why when it acts.
+    }
+  };
+  const resolved = (app: { readonly bundleId: string; readonly name: string }): { readonly bundleId: string; readonly name: string } => {
+    const unresolved = app.bundleId.trim() === "" || app.bundleId.trim().toLowerCase() === app.name.trim().toLowerCase();
+    const bundleId = unresolved ? bundleIds.get(app.name.trim().toLowerCase()) : undefined;
+    return bundleId === undefined ? app : { bundleId, name: app.name };
+  };
   const ports = new Map<string, GatedDesktopPort>();
   const seen = new Map<string, Set<string>>();
   const stopped = new Map<string, Set<string>>();
@@ -146,10 +161,9 @@ export function createDesktopWorkspaces(options: {
     portFor,
     tierOf: (workspaceId, app) => {
       const read = grants.get(workspaceId);
-      if (read !== undefined) return grantedTierOf(read, app);
-      void options
-        .grantedApps(workspaceId)
-        .then((apps) => {
+      if (read !== undefined) return grantedTierOf(read, resolved(app));
+      void Promise.all([options.grantedApps(workspaceId), learnApps()])
+        .then(([apps]) => {
           if (!grants.has(workspaceId)) grants.set(workspaceId, apps);
         })
         .catch(() => undefined);
@@ -161,7 +175,8 @@ export function createDesktopWorkspaces(options: {
       if (stopped.get(workspaceId)?.has(runId) === true)
         throw new TaviError("CANCELLED", "desktop control was stopped by the abort hotkey for this run: start a new one to act again");
       noteRun(workspaceId, runId);
-      grants.set(workspaceId, await options.grantedApps(workspaceId));
+      const [apps] = await Promise.all([options.grantedApps(workspaceId), learnApps()]);
+      grants.set(workspaceId, apps);
     },
     abortAll: () => {
       const stoppedNow: { readonly workspaceId: string; readonly runId: string }[] = [];
