@@ -8,6 +8,9 @@ change behaviour or stored data.
 
 ### Changed
 
+- A chat that was stuck answers your new message and stops there: it no longer
+  goes back on its own to the earlier requests it never finished, each asking
+  for approvals again. It says in a line which are not done and offers them.
 - The Node.js floor is now 22.22.2 (it was 22.21.0): the test toolchain's
   jsdom needs it, and `pnpm install` refuses an older Node.
 

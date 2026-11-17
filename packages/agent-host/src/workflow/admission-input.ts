@@ -282,11 +282,18 @@ export function withoutWorkflowFields(context: InvocationContext): InvocationCon
   return rest;
 }
 
+/**
+ * What to do about the requests a stuck turn left behind, said wherever the person moved past a waiting call: only their
+ * new message is answered. Without it a chat that had been stuck took up every earlier request it never finished (a
+ * flight search and a sign-in an hour old), each with its own approvals, after answering the one the person had resent.
+ */
+const ANSWER_ONLY_THE_NEW_MESSAGE =
+  "answer that new message only; do not go back on your own to an earlier request of theirs that went unfinished — say in one line which are not done and offer to do them";
+
 /** What a call the person moved past returns: it never ran, and their new message is what to answer. */
 export const SUPERSEDED_CALL_OUTPUT = {
   error: "NOT_RUN",
-  reason:
-    "not run: the person sent a new message while this call was waiting (for their approval, an answer or their hand in the browser); answer that message instead",
+  reason: `not run: the person sent a new message while this call was waiting (for their approval, an answer or their hand in the browser); ${ANSWER_ONLY_THE_NEW_MESSAGE}`,
 } as const;
 
 /**
@@ -327,6 +334,5 @@ export function supersededCallResults(previous: unknown): WorkflowMessage[] {
 /** What the model reads of a result still waiting for review when the person sends a new message instead. */
 export const UNREVIEWED_RESULT_OUTPUT = {
   error: "NOT_REVIEWED",
-  reason:
-    "not delivered: this result was waiting for the person to review it, and they sent a new message instead; it is still in the chat's Held files for them to review. Answer the new message",
+  reason: `not delivered: this result was waiting for the person to review it, and they sent a new message instead; it is still in the chat's Held files for them to review. ${ANSWER_ONLY_THE_NEW_MESSAGE}`,
 } as const;
