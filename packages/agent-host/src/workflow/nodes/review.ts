@@ -6,6 +6,7 @@ import {
   type WorkflowReviewRequest,
   parseAgentState,
 } from "@tavi/contracts";
+import { errorMessage } from "@tavi/contracts/util";
 import { assertLeaseCurrent } from "../run-config.js";
 import type { WorkflowScope } from "../scope.js";
 import type { WorkflowUpdate, WorkflowNode } from "../state.js";
@@ -202,6 +203,18 @@ export function createReviewNode(scope: WorkflowScope): WorkflowNode {
         }
       }
       const request: WorkflowReviewInterrupt = { requests };
+      // Where the person is (a Telegram chat), they hear that the turn waits on a review they cannot give there.
+      if (options.announceReview !== undefined) {
+        try {
+          await options.announceReview({ taskId: current.runId, steps: current.steps, invocation: current.invocation, requests });
+        } catch (error) {
+          options.onDiagnostic?.("a review the turn waits on could not be announced", {
+            taskId: current.runId,
+            steps: current.steps,
+            error: errorMessage(error),
+          });
+        }
+      }
       // The node restarts from the top on resume (see this node's own doc
       // comment), so nothing here writes durable state before `interrupt`
       // — unlike `approveNode`, the durable state this node depends on

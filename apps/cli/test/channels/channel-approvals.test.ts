@@ -209,6 +209,24 @@ describe("renderRoundText", () => {
     expect(text).toContain("approve abcdefgh session");
     expect(text).not.toContain("always");
   });
+
+  it("keeps every line of a call's detail under it, and says when it expires in words", () => {
+    const request = {
+      callId: "a",
+      toolName: "browser.batch",
+      summary: "s",
+      input: {},
+      display: { title: "Browser: fill 2 fields", detail: "“Origin” ← London\n“Destination” ← Lisbon" },
+    };
+    const text = renderRoundText(
+      { taskId: "t", steps: 1, invocation: { workspaceId: "w", principalId: "p", runId: "t", caller: "c" }, requests: [request] },
+      "abcdefgh",
+      "2026-11-18T09:39:28.175Z",
+    );
+    expect(text).toContain("1. Browser: fill 2 fields\n   “Origin” ← London\n   “Destination” ← Lisbon");
+    expect(text).toContain("⌛ Not decided by Wed 18 Nov, 09:39 UTC, it is rejected.");
+    expect(text).not.toContain("09:39:28.175Z");
+  });
 });
 
 describe("a tainted round's provenance line", () => {
@@ -668,6 +686,63 @@ describe("rounds in the originating conversation", () => {
       new RegExp(`^✅ Round ${token} approved by operator via a terminal at \\d\\d:\\d\\d UTC\\.$`),
     );
     await runtime.close();
+  });
+});
+
+describe("announcing a review a channel's turn waits on", () => {
+  it("tells the chat where to review it and that a new message goes on, once per review, and nothing to the owner's own chats", async () => {
+    const directory = directories.create();
+    const store = await SqliteStore.open({
+      databasePath: join(directory, "tavi.sqlite"),
+      artifactsDirectory: join(directory, "artifacts"),
+    });
+    try {
+      const sentTo: { effectId: string; text: string }[] = [];
+      const local = new Set<string>();
+      const channels = createChannelApprovals({
+        repositories: store.asPort().repositories,
+        messaging: {
+          send: async (message) => {
+            sentTo.push({ effectId: message.effectId, text: (message.parts[0] as { content: string }).content });
+            return { status: "accepted", retryable: false, parts: [] };
+          },
+          buildReplyDestination: (_connectionId, replyTo) => ({ chat: replyTo.externalConversationId }),
+          capabilitiesOf: () => undefined,
+          answerInteraction: async () => {},
+          editMessage: async () => false,
+        },
+        workflow: () => undefined,
+        scheduleOf: () => undefined,
+        isLocalConnection: (connectionId) => local.has(connectionId),
+        now: () => "2026-01-01T00:00:00.000Z",
+        fillRandom: (bytes) => bytes.fill(7),
+      });
+      const review = (connectionId: string) => ({
+        taskId: "task-1",
+        steps: 4,
+        invocation: {
+          workspaceId: "default",
+          principalId: "alice",
+          runId: "task-1",
+          caller: "channel",
+          messagingReplyTo: { connectionId, externalConversationId: "chat-1", externalSenderId: "user-1" },
+        },
+        requests: [{ artifactId: "art-1", callId: "c1", toolName: "browser.capture", steps: 4 }],
+      });
+      await channels.announceReview(review("telegram"));
+      await channels.announceReview({ ...review("telegram"), steps: 5 });
+      expect(sentTo.map((entry) => entry.text)).toEqual([
+        "📎 The screenshot I took is waiting for your review before I can use it. Review it in the Tavi app (the chat's Held files), or send a new message and I'll go on without it.",
+        expect.any(String),
+      ]);
+      // The outbox sends one effect once: a node that re-enters on the same review sends nothing new.
+      expect(new Set(sentTo.map((entry) => entry.effectId)).size).toBe(1);
+      local.add("web");
+      await channels.announceReview(review("web"));
+      expect(sentTo).toHaveLength(2);
+    } finally {
+      store.close();
+    }
   });
 });
 

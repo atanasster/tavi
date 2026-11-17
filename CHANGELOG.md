@@ -36,6 +36,13 @@ change behaviour or stored data.
 - The browser refuses a click on a captcha embedded in an ordinary page (a
   Turnstile or reCAPTCHA box beside a form), by element or by sight, as it
   already did on a page that is only a captcha; it is handed to you.
+- A chat whose turn waited for a file's review (a browser screenshot) no
+  longer stops answering: a new message goes on without the file, which stays
+  waiting in **Held files**. On Telegram and other channels, the chat is told
+  when a turn waits on a review and where to give it; before, it went silent.
+- A Telegram approval keeps each line of a call's details (a form's fields)
+  under that call, and says when it expires in words (`Wed 18 Nov, 09:39 UTC`)
+  instead of a raw timestamp.
 - After a chat has read web content, a page on a site it has seen or you
   allowed opens without asking when its path is one your message names
   (`/login`, `/dynamic_loading/2`) and it has no query or fragment. Before,

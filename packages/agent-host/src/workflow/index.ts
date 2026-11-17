@@ -73,6 +73,7 @@ export { type WorkflowState, type WorkflowUpdate, type WorkflowNode, mergeConver
 export type {
   WorkflowAdapterOptions,
   ApprovalRoundAnnouncement,
+  ReviewAnnouncement,
   ApprovalRoundSettlement,
   ChatMemoryState,
   MemoryRecallSwitches,

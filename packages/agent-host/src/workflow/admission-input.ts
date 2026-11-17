@@ -299,7 +299,7 @@ export function supersededCallResults(previous: unknown): WorkflowMessage[] {
   const at = conversation.findLastIndex((message) => message.role === "assistant");
   const asked = conversation[at]?.toolCalls ?? [];
   const answered = new Set(conversation.slice(at + 1).flatMap((message) => (message.role === "tool" ? [message.toolCallId] : [])));
-  return asked
+  const unanswered = asked
     .filter((call) => !answered.has(call.id))
     .map((call) => ({
       id: `tool-superseded-${call.id}`.slice(0, 128),
@@ -310,4 +310,23 @@ export function supersededCallResults(previous: unknown): WorkflowMessage[] {
       output: SUPERSEDED_CALL_OUTPUT,
       isError: true,
     }));
+  // A result held for a person's review (a screenshot) is replaced, by its id, with one saying it was not reviewed: its
+  // content never reaches the model, the file stays waiting in Held files, and the review node no longer stops each
+  // later turn on it — before, every message after it came back waiting on the same review.
+  const unreviewed = conversation
+    .filter((message) => message.role === "tool" && (message.pendingReviewArtifactIds?.length ?? 0) > 0)
+    .map((message) => ({
+      ...message,
+      output: { ...UNREVIEWED_RESULT_OUTPUT, artifactIds: [...(message.pendingReviewArtifactIds ?? [])] },
+      isError: true,
+      pendingReviewArtifactIds: undefined,
+    }));
+  return [...unreviewed, ...unanswered];
 }
+
+/** What the model reads of a result still waiting for review when the person sends a new message instead. */
+export const UNREVIEWED_RESULT_OUTPUT = {
+  error: "NOT_REVIEWED",
+  reason:
+    "not delivered: this result was waiting for the person to review it, and they sent a new message instead; it is still in the chat's Held files for them to review. Answer the new message",
+} as const;

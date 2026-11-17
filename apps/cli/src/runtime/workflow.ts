@@ -367,6 +367,7 @@ export function composeWorkflow(composed: AskingContext) {
           pendingBrowserActions.announced(shown);
           return channelApprovals.announceRound(shown);
         },
+        announceReview: (review) => channelApprovals.announceReview(review),
         onRoundSettled: (settlement) => {
           pendingBrowserActions.settled(settlement);
           return channelApprovals.onRoundSettled(settlement);

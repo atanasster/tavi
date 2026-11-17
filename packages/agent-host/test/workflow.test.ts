@@ -106,7 +106,7 @@ import {
 } from "@tavi/agent-host/workflow";
 import { sleep } from "@tavi/node-kit";
 import { NO_ANSWER_NOTICE } from "../src/workflow/nodes/model/call.js";
-import { SUPERSEDED_CALL_OUTPUT } from "../src/workflow/admission-input.js";
+import { SUPERSEDED_CALL_OUTPUT, UNREVIEWED_RESULT_OUTPUT } from "../src/workflow/admission-input.js";
 import { withAnsweredCalls } from "../src/workflow/nodes/model/context.js";
 import { fakeFetch } from "@tavi/test-support";
 import { sse, textChunk } from "@tavi/test-support/openai-stub";
@@ -4746,6 +4746,30 @@ describe("compaction stage 1: bulky tool output archiving", () => {
       const record = await artifacts.putArtifact({ workspaceId: "ws-1", contentType: "image/png", body: "png", reviewState: "pending" });
       return { artifactId: record.artifactId };
     },
+  });
+
+  it("answers a new message sent while a result waits for review, without the result, and leaves the file waiting", async () => {
+    // A Telegram chat whose screenshot waited for review came back waiting on that review for every later message.
+    const artifacts = createInMemoryArtifactRepository();
+    const { adapter, model } = adapterWithArtifacts(
+      [pendingProducer(artifacts)],
+      [{ toolCall: { id: "call-1", name: "fixture.capture", input: {} } }, { text: "Here are the cities." }],
+      artifacts,
+    );
+    const first = await adapter.admit({ context, operationKey: "review-held-1", kind: "start", prompt: "screenshot it" });
+    expect(first.outcome.status).toBe("waiting");
+    const artifactId = first.outcome.reviewInterrupt?.requests[0]?.artifactId ?? "";
+    const next = await adapter.admit({
+      context,
+      taskId: first.taskId,
+      operationKey: "review-held-2",
+      kind: "reply",
+      prompt: "Just list the cities",
+    });
+    expect([next.outcome.status, next.outcome.finalText]).toEqual(["completed", "Here are the cities."]);
+    expect(next.outcome.reviewInterrupt).toBeUndefined();
+    expect(toolOutputSentToModel(model)).toEqual({ ...UNREVIEWED_RESULT_OUTPUT, artifactIds: [artifactId] });
+    expect((await artifacts.getArtifact(artifactId))?.reviewState).toBe("pending");
   });
 
   it("rejects an artifact from review: the model never sees the real content, only a typed rejection", async () => {

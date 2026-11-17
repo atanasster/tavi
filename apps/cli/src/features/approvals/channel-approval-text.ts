@@ -321,8 +321,33 @@ export function formOfDetail(detail: Readonly<Record<string, unknown>> | undefin
   };
 }
 
+/** What a channel's chat is told when its turn waits on a review it cannot give there. */
+export function reviewNoticeText(requests: readonly { readonly toolName: string }[]): string {
+  const screenshots = requests.every((request) => request.toolName === "browser.capture");
+  const what =
+    requests.length === 1
+      ? screenshots
+        ? "The screenshot I took is"
+        : "A file I made is"
+      : `${requests.length} ${screenshots ? "screenshots" : "files"} I made are`;
+  return (
+    `📎 ${what} waiting for your review before I can use ${requests.length === 1 ? "it" : "them"}. ` +
+    "Review it in the Tavi app (the chat's Held files), or send a new message and I'll go on without it."
+  );
+}
+
 /** The line that says when an announced round is rejected unless decided. */
-export const roundExpiryLine = (expiresAt: string): string => `Not decided by ${expiresAt}, it is rejected.`;
+export const roundExpiryLine = (expiresAt: string): string => {
+  const by = deadlineText(expiresAt, undefined);
+  return by === "" ? "If nobody decides it in time, it is rejected." : `⌛ Not decided by ${by}, it is rejected.`;
+};
+
+/** Text under a call's line, every line of it indented, so a multi-line detail (a form's fields) stays under its call. */
+const indented = (text: string): string =>
+  text
+    .split(/\r?\n/)
+    .map((line) => `   ${line}`)
+    .join("\n");
 
 /** The plain-text announcement: what each call does, its risk, and how to answer. */
 export function renderRoundText(
@@ -353,7 +378,7 @@ export function renderRoundText(
     // A form's own table stands for its plain-text `command`, and is not clipped: every row or none.
     const shown =
       form === undefined ? (request.display?.command ?? request.display?.destination ?? request.display?.detail) : request.display?.detail;
-    if (shown !== undefined && shown !== request.display?.title) entry.push(`   ${clip(shown, 300)}`);
+    if (shown !== undefined && shown !== request.display?.title) entry.push(indented(clip(shown, 300)));
     // What approving for the chat covers, where that is offered.
     if (request.display?.forThisChat !== undefined && request.allowedScopes?.includes("session") === true)
       entry.push(`   for this chat, approving covers: ${clip(request.display.forThisChat, 200)}`);

@@ -30,7 +30,7 @@ import {
 } from "@tavi/contracts";
 import { clip, definedOnly, errorMessage, plural } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
-import type { ApprovalRoundAnnouncement, ApprovalRoundSettlement } from "@tavi/agent-host/workflow";
+import type { ApprovalRoundAnnouncement, ApprovalRoundSettlement, ReviewAnnouncement } from "@tavi/agent-host/workflow";
 
 import { pressOf } from "../channels/button-press.js";
 import {
@@ -55,6 +55,7 @@ import {
   ROUND_BUTTON,
   ROUND_TOKEN_SHAPE,
   roundExpiryLine,
+  reviewNoticeText,
   roundGroup,
   roundLabelOf,
   roundScopes,
@@ -137,6 +138,8 @@ const MULTI_SELECT_CHOICE = "*";
 
 export interface ChannelApprovals {
   readonly announceRound: (round: ApprovalRoundAnnouncement) => Promise<void>;
+  /** Tells the chat's channel that its turn waits on a review it cannot give there; once per review. */
+  readonly announceReview: (review: ReviewAnnouncement) => Promise<void>;
   readonly onRoundSettled: (settlement: ApprovalRoundSettlement) => Promise<void>;
   /**
    * `/new` ended the conversation `taskId` was the task of: its rounds
@@ -615,6 +618,24 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       });
       throw error;
     }
+  };
+
+  /**
+   * A turn of a channel's chat that waits on a review (a screenshot held until a person approves it) is said so in
+   * the chat, which cannot review it: where to, and that a new message goes on without it. Keyed by the review's
+   * artifacts, so a node that re-enters sends it once.
+   */
+  const announceReview = async (review: ReviewAnnouncement): Promise<void> => {
+    if (review.requests.length === 0 || deps.scheduleOf(review.taskId) !== undefined) return;
+    const replyTarget = await replyTargetOf(review.taskId, review.invocation);
+    if (replyTarget === undefined || deps.isLocalConnection(replyTarget.connectionId)) return;
+    const ids = review.requests.map((request) => request.artifactId).sort();
+    await send(
+      { workspaceId: review.invocation.workspaceId },
+      `review:${review.taskId}:${createHash("sha256").update(ids.join(",")).digest("hex").slice(0, 32)}`,
+      reviewNoticeText(review.requests),
+      replyTarget,
+    );
   };
 
   const announceRound = async (announcement: ApprovalRoundAnnouncement): Promise<void> => {
@@ -2001,6 +2022,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
 
   return {
     announceRound,
+    announceReview,
     onRoundSettled,
     onConversationReset,
     recordToolResults,

@@ -2,6 +2,7 @@ import type { BaseCheckpointSaver } from "@langchain/langgraph-checkpoint";
 import type { EpochFlushProvider } from "../memory/epoch-flush.js";
 import type {
   ReachableChannel,
+  WorkflowReviewRequest,
   ModelTarget,
   TaskRoutingPort,
   RouterPort,
@@ -731,6 +732,13 @@ export interface WorkflowAdapterOptions {
    * never fails the round: the round stays decidable from every front end.
    */
   readonly announceRound?: (round: ApprovalRoundAnnouncement) => Promise<void>;
+  /**
+   * Tell the person where they are that the turn waits on their review of
+   * what a tool made (a screenshot): called before the review node
+   * suspends, and again each time it re-enters, so it must be idempotent. A
+   * throw is reported and never fails the turn.
+   */
+  readonly announceReview?: (review: ReviewAnnouncement) => Promise<void>;
   /** Called once a round is decided, with each call's outcome, so the channels that announced it can say so. */
   readonly onRoundSettled?: (settlement: ApprovalRoundSettlement) => Promise<void>;
   /** Called after dispatch with what became of each call a round decided — ran, failed or denied — for the round's audit trail. Idempotent: a replayed node calls it again. */
@@ -792,6 +800,14 @@ export interface WorkflowAdapterOptions {
   readonly checkpointNamespace?: string;
   readonly newId?: (prefix: string) => string;
   readonly now?: () => string;
+}
+
+/** What `announceReview` receives: the artifacts the turn waits on, as its interrupt payload carries them. */
+export interface ReviewAnnouncement {
+  readonly taskId: string;
+  readonly steps: number;
+  readonly invocation: InvocationContext;
+  readonly requests: readonly WorkflowReviewRequest[];
 }
 
 /** What `announceRound` receives: the round, as its interrupt payload will carry it. */
