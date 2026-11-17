@@ -49,6 +49,9 @@ function PairingPanel({
   const [checkedAt, setCheckedAt] = useState<string>();
   const generation = useRef(0);
   const question = useRef<HTMLParagraphElement>(null);
+  const panel = useRef<HTMLElement>(null);
+  // The panel opens below the form, often past the dialog's fold: bring the code into view (Mac mini tests).
+  useEffect(() => panel.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" }), []);
   const who = pairing.name ?? pairing.principalId;
   const check = useCallback(async (): Promise<void> => {
     generation.current += 1;
@@ -60,7 +63,8 @@ function PairingPanel({
       return;
     }
     setFailure(undefined);
-    setCheckedAt(new Date().toLocaleTimeString());
+    // On the 24-hour clock the code's expiry is shown on, with seconds as the check runs every two.
+    setCheckedAt(new Date().toLocaleTimeString("en-GB", { hourCycle: "h23" }));
     setStatus(answer.value);
   }, [client, workspaceId, pairing.pairingId]);
   useEffect(
@@ -160,7 +164,7 @@ function PairingPanel({
     );
   }
   return (
-    <section className="settings-panel" aria-label="Pairing">
+    <section className="settings-panel" aria-label="Pairing" ref={panel}>
       <h2 className="settings-section-title">
         {pairing.me ? `Pair yourself${pairing.name === undefined ? "" : ` (${pairing.name})`}` : `Pair ${who}`}
       </h2>
@@ -425,6 +429,8 @@ export function PeopleEditor({
             <span className="settings-description">
               Don't know what to enter as {descriptor?.sender.label ?? "Sender"}? Pair with a code: they send it to the agent on this
               channel, and you confirm it was them.
+              {/* The button waits on whom the code is for (Mac mini tests): say so rather than leave it grey. */}
+              {person.principal.trim() === "" ? " Tick This is me, or fill in Person ID, to get a code." : null}
             </span>
           </BusyFieldset>
         </form>

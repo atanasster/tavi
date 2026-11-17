@@ -4,6 +4,7 @@ import type { ChannelConnectionView, ChannelDescriptor, ChannelField, ChannelsRe
 
 import { useAction } from "../../hooks/use-action.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
+import { usePoll } from "../../hooks/use-poll.js";
 import { when } from "../../lib/time.js";
 import { Confirm } from "../../ui/Confirm.js";
 import { Empty } from "../../ui/Empty.js";
@@ -28,9 +29,15 @@ import { Command } from "../../ui/Command.js";
  * adds is configured the same way as the builtin ones, with no page of its own.
  */
 
+/** How often Channels and Allowed people read the connections again while open. */
+const CHANNELS_REFRESH_MS = 15_000;
+
 export function ChannelsSettings({ people = false }: { people?: boolean }) {
   const { client, workspaceId } = useWorkspace();
   const loaded = useLoaded(() => load(client, workspaceId, people));
+  // A connection's state and its last message in or out change while the page is open: read again quietly
+  // (Mac mini tests: the page showed the pairing message as the last one long after a conversation).
+  usePoll(loaded.reload, CHANNELS_REFRESH_MS, { enabled: loaded.data !== undefined }, [loaded.reload]);
   return (
     <section className="settings">
       <PageHead
@@ -42,7 +49,7 @@ export function ChannelsSettings({ people = false }: { people?: boolean }) {
             : "Connect the channels the agent can be reached on and send through."
         }
       />
-      <LoadState error={loaded.error || undefined} reload={loaded.reload} loading={loaded.loading} />
+      <LoadState error={loaded.error || undefined} reload={loaded.reload} loading={loaded.loading && loaded.data === undefined} />
       {loaded.data ? (
         people ? (
           <People data={loaded.data} reload={loaded.reload} />
@@ -348,10 +355,10 @@ function ConnectionPeople({
   );
 }
 
-/** "Last message in 14:02 · last sent 14:05", and why the last send failed. */
+/** "last message received 14:02 · last sent 14:05", and why the last send failed. */
 function ActivityLine({ status }: { status: ChannelConnectionView["status"] }) {
   const parts = [
-    status.lastInboundAt === undefined ? undefined : `last message in ${when(status.lastInboundAt, undefined)}`,
+    status.lastInboundAt === undefined ? undefined : `last message received ${when(status.lastInboundAt, undefined)}`,
     status.lastSendAt === undefined ? undefined : `last sent ${when(status.lastSendAt, undefined)}`,
     status.lastError === undefined ? undefined : `last send failed: ${status.lastError}`,
   ].filter((part): part is string => part !== undefined);

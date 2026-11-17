@@ -409,6 +409,10 @@ export interface BrowserBoundary {
   readonly chromiumSandbox?: ChromiumSandboxMode | "chosen at the first launch";
   /** Confined: the browser's memory cap, and whether it fits what every sandbox together may use, where that is known. */
   readonly memory?: { readonly capBytes: number; readonly aggregateBytes?: number; readonly fits?: boolean };
+  /** Whether Playwright's Chromium is there to launch: while it is missing, no chat is offered the browser's tools. */
+  readonly chromium?: "installed" | "missing";
+  /** Missing: the command that installs it. */
+  readonly install?: string;
 }
 
 export interface TaviRuntime {
@@ -621,7 +625,7 @@ export interface TaviRuntime {
   /** The browser adapter the browser tools use: what an operator's **Close browser** reaches. */
   readonly browser: BrowserPort;
   /** Whether the browser runs confined, and in what. */
-  readonly browserBoundary: () => BrowserBoundary;
+  readonly browserBoundary: () => Promise<BrowserBoundary>;
   /** Task-keyed abort controllers, owned by the decorator (`abort` signals one). */
   readonly abortRegistry: AbortRegistry;
   /** Admissions in flight through the decorator, so shutdown can drain them. */

@@ -46,7 +46,20 @@ export function composeBrowser(composed: SandboxContext) {
   // inside srt on macOS, where its own sandbox is the boundary; a headed window on Linux runs as before.
   const confineBrowser = process.platform === "linux" && browserDisplay() === "headless" && options.sandboxPinnedOff !== true;
   let browserMode: ChromiumSandboxMode | undefined;
-  const browserBoundary = (): BrowserBoundary => {
+  // The real browser's tools are offered only while its Chromium is installed; a browser handed in (tests) always is.
+  const browserOffered = overrides.browserOverride === undefined ? ownerBrowserInstalled() : undefined;
+  // Whether there is a Chromium to launch, and the command that installs one when there is not: without it the
+  // plugin is ready but a chat is never offered the browser's tools (Mac mini tests, a Playwright update).
+  const chromiumState = async (): Promise<Pick<BrowserBoundary, "chromium" | "install">> =>
+    browserOffered === undefined || (await browserOffered())
+      ? { chromium: "installed" }
+      : {
+          chromium: "missing",
+          install:
+            "pnpm --filter @tavi/plugin-browser exec playwright install chromium (npx playwright install chromium beside an installed Tavi)",
+        };
+  const browserBoundary = async (): Promise<BrowserBoundary> => ({ ...boundaryOf(), ...(await chromiumState()) });
+  const boundaryOf = (): BrowserBoundary => {
     const display = browserDisplay();
     if (!confineBrowser) {
       const why =
@@ -252,8 +265,6 @@ export function composeBrowser(composed: SandboxContext) {
     ...(overrides.liveViewServed === true ? { handoff: true } : {}),
   });
   frameHostAllowed = browserTools.frameHostAllowed;
-  // The real browser's tools are offered only while its Chromium is installed; a browser handed in (tests) always is.
-  const browserOffered = overrides.browserOverride === undefined ? ownerBrowserInstalled() : undefined;
   // Typed by its port, which a declaration can name: the repository's own interface is not exported.
   const ports: { readonly keptFindings: TaskFindingRepositoryPort } = { keptFindings };
   return {

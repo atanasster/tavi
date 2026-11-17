@@ -407,7 +407,12 @@ export function Ingress({ data, reload }: { data: ChannelsListAnswer; reload: ()
           />
         </label>
         <div className="actions">
-          <Button variant="primary" type="submit">
+          {/* Off until something is changed, as every Save on these pages (Mac mini tests). */}
+          <Button
+            variant="primary"
+            type="submit"
+            disabled={port === data.ingress.port && publicUrl.trim() === (data.ingress.publicUrl ?? "")}
+          >
             {busy === "ingress" ? "Saving…" : "Save webhooks"}
           </Button>
         </div>

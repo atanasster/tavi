@@ -13,6 +13,21 @@ change behaviour or stored data.
 
 ### Fixed
 
+- `tavi doctor` says whether the browser has a Chromium to launch
+  (`browser.chromium`), and how to install one when it does not
+  (`browser.install`). Without one, a chat is never offered the browser's
+  tools, as after a Playwright update that wants a newer Chromium; until now
+  nothing said why.
+- Settings → Channels, from the Mac mini Telegram tests:
+  - The page reads its connections again every 15 seconds, so a connection's
+    state and its last message stay current while it is open.
+  - "last message in" now reads "last message received".
+  - Save webhooks is off until something is changed.
+  - Pairing brings the code into view, and says Pair with a code waits on
+    This is me or a Person ID.
+  - The time a pairing was last checked is on the 24-hour clock, as its
+    expiry is.
+
 - A picture a model provider will not take, one over 8000 pixels on a side
   or one whose header is damaged (a PNG signature followed by text), passed
   `artifacts.view_image` and then failed the model call, and every later one

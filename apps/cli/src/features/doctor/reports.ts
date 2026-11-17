@@ -852,7 +852,7 @@ export async function buildDoctorDocument(
     // Open browser sessions: in use, and inactive — kept for a chat's next turn, each holding a browser context until closed.
     browserSessions: await runtime.store.asPort().repositories.browserHistory.counts(),
     // How the browser is bounded: confined in srt or not and why, Chromium's own sandbox, and whether its cap fits.
-    browser: runtime.browserBoundary(),
+    browser: await runtime.browserBoundary(),
     // Every plugin the registry knows, with its phase here: an external one that failed to load
     // (or, from an offline doctor, one verified without being imported) is not in the host's list.
     pluginRegistry: (await runtime.plugins.registry.list(runtime.plugins)).map((plugin) => ({

@@ -117,7 +117,7 @@ async function submit(form: Element) {
 it("edits a connection from its descriptor: saved settings shown, secrets masked and sent only when entered", async () => {
   const writes = await mount();
   // When it last took a message in, and why its last send failed.
-  expect(host.textContent).toContain("last message in");
+  expect(host.textContent).toContain("last message received");
   expect(host.textContent).toContain("last send failed: chat not found");
   await click("Edit Pager");
   expect(field("Region").textContent).toContain("us");
@@ -212,7 +212,10 @@ it("allows the operator's own sender as them with This is me, and marks their ro
   expect(host.querySelector(".rows .badge")?.textContent).toBe("you");
   // The channel's own label, as written.
   expect(host.textContent).toContain("Don't know what to enter as Phone number? Pair with a code");
+  // The greyed button says what it waits on, until it has it.
+  expect(host.textContent).toContain("Tick This is me, or fill in Person ID, to get a code.");
   await act(async () => field("This is me").click());
+  expect(host.textContent).not.toContain("to get a code.");
   // Their own principal stands in for a person ID: none is asked.
   expect(host.querySelector('[aria-label="Person ID"]')).toBeNull();
   await fill("Phone number", "+15550100");
@@ -239,7 +242,11 @@ it("allows the operator's own sender as them with This is me, and marks their ro
 
 it("saves the webhook listener's settings, saying when it could not move, and removes a connection once confirmed", async () => {
   const writes = await mount();
+  const saveWebhooks = () => [...host.querySelectorAll("button")].find((button) => button.textContent === "Save webhooks")!;
+  // Off until something is changed (Mac mini tests).
+  expect(saveWebhooks().disabled).toBe(true);
   await fill("Public address", "https://hooks.example.com/tavi");
+  expect(saveWebhooks().disabled).toBe(false);
   await submit(field("Public address").closest("form")!);
   expect(writes).toContainEqual({ action: "ingress", port: 8025, publicUrl: "https://hooks.example.com/tavi" });
   expect(host.textContent).toContain("the listener could not move: port in use");
@@ -299,7 +306,8 @@ it("speaks to you when you pair yourself, warns of a linked account only when on
   expect(panel.textContent).not.toContain("already linked");
   await act(async () => [...host.querySelectorAll("button")].find((button) => button.textContent === "Check now")!.click());
   expect(panel.querySelector('p[role="status"]')?.textContent).toBe("No message with the code yet.");
-  expect(panel.textContent).toMatch(/Last checked /);
+  // On the 24-hour clock the code's expiry is on.
+  expect(panel.textContent).toMatch(/Last checked \d{2}:\d{2}:\d{2}\./);
 
   // Someone already allowed on the connection: their own messages are never read as a code, so the panel says so.
   unmountAll();
@@ -1180,4 +1188,21 @@ it("shows a channel's connections on its app page: settings, saved secrets and t
   expect(host.textContent).not.toContain("Letters");
   await click("People on Pager");
   expect(host.querySelector("dialog")?.textContent).toContain("Allow a person");
+});
+
+it("reads the connections again while the page is open, so a connection's last message stays current (Mac mini tests)", async () => {
+  vi.useFakeTimers();
+  try {
+    const writes = await mount();
+    const lists = () => writes.filter((write) => write["action"] === "list").length;
+    const before = lists();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(15_000);
+    });
+    expect(lists()).toBeGreaterThan(before);
+    // Quietly: the page does not flash a loading line over what it shows.
+    expect(host.textContent).not.toContain("Loading…");
+  } finally {
+    vi.useRealTimers();
+  }
 });

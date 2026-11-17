@@ -70,7 +70,10 @@ platform with your locale, language and timezone. It runs without the
   instead, placed off-screen; on Linux that window runs unconfined.
 
 `tavi doctor` shows how the browser is bounded (`browser`) and counts open
-sessions (`browserSessions`).
+sessions (`browserSessions`). Its `browser.chromium` says whether Playwright's
+Chromium is there to launch: `missing` (with the command that installs it in
+`browser.install`) explains a chat that is never offered the browser's tools,
+as after a Playwright update that wants a newer Chromium than the one installed.
 
 ### The profile
 

@@ -658,6 +658,11 @@ describe("browser close", () => {
     expect(report.browser.display).toBe("headless");
     if (process.platform === "darwin")
       expect(report.browser).toMatchObject({ confined: false, why: expect.stringContaining("Chromium's own sandbox") });
+    // Whether a Chromium is there to launch, and how to install one when it is not (Mac mini tests).
+    const { chromium, install } = report.browser as { chromium?: string; install?: string };
+    expect(["installed", "missing"]).toContain(chromium);
+    expect(install === undefined).toBe(chromium === "installed");
+    if (install !== undefined) expect(install).toContain("playwright install chromium");
     const closed = await run("close", "--inactive");
     expect(closed.code, closed.err).toBe(EXIT.ok);
     expect(closed.out).toBe("Closed 1 browser session: s-live\n");
