@@ -13,6 +13,7 @@ import {
   type ContentLabel,
 } from "./content-label.js";
 import { isKnownNavigation, isKnownUrl, navigationKeyOf, normalizeUrl, KNOWN_URL_LIMITS } from "./known-url.js";
+import { hostAndPathOf } from "./url-text.js";
 // Acyclic: argument-provenance.ts imports only zod, content-label.ts and terminal-text.ts.
 import { ARG_PROVENANCE_LIMITS, ArgOriginSchema } from "./argument-provenance.js";
 import { ToolEffectSchema, ToolIdSchema, ToolSinkSchema, type ToolEffect, type ToolSink } from "./tools.js";
@@ -1039,6 +1040,11 @@ export interface GateEvaluationInput {
    */
   readonly knownUrls?: ReadonlySet<string> | undefined;
   /**
+   * The person's own words in this chat (`personTexts`): a browser page
+   * whose path they wrote is theirs to open (`personPathOn`). Absent: none.
+   */
+  readonly personTexts?: readonly string[] | undefined;
+  /**
    * The `allowed-tools` ceiling of the skills loaded this turn
    * (`skillCeilingOf`). Absent: none in force. It only ever asks.
    */
@@ -1277,6 +1283,27 @@ function originOfKey(key: string): string {
   return at === -1 ? key : key.slice(0, at);
 }
 
+/** Whether a session grant on a browser tool ("Allow for this chat" on a site) names `url`'s host. */
+function browserGrantCovers(grants: readonly SessionGrant[], url: string): boolean {
+  const host = hostAndPathOf(url)?.hostname;
+  if (host === undefined || host === "") return false;
+  return grants.some(
+    (grant) => grant.toolId.startsWith("browser.") && grant.argMatcher !== undefined && globMatches(grant.argMatcher, host),
+  );
+}
+
+/**
+ * Whether `url` is a page of a site `onSite` accepts, with no query or fragment, whose path is the site's root or
+ * one the person wrote (`/login`, `/dynamic_loading/2`): an address made only of their words.
+ */
+function personPathOn(url: string, onSite: (url: string) => boolean, texts: readonly string[] | undefined): boolean {
+  const parsed = hostAndPathOf(url);
+  if (parsed === undefined || /[?#]/.test(url) || !onSite(url)) return false;
+  const path = parsed.pathname.replace(/\/+$/, "");
+  if (path === "") return true;
+  return path.length <= 512 && (texts ?? []).some((text) => text.includes(path));
+}
+
 /**
  * The taint step for one call: what it asks, or `undefined` when it
  * skips. Pure. [B], private data in the context, is the label's
@@ -1326,10 +1353,17 @@ function taintStep(input: GateEvaluationInput, assessment: CallAssessment | unde
     else if (!novel.includes(key)) novel.push(key);
   };
   const novelAsk = (): TaintAsk | undefined => (novel.length === 0 && !unrecorded ? undefined : { reason: "novel-url", urls: novel });
+  let origins: ReadonlySet<string> | undefined;
+  const originKnown = (url: string): boolean => {
+    origins ??= new Set([...known, ...vouched].map(originOfKey));
+    const page = normalizeUrl(url);
+    return page !== undefined && origins.has(originOfKey(page));
+  };
   const steps = assessment?.browserSteps;
   if (steps !== undefined) {
+    // A site the person allowed the browser on for this chat ("Allow for this chat"): its pages they name open.
+    const siteAllowed = (url: string): boolean => browserGrantCovers(input.sessionGrants, url);
     let payload = false;
-    let origins: ReadonlySet<string> | undefined;
     for (const step of steps) {
       if (step.kind === "inert") continue;
       // A submit, upload, download or committing press carries what the page holds out under taint: its
@@ -1342,7 +1376,14 @@ function taintStep(input: GateEvaluationInput, assessment: CallAssessment | unde
         // The fragment counts: page script reads it (`isKnownNavigation`). A fragment on a known
         // page is not known either: the call asks, with the address and its fragment recorded.
         if (step.url === undefined) unrecorded = true;
-        else if (!isKnownNavigation(step.url, known) && !isKnownNavigation(step.url, vouched)) noteNovel(step.url, true);
+        else if (
+          !isKnownNavigation(step.url, known) &&
+          !isKnownNavigation(step.url, vouched) &&
+          // A page of an allowed or seen site by a path the person wrote, with no query or fragment: its
+          // address is the site and the person's words as they wrote them, with nothing composed into it.
+          !personPathOn(step.url, (url) => siteAllowed(url) || originKnown(url), input.personTexts)
+        )
+          noteNovel(step.url, true);
         continue;
       }
       // Typing under [A] alone: allowed on an origin a known URL names. A page the tool cannot
@@ -1352,9 +1393,7 @@ function taintStep(input: GateEvaluationInput, assessment: CallAssessment | unde
         payload = true;
         continue;
       }
-      origins ??= new Set([...known, ...vouched].map(originOfKey));
-      const page = normalizeUrl(step.url);
-      if (page === undefined || !origins.has(originOfKey(page))) payload = true;
+      if (!originKnown(step.url)) payload = true;
     }
     return payload ? { reason: "tainted-payload" } : novelAsk();
   }

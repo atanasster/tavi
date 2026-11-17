@@ -165,6 +165,11 @@ browser **on that site only**:
   browser to on another site: a browser call is held to the host its page is
   on now, and a call whose page moved to another host after it was decided (a
   timed script, a late redirect) is refused: observe the page and act again.
+  Once the chat has read web or document content, opening a page asks once
+  each time, unless the chat has seen its exact address or the page is on
+  that site with no query or fragment and a path your messages name
+  (`/login`); typing asks once each time (see
+  [SECURITY-MODEL.md](SECURITY-MODEL.md)).
 - **Always allow**: a workspace rule per browser tool for that site; the
   browser never asks again there (remove them in Settings → Permissions). Not
   offered once the task has read web or document content; allowing it for the

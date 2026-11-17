@@ -106,7 +106,7 @@ export async function proposeFromChat(page: Page, text: string): Promise<Locator
   for (let waited = 0; !((await cards.count()) > before && (await ended.isVisible())); waited += 1_000) {
     const shown = async () => ((await page.locator("main .runs").textContent()) ?? "").slice(-1_500);
     if (waited > 240_000) throw new Error(`"${text}" led to no memory card; the chat ends: ${await shown()}`);
-    if ((await page.getByRole("button", { name: /^(Allow once|Allow the rest)$/ }).count()) > 0)
+    if ((await page.getByRole("button", { name: /^(Allow once|Allow all)$/ }).count()) > 0)
       throw new Error(`"${text}" stopped on an approval card before its memory card: ${await shown()}`);
     await delay(1_000);
   }

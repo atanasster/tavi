@@ -367,6 +367,8 @@ export function createGateScope(scope: OfferScope) {
       taintMode,
       // Read only when the step can ask: a clean conversation's calls skip it.
       ...(tainted && taintMode !== "off" && known !== undefined ? { knownUrls: known() } : {}),
+      // The person's own words: a page path they wrote is theirs to open, tainted or not.
+      ...(tainted && taintMode !== "off" ? { personTexts: personTexts(current.conversation, origin) } : {}),
       // The `allowed-tools` of the skills loaded this turn: a call outside them asks, or is refused unattended.
       skillCeiling: turnSkillCeiling(current.conversation),
     });

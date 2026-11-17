@@ -1177,7 +1177,13 @@ describe("other assessments", () => {
     const order = assessBrowserAct({ sessionId: "s", ref: "e9", epoch: 0, kind: "click" }, { role: "button", text: "Place order" });
     expect(order).toMatchObject({ subjects: ["submit"], risk: "high" });
     expect(order.scopeGroup).toBeUndefined();
-    expect(order.reasons[0]).toContain("Place order");
+    expect(order.reasons).toEqual(['presses "Place order", which can pay, book or order']);
+    // Each press says what its own label can do: a confirm is not called a payment.
+    const confirm = assessBrowserAct(
+      { sessionId: "s", ref: "e3", epoch: 0, kind: "click" },
+      { role: "button", text: "Click for JS Confirm" },
+    );
+    expect(confirm.reasons).toEqual(['presses "Click for JS Confirm", which can send or submit something']);
     // A plain link is observed by its href, with no role: one that cancels is asked about as the press re-checks it (QA 1803).
     expect(
       assessBrowserAct(

@@ -592,7 +592,11 @@ covers:
   GET. A URL is *seen* when it is exactly one in your messages, in Tavi's own
   prompt or the memory it shows the model, in a tool result (a page's listed
   links and a fetch's redirects included), or one you approved earlier in the
-  chat; it stays seen after older messages are summarized. Only a result from
+  chat; it stays seen after older messages are summarized. In the browser, a
+  page of a site the chat has seen or you allowed for it, with no query or
+  fragment, whose path is the site's root or one your messages name as
+  written (`/login`), counts as seen too, private data or not: nothing is
+  composed into its address. Only a result from
   outside counts — a page, a search, an email, an MCP or plugin tool, a
   download — never one a model could have written: a worker's answer, a past
   chat, a routine's output, a sandbox's output or a file in the chat's folder.
@@ -607,8 +611,10 @@ covers:
   headers of the model's (`http.request` POST, or any header), and typing in
   the browser — text, or a key that types a character — on a page whose site
   is not in a seen URL, or on a page Tavi has not looked at yet, and on any
-  page once the chat also holds private data (below). Clicks, scrolls and keys
-  that type nothing are not asked about. A submit, an upload, a download, a
+  page once the chat also holds private data (below). Text copied from your
+  own messages is asked about too: they may hold a number or code an injected
+  page asks for. Clicks, scrolls and keys that type nothing are not asked
+  about. A submit, an upload, a download, a
   press of a committing button (paying, sending/posting, account/authorization,
   legal acceptance, or destructive actions across the protected-field languages,
   or any form-submitting control outside a strict search form) and acting by

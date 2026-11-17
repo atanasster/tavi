@@ -1007,6 +1007,40 @@ describe("the taint step", () => {
     });
   });
 
+  it("opens a page of a seen or allowed site by a path the person wrote, and nothing their words could carry out", () => {
+    const siteGrant = { ...grant("browser.navigate"), argMatcher: "the-internet.example" };
+    const personal = untrustedLabel("web", { principal: "host:attacker.example", confidentiality: "personal" });
+    const browse = (browserSteps: readonly BrowserStep[], extra: Partial<GateEvaluationInput> = {}) =>
+      evaluateGate({
+        ...tainted("browser.navigate", "network"),
+        rules: [allow("browser.*")],
+        sessionGrants: [siteGrant],
+        label: personal,
+        personTexts: ["Open /login and /dynamic_loading/2 on the-internet.example. My licence is 4471-XY."],
+        assessment: call({ browserSteps, scopeGroup: "browser.*" }),
+        ...extra,
+      });
+    // Private data in the context or not: the path is the person's words, on a site they allowed or the chat has seen.
+    expect(browse([{ kind: "navigate", url: "https://the-internet.example/dynamic_loading/2" }])).toMatchObject({ decision: "allow" });
+    expect(browse([{ kind: "navigate", url: "https://the-internet.example/" }])).toMatchObject({ decision: "allow" });
+    expect(browse([{ kind: "navigate", url: "https://docs.example/login" }])).toMatchObject({ decision: "allow" });
+    // A path nobody wrote, a query or fragment, or a site neither seen nor allowed asks once, as before.
+    for (const url of [
+      "https://the-internet.example/secure",
+      "https://the-internet.example/login?d=4471-XY",
+      "https://the-internet.example/login#4471-XY",
+      "https://collect.attacker.example/login",
+    ]) {
+      expect(browse([{ kind: "navigate", url }]), url).toMatchObject({ decision: "ask", gateReason: "novel-url", allowedScopes: ["once"] });
+    }
+    // The person's words are not theirs to type under taint: they may hold a secret an injected page asks for.
+    expect(browse([{ kind: "type", url: "https://the-internet.example/login" }], { label: undefined })).toMatchObject({
+      decision: "ask",
+      gateReason: "tainted-payload",
+      allowedScopes: ["once"],
+    });
+  });
+
   it("judges a browser call one step at a time", () => {
     const steps = (browserSteps: readonly BrowserStep[]) =>
       evaluateGate({

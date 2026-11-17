@@ -1844,6 +1844,24 @@ function commitHeadline(category: CommitCategory | undefined, label: string): st
   }
 }
 
+/** What a committing press can do, by what its label says: the card's reason, so a "Confirm" is not called a payment. */
+function commitConsequence(category: CommitCategory | undefined, label: string): string {
+  switch (category) {
+    case "pay":
+      return "can pay, book or order";
+    case "send":
+      return POSTING_LABEL.test(label) ? "can post publicly" : "can send or submit something";
+    case "account":
+      return "can sign up, subscribe or authorize";
+    case "legal":
+      return "can accept or approve terms";
+    case "destructive":
+      return "can delete or cancel";
+    case undefined:
+      return "sends its form";
+  }
+}
+
 function assessBrowserActCall(input: unknown, element?: ObservedElement, page?: string, dismissedDialog?: string): CallAssessment {
   const call = record(input);
   const kind = text(call["kind"]) ?? "click";
@@ -1893,7 +1911,7 @@ function assessBrowserActCall(input: unknown, element?: ObservedElement, page?: 
     reasons: governed
       ? [
           submitsByClick
-            ? `presses ${JSON.stringify(clip(label, 80))}${category === undefined ? "" : ` (${category})`}, which can pay, book, order or send`
+            ? `presses ${JSON.stringify(clip(label, 80))}, which ${commitConsequence(category, label)}`
             : dialogAccept
               ? `accepts a page dialog (${dialogCategory}), which can confirm or commit an action`
               : submitsByKey

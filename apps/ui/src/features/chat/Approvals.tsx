@@ -348,7 +348,7 @@ function Pending({
               }}
               onClick={() => act(true)}
             >
-              Allow the rest
+              Allow all
             </Button>
           ) : null}
           {scopes.includes("session") && saved.length > 0 ? (

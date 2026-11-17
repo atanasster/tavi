@@ -36,6 +36,14 @@ change behaviour or stored data.
 - The browser refuses a click on a captcha embedded in an ordinary page (a
   Turnstile or reCAPTCHA box beside a form), by element or by sight, as it
   already did on a page that is only a captcha; it is handed to you.
+- After a chat has read web content, a page on a site it has seen or you
+  allowed opens without asking when its path is one your message names
+  (`/login`, `/dynamic_loading/2`) and it has no query or fragment. Before,
+  only an exact full URL counted, so naming pages by path asked about each.
+- An approval for a press says what that button can do ("can send or submit
+  something" for a **Confirm**, "can pay, book or order" for **Place order**)
+  instead of calling every such press a payment. An approval card with several
+  calls says **Allow all** where it said **Allow the rest**.
 - The folded sidebar (as on a phone) offers **New chat** beside **+**, so a
   clean chat, without the side chat's carried-over untrusted content, is a tap
   away; **+**'s tooltip says what a side chat carries on.
