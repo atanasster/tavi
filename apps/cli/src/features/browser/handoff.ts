@@ -66,6 +66,12 @@ export interface BrowserHandoffs {
    * resumed tool hands the page back. How many were withdrawn.
    */
   withdraw(taskId: string, by: string): Promise<number>;
+  /**
+   * The person sent a new message instead of taking the page (a chat message while `taskId` waits on a handoff):
+   * the wait is settled `cancelled` without resuming the turn that asked, and the page goes back to the agent. The
+   * message's own turn moves past the call (the workflow answers it as not run). Whether a handoff was waiting.
+   */
+  supersede(taskId: string, by: string): Promise<boolean>;
 }
 
 /** What a remote chat is told: the takeover itself is only in the canvas, on the owner's computer. */
@@ -207,6 +213,17 @@ export function createBrowserHandoffs(deps: BrowserHandoffDependencies): Browser
         if (await settle(wait.taskId, wait.waitId, outcome, by, "browser")) withdrawn += 1;
       }
       return withdrawn;
+    },
+    async supersede(taskId, by) {
+      const wait = await repositories.agentWaits.getActiveByTask(taskId);
+      if (wait?.handoff === undefined) return false;
+      const outcome: AgentWaitOutcome = {
+        kind: "cancelled",
+        error: { code: "HANDOFF_SUPERSEDED", message: "the person sent a new message instead of taking over the browser" },
+      };
+      if (!(await repositories.agentWaits.settle({ waitId: wait.waitId, outcome, resume: false, by, via: "messaging" }))) return false;
+      port.end({ historyId: wait.handoff.sessionId, outcome: "cancelled" });
+      return true;
     },
     start() {
       const stop =

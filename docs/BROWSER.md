@@ -896,7 +896,10 @@ durably, by default up to 15 minutes (at most 60), until you hand the page back
 from the live view with how it went and an optional note; then it looks at the
 page again. A task started in a chat is told to send you there (the takeover is
 only in `tavi ui`, on this computer); an unattended one cannot ask, and the tool
-is not offered where nobody could take the page over.
+is not offered where nobody could take the page over. A new message in that chat
+while it waits moves on: the handoff is cancelled, the page goes back to the
+agent, and the new message is answered (the same holds for a message sent while
+a call waits for your approval: that call is not run).
 
 In the canvas, a card in the chat says so, with the time left, **Take control**
 and **I can't do this** (with an optional note); above phone width the chat

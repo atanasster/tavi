@@ -132,6 +132,7 @@ describe("the owner's handoffs", () => {
     const requested: string[] = [];
     const recorded: BrowserLiveControlChange[] = [];
     const woken: string[] = [];
+    const ended: string[] = [];
     const deps = {
       browser: {
         handoffTarget: (sessionId: string, options?: { wake?: boolean }) => {
@@ -148,7 +149,7 @@ describe("the owner's handoffs", () => {
         onControl: (listener: (change: BrowserLiveControlChange) => void) => (listeners.add(listener), () => listeners.delete(listener)),
         controlState: (historyId: string) => (requested.includes(historyId) ? "requested" : "agent"),
         requestHandoff: (historyId: string) => void requested.push(historyId),
-        endControl: () => undefined,
+        endControl: (historyId: string, outcome: string) => void ended.push(`${historyId} ${outcome}`),
         sessions: () => [{ sessionId: "h1", taskId: "chat", state: "open", url: "https://shop.example/login" }],
       } as unknown as BrowserLiveSource,
       repositories: {
@@ -191,6 +192,7 @@ describe("the owner's handoffs", () => {
       requested,
       recorded,
       woken,
+      ended,
       emit: (change: BrowserLiveControlChange) => listeners.forEach((listener) => listener(change)),
     };
   }
@@ -309,5 +311,21 @@ describe("the owner's handoffs", () => {
     expect(waits.get("w-worker")?.state).toBe("settled");
     expect(waits.get("w-other")?.state).toBe("active");
     expect(await handoffs.withdraw("home", "operator:ui")).toBe(0);
+  });
+
+  it("supersedes a chat's waiting handoff when its person sends a new message: cancelled, not resumed, the page handed back", async () => {
+    const { deps, waits, ended } = fakes();
+    const resumed: string[] = [];
+    const handoffs = createBrowserHandoffs({ ...deps, workflow: () => ({ admit: async () => void resumed.push("resume") }) as never });
+    waits.set("w-chat", { waitId: "w-chat", taskId: "chat", state: "active", handoff: { sessionId: "h1", reason: "sign-in" } });
+    expect(await handoffs.supersede("chat", "operator")).toBe(true);
+    expect(waits.get("w-chat")).toMatchObject({ state: "settled", outcome: { kind: "cancelled", error: { code: "HANDOFF_SUPERSEDED" } } });
+    expect(ended).toEqual(["h1 cancelled"]);
+    expect(resumed).toEqual([]);
+    // Nothing waits now, and a question is never a handoff to supersede.
+    expect(await handoffs.supersede("chat", "operator")).toBe(false);
+    waits.set("w-ask", { waitId: "w-ask", taskId: "chat", state: "active" });
+    expect(await handoffs.supersede("chat", "operator")).toBe(false);
+    expect(waits.get("w-ask")?.state).toBe("active");
   });
 });

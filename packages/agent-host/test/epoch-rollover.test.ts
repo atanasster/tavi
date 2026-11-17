@@ -739,14 +739,19 @@ describe("a long chat rolls over instead of ending", () => {
     const after = await latest();
     expect(before).toContain('"first"');
     // The admission did not fold: a fold there would sit before "second". The
-    // model step that followed may, and keeps the call its round still holds.
+    // model step that followed may: "second" answered the held call as not run,
+    // so a fold takes the call with that result, or keeps both.
     const conversation = JSON.parse(after) as WorkflowMessage[];
     const ids = conversation.map((message) =>
       message.text.startsWith("[compaction:epoch") ? "epoch" : message.text === "second" ? "second" : message.id,
     );
     expect(ids.indexOf("epoch") === -1 || ids.indexOf("epoch") > ids.indexOf("second")).toBe(true);
     const pendingCall = (JSON.parse(before) as WorkflowMessage[]).find((message) => message.toolCalls !== undefined);
-    expect(conversation.some((message) => message.id === pendingCall?.id)).toBe(true);
+    const kept = conversation.some((message) => message.id === pendingCall?.id);
+    const answered = conversation.some(
+      (message) => message.role === "tool" && pendingCall?.toolCalls?.some((call) => call.id === message.toolCallId),
+    );
+    expect(kept).toBe(answered);
   });
 });
 

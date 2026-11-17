@@ -23,7 +23,7 @@ import {
   parseAgentState,
 } from "@tavi/contracts";
 import { definedOnly, errorMessage } from "@tavi/contracts/util";
-import { REWIND_NOTE_ID, REWIND_NOTE, rewoundFrom, inboundUrlKeys } from "./admission-input.js";
+import { REWIND_NOTE_ID, REWIND_NOTE, rewoundFrom, inboundUrlKeys, supersededCallResults } from "./admission-input.js";
 import { ApprovalRequestSchema, ReviewRequestListSchema } from "./approval.js";
 import { abortCode, graphFailureCode, STOPPED_TURN } from "./dispatch.js";
 import { ADMISSION_FLUSH_TIMEOUT_MS, isSummaryMessage, planEpochRollover, buildEpochRolloverFold } from "./epoch.js";
@@ -291,6 +291,12 @@ export function createRunInvocation(scope: WorkflowScope & { readonly compiled: 
             turnBaselines.delete(input.threadId);
             throw error;
           });
+    // A message admitted while the thread is suspended (an approval, a question, a browser handoff) moves past it:
+    // the calls it held are answered as not run, before the message, and are no longer pending.
+    const superseded =
+      recoverCommittedInput || input.resume !== undefined || previousState === undefined || pendingInterruptOf(previousState) === undefined
+        ? []
+        : supersededCallResults(previousState.values);
     const graphInput = recoverCommittedInput
       ? null
       : input.resume === undefined
@@ -308,7 +314,8 @@ export function createRunInvocation(scope: WorkflowScope & { readonly compiled: 
             turnSteers: [],
             // A rollover here begins a new epoch, and a rewind takes turns back: the discovered and routed tools go with them.
             ...(admissionRollover === undefined && admissionRewind === undefined ? {} : { discoveredToolIds: [], routedToolIds: [] }),
-            conversation: admissionRewind ?? admissionRollover ?? admittedMessages,
+            conversation: admissionRewind ?? admissionRollover ?? [...superseded, ...admittedMessages],
+            ...(superseded.length === 0 ? {} : { pendingToolCalls: [], denials: {} }),
             // A rollover here folds what it was read from before any node sees it, and a side
             // chat's background is untrusted from its first step: either is kept in the flag.
             // So is a worker spawned from a tainted conversation.

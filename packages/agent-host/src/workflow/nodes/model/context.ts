@@ -10,6 +10,7 @@ import {
   type AgentStateData,
 } from "@tavi/contracts";
 import type { PreparedContextAdvice } from "../../../context/context.js";
+import { SUPERSEDED_CALL_OUTPUT } from "../../admission-input.js";
 import { compactSupersededObservations } from "../../compaction.js";
 import { withoutMemoryBlocks, type ContextDelta } from "../../context-block.js";
 import { modelSummariesAsData } from "../../model-summary.js";
@@ -184,10 +185,45 @@ export function callView(ctx: ModelCall): readonly WorkflowMessage[] {
   const { supersededObservationStride } = step.scope;
   // A turn the model declined stays in the history but is never sent again: a later turn is asked without it.
   const sent = step.conversationForThisCall.filter((message) => message.declined !== true);
-  return withoutMemoryBlocks(
-    modelSummariesAsData(compactSupersededObservations(sent, supersededObservationStride)),
-    layout === "v2" && memoryTurnedOff,
+  return withAnsweredCalls(
+    withoutMemoryBlocks(
+      modelSummariesAsData(compactSupersededObservations(sent, supersededObservationStride)),
+      layout === "v2" && memoryTurnedOff,
+    ),
   );
+}
+
+/**
+ * The view with every call answered: a call left without a result (a chat stuck before a message moved past it) gets
+ * one that says it never ran, right after the calls' own results. A provider refuses a request with an unanswered
+ * call, and the chat failed on every turn after it.
+ */
+export function withAnsweredCalls(view: readonly WorkflowMessage[]): readonly WorkflowMessage[] {
+  const out: WorkflowMessage[] = [];
+  let open: { readonly id: string; readonly name: string }[] = [];
+  const close = (): void => {
+    for (const call of open)
+      out.push({
+        id: `tool-superseded-${call.id}`.slice(0, 128),
+        role: "tool",
+        text: "",
+        toolCallId: call.id,
+        toolName: call.name,
+        output: SUPERSEDED_CALL_OUTPUT,
+        isError: true,
+      });
+    open = [];
+  };
+  for (const message of view) {
+    if (message.role === "tool") open = open.filter((call) => call.id !== message.toolCallId);
+    else {
+      close();
+      if (message.role === "assistant") open = (message.toolCalls ?? []).map((call) => ({ id: call.id, name: call.name }));
+    }
+    out.push(message);
+  }
+  close();
+  return out.length === view.length ? view : out;
 }
 
 // Memory that could not be read is said in the prompt and logged once per turn.

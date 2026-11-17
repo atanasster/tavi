@@ -106,6 +106,8 @@ import {
 } from "@tavi/agent-host/workflow";
 import { sleep } from "@tavi/node-kit";
 import { NO_ANSWER_NOTICE } from "../src/workflow/nodes/model/call.js";
+import { SUPERSEDED_CALL_OUTPUT } from "../src/workflow/admission-input.js";
+import { withAnsweredCalls } from "../src/workflow/nodes/model/context.js";
 import { fakeFetch } from "@tavi/test-support";
 import { sse, textChunk } from "@tavi/test-support/openai-stub";
 import { createAiSdkModelAdapter } from "@tavi/agent-host/models";
@@ -843,6 +845,29 @@ describe("workflow: model → tool → model round trip", () => {
     expect(tools.map((tool) => tool.id)).toEqual(["fixture.echo"]);
     expect(tools.map((tool) => tool.name)).toEqual(["fixture_echo"]);
     expect(tools[0]?.inputJsonSchema).toMatchObject({ type: "object" });
+  });
+
+  it("answers a call waiting for approval as not run when the person sends a new message instead", async () => {
+    const { adapter, model, invocations } = build({
+      tools: [{ definition: writeDefinition, schema: z.object({ message: z.string() }), handler: async (input) => input }],
+      turns: [
+        { toolCall: { id: "held-write", name: "fixture.write", input: { message: "saved" } } },
+        { text: "Answered the new message." },
+      ],
+    });
+    const first = await adapter.admit({ context, operationKey: "held-approval-1", kind: "start", prompt: "save it" });
+    expect(first.outcome.status).toBe("waiting");
+    const next = await adapter.admit({
+      context,
+      taskId: first.taskId,
+      operationKey: "held-approval-2",
+      kind: "reply",
+      prompt: "never mind",
+    });
+    expect([next.outcome.status, next.outcome.finalText]).toEqual(["completed", "Answered the new message."]);
+    expect(invocations).toEqual([]);
+    const result = model.calls.at(-1)?.messages.find((message) => message.role === "tool" && message.toolCallId === "held-write");
+    expect(result?.toolResults?.[0]?.output).toEqual(SUPERSEDED_CALL_OUTPUT);
   });
 
   it("freezes unrouted model inputs across governed tool approval and resume", async () => {
@@ -8520,6 +8545,61 @@ describe("workflow: browser handoff", () => {
     const result = message?.toolResults?.[0] as { readonly output?: unknown } | undefined;
     return result?.output ?? message?.toolResults;
   };
+
+  it("answers, in what the model is sent, a call a chat already holds with no result", () => {
+    const stuck = [
+      { id: "u1", role: "user" as const, text: "get past the check" },
+      { id: "a1", role: "assistant" as const, text: "", toolCalls: [{ id: "call-hand", name: "browser.request_handoff", input: {} }] },
+      { id: "u2", role: "user" as const, text: "do something else" },
+    ];
+    const view = withAnsweredCalls(stuck);
+    expect(view.map((message) => [message.role, message.toolCallId])).toEqual([
+      ["user", undefined],
+      ["assistant", undefined],
+      ["tool", "call-hand"],
+      ["user", undefined],
+    ]);
+    expect(view[2]?.output).toEqual(SUPERSEDED_CALL_OUTPUT);
+    // A view with every call answered is the same view.
+    const answered = [...stuck.slice(0, 2), { id: "t1", role: "tool" as const, text: "", toolCallId: "call-hand", output: {} }, stuck[2]!];
+    expect(withAnsweredCalls(answered)).toBe(answered);
+  });
+
+  it("answers a held handoff as not run when the person sends a new message, so the chat goes on", async () => {
+    // Mac mini Telegram tests: a message sent while a handoff waited was sent to the model after a call with no
+    // result; the provider refused it, and every later turn of that chat failed the same way.
+    const browser = fakeHandoffs();
+    const { adapter, model } = build({
+      withAgents: true,
+      browserHandoff: browser.port,
+      tools: [{ definition: handoffDefinition, schema: z.object({}).passthrough(), handler: never }],
+      turns: [
+        {
+          toolCall: {
+            id: "call-hand",
+            name: "browser.request_handoff",
+            input: { sessionId: "browser-session-1", reason: "captcha", instructions: "Tick the box" },
+          },
+        },
+        { text: "Here is the other thing." },
+      ],
+    });
+    const first = await adapter.admit({ context, operationKey: "op-held-1", kind: "start", prompt: "get past the check" });
+    expect(first.outcome.status).toBe("waiting");
+    const next = await adapter.admit({
+      context,
+      taskId: first.taskId,
+      operationKey: "op-held-2",
+      kind: "reply",
+      prompt: "do something else",
+    });
+    expect([next.outcome.status, next.outcome.finalText]).toEqual(["completed", "Here is the other thing."]);
+    const sent = model.calls.at(-1)?.messages ?? [];
+    const call = sent.findIndex((message) => message.toolCalls?.some((asked) => asked.id === "call-hand"));
+    expect(sent[call + 1]).toMatchObject({ role: "tool", toolCallId: "call-hand" });
+    expect(toolResult(model, "call-hand")).toEqual(SUPERSEDED_CALL_OUTPUT);
+    expect(sent.at(-1)?.role).toBe("user");
+  });
 
   it("waits for the person, with the handoff on the suspension, and hands the model how it went and the page as it is now", async () => {
     const browser = fakeHandoffs();

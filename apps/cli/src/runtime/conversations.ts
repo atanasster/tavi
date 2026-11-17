@@ -47,6 +47,7 @@ const MESSAGING_RESET_COMMAND = /^\/(?:new|reset)(?:@\w+)?$/i;
 export function composeConversations(composed: SchedulesContext) {
   const {
     access,
+    browserHandoffs,
     channelApprovals,
     channelTarget,
     clock,
@@ -954,6 +955,9 @@ export function composeConversations(composed: SchedulesContext) {
         }
         const prompted = member ? turn : await withMcpPrompt(turn, owner.principalId);
         if (prompted === undefined) return undefined;
+        // A message while the chat waits on its owner in the browser (a captcha, a sign-in) moves past it: the page goes
+        // back to the agent, and this turn answers the waiting call as not run. Before, the chat's every later turn failed.
+        if (!member) await browserHandoffs?.supersede(taskId, actor.principalId);
         return conversationWorkflow.admit({
           context: {
             workspaceId: actor.workspaceId,

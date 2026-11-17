@@ -20,6 +20,12 @@ change behaviour or stored data.
 - A message the model declined is no longer sent to it with later messages:
   it stays in the chat's history, marked as declined, so the next message is
   answered normally rather than declined with it.
+- A chat no longer stops answering after a message arrives while it waits for
+  you: a browser handoff (a captcha, a sign-in) or a call waiting for
+  approval. The new message is answered, the waiting call is recorded as not
+  run, and a handoff is cancelled with the page handed back. Before, the model
+  was sent a call with no result, the provider refused it, and every later
+  message in that chat failed. Chats already stuck this way answer again.
 - Pairing or allowing someone on a channel now says plainly what changed:
   "You're paired: your messages on this channel now reach Tavi."
 

@@ -281,3 +281,33 @@ export function withoutWorkflowFields(context: InvocationContext): InvocationCon
   } = context;
   return rest;
 }
+
+/** What a call the person moved past returns: it never ran, and their new message is what to answer. */
+export const SUPERSEDED_CALL_OUTPUT = {
+  error: "NOT_RUN",
+  reason:
+    "not run: the person sent a new message while this call was waiting (for their approval, an answer or their hand in the browser); answer that message instead",
+} as const;
+
+/**
+ * A result for each call the newest assistant message asked for that has none: what a message admitted to a suspended
+ * thread writes before itself. Without them the model is sent a call with no result, which a provider refuses, and
+ * every later turn of the chat failed the same way (a Telegram message sent while a browser handoff waited).
+ */
+export function supersededCallResults(previous: unknown): WorkflowMessage[] {
+  const conversation = (previous as { readonly conversation?: readonly WorkflowMessage[] } | undefined)?.conversation ?? [];
+  const at = conversation.findLastIndex((message) => message.role === "assistant");
+  const asked = conversation[at]?.toolCalls ?? [];
+  const answered = new Set(conversation.slice(at + 1).flatMap((message) => (message.role === "tool" ? [message.toolCallId] : [])));
+  return asked
+    .filter((call) => !answered.has(call.id))
+    .map((call) => ({
+      id: `tool-superseded-${call.id}`.slice(0, 128),
+      role: "tool" as const,
+      text: "",
+      toolCallId: call.id,
+      toolName: call.name,
+      output: SUPERSEDED_CALL_OUTPUT,
+      isError: true,
+    }));
+}
