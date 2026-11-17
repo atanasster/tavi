@@ -28,6 +28,10 @@ change behaviour or stored data.
   "paypal" or "google"). Cyrillic text that names Latin brands, has a Latin
   letter typed for a Cyrillic one, or runs two words together no longer
   triggers it.
+- When your search provider answers "too many requests", Tavi stops asking it
+  until the time it gives (a minute when it gives none, at most fifteen), and
+  no longer asks you to approve searches that could only fail meanwhile. The
+  model is told when it may search again, and answers from what it has.
 - The *keep in touch* idea asks which weekday or day of the month to remind
   you, the repeats a reminder can keep, instead of a free interval such as
   "every two weeks" that it then had to turn down.

@@ -17,7 +17,7 @@ import {
 } from "@tavi/contracts";
 import { providerDispatcher, type ProviderExecutionOptions, type ResolvedProvider, type ToolRegistry } from "@tavi/runtime";
 import type { ToolHandler } from "@tavi/contracts";
-import { errorMessage, isRecord } from "@tavi/contracts/util";
+import { errorMessage, isRecord, retryAfterMs } from "@tavi/contracts/util";
 import { BodyTooLargeError, readBoundedBody } from "@tavi/node-kit";
 import { z } from "zod";
 
@@ -112,8 +112,11 @@ export function createWebSearchAdapter(config: SearchProviderConfig, options: We
   const fail = (
     code: "UNAVAILABLE" | "NOT_AUTHORIZED" | "NOT_CONFIGURED",
     message: string,
-    /** The provider answered with a refusal: nothing ran (`refused`), and for a 429, a retry waits (`rateLimited`). */
-    answered?: { readonly refused: true; readonly rateLimited?: true },
+    /**
+     * The provider answered with a refusal: nothing ran (`refused`), and for a 429, a retry waits (`rateLimited`)
+     * as long as its `Retry-After` says (`retryAfter`, raw), which `web_search` reads into a cooldown.
+     */
+    answered?: { readonly refused: true; readonly rateLimited?: true; readonly retryAfter?: string },
   ): TaviError =>
     new TaviError(code, `web search provider ${config.providerId} (${config.kind}): ${message}`, {
       details: { providerId: config.providerId, kind: config.kind, ...answered },
@@ -181,6 +184,7 @@ export function createWebSearchAdapter(config: SearchProviderConfig, options: We
           REFUSED,
         );
       }
+      const retryAfter = response.headers.get("retry-after")?.trim().slice(0, 100);
       // Best effort: the body is discarded; one already closed has nothing to cancel.
       await response.body?.cancel().catch(() => undefined);
       if (config.kind === "searxng" && response.status === 403) {
@@ -192,7 +196,12 @@ export function createWebSearchAdapter(config: SearchProviderConfig, options: We
       }
       if (response.status === 401 || response.status === 403)
         throw fail("NOT_AUTHORIZED", `the provider refused the key (${response.status})`, REFUSED);
-      if (response.status === 429) throw fail("UNAVAILABLE", "rate limited (429); try again later", { refused: true, rateLimited: true });
+      if (response.status === 429)
+        throw fail("UNAVAILABLE", "rate limited (429)", {
+          refused: true,
+          rateLimited: true,
+          ...(retryAfter === undefined || retryAfter === "" ? {} : { retryAfter }),
+        });
       throw fail("UNAVAILABLE", `answered ${response.status}`, REFUSED);
     }
     let body: string | undefined;
@@ -389,6 +398,70 @@ const WebSearchInputSchema = z.strictObject({
     .describe("Only results from this domain and its subdomains, e.g. github.com"),
 });
 
+/**
+ * How long a provider that answered 429 is left alone: its `Retry-After`, held
+ * between a second and fifteen minutes, and a minute when it names none.
+ */
+const RATE_LIMIT_BOUNDS = { minMs: 1_000, maxMs: 15 * 60_000 } as const;
+
+/** A moment as the model is told it: a whole second, in UTC. */
+const atSecond = (ms: number): string => new Date(Math.ceil(ms / 1000) * 1000).toISOString().replace(/\.\d{3}Z$/, "Z");
+
+/**
+ * The providers that answered 429, each until its wait is over, by workspace
+ * and provider id. While one cools down `web_search` asks it nothing; while
+ * every provider of a call's chain does, the call's assessor refuses it
+ * outright, so the gate denies it before any approval card — a call that can
+ * only fail is never put to a person.
+ */
+function rateLimitCooldowns(now: () => number) {
+  const until = new Map<string, number>();
+  /**
+   * A workspace's available providers as last resolved, each selection id to its provider's id, in order:
+   * what the assessor, which does no I/O, reads.
+   */
+  const chains = new Map<string, ReadonlyMap<string, string>>();
+  const keyOf = (workspaceId: string, providerId: string): string => `${workspaceId}\u0000${providerId}`;
+  const coolingUntil = (workspaceId: string, providerId: string): number | undefined => {
+    const key = keyOf(workspaceId, providerId);
+    const at = until.get(key);
+    if (at === undefined) return undefined;
+    if (at > now()) return at;
+    until.delete(key);
+    return undefined;
+  };
+  return {
+    coolingUntil,
+    /** Notes a 429 from `providerId`, and returns when it may be asked again. */
+    limited(workspaceId: string, providerId: string, retryAfter: string | undefined): number {
+      const at = now() + retryAfterMs(retryAfter, new Date(now()).toISOString(), RATE_LIMIT_BOUNDS);
+      until.set(keyOf(workspaceId, providerId), at);
+      return at;
+    },
+    chainResolved(workspaceId: string, providers: ReadonlyMap<string, string>): void {
+      chains.set(workspaceId, providers);
+    },
+    /**
+     * When the first provider of the call's chain — the selection's, else every available one — may be asked
+     * again, if every one of them is cooling down now. A provider not resolved yet is not known to cool down.
+     */
+    allCoolingUntil(workspaceId: string, selected: readonly string[] | undefined): number | undefined {
+      const known = chains.get(workspaceId);
+      if (known === undefined) return undefined;
+      const ids = selected ?? [...known.keys()];
+      if (ids.length === 0) return undefined;
+      let first: number | undefined;
+      for (const id of ids) {
+        const providerId = known.get(id);
+        const at = providerId === undefined ? undefined : coolingUntil(workspaceId, providerId);
+        if (at === undefined) return undefined;
+        first = first === undefined ? at : Math.min(first, at);
+      }
+      return first;
+    },
+  };
+}
+
 /** What `web_search` may hand a model at most, as JSON: under the 64 KiB tool-result gate, with room to spare. */
 export const WEB_SEARCH_MAX_OUTPUT_BYTES = 48 * 1024;
 
@@ -432,22 +505,37 @@ export async function registerWebSearchTool(
     selection?: (context: InvocationContext) => ProviderSelection | undefined;
     /** Whether `web_fetch` is offered (the owner allows hosts to fetch): only then does the description point at it. */
     fetchOffered?: boolean;
+    /** The clock rate-limit cooldowns are kept by; the system clock by default. */
+    now?: () => number;
   },
 ): Promise<void> {
   if ((await providers()).filter((provider) => provider.available()).length === 0) return;
+  const cooldowns = rateLimitCooldowns(execution.now ?? Date.now);
   const dispatcher = providerDispatcher({
     execution,
     ...(execution.selection === undefined ? {} : { selection: execution.selection }),
-    candidates: async (context) =>
-      Promise.all(
+    candidates: async (context) => {
+      const candidates = await Promise.all(
         (await providers(context))
           .filter((provider) => provider.available())
           .map(async (provider) => {
             const resolved = await execution.resolve(provider, context);
-            return { id: resolved.selectionId ?? provider.id, resolved };
+            return { id: resolved.selectionId ?? provider.id, resolved, providerId: provider.id };
           }),
-      ),
+      );
+      // The chain a call without a selection goes down: every available provider (a selection names its own).
+      cooldowns.chainResolved(context.workspaceId, new Map(candidates.map((candidate) => [candidate.id, candidate.providerId])));
+      return candidates;
+    },
   });
+  /** The selection's provider ids for `context`, or `undefined` when there is none or it cannot be read. */
+  const selectedIds = (context: InvocationContext): readonly string[] | undefined => {
+    try {
+      return execution.selection?.(context)?.providers;
+    } catch {
+      return undefined;
+    }
+  };
   registry.register({
     id: "web_search",
     sink: "search",
@@ -461,7 +549,20 @@ export async function registerWebSearchTool(
     effect: "external",
     requiredPermissions: ["tools.invoke"],
     inputSchema: WebSearchInputSchema,
-    assess: assessWebSearch,
+    // While every provider the call would go to waits out a 429, the call is refused here — before the gate
+    // asks anyone — with the time the model may search again. Only a call that cannot run is refused.
+    assess: (input: unknown, context: InvocationContext) => {
+      const assessment = assessWebSearch(input);
+      const until = cooldowns.allCoolingUntil(context.workspaceId, selectedIds(context));
+      return until === undefined
+        ? assessment
+        : {
+            ...assessment,
+            hardDeny:
+              `Web search is rate limited until ${atSecond(until)}: do not call web_search again before then; ` +
+              "answer from what you already have, or say what you could not look up.",
+          };
+    },
     resolveBinding: async (_input: unknown, context: InvocationContext) => dispatcher.resolve(context),
     untrustedOutput: true,
     outputSource: "search",
@@ -502,7 +603,25 @@ export async function registerWebSearchTool(
         expectedBindingHash,
         ...(operationEnvelope === undefined ? {} : { envelope: operationEnvelope }),
         ...(reserveProviderAttempt === undefined ? {} : { reserve: reserveProviderAttempt }),
-        invoke: async (provider, signal) => normalize(await provider.search(query, signal), provider.id),
+        invoke: async (provider, signal) => {
+          const cooling = cooldowns.coolingUntil(context.workspaceId, provider.id);
+          if (cooling !== undefined)
+            throw new TaviError(
+              "UNAVAILABLE",
+              `web search provider ${provider.id}: rate limited; do not search the web again before ${atSecond(cooling)}`,
+              { details: { providerId: provider.id, refused: true, rateLimited: true } },
+            );
+          try {
+            return normalize(await provider.search(query, signal), provider.id);
+          } catch (error) {
+            if (!(error instanceof TaviError) || error.details?.["rateLimited"] !== true) throw error;
+            const retryAfter = error.details["retryAfter"];
+            const at = cooldowns.limited(context.workspaceId, provider.id, typeof retryAfter === "string" ? retryAfter : undefined);
+            throw new TaviError(error.code, `${error.message}; do not search the web again before ${atSecond(at)}`, {
+              details: error.details,
+            });
+          }
+        },
       });
       return { ...answer.result, provider: answer.provider };
     },

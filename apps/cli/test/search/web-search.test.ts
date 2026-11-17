@@ -3,6 +3,8 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
+  evaluateGate,
+  untrustedLabel,
   WEB_SEARCH_BOUNDS,
   WEB_SEARCH_CAPABILITIES,
   type InvocationContext,
@@ -41,9 +43,8 @@ interface Seen {
 }
 
 /** A fake `fetch` answering every request with `status` and `body`, remembering what it was sent. */
-function fakeFetch(
-  answer: { readonly status?: number; readonly body: unknown } | ((url: string) => { readonly status?: number; readonly body: unknown }),
-) {
+type FakeAnswer = { readonly status?: number; readonly body: unknown; readonly headers?: Record<string, string> };
+function fakeFetch(answer: FakeAnswer | ((url: string) => FakeAnswer)) {
   const seen: Seen[] = [];
   const doFetch = (async (input: string | URL | Request, init?: RequestInit) => {
     const url = String(input);
@@ -56,7 +57,7 @@ function fakeFetch(
     const given = typeof answer === "function" ? answer(url) : answer;
     return new Response(typeof given.body === "string" ? given.body : JSON.stringify(given.body), {
       status: given.status ?? 200,
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...given.headers },
     });
   }) as typeof globalThis.fetch;
   return { seen, doFetch };
@@ -246,6 +247,14 @@ describe("the adapters", () => {
       message: expect.stringContaining("rate limited"),
       details: { refused: true, rateLimited: true },
     });
+    // The provider's Retry-After travels with the refusal, so the tool can wait it out.
+    const later = await createWebSearchAdapter(brave, {
+      readSecret: keys,
+      fetch: fakeFetch({ status: 429, body: {}, headers: { "retry-after": "120" } }).doFetch,
+    })
+      .search({ query: "q" }, signal)
+      .catch((error: unknown) => error);
+    expect(later).toMatchObject({ details: { rateLimited: true, retryAfter: "120" } });
     expect(await refuse(brave, 502)).toMatchObject({
       code: "UNAVAILABLE",
       message: expect.stringContaining("answered 502"),
@@ -540,6 +549,113 @@ describe("web_search", () => {
       code: "UNAVAILABLE",
       message: expect.stringContaining("No enabled provider"),
     });
+  });
+});
+
+describe("web_search after a rate limit", () => {
+  const context = { workspaceId: "w", principalId: "operator", runId: "run-1", caller: "test" };
+  const START = Date.parse("2026-11-17T10:00:00.000Z");
+  const setup = async (
+    fetches: Record<string, ReturnType<typeof fakeFetch>>,
+    selection?: ProviderSelection,
+  ): Promise<{ registry: ToolRegistry; clock: { now: number } }> => {
+    const clock = { now: START };
+    const registry = new ToolRegistry();
+    await registerWebSearchTool(
+      registry,
+      () =>
+        Object.entries(fetches).map(([id, answer]) =>
+          createWebSearchAdapter(provider({ providerId: id, kind: "tavily" }), { readSecret: keys, fetch: answer.doFetch }),
+        ),
+      { ...searchExecution(selection), now: () => clock.now },
+    );
+    return { registry, clock };
+  };
+  const invoke = async (registry: ToolRegistry, input: unknown) => {
+    const tool = registry.get("web_search");
+    const binding = await tool?.resolveBinding?.(input, context);
+    return tool?.handler({ input, context, signal, ...(binding === undefined ? {} : { expectedBindingHash: binding.bindingHash }) });
+  };
+  const assess = (registry: ToolRegistry, input: unknown = { query: "visa rules" }) => registry.get("web_search")?.assess?.(input, context);
+  /** The gate's verdict on a search in a chat that read a web page, as the workflow asks it. */
+  const gate = (registry: ToolRegistry) => {
+    const assessment = assess(registry);
+    return evaluateGate({
+      toolId: "web_search",
+      effect: "external",
+      sink: "search",
+      ...(assessment === undefined ? {} : { assessment }),
+      rules: [],
+      sessionGrants: [],
+      gatedEffects: new Set(["external"]),
+      tainted: true,
+      label: untrustedLabel("web", { confidentiality: "personal" }),
+    });
+  };
+
+  it("refuses every search before the gate asks while the provider waits out its Retry-After, and searches again after", async () => {
+    let limited = true;
+    const tavily = fakeFetch(() =>
+      limited
+        ? { status: 429, body: {}, headers: { "retry-after": "90" } }
+        : { body: { results: [{ title: "Visa", url: "https://visa.example" }] } },
+    );
+    const { registry, clock } = await setup({ tavily });
+    expect(assess(registry)?.hardDeny).toBeUndefined();
+    expect(gate(registry).decision).toBe("ask");
+    await expect(invoke(registry, { query: "visa rules" })).rejects.toMatchObject({
+      code: "UNAVAILABLE",
+      message: expect.stringContaining("do not search the web again before 2026-11-17T10:01:30Z"),
+    });
+    // The next call is refused by its assessor: the gate denies it with this reason and shows nobody a card.
+    const refused = assess(registry, { query: "packing list" });
+    expect(refused?.hardDeny).toBe(
+      "Web search is rate limited until 2026-11-17T10:01:30Z: do not call web_search again before then; " +
+        "answer from what you already have, or say what you could not look up.",
+    );
+    expect(gate(registry)).toMatchObject({ decision: "deny", ruleId: "hard-deny", reason: refused?.hardDeny });
+    // And a call that reaches the handler anyway asks no provider.
+    await expect(invoke(registry, { query: "packing list" })).rejects.toMatchObject({
+      message: expect.stringContaining("2026-11-17T10:01:30Z"),
+    });
+    expect(tavily.seen).toHaveLength(1);
+
+    clock.now = START + 89_000;
+    expect(assess(registry)?.hardDeny).toBeDefined();
+    clock.now = START + 90_000;
+    limited = false;
+    expect(assess(registry)?.hardDeny).toBeUndefined();
+    expect(gate(registry).decision).toBe("ask");
+    expect(await invoke(registry, { query: "visa rules" })).toMatchObject({ provider: "tavily" });
+    expect(tavily.seen).toHaveLength(2);
+  });
+
+  it("waits a minute when the provider names no time, and never longer than fifteen minutes", async () => {
+    const bare = await setup({ tavily: fakeFetch({ status: 429, body: {} }) });
+    await invoke(bare.registry, { query: "q" }).catch(() => undefined);
+    expect(assess(bare.registry)?.hardDeny).toContain("until 2026-11-17T10:01:00Z");
+
+    const huge = await setup({ tavily: fakeFetch({ status: 429, body: {}, headers: { "retry-after": "86400" } }) });
+    await invoke(huge.registry, { query: "q" }).catch(() => undefined);
+    expect(assess(huge.registry)?.hardDeny).toContain("until 2026-11-17T10:15:00Z");
+  });
+
+  it("does not hold a search back for any other failure", async () => {
+    const { registry } = await setup({ tavily: fakeFetch({ status: 503, body: {} }) });
+    await invoke(registry, { query: "q" }).catch(() => undefined);
+    expect(assess(registry)?.hardDeny).toBeUndefined();
+  });
+
+  it("keeps searching through a fallback that is not cooling down, skipping the one that is", async () => {
+    const first = fakeFetch({ status: 429, body: {}, headers: { "retry-after": "60" } });
+    const second = fakeFetch({ body: { results: [{ title: "B", url: "https://b.example" }] } });
+    const { registry } = await setup({ first, second }, { providers: ["first", "second"], timeoutMs: 10_000 });
+    expect(await invoke(registry, { query: "q" })).toMatchObject({ provider: "second" });
+    // One provider in the chain can still answer: the call is asked about as before, never refused.
+    expect(assess(registry)?.hardDeny).toBeUndefined();
+    expect(await invoke(registry, { query: "q" })).toMatchObject({ provider: "second" });
+    expect(first.seen).toHaveLength(1);
+    expect(second.seen).toHaveLength(2);
   });
 });
 

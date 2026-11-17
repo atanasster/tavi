@@ -2707,6 +2707,8 @@ tavi search <action> [options]
 
 `web_search` uses a single available provider automatically. If several are available, select one or an explicit fallback chain in [web-providers.json](PLUGINS.md#web-provider-selection-and-receipts). Provider failures may use the next provider; authorization failure, revocation and cancellation stop dispatch.
 
+A provider that answers `429` is left alone for as long as its `Retry-After` says (a minute when it names no time, fifteen minutes at most), in that `tavi serve`: a search is not sent to it meanwhile, and the next provider in the chain is asked. While every provider of the chain waits, `web_search` is refused before the approval gate asks anyone, and the model reads the time it may search again (*Web search is rate limited until 2026-11-17T10:01:30Z: do not call web_search again before then; …*).
+
 It takes:
 
 - `query`;
