@@ -167,25 +167,26 @@ function openProfile(
   return profile;
 }
 
-async function attachSignatureRoute(ctx: BrowserRuntime, context: BrowserContext): Promise<void> {
-  if (ctx.identity.signature === undefined || ctx.signedContexts.has(context)) return;
+/**
+ * A route over every request of `context`, when one is needed: the operator's signature on a page's own documents,
+ * and, behind the egress proxy, every request passed on as it is. Playwright pauses each request to answer the proxy's
+ * credentials, and never resumes one Chromium restarts with the client hints a `Critical-CH` header asks for (every
+ * Google page): the page never loads, and nothing on it answers. A request a route of its own continued is resumed
+ * on its restart.
+ */
+async function attachRequestRoute(ctx: BrowserRuntime, context: BrowserContext): Promise<void> {
+  const signature = ctx.identity.signature;
+  if ((signature === undefined && ctx.options.egress === undefined) || ctx.routedContexts.has(context)) return;
   if (typeof (context as { readonly route?: unknown }).route !== "function") return;
-  ctx.signedContexts.add(context);
-  const sigConfig = ctx.identity.signature;
-  await context.route("https://**/*", async (route, request) => {
+  ctx.routedContexts.add(context);
+  await context.route("**/*", async (route, request) => {
     // A page's own document is what a site checks an agent by; its images and scripts go unsigned, unslowed.
-    if (typeof request.resourceType === "function" && request.resourceType() !== "document") {
+    if (signature === undefined || !request.url().startsWith("https://") || request.resourceType() !== "document") {
       await route.continue();
       return;
     }
     try {
-      const signed = signAgentRequest(request.url(), sigConfig);
-      await route.continue({
-        headers: {
-          ...request.headers(),
-          ...signed,
-        },
-      });
+      await route.continue({ headers: { ...request.headers(), ...signAgentRequest(request.url(), signature) } });
     } catch {
       await route.continue();
     }
@@ -219,7 +220,7 @@ export async function openSessionPage(
       );
     }
     if (profile !== undefined) {
-      await attachSignatureRoute(ctx, profile);
+      await attachRequestRoute(ctx, profile);
       // A profile opens with a blank page: the first session takes it rather than leaving it behind.
       const page =
         profile.pages().find((candidate) => !ctx.claimedPages.has(candidate) && candidate.url() === "about:blank") ??
@@ -233,7 +234,7 @@ export async function openSessionPage(
   const context = await browser.newContext(contextOptions);
   context.setDefaultTimeout?.(ACTION_TIMEOUT_MS);
   context.setDefaultNavigationTimeout?.(NAVIGATION_TIMEOUT_MS);
-  await attachSignatureRoute(ctx, context);
+  await attachRequestRoute(ctx, context);
   return { context, page: await context.newPage(), shared: false };
 }
 

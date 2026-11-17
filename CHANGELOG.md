@@ -32,6 +32,13 @@ change behaviour or stored data.
   until the time it gives (a minute when it gives none, at most fifteen), and
   no longer asks you to approve searches that could only fail meanwhile. The
   model is told when it may search again, and answers from what it has.
+- The built-in browser opens Google pages (Maps, Search, YouTube) again. Behind
+  Tavi's egress proxy, every request on those sites stalled when Chromium sent
+  it a second time with the client hints the site asked for, so the page never
+  loaded and each browser call waited out the 2-minute tool timeout. A page
+  that still does not answer now fails within seconds, saying so: a
+  navigation with its own timeout, an observation when the page's scan gets no
+  answer in 10 s, and a screenshot is skipped.
 - The *keep in touch* idea asks which weekday or day of the month to remind
   you, the repeats a reminder can keep, instead of a free interval such as
   "every two weeks" that it then had to turn down.

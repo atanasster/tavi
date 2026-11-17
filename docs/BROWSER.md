@@ -193,7 +193,10 @@ owner runs an egress proxy for the browser (on 127.0.0.1, one per browser,
 answering only the browser's own per-launch credentials), and Chromium sends
 every connection through it — loopback included, WebRTC only through it (no
 direct UDP), and no QUIC. A launched browser runs only once a request of its
-own is seen at the proxy, so a managed policy that sets another proxy stops it. The proxy checks each connection's host, resolves a
+own is seen at the proxy, so a managed policy that sets another proxy stops it.
+Every request passes through a route of the browser's own as it is (Playwright
+otherwise never lets through a request Chromium sends again with the client
+hints a site's `Critical-CH` header asks for, as every Google page does). The proxy checks each connection's host, resolves a
 name once and connects to the address it checked, never resolving it again, and
 refuses the rest with a 403 (the owner logs a warning naming the host; the full
 URL is not logged). So every request is held to the rule wherever it comes
@@ -443,7 +446,9 @@ to confirm the commit worked before reporting success.
 
 - **Timeouts.** An action gives up after 8 seconds and a navigation after 15
   (`timed out after 8 s`); `timeoutMs` sets an action's own limit, and how long
-  a `wait_for` waits (5 seconds by default, at most 15).
+  a `wait_for` waits (5 seconds by default, at most 15). An observation whose
+  page does not answer its scan within 10 seconds fails, saying so, rather than
+  waiting out the tool's own timeout.
 - **Stop.** Stopping the turn interrupts the action in flight. A step Chromium
   was already running may still land; the session's next action waits for it
   to finish first, so the two never act on the page at once.

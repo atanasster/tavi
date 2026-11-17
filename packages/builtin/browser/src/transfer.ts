@@ -26,7 +26,7 @@ import {
 } from "./download-media.js";
 import { readPdfBytes } from "./navigation.js";
 import type { SessionRecord, BrowserRuntime } from "./session-types.js";
-import { DOWNLOAD_TIMEOUT_MS, abortedBy, stopDownload, ACTION_TIMEOUT_MS } from "./timing.js";
+import { DOWNLOAD_TIMEOUT_MS, abortedBy, stopDownload, ACTION_TIMEOUT_MS, CDP_SESSION_TIMEOUT_MS, within } from "./timing.js";
 
 /**
  * Hand already-authorized bytes to the page's file input.
@@ -228,7 +228,8 @@ export function startDownloadMonitor(page: Page, maxMiB: number, scope: "any" | 
     },
     attachCdp: async (session: SessionRecord) => {
       if (cdp !== undefined || typeof session.context?.newCDPSession !== "function") return;
-      cdp = await session.context.newCDPSession(page).catch(() => undefined);
+      // Bounded, as `cleanup`'s detach is: a renderer stuck on its document answers no DevTools command.
+      cdp = await within(session.context.newCDPSession(page), CDP_SESSION_TIMEOUT_MS);
       if (cdp !== undefined) {
         cdp.on("Page.downloadProgress", (payload: { totalBytes?: number; receivedBytes?: number }) => {
           if (typeof payload.totalBytes === "number" && payload.totalBytes > 0) {
@@ -247,13 +248,14 @@ export function startDownloadMonitor(page: Page, maxMiB: number, scope: "any" | 
             rejectOverCapFn?.(new TaviError("INVALID_INPUT", `Download exceeds the ${maxMiB} MiB size limit`));
           }
         });
-        await cdp.send("Page.enable").catch(() => undefined);
+        await within(cdp.send("Page.enable"), CDP_SESSION_TIMEOUT_MS);
       }
     },
     cleanup: async () => {
       if (typeof pageEmitter.off === "function") pageEmitter.off("response", onResponse);
       else pageEmitter.removeListener?.("response", onResponse);
-      await cdp?.detach().catch(() => undefined);
+      // Bounded: a renderer stuck on its document never answers the detach, and the call it ends must still return.
+      if (cdp !== undefined) await within(cdp.detach(), CDP_SESSION_TIMEOUT_MS);
       cdp = undefined;
     },
   };

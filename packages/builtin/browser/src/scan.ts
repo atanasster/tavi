@@ -5,6 +5,7 @@ import {
   SEARCH_FIELD_WORD_SOURCE,
   SEARCH_FIELD_EXACT_SOURCE,
   DISQUALIFYING_SEARCH_FIELD_SOURCE,
+  TaviError,
   compactBrowserElements,
 } from "@tavi/contracts";
 import type { Locator, Frame, Page } from "playwright";
@@ -15,7 +16,7 @@ import type { PageGlobals } from "./page-globals.js";
 import { SCOPE_TIMEOUT_MS, visibleChildFrames, refusedFrames } from "./frames.js";
 import type { PlaywrightBrowserOptions } from "./options.js";
 import type { StoredElementRef } from "./session-types.js";
-import { within } from "./timing.js";
+import { SCAN_TIMEOUT_MS, beforeDeadline, within } from "./timing.js";
 
 export const INTERACTIVE_SELECTOR = "a, button, input, select, textarea, summary, h1, h2, h3, [role]";
 
@@ -539,10 +540,17 @@ export async function scanElements(
     searchFieldExact: SEARCH_FIELD_EXACT_SOURCE,
     disqualifyingSearchField: DISQUALIFYING_SEARCH_FIELD_SOURCE,
   };
-  const result = await matches.evaluateAll(SCAN_PAGE, {
-    ...baseScanArgs,
-    ...scopeOption,
-  });
+  // Bounded: Playwright gives a page script no deadline, and a page whose renderer is stuck (a document that never
+  // arrives, a script that never yields) would hold the call until the tool's own timeout.
+  const result = await beforeDeadline(
+    matches.evaluateAll(SCAN_PAGE, { ...baseScanArgs, ...scopeOption }),
+    SCAN_TIMEOUT_MS,
+    () =>
+      new TaviError(
+        "UNAVAILABLE",
+        `the page did not answer within ${String(SCAN_TIMEOUT_MS / 1000)}s: it may still be loading or stuck. Observe it again, read its text with browser.read, or open another page`,
+      ),
+  );
   // A test's fake page answers the elements alone.
   const { elements: scanned, scopeFound } = Array.isArray(result) ? { elements: result as ScannedElement[], scopeFound: true } : result;
   const seen = new Map<string, number>();

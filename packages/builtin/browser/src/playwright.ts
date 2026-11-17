@@ -103,7 +103,7 @@ export function createPlaywrightBrowser(options: PlaywrightBrowserOptions): Brow
     claimedPages: new Set(),
     userAgentPromise: undefined,
     disposed: false,
-    signedContexts: new WeakSet(),
+    routedContexts: new WeakSet(),
   };
   return portOf(ctx);
 }

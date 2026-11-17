@@ -50,10 +50,15 @@ export const MODEL_CAPTURE_QUALITY = 70;
 /** How long a page title may take before the observation goes without one. */
 export const TITLE_TIMEOUT_MS = 1_000;
 
+/** How long the page's scan of its elements may take before an observation fails as unanswered. */
+export const SCAN_TIMEOUT_MS = 10_000;
+
+/** How long a DevTools session of the browser's own may take to attach, answer a command, or let go of its page. */
+export const CDP_SESSION_TIMEOUT_MS = 2_000;
+
 /** How long one thumbnail run may hold its session's queue before the next one starts. */
 export const THUMBNAIL_TIMEOUT_MS = 5_000;
 
-/** `promise`'s value, or `undefined` once `ms` pass or it rejects. */
 /** What a key does to the control it lands on: Enter submits, Space presses; any other key presses nothing. */
 export function pressModeOf(key: string): PressMode | undefined {
   if (/(^|\+)(enter|return|numpadenter)$/i.test(key)) return "enter";
@@ -61,6 +66,24 @@ export function pressModeOf(key: string): PressMode | undefined {
   return undefined;
 }
 
+/** `promise`'s value or rejection, or `timedOut()`'s error once `ms` pass. */
+export async function beforeDeadline<T>(promise: Promise<T>, ms: number, timedOut: () => Error): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  // Raced against its deadline: a rejection after the deadline has no one to tell.
+  void promise.catch(() => undefined);
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => reject(timedOut()), ms);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+/** `promise`'s value, or `undefined` once `ms` pass or it rejects. */
 export async function within<T>(promise: Promise<T>, ms: number): Promise<T | undefined> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {

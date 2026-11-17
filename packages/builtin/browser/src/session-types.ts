@@ -145,5 +145,5 @@ export interface BrowserRuntime {
   readonly claimedPages: Set<Page>;
   userAgentPromise: Promise<string | undefined> | undefined;
   disposed: boolean;
-  readonly signedContexts: WeakSet<BrowserContext>;
+  readonly routedContexts: WeakSet<BrowserContext>;
 }

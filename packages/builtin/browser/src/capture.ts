@@ -232,7 +232,13 @@ export async function captureForModel(
   const contextLabel = captureOptions?.contextLabel;
   const blockedHosts = await blockedHostsOf(ctx, session.workspaceId);
   const refusal = async (): Promise<string | undefined> => {
-    const sensitive = await sensitivityOf((ctx.options.thumbnailPage ?? playwrightThumbnailPage)(session.page), blockedHosts);
+    // Bounded, and closed when unanswered: a frame's query has no deadline of its own.
+    const checked = await within(
+      sensitivityOf((ctx.options.thumbnailPage ?? playwrightThumbnailPage)(session.page), blockedHosts).then((reason) => ({ reason })),
+      SIGNALS_TIMEOUT_MS,
+    );
+    if (checked === undefined) return "the page did not answer";
+    const sensitive = checked.reason;
     if (sensitive !== undefined) return sensitive.replace("-", " ");
     // A secret someone typed — a code, a password a "show password" switch made plain — fails closed too.
     const typed = await within(

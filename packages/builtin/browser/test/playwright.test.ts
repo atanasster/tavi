@@ -1894,6 +1894,41 @@ describe("createPlaywrightBrowser — dispose", () => {
   });
 });
 
+/** A page whose canary request goes through the launch's proxy, as Chromium would send it — or, `reaches` false, nowhere. */
+function pageThroughProxy(
+  launched: () => { proxy?: { server: string; username?: string; password?: string } } | undefined,
+  reaches: boolean,
+): Page {
+  const page = fakePage();
+  // The canary page: through the launch's proxy, as Chromium would send it — or, overridden, nowhere.
+  (page as unknown as { goto: (url: string) => Promise<null> }).goto = async (url: string) => {
+    const proxy = launched()?.proxy;
+    if (!reaches || proxy === undefined) return null;
+    const target = new URL(proxy.server);
+    await new Promise<void>((resolve) => {
+      const sent = httpRequest(
+        {
+          host: target.hostname,
+          port: Number(target.port),
+          path: url,
+          headers: {
+            Host: new URL(url).host,
+            "Proxy-Authorization": `Basic ${Buffer.from(`${proxy.username ?? ""}:${proxy.password ?? ""}`).toString("base64")}`,
+          },
+        },
+        (response) => {
+          response.resume();
+          response.once("end", () => resolve());
+        },
+      );
+      sent.once("error", () => resolve());
+      sent.end();
+    });
+    return null;
+  };
+  return page;
+}
+
 describe("createPlaywrightBrowser — identity and profiles", () => {
   /** A persistent profile: a context with pages, one blank page to start, closable. */
   function fakeProfile(): BrowserContext & { readonly opened: Page[] } {
@@ -1921,39 +1956,7 @@ describe("createPlaywrightBrowser — identity and profiles", () => {
   }
 
   it("sends every connection of the browser it launches through its own egress proxy, with its credentials, and runs it only once its traffic is seen there", async () => {
-    const pageVia = (
-      launched: () => { proxy?: { server: string; username?: string; password?: string } } | undefined,
-      reaches: boolean,
-    ): Page => {
-      const page = fakePage();
-      // The canary page: through the launch's proxy, as Chromium would send it — or, overridden, nowhere.
-      (page as unknown as { goto: (url: string) => Promise<null> }).goto = async (url: string) => {
-        const proxy = launched()?.proxy;
-        if (!reaches || proxy === undefined) return null;
-        const target = new URL(proxy.server);
-        await new Promise<void>((resolve) => {
-          const sent = httpRequest(
-            {
-              host: target.hostname,
-              port: Number(target.port),
-              path: url,
-              headers: {
-                Host: new URL(url).host,
-                "Proxy-Authorization": `Basic ${Buffer.from(`${proxy.username ?? ""}:${proxy.password ?? ""}`).toString("base64")}`,
-              },
-            },
-            (response) => {
-              response.resume();
-              response.once("end", () => resolve());
-            },
-          );
-          sent.once("error", () => resolve());
-          sent.end();
-        });
-        return null;
-      };
-      return page;
-    };
+    const pageVia = pageThroughProxy;
     for (const reaches of [true, false]) {
       let options: { proxy?: { server: string; username?: string; password?: string }; args?: string[] } | undefined;
       const context = fakeContext(pageVia(() => options, reaches));
@@ -1990,6 +1993,39 @@ describe("createPlaywrightBrowser — identity and profiles", () => {
       // Disposed, it launches nothing more.
       await expect(adapter.createSession({ workspaceId: "w1" })).rejects.toMatchObject({ code: "UNAVAILABLE" });
     }
+  });
+
+  it("routes every request behind its egress proxy, so one Chromium restarts for a site's client hints is let through", async () => {
+    // Playwright pauses every request to answer the proxy's credentials, and never resumes one Chromium restarts with the
+    // hints a `Critical-CH` header asks for (every Google page): only a route of its own takes the path that does.
+    let options: { proxy?: { server: string; username?: string; password?: string } } | undefined;
+    const context = fakeContext(pageThroughProxy(() => options, true));
+    let pattern: string | undefined;
+    let handler: ((route: unknown, request: unknown) => Promise<void>) | undefined;
+    Object.assign(context, {
+      route: vi.fn(async (given: string, next: typeof handler) => {
+        pattern = given;
+        handler = next;
+      }),
+    });
+    const browser = { newContext: vi.fn(async () => context), version: () => "153.0.8010.12", close: vi.fn(async () => {}) };
+    const adapter = createPlaywrightBrowser({
+      stagingDirectory: tmpdir(),
+      launch: (async (given: typeof options) => {
+        options = given;
+        return browser;
+      }) as never,
+      egress: async () => ({ refused: "test" }),
+    });
+    await adapter.createSession({ workspaceId: "w1" });
+    expect(pattern).toBe("**/*");
+    const sent: unknown[] = [];
+    const route = { continue: vi.fn(async (given?: unknown) => void sent.push(given)) };
+    for (const type of ["document", "image"])
+      await handler?.(route, { url: () => "https://www.google.com/maps", resourceType: () => type, headers: () => ({}) });
+    // Passed on as they are: nothing signed, nothing changed.
+    expect(sent).toEqual([undefined, undefined]);
+    await adapter.dispose?.();
   });
 
   it("presents a desktop Chrome's agent and the operator's locale in a fresh context", async () => {
@@ -2527,6 +2563,55 @@ describe("createPlaywrightBrowser — navigation downloads and inline PDFs", () 
         expect(reads).toBe(65);
         expect(pdf.run).not.toHaveBeenCalled();
       }
+    }
+  });
+});
+
+describe("createPlaywrightBrowser — a page that never answers", () => {
+  it("fails a navigation that timed out with its own error, though the page's DevTools session never lets go", async () => {
+    const page = fakePage();
+    Object.assign(page, {
+      goto: vi.fn(async () => {
+        throw new Error("page.goto: Timeout 15000ms exceeded.");
+      }),
+    });
+    const context = fakeContext(page);
+    // A renderer stuck on its document: the download watch's session attaches, and its detach never answers.
+    const stuck = { on: vi.fn(), send: vi.fn(async () => undefined), detach: vi.fn(() => new Promise(() => {})) };
+    Object.assign(context, { newCDPSession: vi.fn(async () => stuck) });
+    const adapter = createPlaywrightBrowser({ stagingDirectory: tmpdir(), launch: async () => fakeBrowser(context) });
+    const session = await adapter.createSession({ workspaceId: "w1" });
+    vi.useFakeTimers();
+    try {
+      const navigating = adapter.navigate(session.sessionId, "https://www.google.com/maps/search/electrician+Sofia");
+      const failed = expect(navigating).rejects.toThrow("Timeout 15000ms exceeded");
+      await vi.advanceTimersByTimeAsync(5_000);
+      await failed;
+      expect(stuck.detach).toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("fails an observation fast, saying why, when the page never answers its scan", async () => {
+    const page = fakePage({ url: "https://www.google.com/maps" });
+    (page.locator as ReturnType<typeof vi.fn>).mockImplementation(() => ({
+      evaluateAll: vi.fn(() => new Promise(() => {})),
+      nth: () => undefined,
+    }));
+    const adapter = createPlaywrightBrowser({ stagingDirectory: tmpdir(), launch: async () => fakeBrowser(fakeContext(page)) });
+    const session = await adapter.createSession({ workspaceId: "w1" });
+    vi.useFakeTimers();
+    try {
+      const observing = adapter.observe(session.sessionId);
+      const refused = expect(observing).rejects.toMatchObject({
+        code: "UNAVAILABLE",
+        message: expect.stringContaining("did not answer within 10s"),
+      });
+      await vi.advanceTimersByTimeAsync(15_000);
+      await refused;
+    } finally {
+      vi.useRealTimers();
     }
   });
 });
