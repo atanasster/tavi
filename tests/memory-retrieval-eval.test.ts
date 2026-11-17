@@ -199,11 +199,12 @@ describe("the offline memory retrieval eval", () => {
     ).toThrow(/relevant names unknown id unknown-id/);
   });
 
-  it("runs deterministically in under 10 seconds and matches or improves on the committed baseline", () => {
+  it("runs deterministically in under 20 seconds and matches or improves on the committed baseline", { timeout: 60_000 }, () => {
     const started = performance.now();
     const current = runRetrievalEval(worldsFile);
     const elapsedMs = performance.now() - started;
-    expect(elapsedMs).toBeLessThan(10_000);
+    // A budget that catches a slow eval, not a stopwatch: a shared Windows runner has taken just over 10 s.
+    expect(elapsedMs).toBeLessThan(20_000);
 
     const repeat = runRetrievalEval(worldsFile);
     expect(repeat).toEqual(current);

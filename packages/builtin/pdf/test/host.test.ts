@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { PDFDocument, StandardFonts } from "@cantoo/pdf-lib";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createPdfService, defaultChildPath, fillFonts, type PdfService } from "../src/host.js";
 import { sampleForm } from "./support.js";
@@ -138,16 +138,16 @@ describe("the PDF service", () => {
 
   it("hands a warm child the next document, and warms another after it", async () => {
     const spawned: (number | undefined)[] = [];
-    const pdf = service({ warm: true, observe: (event) => event.kind === "spawn" && spawned.push(event.pid) });
+    const exited: (number | undefined)[] = [];
+    const pdf = service({ warm: true, observe: (event) => (event.kind === "spawn" ? spawned : exited).push(event.pid) });
     pdf.prewarm();
-    await new Promise((resolve) => setTimeout(resolve, 1_000));
-    expect(spawned).toHaveLength(1);
-    const started = Date.now();
+    await vi.waitFor(() => expect(spawned).toHaveLength(1));
     const answer = await pdf.run({ op: "facts" }, await sampleForm());
     expect(answer.ok).toBe(true);
-    expect(Date.now() - started).toBeLessThan(1_500);
-    // The call used the warm child; the one spawned after it is the next warm one.
+    // The call used the warm child, which ends with its document; the one spawned after it
+    // is the next warm one and is still waiting. (Not a stopwatch: a busy runner is slow either way.)
     expect(spawned).toHaveLength(2);
+    await vi.waitFor(() => expect(exited).toEqual([spawned[0]]));
   });
 
   it("queues calls past its concurrency", async () => {
