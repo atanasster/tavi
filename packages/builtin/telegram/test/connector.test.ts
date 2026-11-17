@@ -380,6 +380,7 @@ describe("createTelegramConnectorDefinition", () => {
 
     async function startInstance(input: {
       readonly sendDocument?: (init: RequestInit | undefined) => Response | Promise<Response>;
+      readonly sendPhoto?: (init: RequestInit | undefined) => Response | Promise<Response>;
       readonly readArtifact?: (
         artifactId: string,
         workspaceId: string,
@@ -388,6 +389,10 @@ describe("createTelegramConnectorDefinition", () => {
     }): Promise<{ instance: MessagingConnectorInstance; fetchImpl: ReturnType<typeof vi.fn> }> {
       const fetchImpl = vi.fn(async (url: string, init?: RequestInit) => {
         if (url.includes("/getMe")) return jsonResponse({ ok: true, result: { id: 1 } });
+        if (url.includes("/sendPhoto")) {
+          if (input.sendPhoto === undefined) throw new Error("sendPhoto was called but this test configured no response for it");
+          return input.sendPhoto(init);
+        }
         if (url.includes("/sendDocument")) {
           if (input.sendDocument === undefined) throw new Error("sendDocument was called but this test configured no response for it");
           return input.sendDocument(init);
@@ -413,6 +418,35 @@ describe("createTelegramConnectorDefinition", () => {
       connectionId: "conn-1",
       destination: { chatId: 7 },
       parts: [{ kind: "file" as const, artifactId: "art-1", ...overrides }],
+    });
+
+    it("sends a picture as a photo, shown in the chat, and as a document when Telegram will not draw it (Mac mini tests)", async () => {
+      const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
+      const sent = { message_id: 91, date: 0, chat: { id: 7 } };
+      const { instance, fetchImpl } = await startInstance({
+        sendPhoto: () => jsonResponse({ ok: true, result: sent }),
+        readArtifact: () => ({ bytes: JPEG, contentType: "image/jpeg" }),
+      });
+      expect((await instance.send(fileMessage({ caption: "example.com" }))).status).toBe("accepted");
+      const [, init] = fetchImpl.mock.calls.find(([callUrl]) => String(callUrl).includes("/sendPhoto")) as [string, RequestInit];
+      const form = init.body as FormData;
+      expect((form.get("photo") as File).type).toBe("image/jpeg");
+      expect(form.get("caption")).toBe("example.com");
+      expect(fetchImpl.mock.calls.some(([callUrl]) => String(callUrl).includes("/sendDocument"))).toBe(false);
+      await instance.stop();
+
+      // A full-page capture too long to draw: refused as a photo, sent as a document.
+      const tall = await startInstance({
+        sendPhoto: () => jsonResponse({ ok: false, error_code: 400, description: "Bad Request: PHOTO_INVALID_DIMENSIONS" }),
+        sendDocument: () => jsonResponse({ ok: true, result: { ...sent, message_id: 92 } }),
+        readArtifact: () => ({ bytes: JPEG, contentType: "image/jpeg" }),
+      });
+      expect(await tall.instance.send(fileMessage())).toEqual({
+        status: "accepted",
+        retryable: false,
+        parts: [{ index: 0, status: "accepted", providerMessageId: "92" }],
+      });
+      await tall.instance.stop();
     });
 
     it("abandons a hung upload after the upload timeout as uncertain", async () => {

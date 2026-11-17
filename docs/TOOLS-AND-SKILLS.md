@@ -457,7 +457,7 @@ an `agents:message:<agent-id>` grant for the agent they reach.
 | `messaging.end_poll` | external | message | trusted | listed | End a poll this task posted with messaging.create_poll before its time runs out; everyone in the conversation sees it closed. |
 | `messaging.poll_results` | read-only | none | untrusted | listed | Read the votes of a poll this task posted with messaging.create_poll: each answer's count and who voted, as far as Tavi knows them, and whether they are fina… |
 | `messaging.recent` | read-only | none | untrusted | listed | Read this room's latest messages, oldest first: who said what, as far as Tavi knows them — anyone it does not know is never quoted. |
-| `messaging.send` | external | reply | trusted | listed | Reply here: send a message to the conversation this task came from, on the channel it came through. |
+| `messaging.send` | external | reply | trusted | listed | Reply here: send a message to the conversation this task came from, on the channel it came through, with an approved artifact (a screenshot, a report) when y… |
 | `messaging.send_to` | external | message | trusted | listed | Send a text message, an approved artifact (a PDF report) or a file from your working folder (by path) through one of the channels you can reach, by its conne… |
 | `news.search` | read-only | search | untrusted | listed | Recent news items carrying links for one configured project's keywords, from the deployment's news feeds and its news search provider. |
 | `operator.ask_user` | external | none | trusted | listed | Ask the operator a question in their chat and suspend until they answer, or until the deadline passes. |

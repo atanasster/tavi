@@ -160,23 +160,35 @@ async function sendFilePart(
   }
   const contentType = part.mimeType ?? attachment.contentType;
   const filename = safeFilename(part.filename ?? defaultFilename(part.artifactId, contentType));
+  const fields = {
+    chat_id: String(destination.chatId),
+    ...(part.caption === undefined ? {} : { caption: part.caption }),
+    ...(destination.replyToMessageId === undefined ? {} : { reply_to_message_id: String(destination.replyToMessageId) }),
+    ...(destination.threadId === undefined ? {} : { message_thread_id: String(destination.threadId) }),
+  };
+  const bytes = attachment.bytes;
+  const upload = (method: "sendPhoto" | "sendDocument", field: "photo" | "document") =>
+    context.api.callMultipart<TelegramMessage>(method, fields, { field, filename, contentType, bytes });
   let result: TelegramApiResult<TelegramMessage>;
   try {
-    result = await context.api.callMultipart<TelegramMessage>(
-      "sendDocument",
-      {
-        chat_id: String(destination.chatId),
-        ...(part.caption === undefined ? {} : { caption: part.caption }),
-        ...(destination.replyToMessageId === undefined ? {} : { reply_to_message_id: String(destination.replyToMessageId) }),
-        ...(destination.threadId === undefined ? {} : { message_thread_id: String(destination.threadId) }),
-      },
-      { field: "document", filename, contentType, bytes: attachment.bytes },
-    );
+    // A picture is shown in the chat as one (Mac mini tests: a screenshot came as a file to download). Telegram
+    // refuses a photo it will not draw — over 10 MB, too long a side — before sending anything, so that one goes
+    // as a document instead.
+    result =
+      PHOTO_TYPES.has(contentType.toLowerCase()) && bytes.byteLength <= TELEGRAM_MAX_PHOTO_BYTES
+        ? await upload("sendPhoto", "photo")
+        : await upload("sendDocument", "document");
+    if (!result.ok && result.error_code === 400 && PHOTO_TYPES.has(contentType.toLowerCase()))
+      result = await upload("sendDocument", "document");
   } catch (error) {
     return { index, status: "uncertain", error: redactedError(error, [context.api.token()]) };
   }
   return toPartReceipt(index, result);
 }
+
+/** The pictures Telegram shows as photos, and the most it takes as one. */
+const PHOTO_TYPES: ReadonlySet<string> = new Set(["image/jpeg", "image/png", "image/webp"]);
+const TELEGRAM_MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
 /** Shared Bot API result → per-part receipt mapping, so the text and document paths cannot drift on rejection/retry semantics. */
 function toPartReceipt(index: number, result: TelegramApiResult<TelegramMessage>): TelegramPartReceipt {

@@ -189,3 +189,48 @@ describe("messaging contacts", () => {
     ).rejects.toMatchObject({ code: "NOT_CONFIGURED" });
   });
 });
+
+/** Mac mini Telegram tests: a screenshot asked for in a chat could not be sent back, and a send naming no one was approved before it failed. */
+describe("a file sent back to the chat, and a send that can only fail", () => {
+  it("refuses before the card a send_to that names no one, or a target the allowlist refuses, pointing to messaging.send", () => {
+    const { tool } = fixture(people, allowed);
+    const assess = (input: Record<string, unknown>) =>
+      tool("messaging.send_to").assess?.({ kind: "file", artifactId: "art-1", connectionId: "tg-a", ...input }, context);
+    expect(assess({})?.hardDeny).toContain("it names no one");
+    expect(assess({})?.hardDeny).toContain("use messaging.send");
+    expect(assess({ to: "999" })?.hardDeny).toContain("use messaging.send");
+    expect(assess({ to: "111" })?.hardDeny).toBeUndefined();
+  });
+
+  it("replies with an approved artifact, its text as the caption, and refuses a caption past the channel's limit", async () => {
+    const sent: OutboundMessage[] = [];
+    const messaging = {
+      send: async (message: OutboundMessage): Promise<SendOutcome> => {
+        sent.push(message);
+        return { status: "accepted", retryable: false, parts: [{ index: 0, status: "accepted" }] };
+      },
+      buildReplyDestination: (_connectionId: string, reply: { readonly externalConversationId: string }) => ({
+        chatId: reply.externalConversationId,
+      }),
+    } as unknown as MessagingServicePort;
+    const registry = new ToolRegistry();
+    registerMessagingTools(registry, messaging, (prefix) => `${prefix}-1`, {});
+    const tool = registry.get("messaging.send")!;
+    const inChat = {
+      ...context,
+      messagingReplyTo: { connectionId: "tg-a", externalConversationId: "42", externalSenderId: "42", audience: "one-to-one" },
+    } as unknown as InvocationContext;
+    const reply = (input: Record<string, unknown>) => tool.handler({ input, context: inChat, signal: new AbortController().signal });
+    expect(tool.assess?.({ content: "example.com", artifactId: "art-9" }, inChat)).toMatchObject({
+      risk: "low",
+      display: { title: "Reply in this conversation with artifact art-9" },
+    });
+    expect(await reply({ content: "example.com", artifactId: "art-9" })).toMatchObject({ status: "accepted" });
+    expect(await reply({ content: "Just words" })).toMatchObject({ status: "accepted" });
+    expect(sent.map((message) => [message.destination, message.parts])).toEqual([
+      [{ chatId: "42" }, [{ kind: "file", artifactId: "art-9", caption: "example.com" }]],
+      [{ chatId: "42" }, [{ content: "Just words" }]],
+    ]);
+    await expect(reply({ content: "x".repeat(1_025), artifactId: "art-9" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
+  });
+});

@@ -13,6 +13,16 @@ change behaviour or stored data.
 
 ### Fixed
 
+- A chat on Telegram (or any channel) can be sent back a file it asked for:
+  `messaging.send` takes an approved artifact, such as a browser screenshot,
+  with its text as the caption. Before, a screenshot asked for in a Telegram
+  chat could not be sent at all.
+- `messaging.send_to` that names no one, or a target the allowlist refuses, is
+  refused before anyone is asked to approve it; it used to be approved and
+  then fail.
+- Telegram shows a picture in the chat as a photo, not a file to download;
+  one too long to draw goes as a document, as before.
+
 - `pnpm install` installs the Chromium the browser uses, and the newer one a
   Playwright update wants (the root `postinstall`; skipped in CI and with
   `TAVI_SKIP_CHROMIUM=1`). Chromium used to be a step of its own, so an

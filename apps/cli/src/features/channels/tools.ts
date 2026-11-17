@@ -157,8 +157,22 @@ const contactLine = (contact: MessagingContact): string => `${contact.person} on
 
 const MessagingChannelsInputSchema = z.strictObject({});
 
+/** The most a file's caption may carry: Telegram's own limit, and the reply's text when it carries a file. */
+const CAPTION_MAX = 1_024;
+
 const MessagingSendInputSchema = z.object({
-  content: z.string().min(1).max(4_000).describe("The reply text to send back through the originating channel"),
+  content: z
+    .string()
+    .min(1)
+    .max(4_000)
+    .describe(
+      `The reply text to send back through the originating channel; with artifactId, the file's caption (at most ${CAPTION_MAX} characters)`,
+    ),
+  artifactId: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("An approved artifact to send with the reply, such as a browser screenshot or a report, by its id"),
 });
 
 /**
@@ -323,7 +337,7 @@ export function registerMessagingTools(
     sink: "reply",
     version: "1.0.0",
     description:
-      "Reply here: send a message to the conversation this task came from, on the channel it came through. To message anyone or anywhere else, or from a task no message started, use messaging.send_to.",
+      "Reply here: send a message to the conversation this task came from, on the channel it came through, with an approved artifact (a screenshot, a report) when you pass its artifactId. To message anyone or anywhere else, or from a task no message started, use messaging.send_to.",
     effect: "external",
     requiredPermissions: ["tools.invoke"],
     inputSchema: MessagingSendInputSchema,
@@ -355,6 +369,14 @@ export function registerMessagingTools(
           `Connection ${replyTo.connectionId} is not open, or its connector supports no reply destination`,
         );
       }
+      const { artifactId, content } = parsed.data;
+      if (artifactId !== undefined && content.length > CAPTION_MAX)
+        throw new TaviError(
+          "INVALID_INPUT",
+          `messaging.send's text is a file's caption, at most ${CAPTION_MAX} characters: send the rest first`,
+        );
+      // In a tainted turn, a URL the conversation does not know goes out defanged.
+      const words = disarmUrls === undefined ? content : disarmUrls(content);
       const message: OutboundMessage = {
         effectId: newId("msg"),
         connectionId: replyTo.connectionId,
@@ -364,8 +386,8 @@ export function registerMessagingTools(
         // in this file silently un-checked as they share a send path.
         workspaceId: context.workspaceId,
         destination,
-        // In a tainted turn, a URL the conversation does not know goes out defanged.
-        parts: [{ content: disarmUrls === undefined ? parsed.data.content : disarmUrls(parsed.data.content) }],
+        // A file goes back to the person who asked, as approved: the channel's host sends only an approved artifact of this workspace.
+        parts: [artifactId === undefined ? { content: words } : { kind: "file", artifactId, caption: words }],
       };
       return messaging.send(message);
     },
@@ -430,6 +452,21 @@ export function registerMessagingTools(
           : typeof call?.chatId === "string" || typeof call?.chatId === "number"
             ? String(call.chatId)
             : undefined;
+      // A send that names no one, or someone the allowlist refuses, can only fail: refused before anyone is asked
+      // (Mac mini tests: a file sent with no `to` was approved, then failed).
+      const refused = (why: string): CallAssessment => ({ ...assessed, hardDeny: clip(`messaging.send_to refused: ${why}`, 500) });
+      if (given === undefined && unresolved === undefined)
+        return refused(
+          "it names no one: give `to` (or `person`); to answer the conversation this task came from, use messaging.send, which also sends a file",
+        );
+      if (given !== undefined && typeof call?.connectionId === "string") {
+        const target = options.targetOf === undefined ? given : options.targetOf(call.connectionId, given);
+        const connectionIds = currentConnectionIds();
+        if (target !== undefined && !destinationAllowed(call.connectionId, target, allowedDestinations, connectionIds, destinationChannels))
+          return refused(
+            `${destinationRefusal(call.connectionId, target, connectionIds)}; to answer the conversation this task came from, use messaging.send, which also sends a file`,
+          );
+      }
       // Who reads the configured destination is not known: as a reply of unknown audience, it counts as a group (`private-group-reply`).
       return toScheduleDelivery(call?.connectionId, given, call?.threadId, context)
         ? { ...assessed, sink: "reply", groupDestination: true }

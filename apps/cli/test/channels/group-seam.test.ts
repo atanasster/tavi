@@ -280,6 +280,9 @@ describe.each([groupLikeChannel(), discordChannel()])("the group-chat seam over 
           approvalRequiredFor: ["mutating", "external"],
           openSavedChannels: true,
           messagingAllowTools: ["fs.write"],
+          // The number the injection cases send to: allowed, so their send reaches the taint step (one the allowlist
+          // refuses is refused before any card).
+          messagingAllowedDestinations: ["555-0100"],
           // The taint step asks, as the injection, picked-message and poll-results cases assume whatever a workspace's own setting.
           taintPolicy: "enforce",
           // The suite's operator speaks many times a minute; a room's own buckets stay as shipped (the flood cases).

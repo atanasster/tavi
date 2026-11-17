@@ -1463,8 +1463,12 @@ function hasHeaders(headers: unknown): boolean {
 
 export function assessMessagingSend(input: unknown, context?: Pick<InvocationContext, "messagingReplyTo">): CallAssessment {
   const content = text(record(input)["content"]) ?? "";
+  const artifactId = text(record(input)["artifactId"]);
   return {
-    display: { title: "Reply in this conversation", detail: clip(content, 2_000) },
+    display: {
+      title: artifactId === undefined ? "Reply in this conversation" : clip(`Reply in this conversation with artifact ${artifactId}`, 300),
+      detail: clip(content, 2_000),
+    },
     subjects: [],
     risk: "low",
     reasons: [],
