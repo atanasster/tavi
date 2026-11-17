@@ -14,6 +14,8 @@ export interface CallOutcome {
   readonly targetIndex: number;
   readonly failedOver: readonly string[];
   readonly signal: AbortSignal;
+  /** The model declined the turn (nothing, twice): its answer is `NO_ANSWER_NOTICE`, and the turn is kept out of later calls. */
+  readonly declined?: true;
 }
 
 /**
@@ -284,7 +286,7 @@ export async function callWithFailover(ctx: ModelCall): Promise<{ readonly early
     outcome.toolCalls.length === 0 &&
     !signal.aborted
   )
-    outcome = { ...outcome, text: NO_ANSWER_NOTICE };
+    return { outcome: { ...outcome, text: NO_ANSWER_NOTICE }, targetIndex, failedOver, signal, declined: true };
   return { outcome, targetIndex, failedOver, signal };
 }
 

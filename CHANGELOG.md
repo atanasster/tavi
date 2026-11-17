@@ -17,6 +17,11 @@ change behaviour or stored data.
   with a short note saying so and suggesting a rephrase or `/new`, instead of
   silence. On Telegram, a prompt injection and every message after it in that
   conversation had gone unanswered.
+- A message the model declined is no longer sent to it with later messages:
+  it stays in the chat's history, marked as declined, so the next message is
+  answered normally rather than declined with it.
+- Pairing or allowing someone on a channel now says plainly what changed:
+  "You're paired: your messages on this channel now reach Tavi."
 
 - A chat on Telegram (or any channel) can be sent back a file it asked for:
   `messaging.send` takes an approved artifact, such as a browser screenshot,

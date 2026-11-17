@@ -209,7 +209,7 @@ function AllowFromTest({
       setFailure(answer.message);
       return;
     }
-    onAllowed(`${person.principal.trim()} is allowed: new messages from ${descriptor.sender.label} ${sender} can start a conversation.`);
+    onAllowed(`${person.principal.trim()} is allowed: messages from ${descriptor.sender.label} ${sender} now reach Tavi.`);
   };
   return (
     <form

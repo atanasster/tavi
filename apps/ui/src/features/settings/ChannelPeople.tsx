@@ -94,8 +94,8 @@ function PairingPanel({
       return;
     }
     const allowed = pairing.me
-      ? "You're allowed: new messages from you can start a conversation."
-      : `${who} is allowed: new messages from them can start a conversation.`;
+      ? "You're paired: your messages on this channel now reach Tavi."
+      : `${who} is paired: their messages on this channel now reach Tavi.`;
     onDone(action === "confirm-pair" ? allowed : undefined);
   };
   const code = shownPairingCode(pairing.code);
@@ -358,7 +358,7 @@ export function PeopleEditor({
       if (!answer.ok) return answer;
       setSender("");
       setPerson(NO_PERSON);
-      const allowed = "Person allowed. New incoming messages can start a conversation.";
+      const allowed = "Person allowed: their messages on this channel now reach Tavi.";
       onAllowed?.(allowed);
       return { ok: true, value: allowed };
     });

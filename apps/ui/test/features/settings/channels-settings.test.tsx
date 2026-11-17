@@ -273,7 +273,7 @@ it("pairs a person with a code: shown to send, then who sent it, allowed on conf
   expect(document.activeElement?.textContent).toContain("A message from +15550123");
   await act(async () => [...host.querySelectorAll("button")].find((button) => button.textContent === "Allow them")!.click());
   expect(writes).toContainEqual({ action: "confirm-pair", workspaceId: "default", pairingId: "00000000-0000-4000-8000-000000000001" });
-  expect(host.textContent).toContain("bo is allowed");
+  expect(host.textContent).toContain("bo is paired: their messages on this channel now reach Tavi.");
   expect(field("Person ID").value).toBe("");
 });
 
@@ -335,7 +335,7 @@ it("asks whether it was you when you pair yourself, as Welcome does (QA 1832)", 
   expect([...panel.querySelectorAll("button")].map((button) => button.textContent)).toEqual(["Not me", "Yes, it's me"]);
   await act(async () => [...panel.querySelectorAll("button")].find((button) => button.textContent === "Yes, it's me")!.click());
   expect(writes).toContainEqual({ action: "confirm-pair", workspaceId: "default", pairingId: "00000000-0000-4000-8000-000000000001" });
-  expect(host.textContent).toContain("You're allowed: new messages from you can start a conversation.");
+  expect(host.textContent).toContain("You're paired: your messages on this channel now reach Tavi.");
 });
 
 it("shows the Telegram QR code and deep link when pairing, names the sender who claimed it, and confirms before revoking access", async () => {
@@ -1154,7 +1154,7 @@ it("says who may reach each connection, and allows a person on it from its row",
   });
   // Allowing was what the dialog was opened for: it closes, and its word stays on the page.
   expect(host.querySelector("dialog")).toBeNull();
-  expect(host.textContent).toContain("Person allowed.");
+  expect(host.textContent).toContain("Person allowed: their messages on this channel now reach Tavi.");
 });
 
 it("asks who may reach a connection just added", async () => {

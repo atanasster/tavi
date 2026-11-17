@@ -406,7 +406,11 @@ export async function buildEpochRolloverFold(
       // Written as data, a user-role message the conversation opens with
       // (`mergeConversation`); otherwise the system channel, as before.
       role: untrusted ? "user" : "system",
-      text: epochSummaryText(folded, { at: now(), untrusted, ...(archived === undefined ? {} : { artifactId: archived.artifactId }) }),
+      // A declined turn is left out: folded, it would reach the model again inside the summary.
+      text: epochSummaryText(
+        folded.filter((message) => message.declined !== true),
+        { at: now(), untrusted, ...(archived === undefined ? {} : { artifactId: archived.artifactId }) },
+      ),
     },
     append: [...opener, ...append],
   };

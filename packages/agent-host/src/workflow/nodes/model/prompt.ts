@@ -199,7 +199,12 @@ export async function buildModelCall(step: ModelStep, instructions: Instructions
     contextLimits,
     mandatoryPrefix,
     current.invocation,
-    contextKept ? undefined : turnRetrievalQueryFrom(step.conversationForThisCall, turnQueryOptions(step, timezone)),
+    contextKept
+      ? undefined
+      : turnRetrievalQueryFrom(
+          step.conversationForThisCall.filter((message) => message.declined !== true),
+          turnQueryOptions(step, timezone),
+        ),
     undefined,
     // The same key the router's reads of this step derive from its turn and step.
     stepLease === undefined ? undefined : turnRecallKey(stepLease.admissionId, current.steps),

@@ -1,4 +1,4 @@
-import { isTrustedPublic, type ConversationUpdate, type WorkflowMessage } from "@tavi/contracts";
+import { isPersonMessage, isTrustedPublic, type ConversationUpdate, type WorkflowMessage } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 import { executionLeaseOf, assertLeaseCurrent } from "../../run-config.js";
 import { cacheModelKey, type ModelCall, targetAt } from "./context.js";
@@ -171,6 +171,16 @@ export async function stepResult(ctx: ModelCall, called: CallOutcome): Promise<W
   }
 
   const assistantId = `assistant-${ctx.attemptId}`;
+  // A declined turn: its person messages (every one since the last answer or tool result, steers included)
+  // and its notice are marked, so later calls are asked without them; the history keeps both.
+  const declined = called.declined === true ? ({ declined: true } as const) : {};
+  const declinedPersons =
+    called.declined === true
+      ? declinedTurnPersons([...step.conversationForThisCall, ...steerMessages]).map((message) => ({
+          ...(message.id === keptPerson?.id ? keptPerson : message),
+          declined: true as const,
+        }))
+      : [];
   // The context this call was shown: the per-call block, or under `v2` its turn's block.
   const shownContext = turnPerson === undefined ? ctx.systemPromptResult.context : (ctx.sentDelta?.text ?? turnPerson.contextText ?? "");
   // A call a final step returns — offered no tools under `v1`, told a call is not run under `v2` — is dropped,
@@ -190,6 +200,7 @@ export async function stepResult(ctx: ModelCall, called: CallOutcome): Promise<W
         role: "assistant" as const,
         text: answer,
         ...labelled,
+        ...declined,
         // A native Anthropic connection's thinking, sent back with the step's tool results and kept as sent after.
         ...(outcome.reasoning === undefined ? {} : { reasoning: outcome.reasoning }),
         ...(calls.length === 0
@@ -202,6 +213,7 @@ export async function stepResult(ctx: ModelCall, called: CallOutcome): Promise<W
               })),
             }),
       },
+      ...declinedPersons,
     ]),
     steps: 1,
     ...turnAdvance,
@@ -236,4 +248,14 @@ export async function stepResult(ctx: ModelCall, called: CallOutcome): Promise<W
     phase: calls.length > 0 ? ("running" as const) : ("completed" as const),
     finalText: calls.length > 0 ? "" : answer,
   };
+}
+
+/** The person messages of the turn being answered: every one after the conversation's last assistant or tool message, by id. */
+function declinedTurnPersons(conversation: readonly WorkflowMessage[]): WorkflowMessage[] {
+  const byId = new Map<string, WorkflowMessage>();
+  for (const message of conversation) {
+    if (message.role === "assistant" || message.role === "tool") byId.clear();
+    else if (isPersonMessage(message)) byId.set(message.id, message);
+  }
+  return [...byId.values()];
 }

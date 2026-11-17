@@ -175,15 +175,17 @@ export function turnQueryOptions(step: ModelStep, timezone: string | undefined) 
 
 /**
  * The conversation as this call shows it to the model, read afresh (a rollover may change it): observations a later
- * one supersedes compacted, summaries as data, and under `v2` with memory turned off no kept block that showed memory.
+ * one supersedes compacted, a declined turn left out, summaries as data, and under `v2` with memory turned off no kept block that showed memory.
  * The estimates and the request alike count this view.
  */
 export function callView(ctx: ModelCall): readonly WorkflowMessage[] {
   const { step, memoryTurnedOff } = ctx;
   const { layout } = step;
   const { supersededObservationStride } = step.scope;
+  // A turn the model declined stays in the history but is never sent again: a later turn is asked without it.
+  const sent = step.conversationForThisCall.filter((message) => message.declined !== true);
   return withoutMemoryBlocks(
-    modelSummariesAsData(compactSupersededObservations(step.conversationForThisCall, supersededObservationStride)),
+    modelSummariesAsData(compactSupersededObservations(sent, supersededObservationStride)),
     layout === "v2" && memoryTurnedOff,
   );
 }

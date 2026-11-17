@@ -129,6 +129,12 @@ export const WorkflowMessageSchema = z.object({
    */
   untrusted: z.literal(true).optional(),
   /**
+   * A message of a turn the model declined (it answered nothing, twice): the person's message and the
+   * notice that said so. Kept in the chat's history, never sent to the model again, so a later turn is
+   * asked without it.
+   */
+  declined: z.literal(true).optional(),
+  /**
    * The message's content label. On a `role:
    * "tool"` message: its result's (`toolResultLabel`), set as it entered. On
    * a summary (a stage-2 `foldsum-…`, an epoch summary, a fold's note): the

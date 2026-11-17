@@ -304,6 +304,8 @@ export function createCoreScope(scope: LabelScope, compiled: Pick<CompiledWorkfl
     timeoutMs?: number,
   ): Promise<void> => {
     const flush = options.epochMemoryFlush;
+    // A declined turn proposes nothing: it is never read by a model again.
+    conversation = conversation.filter((message) => message.declined !== true);
     if (flush === undefined || flush === false || options.memory === undefined) return;
     // Paused memory, or capture off, flushes nothing.
     const memorySettings = await memorySettingsOf(invocation.workspaceId);
