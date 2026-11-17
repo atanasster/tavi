@@ -134,6 +134,7 @@ async function seed(handle: ServeHandle) {
     contentType: "image/png",
     body: "png",
     extension: "png",
+    reviewState: "pending",
   });
   await history.open({ sessionId: "s-other", workspaceId: "other", taskId: "task-z", openedAt: minutesAgo(5) });
   const otherThumbnail = await repositories.artifacts.putArtifact({
@@ -272,7 +273,7 @@ describe("browser on a live owner", () => {
     expect(tooMany.ok).toBe(false);
   });
 
-  it("reads a thumbnail's bytes and nothing else through artifacts read", async () => {
+  it("reads a thumbnail's or an approved image's bytes, and nothing else, through artifacts read", async () => {
     const dataDirectory = directories.create();
     const handle = await owner(dataDirectory);
     const { thumbnail, ordinary, otherThumbnail } = await seed(handle);
@@ -299,6 +300,17 @@ describe("browser on a live owner", () => {
       expect(refused.ok, artifactId).toBe(false);
       expect(refused.error?.code).toBe("NOT_FOUND");
     }
+    // An image you approved (a screenshot) is shown in the chat's Held files; one still held, as above, is not.
+    const screenshot = await handle.runtime.store.asPort().repositories.artifacts.putArtifact({
+      workspaceId: "default",
+      runId: "task-a",
+      contentType: "image/jpeg",
+      body: JPEG,
+      extension: "jpg",
+      reviewState: "approved",
+    });
+    const shown = await request(client, "artifacts", { action: "read", workspaceId: "default", artifactId: screenshot.artifactId });
+    expect((shown.result as ArtifactReadAnswer | undefined)?.contentType).toBe("image/jpeg");
     const past = await request(client, "artifacts", {
       action: "read",
       workspaceId: "default",
@@ -308,7 +320,9 @@ describe("browser on a live owner", () => {
     expect(past.error?.code).toBe("INVALID_INPUT");
     // A list, with no action, is what it was.
     const listed = await request(client, "artifacts", { workspaceId: "default", includeDecided: true });
-    expect((listed.result as ArtifactsResult).rows.map((row) => row.artifactId)).toEqual([ordinary.artifactId]);
+    expect((listed.result as ArtifactsResult).rows.map((row) => row.artifactId).sort()).toEqual(
+      [ordinary.artifactId, screenshot.artifactId].sort(),
+    );
   });
 });
 
@@ -400,7 +414,9 @@ describe("the browser command over a repository", () => {
       artifactId: "art-big",
     });
     expect(damaged.ok || damaged.error.code).toBe("UNAVAILABLE");
-    const { purpose: _purpose, ...plain } = record;
+    // An image still held for review is not served (an approved one is, as a chat's Held files shows it).
+    const { purpose: _purpose, ...approved } = record;
+    const plain = { ...approved, reviewState: "pending" } as ArtifactRecord;
     const ordinary = await artifactsReadCommand(deps({ record: plain, body }), {
       action: "read",
       workspaceId: "default",

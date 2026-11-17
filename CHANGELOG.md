@@ -20,6 +20,11 @@ change behaviour or stored data.
 - A message the model declined is no longer sent to it with later messages:
   it stays in the chat's history, marked as declined, so the next message is
   answered normally rather than declined with it.
+- A chat's **Held files** shows its files as cards: an approved screenshot or
+  image as its picture, any other file with its type, size and review state in
+  words, instead of a bulleted list of ids, MIME types and byte counts.
+  Opening one shows the image in **Details**. `artifacts read` now also serves
+  approved images (JPEG, PNG, WebP, up to 4 MiB) of the workspace.
 - A chat no longer stops answering after a message arrives while it waits for
   you: a browser handoff (a captcha, a sign-in) or a call waiting for
   approval. The new message is answered, the waiting call is recorded as not

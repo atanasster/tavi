@@ -290,11 +290,17 @@ export async function browserCommand(
   }
 }
 
+/** An approved image the canvas shows in a chat's Held files: a screenshot, a picture a tool saved. */
+const SHOWN_IMAGE_TYPES = /^image\/(?:jpeg|png|webp)$/;
+/** The largest approved image served: what the canvas reads in its 16 chunks. */
+const SHOWN_IMAGE_MAX_BYTES = 4 * 1024 * 1024;
+
 /**
- * `artifacts read`: one chunk of a browser thumbnail's bytes, or of a PDF
- * page preview a fill or render stored. Every other artifact —
- * an ordinary one, another workspace's, one that is gone — is the same
- * `NOT_FOUND`, so the answer never tells a page that an id exists.
+ * `artifacts read`: one chunk of a browser thumbnail's bytes, of a PDF
+ * page preview a fill or render stored, or of an image you approved (a
+ * screenshot), at most 4 MiB. Every other artifact — an ordinary one, one
+ * still held for review or rejected, another workspace's, one that is gone —
+ * is the same `NOT_FOUND`, so the answer never tells a page that an id exists.
  */
 export async function artifactsReadCommand(
   deps: BrowserDependencies,
@@ -303,13 +309,18 @@ export async function artifactsReadCommand(
   try {
     const workspaceId = servedWorkspace(deps, payload.workspaceId);
     const missing = (): TaviError =>
-      new TaviError("NOT_FOUND", `artifact ${payload.artifactId} is not a thumbnail or page preview in workspace ${workspaceId}`);
+      new TaviError(
+        "NOT_FOUND",
+        `artifact ${payload.artifactId} is not a thumbnail, page preview or approved image in workspace ${workspaceId}`,
+      );
     const artifacts = deps.repositories.artifacts;
     const record = await artifacts.getArtifact(payload.artifactId);
     // A preview is an image: a whole PDF `pdf.view` stored with the same tag (to go with the chat) is not one.
     if (
       record === undefined ||
-      (record.purpose !== "thumbnail" && (record.preview === undefined || !record.contentType.startsWith("image/"))) ||
+      (record.purpose !== "thumbnail" &&
+        (record.preview === undefined || !record.contentType.startsWith("image/")) &&
+        !(record.reviewState === "approved" && SHOWN_IMAGE_TYPES.test(record.contentType) && record.byteSize <= SHOWN_IMAGE_MAX_BYTES)) ||
       record.workspaceId !== workspaceId
     )
       throw missing();

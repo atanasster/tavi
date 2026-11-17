@@ -2462,15 +2462,21 @@ it("shows decided artifacts in Held files and opens their metadata in the inspec
   await click([...page.querySelectorAll(".subviews button")].find((button) => button.textContent === "Held files"));
   expect(payloads[0]).toMatchObject({ taskId: "task-1", workspaceId: "default", includeDecided: true, limit: 100 });
   // Named for what it lists, and claiming no record of written files it does not keep.
-  expect(page.querySelector('[aria-label="Held files"]')?.textContent).toContain("held back for you to review");
+  expect(page.querySelector('[aria-label="Held files"]')?.textContent).toContain("Files this chat's tools saved");
+  // A card says what the file is, how big, and whether it was approved — never its raw id and MIME type.
+  const card = page.querySelector('[aria-label="Held files"] li button')?.textContent ?? "";
+  expect(card).toContain("PNG image");
+  expect(card).toContain("42 bytes");
+  expect(card).toContain("Approved");
+  expect(card).not.toContain("image/png");
   expect(page.querySelector('[aria-label="Held files"]')?.textContent).not.toContain("not recorded");
   await click(page.querySelector('[aria-label="Held files"] li button'));
-  expect(page.querySelector('[aria-label="artifact details"]')?.textContent).toContain("approved");
+  expect(page.querySelector('[aria-label="artifact details"]')?.textContent).toContain("Approved");
   const both = [...first, run("other", "another task", { taskId: "task-2", status: "completed" })];
   await act(async () => fake.publish({ connection: "ready", runs: both, directory: listed(both) }));
   // The picked chat holds, and so does its inspector, until the reader switches chats.
   expect(page.querySelector(".session.current")?.textContent).toContain("p");
-  expect(page.querySelector('[aria-label="artifact details"]')?.textContent).toContain("approved");
+  expect(page.querySelector('[aria-label="artifact details"]')?.textContent).toContain("Approved");
   expect(row("another task")).toBeDefined();
   await click(row("another task"));
   expect(page.querySelector(".session.current")?.textContent).toContain("another task");

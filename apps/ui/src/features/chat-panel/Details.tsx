@@ -10,7 +10,8 @@ import { useLoaded } from "../../hooks/use-loaded.js";
 import { loadArtifacts } from "../chat/tasks-api.js";
 import { chatVersion } from "./load.js";
 import { Empty } from "../../ui/Empty.js";
-import { formatCount } from "../../lib/format.js";
+import { formatBytes, formatCount } from "../../lib/format.js";
+import { fileKind, fileTitle, HeldFilePicture, ReviewBadge, showsImage } from "../chat/held-file.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
 
@@ -82,18 +83,23 @@ export function Details({
     <>
       {artifact ? (
         <section aria-label="artifact details">
-          <h4>Artifact metadata</h4>
+          <h4>{fileTitle(artifact)}</h4>
+          {showsImage(artifact) ? <HeldFilePicture row={artifact} alt={fileTitle(artifact)} className="held-file-preview" /> : null}
           <dl className="facts">
-            <dt>ID</dt>
-            <dd>{artifact.artifactId}</dd>
-            <dt>Content type</dt>
-            <dd>{artifact.contentType}</dd>
-            <dt>Bytes</dt>
-            <dd>{artifact.byteSize}</dd>
+            <dt>Type</dt>
+            <dd>{fileKind(artifact.contentType)}</dd>
+            <dt>Size</dt>
+            <dd>{formatBytes(artifact.byteSize)}</dd>
             <dt>Review</dt>
-            <dd>{artifact.reviewState}</dd>
+            <dd>
+              <ReviewBadge state={artifact.reviewState} />
+            </dd>
+            <dt>ID</dt>
+            <dd className="held-file-id">{artifact.artifactId}</dd>
           </dl>
-          <p>Content is not loaded in this page.</p>
+          {showsImage(artifact) ? null : (
+            <p className="muted">{artifact.reviewState === "approved" ? "Only pictures are shown here." : "Shown once it is approved."}</p>
+          )}
         </section>
       ) : null}
       <dl className="facts">

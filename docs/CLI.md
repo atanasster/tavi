@@ -993,7 +993,7 @@ process and a client of the owner: one IPC connection carries every tab.
   is a reminder's page (on an owner that offers `reminders`). A path the canvas does not know is the chat, and
   the address bar is corrected.
 - **What a page may do.** Runs and their streams, approvals (listing and
-  deciding), reviews, replies, aborts, cancellations, `tasks`, `agents`, `center`, `memory`, `reminders`, `browser`, the artifact metadata (and `artifacts read` of browser thumbnails) and the configuration
+  deciding), reviews, replies, aborts, cancellations, `tasks`, `agents`, `center`, `memory`, `reminders`, `browser`, the artifact metadata (and `artifacts read` of browser thumbnails, page previews and approved images) and the configuration
   families (`models`, `credentials`, `projects`, `schedules`, `search`), and
   `reset-instance` (Settings → General → Reset instance). `shutdown`,
   `recover` and `doctor` are refused by the bridge.

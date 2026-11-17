@@ -461,9 +461,12 @@ Beside **Transcript**, the chat has three other views:
 
   ![Trajectory: each turn opened to its model attempt and timed tool call (browser.create_session, 3.9 s, its retained bytes), and the chat's record below](assets/screens/chat-trajectory.png)
 
-- **Held files** lists the files the chat's tools held back for review
-  (downloads, saved outputs, screenshots), approved or not, each opening for
-  inspection, with **Load more**. A file the chat wrote with `fs.write` or
+- **Held files** shows the files the chat's tools saved (screenshots,
+  downloads, outputs) as cards: an approved image (JPEG, PNG or WebP, up to
+  4 MiB) as its picture, any other file as a tile with its type, each with its
+  name or type, its size and whether it is approved, waiting for review or
+  rejected. A card opens the file in **Details**, which shows an approved
+  image at full width, with **Load more**. A file the chat wrote with `fs.write` or
   `fs.edit` is not listed here: its diff is on the call's approval card.
 - **Agents** shows the session's agent tree: the child tasks it spawned, their
   status, when each last changed, what a running one did last (its newest tool

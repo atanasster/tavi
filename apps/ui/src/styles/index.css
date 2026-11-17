@@ -17,6 +17,7 @@
 
 @import "./layout.css";
 @import "./chat-panel.css";
+@import "./held-files.css";
 @import "./strip.css";
 @import "./turn.css";
 @import "./composer.css";

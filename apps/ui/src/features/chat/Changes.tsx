@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ArtifactListRow } from "@tavi/contracts";
-import { artifactMeta } from "../../lib/format.js";
+import { formatBytes } from "../../lib/format.js";
+import { fileTitle, HeldFilePicture, ReviewBadge } from "./held-file.js";
 import { mergeBy } from "../../lib/paging.js";
 import { CHAT_NOT_STARTED, Failure, Pending } from "../../ui/Parts.js";
 import { unreadable } from "../../lib/ipc.js";
@@ -47,38 +48,44 @@ export function Changes({
     };
   }, [client, workspaceId, taskId, page, revision]);
   return (
-    <section aria-label="Held files">
-      <p>
-        The files this chat's tools held back for you to review — downloads, saved outputs, screenshots — approved or not: {rows.length}
-        {cursor ? "+" : ""} loaded.
-      </p>
+    <section aria-label="Held files" className="held-files">
+      <p className="held-files-intro">Files this chat's tools saved: screenshots, downloads and outputs. Pick one to see its details.</p>
       {!taskId ? <p>{CHAT_NOT_STARTED}</p> : null}
-      {loading ? <Pending label="Loading artifact metadata…" className="notice" status /> : null}
+      {loading ? <Pending label="Loading files…" className="notice" status /> : null}
       {error ? <Failure alert={false}>{error}</Failure> : null}
-      <ul>
-        {rows.map((row) => (
-          <li key={row.artifactId}>
-            <Button onClick={() => onInspect(row)}>
-              {row.artifactId} — {artifactMeta(row)}
-            </Button>
-          </li>
-        ))}
-      </ul>
-      {!loading && !error && taskId && rows.length === 0 ? <p>No file was held back in this chat.</p> : null}
-      <Button
-        disabled={loading || !taskId}
-        onClick={() => {
-          setPage(undefined);
-          setRevision((value) => value + 1);
-        }}
-      >
-        Refresh
-      </Button>
-      {cursor ? (
-        <Button disabled={loading} onClick={() => setPage(cursor)}>
-          Load more
-        </Button>
+      {rows.length > 0 ? (
+        <ul className="held-files-grid">
+          {rows.map((row) => (
+            <li key={row.artifactId}>
+              <Button variant="bare" className="held-file" onClick={() => onInspect(row)} title={row.artifactId}>
+                <HeldFilePicture row={row} alt={fileTitle(row)} className="held-file-picture" />
+                <span className="held-file-body">
+                  <span className="held-file-title">{fileTitle(row)}</span>
+                  <span className="held-file-facts">{formatBytes(row.byteSize)}</span>
+                  <ReviewBadge state={row.reviewState} />
+                </span>
+              </Button>
+            </li>
+          ))}
+        </ul>
       ) : null}
+      {!loading && !error && taskId && rows.length === 0 ? <p>No file was held back in this chat.</p> : null}
+      <div className="held-files-actions">
+        <Button
+          disabled={loading || !taskId}
+          onClick={() => {
+            setPage(undefined);
+            setRevision((value) => value + 1);
+          }}
+        >
+          Refresh
+        </Button>
+        {cursor ? (
+          <Button disabled={loading} onClick={() => setPage(cursor)}>
+            Load more
+          </Button>
+        ) : null}
+      </div>
     </section>
   );
 }
