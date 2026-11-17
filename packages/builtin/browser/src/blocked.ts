@@ -44,6 +44,11 @@ const SHORT_PAGE_CHARS = 1_200;
 const CHALLENGE_FRAMES =
   /(?:google\.com\/recaptcha|recaptcha\.net|hcaptcha\.com|challenges\.cloudflare\.com|captcha-delivery\.com|arkoselabs\.com|funcaptcha\.com)/i;
 
+/** Whether a frame at `src` is a human check's widget (reCAPTCHA, hCaptcha, Turnstile, DataDome, Arkose). */
+export function isChallengeFrame(src: string): boolean {
+  return CHALLENGE_FRAMES.test(src);
+}
+
 /** A host that is only for signing in (`accounts.google.com`, `login.microsoftonline.com`). */
 const SIGN_IN_PLACE = /^(login|logon|signin|auth|sso|accounts?)\./i;
 /** A path segment that names a sign-in (`/login`, `/users/sign_in`), not an account's settings. */

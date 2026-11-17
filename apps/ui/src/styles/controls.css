@@ -199,7 +199,7 @@ input[type="radio"] {
   margin: 0;
   /* In a line of text (a bare label) the box centres on the words beside it,
      not on their baseline; in a flex row this does nothing. */
-  vertical-align: -0.2em;
+  vertical-align: middle;
 }
 
 /* Icon-only controls share the same target size, alignment, and theme colours. */

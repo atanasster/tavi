@@ -7,9 +7,10 @@ import { playwrightLiveTarget } from "./live.js";
 import { MAX_SESSION_PAGES } from "./action-kit.js";
 import { recordNavigation } from "./navigation.js";
 import { reportHistoryError } from "./observation.js";
+import { isChallengeFrame } from "./blocked.js";
 import { blockOf, trackStatus } from "./page-status.js";
 import type { SessionRecord, StoredElementRef, BrowserRuntime } from "./session-types.js";
-import { within, TITLE_TIMEOUT_MS, ACTION_TIMEOUT_MS, NAVIGATION_TIMEOUT_MS } from "./timing.js";
+import { within, LIVE_BOX_TIMEOUT_MS, TITLE_TIMEOUT_MS, ACTION_TIMEOUT_MS, NAVIGATION_TIMEOUT_MS } from "./timing.js";
 
 /**
  * The element `ref` names in `session`'s latest observation. Stale-reference
@@ -83,14 +84,6 @@ export function requireOpenSession(ctx: BrowserRuntime, sessionId: string): Sess
   return session;
 }
 
-/**
- * Runs one of the agent's calls on `session`, refused while a person acts
- * in it; a take waits for it to settle.
- */
-/**
- * A human check is never solved by the agent:
- * refused in code, not only by prompt, before an action that could answer one.
- */
 /** What stands in the way on the session's page now, if anything. */
 export async function pageBlock(session: SessionRecord): Promise<BrowserBlock | undefined> {
   const title = clipBrowserTitle(
@@ -102,7 +95,15 @@ export async function pageBlock(session: SessionRecord): Promise<BrowserBlock | 
   return blockOf(session.page, title, session.lastStatus);
 }
 
-export async function refuseHumanCheck(session: SessionRecord): Promise<void> {
+/**
+ * A human check is never solved by the agent: refused in code, not only by prompt, before an action that could answer
+ * one. A page that is all challenge refuses every action; on a longer page, an action aimed at a check's widget (an
+ * embedded Turnstile or reCAPTCHA box) is refused: `target` is the point the action lands on, or the element it acts on.
+ */
+export async function refuseHumanCheck(
+  session: SessionRecord,
+  target?: { readonly x: number; readonly y: number } | Locator,
+): Promise<void> {
   const blocked = await pageBlock(session);
   if (blocked?.kind === "captcha" || blocked?.kind === "bot-wall") {
     throw new TaviError(
@@ -111,6 +112,48 @@ export async function refuseHumanCheck(session: SessionRecord): Promise<void> {
       { details: { blocked: blocked.kind } },
     );
   }
+  if (target !== undefined && (await onChallengeWidget(session.page, target))) {
+    throw new TaviError(
+      "NOT_AUTHORIZED",
+      "this is a human check's widget (a captcha), which the agent never answers: hand the page to a person (browser.request_handoff) or use another source",
+      { details: { blocked: "captcha" } },
+    );
+  }
+}
+
+type Box = { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
+
+/** Whether `target` lands inside a frame that is a human check's widget. Unknown (a box that cannot be read) is not. */
+export async function onChallengeWidget(page: Page, target: { readonly x: number; readonly y: number } | Locator): Promise<boolean> {
+  if (typeof page.frames !== "function") return false;
+  const widgets = page.frames().filter((frame) => typeof frame.url === "function" && isChallengeFrame(frame.url()));
+  if (widgets.length === 0) return false;
+  let point: { readonly x: number; readonly y: number } | undefined;
+  if ("boundingBox" in target) {
+    const box = await within(target.boundingBox(), LIVE_BOX_TIMEOUT_MS).catch(() => undefined);
+    if (box === undefined || box === null) return false;
+    point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  } else {
+    point = target;
+  }
+  for (const frame of widgets) {
+    if (typeof frame.frameElement !== "function") continue;
+    const handle = await within(frame.frameElement(), LIVE_BOX_TIMEOUT_MS).catch(() => undefined);
+    if (handle === undefined || handle === null) continue;
+    const box: Box | null | undefined = await within(handle.boundingBox(), LIVE_BOX_TIMEOUT_MS).catch(() => undefined);
+    await handle.dispose().catch(() => undefined);
+    if (
+      box !== undefined &&
+      box !== null &&
+      point.x >= box.x &&
+      point.x <= box.x + box.width &&
+      point.y >= box.y &&
+      point.y <= box.y + box.height
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**

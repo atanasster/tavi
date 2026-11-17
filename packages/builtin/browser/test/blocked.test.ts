@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import type { Locator, Page } from "playwright";
+
 import { classifyPage, type PageSignals } from "../src/blocked.js";
+import { onChallengeWidget } from "../src/sessions.js";
 
 const page = (overrides: Partial<PageSignals>): PageSignals => ({
   url: "https://example.com/",
@@ -58,5 +61,34 @@ describe("classifyPage", () => {
     expect(classifyPage(page({ url: "https://example.com/oauth/authorize", password: true }))).toBeUndefined();
     expect(classifyPage(page({ status: 403, text: article }))).toBeUndefined();
     expect(classifyPage(page({ url: "not a url", text: "Flights from 802 EUR" }))).toBeUndefined();
+  });
+});
+
+describe("onChallengeWidget", () => {
+  const frame = (url: string, box: { x: number; y: number; width: number; height: number }) => ({
+    url: () => url,
+    frameElement: async () => ({ boundingBox: async () => box, dispose: async () => undefined }),
+  });
+  const pageWith = (...frames: ReturnType<typeof frame>[]) => ({ frames: () => frames }) as unknown as Page;
+  const turnstile = frame("https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/if/ov2/av0/rcv/x", {
+    x: 100,
+    y: 400,
+    width: 300,
+    height: 65,
+  });
+  const widget = frame("https://www.youtube.com/embed/x", { x: 0, y: 0, width: 640, height: 360 });
+
+  it("finds a click by sight or an element on an embedded Turnstile, on a page long enough to be no challenge page", async () => {
+    expect(await onChallengeWidget(pageWith(widget, turnstile), { x: 130, y: 430 })).toBe(true);
+    const checkbox = { boundingBox: async () => ({ x: 110, y: 410, width: 24, height: 24 }) } as unknown as Locator;
+    expect(await onChallengeWidget(pageWith(turnstile), checkbox)).toBe(true);
+  });
+
+  it("leaves a click beside the widget, in another frame, or on a page with none alone", async () => {
+    expect(await onChallengeWidget(pageWith(widget, turnstile), { x: 130, y: 500 })).toBe(false);
+    expect(await onChallengeWidget(pageWith(widget, turnstile), { x: 50, y: 50 })).toBe(false);
+    expect(await onChallengeWidget(pageWith(widget), { x: 130, y: 430 })).toBe(false);
+    const unplaced = { boundingBox: async () => null } as unknown as Locator;
+    expect(await onChallengeWidget(pageWith(turnstile), unplaced)).toBe(false);
   });
 });

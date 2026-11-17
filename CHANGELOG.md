@@ -33,6 +33,15 @@ change behaviour or stored data.
   message in that chat failed. Chats already stuck this way answer again.
 - Pairing or allowing someone on a channel now says plainly what changed:
   "You're paired: your messages on this channel now reach Tavi."
+- The browser refuses a click on a captcha embedded in an ordinary page (a
+  Turnstile or reCAPTCHA box beside a form), by element or by sight, as it
+  already did on a page that is only a captcha; it is handed to you.
+- The folded sidebar (as on a phone) offers **New chat** beside **+**, so a
+  clean chat, without the side chat's carried-over untrusted content, is a tap
+  away; **+**'s tooltip says what a side chat carries on.
+- On a phone, the page under the open chat panel scrolls its last rows (and
+  buttons such as **Refresh**) clear of the panel instead of stopping behind
+  it.
 
 - A chat on Telegram (or any channel) can be sent back a file it asked for:
   `messaging.send` takes an approved artifact, such as a browser screenshot,

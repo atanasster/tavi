@@ -603,7 +603,8 @@ is given the task's findings.
   limit or virtual waiting room, a consent wall, a sign-in) is named in the
   observation (`blocked`), with what to do: hand it to you with `browser.request_handoff`, or get the
   information elsewhere. A click, key or text on a captcha or bot-wall page, by
-  element or by sight, is refused. A rate limit is read only on strong signs:
+  element or by sight, is refused, and so is a click on a captcha's widget
+  embedded in an ordinary page (a Turnstile or reCAPTCHA box). A rate limit is read only on strong signs:
   HTTP 429, a short page that says this client was limited, or one that
   mentions a rate limit and came back with an error status.
 - **Consent banners.** A cookie banner is answered by the browser itself, after

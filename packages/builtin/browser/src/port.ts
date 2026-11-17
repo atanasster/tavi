@@ -359,7 +359,7 @@ export function portOf(ctx: BrowserRuntime): BrowserPort {
             action.kind === "select" ||
             action.kind === "drag"
           )
-            await refuseHumanCheck(session);
+            await refuseHumanCheck(session, locator);
           const outcome = await liveAction(ctx, session, action.kind, action.callId, locator, async () => {
             requireDecidedHost(session, action.guard, stored);
             const errorsAtStart = session.networkErrorsSeen ?? 0;
@@ -563,7 +563,8 @@ export function portOf(ctx: BrowserRuntime): BrowserPort {
               : action.kind === "wait"
                 ? "wait_for"
                 : "click";
-      if (action.kind !== "wait" && action.kind !== "scroll") await refuseHumanCheck(session);
+      if (action.kind !== "wait" && action.kind !== "scroll")
+        await refuseHumanCheck(session, action.kind === "click" ? { x: action.x, y: action.y } : undefined);
       return asAgent(
         ctx,
         session,

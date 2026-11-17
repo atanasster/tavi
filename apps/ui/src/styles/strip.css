@@ -132,6 +132,16 @@
     height: calc(90dvh - var(--chat-panel-sheet-drag, 0px));
   }
 
+  /* The page under an open sheet keeps room to scroll its foot (a list's last
+     row, its Refresh) up above the sheet, not stop behind it. */
+  .body:has(.chat-panel.sheet-half) .runs {
+    padding-bottom: calc(45dvh + var(--space-4));
+  }
+
+  .body:has(.chat-panel.sheet-full) .runs {
+    padding-bottom: calc(90dvh + var(--space-4));
+  }
+
   /* Under a finger, the sheet follows it rather than easing after it. */
   .chat-panel.sheet-dragging {
     transition: none;

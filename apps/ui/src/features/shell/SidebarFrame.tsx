@@ -78,12 +78,19 @@ export function SidebarFrame({
               size="sm"
               className="new-own-session button-sm button-xs"
               label={NEW_OWN_CHAT_LABEL}
-              tooltip="New chat: a chat of its own, with nothing of the chat on screen"
+              tooltip={NEW_OWN_CHAT_TOOLTIP}
               onClick={onNewOwn}
             />
           )}
           {onNew === undefined ? null : (
-            <IconButton icon="plus" size="sm" className="new-session button-sm button-xs" label={newLabel} onClick={onNew} />
+            <IconButton
+              icon="plus"
+              size="sm"
+              className="new-session button-sm button-xs"
+              label={newLabel}
+              tooltip={newTooltip(newLabel)}
+              onClick={onNew}
+            />
           )}
           {onNewPrivate === undefined ? null : (
             <IconButton
@@ -126,6 +133,14 @@ export function SidebarFrame({
 
 /** What a chat of its own is called while Home is on, beside *New side chat*. */
 const NEW_OWN_CHAT_LABEL = "New chat";
+const NEW_OWN_CHAT_TOOLTIP = "New chat: a chat of its own, with nothing of the chat on screen";
+
+/** The + control's tooltip: a side chat says it carries on from the chat on screen, its untrusted content included. */
+function newTooltip(label: string | undefined): string {
+  return label === "New side chat"
+    ? "New side chat: carries on from the chat on screen, with what it read; for a clean start use New chat"
+    : (label ?? "New chat");
+}
 
 /** What *New private chat* is called wherever it is offered. */
 export const NEW_PRIVATE_CHAT_LABEL = "New private chat";
@@ -136,11 +151,14 @@ export function SidebarRail({
   onExpand,
   onNew,
   newLabel = "New chat",
+  onNewOwn,
 }: {
   readonly title?: string;
   readonly onExpand: () => void;
   readonly onNew?: (() => void) | undefined;
   readonly newLabel?: string;
+  /** *New chat* while Home is on, beside + (*New side chat*), as in the open panel. */
+  readonly onNewOwn?: (() => void) | undefined;
 }) {
   return (
     <aside className="panel-rail sidebar-rail">
@@ -152,7 +170,18 @@ export function SidebarRail({
         aria-expanded={false}
         onClick={onExpand}
       />
-      {onNew === undefined ? null : <IconButton icon="plus" className="new-session button-sm" label={newLabel} onClick={onNew} />}
+      {onNewOwn === undefined ? null : (
+        <IconButton
+          icon="square-pen"
+          className="new-own-session button-sm"
+          label={NEW_OWN_CHAT_LABEL}
+          tooltip={NEW_OWN_CHAT_TOOLTIP}
+          onClick={onNewOwn}
+        />
+      )}
+      {onNew === undefined ? null : (
+        <IconButton icon="plus" className="new-session button-sm" label={newLabel} tooltip={newTooltip(newLabel)} onClick={onNew} />
+      )}
     </aside>
   );
 }

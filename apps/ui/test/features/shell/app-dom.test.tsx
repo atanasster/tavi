@@ -1468,6 +1468,16 @@ describe("Home", () => {
     expect(page.querySelector("textarea")?.getAttribute("placeholder")).toBe("Message Home…");
   });
 
+  it("offers a clean New chat beside New side chat on the folded sidebar too", async () => {
+    const fake = fakeStore({ connection: "ready", runs: [], next: { kind: "home" } });
+    const page = await mount(<App store={fake.store} client={owner(true, []).client} workspaceId="default" />);
+    await settle();
+    await click(page.querySelector(".sidebar .sidebar-toggle"));
+    expect(page.querySelector('.sidebar-rail [aria-label="New side chat"]')).not.toBeNull();
+    await click(page.querySelector('.sidebar-rail [aria-label="New chat"]'));
+    expect(fake.acted).toEqual(["newTask"]);
+  });
+
   it("leaves an empty canvas whose first prompt makes Home, and offers one New side chat path", async () => {
     const fake = fakeStore({ connection: "ready", runs: [], next: { kind: "home" } });
     const page = await mount(<App store={fake.store} client={owner(true, []).client} workspaceId="default" />);

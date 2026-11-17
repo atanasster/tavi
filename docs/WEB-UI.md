@@ -85,8 +85,9 @@ bookmark with a count the notes it keeps.
   prompt's own entry, ends the empty canvas). The rail's **+**
   and the keyboard sheet's entry do the same. With Home on, **New chat** (the
   pen beside the **+**) starts a chat of its own whatever is on screen: it
-  begins with nothing of the chat you were in, and the box says **Start a new
-  chat…**. An empty canvas, this one or
+  begins with nothing of the chat you were in (nor its untrusted-content
+  flag: a side chat carries that on), and the box says **Start a new
+  chat…**. The folded sidebar's rail, as on a phone, offers it too. An empty canvas, this one or
   Home before its first message, greets you for the time of day in the
   workspace's time zone (**Good morning**, **Good afternoon** or **Good
   evening**) above where the first prompt goes.

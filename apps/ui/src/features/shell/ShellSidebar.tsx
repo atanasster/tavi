@@ -107,7 +107,12 @@ export function ShellSidebar({
           onCollapse={() => setSidebar(false)}
         />
       ) : (
-        <SidebarRail onExpand={() => setSidebar(true)} onNew={newSession} newLabel={newLabel} />
+        <SidebarRail
+          onExpand={() => setSidebar(true)}
+          onNew={newSession}
+          newLabel={newLabel}
+          onNewOwn={homeChat ? newOwnSession : undefined}
+        />
       )}
     </ViewBoundary>
   );
