@@ -11,20 +11,28 @@ import { type ComponentType, use } from "react";
  * now, for a test that renders it synchronously.
  */
 export function lazyModule<P extends object>(load: () => Promise<ComponentType<P>>) {
-  let loaded: ComponentType<P> | undefined;
-  let pending: Promise<ComponentType<P>> | undefined;
+  // The fetch, tagged with how it settled the way React reads a thenable, so
+  // `use` returns a loaded chunk in the same pass instead of suspending again.
+  // `Route` calls `use` on every render: one that suspended and then skipped
+  // `use` once the chunk arrived would break React's rule for `use`.
+  type Fetch = Promise<ComponentType<P>> & { status?: string; value?: unknown; reason?: unknown };
+  let pending: Fetch | undefined;
   let failed = false;
   const ready = (): Promise<ComponentType<P>> => {
-    pending ??= load().then(
-      (component) => {
-        loaded = component;
-        return component;
-      },
-      (error: unknown) => {
-        failed = true;
-        throw error;
-      },
-    );
+    if (pending === undefined) {
+      const fetching: Fetch = load().then(
+        (component) => {
+          Object.assign(fetching, { status: "fulfilled", value: component });
+          return component;
+        },
+        (error: unknown) => {
+          failed = true;
+          Object.assign(fetching, { status: "rejected", reason: error });
+          throw error;
+        },
+      );
+      pending = fetching;
+    }
     return pending;
   };
   const retry = (): void => {
@@ -33,7 +41,7 @@ export function lazyModule<P extends object>(load: () => Promise<ComponentType<P
     pending = undefined;
   };
   function Route(props: P) {
-    const Part = loaded ?? use(ready());
+    const Part = use(ready());
     return <Part {...props} />;
   }
   return { Route, ready, retry };

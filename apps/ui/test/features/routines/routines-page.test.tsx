@@ -205,9 +205,14 @@ describe("the run inspector", () => {
         />
       </InWorkspace>,
     );
-    await settle();
-    const coverage = [...page.querySelectorAll(".routine-report p")].find((line) => line.textContent?.startsWith("Coverage"));
-    expect(coverage?.textContent).toBe("Coverage: Thu 1 Oct 03:39 — Fri 2 Oct 03:39");
+    // The report is checked against its hash by WebCrypto, which answers off the main thread,
+    // so a busy machine can take longer than one settle: wait for the report itself.
+    const coverage = await vi.waitFor(async () => {
+      await settle();
+      const line = [...page.querySelectorAll(".routine-report p")].find((each) => each.textContent?.startsWith("Coverage"));
+      return line ?? Promise.reject(new Error("no report yet"));
+    });
+    expect(coverage.textContent).toBe("Coverage: Thu 1 Oct 03:39 — Fri 2 Oct 03:39");
     const excerpt = page.querySelector<HTMLElement>(".evidence-row pre");
     expect(excerpt?.tabIndex).toBe(0);
     expect(excerpt?.getAttribute("role")).toBe("region");

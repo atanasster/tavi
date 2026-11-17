@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, Suspense } from "react";
+import { act, startTransition, Suspense } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -57,6 +57,34 @@ describe("lazyModule", () => {
     );
     expect(shown.textContent).toBe("page b");
     expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps to React's rule for use() when a transition's render waits for the chunk and picks up where it left off", async () => {
+    // Outside act, as in the browser: a transition that suspends on the chunk is replayed in place
+    // once it arrives, and a Route that skipped use() on that replay made React warn.
+    const actEnvironment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
+    actEnvironment.IS_REACT_ACT_ENVIRONMENT = false;
+    const errors = vi.spyOn(console, "error");
+    const wait = (ms: number) => new Promise((done) => setTimeout(done, ms));
+    try {
+      const page = lazyModule(() => new Promise<typeof Page>((resolve) => setTimeout(() => resolve(Page), 5)));
+      host = document.createElement("div");
+      const own = createRoot(host);
+      own.render(<Suspense fallback={<p>loading</p>}>none</Suspense>);
+      await wait(20);
+      startTransition(() =>
+        own.render(
+          <Suspense fallback={<p>loading</p>}>
+            <page.Route name="later" />
+          </Suspense>,
+        ),
+      );
+      await vi.waitFor(() => expect(host?.textContent).toBe("page later"));
+      own.unmount();
+      expect(errors.mock.calls.map((call) => String(call[0]))).toEqual([]);
+    } finally {
+      actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    }
   });
 
   it("throws a failed fetch to the page's boundary without fetching again on its own, and Try again fetches it again", async () => {
