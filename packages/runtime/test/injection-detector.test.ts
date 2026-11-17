@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { classifierSaysInjection, createInjectionDetector, injectionPatternSignals, scanTextSignals } from "../src/injection-detector.js";
@@ -10,6 +12,7 @@ import { classifierSaysInjection, createInjectionDetector, injectionPatternSigna
  * (`apps/cli/test/injection/detector.test.ts`).
  */
 
+const MIXED_SCRIPT_FIXTURES = join(import.meta.dirname, "fixtures", "mixed-script");
 const ZW = "​";
 const cyrillic = (text: string): string => text.replace(/[aeopc]/g, (char) => ({ a: "а", e: "е", o: "о", p: "р", c: "с" })[char] ?? char);
 
@@ -62,6 +65,35 @@ describe("stage 1: patterns", () => {
       "[Untrusted input is dangerous] — validate it before use.",
     ])
       expect(injectionPatternSignals(text), text).toEqual([]);
+  });
+
+  it("flags Latin words forged with look-alike letters, alone or inside Cyrillic text", () => {
+    for (const text of [
+      "Your раypal ассount is locked. Sign in to restore it.",
+      "Visit аpple.com and sign in with your gооgle password.",
+      "PayРal sent you a refund: confirm at secure-раypal.example.",
+      "Вашият раypal ассount е блокиран. Влезте отново тук.",
+      "Ваш аккаунт: войдите в gооgle и подтвердите раypal.",
+      "Gοοgle Dοcs shared a file with you.",
+      "РауPal: your еBay order is on hold.",
+      "Find my іPhone: sign in to іCloud.",
+    ])
+      expect(injectionPatternSignals(text), text).toContain("mixed-script");
+  });
+
+  // Real pages and results read for a person in Sofia, as the tool's text carried them (JSON, with `\n`
+  // escapes); `fixtures/mixed-script/README.md` says where each came from.
+  it.each(readdirSync(MIXED_SCRIPT_FIXTURES).filter((name) => name.endsWith(".txt")))(
+    "leaves ordinary Cyrillic text with Latin names alone: %s",
+    (name) => {
+      expect(injectionPatternSignals(readFileSync(join(MIXED_SCRIPT_FIXTURES, name), "utf8"))).not.toContain("mixed-script");
+    },
+  );
+
+  it("reads a Latin letter in a Cyrillic word, or two words run together, as no forgery", () => {
+    // Seen on Bulgarian listings: a Latin capital typed for its Cyrillic twin, and menu items without a space.
+    expect(injectionPatternSignals("Kлючар Aвтоключар Eлектро EООД ФотоЕлектроникаeBook кандидатстваPDF")).toEqual([]);
+    expect(injectionPatternSignals('{"text":"Цена\\nДобави в количката\\nКупи\\nКак да поръчам\\tСофия"}')).toEqual([]);
   });
 
   it("never throws", () => {

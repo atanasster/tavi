@@ -56,8 +56,29 @@ const re =
   (folded: string): boolean =>
     pattern.test(folded);
 
-/** Words mixing Latin with Cyrillic or Greek letters, in the raw text: a look-alike forgery. */
-const MIXED_SCRIPT_WORD = /(?=[\p{L}]*[a-z])(?=[\p{L}]*[Ͱ-ϿЀ-ӿ])[\p{L}]{3,}/giu;
+/** A run of letters. */
+const LETTERS = /\p{L}+/gu;
+/** A string escape (`\n`, `\t`, `\u…`) in a tool's JSON text: its letter is no part of the next word. */
+const STRING_ESCAPE = /\\[a-z]/gi;
+const LATIN_LETTER = /[a-z]/i;
+const CYRILLIC_OR_GREEK_LETTER = /[Ͱ-ϿЀ-ӿ]/u;
+
+/**
+ * The words of `raw` forged with look-alike letters: a Latin word with Cyrillic or Greek twins swapped in
+ * (`раypal`, `gооgle`), which a reader takes for the Latin one. A word whose other-script letters are not
+ * all twins of Latin ones (`Kлючар`, `EООД`: a Latin capital typed in a Cyrillic word; `ФотоЕлектроникаeBook`:
+ * two menu items run together) passes for no Latin word, and is none. Nor is a word after a string escape
+ * (`\nДобави`): the escape's letter is not read into it. Words are not split at a case turn: `РауPal` and
+ * `еBay` are forgeries whole.
+ */
+function lookAlikeForgeries(raw: string): string[] {
+  const out: string[] = [];
+  for (const [word] of raw.replace(STRING_ESCAPE, " ").matchAll(LETTERS)) {
+    if (word.length < 3 || !LATIN_LETTER.test(word) || !CYRILLIC_OR_GREEK_LETTER.test(word)) continue;
+    if (/^[a-z]+$/.test(foldedText(word))) out.push(word);
+  }
+  return out;
+}
 /** A letter, an invisible character, a letter: a word split so a filter misses it. */
 const INVISIBLE_SPLIT = /[a-z][​‌⁠⁡⁢⁣﻿]+[a-z]/giu;
 /** A base64 run long enough to hide a sentence. */
@@ -152,7 +173,7 @@ const TEXT_SIGNALS: readonly Signal[] = [
     test: re(/\b(?:decode|decoded|deobfuscate|base64)\b[^.\n]{0,40}?\b(?:and )?(?:follow|execute|obey|carry out|do what)\b/),
   },
   { name: "invisible-split", test: (_folded, raw) => (raw.match(INVISIBLE_SPLIT)?.length ?? 0) >= 3 },
-  { name: "mixed-script", test: (_folded, raw) => (raw.match(MIXED_SCRIPT_WORD)?.length ?? 0) >= 2 },
+  { name: "mixed-script", test: (_folded, raw) => lookAlikeForgeries(raw).length >= 2 },
 ];
 
 /** The base64 runs of `raw` that decode to mostly printable text. */

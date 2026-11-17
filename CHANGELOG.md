@@ -22,6 +22,12 @@ change behaviour or stored data.
 
 ### Fixed
 
+- Approvals in a chat that reads Bulgarian or Russian pages no longer all warn
+  of "possible prompt injection (mixed-script)". The warning now needs Latin
+  words forged with Cyrillic or Greek look-alike letters (such as a fake
+  "paypal" or "google"). Cyrillic text that names Latin brands, has a Latin
+  letter typed for a Cyrillic one, or runs two words together no longer
+  triggers it.
 - The *keep in touch* idea asks which weekday or day of the month to remind
   you, the repeats a reminder can keep, instead of a free interval such as
   "every two weeks" that it then had to turn down.
