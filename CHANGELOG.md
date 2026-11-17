@@ -22,6 +22,9 @@ change behaviour or stored data.
 
 ### Fixed
 
+- The *keep in touch* idea asks which weekday or day of the month to remind
+  you, the repeats a reminder can keep, instead of a free interval such as
+  "every two weeks" that it then had to turn down.
 - On a phone, an idea's **Try it** closes the chat's sheet, so the prompt it
   put in the box is in view instead of under the sheet. The Ideas tab's
   **For you** shows its four ideas two by two, not three and one alone.

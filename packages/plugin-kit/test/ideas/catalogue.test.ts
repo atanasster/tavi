@@ -78,6 +78,11 @@ describe("idea catalogue", () => {
     expect(IDEA_CATALOGUE.filter((template) => notWatches.includes(template.key) && template.cadence !== undefined)).toEqual([]);
   });
 
+  it("asks for a reminder's repeat only as reminders can keep one: a weekday or a day of the month, never a free interval", () => {
+    // Reminders repeat on weekdays, a monthly day or a yearly date: "every [interval]" invites "every two weeks", which they can't.
+    for (const template of IDEA_CATALOGUE) expect(template.prompt).not.toMatch(/every \[interval\]/i);
+  });
+
   it("scores triggers as whole words and phrases", () => {
     const fares = IDEA_CATALOGUE.find((template) => template.useCase === "6.1")!;
     expect(triggerScore(fares, "Planning a TRIP to Lisbon; need flights.")).toBe(2);

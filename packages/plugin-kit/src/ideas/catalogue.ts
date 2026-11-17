@@ -857,7 +857,7 @@ const ROWS: readonly Row[] = [
     "I can nudge you to keep in touch with people you care about",
     "Keep in touch",
     "Tell me who you'd like to stay close to and how often, and I'll remind you, with something to talk about.",
-    "Help me keep in touch with [people]: remind me every [interval] and suggest something to talk about.",
+    "Help me keep in touch with [people]: remind me each [weekday or day of the month] and suggest something to talk about.",
   ],
 ];
 
