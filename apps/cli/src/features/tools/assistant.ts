@@ -44,7 +44,7 @@ const ViewImageInputSchema = z.strictObject({
 });
 
 /** A picture's type from its first bytes, never its name: only the raster types a model is shown. */
-export function imageTypeOf(bytes: Uint8Array): string | undefined {
+function imageTypeOf(bytes: Uint8Array): string | undefined {
   const starts = (...prefix: number[]) => prefix.every((byte, index) => bytes[index] === byte);
   if (starts(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return "image/png";
   if (starts(0xff, 0xd8, 0xff)) return "image/jpeg";
@@ -101,7 +101,7 @@ export function imageDimensionsOf(bytes: Uint8Array): { readonly width: number; 
 }
 
 /** The longest side of a picture put in front of a model: the providers refuse a larger one, and the whole request with it. */
-export const MAX_VIEW_IMAGE_SIDE = 8000;
+const MAX_VIEW_IMAGE_SIDE = 8000;
 
 /** Why a picture cannot be put in front of a model, or undefined when it can. */
 export function unviewableImage(bytes: Uint8Array): string | undefined {
