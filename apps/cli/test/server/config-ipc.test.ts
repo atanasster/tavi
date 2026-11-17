@@ -151,6 +151,20 @@ describe("configuration commands under an owner", () => {
     expect((await client.request("agents", { action: "show", agentId: "nobody" }, "agents-none")).error?.code).toBe("NOT_FOUND");
     // A write action is refused by the contract rather than ignored.
     expect((await client.request("agents", { action: "add" }, "agents-add")).error?.code).toBe("INVALID_INPUT");
+    // An id another differs from only in case, a name another has, or a name with a control
+    // character is refused: nobody could tell the two apart (Mac mini adversarial tests).
+    const add = async (agentId: string, name: string, key: string) =>
+      (await client.request("agents", { action: "add", agentId, name, prompt: "Help." }, key)).error;
+    expect(await add("BRIEF", "Other", "a1")).toMatchObject({ code: "CONFLICT", message: expect.stringContaining("only in case") });
+    expect(await add("second", "brief WRITER", "a2")).toMatchObject({
+      code: "CONFLICT",
+      message: expect.stringContaining("already named Brief writer"),
+    });
+    expect((await add("third", "Evil\u001b[2Jname", "a3"))?.code).toBe("INVALID_INPUT");
+    expect(await add("second", "Second writer", "a4")).toBe(undefined);
+    expect((await client.request("agents", { action: "update", agentId: "second", name: "Brief Writer" }, "a5")).error?.code).toBe(
+      "CONFLICT",
+    );
   });
 
   it("reports a task's mailbox beside the agents: addressing only, bounded, and only in the task's workspace", async () => {

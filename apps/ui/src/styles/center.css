@@ -81,6 +81,9 @@
   /* The containing block of its `.visually-hidden` labels, as `.runs` is. */
   position: relative;
   overflow-y: auto;
+  /* The scrollbar's room is kept while the page is short too, so a centred
+     column does not move sideways from one page to the next. */
+  scrollbar-gutter: stable;
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--width-rail-column);
 }
@@ -106,7 +109,11 @@
   margin-inline: auto;
 }
 
-.center-unavailable {
+/* A page whose code is still on its way: a line where the page will be, not
+   text pressed into the corner. */
+.center-unavailable,
+.page-loading {
+  flex: 1;
   padding: var(--space-12) var(--space-6);
   text-align: center;
 }

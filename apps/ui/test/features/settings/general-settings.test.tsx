@@ -27,6 +27,7 @@ const effectiveOf = (settings: WorkspaceSettingsAnswer["settings"], older: boole
         travelFlightSearch: settings.travelFlightSearch !== false,
         travelGoogleFlights: settings.travelGoogleFlights !== false,
         videoEnabled: settings.videoEnabled !== false,
+        ...(settings.videoKeepDays === undefined ? {} : { videoKeepDays: settings.videoKeepDays }),
       };
 
 function owner(initial: WorkspaceSettingsAnswer["settings"], older = false, disabledPlugins?: string[]) {
@@ -55,6 +56,7 @@ function owner(initial: WorkspaceSettingsAnswer["settings"], older = false, disa
             if (parsed !== undefined && "hosts" in parsed) settings.browserNoThumbnailHosts = [...parsed.hosts];
             else delete settings.browserNoThumbnailHosts;
           }
+          if (body["key"] === "videoKeepDays" && body["action"] === "set") settings.videoKeepDays = Number(body["value"]);
           for (const key of ["travelFlightSearch", "travelGoogleFlights"] as const) {
             if (body["key"] !== key) continue;
             if (body["action"] === "set") settings[key] = false;
@@ -226,6 +228,31 @@ describe("browser thumbnail hosts in Settings → General", () => {
     await settle();
     expect(writes.at(-1)).toMatchObject({ key: "browserNoThumbnailHosts", value: "none" });
     expect(page.querySelector<HTMLInputElement>('input[aria-label="hosts without thumbnails"]')?.value).toBe("none");
+  });
+});
+
+describe("how long videos are kept, in Settings → General", () => {
+  it("saves like the page's other fields: primary, and only once the number has changed and is in range (Mac mini UI check)", async () => {
+    const { client, writes } = owner({});
+    const page = await mount(
+      <InWorkspace client={client} workspaceId="default">
+        <GeneralSettings />
+      </InWorkspace>,
+    );
+    const field = () => page.querySelector<HTMLInputElement>('input[aria-label="days a video is kept"]') as HTMLInputElement;
+    const save = () => field().closest("form")?.querySelector<HTMLButtonElement>('button[type="submit"]') as HTMLButtonElement;
+    expect(field().value).toBe("30");
+    expect(save().className).toContain("button-primary");
+    expect(save().disabled).toBe(true);
+    await type(field(), "0");
+    expect(save().disabled).toBe(true);
+    await type(field(), "7");
+    expect(save().disabled).toBe(false);
+    await act(async () => save().click());
+    await settle();
+    expect(writes).toEqual([{ action: "set", workspaceId: "default", key: "videoKeepDays", value: "7", expectedRevision: 1 }]);
+    expect(field().value).toBe("7");
+    expect(save().disabled).toBe(true);
   });
 });
 

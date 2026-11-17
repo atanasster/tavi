@@ -73,7 +73,8 @@ async function editedVersionId(deps: SkillsCommandDependencies, workspaceId: str
 /** A version of this workspace that the agent proposed, or the refusal saying it is not one. */
 async function proposalOf(deps: SkillsCommandDependencies, workspaceId: string, skillId: string, version: string): Promise<SkillVersion> {
   const stored = await deps.skills.getVersion(workspaceId, skillId, version);
-  if (stored === undefined || stored.scopeKey !== workspaceId) throw new TaviError("NOT_FOUND", `no skill ${skillId}@${version} here`);
+  if (stored === undefined || stored.scopeKey !== workspaceId)
+    throw new TaviError("NOT_FOUND", `Skill ${skillId}@${version} does not exist`);
   if (stored.manifest.proposal === undefined)
     throw new TaviError("INVALID_INPUT", `${skillId}@${version} was not proposed by the agent: it has no source task`);
   return stored;
@@ -119,7 +120,7 @@ export async function skillsOwnerCommand(
       case "body": {
         const version = await deps.skills.getVersion(workspaceId, payload.skillId, payload.version);
         if (version === undefined || version.scopeKey !== workspaceId)
-          throw new TaviError("NOT_FOUND", `no skill ${payload.skillId}@${payload.version} here`);
+          throw new TaviError("NOT_FOUND", `Skill ${payload.skillId}@${payload.version} does not exist`);
         const text = await textOf(deps, version);
         const parent =
           version.parentVersion === undefined

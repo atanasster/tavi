@@ -313,6 +313,19 @@ export function agentsCommand(deps: ConfigDependencies, input: AgentsPayload): P
     if (input.expectedUpdatedAt !== undefined && input.action !== "update" && input.action !== "enable" && input.action !== "disable") {
       throw new TaviError("INVALID_INPUT", "only agents update, enable and disable take expectedUpdatedAt");
     }
+    if (input.action === "add" || (input.action === "update" && input.name !== undefined)) {
+      // An id another differs from only in case, or a name another has, is a pair nobody can tell apart:
+      // agents.spawn takes either in any case, and a channel's @mention names the agent (Mac mini adversarial tests).
+      const agentId = input.agentId ?? "";
+      const others = (await agents.list(workspaceId)).agents.filter((agent) => agent.agentId !== agentId);
+      const sameId = input.action === "add" ? others.find((agent) => agent.agentId.toLowerCase() === agentId.toLowerCase()) : undefined;
+      if (sameId !== undefined)
+        throw new TaviError("CONFLICT", `agent ${sameId.agentId} is already here: an id may not differ from another's only in case`);
+      const name = input.name?.trim().toLowerCase();
+      const sameName = others.find((agent) => agent.name.trim().toLowerCase() === name);
+      if (sameName !== undefined)
+        throw new TaviError("CONFLICT", `agent ${sameName.agentId} is already named ${sameName.name}: give this one another name`);
+    }
     if (input.action === "add")
       return await agents.create({
         workspaceId,

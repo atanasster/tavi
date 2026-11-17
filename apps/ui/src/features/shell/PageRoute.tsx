@@ -120,7 +120,7 @@ export function PageRoute({
     chatAboutHeartbeatItem,
   } = nav;
   return (
-    <Suspense fallback={<Pending />}>
+    <Suspense fallback={<Pending className="empty page-loading" />}>
       {route === "ideas" ? (
         offersIdeas ? (
           <IdeasPage

@@ -48,6 +48,7 @@ import {
   schedulePrecheckText,
   type ScheduleNotify,
   type ToolDefinition,
+  DisplayNameSchema,
 } from "@tavi/contracts";
 import { definedOnly } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
@@ -179,7 +180,7 @@ const precheck = z
 const ref = z.string().min(1).max(200).describe("The schedule's id, or its name");
 
 const CreateSchema = z.strictObject({
-  name: z.string().min(1).max(200),
+  name: DisplayNameSchema,
   prompt: z.string().min(1).max(20_000).describe("What the agent does at each run, as you would ask it"),
   at: at.optional(),
   times: cadence.times.optional(),

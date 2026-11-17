@@ -10,6 +10,8 @@ import {
   type TasksHome,
 } from "@tavi/contracts";
 
+import { useEffect, useState } from "react";
+
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { Select } from "../../ui/Select.js";
 import { loadModels } from "./models-api.js";
@@ -26,6 +28,12 @@ import { Command } from "../../ui/Command.js";
  */
 export function VideoTools({ answer, busy, run }: SettingSectionProps) {
   const { client, workspaceId } = useWorkspace();
+  // Each answer shows the days in effect, so after a save the field is the owner's number.
+  const shown = String(answer.effective.videoKeepDays ?? DEFAULT_VIDEO_KEEP_DAYS);
+  const [draft, setDraft] = useState(shown);
+  useEffect(() => setDraft(shown), [shown]);
+  const days = Number(draft);
+  const validDays = Number.isInteger(days) && days >= 1 && days <= MAX_VIDEO_KEEP_DAYS;
   return (
     <>
       <h2>Video</h2>
@@ -48,11 +56,11 @@ export function VideoTools({ answer, busy, run }: SettingSectionProps) {
         </label>
       </p>
       <form
+        className="actions"
         onSubmit={(event) => {
           event.preventDefault();
-          const days = Number(new FormData(event.currentTarget).get("days"));
-          if (Number.isInteger(days) && days >= 1 && days <= MAX_VIDEO_KEEP_DAYS)
-            void run("video-days", () => workspaceSettingsActions.setVideoKeepDays(client, workspaceId, days, answer.revision));
+          if (validDays)
+            void run("video-days", () => workspaceSettingsActions.setVideoKeepDays(client, workspaceId, Number(draft), answer.revision));
         }}
       >
         <label>
@@ -62,14 +70,15 @@ export function VideoTools({ answer, busy, run }: SettingSectionProps) {
             type="number"
             min={1}
             max={MAX_VIDEO_KEEP_DAYS}
-            defaultValue={answer.effective.videoKeepDays ?? DEFAULT_VIDEO_KEEP_DAYS}
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
             aria-label="days a video is kept"
             disabled={busy !== undefined}
           />{" "}
           days
-        </label>{" "}
-        <Button type="submit" disabled={busy !== undefined}>
-          Save
+        </label>
+        <Button variant="primary" type="submit" disabled={busy !== undefined || !validDays || draft === shown}>
+          {busy === "video-days" ? "Saving…" : "Save"}
         </Button>
       </form>
       <p className="meta-sm">Frames taken from a video stay with their chat after the video itself is gone.</p>

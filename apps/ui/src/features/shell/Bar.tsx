@@ -79,8 +79,10 @@ export function Bar({
         <Connection state={state.connection} />
       </header>
       {state.failure !== undefined ? (
-        <Failure alert={false}>
-          {state.failure} Press Enter where <Command>tavi ui</Command> runs for a new link.
+        <Failure alert={false} className="bar-failure">
+          {/* The owner's reason is a clause ("no tavi owner is serving: …"): a full stop ends it before the advice. */}
+          {/[.!?]$/.test(state.failure) ? state.failure : `${state.failure}.`} Press Enter where <Command>tavi ui</Command> runs for a new
+          link.
         </Failure>
       ) : null}
     </>

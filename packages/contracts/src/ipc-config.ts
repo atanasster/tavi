@@ -47,7 +47,7 @@ export {
   MAX_REVIEW_EVENT_REQUESTS,
   type ApprovalRowId,
 } from "./ipc-limits.js";
-import { IdSchema } from "./ids.js";
+import { DisplayNameSchema, IdSchema } from "./ids.js";
 
 /**
  * The payloads of the IPC commands that configure the owner: models,
@@ -282,7 +282,7 @@ export const SchedulesPayloadSchema = z.object({
   action: z.enum(SCHEDULES_ACTIONS),
   workspaceId: IdSchema.optional(),
   principalId: IdSchema.optional(),
-  name: z.string().min(1).max(200).optional(),
+  name: DisplayNameSchema.optional(),
   prompt: z.string().min(1).max(IPC_MAX_PROMPT_CHARS).optional(),
   at: z.string().max(5).optional(),
   /** Several times a day (`tavi schedules --at 07:00,19:00`); replaces `at` or `everyHours`. */

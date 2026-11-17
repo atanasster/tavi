@@ -5,6 +5,18 @@ export const IdSchema = z.string().min(1).max(128);
 export type Id = z.infer<typeof IdSchema>;
 
 /**
+ * A name a person gives a schedule or an agent, as it comes in: one line of
+ * text with no control character. A tab breaks `tavi schedules list`'s
+ * columns, and an escape sequence would drive the terminal it is printed in.
+ * Stored records are read as they are; only a new name is held to this.
+ */
+export const DisplayNameSchema = z
+  .string()
+  .min(1, "a name cannot be empty")
+  .max(200, "a name is at most 200 characters")
+  .regex(/^[^\p{Cc}\u2028\u2029]+$/u, "a name is one line of text, with no tab, line break or other control character");
+
+/**
  * Reserved id aliases.
  *
  * These are deliberately plain string aliases rather than branded types: a

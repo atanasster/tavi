@@ -42,7 +42,7 @@ import { connectionLocality } from "@tavi/agent-host/task-summarizer";
 import { createEmbeddingRole } from "../features/memory/embedding-role.js";
 import { createAiSdkModelAdapter, type ProviderConnection } from "@tavi/agent-host/models";
 import { join } from "node:path";
-import { MAX_VIEW_IMAGE_BYTES, VIEWABLE_IMAGE_TYPES } from "../features/tools/assistant.js";
+import { MAX_VIEW_IMAGE_BYTES, unviewableImage, VIEWABLE_IMAGE_TYPES } from "../features/tools/assistant.js";
 import { attendedVideoResolver } from "../features/video/tools.js";
 import { createLocalCredentialStore, serializeCredentialAction } from "../features/credentials/store.js";
 import { chatGptAwareResolver, revisionValue } from "../features/onboard/chatgpt.js";
@@ -549,7 +549,9 @@ export async function composeModels(composed: PluginsContext) {
               )
                 return undefined;
               const data = await artifactBody(artifact);
-              return data === undefined ? undefined : { mediaType: artifact.contentType, data };
+              // A picture the provider would refuse is left out, not sent: one refused image fails the
+              // whole request, and the chat that still carries it would fail on every turn after.
+              return data === undefined || unviewableImage(data) !== undefined ? undefined : { mediaType: artifact.contentType, data };
             },
             // `pdf.view`'s document, for a connection that takes PDFs: an approved,
             // model-visible PDF within `pdf.view`'s cap (under the provider's request size), its record read again here on every step.

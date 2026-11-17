@@ -36,7 +36,7 @@ export function UnseenReminderCards({
       <ul className="list-reset">
         {fires.map((fire) => (
           <li key={key(fire)} className="reminder-card">
-            <span className="reminder-card-text">⏰ {fire.text}</span>
+            <span className="reminder-card-text">{fire.text}</span>
             <span className="reminder-card-when meta-sm">
               {dayTime(fire.firedAt ?? fire.fireAt, timeZone, todayIn(timeZone))}
               {fire.late === true ? " · late" : ""}

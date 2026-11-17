@@ -221,6 +221,9 @@ describe("the canvas", () => {
     expect(closed).toContain(">disconnected<");
     expect(closed).toContain("the bridge refused this page&#x27;s session");
     expect(closed).toContain("for a new link");
+    // The owner's clause is ended before the advice, and the line is the bar's own (Mac mini UI check).
+    expect(closed).toContain("the bridge refused this page&#x27;s session. Press Enter");
+    expect(closed).toContain('class="failure bar-failure"');
   });
 
   it("draws an epoch divider between the turns the chat rolled over between, with its archive and fresh context", () => {

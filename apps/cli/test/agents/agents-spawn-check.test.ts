@@ -32,7 +32,7 @@ describe("agents.spawn's definition check", () => {
     // The gate denies a check whose hash is not a SHA-256 hex ("could not be checked"), so a pass carries one.
     expect(await check("browser")).toEqual({ statuses: [], contentHash: expect.stringMatching(/^[a-f0-9]{64}$/) });
     expect(await check("nobody")).toEqual({
-      refused: "No agent definition nobody is on here; the ones there are: browser, writer, worker",
+      refused: "No agent definition nobody is on here; the ones there are: browser, writer (Story Writer), worker",
     });
     expect(await check("old")).toMatchObject({ refused: expect.stringContaining("No agent definition old") });
   });

@@ -38,6 +38,13 @@ describe("the canvas keeps ai-finance's design rules", () => {
     expect(rule).not.toContain("overflow-x");
   });
 
+  it("keeps a page scroller's scrollbar room, so its centred column sits still between a short page and a long one (Mac mini UI check)", () => {
+    for (const selector of [".settings", ".center", ".ideas-page", ".welcome-page", ".runs"]) {
+      const rule = new RegExp(`\\n${selector.replace(".", "\\.")} \\{[^}]*\\}`).exec(canvasCss())?.[0];
+      expect(rule, selector).toContain("scrollbar-gutter: stable");
+    }
+  });
+
   it("draws no emoji and no glyph icons", () => {
     // Emoji, and the dingbats, carets and triangles the old icons were set in.
     // An arrow in a sentence ("turn → tool") is punctuation and is not caught.

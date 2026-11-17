@@ -698,6 +698,8 @@ describe("parsing the folder flags and commands", () => {
     expect(parseArgs(["run", "hi", "--folder", "~/work"])).toMatchObject({ options: { folder: "~/work" } });
     expect(parseArgs(["run", "hi", "--managed"])).toMatchObject({ options: { managed: true } });
     expect(() => parseArgs(["run", "hi", "--folder", "a", "--managed"])).toThrow(UsageError);
+    // An empty one (an unset variable) is refused, not read as the current directory (Mac mini adversarial tests).
+    expect(() => parseArgs(["run", "hi", "--folder", ""])).toThrow(/--folder needs a folder/);
     expect(() => parseArgs(["run", "hi", "--home", "--managed"])).toThrow(/Home keeps its own/);
     expect(() => parseArgs(["run", "--attach", "t1", "--folder", "a"])).toThrow(UsageError);
     expect(() => parseArgs(["run", "hi", "--folder", "a", "--in-memory"])).toThrow(/needs a live owner/);

@@ -301,6 +301,7 @@ export function SystemPromptEditor({
         <label htmlFor={`${id}-text`}>System prompt</label>
         <textarea
           id={`${id}-text`}
+          className="prompt-text"
           aria-label="System prompt"
           aria-describedby={`${id}-count ${id}-problem`}
           rows={rows}

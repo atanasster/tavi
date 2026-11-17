@@ -1199,6 +1199,31 @@ describe("the Memory pane", () => {
   });
 });
 
+describe("the Command Center's one scroller", () => {
+  it("starts a section at its top, not as far down as the last one was read (Mac mini UI check)", async () => {
+    const { client } = owner({ approved: [], proposed: [] });
+    const feed: CenterFeed = { summary: summary(), error: undefined, revisions: {} };
+    const at = (section: "activity" | "identity") => (
+      <WorkspaceProvider client={client} workspaceId="default" timeZone={undefined}>
+        <CenterPage
+          section={section}
+          feed={feed}
+          onSection={() => undefined}
+          onOpenRoutine={() => undefined}
+          onOpenTask={() => Promise.resolve()}
+          onPermissions={() => undefined}
+        />
+      </WorkspaceProvider>
+    );
+    const view = await mount(at("activity"));
+    const scroller = view.querySelector<HTMLElement>(".center") as HTMLElement;
+    scroller.scrollTop = 500;
+    await rerender(at("identity"));
+    await settle();
+    expect(scroller.scrollTop).toBe(0);
+  });
+});
+
 describe("the rail's memory proposals", () => {
   it("open Soul & memory at its proposals", async () => {
     const { client } = owner({ approved: [], proposed: [record("q1", { status: "proposed", body: "Prefers trains" })] });

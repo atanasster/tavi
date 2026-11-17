@@ -549,6 +549,14 @@ body.sidebar-resizing * {
   margin: var(--space-3) var(--space-6) 0;
 }
 
+/* Why the page lost its owner, under the bar: in from the edge as the bar's own words are. */
+.bar-failure {
+  flex: none;
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: var(--border-width) solid var(--line-faintest);
+}
+
 .main-head {
   flex: none;
   display: flex;

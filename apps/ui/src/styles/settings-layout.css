@@ -149,6 +149,13 @@
   overflow-wrap: anywhere;
 }
 
+/* A row's text takes the room its actions leave, so the actions stay at the
+   far end whether the text is one line or ten; they drop under it only when
+   the row is too narrow for both. */
+.settings .row > :is(.plugin-info, .connection-info, .rule-info):first-child {
+  flex: 1 1 var(--width-row-text);
+}
+
 .settings .rows {
   display: grid;
   gap: var(--space-2-5);
@@ -275,10 +282,14 @@
 /* The system prompt editor: its textarea is a direct child of a bare
    form rather than of `.settings-fields`, so it needs the width that grid
    provides elsewhere; and the shipped default is a `<pre>` that must wrap on a
-   narrow screen, as `.routines pre` already does. */
+   narrow screen, as `.routines pre` already does. Only the prompt itself is
+   set in the code face: another form's text (the Ideas brief) is prose. */
 .settings textarea {
   width: 100%;
   box-sizing: border-box;
+}
+
+.settings textarea.prompt-text {
   font-family: var(--font-mono);
   font-size: var(--text-base);
 }

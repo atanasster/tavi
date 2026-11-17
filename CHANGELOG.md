@@ -13,6 +13,53 @@ change behaviour or stored data.
 
 ### Fixed
 
+- A picture a model provider will not take, one over 8000 pixels on a side
+  or one whose header is damaged (a PNG signature followed by text), passed
+  `artifacts.view_image` and then failed the model call, and every later one
+  in that chat. `view_image` now refuses such a picture and says why. A
+  picture already in a chat's history is left out of the request instead of
+  failing it, so a chat broken this way works again.
+- A schedule or agent name could hold a tab, a line break or a terminal
+  escape sequence, which `tavi schedules list` and `tavi agents list` printed
+  raw. A new name must be one line of text; names already stored still read.
+- `tavi agents add` accepted an id that differed from another only in case
+  (`RESEARCHER` beside `researcher`) and a display name another agent had,
+  so a chat could not tell the two apart. Both are now refused, as is
+  renaming an agent to another's name. When `agents.spawn` refuses an agent
+  it does not know, the list it gives now shows each agent's name beside
+  its id.
+- `tavi run --folder ""` ran in the current directory. An empty `--folder`
+  is now a usage error.
+- `tavi skills approve` said "no skill X@v here" where `reject` and
+  `activate` said "Skill X@v does not exist"; all three now say the latter.
+  A folder file over a tool's size cap no longer says the cap is "for a file
+  sent out".
+- Web UI:
+  - The video retention form in Settings → General saved with a plain
+    button that could be pressed before anything changed. Its Save is now
+    the page's green button, enabled only for a new number in range.
+  - Settings pages short enough not to scroll sat 4 px to the right of
+    long ones, as did the Command Center, Ideas and the transcript. Each
+    page now keeps its scrollbar's room.
+  - A Plugins card with a long description dropped its Disable and Remove
+    buttons under the text, at the left. The buttons now stay at the
+    right, as on a short card, until the window is too narrow for both.
+  - The Ideas brief in Settings was set in the code font, because a rule
+    meant for the system prompt editor caught every text box in Settings.
+  - A checkbox in a line of text sat 2–3 px above its words; it is now
+    centred on them.
+  - A reminder card in the Command Center opened with an emoji alarm
+    clock, which the canvas draws nowhere else (the section already has its
+    bell). Its Done button now has its own row with the two snoozes side by
+    side under it; before, one snooze wrapped onto a line of its own.
+  - Opening a Command Center section kept the scroll position of the one
+    before it, so Soul & memory could open halfway down with its heading out
+    of sight. Each section now opens at its top.
+  - "Loading…" while a page's code arrives sat in the top-left corner; it
+    is now spaced as the page's other notices are.
+  - The "disconnected" line under the bar ran into the window's edge and
+    into its own advice ("…finds one Press Enter…"). It is now in from the
+    edge, and the owner's reason ends with a full stop.
 - Tavi could not look at a picture in the chat's folder: `artifacts.view_image`
   opened only attachments, so "Look at lisbon.jpg" in a run under `--fs-root`
   ended in shell commands and no description. It now also takes a `path` in

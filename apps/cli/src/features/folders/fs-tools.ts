@@ -834,8 +834,7 @@ export function folderFileReader(options: FsToolOptions): (path: string, context
         throw new TaviError("NOT_AUTHORIZED", `${label} changed while it was being opened`);
       }
       if (info.nlink > 1 && scope.inManagedFolder(again)) throw new TaviError("NOT_AUTHORIZED", `${label} ${HARD_LINKED}`);
-      if (info.size > maxBytes)
-        throw new TaviError("INVALID_INPUT", `${label} is ${info.size} bytes, over the ${maxBytes}-byte limit for a file sent out`);
+      if (info.size > maxBytes) throw new TaviError("INVALID_INPUT", `${label} is ${info.size} bytes, over the ${maxBytes}-byte limit`);
       // Read to the end, once, into a buffer one byte larger than the file: a file that grows meanwhile is refused, not cut.
       const bytes = Buffer.alloc(info.size + 1);
       let length = 0;

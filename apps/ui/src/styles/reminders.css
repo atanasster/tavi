@@ -118,6 +118,15 @@
   overflow-wrap: anywhere;
 }
 
+/* Done on its own line, the two snoozes side by side under it: the card is
+   as narrow as the rail, where three buttons in one wrapping row left one
+   snooze alone on a second line. */
 .reminder-card-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: var(--space-1);
+}
+
+.reminder-card-actions > :first-child {
+  grid-column: 1 / -1;
 }

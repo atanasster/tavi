@@ -199,6 +199,9 @@
      composer scrolls the whole page — header and all — out of view. */
   position: relative;
   overflow-y: auto;
+  /* The scrollbar's room is kept while the page is short too, so a centred
+     column does not move sideways from one page to the next. */
+  scrollbar-gutter: stable;
   padding: var(--space-4) var(--gutter);
 }
 

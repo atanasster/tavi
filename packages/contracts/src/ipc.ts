@@ -83,7 +83,7 @@ export {
   MAX_REVIEW_EVENT_REQUESTS,
   type ApprovalRowId,
 } from "./ipc-limits.js";
-import { IdSchema } from "./ids.js";
+import { DisplayNameSchema, IdSchema } from "./ids.js";
 import { TaskListFiltersSchema, TaskPromptsFiltersSchema } from "./task-list.js";
 import { NoticeListFiltersSchema, TranscriptPageFiltersSchema } from "./transcript.js";
 
@@ -1169,7 +1169,7 @@ export const AbortPayloadSchema = z.object({ taskId: IdSchema });
 export const AgentsPayloadSchema = z.object({
   workspaceId: IdSchema.optional(),
   action: z.enum(["list", "show", "tree", "add", "update", "enable", "disable", "remove"]).optional(),
-  name: z.string().min(1).max(200).optional(),
+  name: DisplayNameSchema.optional(),
   prompt: z.string().min(1).max(20_000).optional(),
   description: z.string().max(2000).optional(),
   limit: z.number().int().min(1).max(AGENT_TREE_LIMIT).optional(),

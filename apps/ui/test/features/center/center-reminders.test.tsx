@@ -884,7 +884,7 @@ describe("the rail's unseen reminders", () => {
     );
     const card = page.querySelector(".reminder-card");
     expect(page.querySelector(".center-rail > *")?.classList.contains("reminder-cards")).toBe(true);
-    expect(card?.querySelector(".reminder-card-text")?.textContent).toBe("⏰ Take your pills");
+    expect(card?.querySelector(".reminder-card-text")?.textContent).toBe("Take your pills");
     // Each card's buttons name the reminder they act on.
     expect([...(card?.querySelectorAll("button") ?? [])].map((item) => item.getAttribute("aria-label"))).toEqual([
       "Done: Take your pills",

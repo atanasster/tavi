@@ -126,7 +126,8 @@ describe("an image a run was sent, through the composed runtime", () => {
     const keyFile = join(directory, "api-key");
     writeFileSync(keyFile, "sk-local-probe\n", { mode: 0o600 });
     const storeOptions = { databasePath: join(directory, "tavi.sqlite"), artifactsDirectory: join(directory, "artifacts") };
-    const body = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 7, 7, 7]);
+    // A real header (a 1×1 PNG): a picture whose header names no size is never sent.
+    const body = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 7]);
     const encoded = Buffer.from(body).toString("base64");
     const ownership = await acquireDataDirectoryOwnership({ dataDirectory: directory, sessionId: `seed-${process.pid}` });
     const seed = await SqliteStore.open(storeOptions);

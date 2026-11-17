@@ -164,6 +164,8 @@
   /* Widths: the page columns, the transcript column, dialogs, sheets and
      popovers, and the fixed columns of a few grids. */
   --width-prose: 44rem;
+  /* A settings row's text, before it gives way to the row's actions. */
+  --width-row-text: 20rem;
   --width-welcome: 60rem;
   --width-welcome-rail: 15rem;
   --column: 880px;

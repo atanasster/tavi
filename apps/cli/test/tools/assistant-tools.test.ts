@@ -24,7 +24,12 @@ import { temporaryDirectories, partialFake } from "@tavi/test-support";
 import { SqliteStore } from "../support/database-fixture.js";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { ARTIFACT_READ_PAGE_BYTES, pastChatSearchTerms, registerAssistantTools } from "../../src/features/tools/assistant.js";
+import {
+  ARTIFACT_READ_PAGE_BYTES,
+  imageDimensionsOf,
+  pastChatSearchTerms,
+  registerAssistantTools,
+} from "../../src/features/tools/assistant.js";
 import { agentActorFrom, registerAgentTools } from "../../src/features/agents/tools.js";
 import { assessHttpRequest, assessSandboxRun } from "../../src/features/approvals/call-assessors.js";
 import { delegationRootOrigin, heldChannelOf, heldConnectionOf, memoryReachOf, turnChannelOf } from "../../src/runtime/chat-scope.js";
@@ -390,6 +395,88 @@ describe("artifacts.read", () => {
   });
 });
 
+/** A PNG's signature and IHDR, `width`×`height`: all `imageDimensionsOf` reads. `salt` makes two of them differ. */
+const pngOf = (width: number, height: number, salt = 0): Uint8Array => {
+  const u32 = (value: number) => [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff];
+  return new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, ...u32(width), ...u32(height), 8, 6, 0, 0, 0, salt]);
+};
+/** A JPEG's start, a JFIF segment, then a baseline frame header `width`×`height`. */
+const jpegOf = (width: number, height: number): Uint8Array =>
+  new Uint8Array([
+    0xff,
+    0xd8,
+    0xff,
+    0xe0,
+    0,
+    16,
+    74,
+    70,
+    73,
+    70,
+    0,
+    1,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0xff,
+    0xc0,
+    0,
+    17,
+    8,
+    height >> 8,
+    height & 0xff,
+    width >> 8,
+    width & 0xff,
+    3,
+    1,
+    0x22,
+    0,
+    2,
+    0x11,
+    1,
+    3,
+    0x11,
+    1,
+  ]);
+
+describe("imageDimensionsOf", () => {
+  it("reads a PNG's, a JPEG's, a GIF's and a WebP's size from its header, and nothing from a damaged one", () => {
+    expect(imageDimensionsOf(pngOf(9000, 9000))).toEqual({ width: 9000, height: 9000 });
+    expect(imageDimensionsOf(jpegOf(320, 240))).toEqual({ width: 320, height: 240 });
+    expect(imageDimensionsOf(new Uint8Array([...new TextEncoder().encode("GIF89a"), 0x40, 1, 0xf0, 0]))).toEqual({
+      width: 320,
+      height: 240,
+    });
+    const webp = (chunk: string, body: number[]) =>
+      new Uint8Array([
+        ...new TextEncoder().encode("RIFF"),
+        0,
+        0,
+        0,
+        0,
+        ...new TextEncoder().encode("WEBP"),
+        ...new TextEncoder().encode(chunk),
+        ...body,
+      ]);
+    // VP8X: 24-bit width and height less one, at 24 and 27.
+    expect(imageDimensionsOf(webp("VP8X", [10, 0, 0, 0, 0, 0, 0, 0, 0x3f, 1, 0, 0xef, 0, 0]))).toEqual({ width: 320, height: 240 });
+    // VP8L: 14-bit width and height less one, packed after the 0x2f signature.
+    expect(imageDimensionsOf(webp("VP8L", [0, 0, 0, 0, 0x2f, 0x3f, 0xc1, 0x3b, 0]))).toEqual({ width: 320, height: 240 });
+    // VP8: the key frame's 14-bit width and height at 26 and 28.
+    expect(imageDimensionsOf(webp("VP8 ", [0, 0, 0, 0, 0, 0, 0, 0x9d, 0x01, 0x2a, 0x40, 1, 0xf0, 0]))).toEqual({ width: 320, height: 240 });
+    // The signature, then text (Mac mini adversarial tests): no size, so not a picture to show.
+    expect(
+      imageDimensionsOf(new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, ...new TextEncoder().encode("not really a png at all")])),
+    ).toBe(undefined);
+    expect(imageDimensionsOf(new Uint8Array([0xff, 0xd8, 0xff]))).toBe(undefined);
+  });
+});
+
 describe("artifacts.view_image", () => {
   it("names an approved image of this workspace, and refuses anything else", async () => {
     const store = await openStore();
@@ -399,7 +486,7 @@ describe("artifacts.view_image", () => {
         workspaceId: "default",
         runId: "r",
         contentType: "image/png",
-        body: new Uint8Array([137, 80, 78, 71]),
+        body: pngOf(1, 1),
         reviewState: "approved",
       });
       const pending = store.putArtifact({
@@ -432,8 +519,13 @@ describe("artifacts.view_image", () => {
   it("looks at a picture in the chat's folders by path, typed by its bytes and stored with its label (Mac mini tests)", async () => {
     const store = await openStore();
     try {
-      const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 16, 74, 70, 73, 70]);
-      const files: Record<string, Uint8Array> = { "lisbon.jpg": jpeg, "notes.png": new TextEncoder().encode("not a picture") };
+      const jpeg = jpegOf(320, 240);
+      const files: Record<string, Uint8Array> = {
+        "lisbon.jpg": jpeg,
+        "notes.png": new TextEncoder().encode("not a picture"),
+        "giant.png": pngOf(9000, 9000),
+        "corrupt.png": new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, ...new TextEncoder().encode("only text after the signature")]),
+      };
       const asked: number[] = [];
       const registry = new ToolRegistry();
       registerAssistantTools(registry, {
@@ -462,6 +554,12 @@ describe("artifacts.view_image", () => {
       expect(asked).toEqual([5_000_000]);
       // Named .png, but not a picture: refused by what it is.
       await expect(view({ path: "notes.png" })).rejects.toThrow(/not a png, jpeg, gif or webp picture/);
+      // A picture the provider would refuse, refused here instead (Mac mini adversarial tests): it failed the call,
+      // and every later one in the chat that still carried it.
+      await expect(view({ path: "giant.png" })).rejects.toThrow(/9000×9000 pixels, over the 8000-pixel side/);
+      await expect(view({ path: "corrupt.png" })).rejects.toThrow(/damaged or not the picture it starts like/);
+      const giant = await store.putArtifact({ ...context, contentType: "image/png", body: pngOf(8001, 10), reviewState: "approved" });
+      await expect(view({ artifactId: giant.artifactId })).rejects.toThrow(/8001×10 pixels/);
       // One of the two, never both or neither.
       await expect(view({})).rejects.toThrow(/an artifactId or a path/);
       await expect(view({ path: "lisbon.jpg", artifactId: artifactId })).rejects.toThrow(/an artifactId or a path/);
@@ -536,7 +634,7 @@ describe("artifacts.view_image", () => {
           "2026-10-13T00:00:00.000Z",
         );
       };
-      const png = new Uint8Array([137, 80, 78, 71]);
+      const png = pngOf(1, 1);
       const web = untrustedLabel("web", {
         confidentiality: "personal",
         principal: "host:shop.example",
@@ -549,7 +647,7 @@ describe("artifacts.view_image", () => {
         workspaceId: "default",
         runId: "r",
         contentType: "image/png",
-        body: new Uint8Array([137, 80, 78, 71, 1]),
+        body: pngOf(1, 1, 1),
         label: TRUSTED_PUBLIC,
       });
       expect(isUntrusted(await labelOf(chart.artifactId))).toBe(false);
@@ -557,14 +655,14 @@ describe("artifacts.view_image", () => {
         workspaceId: "default",
         runId: "r",
         contentType: "image/png",
-        body: new Uint8Array([137, 80, 78, 71, 2]),
+        body: pngOf(1, 1, 2),
       });
       expect(await labelOf(old.artifactId)).toMatchObject({ integrity: "untrusted", sources: ["unknown-source"] });
       const media = await store.putArtifact({
         workspaceId: "default",
         runId: "r",
         contentType: "image/png",
-        body: new Uint8Array([137, 80, 78, 71, 3]),
+        body: pngOf(1, 1, 3),
         untrusted: true,
       });
       expect(await labelOf(media.artifactId)).toMatchObject({ integrity: "untrusted", sources: ["attachment"] });

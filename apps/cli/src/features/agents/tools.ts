@@ -266,7 +266,8 @@ export function registerAgentTools(registry: ToolRegistry, agents: AgentCommunic
             if (definition !== undefined && definition.enabled) return { statuses: [], contentHash: spawnCheckHash(definitionId) };
             const known = ((await definitions?.list(context.workspaceId))?.agents ?? [])
               .filter((agent) => agent.enabled)
-              .map((agent) => agent.agentId)
+              // With its name beside its id where they differ: the person may know it only by the name.
+              .map((agent) => (agent.name === agent.agentId ? agent.agentId : `${agent.agentId} (${agent.name})`))
               .slice(0, 40);
             return {
               refused: `No agent definition ${parsed.data.agentDefinitionId} is on here; the ones there are: ${[...new Set([...known, GENERAL_WORKER_AGENT_ID])].join(", ")}`,

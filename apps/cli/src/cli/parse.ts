@@ -380,6 +380,8 @@ function parseCommand(command: string | undefined, rest: readonly string[]): Par
 
   // Where a new chat works: a run of its own only — Home keeps its folder, and --attach starts nothing.
   const folder = flags.get("--folder");
+  // An empty value (an unset shell variable) would resolve to the current directory, which nobody named.
+  if (folder?.trim() === "") throw new UsageError("--folder needs a folder: it was given an empty value", RUN_FOLDER_USAGE);
   if (folder !== undefined && managed) throw new UsageError("run takes --folder or --managed, not both", RUN_FOLDER_USAGE);
   if ((folder !== undefined || managed) && (home || attach !== undefined)) {
     throw new UsageError(

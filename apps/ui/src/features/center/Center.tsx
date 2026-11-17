@@ -1,5 +1,5 @@
 import type { ReminderFireView } from "@tavi/contracts";
-import { useCallback, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
 import { Notice } from "../../ui/Parts.js";
@@ -115,8 +115,18 @@ export function CenterPage({
   useResetOnChange([section], () => {
     if (section !== "identity") setProposalsFocus(false);
   });
+  /*
+   * One scroller holds every section, so a section opened from far down
+   * another one would open as far down, its heading out of sight. Back to the
+   * top on each new page — before a section's own effects scroll to what it
+   * focuses (the rail's memory proposals, a day in Activity).
+   */
+  const scroller = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (scroller.current !== null) scroller.current.scrollTop = 0;
+  }, [section, routineId, runId, reminderId, scheduleId]);
   return (
-    <div className="center">
+    <div className="center" ref={scroller}>
       <div className="center-main">
         {feed.error === undefined ? null : <Notice>Live updates paused: {feed.error}. Trying again shortly.</Notice>}
         {section === "activity" ? (

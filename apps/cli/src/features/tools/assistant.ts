@@ -54,6 +54,64 @@ export function imageTypeOf(bytes: Uint8Array): string | undefined {
   return undefined;
 }
 
+/**
+ * A picture's width and height from its header, or undefined when the header
+ * does not hold them — a file that starts like a PNG and is not one. Read
+ * from the bytes alone, as `imageTypeOf` reads the type.
+ */
+export function imageDimensionsOf(bytes: Uint8Array): { readonly width: number; readonly height: number } | undefined {
+  const be16 = (at: number) => ((bytes[at] ?? 0) << 8) | (bytes[at + 1] ?? 0);
+  const le16 = (at: number) => (bytes[at] ?? 0) | ((bytes[at + 1] ?? 0) << 8);
+  const le24 = (at: number) => le16(at) | ((bytes[at + 2] ?? 0) << 16);
+  const be32 = (at: number) => be16(at) * 0x10000 + be16(at + 2);
+  const tag = (at: number) => String.fromCharCode(...bytes.subarray(at, at + 4));
+  const sized = (width: number, height: number) => (width > 0 && height > 0 ? { width, height } : undefined);
+  const type = imageTypeOf(bytes);
+  if (type === "image/png") return bytes.length >= 24 && tag(12) === "IHDR" ? sized(be32(16), be32(20)) : undefined;
+  if (type === "image/gif") return bytes.length >= 10 ? sized(le16(6), le16(8)) : undefined;
+  if (type === "image/webp") {
+    if (tag(12) === "VP8 " && bytes.length >= 30) return sized(le16(26) & 0x3fff, le16(28) & 0x3fff);
+    if (tag(12) === "VP8L" && bytes.length >= 25) {
+      const [b1, b2, b3, b4] = [bytes[21] ?? 0, bytes[22] ?? 0, bytes[23] ?? 0, bytes[24] ?? 0];
+      return sized(1 + (((b2 & 0x3f) << 8) | b1), 1 + (((b4 & 0x0f) << 10) | (b3 << 2) | ((b2 & 0xc0) >> 6)));
+    }
+    if (tag(12) === "VP8X" && bytes.length >= 30) return sized(1 + le24(24), 1 + le24(27));
+    return undefined;
+  }
+  if (type === "image/jpeg") {
+    // The frame header (SOF0–SOF15, less DHT, JPG and DAC) holds the size; every other segment is skipped by its length.
+    let at = 2;
+    while (at + 9 < bytes.length) {
+      if (bytes[at] !== 0xff) return undefined;
+      const marker = bytes[at + 1] ?? 0;
+      if (marker === 0xff) {
+        at += 1;
+        continue;
+      }
+      if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc)
+        return sized(be16(at + 7), be16(at + 5));
+      if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd8)) {
+        at += 2;
+        continue;
+      }
+      at += 2 + be16(at + 2);
+    }
+  }
+  return undefined;
+}
+
+/** The longest side of a picture put in front of a model: the providers refuse a larger one, and the whole request with it. */
+export const MAX_VIEW_IMAGE_SIDE = 8000;
+
+/** Why a picture cannot be put in front of a model, or undefined when it can. */
+export function unviewableImage(bytes: Uint8Array): string | undefined {
+  const size = imageDimensionsOf(bytes);
+  if (size === undefined) return "its header does not say how large it is, so it is damaged or not the picture it starts like";
+  if (Math.max(size.width, size.height) > MAX_VIEW_IMAGE_SIDE)
+    return `it is ${size.width}×${size.height} pixels, over the ${MAX_VIEW_IMAGE_SIDE}-pixel side a model is shown`;
+  return undefined;
+}
+
 /** The image types put in front of a model: raster only — an SVG is a document that can carry script. */
 export const VIEWABLE_IMAGE_TYPES = /^image\/(png|jpeg|gif|webp)$/;
 
@@ -260,6 +318,10 @@ export function registerAssistantTools(registry: ToolRegistry, options: Assistan
         const picture = await options.folderPicture(parsed.path, context, MAX_VIEW_IMAGE_BYTES);
         const contentType = imageTypeOf(picture.bytes);
         if (contentType === undefined) throw new TaviError("UNSUPPORTED", `${parsed.path} is not a png, jpeg, gif or webp picture`);
+        // Refused here, not by the provider: a picture it will not take fails the whole call, and every later one
+        // in the chat that still carries it (Mac mini adversarial tests: a 9000×9000 PNG, a PNG of text).
+        const unviewable = unviewableImage(picture.bytes);
+        if (unviewable !== undefined) throw new TaviError("UNSUPPORTED", `${parsed.path} cannot be shown: ${unviewable}`);
         if (
           contentType === "image/gif" &&
           gifIsAnimated(picture.bytes) &&
@@ -299,10 +361,13 @@ export function registerAssistantTools(registry: ToolRegistry, options: Assistan
         throw new TaviError("UNSUPPORTED", `artifact ${artifactId} is ${artifact.contentType}, not a png, jpeg, gif or webp image`);
       if (artifact.byteSize > MAX_VIEW_IMAGE_BYTES)
         throw new TaviError("INVALID_INPUT", `artifact ${artifactId} is ${artifact.byteSize} bytes, over ${MAX_VIEW_IMAGE_BYTES}`);
+      const body = await options.artifacts.readArtifactBody(artifact.artifactId);
+      if (body === undefined) throw new TaviError("NOT_FOUND", `artifact ${artifactId}'s content is gone`);
+      const unviewable = unviewableImage(body);
+      if (unviewable !== undefined) throw new TaviError("UNSUPPORTED", `artifact ${artifactId} cannot be shown: ${unviewable}`);
       // An animated GIF is a video: one image of it says little, and video.frames shows its moments.
       if (artifact.contentType === "image/gif" && (await options.videoFramesAvailable?.(context.workspaceId)) === true) {
-        const body = await options.artifacts.readArtifactBody(artifact.artifactId);
-        if (body !== undefined && gifIsAnimated(body))
+        if (gifIsAnimated(body))
           throw new TaviError("UNSUPPORTED", `artifact ${artifactId} is an animated GIF: look at it with video.frames`, {
             details: { animated: true },
           });
