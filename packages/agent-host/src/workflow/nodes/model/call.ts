@@ -273,5 +273,21 @@ export async function callWithFailover(ctx: ModelCall): Promise<{ readonly early
     // Another connection is asked for the turn's own cap, not what one key could afford.
     dispatch = { ...dispatch, outputCap };
   }
+  // Asked twice and still nothing, at a turn's first step: the model declined the message (a refusal streams no
+  // text). Said in words, so a chat's reply is sent rather than nothing at all (Mac mini Telegram tests: a prompt
+  // injection, and every message after it in that conversation, went unanswered).
+  if (
+    outcome.status === "completed" &&
+    emptyRetried &&
+    turnStepsSoFar === 0 &&
+    outcome.text.trim() === "" &&
+    outcome.toolCalls.length === 0 &&
+    !signal.aborted
+  )
+    outcome = { ...outcome, text: NO_ANSWER_NOTICE };
   return { outcome, targetIndex, failedOver, signal };
 }
+
+/** A turn's answer when the model gave none, twice: what happened and what to do, never silence. */
+export const NO_ANSWER_NOTICE =
+  "I couldn't answer that: the model returned nothing, which usually means it declined the message. Rephrase it, or send /new to start a fresh conversation.";

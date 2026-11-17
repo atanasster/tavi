@@ -105,6 +105,7 @@ import {
   withinToolTimeout,
 } from "@tavi/agent-host/workflow";
 import { sleep } from "@tavi/node-kit";
+import { NO_ANSWER_NOTICE } from "../src/workflow/nodes/model/call.js";
 import { fakeFetch } from "@tavi/test-support";
 import { sse, textChunk } from "@tavi/test-support/openai-stub";
 import { createAiSdkModelAdapter } from "@tavi/agent-host/models";
@@ -1044,17 +1045,16 @@ describe("workflow: model → tool → model round trip", () => {
     });
     expect([result.status, result.finalText]).toEqual(["completed", "the real answer"]);
     expect(once.calls()).toBe(2);
-    // Once only: a model that answers nothing again ends the turn as before.
+    // Once only: a model that answers nothing again ends the turn, saying so rather than in silence, so a chat is
+    // answered (Mac mini Telegram tests: a refused message, and every one after it, went unanswered).
     const twice = answering(["", "", "never asked"]);
-    expect(
-      (
-        await build({ turns: [], models: twice.models }).adapter.invoke({
-          context,
-          threadId: "thread-empty-twice",
-          messages: [userMessage],
-        })
-      ).status,
-    ).toBe("completed");
+    const declined = await build({ turns: [], models: twice.models }).adapter.invoke({
+      context,
+      threadId: "thread-empty-twice",
+      messages: [userMessage],
+    });
+    expect([declined.status, declined.finalText]).toEqual(["completed", NO_ANSWER_NOTICE]);
+    expect(declined.finalText).toContain("/new");
     expect(twice.calls()).toBe(2);
   });
 

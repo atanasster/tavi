@@ -13,6 +13,11 @@ change behaviour or stored data.
 
 ### Fixed
 
+- A message the model will not answer (it returns nothing, twice) is answered
+  with a short note saying so and suggesting a rephrase or `/new`, instead of
+  silence. On Telegram, a prompt injection and every message after it in that
+  conversation had gone unanswered.
+
 - A chat on Telegram (or any channel) can be sent back a file it asked for:
   `messaging.send` takes an approved artifact, such as a browser screenshot,
   with its text as the caption. Before, a screenshot asked for in a Telegram
