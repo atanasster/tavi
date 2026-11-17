@@ -224,7 +224,8 @@ export async function skillsCommand(options: ResolvedDataDirectory<SkillsCommand
         return await regenerateCommand(options, io);
       case "approve": {
         const skillId = requireSkillId(options);
-        const version = requireFlag(options.version, "--version");
+        const version = options.version ?? (await onlyVersion(options, skillId, "proposed", io));
+        if (typeof version === "number") return version;
         // What is approved is shown first: its text and the hash every run checks it by.
         const read = await skillsRequest(options, { action: "body", workspaceId, skillId, version }, io);
         if (!read.ok) return read.exit;
@@ -248,11 +249,14 @@ export async function skillsCommand(options: ResolvedDataDirectory<SkillsCommand
       case "reject":
       case "activate":
       case "rollback": {
-        const reply = await skillsRequest(
-          options,
-          { action: options.action, workspaceId, skillId: requireSkillId(options), version: requireFlag(options.version, "--version") },
-          io,
-        );
+        const skillId = requireSkillId(options);
+        const version =
+          options.version ??
+          (options.action === "rollback"
+            ? requireFlag(options.version, "--version")
+            : await onlyVersion(options, skillId, options.action === "reject" ? "proposed" : "approved", io));
+        if (typeof version === "number") return version;
+        const reply = await skillsRequest(options, { action: options.action, workspaceId, skillId, version }, io);
         if (!reply.ok) return reply.exit;
         if (options.action === "reject")
           emit(io, options.format, reply.result, (result) => {
@@ -278,6 +282,31 @@ export async function skillsCommand(options: ResolvedDataDirectory<SkillsCommand
   } catch (error) {
     return reportRefusal(error, io, "skills command failed", SKILLS_REFUSAL_CODES);
   }
+}
+
+/**
+ * The version `approve`, `reject` or `activate` acts on when none is named: the skill's only one in `state`. With
+ * none or several it says which there are and asks for --version (an exit code). A freshly imported skill has one.
+ */
+async function onlyVersion(
+  options: ResolvedDataDirectory<SkillsCommandOptions>,
+  skillId: string,
+  state: "proposed" | "approved",
+  io: CliIo,
+): Promise<string | number> {
+  const reply = await skillsRequest(options, { action: "show", workspaceId: options.workspaceId, skillId }, io);
+  if (!reply.ok) return reply.exit;
+  const versions = SkillsShowAnswerSchema.parse(reply.result).versions;
+  const candidates = versions.filter((version) => version.reviewState === state).map((version) => version.version);
+  if (candidates.length === 1 && candidates[0] !== undefined) return candidates[0];
+  const there = versions.map((version) => `${version.version} (${version.reviewState})`).join(", ");
+  emitError(
+    io,
+    candidates.length === 0
+      ? `${skillId} has no ${state} version${there === "" ? "" : `: its versions are ${there}`}`
+      : `${skillId} has ${candidates.length} ${state} versions (${candidates.join(", ")}): name one with --version`,
+  );
+  return EXIT.usage;
 }
 
 /** A time as the person's own clock reads it: "Tue, 03/11/2026, 16:24". */

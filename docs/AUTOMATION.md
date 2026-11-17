@@ -234,8 +234,12 @@ tavi schedules agenda [--days N] [--limit N] [--format text|json]
   GMT+3)", or "(earlier runs were missed; …)" when its own fire is on time
   but the ones before it never ran. Without a previous run the note says only
   that the window since the last run may be longer than usual. So a prompt
-  that asks for "news since yesterday" can widen. An on-time fire's prompt is
-  exactly yours, and the note never touches the run's system prompt.
+  that asks for "news since yesterday" can widen. Every fire's run is also
+  told, after your prompt, that it is the schedule doing its job now, so a
+  prompt such as "Remind me to stand up and stretch." is the reminder itself,
+  said in its answer, never a one-off reminder set for an hour later. An
+  on-time fire's prompt is otherwise exactly yours, and neither note touches
+  the run's system prompt.
 - Across a daylight-saving change, a time the clocks skip fires at the first
   minute that exists (New York's 02:30 on the spring change is 03:00 EDT;
   Sofia's 03:30 is 04:00), and a time the clocks repeat fires once, the first

@@ -414,7 +414,7 @@ an `agents:message:<agent-id>` grant for the agent they reach.
 | `agents.status` | read-only | none | per result | listed | Inspect a delegated task's current status. |
 | `agents.wait` | read-only | none | per result | listed | Suspend until a matching reply arrives, a worker completes, or the deadline passes. |
 | `artifacts.read` | read-only | none | per result | listed | Page through a large tool result this chat kept whole as an artifact (its note names the artifactId), or another approved JSON or plain-text artifact of this… |
-| `artifacts.view_image` | read-only | none | per result | listed | Look at an approved image artifact (a browser capture, a rendered chart). |
+| `artifacts.view_image` | read-only | none | per result | listed | Look at a picture: an approved image artifact (a browser capture, a rendered chart) by `artifactId`, or one in the chat's folders by `path`. |
 | `browser.act` | external | network | untrusted | listed | Act in a browser session. |
 | `browser.batch` | external | network | untrusted | listed | Run up to 5 browser.act steps in one call, in order — fill a form's fields, pick a date, scroll and wait — each as browser.act would; up to 12 when every ste… |
 | `browser.capture` | external | none | untrusted | listed | Capture a screenshot of a browser session. |

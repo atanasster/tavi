@@ -41,6 +41,7 @@ import {
   scheduleRunContext,
   scheduleRunKey,
   triggerOf,
+  SCHEDULED_RUN_NOTE,
   webhookRunNote,
   withEventCeiling,
 } from "./schedule-run-kind.js";
@@ -557,6 +558,7 @@ async function fireOnce(
         operationKey,
         prompt: [
           schedule.prompt,
+          SCHEDULED_RUN_NOTE,
           catchUpNote,
           precheckRun?.note,
           options.webhook === undefined ? undefined : webhookRunNote(options.webhook),

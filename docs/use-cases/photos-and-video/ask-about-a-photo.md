@@ -26,7 +26,7 @@ Ask about the same picture again: *What colour is the bowl?* The picture stays i
 
 ## 4. Know which pictures go
 
-A PNG or JPEG is refused in the canvas, with a note under the box saying what can be attached. Save the photo as a GIF, or put it in a PDF, to send it from the canvas; from a messaging channel such as Telegram, photos go as they are.
+A PNG or JPEG is refused in the canvas, with a note under the box saying what can be attached. Save the photo as a GIF, or put it in a PDF, to send it from the canvas; from a messaging channel such as Telegram, photos go as they are. A photo already in the chat's folder, such as one under your `--fs-root`, needs no attaching: ask "Look at holiday.jpg" and Tavi opens it there.
 
 ![The message box with the note: holiday.jpg: the canvas takes a PDF, a video (MP4, MOV, WebM), a GIF (read as a short clip), or a text or code file; a photo is read when it is sent from a messaging channel](../../assets/use-cases/photos-and-video/ask-about-a-photo/04-know-which-pictures-go.webp)
 

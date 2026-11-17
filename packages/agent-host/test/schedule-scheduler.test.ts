@@ -48,6 +48,10 @@ import {
   type InFlightFireRegistry,
   type ScheduleSchedulerDependencies,
 } from "../src/schedulers/schedule-scheduler.js";
+import { SCHEDULED_RUN_NOTE } from "../src/schedulers/schedule-run-kind.js";
+
+/** The fixture's prompt as a fire's run reads it: the operator's words, then that this run is the schedule's doing. */
+const BRIEF_RUN = `produce and send the brief\n\n${SCHEDULED_RUN_NOTE}`;
 
 /**
  * The recurring-schedule scheduler.
@@ -651,7 +655,7 @@ describe("fireSchedule", () => {
     expect(h.admitted[0]).toMatchObject({
       kind: "start",
       operationKey: "schedule:sched-1:2026-04-05T04:00:00.000Z",
-      prompt: "produce and send the brief",
+      prompt: BRIEF_RUN,
     });
     expect(h.recorded).toEqual([{ taskId: "task-1", outcome: "completed", outcomeKind: "succeeded" }]);
     expect(h.alerts).toHaveLength(0);
@@ -1282,12 +1286,13 @@ describe("fireSchedule", () => {
     const late = harness({ admitResults: [attemptResult({ status: "completed", finalText: "late but sent" })] });
     await fireSchedule(scheduleFixture({ spec: AT_0330 }), "2026-04-05T00:30:00.000Z", late.deps);
     expect(late.admitted[0]?.prompt).toBe(
-      "produce and send the brief\n\nScheduled for 03:30 GMT+3, running at 07:00 GMT+3 (catch-up; the window since the last run may be longer than usual).",
+      `${BRIEF_RUN}\n\n` +
+        "Scheduled for 03:30 GMT+3, running at 07:00 GMT+3 (catch-up; the window since the last run may be longer than usual).",
     );
-    // Thirty seconds late is on time: the prompt is the operator's, byte for byte.
+    // Thirty seconds late is on time: the prompt is the operator's, byte for byte, then the note every fire has.
     const onTime = harness({ admitResults: [attemptResult({ status: "completed", finalText: "brief sent" })] });
     await fireSchedule(scheduleFixture(), "2026-04-05T04:00:00.000Z", onTime.deps);
-    expect(onTime.admitted[0]?.prompt).toBe("produce and send the brief");
+    expect(onTime.admitted[0]?.prompt).toBe(BRIEF_RUN);
     // The note rides in the turn's input alone: the run's context, and with it its system prompt, is the same.
     expect(late.admitted[0]?.context).toEqual(onTime.admitted[0]?.context);
   });
@@ -1297,13 +1302,15 @@ describe("fireSchedule", () => {
     const h = harness({ admitResults: [attemptResult({ status: "completed", finalText: "ok" })] });
     await fireSchedule(scheduleFixture({ lastRunAt: "2026-04-02T04:00:00.000Z" }), "2026-04-03T04:00:00.000Z", h.deps);
     expect(h.admitted[0]?.prompt).toBe(
-      "produce and send the brief\n\nScheduled for 2026-04-05 07:00 GMT+3, running at 2026-04-05 07:00 GMT+3 (earlier runs were missed; the last run was 2026-04-02 07:00 GMT+3).",
+      `${BRIEF_RUN}\n\n` +
+        "Scheduled for 2026-04-05 07:00 GMT+3, running at 2026-04-05 07:00 GMT+3 (earlier runs were missed; the last run was 2026-04-02 07:00 GMT+3).",
     );
     // A schedule that never ran says only that the window may be longer.
     const first = harness({ admitResults: [attemptResult({ status: "completed", finalText: "ok" })] });
     await fireSchedule(scheduleFixture(), "2026-04-03T04:00:00.000Z", first.deps);
     expect(first.admitted[0]?.prompt).toBe(
-      "produce and send the brief\n\nScheduled for 07:00 GMT+3, running at 07:00 GMT+3 (earlier runs were missed; the window since the last run may be longer than usual).",
+      `${BRIEF_RUN}\n\n` +
+        "Scheduled for 07:00 GMT+3, running at 07:00 GMT+3 (earlier runs were missed; the window since the last run may be longer than usual).",
     );
   });
 
@@ -4536,9 +4543,9 @@ describe("a schedule's pre-check", () => {
     const outcome = await fireSchedule(schedule, FIRE, deps);
     expect(outcome).toMatchObject({ kind: "ran", status: "completed" });
     const prompt = h.admitted[0]?.prompt ?? "";
-    expect(
-      prompt.startsWith("produce and send the brief\n\nPre-check: the page https://example.com/news has changed since the last check"),
-    ).toBe(true);
+    expect(prompt.startsWith(`${BRIEF_RUN}\n\n` + "Pre-check: the page https://example.com/news has changed since the last check")).toBe(
+      true,
+    );
     expect(prompt).toMatch(/read it yourself/);
     expect(h.fires.at(-1)).toMatchObject({ reasonCode: "ok" });
     expect(h.recorded.at(-1)).toMatchObject({ outcomeKind: "succeeded", precheckState: { of: page, state: after } });
@@ -4602,7 +4609,7 @@ describe("a schedule's pre-check", () => {
     const none = checked({ kind: "unchanged", state: before }, {}, [attemptResult({ status: "completed", finalText: "done" })]);
     await fireSchedule(scheduleFixture(), FIRE, none.deps);
     expect(none.asked).toHaveLength(0);
-    expect(none.h.admitted[0]?.prompt).toBe("produce and send the brief");
+    expect(none.h.admitted[0]?.prompt).toBe(BRIEF_RUN);
   });
 
   /** A pre-check that answers only once `answer` is called, and says when it was asked. */

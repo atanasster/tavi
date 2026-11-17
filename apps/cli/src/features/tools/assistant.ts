@@ -8,8 +8,11 @@ import {
   TOOL_LABEL_KEY,
   TOOL_MEDIA_KEY,
   TaviError,
+  type ContentLabel,
+  type InvocationContext,
   type ToolResultLabel,
   artifactLabel,
+  isUntrusted,
   isModelVisibleArtifact,
   type ArtifactRepositoryPort,
   type MemoryReach,
@@ -31,8 +34,25 @@ const SearchInputSchema = z.strictObject({
 });
 
 const ViewImageInputSchema = z.strictObject({
-  artifactId: z.string().min(1).max(128).describe("An approved image artifact, e.g. a browser capture"),
+  artifactId: z.string().min(1).max(128).optional().describe("An approved image artifact, e.g. a browser capture"),
+  path: z
+    .string()
+    .min(1)
+    .max(4096)
+    .optional()
+    .describe("Or a picture in the chat's folders, as fs.read takes a path (png, jpeg, gif or webp)"),
 });
+
+/** A picture's type from its first bytes, never its name: only the raster types a model is shown. */
+export function imageTypeOf(bytes: Uint8Array): string | undefined {
+  const starts = (...prefix: number[]) => prefix.every((byte, index) => bytes[index] === byte);
+  if (starts(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return "image/png";
+  if (starts(0xff, 0xd8, 0xff)) return "image/jpeg";
+  if (starts(0x47, 0x49, 0x46, 0x38)) return "image/gif";
+  const tag = (offset: number) => String.fromCharCode(...bytes.subarray(offset, offset + 4));
+  if (bytes.length >= 12 && tag(0) === "RIFF" && tag(8) === "WEBP") return "image/webp";
+  return undefined;
+}
 
 /** The image types put in front of a model: raster only — an SVG is a document that can carry script. */
 export const VIEWABLE_IMAGE_TYPES = /^image\/(png|jpeg|gif|webp)$/;
@@ -50,7 +70,17 @@ export interface AssistantToolOptions {
     readonly reach?: MemoryReach /** The chat searching: one on a remote model finds no local chat's words. */;
     readonly readerTaskId?: string;
   }) => Promise<readonly PastChatHit[]>;
-  readonly artifacts: Pick<ArtifactRepositoryPort, "getArtifact" | "readArtifactBody">;
+  readonly artifacts: Pick<ArtifactRepositoryPort, "getArtifact" | "readArtifactBody" | "putArtifact">;
+  /**
+   * A picture in the chat's folders, for `artifacts.view_image` with a `path`: `folderFileReader`'s read under
+   * `fs.read`'s confinement, and the label `fs.read` would give it (`folderFileLabel` over `folderFileTaint`).
+   * Absent: only artifacts are looked at.
+   */
+  readonly folderPicture?: (
+    path: string,
+    context: InvocationContext,
+    maxBytes: number,
+  ) => Promise<{ readonly bytes: Uint8Array; readonly name: string; readonly label: ContentLabel }>;
   /**
    * Whether `video.frames` can read a workspace's videos now (it is offered and on): an animated GIF is then refused here and pointed there; otherwise it is shown as an image (its first frame).
    */
@@ -209,7 +239,7 @@ export function registerAssistantTools(registry: ToolRegistry, options: Assistan
     sink: "none",
     version: "1.0.0",
     description:
-      "Look at an approved image artifact (a browser capture, a rendered chart). A model that cannot see images receives only its description.",
+      "Look at a picture: an approved image artifact (a browser capture, a rendered chart) by `artifactId`, or one in the chat's folders by `path`. A model that cannot see images receives only its description.",
     effect: "read-only",
     requiredPermissions: ["tools.invoke"],
     inputSchema: ViewImageInputSchema,
@@ -220,22 +250,60 @@ export function registerAssistantTools(registry: ToolRegistry, options: Assistan
     labelledByStore: true,
     handler: async ({ input, context }) => {
       const parsed = ViewImageInputSchema.parse(input);
-      const artifact = await options.artifacts.getArtifact(parsed.artifactId);
+      if ((parsed.artifactId === undefined) === (parsed.path === undefined))
+        throw new TaviError("INVALID_INPUT", "artifacts.view_image takes an artifactId or a path, one of them");
+      if (parsed.path !== undefined) {
+        // A picture in the chat's folders: read as fs.read reads it, typed by its bytes, stored with its label
+        // (Mac mini tests: a photo in the folder could not be looked at). The model is handed the stored copy.
+        if (options.folderPicture === undefined)
+          throw new TaviError("UNSUPPORTED", "this chat has no folders to read a picture from: look at an artifact by its artifactId");
+        const picture = await options.folderPicture(parsed.path, context, MAX_VIEW_IMAGE_BYTES);
+        const contentType = imageTypeOf(picture.bytes);
+        if (contentType === undefined) throw new TaviError("UNSUPPORTED", `${parsed.path} is not a png, jpeg, gif or webp picture`);
+        if (
+          contentType === "image/gif" &&
+          gifIsAnimated(picture.bytes) &&
+          (await options.videoFramesAvailable?.(context.workspaceId)) === true
+        )
+          throw new TaviError("UNSUPPORTED", `${parsed.path} is an animated GIF: look at it with video.frames`, {
+            details: { animated: true },
+          });
+        const stored = await options.artifacts.putArtifact({
+          workspaceId: context.workspaceId,
+          runId: context.runId,
+          contentType,
+          body: picture.bytes,
+          extension: contentType.slice("image/".length).replace("jpeg", "jpg"),
+          fileName: picture.name,
+          label: picture.label,
+          ...(isUntrusted(picture.label) ? { untrusted: true } : {}),
+        });
+        return {
+          artifactId: stored.artifactId,
+          path: parsed.path,
+          contentType,
+          byteSize: picture.bytes.length,
+          [TOOL_MEDIA_KEY]: { artifactId: stored.artifactId, mediaType: contentType },
+          [TOOL_LABEL_KEY]: { stored: picture.label } satisfies ToolResultLabel,
+        };
+      }
+      const artifactId = parsed.artifactId ?? "";
+      const artifact = await options.artifacts.getArtifact(artifactId);
       // Refused alike when missing, another workspace's or internal (a browser
       // thumbnail): the id is model-authored.
       if (artifact === undefined || !isModelVisibleArtifact(artifact) || artifact.workspaceId !== context.workspaceId)
-        throw new TaviError("NOT_FOUND", `no artifact ${parsed.artifactId} in this workspace`);
+        throw new TaviError("NOT_FOUND", `no artifact ${artifactId} in this workspace`);
       if (artifact.reviewState !== "approved")
-        throw new TaviError("NOT_AUTHORIZED", `artifact ${parsed.artifactId} is ${artifact.reviewState}, not approved for release`);
+        throw new TaviError("NOT_AUTHORIZED", `artifact ${artifactId} is ${artifact.reviewState}, not approved for release`);
       if (!VIEWABLE_IMAGE_TYPES.test(artifact.contentType))
-        throw new TaviError("UNSUPPORTED", `artifact ${parsed.artifactId} is ${artifact.contentType}, not a png, jpeg, gif or webp image`);
+        throw new TaviError("UNSUPPORTED", `artifact ${artifactId} is ${artifact.contentType}, not a png, jpeg, gif or webp image`);
       if (artifact.byteSize > MAX_VIEW_IMAGE_BYTES)
-        throw new TaviError("INVALID_INPUT", `artifact ${parsed.artifactId} is ${artifact.byteSize} bytes, over ${MAX_VIEW_IMAGE_BYTES}`);
+        throw new TaviError("INVALID_INPUT", `artifact ${artifactId} is ${artifact.byteSize} bytes, over ${MAX_VIEW_IMAGE_BYTES}`);
       // An animated GIF is a video: one image of it says little, and video.frames shows its moments.
       if (artifact.contentType === "image/gif" && (await options.videoFramesAvailable?.(context.workspaceId)) === true) {
         const body = await options.artifacts.readArtifactBody(artifact.artifactId);
         if (body !== undefined && gifIsAnimated(body))
-          throw new TaviError("UNSUPPORTED", `artifact ${parsed.artifactId} is an animated GIF: look at it with video.frames`, {
+          throw new TaviError("UNSUPPORTED", `artifact ${artifactId} is an animated GIF: look at it with video.frames`, {
             details: { animated: true },
           });
       }

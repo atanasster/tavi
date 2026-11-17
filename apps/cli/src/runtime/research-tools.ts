@@ -15,7 +15,14 @@ import { registerAssistantTools } from "../features/tools/assistant.js";
 import { registerMathTool } from "../features/tools/math.js";
 import { registerSkillProposeTool } from "../features/skills/propose.js";
 import { registerSkillTools } from "../features/skills/tools.js";
-import { folderFileCheck, folderSaver, fsRootResolver } from "../features/folders/fs-tools.js";
+import {
+  folderFileCheck,
+  folderFileLabel,
+  folderFileReader,
+  folderFileTaint,
+  folderSaver,
+  fsRootResolver,
+} from "../features/folders/fs-tools.js";
 import { registerAuthoringTools } from "../features/plugins/authoring-tools.js";
 import { COLLECTORS_PLUGIN_ID, registerOwnerCollectorTools } from "../features/collectors/host.js";
 import { registerHttpTools } from "../features/http/tools.js";
@@ -56,7 +63,18 @@ export async function composeResearchTools(composed: HostsContext) {
     checkFile: folderFileCheck(fsToolOptions),
     validate: { builtins: builtinPluginIds, sandbox },
   });
+  const readFolderFile = folderFileReader(fsToolOptions);
+  const folderTaint = folderFileTaint(fsToolOptions);
   registerAssistantTools(tools, {
+    // A picture in the chat's folders, as fs.read reads it and with the label it would give it.
+    folderPicture: async (path, context, maxBytes) => {
+      const file = readFolderFile(path, context, maxBytes);
+      return {
+        bytes: new Uint8Array(file.bytes),
+        name: file.name,
+        label: folderFileLabel(file, await folderTaint(file, context), context, nowTimestamp()),
+      };
+    },
     // A chat on a remote model finds no local chat's words.
     searchHistory: async ({ readerTaskId, ...input }) =>
       await withoutLocalChats(await store.searchTaskHistory(input), localChatModels, input.workspaceId, readerTaskId),

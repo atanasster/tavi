@@ -259,7 +259,7 @@ Under one owner, several front ends — terminals, chat, schedules, attached cli
     - A keyword with no run of 3 characters that fold alike (a CJK bigram) is matched by a scan of every turn instead, and a keyword with none at all leaves every turn a candidate.
     - From a turn whose `memoryReach` is `chat-only` — a group conversation's Home, its forum topics' side chats and their workers, stamped at every admission — it searches only chats mapped to the caller's own conversation (same connection, the group's key or one of its topics' keys), never the person's Home or other chats, and `memory.search`/`memory.get` read only that chat's notes while `memory.propose` takes only `scope: "chat"`.
   - **`artifacts.read`** reads an approved text or JSON artifact of the calling chat itself (a large result kept whole, whose note names it; never another chat's or a worker's mailbox, at most 8 MiB) a page at a time — at most 16,000 characters (`maxChars`, up to 24,000) and 40,000 bytes, with `nextOffset` — labelled as it was stored, so reading back a web page taints the turn as the page did.
-  - **`artifacts.view_image`** returns a reference to an approved png/jpeg/gif/webp artifact of at most 5 MB, which the model adapter resolves into an image part for the model — the bytes never enter the checkpoint.
+  - **`artifacts.view_image`** returns a reference to an approved png/jpeg/gif/webp artifact of at most 5 MB, or, with a `path`, to a picture in the chat's folders (read as `fs.read` reads it, typed by its bytes, and stored as an artifact with the label `fs.read` would give it), which the model adapter resolves into an image part for the model — the bytes never enter the checkpoint.
   - **Origin-scoped rules.**
     - A rule can carry an `origin`; the shipped messaging profile denies `sandbox.run`, `fs.write`, `fs.edit` and credentialed `http.request` (its subjects now include `credential:<ref>`) to tasks with origin `messaging`, less any tool named by `serve --messaging-allow-tool` in a turn from the operator's own one-to-one chat, and any a contact grant allows in that person's own one-to-one chat on a chat channel (`tavi channels grant … contact … allow`, still asked).
     - A rule scoped to origin `ipc` also applies to `web` tasks, so a rule written before the canvas's runs were recorded as `web` keeps covering them.
@@ -1566,10 +1566,10 @@ tavi skills <action> [options]
   - `--name <text>` *(required)*: Manifest skill name.
   - `--provenance <text>` *(required)*: Source provenance URL or origin.
   - `--description <text>`: Optional skill description.
-- `approve <skill-id> --version <v>`: Mark a proposed skill version approved for activation. Prints the version's text and hash first (to stderr, as `show --body` does); a skill another author wrote (provenance `chat:…` or `archive:…`) needs `--yes`. Then `<id>@<version> approved.` and the `activate` command that turns it on.
-- `reject <skill-id> --version <v>`: Reject a proposed version (`<id>@<version> rejected`).
+- `approve <skill-id> [--version <v>]`: Mark a proposed skill version (without `--version`, the skill's only proposed one) approved for activation. Prints the version's text and hash first (to stderr, as `show --body` does); a skill another author wrote (provenance `chat:…` or `archive:…`) needs `--yes`. Then `<id>@<version> approved.` and the `activate` command that turns it on.
+- `reject <skill-id> [--version <v>]`: Reject a proposed version (without `--version`, the only one) (`<id>@<version> rejected`).
 - `disable <skill-id>`: Clear the workspace's activation: no version of the skill is active.
-- `activate <skill-id> --version <v>`: Set workspace activation pointer to an approved skill version (`<id>@<version> is active, since <local time>`).
+- `activate <skill-id> [--version <v>]`: Set workspace activation pointer to an approved skill version (without `--version`, the skill's only approved one; with none or several it lists them and asks for one) (`<id>@<version> is active, since <local time>`).
 - `rollback <skill-id> --version <v>`: Revert activation to a previously activated skill version.
 - `pin-rollout <skill-id> --task <id> [--task <id> ...] [--version <v>]`: Restrict a skill version to an explicit allowlist of authorized task IDs. If `--version` is omitted, pins the currently active version. Prints the version and the tasks it is pinned to.
 - `clear-rollout <skill-id> [--version <v>]`: Remove bounded rollout restriction, making the version available to all tasks.

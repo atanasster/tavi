@@ -13,6 +13,22 @@ change behaviour or stored data.
 
 ### Fixed
 
+- Tavi could not look at a picture in the chat's folder: `artifacts.view_image`
+  opened only attachments, so "Look at lisbon.jpg" in a run under `--fs-root`
+  ended in shell commands and no description. It now also takes a `path` in
+  the chat's folders, read as `fs.read` reads it and typed by its bytes, and
+  the copy it shows keeps the label `fs.read` would give the file.
+- A schedule's prompt such as "Remind me to stand up and stretch." (the
+  schedule guide's own example) set a one-off reminder for an hour later at
+  every fire instead of reminding you. Every fire's run is now told it is the
+  schedule doing its job, so the reminder is in its answer.
+- A chat that started a worker as "Researcher" was refused with "No agent
+  definition Researcher": `agents.spawn` now takes an agent's id in any case,
+  or its name.
+- `tavi skills approve <skill>`, `reject` and `activate` needed `--version`
+  even when the skill had only the one version. Without it they now take the
+  only proposed (or, for `activate`, approved) version, and list the versions
+  when there are none or several.
 - `tavi onboard`'s questions are drawn in a terminal where `CI` is set: Ink
   took that to mean "print only the last frame", so the prompt never showed.
 - A plugin worker whose proxy CA came due for renewal while it was starting

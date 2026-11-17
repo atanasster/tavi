@@ -76,9 +76,11 @@ Actions:
                               (needs \`tavi serve\`)
   approve <skill-id>         Approve a proposed version: prints its text and hash,
                               and needs --yes when another author wrote it
-                              (a chat's proposal, an outside archive)
-  reject <skill-id>          Reject a proposed version
+                              (a chat's proposal, an outside archive); without
+                              --version, the skill's only proposed one
+  reject <skill-id>          Reject a proposed version (without --version, the only one)
   activate <skill-id>        Point this workspace's activation at an approved version
+                              (without --version, the only approved one)
   disable <skill-id>         Clear this workspace's activation: no version is active
   rollback <skill-id>        Activate a version this workspace has activated before
   pin-rollout <skill-id>     Bound a version to an explicit authorized task set
@@ -165,14 +167,7 @@ export function parseSkills(argv: readonly string[]): ParsedCommand {
   // `import <folder|SKILL.md|zip>` reads an Agent Skills package: its frontmatter names it, so only the path is needed.
   // Without --package the argument is that path; whether it exists is checked when it is read.
   const agentSkill = action === "import" && flags.get("--package") === undefined;
-  const needsVersion =
-    (action === "import" && !agentSkill) ||
-    action === "edit" ||
-    action === "regenerate" ||
-    action === "approve" ||
-    action === "reject" ||
-    action === "activate" ||
-    action === "rollback";
+  const needsVersion = (action === "import" && !agentSkill) || action === "edit" || action === "regenerate" || action === "rollback";
   const version = flags.get("--version");
   if (needsVersion && version === undefined) {
     throw new UsageError(`skills ${action} needs --version`, SKILLS_USAGE);

@@ -217,6 +217,39 @@ describe("Agent Skills packages", () => {
     }
   });
 
+  it("approves and activates a skill's only version without --version, and asks for one when there are two (Mac mini tests)", async () => {
+    const directory = directories.create();
+    const write = (version: string) => {
+      const root = join(directories.create(), "notes");
+      mkdirSync(root, { recursive: true });
+      writeFileSync(join(root, "SKILL.md"), `---\nname: notes\ndescription: Notes\nmetadata:\n  version: ${version}\n---\n1. Start.\n`);
+      return root;
+    };
+    const run = async (args: string[]) => {
+      const captured = capture();
+      const code = await main(["skills", ...args, "--data-dir", directory], { io: captured.io });
+      return { code, stdout: captured.stdout(), stderr: captured.stderr() };
+    };
+    expect((await run(["import", write("1.0.0"), "--provenance", "my own notes"])).code).toBe(EXIT.ok);
+    // Nothing approved yet: activate says what there is.
+    const early = await run(["activate", "notes"]);
+    expect(early.code).toBe(EXIT.usage);
+    expect(early.stderr).toContain("notes has no approved version: its versions are 1.0.0 (proposed)");
+    const approved = await run(["approve", "notes"]);
+    expect(approved.code, approved.stderr).toBe(EXIT.ok);
+    expect(approved.stdout).toContain("notes@1.0.0 approved");
+    const active = await run(["activate", "notes"]);
+    expect(active.code, active.stderr).toBe(EXIT.ok);
+    expect(active.stdout).toContain("notes@1.0.0 is active");
+    // Two proposed versions: which is meant is the person's to say.
+    expect((await run(["import", write("1.1.0"), "--provenance", "my own notes"])).code).toBe(EXIT.ok);
+    expect((await run(["import", write("1.2.0"), "--provenance", "my own notes"])).code).toBe(EXIT.ok);
+    const two = await run(["reject", "notes"]);
+    expect(two.code).toBe(EXIT.usage);
+    expect(two.stderr).toContain("notes has 2 proposed versions (");
+    expect(two.stderr).toContain("name one with --version");
+  });
+
   it("imports a folder with tavi skills import, and skills.read serves SKILL.md, then a reference by path", async () => {
     const directory = directories.create();
     const run = async (args: string[]) => {

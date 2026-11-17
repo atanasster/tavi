@@ -111,6 +111,14 @@ function webhookPayloadFacts(webhook: ScheduleWebhookFire): string {
  * What a webhook's run is told after its prompt: that a call started it, and where what the call carried is — the
  * quoted-data block after it (`triggerOf`).
  */
+/**
+ * What every fire's run is told after the prompt: it is the schedule doing its job now, so a prompt like "Remind me to
+ * stand up and stretch." is the reminder itself. Without it a run set a one-off reminder an hour later at every fire
+ * (Mac mini tests of the schedule guide's own example).
+ */
+export const SCHEDULED_RUN_NOTE =
+  "This run is a schedule doing what its prompt asks, now; its answer reaches the person as the schedule delivers it. A prompt that asks to remind the person of something is that reminder: say it in your answer, and do not set a reminder or a schedule for later.";
+
 export function webhookRunNote(webhook: ScheduleWebhookFire): string {
   const lead = "This run was started by a call to this schedule's webhook, not at its scheduled time.";
   if ((webhook.payload ?? "") === "") return `${lead} The call carried no payload.`;

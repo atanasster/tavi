@@ -220,7 +220,8 @@ got from your linked Telegram DM when a later rollover folds them. See
 An **agent** is a named persona (`tavi agents add`) that a task, a schedule or
 a chat message (`@name`) can run as; every workspace also has built-in ones,
 such as `browser`. A chat delegates to a **worker** with `agents.spawn`, which
-may name the tools the worker needs (it can only narrow what the chat may use),
+names the agent by its id or, in any case, its name ("Researcher" is
+`researcher`), may name the tools the worker needs (it can only narrow what the chat may use),
 and the worker's answer comes back to the chat as a quoted message. A routine's
 research worker runs before its synthesis, which reads the evidence as quoted
 data. Limits, taint and

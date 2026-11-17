@@ -429,6 +429,47 @@ describe("artifacts.view_image", () => {
     }
   });
 
+  it("looks at a picture in the chat's folders by path, typed by its bytes and stored with its label (Mac mini tests)", async () => {
+    const store = await openStore();
+    try {
+      const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 16, 74, 70, 73, 70]);
+      const files: Record<string, Uint8Array> = { "lisbon.jpg": jpeg, "notes.png": new TextEncoder().encode("not a picture") };
+      const asked: number[] = [];
+      const registry = new ToolRegistry();
+      registerAssistantTools(registry, {
+        searchHistory: async () => [],
+        artifacts: store,
+        folderPicture: async (path, _context, maxBytes) => {
+          asked.push(maxBytes);
+          const bytes = files[path];
+          if (bytes === undefined) throw new Error(`no ${path}`);
+          return { bytes, name: path, label: untrustedLabel("download") };
+        },
+      });
+      const view = (input: unknown) =>
+        registry.get("artifacts.view_image")!.handler({ input, context, signal: new AbortController().signal });
+      const shown = (await view({ path: "lisbon.jpg" })) as Record<string | symbol, unknown>;
+      const artifactId = shown["artifactId"] as string;
+      expect(shown).toMatchObject({
+        path: "lisbon.jpg",
+        contentType: "image/jpeg",
+        [TOOL_MEDIA_KEY]: { artifactId, mediaType: "image/jpeg" },
+      });
+      // The copy the model is handed keeps the file's label: a downloaded picture stays untrusted.
+      const stored = await store.getArtifact(artifactId);
+      expect(stored).toMatchObject({ contentType: "image/jpeg", fileName: "lisbon.jpg", untrusted: true, reviewState: "approved" });
+      expect(stored?.label).toEqual(untrustedLabel("download"));
+      expect(asked).toEqual([5_000_000]);
+      // Named .png, but not a picture: refused by what it is.
+      await expect(view({ path: "notes.png" })).rejects.toThrow(/not a png, jpeg, gif or webp picture/);
+      // One of the two, never both or neither.
+      await expect(view({})).rejects.toThrow(/an artifactId or a path/);
+      await expect(view({ path: "lisbon.jpg", artifactId: artifactId })).rejects.toThrow(/an artifactId or a path/);
+    } finally {
+      store.close();
+    }
+  });
+
   it("sends an animated GIF to video.frames where it can read it, and shows it as an image where it cannot", async () => {
     const store = await openStore();
     try {

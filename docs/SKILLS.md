@@ -25,7 +25,9 @@ active one. A version opens its text, its hash and provenance, and the changes
 from the version it follows; from there it is approved or rejected, activated,
 rolled back to, or the skill disabled. A version another author wrote is marked
 so. `tavi skills approve` prints a version's text and hash before approving,
-and approves another author's only with `--yes`.
+and approves another author's only with `--yes`. Without `--version`,
+`approve` and `reject` take the skill's only proposed version and `activate`
+its only approved one.
 
 ## Skills
 

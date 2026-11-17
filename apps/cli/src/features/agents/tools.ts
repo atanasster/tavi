@@ -226,6 +226,19 @@ export function registerAgentTools(registry: ToolRegistry, agents: AgentCommunic
   const recipientAgentOf = async (taskId: string): Promise<string> =>
     (await options.delegations?.getByWorkerTaskId(taskId))?.workerAgentId ?? taskId;
   const peerOffered = options.peerMessaging === undefined ? {} : { offered: options.peerMessaging };
+  /**
+   * The definition a spawn names, as the model wrote it: its id, else the one definition whose id or name it is
+   * in another case ("Researcher" for `researcher`, Mac mini tests). Anything else is passed on as it is.
+   */
+  const definitionIdOf = async (workspaceId: string, named: string): Promise<string> => {
+    const definitions = options.definitions;
+    if (definitions === undefined || (await definitions.get(workspaceId, named)) !== undefined) return named;
+    const wanted = named.trim().toLowerCase();
+    const matches = ((await definitions.list(workspaceId))?.agents ?? []).filter(
+      (agent) => agent.agentId.toLowerCase() === wanted || agent.name.trim().toLowerCase() === wanted,
+    );
+    return matches.length === 1 && matches[0] !== undefined ? matches[0].agentId : named;
+  };
   registry.register({
     id: "agents.spawn",
     sink: "none",
@@ -248,9 +261,9 @@ export function registerAgentTools(registry: ToolRegistry, agents: AgentCommunic
             if (!parsed.success || parsed.data.agentDefinitionId === undefined)
               return { statuses: [], contentHash: spawnCheckHash(undefined) };
             const definitions = options.definitions;
-            const definition = await definitions?.get(context.workspaceId, parsed.data.agentDefinitionId);
-            if (definition !== undefined && definition.enabled)
-              return { statuses: [], contentHash: spawnCheckHash(parsed.data.agentDefinitionId) };
+            const definitionId = await definitionIdOf(context.workspaceId, parsed.data.agentDefinitionId);
+            const definition = await definitions?.get(context.workspaceId, definitionId);
+            if (definition !== undefined && definition.enabled) return { statuses: [], contentHash: spawnCheckHash(definitionId) };
             const known = ((await definitions?.list(context.workspaceId))?.agents ?? [])
               .filter((agent) => agent.enabled)
               .map((agent) => agent.agentId)
@@ -274,7 +287,7 @@ export function registerAgentTools(registry: ToolRegistry, agents: AgentCommunic
           ...labelledActorFrom(context, contextLabel, operationEnvelope?.tainted),
           ...(context.inheritedKnownUrls === undefined ? {} : { knownUrls: [...context.inheritedKnownUrls] }),
         },
-        agentDefinitionId: parsed.data.agentDefinitionId,
+        agentDefinitionId: await definitionIdOf(context.workspaceId, parsed.data.agentDefinitionId),
         input: parsed.data.input,
         operationKey: spawnOperationKey(context, parsed.data.operationKey),
         ...(parsed.data.sharedMemoryRecordIds === undefined ? {} : { sharedMemoryRecordIds: parsed.data.sharedMemoryRecordIds }),
