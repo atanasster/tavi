@@ -29,7 +29,13 @@ search and `web_fetch` instead of asking you to approve a browser that cannot
 open. Install Chromium while the owner runs and they are offered within half a
 minute. A report render fails with `CAPABILITY_MISSING` naming these commands,
 and the renderer reports itself unavailable. A checkout of this repository
-already has Playwright, as a development dependency.
+already has Playwright, as a development dependency, and `pnpm install` there
+installs its Chromium too (the root `postinstall`). Playwright skips a
+Chromium it already has, so a later `pnpm install` costs a moment, and one
+that brings a newer Playwright brings the Chromium it wants. It never fails
+the install: offline, it says so and names the command above. It is skipped
+in CI and when `TAVI_SKIP_CHROMIUM=1` or `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`
+is set. `tavi doctor` says whether there is one (`browser.chromium`).
 
 A process launches Chromium on its first browser session and shares it across
 the rest. Closing the runtime — the end of an in-process `tavi run`,

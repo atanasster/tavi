@@ -13,6 +13,11 @@ change behaviour or stored data.
 
 ### Fixed
 
+- `pnpm install` installs the Chromium the browser uses, and the newer one a
+  Playwright update wants (the root `postinstall`; skipped in CI and with
+  `TAVI_SKIP_CHROMIUM=1`). Chromium used to be a step of its own, so an
+  update could leave the browser without one, and no chat was offered it.
+
 - `tavi doctor` says whether the browser has a Chromium to launch
   (`browser.chromium`), and how to install one when it does not
   (`browser.install`). Without one, a chat is never offered the browser's

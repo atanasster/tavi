@@ -43,7 +43,9 @@
     ".": {
       // The repository-wide tests, the eval suites (run through their tests) and the maintenance scripts.
       "entry": ["tests/**/*.test.ts", "evals/**/*.ts", "scripts/**/*.{mjs,ts}"],
-      "project": ["tests/**/*.ts", "evals/**/*.ts", "scripts/**/*.{mjs,ts}"]
+      "project": ["tests/**/*.ts", "evals/**/*.ts", "scripts/**/*.{mjs,ts}"],
+      // scripts/install-chromium.mjs resolves Playwright from the browser plugin, whose dependency it is.
+      "ignoreDependencies": ["playwright"]
     },
     "apps/cli": {
       // Fixture servers and mods the tests start by path, as child processes or plugin entries.

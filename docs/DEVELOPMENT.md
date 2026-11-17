@@ -32,7 +32,7 @@ The optional system tools, each needed only for the feature it serves:
 
 | Tool | For | Get it |
 | --- | --- | --- |
-| Chromium | the browser tools and PDF reports | `pnpm --filter @tavi/plugin-browser exec playwright install chromium` ([BROWSER.md](BROWSER.md)) |
+| Chromium | the browser tools and PDF reports | installed by `pnpm install`, and again for each new Playwright; by hand, `pnpm --filter @tavi/plugin-browser exec playwright install chromium` ([BROWSER.md](BROWSER.md)) |
 | bubblewrap, socat and ripgrep (Linux) | the sandbox; macOS has one built in | your package manager; `tavi sandbox check` says what is missing ([SANDBOX.md](SANDBOX.md)) |
 | FFmpeg | the video tools | `brew install ffmpeg`, `apt install ffmpeg` ([VIDEO.md](VIDEO.md)) |
 | whisper.cpp and a ggml model | video transcription | `brew install whisper-cpp`, or a build of your own on `PATH` |

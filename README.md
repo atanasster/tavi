@@ -176,7 +176,7 @@ login, see [OPERATIONS](docs/OPERATIONS.md).
 | Required | Node.js `>= 22.22.2` | everything |
 | Required | pnpm `12.16.1` | building from the clone (`corepack enable`) |
 | Linux | bubblewrap, socat and ripgrep | the sandbox (macOS has one built in); `tavi sandbox check` says what is missing |
-| Optional | Chromium | the browser tools and PDF reports |
+| Optional | Chromium | the browser tools and PDF reports; `pnpm install` installs it |
 | Optional | FFmpeg, whisper.cpp | the video tools and transcription |
 | Optional | uv | Python MCP servers |
 
