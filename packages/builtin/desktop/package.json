@@ -33,7 +33,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@tavi/contracts": "workspace:*"
+    "@tavi/contracts": "workspace:*",
+    "@tavi/node-kit": "workspace:*"
   },
   "devDependencies": {
     "tsdown": "catalog:",

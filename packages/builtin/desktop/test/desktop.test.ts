@@ -879,6 +879,22 @@ describe("the gate's own rules", () => {
     expect(acted).toEqual([{ kind: "type", text: "Hello" }]);
   });
 
+  it("reports the field once the keys have landed, not as the app is still taking them in (Mac mini tests)", async () => {
+    // What the app shows after the keys, read by read: they arrive a few at a time.
+    const landing = ["Hi Hel", "Hi Hello", "Hi Hello"];
+    let reads = 0;
+    const { port, acted } = engine(
+      () => undefined,
+      () => ({ ...field(), value: acted.length === 0 ? "Hi" : (landing[Math.min(reads++, landing.length - 1)] ?? "") }),
+    );
+    const gated = createGatedDesktopPort(port, { grantedApps: { "com.apple.TextEdit": "full" }, attended: true });
+    await expect(gated.act({ kind: "type", text: " Hello" }, { app: "TextEdit" })).resolves.toMatchObject({
+      status: "accepted",
+      before: { focusedValue: "Hi" },
+      after: { focusedValue: "Hi Hello" },
+    });
+  });
+
   it("never drives the desktop when nobody said the run is attended", async () => {
     const { port, acted } = engine(() => field());
     const gated = createGatedDesktopPort(port, { grantedApps: { "com.apple.TextEdit": "full" } });

@@ -88,6 +88,9 @@ change behaviour or stored data.
   The desktop helper now asks the app in front for its focused element when
   that query is empty. Rebuild the helper (the refusal prints the commands)
   to pick it up.
+- `desktop.act`'s report after typing or a key press read the field while the
+  app was still taking the keys in, so "Hello from Tavi" came back as "Hello
+  from". It now waits, briefly, for the field to settle before reading it.
 - In a freshly started owner, a `desktop.act` before any `desktop.observe` was
   refused as "not granted desktop control in this workspace" for a granted
   app: its card read the grants before they were loaded. They are loaded then,

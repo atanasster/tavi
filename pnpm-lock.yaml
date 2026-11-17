@@ -700,6 +700,9 @@ importers:
       '@tavi/contracts':
         specifier: workspace:*
         version: link:../../contracts
+      '@tavi/node-kit':
+        specifier: workspace:*
+        version: link:../../node-kit
     devDependencies:
       tsdown:
         specifier: 'catalog:'

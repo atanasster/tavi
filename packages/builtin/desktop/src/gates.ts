@@ -31,6 +31,7 @@ import {
   refusedEarly,
 } from "@tavi/contracts";
 import { definedOnly } from "@tavi/contracts/util";
+import { sleep } from "@tavi/node-kit";
 
 export type { DesktopAbortHotkeyEvent, GatedDesktopPort } from "@tavi/contracts";
 
@@ -136,6 +137,33 @@ function snapshotFromElement(el: DesktopResolvedElement | undefined): DesktopSta
     ...(el.title === undefined ? {} : { focusedTitle: el.title }),
     ...(!isSecure && el.value !== undefined ? { focusedValue: el.value } : {}),
   };
+}
+
+/** How long the state after keys waits for the app to take them in, and how often it looks. */
+const KEYS_SETTLE_MAX_MS = 600;
+const KEYS_SETTLE_POLL_MS = 40;
+
+/**
+ * The focused element once the keys just sent have landed. The helper posts
+ * them and returns while the app is still taking them in, so a read at once
+ * showed "Hello from" for "Hello from Tavi" (Mac mini tests). Read until the
+ * value holds still across a poll, and, where it can be read, differs from
+ * before the keys; at most `KEYS_SETTLE_MAX_MS`.
+ */
+async function settledFocus(
+  read: () => Promise<DesktopResolvedElement | undefined>,
+  before: DesktopResolvedElement | undefined,
+): Promise<DesktopResolvedElement | undefined> {
+  const valueOf = (element: DesktopResolvedElement | undefined): string | undefined => snapshotFromElement(element)?.focusedValue;
+  let previous = await read();
+  for (let waited = 0; waited < KEYS_SETTLE_MAX_MS; waited += KEYS_SETTLE_POLL_MS) {
+    await sleep(KEYS_SETTLE_POLL_MS);
+    const next = await read();
+    const value = valueOf(next);
+    if (value === valueOf(previous) && (value === undefined || value !== valueOf(before))) return next;
+    previous = next;
+  }
+  return previous;
 }
 
 function isKeyboardOrWriteAction(action: DesktopAction): boolean {
@@ -710,7 +738,9 @@ export function createGatedDesktopPort(inner: DesktopPort, options: GatedDesktop
         };
       }
 
-      const afterFocused = await inner.focusedElement?.();
+      const afterFocused = isKeyboardOrWriteAction(action)
+        ? await settledFocus(async () => await inner.focusedElement?.(), beforeFocused)
+        : await inner.focusedElement?.();
       const beforeSnap = snapshotFromElement(beforeFocused);
       const afterSnap = snapshotFromElement(afterFocused);
       const changes = outcome.changes ?? describeDesktopChanges(beforeSnap, afterSnap);
