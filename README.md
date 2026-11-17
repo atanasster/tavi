@@ -6,6 +6,7 @@
 </p>
 
 <p align="center">
+  <img alt="Status: beta" src="https://img.shields.io/badge/status-beta-e9a62b">
   <a href="LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/badge/licence-MIT-1f6b55"></a>
   <img alt="Node.js 22.22 or later" src="https://img.shields.io/badge/node-%E2%89%A5%2022.22-1f6b55">
   <img alt="macOS, Linux and WSL2" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20WSL2-1f6b55">
