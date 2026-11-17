@@ -271,7 +271,7 @@ func resolveElementInfo(_ element: AXUIElement) -> [String: Any]? {
       "bundleId": bundleId,
       "name": appName,
       "pid": Int(pid),
-      "active": runningApp.isActive,
+      "active": runningApp.processIdentifier == frontmostPid(),
     ],
     "role": axString(element, kAXRoleAttribute) ?? "AXUnknown",
   ]
@@ -324,12 +324,30 @@ func systemFocusedElement() -> AXUIElement? {
   }
   // The system-wide query answers nothing for some apps (TextEdit with a focused document, on the Mac mini): the
   // keys go to the app in front, so its own focused element is the one they reach.
-  guard let front = NSWorkspace.shared.frontmostApplication else {
+  guard let front = frontmostPid() else {
     return nil
   }
-  let app = AXUIElementCreateApplication(front.processIdentifier)
+  let app = AXUIElementCreateApplication(front)
   configureMessagingTimeout(app)
   return axElement(app, kAXFocusedUIElementAttribute)
+}
+
+/// The pid of the app in front, read afresh at each call. NSWorkspace's `frontmostApplication` and `isActive` stayed
+/// at what was in front when this helper started (the Terminal that ran `tavi serve`, on the Mac mini), however
+/// focus moved since: the accessibility server's focused application, else the window list's frontmost window.
+func frontmostPid() -> pid_t? {
+  let systemWide = AXUIElementCreateSystemWide()
+  configureMessagingTimeout(systemWide)
+  var pid: pid_t = 0
+  if let app = axElement(systemWide, kAXFocusedApplicationAttribute), AXUIElementGetPid(app, &pid) == .success, pid > 0 {
+    return pid
+  }
+  if let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]],
+     let front = windows.first(where: { ($0[kCGWindowLayer as String] as? Int) == 0 }),
+     let owner = front[kCGWindowOwnerPID as String] as? pid_t {
+    return owner
+  }
+  return NSWorkspace.shared.frontmostApplication?.processIdentifier
 }
 
 func getFocusedElement() -> [String: Any]? {
@@ -353,8 +371,8 @@ func refuseTaviHostFocused() throws {
   var pid: pid_t = 0
   if let element = systemFocusedElement(), AXUIElementGetPid(element, &pid) == .success {
     // Resolved from the focused element.
-  } else if let front = NSWorkspace.shared.frontmostApplication {
-    pid = front.processIdentifier
+  } else if let front = frontmostPid() {
+    pid = front
   }
   if pid > 0, isTaviHost(pid) {
     throw HelperError(message: "Refused: keyboard focus is in the process that runs Tavi (pid \(pid)). Do not retry.")
@@ -653,7 +671,7 @@ func captureScreen(
       "bundleId": running.bundleIdentifier ?? "",
       "name": running.localizedName ?? "",
       "pid": Int(pid),
-      "active": running.isActive,
+      "active": pid == frontmostPid(),
     ]
   } else {
     let rawId: Double? = (target["displayId"] as? Int).map(Double.init) ?? (target["displayId"] as? Double)
@@ -724,6 +742,7 @@ func captureScreen(
 
 func listApps() -> [[String: Any]] {
   var results: [[String: Any]] = []
+  let front = frontmostPid()
   for app in NSWorkspace.shared.runningApplications where app.activationPolicy == .regular {
     let bundleId = app.bundleIdentifier ?? ""
     let name = app.localizedName ?? ""
@@ -738,7 +757,7 @@ func listApps() -> [[String: Any]] {
       "bundleId": bundleId,
       "name": name,
       "pid": Int(app.processIdentifier),
-      "active": app.isActive,
+      "active": app.processIdentifier == front,
       "hidden": app.isHidden,
     ]
     if let winTitle = winTitle {
@@ -777,7 +796,7 @@ func getTree(appQuery: String) -> [String: Any] {
       "bundleId": runningApp.bundleIdentifier ?? appQuery,
       "name": runningApp.localizedName ?? appQuery,
       "pid": Int(pid),
-      "active": runningApp.isActive,
+      "active": runningApp.processIdentifier == frontmostPid(),
     ],
     "nodes": nodes,
   ]

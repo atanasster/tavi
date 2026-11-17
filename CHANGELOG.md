@@ -95,6 +95,11 @@ change behaviour or stored data.
   com.apple.TextEdit`), a `desktop.act` that named it only as "TextEdit",
   before any `desktop.observe`, was refused as "not granted desktop control in
   this workspace". The name is now matched to the running app's bundle id.
+- On macOS the desktop helper kept taking the app that was in front when it
+  started (the Terminal that ran `tavi serve`) as the app in front, so keys
+  for TextEdit were refused as "Keyboard focus is in Terminal" and
+  `desktop.observe` reported TextEdit as not active. It now asks which app is
+  in front at each call. Rebuild the helper to pick it up.
 - In a freshly started owner, a `desktop.act` before any `desktop.observe` was
   refused as "not granted desktop control in this workspace" for a granted
   app: its card read the grants before they were loaded. They are loaded then,
