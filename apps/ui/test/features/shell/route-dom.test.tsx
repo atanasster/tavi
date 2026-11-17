@@ -699,6 +699,68 @@ describe("the chat panel in the address", () => {
     expect([...without.querySelectorAll(".bar .views .view")].map((view) => view.textContent)).not.toContain("Ideas");
   });
 
+  it("on a phone, Try it closes the chat's sheet so the prompt it put in the composer is in view", async () => {
+    const at = "2026-10-19T10:00:00.000Z";
+    const idea = {
+      id: "id-1",
+      workspaceId: "default",
+      runId: "run-1",
+      providerId: "tavi.ideasagent",
+      key: "travel.fare-watch",
+      category: "travel",
+      icon: "💡",
+      title: "I can watch fares",
+      pitch: "Fares.",
+      label: "Fares",
+      prompt: "Watch Sofia–Lisbon fares for May.",
+      basis: [{ kind: "general", ref: "general" }],
+      uses: [{ capability: "web", approval: false }],
+      score: 0.5,
+      status: "active",
+      pinned: false,
+      shownRuns: 0,
+      createdAt: at,
+      updatedAt: at,
+      expiresAt: at,
+    };
+    const owner: SettingsClient & { features: readonly string[] } = {
+      features: ["ideas"],
+      request: async (command, payload) => {
+        const action = String((payload as Record<string, unknown>)["action"]);
+        if (command !== "ideas") return { ok: false, error: { code: "UNSUPPORTED", message: "no" } } as never;
+        return {
+          ok: true,
+          result:
+            action === "try"
+              ? { prompt: idea.prompt, idea }
+              : { ideas: [idea], mutedCategories: [], excludedBasis: [], provider: "tavi.ideasagent", providers: [] },
+        } as never;
+      },
+    };
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes("720px"),
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    })) as unknown as typeof window.matchMedia;
+    // The panel was left open (a sheet on a phone).
+    localStorage.setItem("tavi.chatpanel.open", "true");
+    try {
+      const { store } = fakeStore({ connection: "ready", runs: [] });
+      const address = fakeNavigation("/ideas");
+      const page = await mount(<App store={store} client={owner} workspaceId="default" navigation={address.navigation} />);
+      await act(async () => undefined);
+      await click([...page.querySelectorAll(".idea-card button")].find((button) => button.textContent === "Try it"));
+      await act(async () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+      expect(page.querySelector<HTMLTextAreaElement>(".composer textarea")?.value).toBe("Watch Sofia–Lisbon fares for May.");
+      expect(localStorage.getItem("tavi.chatpanel.open")).toBe("false");
+    } finally {
+      window.matchMedia = original;
+      localStorage.removeItem("tavi.chatpanel.open");
+    }
+  });
+
   it("suggests prompts in an empty chat that fill the box, select the part to type, send nothing, and hide once typing starts", async () => {
     const asked: string[] = [];
     const owner: SettingsClient & { features: readonly string[] } = {

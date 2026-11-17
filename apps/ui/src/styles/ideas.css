@@ -64,6 +64,11 @@
   gap: var(--space-3);
 }
 
+/* "For you" holds four: two by two, never three and one left alone. A phone stacks them (below). */
+.ideas-for-you {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .idea-card {
   min-width: 0;
 }

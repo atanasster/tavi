@@ -22,6 +22,9 @@ change behaviour or stored data.
 
 ### Fixed
 
+- On a phone, an idea's **Try it** closes the chat's sheet, so the prompt it
+  put in the box is in view instead of under the sheet. The Ideas tab's
+  **For you** shows its four ideas two by two, not three and one alone.
 - A message the model will not answer (it returns nothing, twice) is answered
   with a short note saying so and suggesting a rephrase or `/new`, instead of
   silence. On Telegram, a prompt injection and every message after it in that

@@ -47,14 +47,14 @@ Each template declares its required workspace capabilities (`requires`), which c
 
 The **Ideas** tab sits beside Chat when the owner offers it (`tavi serve` with this build).
 
-- **For you**: the four best ideas.
+- **For you**: the four best ideas, two by two (stacked on a phone).
 - **The sections**: the rest, three per section, with *More* to see all of them.
 - **The footer**: "That's all for now", when Tavi last looked (and why that look came to nothing, when it was skipped or failed), and when it will look next.
 
 Each card shows:
 - **Why this:** what it rests on. *you said "…"* opens Soul & memory, *chat "…"* opens that chat, *your brief* is your own words, and *something many people ask for* means nothing personal was used (a plugin provider's such idea says *suggested by* and the provider's id).
 - **Uses:** what it would use, plus *asks before acting* when one of them always asks you first.
-- **Try it:** opens a new chat of its own (never a side chat of a draft, or a reply to a notice) with the idea's prompt in the box. Its first `[part]` is selected to type over, and Tab goes to the next one; with none ahead, Tab leaves the box. Edit it, then send it yourself, or don't. One *Try it* at a time.
+- **Try it:** opens a new chat of its own (never a side chat of a draft, or a reply to a notice) with the idea's prompt in the box; on a phone it closes the chat's sheet so the box is in view. Its first `[part]` is selected to type over, and Tab goes to the next one; with none ahead, Tab leaves the box. Edit it, then send it yourself, or don't. One *Try it* at a time.
 
 Each card's **⋯** menu steers what comes next:
 - **Pin** keeps it until you unpin it, try it, or make it recurring: trying an idea or making it a routine retires it, pin and all, and frees its place among the 12.

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateA
 
 import type { ChatNotice } from "@tavi/contracts";
 
+import { isPhone } from "../../hooks/page.js";
 import type { HeartbeatItemView } from "../center/HeartbeatItem.js";
 import type { ChatPanelTab } from "../chat-panel/tabs.js";
 import type { CanvasRun, CanvasStore } from "../chat/store/types.js";
@@ -159,6 +160,8 @@ export function useChatNavigation({
     store.newTask(undefined, { own: true });
     setDraft(new Set(runs.map((run) => run.id)));
     setPane("transcript");
+    // On a phone the panel is a sheet over the chat: it would hide the composer the prompt was put in.
+    if (isPhone()) setPanel((now) => (now.open ? { ...now, open: false } : now));
     navigate((page) => ({ ...page, route: "chat", taskId: undefined }));
     setSeededIdea(ideaId);
     setComposerSeed((before) => ({ text: prompt, key: (before?.key ?? 0) + 1 }));
