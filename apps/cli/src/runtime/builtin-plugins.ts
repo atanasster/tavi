@@ -1107,7 +1107,8 @@ export function composeBuiltinPlugins(composed: ConversationsContext) {
             provider: createBuiltinIdeasProvider(),
             kind: "builtin",
             receives: ["memory", "tasks", "brief", "ledger"],
-            maxRunSeconds: 30,
+            // Two fast-model turns, one after the other: choosing the ideas that fit, then rewording them.
+            maxRunSeconds: 60,
             usesTurns: true,
           }),
         );

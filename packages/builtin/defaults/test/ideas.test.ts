@@ -2,7 +2,7 @@ import { describeIdeasProviderConformance, fullIdeasRequest, bareIdeasRequest } 
 import { IDEA_CATEGORIES, IdeasProviderError, type IdeasGenerateRequest } from "@tavi/contracts";
 import { describe, expect, it } from "vitest";
 
-import { createBuiltinIdeasProvider } from "../src/ideas.js";
+import { createBuiltinIdeasProvider, REWORD_SYSTEM, TRIAGE_SYSTEM } from "../src/ideas.js";
 
 /** The built-in ideas provider: catalogue templates the census can run, ranked by what the person mentioned. */
 
@@ -47,7 +47,8 @@ describe("the built-in ideas provider", () => {
   it("has the fast model reword the ideas that fit the person, keeping what each does and rests on", async () => {
     const sent: string[] = [];
     const host: NonNullable<IdeasGenerateRequest["host"]> = {
-      runTurn: async ({ user }) => {
+      runTurn: async ({ system, user }) => {
+        if (system !== REWORD_SYSTEM) return { text: "{}" };
         sent.push(user);
         return {
           text:
@@ -144,8 +145,8 @@ describe("the built-in ideas provider", () => {
   it("rewords no idea matched only by more like this: it cites nothing of the person's, so it keeps the catalogue's words", async () => {
     const sent: string[] = [];
     const host: NonNullable<IdeasGenerateRequest["host"]> = {
-      runTurn: async ({ user }) => (
-        sent.push(user),
+      runTurn: async ({ system, user }) => (
+        system === REWORD_SYSTEM && sent.push(user),
         { text: JSON.stringify({ ideas: [{ key: "learning.language", title: "I can teach you Portuguese for your Lisbon trip" }] }) }
       ),
     };
@@ -170,6 +171,81 @@ describe("the built-in ideas provider", () => {
         plain,
       );
     }
+  });
+
+  it("asks the fast model which ideas fit the person, beyond the trigger words, and ranks its picks first", async () => {
+    const turns: { system: string; user: string }[] = [];
+    const bare = bareIdeasRequest(new AbortController().signal);
+    const request: IdeasGenerateRequest = {
+      ...bare,
+      memory: [
+        { recordId: "mem-cello", revisionId: "rev-cello", kind: "fact", text: "Learning the cello; practises scales every evening" },
+        { recordId: "mem-dog", revisionId: "rev-dog", kind: "lesson", text: "Biscuit the beagle needs a walk before any long call" },
+      ],
+      ledger: {
+        dismissedKeys: ["health-home.lost-pet"],
+        snoozedKeys: [],
+        suppressedKeys: [],
+        recentKeys: [],
+        mutedCategories: [],
+        excludedBasis: [],
+        boostedKeys: [],
+        boostedCategories: [],
+        examples: [],
+        active: [],
+      },
+      host: {
+        runTurn: async ({ system, user }) => {
+          turns.push({ system, user });
+          if (system !== TRIAGE_SYSTEM) return { text: "{}" };
+          return {
+            text: JSON.stringify({
+              picks: [
+                { key: "learning.mix-practice", note: "n1" },
+                // Not offered (dismissed), not a template, or resting on no note given: each is left out.
+                { key: "health-home.lost-pet", note: "n2" },
+                { key: "made.up", note: "n1" },
+                { key: "health-home.pet-vaccines", note: "n9" },
+                { key: "health-home.pet-diet", note: "n2" },
+              ],
+            }),
+          };
+        },
+      },
+    };
+    const { ideas } = await createBuiltinIdeasProvider().generate(request);
+    // One triage turn, given the notes as data and only the ideas that could be offered.
+    const triage = turns.filter(({ system }) => system === TRIAGE_SYSTEM);
+    expect(triage).toHaveLength(1);
+    const asked = JSON.parse(triage[0]?.user ?? "{}") as { notes: { id: string; text: string }[]; ideas: { key: string }[] };
+    expect(asked.notes).toEqual([
+      { id: "n1", text: "Learning the cello; practises scales every evening" },
+      { id: "n2", text: "Biscuit the beagle needs a walk before any long call" },
+    ]);
+    expect(asked.ideas.map(({ key }) => key)).toContain("learning.mix-practice");
+    expect(asked.ideas.map(({ key }) => key)).not.toContain("health-home.lost-pet");
+    // The picks come first, in the model's order, each citing the note it named.
+    expect(ideas.slice(0, 2).map(({ idea }) => [idea.key, idea.basis])).toEqual([
+      ["learning.mix-practice", [{ kind: "memory", ref: "mem-cello", excerpt: "Learning the cello; practises scales every evening" }]],
+      ["health-home.pet-diet", [{ kind: "memory", ref: "mem-dog", excerpt: "Biscuit the beagle needs a walk before any long call" }]],
+    ]);
+    // A trigger word alone ("learning") still cites the note, but ranks below what the model judged close.
+    const language = ideas.find(({ idea }) => idea.key === "learning.language");
+    expect(language?.idea.basis[0]?.kind).toBe("memory");
+    expect(language?.score).toBeLessThan(ideas[1]?.score ?? 0);
+    const keys = ideas.map(({ idea }) => idea.key);
+    expect(keys).not.toContain("health-home.lost-pet");
+    expect(keys).not.toContain("made.up");
+    expect(ideas.find(({ idea }) => idea.key === "health-home.pet-vaccines")?.idea.basis[0]?.kind ?? "general").toBe("general");
+  });
+
+  it("asks no triage turn when there is nothing of the person's to fit", async () => {
+    const systems: string[] = [];
+    await createBuiltinIdeasProvider().generate({
+      ...bareIdeasRequest(new AbortController().signal),
+      host: { runTurn: async ({ system }) => (systems.push(system), { text: "{}" }) },
+    });
+    expect(systems).toEqual([]);
   });
 
   it("leans toward the sections the person takes up, among equals", async () => {

@@ -105,7 +105,7 @@ describe("ideas sources", () => {
     expect(census(["none", "connected"])).toEqual(["mailbox", "calendar"]);
   });
 
-  it("reads own-scope preferences and facts that recall would use: not past, not sensitive, not on a revoked source", async () => {
+  it("reads own-scope preferences, facts and lessons that recall would use: not past, not sensitive, not on a revoked source", async () => {
     const record = (recordId: string, overrides: Record<string, unknown> = {}) => ({
       recordId,
       kind: "fact",
@@ -160,15 +160,75 @@ describe("ideas sources", () => {
     expect(asked.eligible).not.toContain("past");
     expect(excerpts.map((excerpt) => excerpt.recordId)).not.toContain("revoked");
     expect(excerpts).toHaveLength(IDEAS_MEMORY_MAX);
+    // A preference is the person's profile: it comes before a passing fact.
     expect(excerpts.slice(0, 2)).toEqual([
-      { recordId: "a", revisionId: "rev-a", kind: "fact", text: "Title a — Body a" },
       { recordId: "pref", revisionId: "rev-pref", kind: "preference", text: "Title pref — Body pref" },
+      { recordId: "a", revisionId: "rev-a", kind: "fact", text: "Title a — Body a" },
     ]);
     expect(asked.list).toMatchObject({
-      kinds: ["preference", "fact"],
+      kinds: ["preference", "fact", "lesson"],
       statuses: ["approved"],
       actor: { workspaceId: "default", principalId: "operator", caller: "ideas" },
     });
+  });
+
+  it("reads the person's profile first: core me.* facts, then preferences and lessons, before newer passing facts", async () => {
+    const record = (recordId: string, kind: string, topicKey?: string) => ({
+      recordId,
+      kind,
+      sensitivity: "normal",
+      status: "approved",
+      scope: { kind: "personal" },
+      currentRevisionId: `rev-${recordId}`,
+      currentRevision: { revisionId: `rev-${recordId}` },
+      ...(topicKey === undefined ? {} : { topicKey }),
+    });
+    // Newest first, as the store lists them: 70 passing facts, then the profile, older.
+    const listed = [
+      ...Array.from({ length: 70 }, (_, index) => record(`passing-${index}`, "fact")),
+      record("lesson", "lesson"),
+      record("pref", "preference"),
+      record("core", "fact", "me.hobby"),
+    ];
+    let limit: number | undefined;
+    const memory = {
+      list: (input: { limit?: number }) => ((limit = input.limit), listed),
+      eligible: (input: { recordIds: readonly string[] }) =>
+        input.recordIds.map((recordId) => ({
+          recordId,
+          revisionId: `rev-${recordId}`,
+          scope: { kind: "personal" },
+          title: recordId,
+          snippet: "",
+          recordedAt: NOW,
+          superseded: false,
+          conflict: false,
+        })),
+    } as unknown as Pick<MemoryServicePort, "list" | "eligible">;
+    const excerpts = await ideasMemoryContext(memory, { workspaceId: "default", principalId: "operator" }, NOW);
+    expect(limit).toBeGreaterThanOrEqual(listed.length);
+    expect(excerpts).toHaveLength(IDEAS_MEMORY_MAX);
+    expect(excerpts.slice(0, 4).map(({ recordId, kind }) => [recordId, kind])).toEqual([
+      ["core", "fact"],
+      ["pref", "preference"],
+      ["lesson", "lesson"],
+      ["passing-0", "fact"],
+    ]);
+  });
+
+  it("never runs a provider's turn on the chat's main model: with no fast model bound it refuses", async () => {
+    let called = 0;
+    const turn = ideasModelTurn({
+      principalOf: () => "operator",
+      fastTarget: async () => undefined,
+      models: { stream: async () => ((called += 1), { status: "completed", text: "{}", usage: {} }) as never },
+      newId: () => "a1",
+      now: () => NOW,
+    });
+    await expect(
+      turn({ workspaceId: "default", runId: "irun-1" }, { system: "", user: "hi", maxOutputTokens: 100 }, new AbortController().signal),
+    ).rejects.toThrow(/fast model/);
+    expect(called).toBe(0);
   });
 
   it("gives only the person's own chats with a real title: no prompt line, messaging, run, worker or Home, no private or memory-off chat", () => {

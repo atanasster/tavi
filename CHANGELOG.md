@@ -8,6 +8,12 @@ change behaviour or stored data.
 
 ### Changed
 
+- Ideas are chosen for what Tavi knows of you, not only for words you
+  happened to use: with a *Fast* model set, it first asks that model which
+  ideas fit your interests (each resting on one thing you said), and those
+  come first. Ideas now read your lessons and put your core facts and
+  preferences ahead of newer passing details. They still never use your main
+  chat model.
 - A chat that was stuck answers your new message and stops there: it no longer
   goes back on its own to the earlier requests it never finished, each asking
   for approvals again. It says in a line which are not done and offers them.

@@ -619,7 +619,7 @@ export const PluginIdeasDeclarationSchema = z.strictObject({
 export type PluginIdeasDeclaration = z.infer<typeof PluginIdeasDeclarationSchema>;
 
 const IDEAS_RECEIVE_DISCLOSURES: Readonly<Record<IdeasReceive, string>> = {
-  memory: "your approved, non-sensitive preferences and facts",
+  memory: "your approved, non-sensitive preferences, facts and lessons",
   tasks: "your recent chats' titles and summaries, and prompts you edited before sending",
   brief: "the ideas brief you write",
   ledger: "which ideas you dismissed, snoozed, muted or asked more of",

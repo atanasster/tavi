@@ -179,7 +179,7 @@ describe("ideas providers", () => {
         disclosure: "Runs on your machine.",
       }),
     ).toBe(
-      "Ideas provider: it may receive your approved, non-sensitive preferences and facts (while its switch is on); which ideas you dismissed, snoozed, muted or asked more of. It proposes ideas only; Tavi checks each one and never lets it send or run anything. It says: Runs on your machine.",
+      "Ideas provider: it may receive your approved, non-sensitive preferences, facts and lessons (while its switch is on); which ideas you dismissed, snoozed, muted or asked more of. It proposes ideas only; Tavi checks each one and never lets it send or run anything. It says: Runs on your machine.",
     );
   });
 

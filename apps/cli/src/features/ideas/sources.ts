@@ -121,11 +121,27 @@ export const IDEAS_MEMORY_MAX = 20;
 const IDEAS_TASKS_MAX = 10;
 const OWN_SCOPES = new Set(["personal", "personal_workspace", "personal_agent"]);
 
+/** How many records the store is asked for, newest first, so a core fact older than the passing ones is still found. */
+const IDEAS_MEMORY_SCAN = 200;
+
 /**
- * The person's preferences and facts of their own scopes that recall would
- * use now, newest first: approved, not past, normal sensitivity, and not
- * resting on a source the person revoked — `list` finds the candidates,
- * `eligible` applies search's own filters to them.
+ * How close a record is to the person's profile ("About the person"): a core `me.*` fact first, then their
+ * preferences and lessons, then any other fact. Ideas are meant to rest on who the person is, not on the newest
+ * passing detail.
+ */
+function profileRank(record: { readonly kind: string; readonly topicKey?: string | undefined }): number {
+  if (record.kind === "fact" && record.topicKey?.startsWith("me.") === true) return 0;
+  if (record.kind === "preference") return 1;
+  if (record.kind === "lesson") return 2;
+  return 3;
+}
+
+/**
+ * The person's preferences, facts and lessons of their own scopes that recall
+ * would use now, profile first (`profileRank`), newest first within each:
+ * approved, not past, normal sensitivity, and not resting on a source the
+ * person revoked — `list` finds the candidates, `eligible` applies search's
+ * own filters to them.
  */
 export async function ideasMemoryContext(
   memory: Pick<MemoryServicePort, "list" | "eligible">,
@@ -135,37 +151,43 @@ export async function ideasMemoryContext(
   const asActor = { ...actor, caller: "ideas", authority: "operator" as const };
   const records = await memory.list({
     actor: asActor,
-    kinds: ["preference", "fact"],
+    kinds: ["preference", "fact", "lesson"],
     statuses: ["approved"],
-    limit: IDEAS_MEMORY_MAX * 3,
+    limit: IDEAS_MEMORY_SCAN,
     withCurrentRevision: true,
   });
-  const candidates = records.filter(
-    (record) =>
-      record.currentRevision !== undefined &&
-      record.sensitivity === "normal" &&
-      OWN_SCOPES.has(record.scope.kind) &&
-      !memoryRecordIsPast(record, now),
-  );
+  const candidates = records
+    .filter(
+      (record) =>
+        record.currentRevision !== undefined &&
+        record.sensitivity === "normal" &&
+        OWN_SCOPES.has(record.scope.kind) &&
+        !memoryRecordIsPast(record, now),
+    )
+    .map((record, order) => ({ record, order }))
+    .sort((a, b) => profileRank(a.record) - profileRank(b.record) || a.order - b.order)
+    .map(({ record }) => record)
+    .slice(0, IDEAS_MEMORY_MAX * 3);
   if (candidates.length === 0) return [];
-  // `eligible` takes at most `MEMORY_SEARCH_MAX` ids a call.
-  const eligible = [];
+  // `eligible` takes at most `MEMORY_SEARCH_MAX` ids a call, and answers in its own order: the candidates' is kept.
+  const eligible = new Map<string, Awaited<ReturnType<typeof memory.eligible>>[number]>();
   for (let start = 0; start < candidates.length; start += MEMORY_SEARCH_MAX) {
-    eligible.push(
-      ...(await memory.eligible({
-        actor: asActor,
-        recordIds: candidates.slice(start, start + MEMORY_SEARCH_MAX).map((record) => record.recordId),
-      })),
-    );
+    for (const hit of await memory.eligible({
+      actor: asActor,
+      recordIds: candidates.slice(start, start + MEMORY_SEARCH_MAX).map((record) => record.recordId),
+    }))
+      eligible.set(hit.recordId, hit);
   }
-  const kinds = new Map(candidates.map((record) => [record.recordId, record.kind]));
-  return eligible
-    .filter((hit) => OWN_SCOPES.has(hit.scope.kind) && !hit.superseded)
+  return candidates
+    .flatMap((record) => {
+      const hit = eligible.get(record.recordId);
+      return hit === undefined || !OWN_SCOPES.has(hit.scope.kind) || hit.superseded ? [] : [{ record, hit }];
+    })
     .slice(0, IDEAS_MEMORY_MAX)
-    .map((hit) => ({
+    .map(({ record, hit }) => ({
       recordId: hit.recordId,
       revisionId: hit.revisionId,
-      kind: kinds.get(hit.recordId) === "preference" ? ("preference" as const) : ("fact" as const),
+      kind: record.kind === "preference" ? ("preference" as const) : record.kind === "lesson" ? ("lesson" as const) : ("fact" as const),
       text: memoryExcerptHead(hit.title, hit.snippet),
     }));
 }

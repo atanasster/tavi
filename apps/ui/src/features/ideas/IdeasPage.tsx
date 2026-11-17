@@ -281,7 +281,7 @@ export function IdeasPage({ onTry, onModels, onSettings, onOpenTask, onOpenMemor
       ) : null}
       {answer?.modelSet === false && !off ? (
         <Notice className="ideas-model">
-          Ideas keep their plain wording until a fast model is set.{" "}
+          Until a fast model is set, ideas match only the words you used and keep their plain wording.{" "}
           {onModels === undefined ? null : (
             <Button variant="link" onClick={onModels}>
               Set one in Settings → Models

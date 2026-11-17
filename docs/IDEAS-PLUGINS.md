@@ -33,7 +33,7 @@ Your provider never stores, sends or runs anything. It proposes. That is what ma
 
 - **`provides` and `ideas.abi`.** Together they say the plugin supplies an ideas provider built for contract `tavi.ideas/1`. A plugin built for another contract is refused before any of its code runs.
 - **`receives`.** Lists what your provider asks to be given. Code for each one being absent:
-  - `memory`: the person's approved, normal-sensitivity preferences and facts. Sensitive and run-local records are never read.
+  - `memory`: the person's approved, normal-sensitivity preferences, facts and lessons, their profile first (core `me.*` facts, then preferences and lessons, then other facts, newest first within each). Sensitive and run-local records are never read.
   - `tasks`: their recent chats' titles and summaries. A chat's summary comes only when its content label was read and is trusted; otherwise you get its title alone.
   - `brief`: the text they wrote to steer ideas.
   - `ledger`: what they dismissed, snoozed, muted, excluded, tried lately or asked for more of, plus the ideas active now. The prompts they edited before sending (`examples`) are their own words, so they come only with `tasks`, and never those typed in a chat they set aside.
