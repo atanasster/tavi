@@ -56,8 +56,8 @@ patchedDependencies:
   '@cantoo/pdf-lib@2.11.1': patches/@cantoo__pdf-lib@2.11.1.patch
 
 overrides:
-  '@ai-sdk/provider': 4.0.34
-  '@ai-sdk/provider-utils': 5.0.68
+  '@ai-sdk/provider': 4.0.38
+  '@ai-sdk/provider-utils': 5.0.81
   # Security floors for transitive dependencies whose parents pin older ranges
   # (`pnpm audit`): undici 7 under the AI SDK and 8 under jsdom, node-forge under the sandbox
   # runtime, KaTeX under remark-math, and the dev toolchain's source-map-js and

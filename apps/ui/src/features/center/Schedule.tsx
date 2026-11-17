@@ -437,7 +437,7 @@ export function Schedule({
 }
 
 /** How soon after a reload of its own the feed's word of that same change is taken as said: nothing is read twice for it. */
-export const ECHO_MS = 2_000;
+const ECHO_MS = 2_000;
 
 /**
  * The feed's `revision` as Schedule reads by it: the first move after a
