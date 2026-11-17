@@ -146,6 +146,8 @@ describe("real prompt → model → tool → model result over real HTTP", () =>
       // registerBrowserTools/registerMessagingTools/registerHttpTools/
       // registerCollectorTools/registerReportTools from the composition would
       // still fail this test.
+      // The browser's own tools are offered only while Chromium is installed: CI has none.
+      const chromium = await chromiumInstalled();
       const offered = (endpoint.requests[0]?.body as { tools?: { function?: { name?: string } }[] }).tools ?? [];
       for (const entry of offered) {
         expect(entry.function?.name ?? "").toMatch(/^[a-zA-Z0-9_-]+$/);
@@ -163,8 +165,7 @@ describe("real prompt → model → tool → model result over real HTTP", () =>
           "agents_wait",
           "agents_read_payload",
           "sandbox_run",
-          // The browser's tools only while Chromium is installed: CI has none.
-          ...((await chromiumInstalled())
+          ...(chromium
             ? ["browser_create_session", "browser_navigate", "browser_observe", "browser_act", "browser_capture", "browser_close"]
             : []),
           "messaging_send_to",
@@ -225,15 +226,13 @@ describe("real prompt → model → tool → model result over real HTTP", () =>
         "fs_edit",
       ])
         expect(offered.map((entry) => entry.function?.name)).toContain(added);
-      // browser.read joined the browser tools, which a site-naming prompt is offered.
-      expect(offered.map((entry) => entry.function?.name)).toContain("browser_read");
+      // browser.read joined the browser tools, which a site-naming prompt is offered
+      // while Chromium is installed.
+      if (chromium) expect(offered.map((entry) => entry.function?.name)).toContain("browser_read");
       // The browser agent's tools: batched, reading, finding and seeing browser
       // actions, the task's findings, and a flight search.
       for (const added of [
-        "browser_batch",
-        "browser_extract",
-        "browser_find",
-        "browser_vision_act",
+        ...(chromium ? ["browser_batch", "browser_extract", "browser_find", "browser_vision_act"] : []),
         "findings_add",
         "findings_check",
         "findings_list",
@@ -252,7 +251,7 @@ describe("real prompt → model → tool → model result over real HTTP", () =>
       for (const added of ["pdf_read", "pdf_view", "pdf_fields", "pdf_render", "pdf_fill", "pdf_overlay"])
         expect(offered.map((entry) => entry.function?.name)).toContain(added);
       // Site profiles' structured-data read.
-      expect(offered.map((entry) => entry.function?.name)).toContain("browser_structured");
+      if (chromium) expect(offered.map((entry) => entry.function?.name)).toContain("browser_structured");
       // The video tools, where the person's FFmpeg is found, as the owner offers them.
       const video = ["video_info", "video_frames", "video_view", "video_pose", "video_transcribe"];
       if ("missing" in findFfmpeg()) for (const absent of video) expect(offered.map((entry) => entry.function?.name)).not.toContain(absent);
@@ -280,7 +279,8 @@ describe("real prompt → model → tool → model result over real HTTP", () =>
         "todos_remove",
       ])
         expect(offered.map((entry) => entry.function?.name)).toContain(added);
-      expect(offered).toHaveLength(98 + ("missing" in findFfmpeg() ? 0 : video.length));
+      // Twelve of them are the browser's, offered only while Chromium is installed.
+      expect(offered).toHaveLength(86 + (chromium ? 12 : 0) + ("missing" in findFfmpeg() ? 0 : video.length));
     } finally {
       await endpoint.close();
     }

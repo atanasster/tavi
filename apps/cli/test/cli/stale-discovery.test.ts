@@ -99,8 +99,9 @@ async function leaveCrashedOwnerDiscovery(directory: string): Promise<void> {
   );
   mintToken(directory, proof);
   // The crash: the lock is released (the OS does this for a killed process) but
-  // the discovery files are never cleaned up.
-  owner.release();
+  // the discovery files are never cleaned up. Awaited: the lock is let go by a
+  // worker, and a probe that ran first would find it still held.
+  await owner.release();
 }
 
 describe("stale owner discovery", () => {
@@ -162,7 +163,7 @@ describe("stale owner discovery", () => {
       expect(readDiscovery(directory)).toBeDefined();
       expect(readToken(directory)).toBeDefined();
     } finally {
-      owner.release();
+      await owner.release();
     }
   });
 
