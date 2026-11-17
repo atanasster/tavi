@@ -31,7 +31,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@modelcontextprotocol/client": "2.3.1",
+    "@modelcontextprotocol/client": "2.4.0",
     "@tavi/agent-host": "workspace:*",
     "@tavi/child-kit": "workspace:*",
     "@tavi/client": "workspace:*",
@@ -60,9 +60,9 @@
     "ajv": "8.20.0",
     "ink": "7.1.1",
     "react": "catalog:",
-    "rolldown": "1.2.15",
+    "rolldown": "1.3.2",
     "string-width": "8.3.0",
-    "undici": "8.12.3",
+    "undici": "8.12.4",
     "ws": "catalog:",
     "yaml": "2.9.1",
     "zod": "catalog:"
@@ -70,7 +70,7 @@
   "devDependencies": {
     "@cantoo/pdf-lib": "catalog:",
     "@langchain/langgraph-checkpoint-sqlite": "catalog:",
-    "@modelcontextprotocol/server": "2.3.1",
+    "@modelcontextprotocol/server": "2.4.0",
     "@tavi/pdf-ocr": "workspace:*",
     "@tavi/plugin-kit": "workspace:*",
     "@tavi/test-support": "workspace:*",
