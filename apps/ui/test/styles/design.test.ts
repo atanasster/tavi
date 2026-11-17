@@ -39,9 +39,15 @@ describe("the canvas keeps ai-finance's design rules", () => {
   });
 
   it("keeps a page scroller's scrollbar room, so its centred column sits still between a short page and a long one (Mac mini UI check)", () => {
+    // A rule may name the page alone or in a shared selector list (`.center,\n.ideas-page {`).
+    const css = canvasCss().replace(/\/\*[\s\S]*?\*\//g, "");
+    const rules = [...css.matchAll(/\n([^{}\s][^{}]*)\{([^}]*)\}/g)].map(([, selectors, body]) => ({
+      selectors: selectors!.split(",").map((part) => part.trim()),
+      body: body!,
+    }));
     for (const selector of [".settings", ".center", ".ideas-page", ".welcome-page", ".runs"]) {
-      const rule = new RegExp(`\\n${selector.replace(".", "\\.")} \\{[^}]*\\}`).exec(canvasCss())?.[0];
-      expect(rule, selector).toContain("scrollbar-gutter: stable");
+      const bodies = rules.filter((rule) => rule.selectors.includes(selector)).map((rule) => rule.body);
+      expect(bodies.join(""), selector).toContain("scrollbar-gutter: stable");
     }
   });
 
