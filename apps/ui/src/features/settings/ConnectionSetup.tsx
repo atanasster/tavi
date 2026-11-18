@@ -61,7 +61,7 @@ export function AddConnectionModal({
 function ProviderChoice({ onChoose }: { readonly onChoose: (preset: ModelProviderPreset) => void }) {
   return (
     <>
-      <p className="picker-intro">Choose where tavi's models come from. Any server that speaks the OpenAI API works through Custom.</p>
+      <p className="picker-intro">Choose where Tavi's models come from. Any server that speaks the OpenAI API works through Custom.</p>
       <ul className="provider-grid list-reset">
         {MODEL_PROVIDER_PRESETS.map((preset) => (
           <li key={preset.id}>

@@ -28,6 +28,15 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Settings → Models, walked at desktop and phone width. A connection's
+  Rediscover and Manage sit level with its name instead of dropping to the
+  middle of an opened Native video list, and on a phone a role's Clear and Set
+  sit beside its name, not halfway down a description that wraps. In Manage,
+  "Remove this connection…" starts on the dialog's text edge. The tiles in Add
+  a model connection start their words at the top, so tiles in a row line up,
+  and its intro says "Tavi's". On a phone the model picker wraps a model's name
+  and details and puts its badges under them, rather than cutting every name to
+  "AionLabs: Aion …".
 - A chat's page, walked at desktop and phone width. A replayed turn that kept
   only its prompt no longer shows an empty **Tavi** heading under it. The
   chat panel's Hide button sits level with the chat's name rather than halfway
