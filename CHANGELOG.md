@@ -28,6 +28,11 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Browser, walked at desktop and phone width. Show visits sits at each
+  card's foot, level across a row whatever the titles' lengths. A task's
+  title is at most four lines, ending in an ellipsis. A session that opened
+  no page is a short card with its task, not a "?" placeholder the size of a
+  page's picture.
 - Soul & memory, walked at desktop and phone width. Keep without asking
   says what may be kept under its name, before its ticks, rather than under
   Lessons as if it were that one's. A tick in Memory's settings stands 8px

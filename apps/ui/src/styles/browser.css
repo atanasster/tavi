@@ -13,9 +13,10 @@
   gap: var(--space-3-5);
 }
 
+/* Show visits at the card's foot: across a row of cards, each at the same height whatever the title's length. */
 .browser-card {
   display: grid;
-  align-content: start;
+  grid-template-rows: auto auto 1fr;
   min-width: 0;
   overflow: hidden;
   border-color: var(--line-fainter);
@@ -99,9 +100,21 @@
   min-width: 0;
 }
 
+/* A task's title at most four lines, ending in an ellipsis: a long one (or one the owner cut short mid-word) no
+   longer sets the height of every card in its row. */
 .browser-card-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
   font-weight: var(--weight-semibold);
   overflow-wrap: anywhere;
+}
+
+/* A session that opened no page has no picture to show: its card is its task, not a placeholder the size of one. */
+.browser-blank .browser-thumb {
+  display: none;
 }
 
 .browser-card-meta {
@@ -115,6 +128,7 @@
 }
 
 .browser-visits {
+  align-self: end;
   padding: var(--space-1-5) var(--space-2) var(--space-2-5);
   font-size: var(--text-meta);
 }
