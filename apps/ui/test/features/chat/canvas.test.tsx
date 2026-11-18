@@ -7,11 +7,11 @@ import type { TaskListRow } from "@tavi/contracts";
 
 import { Settings } from "../../../src/features/settings/SettingsPage.js";
 import { SettingsNav } from "../../../src/features/settings/SettingsNav.js";
-import { StatsStrip } from "../../../src/features/shell/StatsStrip.js";
 import { Bar } from "../../../src/features/shell/Bar.js";
 import { Canvas, trailingEllipsisOff } from "../../../src/features/chat/Canvas.js";
 import { SessionDirectory } from "../../../src/features/sessions/SessionDirectory.js";
 import { Details } from "../../../src/features/chat-panel/Details.js";
+import { replyFacts } from "../../../src/features/chat/reply-facts.js";
 import { sessionsOf, sessionStats, shellState } from "../../../src/features/shell/shell.js";
 import { Trajectory } from "../../../src/features/chat/Trajectory.js";
 import type { CanvasRun, CanvasState, CanvasStore } from "../../../src/features/chat/store/types.js";
@@ -389,7 +389,8 @@ describe("the canvas", () => {
       { kind: "run.started", threadId: "t", workspaceId: "default" },
       { kind: "task.completed", finalText: "first answer" },
     ]);
-    const placeholder = (html: string): string | undefined => /<textarea[^>]*placeholder="([^"]*)"/.exec(html)?.[1];
+    // Its first line: the second says the keys (`COMPOSER_KEYS`).
+    const placeholder = (html: string): string | undefined => /<textarea[^>]*placeholder="([^"]*)"/.exec(html)?.[1]?.split("\n")[0];
     const canvas = (props: Partial<Parameters<typeof Canvas>[0]>, state: CanvasState = { connection: "ready", runs: [] }) =>
       renderToStaticMarkup(
         <InWorkspace>
@@ -410,8 +411,10 @@ describe("the canvas", () => {
       continuing: "task-1",
       next: { kind: "continue", taskId: "task-1" },
     };
-    // Another chat: by its name, else its first prompt, else "this chat".
-    expect(placeholder(canvas({}, held))).toBe("Message first…");
+    // Another chat: by its name; one whose name is only its first message is replied to, not named by the question again.
+    expect(placeholder(canvas({}, held))).toBe("Reply…");
+    expect(placeholder(canvas({ chatTitle: "first" }, held))).toBe("Reply…");
+    expect(/<textarea[^>]*placeholder="Reply…\nEnter to send · Shift\+Enter for a new line"/.test(canvas({}, held))).toBe(true);
     expect(placeholder(canvas({ chatTitle: "Trip plans" }, held))).toBe("Message Trip plans…");
     expect(
       placeholder(
@@ -420,7 +423,7 @@ describe("the canvas", () => {
           { connection: "ready", runs: [run("ui-1", "", done, { restored: true })], next: { kind: "continue", taskId: "task-1" } },
         ),
       ),
-    ).toBe("Message this chat…");
+    ).toBe("Reply…");
     // A chat on screen that the next prompt does not continue (its prompt refused, say): never named.
     const refused: CanvasState = {
       connection: "ready",
@@ -632,23 +635,32 @@ describe("the canvas", () => {
     expect(open).toContain("Nothing.");
   });
 
-  it("shows on the strip only the figures that have a source", () => {
-    const html = renderToStaticMarkup(<StatsStrip stats={{ elapsedMs: 125_000, tools: 1 }} target="openrouter/gpt-5" />);
-    expect(html).toContain("elapsed 2m 05s");
-    expect(html).toContain("1 tool call");
-    expect(html).toContain("Model: gpt-5");
-    expect(html).toContain('title="openrouter/gpt-5"');
-    // No token, cost, context or tok/s figure: the protocol carries none.
-    for (const absent of ["token", "cost", "ctx", "tok/s"]) expect(html).not.toContain(absent);
-    // What cannot be measured is shown absent, never estimated.
-    const bare = renderToStaticMarkup(<StatsStrip stats={undefined} target={undefined} />);
-    expect(bare).toContain("elapsed —");
-    expect(bare).toContain("Model: —");
-    expect(bare).toContain("0 tool calls");
-    // What the owner runs, never the saved choice waiting on a restart.
-    expect(
-      renderToStaticMarkup(<StatsStrip stats={undefined} target={undefined} unconfigured afterRestart="openrouter/gpt-4.1" />),
-    ).toContain("Model: not configured (gpt-4.1 after restart)");
+  it("says under a finished reply only the figures that have a source", () => {
+    const answered = run(
+      "ui-1",
+      "Name a cat",
+      fold([
+        { kind: "run.started", threadId: "thread-1", workspaceId: "default" },
+        { kind: "text.delta", blockId: "b", text: "Midnight" },
+        {
+          kind: "task.completed",
+          finalText: "Midnight",
+          metrics: { models: ["ollama/gemma4-32k:latest"], totalTokens: 22_400, partial: false },
+        },
+      ]),
+      { activeMs: 125_000 },
+    );
+    expect(replyFacts(answered)).toEqual({ time: "2m 05s", model: "gemma4-32k:latest", modelIds: "ollama/gemma4-32k:latest" });
+    const html = render({ connection: "ready", runs: [answered] });
+    expect(html).toContain("2m 05s · gemma4-32k:latest");
+    expect(html).toContain('title="ollama/gemma4-32k:latest"');
+    // No tool call made, none said; and no token, cost, context or tok/s figure.
+    expect(html).not.toContain("tool call");
+    for (const absent of ["token", "cost", "ctx", "tok/s"]) expect(html.toLowerCase()).not.toContain(absent);
+    // A replayed turn whose stamps were not kept has no time, not "0.0s".
+    expect(replyFacts({ ...answered, activeMs: 0 }).time).toBeUndefined();
+    // Nothing is said of a turn still running.
+    expect(replyFacts(run("ui-2", "Again", fold([{ kind: "run.started", threadId: "thread-1", workspaceId: "default" }])))).toEqual({});
   });
 
   it("holds sends and says why while the owner runs no configured model", () => {
@@ -874,6 +886,8 @@ it("renders durable task details and trajectory when there are no stream events"
   for (const missing of ["Model not recorded", "Tokens not recorded", "Time not recorded"]) expect(html).not.toContain(missing);
   const session = sessionsOf([saved])[0]!;
   expect(sessionStats(session)).toEqual({ elapsedMs: 31000, tools: 1 });
+  // Its footer says the same: its time, the model its call named, and the call.
+  expect(replyFacts(saved)).toEqual({ time: "31s", model: "gpt-4.1-mini", modelIds: "openrouter/openai/gpt-4.1-mini", tools: 1 });
   const trajectory = renderToStaticMarkup(
     <InWorkspace client={{ request: async () => ({ ok: true }) }} workspaceId="default">
       <Trajectory session={session} />

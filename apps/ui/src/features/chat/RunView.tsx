@@ -1,4 +1,4 @@
-import { memo, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { memo, type ReactNode, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { turnEnded, type TranscriptEntry } from "@tavi/client/browser";
 import type { PlanItem } from "@tavi/contracts";
@@ -20,6 +20,7 @@ import { Approvals } from "./Approvals.js";
 import { FILES_ONLY_PROMPT, inlinedFilesOf } from "./attachments.js";
 import { MessageActions, type RewindOffer } from "./MessageActions.js";
 import { latestPlan, planStep } from "./plan.js";
+import { replyFacts } from "./reply-facts.js";
 import { Reviews } from "./Reviews.js";
 import {
   cancelledWords,
@@ -134,6 +135,7 @@ export const RunView = memo(function RunView({
   onSteerQueued,
   awaitsDecision: waitsOnDecision = false,
   earlierPlan,
+  memoryChip,
 }: {
   readonly run: CanvasRun;
   readonly timeZone: string | undefined;
@@ -162,6 +164,8 @@ export const RunView = memo(function RunView({
   readonly awaitsDecision?: boolean;
   /** While it runs: the transcript of an earlier turn whose plan this one carries on, when it has kept none of its own. */
   readonly earlierPlan?: readonly TranscriptEntry[] | undefined;
+  /** What the answer used from memory: a chip on the footer's line that opens to the records below it. */
+  readonly memoryChip?: ReactNode;
 }) {
   /** Where focus lands once the divider that held it is gone. */
   const shownHere = useRef<HTMLParagraphElement>(null);
@@ -392,12 +396,7 @@ export const RunView = memo(function RunView({
       {run.error !== undefined ? <Failure alert={false}>{run.error}</Failure> : null}
       {/* Stop lives on the composer; the card only says when one is already on its way. */}
       {run.aborting ? <Notice>Stopping…</Notice> : null}
-      {/* Numbers live in the strip and the Details tab; a response carries only its actions. */}
-      {response ? (
-        <footer className="response-footer">
-          <MessageActions text={response} label="response" readAloud={turnEnded(status)} />
-        </footer>
-      ) : null}
+      {response || memoryChip ? <ReplyFooter run={run} response={response} memoryChip={memoryChip} /> : null}
     </article>
   );
 });
@@ -424,5 +423,40 @@ function Working({ plan }: { readonly plan: readonly PlanItem[] | undefined }) {
         </span>
       )}
     </p>
+  );
+}
+
+/**
+ * Under a reply: its actions and what it used from memory on the left, and on
+ * the right, quietly, how long it worked, the model that answered and its tool
+ * calls when it made any. The chat-wide figures are the Details tab's.
+ */
+function ReplyFooter({
+  run,
+  response,
+  memoryChip,
+}: {
+  readonly run: CanvasRun;
+  readonly response: string;
+  readonly memoryChip: ReactNode;
+}) {
+  const facts = replyFacts(run);
+  const said = [facts.time, facts.model, facts.tools === undefined ? undefined : plural(facts.tools, "tool call")].filter(
+    (fact): fact is string => fact !== undefined,
+  );
+  return (
+    <footer className="response-footer">
+      {response ? <MessageActions text={response} label="response" readAloud={turnEnded(run.run.status)} /> : null}
+      {memoryChip}
+      {said.length === 0 ? null : (
+        <p className="reply-facts meta-sm" title={facts.modelIds}>
+          {said.join(" · ")}
+          {/* The title is for a pointer; a screen reader hears the full model id too. */}
+          {facts.modelIds === undefined || facts.modelIds === facts.model ? null : (
+            <span className="visually-hidden"> ({facts.modelIds})</span>
+          )}
+        </p>
+      )}
+    </footer>
   );
 }

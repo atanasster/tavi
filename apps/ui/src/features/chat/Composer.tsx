@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode, type FormEvent, type Keybo
 import type { PluginCommandView } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
+import { usePhone } from "../../hooks/page.js";
 import { useRowKeys } from "../../hooks/use-row-keys.js";
 import { nextPart } from "../../lib/parts.js";
 import { Icon } from "../../ui/Icon.js";
@@ -67,6 +68,7 @@ export function Composer({
   /** Plugins' slash commands: offered while the prompt is a `/` word being typed. */
   readonly commands?: readonly PluginCommandView[] | undefined;
 }) {
+  const phone = usePhone();
   const [prompt, setPrompt] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   // Two files can share a name: each attachment's key is its own, so removing one leaves the rest in place.
@@ -188,7 +190,14 @@ export function Composer({
           aria-label={composerName(disabled ? undefined : placeholder)}
           value={prompt}
           placeholder={
-            disabled ? "Waiting for the owner…" : unconfigured ? "No model is running: restart `tavi serve` with one to send" : placeholder
+            disabled
+              ? "Waiting for the owner…"
+              : unconfigured
+                ? "No model is running: restart `tavi serve` with one to send"
+                : // The keys, on a second line, where there is a keyboard to press them: not on a phone.
+                  phone
+                  ? placeholder
+                  : `${placeholder}\n${COMPOSER_KEYS}`
           }
           onChange={(event) => setPrompt(event.target.value)}
           onKeyDown={(event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -320,10 +329,12 @@ export function Composer({
           </Button>
         </div>
       </div>
-      <p className="composer-hint">Enter to send · Shift+Enter for a new line</p>
     </form>
   );
-} /** The message box's accessible name: its placeholder's words without the trailing ellipsis, else "Message". */
+} /** How the message box sends, said under its placeholder. */
+const COMPOSER_KEYS = "Enter to send · Shift+Enter for a new line";
+
+/** The message box's accessible name: its placeholder's words without the trailing ellipsis, else "Message". */
 export function composerName(placeholder: string | undefined): string {
   const words = placeholder?.replace(/(…|\.\.\.)$/, "").trim();
   return words === undefined || words === "" ? "Message" : words;

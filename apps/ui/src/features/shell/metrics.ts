@@ -1,7 +1,9 @@
-/** Token totals and actual model identities now arrive as optional metrics on
- * terminal events. They describe the latest execution, not all historical turns.
- * Unknown provider usage stays explicitly partial; old records are not estimated.
- * The global strip remains elapsed · tool calls · running model.
+/**
+ * The figures a chat shows, and the ones it does not. Each reply's footer says
+ * its own working time, the model that answered and its tool calls; the chat
+ * panel's Details tab shows provider usage (token totals), which arrives as
+ * optional metrics on terminal events. Unknown usage stays explicitly partial;
+ * old records are not estimated.
  */
 
 /** A figure the canvas could show, and whether anything can answer it today. */
@@ -11,20 +13,18 @@ export interface Measurable {
   readonly source: string;
 }
 
-/** The name of each figure the strip shows, in the order it shows them. */
-export type MeasuredName = "elapsed" | "tool calls" | "Model";
-
-/**
- * The figures measured in the global strip. The chat panel's Details tab shows provider usage.
- */
-export const MEASURED: readonly (Measurable & { readonly name: MeasuredName })[] = [
+/** The figures a reply's footer shows (`replyFacts`), in the order it shows them. */
+export const MEASURED: readonly Measurable[] = [
   {
-    name: "elapsed",
+    name: "time",
     source:
-      "working time on the owner's own `at` stamps: the gaps between a chat's events while it ran, or its executions' summed spans; waits on a person and time between turns are not in it",
+      "the turn's working time on the owner's own `at` stamps: the gaps between its events while it ran, or its executions' summed spans; waits on a person are not in it",
   },
-  { name: "tool calls", source: "the transcript's tool cards, folded out of the render window or not" },
-  { name: "Model", source: "`models roles`' active owner target (saved default on older owners)" },
+  {
+    name: "model",
+    source: "the models the turn's execution reported, else those its tool calls name, else the chat's when it used one model only",
+  },
+  { name: "tool calls", source: "the turn's tool cards, shown only when there were some" },
 ];
 
 /**

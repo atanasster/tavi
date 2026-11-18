@@ -145,7 +145,7 @@ const listed = (runs: readonly CanvasRun[]): NonNullable<CanvasState["directory"
   loading: false,
 });
 
-/** An owner that never answers: the strip's target read stays open. */
+/** An owner that never answers: the model target's read stays open. */
 const silent: SettingsClient = { request: () => new Promise<never>(() => undefined) };
 
 /** The region `index.html` carries; the test stands it up as the page does. */
@@ -275,7 +275,7 @@ describe("the shell", () => {
     ];
     const { store } = fakeStore({ connection: "ready", runs, directory: listed(runs), next: { kind: "queue", taskId: "task-2" } });
     const page = await mount(<App store={store} client={silent} workspaceId="default" />);
-    const placeholder = () => page.querySelector("textarea")?.getAttribute("placeholder");
+    const placeholder = () => page.querySelector("textarea")?.getAttribute("placeholder")?.split("\n")[0];
     expect(placeholder()).toContain("Queue a message");
     const older = [...page.querySelectorAll(".session")].find((button) => button.textContent?.includes("the old one"));
     await click(older);
@@ -434,15 +434,11 @@ describe("the shell", () => {
   it("gives the sheet focus, takes Escape for it, and gives focus back", async () => {
     const { store, acted } = fakeStore({ connection: "ready", runs: [run("ui-1", "p", { taskId: "task-1", status: "running" })] });
     const page = await mount(<App store={store} client={silent} workspaceId="default" />);
-    // Not a header entry: the footer strip's, reachable without the chord at all (the browser may take Cmd+/).
-    expect([...page.querySelectorAll(".bar button")].some((button) => button.textContent?.includes("Keyboard"))).toBe(false);
-    const help = page.querySelector<HTMLButtonElement>(".strip .strip-keys");
+    // The header's keyboard icon: reachable without the chord at all (the browser may take Cmd+/). It shows no
+    // words, so its name is its own (WCAG 2.5.3 asks nothing of an icon), with the chord in aria-keyshortcuts.
+    const help = page.querySelector<HTMLButtonElement>(".bar .bar-keys");
     expect(help).not.toBeNull();
-    // WCAG 2.5.3, label in name: the name a voice user says is the words they see ("Keyboard"), and no
-    // aria-label replaces them; the shortcut it shows is in aria-keyshortcuts.
-    expect(help?.getAttribute("aria-label")).toBeNull();
-    expect(help?.querySelector(".strip-keys-label")?.textContent).toBe("Keyboard");
-    expect(help?.textContent?.replace(/Cmd\+\//, "").trim()).toBe("Keyboard shortcuts");
+    expect(help?.getAttribute("aria-label")).toBe("Keyboard shortcuts");
     expect(help?.getAttribute("aria-keyshortcuts")).toBe("Meta+/");
     await click(help);
     const dialog = page.querySelector("dialog.modal");
@@ -1111,7 +1107,7 @@ describe("shell regressions", () => {
     expect(acted).toEqual(["decide ui-1 true"]);
     expect(submitted).toEqual([]);
     expect(box.value).toBe("keep this draft");
-    await click(page.querySelector(".strip .strip-keys"));
+    await click(page.querySelector(".bar .bar-keys"));
     expect(page.querySelector(".sheet")).not.toBeNull();
     await act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", metaKey: true, altKey: true, bubbles: true })));
     expect(acted).toEqual(["decide ui-1 true"]);
@@ -1171,16 +1167,11 @@ describe("shell regressions", () => {
     };
     const { store } = fakeStore({ connection: "ready", runs: [] });
     const page = await mount(<App store={store} client={client} workspaceId="default" />);
-    expect(page.querySelector(".strip")?.textContent).toContain("old");
-    expect(page.querySelector(".strip")?.textContent).toContain("elapsed");
+    expect(page.querySelector(".model-picker")?.textContent).toContain("old");
     await click([...page.querySelectorAll(".bar .view")].find((button) => button.textContent === "Settings"));
-    // Off the chat, the strip keeps the target and drops the hidden chat's figures.
-    expect(page.querySelector(".strip")?.textContent).toContain("Model: old");
-    expect(page.querySelector(".strip")?.textContent).not.toContain("elapsed");
-    expect(page.querySelector(".strip")?.textContent).not.toContain("tool call");
     target = "new";
     await click([...page.querySelectorAll(".bar .view")].find((button) => button.textContent === "Chat"));
-    expect(page.querySelector(".strip")?.textContent).toContain("new");
+    expect(page.querySelector(".model-picker")?.textContent).toContain("new");
   });
 });
 
@@ -1315,12 +1306,12 @@ it("starts a new chat from the panel: an empty canvas until the next prompt's en
   const fake = fakeStore({ connection: "ready", runs: earlier, directory: listed(earlier), next: { kind: "continue", taskId: "old" } });
   const page = await mount(<App store={fake.store} client={silent} workspaceId="default" />);
   expect(page.querySelector(".task-header h1")?.textContent).toContain("Earlier question");
-  expect(page.querySelector("textarea")?.getAttribute("placeholder")).toBe("Message Earlier question…");
+  expect(page.querySelector("textarea")?.getAttribute("placeholder")?.split("\n")[0]).toBe("Reply…");
   await click(page.querySelector('[aria-label="New chat"]'));
   expect(fake.acted).toEqual(["newTask"]);
   expect(page.querySelector(".task-header")).toBeNull();
   expect(page.textContent).toContain("Ask Tavi something to start a chat.");
-  expect(page.querySelector("textarea")?.getAttribute("placeholder")).toBe("Start a new chat…");
+  expect(page.querySelector("textarea")?.getAttribute("placeholder")?.split("\n")[0]).toBe("Start a new chat…");
   expect(page.querySelector(".session.current")).toBeNull();
   // The prompt's own entry ends the draft: the canvas follows it.
   await act(async () =>
@@ -1338,15 +1329,13 @@ it("starts a new chat from the panel: an empty canvas until the next prompt's en
   expect(page.querySelector(".task-header h1")?.textContent).toContain("Earlier question");
 });
 
-it("starts a new chat after a failed one with Send and no figures: neither the failure's Retry nor its elapsed time", async () => {
+it("starts a new chat after a failed one with Send, not the failure's Retry", async () => {
   const earlier = [run("live", "Earlier question", { taskId: "old", status: "failed" }, { activeMs: 64_000 })];
   const fake = fakeStore({ connection: "ready", runs: earlier, directory: listed(earlier), next: { kind: "continue", taskId: "old" } });
   const page = await mount(<App store={fake.store} client={silent} workspaceId="default" />);
   expect(page.querySelector(".composer button[type=submit]")?.textContent).toBe("Retry");
-  expect(page.querySelector(".strip")?.textContent).toContain("elapsed 1m 04s");
   await click(page.querySelector('[aria-label="New chat"]'));
   expect(page.querySelector(".composer button[type=submit]")?.textContent).toBe("Send");
-  expect(page.querySelector(".strip")?.textContent).toContain("elapsed —");
 });
 
 it("on a phone, starts with the sessions sidebar folded and folds it again once a chat is picked", async () => {
@@ -1398,7 +1387,7 @@ it("asks a worker's question in its root chat's transcript, answers it there, an
   fake.store.loadWorkerNeeds = async (rootTaskId) => void loaded.push(rootTaskId);
   const page = await mount(<App store={fake.store} client={silent} workspaceId="default" />);
   expect(loaded).toContain("root");
-  expect(page.querySelector("textarea[placeholder]")?.getAttribute("placeholder")).toBe("Answer the question above…");
+  expect(page.querySelector("textarea[placeholder]")?.getAttribute("placeholder")?.split("\n")[0]).toBe("Answer the question above…");
   const card = page.querySelector(".runs .worker-needs .need-question");
   expect(card?.textContent).toContain("Researcher");
   expect(card?.textContent).toContain("Which region?");
@@ -1466,7 +1455,7 @@ describe("Home", () => {
       limit: 1,
     });
     expect(fake.opened).toEqual(["home-1"]);
-    expect(page.querySelector("textarea")?.getAttribute("placeholder")).toBe("Message Home…");
+    expect(page.querySelector("textarea")?.getAttribute("placeholder")?.split("\n")[0]).toBe("Message Home…");
     // Once open, Home is the chat in view, and the composer still writes to it.
     await act(async () =>
       fake.publish({
@@ -1476,7 +1465,7 @@ describe("Home", () => {
         next: { kind: "continue", taskId: "home-1" },
       }),
     );
-    expect(page.querySelector("textarea")?.getAttribute("placeholder")).toBe("Message Home…");
+    expect(page.querySelector("textarea")?.getAttribute("placeholder")?.split("\n")[0]).toBe("Message Home…");
   });
 
   it("offers a clean New chat beside New side chat on the folded sidebar too", async () => {
@@ -1494,12 +1483,12 @@ describe("Home", () => {
     const page = await mount(<App store={fake.store} client={owner(true, []).client} workspaceId="default" />);
     await settle();
     expect(fake.opened).toEqual([]);
-    expect(page.querySelector("textarea")?.getAttribute("placeholder")).toBe("Message Home…");
+    expect(page.querySelector("textarea")?.getAttribute("placeholder")?.split("\n")[0]).toBe("Message Home…");
     // The sidebar's +, and the sheet's chord, say New side chat and do the same thing.
     await click(page.querySelector('[aria-label="New side chat"]'));
     expect(fake.acted).toEqual(["newTask"]);
     // No chat to be a side chat of: an ordinary one, as the empty canvas says.
-    expect(page.querySelector("textarea")?.getAttribute("placeholder")).toBe("Start a new chat…");
+    expect(page.querySelector("textarea")?.getAttribute("placeholder")?.split("\n")[0]).toBe("Start a new chat…");
     await act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "/", metaKey: true, bubbles: true })));
     await click(
       [...(page.querySelector(".sheet")?.querySelectorAll("button") ?? [])].find((button) => button.textContent === "New side chat"),
@@ -1518,7 +1507,7 @@ describe("Home", () => {
       await settle();
       expect(fake.opened).toEqual([]);
       expect(fake.homes.every((on) => !on)).toBe(true);
-      expect(page.querySelector("textarea")?.getAttribute("placeholder")).toBe("Start a new chat…");
+      expect(page.querySelector("textarea")?.getAttribute("placeholder")?.split("\n")[0]).toBe("Start a new chat…");
       expect(page.querySelector('[aria-label="New chat"]')).not.toBeNull();
       unmountAll();
     }

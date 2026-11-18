@@ -7,9 +7,12 @@ import { ROUTES, type Route } from "./route.js";
 import { Failure } from "../../ui/Parts.js";
 import { useWorkspace } from "./Workspace.js";
 import { Command } from "../../ui/Command.js";
+import { Button } from "../../ui/Button.js";
+import { Icon } from "../../ui/Icon.js";
 
 /**
- * The header: the routes, what needs the reader, and the connection — said
+ * The header: the routes, what needs the reader, the way to the keyboard
+ * sheet, and the connection — said
  * by Tavi's mark itself, in its colours when connected, grey when not, and
  * breathing while it connects.
  *
@@ -27,6 +30,7 @@ export function Bar({
   scheduleOnly = false,
   ideas = false,
   focused = false,
+  onKeys,
 }: {
   readonly state: CanvasState;
   readonly route: Route;
@@ -39,6 +43,8 @@ export function Bar({
   readonly ideas?: boolean;
   /** Setup is on screen: the routes step aside, and the header names where the reader is. */
   readonly focused?: boolean;
+  /** Opens the `Cmd+/` sheet: its chord is the browser's to overrule, so it is reachable without it. */
+  readonly onKeys?: () => void;
 }) {
   const { workspaceId } = useWorkspace();
   const routes = ROUTES.filter(
@@ -80,6 +86,19 @@ export function Bar({
             {workspaceId ? ` in workspace ${workspaceId}` : " on this page"}
           </span>
         ) : null}
+        {onKeys === undefined ? null : (
+          <Button
+            variant="ghost"
+            size={["icon", "sm"]}
+            className="bar-keys"
+            aria-label="Keyboard shortcuts"
+            aria-keyshortcuts="Meta+/"
+            title="Keyboard shortcuts (Cmd+/)"
+            onClick={onKeys}
+          >
+            <Icon name="keyboard" size="sm" />
+          </Button>
+        )}
       </header>
       {state.failure !== undefined ? (
         <Failure alert={false} className="bar-failure">

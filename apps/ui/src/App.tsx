@@ -327,7 +327,7 @@ export function App({
   }, [centered, scheduleOnly, route, page.section, section, navigate]);
   useScrollToBrowserTool(toolTarget, route === "chat" ? current : undefined, store, setToolTarget);
   const chatModel = useChatModel(client, workspaceId, current, toHome);
-  const { target, targetError, reloadTarget, chatModelLabel, shownModel, reloadChatModel, newChatModel, setNewChatModel } = chatModel;
+  const { reloadTarget, shownModel, reloadChatModel, newChatModel, setNewChatModel } = chatModel;
   // With the Center offered, what waits is its count — every task's needs, memory proposals and fired reminders — not this page's sessions.
   const waiting = centered ? waitingCount(feed.summary) : shell.needs;
   useTabTitle(waiting, !centered && (state.directory?.needsTruncated ?? false), [
@@ -433,6 +433,7 @@ export function App({
           scheduleOnly={scheduleOnly}
           ideas={offersIdeas}
           focused={setup}
+          onKeys={() => setSheet((open) => !open)}
         />
         <div className="body">
           <ShellSidebar
@@ -597,13 +598,6 @@ export function App({
           ) : null}
         </div>
         <ShellOverlays
-          setup={setup}
-          // A new chat's figures are its own, none yet: never those of the chat it replaced on screen.
-          stats={drafting ? undefined : shell.stats}
-          target={target}
-          targetError={targetError}
-          chatModelLabel={chatModelLabel}
-          route={route}
           sheet={sheet}
           setSheet={setSheet}
           newLabel={newLabel}

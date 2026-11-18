@@ -8,9 +8,9 @@ import type { CanvasRun, CanvasState } from "../chat/store/types.js";
 /**
  * The shell's pure parts: the status vocabulary every zone
  * reads a badge from, the sessions the sidebar lists, the groups it orders
- * them by, and the figures the footer strip may honestly show. Kept out of the
+ * them by, and the figures a chat may honestly show. Kept out of the
  * components so they can be asserted without a DOM, and so the sidebar, the
- * transcript and the strip can never disagree — all three read these.
+ * transcript and the reply footers can never disagree — all three read these.
  */
 
 /**
@@ -211,7 +211,7 @@ export function sessionStats(session: Session): SessionStats {
 }
 
 /**
- * The session the main pane, the strip and the inspector describe: the one the
+ * The session the main pane and the inspector describe: the one the
  * reader selected, or the newest the page holds. A selection the page no
  * longer has (a retired continuation) falls back to the newest rather than
  * blanking every zone at once.
@@ -232,7 +232,7 @@ export function selectedSession(sessions: readonly Session[], selected: string |
 export interface ShellState {
   readonly sessions: readonly Session[];
   readonly needs: number;
-  /** The session the reader is looking at: what the main pane, the strip and the chords act on. */
+  /** The session the reader is looking at: what the main pane and the chords act on. */
   readonly current: Session | undefined;
   /**
    * The session the **next prompt** acts on: the page's last, whatever the
@@ -240,7 +240,6 @@ export interface ShellState {
    * composer says has to follow this one rather than `current`.
    */
   readonly acting: Session | undefined;
-  readonly stats: SessionStats | undefined;
 }
 
 /** Only an ask event received after the read began may supersede the projection. */
@@ -356,15 +355,10 @@ export function shellState(state: CanvasState, selected: string | undefined, wor
     return title === undefined || title === session.title ? session : { ...session, title };
   });
   const current = selectedSession(sessions, selected);
-  const row = state.directory?.rows.find((row) => row.taskId === current?.taskId);
   return {
     sessions,
     needs: state.directory === undefined ? needsCount(sessions) : workspaceNeeds(state, workspaceId),
     current,
     acting: sessions.at(-1),
-    stats:
-      current === undefined
-        ? undefined
-        : { ...sessionStats(current), ...(row === undefined ? {} : { tools: row.counts.tools ?? undefined }) },
   };
 }

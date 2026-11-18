@@ -25,7 +25,7 @@ export function useChatModel(client: SettingsClient, workspaceId: string, curren
   /** The model picked for a new chat before its first message, which carries it as the chat's own. */
   const [newChatModel, setNewChatModel] = useState<ChatModelTarget>();
   // The owner's default as it resolves now: a read, so the strip names it only once it answers.
-  const { data: target, error: targetError, reload: reloadTarget } = useLoaded(() => loadTarget(client, workspaceId));
+  const { data: target, reload: reloadTarget } = useLoaded(() => loadTarget(client, workspaceId));
   // The open chat's own model, read again when another chat opens or a turn of it ends — its first may save
   // a route of the router's; `model` undefined on an owner that predates it.
   const endedTurns = current?.runs.filter((run) => run.run.status !== "running" && run.run.status !== "idle").length ?? 0;
@@ -82,5 +82,5 @@ export function useChatModel(client: SettingsClient, workspaceId: string, curren
     reloadChatModel();
     return modelPickNote(pick, { connectionId, model }, made, now?.ok === true ? now.value.running : undefined);
   };
-  return { target, targetError, reloadTarget, chatModelLabel, shownModel, pickModel, reloadChatModel, newChatModel, setNewChatModel };
+  return { target, reloadTarget, shownModel, pickModel, reloadChatModel, newChatModel, setNewChatModel };
 }

@@ -171,15 +171,9 @@ describe("a recurring row's switch on a phone", () => {
   });
 });
 
-describe("the footer's Keyboard button on a phone", () => {
-  it("shows only its icon, and keeps its words in its name", () => {
-    const phone = [...stylesheet("strip.css").matchAll(/@media \(--phone\) \{([\s\S]*?)\n\}/g)].map((match) => match[1] ?? "").join("\n");
-    // The visible word leaves the screen but not the accessibility tree: display: none would take "Keyboard" out
-    // of the button's name, leaving it "shortcuts".
-    const label = /\.strip \.strip-keys-label \{([^}]*)\}/.exec(phone)?.[1] ?? "";
-    expect(label).toMatch(/clip-path: inset\(50%\);/);
-    expect(label).not.toMatch(/display: none/);
-    expect(phone).toMatch(/\.strip \.strip-keys kbd \{\s*display: none;/);
+describe("the header's Keyboard button", () => {
+  it("leaves a touch screen, where there is no keyboard to press the shortcuts on", () => {
+    expect(stylesheet("dialogs.css")).toMatch(/@media \(hover: none\) and \(pointer: coarse\) \{\s*\.bar-keys \{\s*display: none;/);
   });
 });
 
@@ -209,7 +203,6 @@ describe("the layout's breakpoints are one set of numbers", () => {
 
   it("gives a short window's height to the transcript, and a phone's open Chats their own scroll", () => {
     const short = (name: string) => stylesheet(name).slice(stylesheet(name).indexOf("@media (--short)"));
-    expect(short("strip.css")).toMatch(/\.strip \{\s*display: none;/);
     expect(short("composer.css")).toMatch(/\.composer textarea \{\s*flex: 1 1 0;\s*width: auto;\s*min-height: var\(--control-height\);/);
     expect(short("composer.css")).toMatch(/\.composer-hint \{\s*display: none;/);
     expect(stylesheet("strip.css")).toMatch(/\.body:has\(> \.sidebar\) > \.main \{\s*height: 100%;/);

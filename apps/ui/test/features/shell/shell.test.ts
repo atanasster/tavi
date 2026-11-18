@@ -216,11 +216,9 @@ describe("the shell's derived state", () => {
     );
     expect(shell.sessions.map((session) => session.key)).toEqual(["a", "b"]);
     expect(shell.needs).toBe(1);
-    // The newest by default, and the strip describes that same one.
+    // The newest by default.
     expect(shell.current?.key).toBe("b");
-    expect(shell.stats).toBeDefined();
     expect(shellState({ connection: "ready", runs: [] }, undefined).current).toBeUndefined();
-    expect(shellState({ connection: "ready", runs: [] }, undefined).stats).toBeUndefined();
   });
 });
 

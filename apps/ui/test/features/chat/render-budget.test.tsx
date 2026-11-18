@@ -303,32 +303,36 @@ describe("the render budget", () => {
   });
 });
 
-describe("what the strip may say", () => {
+describe("what a reply's footer may say", () => {
   it("names a source for every figure it shows, and a reason for every one it does not", () => {
     for (const figure of [...MEASURED, ...UNMEASURED]) {
       expect(figure.name, "a figure with no name").not.toBe("");
       expect(figure.source, `${figure.name} has no stated source`).not.toBe("");
     }
-    expect(MEASURED.map((figure) => figure.name)).toEqual(["elapsed", "tool calls", "Model"]);
+    expect(MEASURED.map((figure) => figure.name)).toEqual(["time", "model", "tool calls"]);
     expect(UNMEASURED.map((figure) => figure.name)).toEqual(["cost", "context %", "tok/s"]);
   });
 
-  it("shows no unmeasured figure on the strip, in any spelling of it", async () => {
+  it("shows no unmeasured figure under a reply, in any spelling of it", async () => {
     const { host: shown, send, clock } = await page();
     await act(async () => {
       send(event("run.started", { threadId: "thread-1", workspaceId: "default" }));
       send(event("text.delta", { blockId: "b", text: "an answer" }));
-      send(event("task.completed", { finalText: "an answer" }));
+      send(
+        event("task.completed", {
+          at: "2026-09-20T12:00:42.000Z",
+          finalText: "an answer",
+          metrics: { models: ["ollama/gemma4-32k:latest"], totalTokens: 22_400, partial: false },
+        }),
+      );
       clock.paint();
     });
-    const strip = shown.querySelector(".strip")?.textContent ?? "";
-    expect(strip).not.toBe("");
+    const strip = shown.querySelector(".response-footer")?.textContent ?? "";
+    expect(shown.querySelector(".reply-facts")).not.toBeNull();
     // Not the prose names — the shapes a figure would actually take, so
     // `ctx 42%`, `$0.03` or `128 tok/s` cannot slip past the guard.
     for (const shape of [/tok/i, /token/i, /\bctx\b/i, /%/, /\$/, /cost/i, /\bcontext\b/i, /\bper second\b/i]) {
-      expect(shape.test(strip), `the strip says something matching ${String(shape)}: ${strip}`).toBe(false);
+      expect(shape.test(strip), `the footer says something matching ${String(shape)}: ${strip}`).toBe(false);
     }
-    // And it does say the three it can measure.
-    for (const figure of MEASURED) expect(strip.includes(figure.name), figure.name).toBe(true);
   });
 });

@@ -18,6 +18,16 @@ change behaviour or stored data.
 
 ### Changed
 
+- Each answer in the canvas says, on the line of its copy and read-aloud
+  buttons, how long it worked, the model that answered and its tool calls
+  (`2m 05s · gemma4-32k:latest · 3 tool calls`), and the memories it used are
+  a memory icon with the count there. The figures strip along the bottom of
+  the page is gone; its keyboard-shortcuts button is an icon at the right of
+  the header. The "Enter to send · Shift+Enter for a new line" line under the
+  message box is now the second line of its placeholder, and a chat with no
+  name of its own beyond its first message says **Reply…** rather than
+  repeating that message. On a phone the chat panel's button sits at the right
+  of the row under the header instead of over the Send button.
 - The canvas header no longer spells out the connection: Tavi's mark is in
   its colours when connected, grey when not, and breathes while it connects.
   At phone width the model picker sits between the attach and send buttons

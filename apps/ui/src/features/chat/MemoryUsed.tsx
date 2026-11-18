@@ -18,6 +18,7 @@ import { Failure } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
 import { useTimeZone, useWorkspace } from "../shell/Workspace.js";
 import { Field } from "../../ui/Field.js";
+import { Icon } from "../../ui/Icon.js";
 
 /** Where a record applies, in a few words. */
 function scopeWords(target: string): string {
@@ -46,8 +47,8 @@ function sameWords(title: string, body: string): boolean {
 }
 
 /**
- * What an answer used: a quiet
- * "Used 3 memories" chip under the answer — a disclosure button with
+ * What an answer used: a quiet chip on the answer's footer — a memory icon
+ * and the count, named "Used 3 memories" — a disclosure button with
  * `aria-expanded` — that opens to each record's title (and what it says, when that is more), kind, scope, date and
  * source chat, with *Forget* and *Correct*; "Looked through 6 memories" when the model only listed what is kept,
  * and both when it did both. The saved turn holds ids only, so
@@ -207,8 +208,19 @@ export function MemoryUsed({
   };
   return (
     <div className="memory-used" data-memory-used={seq}>
-      <Button variant="ghost" size="sm" className="memory-used-chip" aria-expanded={open} aria-controls={`${id}-list`} onClick={toggle}>
-        {memoryUsedLabel(count, looked)}
+      {/* An icon and the count on the reply's footer; the words are its name and its tooltip. */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="memory-used-chip"
+        aria-expanded={open}
+        aria-controls={`${id}-list`}
+        aria-label={memoryUsedLabel(count, looked)}
+        title={memoryUsedLabel(count, looked)}
+        onClick={toggle}
+      >
+        <Icon name="memory" size="sm" />
+        <span aria-hidden="true">{count > 0 ? count : looked}</span>
       </Button>
       {open ? (
         <div id={`${id}-list`} className="memory-used-list">

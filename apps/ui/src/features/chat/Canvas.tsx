@@ -72,7 +72,7 @@ export interface CanvasProps {
   readonly heartbeatCard?: ((notice: ChatNotice & { readonly heartbeatItemId: string }) => ReactNode) | undefined;
   /** A memory notice's card. */
   readonly memoryCard?: ((notice: ChatNotice) => ReactNode) | undefined;
-  /** What an answer used, under it: the "Used N memories" chip. */
+  /** What an answer used: the memory chip on its footer's line. */
   readonly memoryUsedChip?: ((run: CanvasRun) => ReactNode) | undefined;
   /** After a turn: the card for a skill the agent offered in it (`SkillOfferCard`), given the session's turns. */
   readonly skillOffer?: ((run: CanvasRun, index: number, runs: readonly CanvasRun[]) => ReactNode) | undefined;
@@ -356,17 +356,17 @@ export function Canvas({
   const next = state.next ?? { kind: "new" as const };
   const toHome = next.kind === "home";
   const target = next.kind === "home" || next.kind === "new" ? undefined : next.taskId;
-  const named = useMemo(
-    () =>
-      chatTitle ??
-      (target === undefined
-        ? undefined
-        : state.runs
-            .filter((run) => run.run.taskId === target || run.continues === target)
-            .map((run) => run.prompt.split("\n", 1)[0]?.trim() ?? "")
-            .find((line) => line !== "")),
-    [chatTitle, target, state.runs],
-  );
+  // A chat's name, when it has one beyond its first message: an untitled chat's
+  // title is that message, and the box saying "Message <the question>" reads as the question again.
+  const named = useMemo(() => {
+    if (chatTitle === undefined || target === undefined) return chatTitle;
+    const first = state.runs
+      .filter((run) => run.run.taskId === target || run.continues === target)
+      .map((run) => run.prompt.split("\n", 1)[0]?.trim() ?? "")
+      .find((line) => line !== "");
+    const title = trailingEllipsisOff(chatTitle).trim();
+    return first !== undefined && (first.startsWith(title) || title.startsWith(first)) ? undefined : chatTitle;
+  }, [chatTitle, target, state.runs]);
   const queued = next.kind === "queue" ? next.taskId : undefined;
   const queueBehind = useMemo(() => queuedBehind(queued, state.runs), [queued, state.runs]);
   // The one question open is answered by what is typed.
@@ -381,7 +381,9 @@ export function Canvas({
           : toHome || (target !== undefined && target === state.home)
             ? "Message Home…"
             : next.kind === "continue"
-              ? `Message ${named === undefined ? "this chat" : trailingEllipsisOff(clip(named, 40))}…`
+              ? named === undefined
+                ? "Reply…"
+                : `Message ${trailingEllipsisOff(clip(named, 40))}…`
               : state.privateDraft === true
                 ? "Start a private chat: memory off, forgotten a day after its last message…"
                 : next.kind === "new" && next.side === true
@@ -481,8 +483,8 @@ export function Canvas({
                 {...(onSteerQueued === undefined || facts?.steerable[index] !== true ? {} : { onSteerQueued })}
                 awaitsDecision={facts?.awaitsDecision[index] === true}
                 earlierPlan={facts?.earlierPlan[index]}
+                memoryChip={memoryUsedChip?.(run)}
               />
-              {memoryUsedChip?.(run)}
               {skillOffer?.(run, index, runs)}
             </Fragment>
           ))}

@@ -32,14 +32,10 @@
   gap: var(--space-1);
   justify-items: start;
 }
-/* Right after its turn, the chip belongs to that answer: it sits up under the
-   answer's actions, and the space that sets turns apart comes after it. */
-.run + .memory-used {
-  margin-top: calc(-1 * (var(--space-turn-gap) + var(--space-turn-pad) - var(--space-2)));
-  margin-bottom: var(--space-turn-gap);
-}
 .memory-used-chip {
+  gap: var(--space-1);
   color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
 }
 .memory-used-items {
   display: grid;

@@ -521,7 +521,7 @@ Each feature directory co-locates its CLI flag parser (`parse.ts`), client comma
 | `apps/ui/src/features/startup/` | Initial session handshake, fragment token exchange, and owner connection status. |
 | `apps/ui/src/features/welcome/` | First-run `/welcome` wizard (`ConnectSteps.tsx`), Telegram QR-code / deep-link pairing, and Home setup checklist card. |
 | `apps/ui/src/features/sessions/` | Left-hand chats list grouped by **Needs you**, **Working**, **Completed**, and **Activity**, plus pin/archive controls and `Cmd+K` search. |
-| `apps/ui/src/features/chat/` | Main conversation view, prompt composer, model picker, file/PDF/video attachments, queued/steered messages, **Used N memories** chip (`MemoryUsed.tsx`), Trajectory view (`Trajectory.tsx`), and Changes (artifacts) view (`Changes.tsx`). |
+| `apps/ui/src/features/chat/` | Main conversation view, prompt composer, model picker, file/PDF/video attachments, queued/steered messages, each answer's footer (its time, model and tool calls, `reply-facts.ts`) and memory chip (`MemoryUsed.tsx`), Trajectory view (`Trajectory.tsx`), and Changes (artifacts) view (`Changes.tsx`). |
 | `apps/ui/src/features/transcript/` | Streamed Markdown + KaTeX renderer (`Transcript.tsx`), collapsible tool-call blocks (`ToolCards.tsx`), **Rewind to here**, receipt rows (`Receipts.tsx`), PDF form-fill review (`FillReview.tsx`), and video contact sheets (`VideoFrames.tsx`). |
 | `apps/ui/src/features/workers/` | **Agents** delegation tree tab and read-only worker transcript side view. |
 | `apps/ui/src/features/chat-panel/` | Resizable 5-tab right-hand panel (`Activity`, `Schedule`, `Memory`, `Instructions`, `Details` with `Folder.tsx`) and plugin strip/tab host. |

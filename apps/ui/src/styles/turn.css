@@ -137,8 +137,35 @@ button.prompt-file-name:hover {
   text-align: end;
 }
 
+/* Under a reply, one line: its actions and memory chip, then — pushed to the
+   far end, quietly — its time, model and tool calls. The memory list opens on
+   a line of its own below. */
 .response-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-1);
   margin-top: var(--space-4-5);
+}
+
+.response-footer .memory-used {
+  display: contents;
+}
+
+.response-footer .memory-used-list {
+  order: 1;
+  flex-basis: 100%;
+  margin-top: var(--space-2);
+}
+
+.reply-facts {
+  min-width: 0;
+  margin: 0 0 0 auto;
+  color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .text {

@@ -34,9 +34,8 @@ kbd {
   white-space: nowrap;
 }
 
-/* Figures line up: tables and the strip's numbers use tabular figures. */
-table,
-.strip {
+/* Figures line up: tables use tabular figures. */
+table {
   font-variant-numeric: tabular-nums;
 }
 
@@ -68,7 +67,7 @@ table,
   outline-offset: var(--focus-offset);
 }
 
-/* The shell: bar, then sidebar · main · inspector, then the strip. */
+/* The shell: bar, then sidebar · main · inspector. */
 .canvas {
   display: flex;
   flex-direction: column;
@@ -124,7 +123,7 @@ table,
 .brand-connecting .tavi-mark,
 .brand-reconnecting .tavi-mark {
   filter: grayscale(0.7);
-  animation: mark-connecting var(--duration-pulse) ease-in-out infinite;
+  animation: mark-connecting var(--duration-pulse) var(--ease-in-out) infinite;
 }
 
 @keyframes mark-connecting {

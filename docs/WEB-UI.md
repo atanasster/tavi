@@ -351,7 +351,7 @@ message) and makes it the workspace default for new chats (the same write as
 the Models view's **Default** row). A note shows only when the pick did not do
 all that: the default could not be saved, or role `main` or the owner's flags
 still choose another model for new chats. Nothing needs a restart: the owner
-reads its models at each turn. The footer strip names the open chat's model. An
+reads its models at each turn. Each answer names the model that gave it. An
 owner with no model configured refuses every run, so the composer holds Send,
 keeping the prompt, until one is picked. The control beside it opens model
 settings; with nothing discovered yet, the picker is that link. With more than
@@ -395,8 +395,25 @@ Your messages sit right-aligned in a bubble that holds only the words; their
 actions show under it on hover. Prompts and responses have copy actions (the
 icon shows a check for a moment once the text is on the clipboard); completed
 responses can be read aloud using browser speech synthesis, with a Stop reading
-control. A response carries only its actions, no model, token or time line
-under it.
+control. On the same line, at its far end, a finished answer says quietly how
+long it worked, the model that answered and its tool calls when it made any
+(`2m 05s · gemma4-32k:latest · 3 tool calls`); hovering the model shows the
+full `connection/model`. The time is the turn's working time on the owner's own
+timestamps: a round waiting on your approval or answer is not in it, and a
+model reading a long prompt on a local server shows none until it answers. A
+turn read back whose record kept no time or model leaves that one out. An
+answer that used memory has a memory icon with the count beside its actions
+(named **Used 2 memories**); it opens the memories on a line below.
+
+Tokens, cost, context % and tokens per second are deliberately not there.
+Provider-reported tokens, once a turn ends, are in the chat panel's
+**Details** tab; there is no price table to turn tokens into cost, and no model
+connection reports a context window to be a percentage of.
+
+The message box's placeholder says where a message goes (**Message Home…**,
+**Start a new chat…**, **Message Trip plans…** for a named chat, **Reply…** for
+one whose only name is its first message) and, with a keyboard, a second line,
+**Enter to send · Shift+Enter for a new line**.
 
 **Rewind to here** takes the chat back to before that message: after you
 confirm, the message, Tavi's answer and every later turn are removed from the
@@ -607,30 +624,6 @@ so the chat starts with them attached and its first turn already sees them. A
 folder that can no longer be attached then is named under that message.
 Reloading the page, or the canvas reconnecting, drops the picks: pick again. A
 message to a Home that has begun meanwhile attaches nothing, and says so.
-
-## The footer strip
-
-Along the bottom is one strip of figures:
-
-- **elapsed**: the time the chat actually worked, summed over its turns on the
-  owner's own timestamps. A round waiting on your approval, a question waiting
-  on your answer and the hours between one turn and the next are not in it (a
-  chat read back from its record sums its executions' runs). It moves as the
-  owner reports work, never on a clock, so a model reading a long prompt on a
-  local server shows no time until it answers; a new chat shows none of the
-  previous chat's;
-- **tool calls**, counted from the transcript whether or not a card has
-  scrolled out of the window;
-- **Model**: the model the owner runs, by its own name (`Model: gemini-3.8-flash`);
-  hovering it shows the full `connection/model`, and a saved choice waiting on
-  a restart is named after it.
-
-Off the chat (on the Center or in Settings) the strip shows only the model.
-
-Tokens, cost, context % and tokens per second are deliberately not there.
-Provider-reported tokens, once a turn ends, are in the chat panel's
-**Details** tab; there is no price table to turn tokens into cost, and no model
-connection reports a context window to be a percentage of.
 
 The header's **Center** tab carries the number of things waiting on you across
 the workspace: approvals, reviews, questions and memory proposals, from every
@@ -1291,9 +1284,9 @@ Details, Memory and Instructions tabs, the Trajectory, Held files and Agents vie
 
 `Ctrl` stands in for `Cmd` where there is no Cmd key. The approve and deny
 chords are deliberately awkward, and `Enter` alone never allows anything. These
-chords are the browser's to overrule, so each also has a button (**Keyboard**
-at the right end of the footer strip; the fold controls on the chats list and
-the chat panel) and none depends on the chord surviving. The rest (a new chat,
+chords are the browser's to overrule, so each also has a button (the keyboard
+icon at the right end of the header, absent on a touch screen; the fold
+controls on the chats list and the chat panel) and none depends on the chord surviving. The rest (a new chat,
 settings, the model picker) are buttons in that sheet rather than keys the page
 pretends to own.
 
@@ -1345,8 +1338,7 @@ as `@custom-media` and read by every stylesheet as `@media (--phone)`: `--phone`
 rail), `--overlay` (721–1279px: the chat panel over the transcript),
 `--undocked` (below 1280px: the Command Center's rail under its section) and
 `--short` (up to 500px tall, a phone on its side: the transcript keeps the
-height, the box is one line beside its controls, and the footer strip leaves,
-its keyboard sheet still on the chord). Chats opened by hand at phone width
+height, the box is one line beside its controls). Chats opened by hand at phone width
 scroll with the chat below them rather than taking its height. The
 build writes them out (Lightning CSS); `src/lib/breakpoints.ts` holds the same
 numbers for the script, `design.test.ts` holds the two equal, and `lint:css`
@@ -1363,7 +1355,7 @@ from the task's record; when the owner no longer holds every turn, they are
 listed apart under **Recorded prompts** rather than guessed onto the wrong
 answer. **Earlier in this chat** marks where the turns read back from the
 record begin. A turn read back keeps what its saved turn holds: the
-**Used N memories** or **Looked through N memories** chip under its answer, and
+memory chip (**Used N memories** or **Looked through N memories**) under its answer, and
 what **Repeat this…** says of what the chat read.
 
 A chat on screen shows a turn it takes without you as it happens — Home
