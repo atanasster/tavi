@@ -51,8 +51,9 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Chat notes and Skills start on the cards' edge above them, as the page's title does. */
 .soul-chat-notes {
-  margin: var(--space-6) var(--space-4) 0;
+  margin: var(--space-6) 0 0;
 }
 
 .soul-chat-notes h2 {
@@ -270,6 +271,16 @@
   padding: 0;
 }
 
+.memory-settings-keep-help {
+  display: block;
+}
+
+/* A tick and its words 8px apart, as in every other form, not one typed space. The label stays inline: as a flex
+   box its baseline was the tick's, and the "On" after it dropped below its words. */
+.memory-settings label > input[type="checkbox"] {
+  margin-inline-end: var(--space-1);
+}
+
 .memory-settings-more summary {
   margin-top: var(--space-2);
   cursor: pointer;
@@ -281,8 +292,9 @@
   margin-top: var(--space-3);
 }
 
+/* Wide enough for 20,000 and its stepper: at 8ch, 8000 showed as "800(". */
 .memory-settings-limits input[type="number"] {
-  width: var(--width-field-ch-sm);
+  width: var(--width-field-ch);
 }
 
 .memory-proposals-more {
@@ -308,6 +320,12 @@
 .memory-proposals {
   margin: var(--space-3) var(--space-4) 0;
   padding: var(--space-3);
+}
+
+/* Keep all and Discard all: under the card, on its edges, not against it and past its right side. It stays outside
+   the card, which is gone once everything is decided, to say what was done and offer Undo. */
+.memory-bulk {
+  margin: var(--space-2) var(--space-4) 0;
 }
 
 .memory-proposals h3 {
@@ -439,7 +457,7 @@
 }
 
 .soul-skills {
-  margin: var(--space-6) var(--space-4) 0;
+  margin: var(--space-6) 0 0;
 }
 
 .soul-skills h2 {

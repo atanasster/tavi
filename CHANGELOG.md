@@ -28,6 +28,13 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Soul & memory, walked at desktop and phone width. Keep without asking
+  says what may be kept under its name, before its ticks, rather than under
+  Lessons as if it were that one's. A tick in Memory's settings stands 8px
+  from its words, not one space. The limits under More show their numbers
+  whole (8,000 read "800(" before). Keep all and Discard all sit under the
+  suggestions card on its edges, not against it and past its right side.
+  Chat notes and Skills start on the cards' edge, not 16px in.
 - Schedule, walked at desktop and phone width. Pause all stays on the
   Recurring filter row, the name filter giving up width for it, rather than
   wrapping onto a line alone. Done / missed shows the chevron it opens with.

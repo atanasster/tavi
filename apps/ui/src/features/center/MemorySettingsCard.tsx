@@ -193,6 +193,11 @@ export function MemorySettingsCard({
           {/* Auto-approve: opt-in per kind, all unticked; only the operator's own words, still shown with Undo. */}
           <fieldset className="memory-settings-keep" aria-describedby={`${id}-keep`}>
             <legend>Keep without asking</legend>
+            {/* What may be kept, under the group's name and before its ticks: under the last one it read as that one's. */}
+            <span id={`${id}-keep`} className="meta-sm memory-settings-keep-help">
+              Only what you typed yourself in your own chats; never sensitive topics, updates, what came from tools, pages or messages, or
+              anything in a chat once it has read one
+            </span>
             <ul className="list-reset">
               {KEEP_WITHOUT_ASKING.map(({ kind, label }) => {
                 const ticked = effective.autoApprove?.includes(kind) === true;
@@ -230,10 +235,6 @@ export function MemorySettingsCard({
                 );
               })}
             </ul>
-            <span id={`${id}-keep`} className="meta-sm">
-              Only what you typed yourself in your own chats; never sensitive topics, updates, what came from tools, pages or messages, or
-              anything in a chat once it has read one
-            </span>
           </fieldset>
         </li>
         <li>
