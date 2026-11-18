@@ -278,13 +278,13 @@ export function Composer({
           />
           <IconButton
             icon="paperclip"
-            label={reading ? "Reading files…" : "Attach PDF, video, GIF, text and code files"}
+            label={reading ? "Reading files…" : "Attach PDF, photo, video, GIF, text and code files"}
             aria-busy={reading}
             disabled={disabled || reading}
             tooltip={
               reading
                 ? "Reading files…"
-                : "Attach PDFs (up to 20 MB), videos and GIFs (up to 50 MB), or text and code files (up to 48 KB each)"
+                : "Attach PDFs (up to 20 MB), photos (up to 5 MB), videos and GIFs (up to 50 MB), or text and code files (up to 48 KB each)"
             }
             onClick={() => fileInput.current?.click()}
           />

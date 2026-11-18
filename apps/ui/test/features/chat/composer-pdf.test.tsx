@@ -84,7 +84,7 @@ describe("the composer with a video", () => {
     );
     expect((shown.querySelector("input[type=file]") as HTMLInputElement).accept).toContain(".mp4,.mov,.m4v,.webm,.gif");
     // What can be attached is said on the attach button, not in a line under the box.
-    expect(shown.querySelector('[aria-label="Attach PDF, video, GIF, text and code files"]')).not.toBeNull();
+    expect(shown.querySelector('[aria-label="Attach PDF, photo, video, GIF, text and code files"]')).not.toBeNull();
     await attach(
       shown,
       new File([new Uint8Array([0, 0, 0, 0x18, ...new TextEncoder().encode("ftypisom")])], "clip.mp4", { type: "video/mp4" }),

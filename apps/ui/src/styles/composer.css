@@ -271,32 +271,20 @@
   color: hsl(var(--muted-foreground));
 }
 
-/* A phone: the model picker takes a row of its own above the attach and send
-   buttons, and cuts a long name with an ellipsis, so the info button stays on
-   screen. */
+/* A phone: the model picker stays on the row between the attach and send
+   buttons, as wide as its name, and cuts a long one with an ellipsis, so the
+   info button stays on screen. A note under it takes a row of its own. */
 @media (--phone) {
   .composer-toolbar {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
 
   .model-picker {
-    order: -1;
-    flex: 1 1 100%;
-    max-width: 100%;
-    margin-left: 0;
-  }
-
-  .composer-toolbar .button-primary {
-    margin-left: auto;
-  }
-
-  .model-picker-controls {
-    width: 100%;
-    justify-content: flex-end;
+    flex: 0 1 auto;
+    max-width: none;
   }
 
   .model-select {
-    flex: 1 1 auto;
     max-width: 100%;
   }
 }

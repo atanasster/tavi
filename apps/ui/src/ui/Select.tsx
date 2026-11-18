@@ -32,6 +32,7 @@ export function Select({
   onChange,
   disabled,
   className,
+  contentClassName,
   searchable,
   searchPlaceholder = "Search…",
   ...props
@@ -44,6 +45,8 @@ export function Select({
   "aria-describedby"?: string;
   id?: string;
   className?: string;
+  /** A class for the open list (`compact`: smaller rows, for a long list of short names). */
+  contentClassName?: string;
   searchable?: boolean;
   searchPlaceholder?: string;
 }) {
@@ -203,7 +206,7 @@ export function Select({
         ref={contentRef}
         position="popper"
         sideOffset={6}
-        className="select-content surface-popover"
+        className={contentClassName === undefined ? "select-content surface-popover" : `select-content surface-popover ${contentClassName}`}
         onKeyDown={handleContentKeyDown}
         // Searchable, it holds a search field and a list: the list alone is the listbox.
         {...(isSearchable ? { role: "dialog", "aria-label": listName } : {})}

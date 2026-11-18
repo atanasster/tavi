@@ -349,6 +349,17 @@ input[type="radio"] {
   outline-color: hsl(var(--ring));
 }
 
+/* A compact list: rows at the search field's own size, so a long list of names shows more of itself. */
+.select-content.compact .select-option {
+  min-height: var(--control-height-sm);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-7);
+  font-size: var(--text-sm);
+}
+
+.select-content.compact .select-check {
+  left: var(--space-1-5);
+}
+
 .select-option[data-disabled] {
   opacity: var(--opacity-disabled);
   pointer-events: none;

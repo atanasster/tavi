@@ -18,6 +18,10 @@ change behaviour or stored data.
 
 ### Changed
 
+- The canvas header no longer spells out the connection: Tavi's mark is in
+  its colours when connected, grey when not, and breathes while it connects.
+  At phone width the model picker sits between the attach and send buttons
+  instead of across a row of its own, and its list is compact.
 - Ideas are chosen for what Tavi knows of you, not only for words you
   happened to use: with a *Fast* model set, it first asks that model which
   ideas fit your interests (each resting on one thing you said), and those

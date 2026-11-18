@@ -113,7 +113,8 @@ describe("the canvas", () => {
     expect(waiting).toContain("connecting…");
     expect(waiting).toMatch(/<button type="submit"[^>]*aria-disabled="true"/);
     expect(waiting).toContain("Ask Tavi something to start a chat.");
-    expect(render({ connection: "ready", runs: [] })).toContain(">connected<");
+    // The mark says it: in its colours when connected, grey when not; its words are for a screen reader.
+    expect(render({ connection: "ready", runs: [] })).toContain('class="brand brand-ready" title="Tavi: connected"');
   });
 
   it("renders a run's text, tool cards, pending round and failure", () => {
@@ -218,7 +219,7 @@ describe("the canvas", () => {
     );
 
     const closed = render({ connection: "closed", failure: "the bridge refused this page's session", runs: [] });
-    expect(closed).toContain(">disconnected<");
+    expect(closed).toContain('class="brand brand-closed" title="Tavi: disconnected"');
     expect(closed).toContain("the bridge refused this page&#x27;s session");
     expect(closed).toContain("for a new link");
     // The owner's clause is ended before the advice, and the line is the bar's own (Mac mini UI check).

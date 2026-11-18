@@ -9,7 +9,9 @@ import { useWorkspace } from "./Workspace.js";
 import { Command } from "../../ui/Command.js";
 
 /**
- * The header: the routes, what needs the reader, and the connection.
+ * The header: the routes, what needs the reader, and the connection — said
+ * by Tavi's mark itself, in its colours when connected, grey when not, and
+ * breathing while it connects.
  *
  * With the Command Center offered (`center`), what is waiting is its tab's
  * badge — approvals, reviews, questions and memory proposals across the
@@ -57,9 +59,11 @@ export function Bar({
   return (
     <>
       <header className="bar">
-        <span className="brand">
+        <span className={`brand brand-${state.connection}`} title={`Tavi: ${CONNECTION_LABELS[state.connection]}`}>
           <TaviMark />
           <Wordmark />
+          {/* Not a live region: the page has one, in `index.html`, and `announcementOf` puts the connection through it. */}
+          <span className="visually-hidden">, {CONNECTION_LABELS[state.connection]}</span>
         </span>
         {focused ? (
           <span className="bar-context">Setup</span>
@@ -76,7 +80,6 @@ export function Bar({
             {workspaceId ? ` in workspace ${workspaceId}` : " on this page"}
           </span>
         ) : null}
-        <Connection state={state.connection} />
       </header>
       {state.failure !== undefined ? (
         <Failure alert={false} className="bar-failure">
@@ -95,8 +98,3 @@ const CONNECTION_LABELS: Readonly<Record<ClientState, string>> = {
   reconnecting: "reconnecting…",
   closed: "disconnected",
 };
-function Connection({ state }: { readonly state: ClientState }) {
-  // Not a live region: the page has one, in `index.html`, and `announcementOf`
-  // puts the connection through it. Four polite regions queue against each other.
-  return <span className={`connection connection-${state}`}>{CONNECTION_LABELS[state]}</span>;
-}

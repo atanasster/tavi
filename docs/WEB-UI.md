@@ -65,7 +65,13 @@ match.
 The page is three zones: the chats down the left, the conversation in the
 middle, and **this chat's panel** on the right. The header carries **Chat**,
 **Ideas** (when the owner offers it), **Center** (the Command Center, when the
-owner offers it) and **Settings**.
+owner offers it) and **Settings**. Tavi's mark at its left says whether the
+page is connected to the owner: in its own colours when it is, grey when it is
+not, and breathing while it connects (its tooltip says which in words).
+
+At phone width the composer keeps the model picker on the row between the
+attach and send buttons, cutting a long name with an ellipsis. The picker's
+list is compact, its rows at its search field's size.
 
 ### The chats list
 

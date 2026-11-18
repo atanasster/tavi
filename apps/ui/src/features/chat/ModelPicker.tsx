@@ -107,6 +107,7 @@ export function ModelPicker({
           <Select
             aria-label="Chat model"
             className="model-select"
+            contentClassName="compact"
             value={known ? (target ?? "") : ""}
             disabled={saving}
             onChange={(event) => void pick(event.target.value)}

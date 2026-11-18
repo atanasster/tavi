@@ -108,6 +108,36 @@ table,
 .brand .tavi-mark {
   width: var(--size-avatar);
   height: var(--size-avatar);
+  transition:
+    filter var(--duration-settle),
+    opacity var(--duration-settle);
+}
+
+/* The connection, said by the mark: grey while there is none, breathing while
+   it is being made (or made again); in its own colours once connected. */
+.brand-idle .tavi-mark,
+.brand-closed .tavi-mark {
+  filter: grayscale(1);
+  opacity: var(--opacity-disabled);
+}
+
+.brand-connecting .tavi-mark,
+.brand-reconnecting .tavi-mark {
+  filter: grayscale(0.7);
+  animation: mark-connecting var(--duration-pulse) ease-in-out infinite;
+}
+
+@keyframes mark-connecting {
+  50% {
+    opacity: var(--opacity-disabled);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-connecting .tavi-mark,
+  .brand-reconnecting .tavi-mark {
+    animation: none;
+  }
 }
 
 /* The wordmark: the display face, with the sun as the dot on its i. */
@@ -192,39 +222,6 @@ table,
   color: hsl(var(--destructive));
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
-}
-
-.connection {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  color: hsl(var(--muted-foreground));
-  font-size: var(--text-base);
-}
-
-.connection::before {
-  content: "";
-  width: var(--size-dot-lg);
-  height: var(--size-dot-lg);
-  border-radius: var(--radius-round);
-  background: hsl(var(--muted-foreground));
-}
-
-.connection-ready {
-  color: hsl(var(--positive));
-}
-
-.connection-ready::before {
-  background: hsl(var(--positive));
-}
-
-.connection-connecting::before,
-.connection-reconnecting::before {
-  background: hsl(var(--warning));
-}
-
-.connection-closed::before {
-  background: hsl(var(--destructive));
 }
 
 /* ---------- The sidebar ---------- */
