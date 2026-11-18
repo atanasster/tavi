@@ -89,11 +89,12 @@
   max-width: 100%;
 }
 
+/* As tall as Send beside it; borderless, so only its hover shows the height. */
 .model-select {
-  min-height: var(--control-height-sm);
+  min-height: var(--control-height);
   min-width: 0;
   max-width: var(--width-select-max);
-  padding: var(--space-0-5) var(--space-2);
+  padding: var(--space-1) var(--space-2);
   box-shadow: none;
   background: transparent;
   border-color: transparent;

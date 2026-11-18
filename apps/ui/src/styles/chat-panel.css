@@ -163,6 +163,16 @@
   font-size: var(--text-base);
 }
 
+/* A text action on a line of its own ("Set up a schedule…", "… in the Command Center →"): its word on the
+   text edge above it, the padding pulled back as the message actions' is (turn.css). */
+.chat-panel-body > .button-sm.ghost:not(.button-icon),
+.chat-panel-body > section > .button-sm.ghost:not(.button-icon),
+.chat-panel-links > .button-sm.ghost {
+  display: flex;
+  width: fit-content;
+  margin-inline-start: calc(-1 * var(--space-2));
+}
+
 /* UI plugins in the chat panel: the
    chat.panel.top slot between the header and the tab strip, and a contributed
    tab's frame, which takes the body's whole height. */

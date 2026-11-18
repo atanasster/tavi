@@ -71,7 +71,7 @@ export function Instructions({
         />
       )}
       <Inherited version={`${version}|${saved}`} taskId={editable ? taskId : undefined} />
-      <p>
+      <p className="chat-panel-links">
         <Button variant="ghost" size="sm" onClick={onSettings}>
           Edit base instructions in Settings →
         </Button>

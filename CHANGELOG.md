@@ -28,6 +28,9 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- In a chat, the side panel's text actions ("Set up a schedule…", "… in the
+  Command Center →") start on the same edge as the text above them, one a
+  line, and the composer's model picker is as tall as Send.
 - Command Center reads better beside the sidebar and the rail. Soul & memory
   stacks its two panes whenever the column is too narrow for both, rather
   than squeezing a memory proposal to a few words a line. The Approvals
