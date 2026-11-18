@@ -28,6 +28,7 @@ import {
 } from "@tavi/contracts";
 
 import { pendingRoundRefusal, type IpcAnswer } from "../../shared/ipc-decisions.js";
+import { clip } from "@tavi/contracts/util";
 
 /** What `chat-context` needs from the owner. */
 export interface ChatContextDependencies {
@@ -89,7 +90,7 @@ async function stateOf(deps: ChatContextDependencies, taskId: string): Promise<C
     revision: current?.revision ?? 0,
     current: current ?? null,
     ...(delegatedFrom === undefined ? {} : { delegatedFrom }),
-    ...(task?.title === null || task?.title === undefined ? {} : { title: task.title.slice(0, TASK_TITLE_MAX) }),
+    ...(task?.title === null || task?.title === undefined ? {} : { title: clip(task.title, TASK_TITLE_MAX) }),
     ...(task?.titleRenamed === true ? { renamed: true } : {}),
     ...(memoryMode === undefined ? {} : { memoryMode }),
   });

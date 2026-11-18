@@ -139,7 +139,8 @@
 .chat-panel-waiting,
 .memory-proposals,
 .reminder-card,
-.handoff-card {
+.handoff-card,
+.center-health {
   border: var(--border-width) solid hsl(var(--warning) / var(--alpha-faint));
   border-radius: var(--radius-lg);
   background: hsl(var(--warning) / var(--tint-soft));

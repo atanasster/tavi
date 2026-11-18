@@ -60,12 +60,22 @@
 }
 
 /* Activity: the owner's sustained growth in memory, open files or child processes. */
+/* The owner's own health: something to act on, boxed as a reminder or a suggestion is, not a loose line of colour. */
 .center-health {
+  display: grid;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+  padding: var(--space-2-5) var(--space-3-5);
   color: hsl(var(--warning));
 }
 
 .center-health p {
   margin: 0;
+}
+
+/* The owner words a warning as a clause ("the owner's memory grew…"); on its own it starts as a sentence. */
+.center-health p::first-letter {
+  text-transform: uppercase;
 }
 
 .center-nav-foot {
@@ -439,8 +449,9 @@
 
 /* A row's follow-up prompts: a toggle under the row, the prompts once opened. */
 .center-followups {
-  /* Lines up with .center-row's text column: its padding, time column and gap. */
-  padding: 0 var(--space-2) var(--space-2-5) calc(var(--space-2) + var(--time-column) + var(--space-3-5));
+  /* Lines up with .center-row's text column: its padding, time column and gap, less the toggle's own padding, so the
+     toggle's words (and the list under them, padded as it is) start on the title's edge. */
+  padding: 0 var(--space-2) var(--space-2-5) calc(var(--space-2) + var(--time-column) + var(--space-3-5) - var(--space-1-5));
   font-size: var(--text-meta);
 }
 

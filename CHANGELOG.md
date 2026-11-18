@@ -28,6 +28,12 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Activity, walked at desktop and phone width. A warning about the owner's
+  own health (memory, open files, processes growing) is a boxed warning that
+  starts as a sentence, not a loose lowercase line of colour. A row's
+  "1 follow-up" and the follow-ups under it start on the title's edge, not
+  6px in. A chat's title, when the owner hands it to a client, is cut with
+  an ellipsis rather than mid-word.
 - Browser, walked at desktop and phone width. Show visits sits at each
   card's foot, level across a row whatever the titles' lengths. A task's
   title is at most four lines, ending in an ellipsis. A session that opened
