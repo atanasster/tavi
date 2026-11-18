@@ -60,3 +60,7 @@ packages/builtin/desktop/native/tavi-desktop-helper
 
 # Keys the how-to guide walks use (pnpm test:guides): never committed.
 .env.tutorials
+
+# The demo video: raw scenes (scripts/docs/demo-record.mjs) and the cut (demo-edit.mjs)
+/.demo-recording/
+/.demo-video/

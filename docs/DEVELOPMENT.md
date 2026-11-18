@@ -621,6 +621,28 @@ node scripts/docs/capture-ui.mjs --only ideas,chat-answer --model
 - `tests/doc-images.test.ts` keeps every file under `docs/assets` shown by a
   page, described by alt text, and under 250 KiB.
 
+The demo video (about a minute and a half: `tavi chat`, the web canvas, the
+same Home at phone size) is recorded and cut by two more scripts:
+
+```bash
+node scripts/docs/demo-record.mjs   # raw scenes into .demo-recording/ (needs a model, like --model)
+node scripts/docs/demo-edit.mjs     # .demo-video/tavi-demo.mp4, poster.png, thumbnail.png, youtube.md
+```
+
+- `demo-record.mjs` uses the same throwaway, seeded session and OpenRouter key
+  as `capture-ui.mjs --model`, and records each scene as the browser's
+  screencast: a JPEG per frame the page drew, with its time and the captions.
+  The terminal is a real `tavi chat` on a pseudo-terminal, drawn live by
+  xterm.js (loaded from jsdelivr). `--only terminal,canvas,phone` re-records
+  some scenes; `--out` moves the recording.
+- `demo-edit.mjs` needs `ffmpeg` with libx264. It keeps every frame the pages
+  drew and shortens only still stretches no caption asked to hold, so the
+  model's waits are cut while its answers stay on screen. It can run on
+  another machine than the recording: copy the recording folder across and
+  pass `--in`.
+- Neither folder is committed. The video goes on YouTube and into a GitHub
+  release or README as an upload; only the poster lives in `docs/assets`.
+
 ### How-to guides
 
 The task-shaped guides under [docs/use-cases/](use-cases/README.md) are

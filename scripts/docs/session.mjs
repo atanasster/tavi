@@ -57,7 +57,7 @@ export function keyFileProblem(keyFile) {
 }
 
 /** The children's environment: none of the caller's TAVI_* settings (a data directory no one can create instead), no key in the OS keychain, and a fixed zone. */
-const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("TAVI_")));
+export const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("TAVI_")));
 env["TAVI_CREDENTIAL_KEYCHAIN"] = "off";
 // A command that misses `--data-dir` fails on a folder no one can create (one under a file, on every platform), never falls back to the reader's own data.
 env["TAVI_DATA_DIR"] = join(process.execPath, "tavi-docs-walk-without-data-dir");
@@ -348,7 +348,7 @@ function storeSearchKeys(run, file) {
  * argument lists) once the owner is up; `serve` adds flags to the owner's
  * `tavi serve` (`--browser-allow-host 127.0.0.1:<port>`, `--fs-root`); `main` is the main model in place of
  * `MODEL.main`, for a walk whose feature needs another kind of model. Returns the directory, a `tavi` bound to it, and
- * `openUi(browser, viewport)`, which starts `tavi ui` on a free port and signs a
+ * `openUi(browser, viewport, deviceScaleFactor)`, which starts `tavi ui` on a free port and signs a
  * new browser context in through its one-time link.
  */
 export async function openSession({
@@ -390,12 +390,12 @@ export async function openSession({
       );
     }
   }
-  async function openUi(browser, viewport = { width: 1280, height: 800 }) {
+  async function openUi(browser, viewport = { width: 1280, height: 800 }, deviceScaleFactor = 1) {
     const port = await freePort();
     // The link ends its line: read only once the whole token has arrived.
     const ui = start(dataDir, ["ui", "--print-url", "--port", String(port)], /(http:\/\/127\.0\.0\.1:\d+\/\S*#\S+)\r?\n/);
     const [, link] = await ui.matched;
-    const context = await browser.newContext({ viewport, deviceScaleFactor: 1, locale: "en-GB", timezoneId: "Europe/London" });
+    const context = await browser.newContext({ viewport, deviceScaleFactor, locale: "en-GB", timezoneId: "Europe/London" });
     const page = await context.newPage();
     // A link signs in once; the session cookie it leaves serves every page after it.
     await page.goto(link);
