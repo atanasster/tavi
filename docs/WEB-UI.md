@@ -361,15 +361,18 @@ Attach up to five files:
 | :--- | :--- | :--- |
 | UTF-8 text and code files | 48 KB each | Their content is included in the prompt, within the combined 64K-character prompt limit |
 | PDFs | 20 MiB each | Uploaded when you send; see [PDF.md](PDF.md) |
+| Photos (PNG, JPEG) | 5 MB each, up to 8000 pixels a side | Uploaded when you send; the chat looks at it with `artifacts.view_image` |
 | Videos (MP4, MOV, M4V, WebM) and GIFs | 50 MiB each | Uploaded when you send; see [VIDEO.md](VIDEO.md) |
 
 An uploaded file is checked by its bytes (a file merely renamed `.pdf` is
 refused), kept as an untrusted attachment, and named in the message as a
 channel attachment is, so the chat reads it with its tools. It goes when the
 chat is erased. A message with an upload is its own turn, never merged into a
-running one. A photo (PNG, JPEG) and other binary files are refused with a note
-saying so: a photo is read when it comes from a messaging channel. A text
-file's lines are shown in your message as a block, as they are.
+running one. A photo needs no PDF or video tools; one a model could not be
+shown (too many pixels, a damaged header) is refused when it is sent. Other
+binary files are refused with a note saying so. Your message shows its files as
+badges under your words: an uploaded file by its name, and a text file by its
+name too, which opens its whole content in a dialog when you press it.
 Remove a file chip before sending to exclude it. A completed PDF fill shows a
 review panel: the filled pages on the left; on the right every value with its
 source and check, what was left blank for you, and a Download button for the

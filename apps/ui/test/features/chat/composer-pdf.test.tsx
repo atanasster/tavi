@@ -12,7 +12,7 @@ import { mount } from "../../support/dom.js";
 
 /** The composer mounted, sending to `onSubmit` and uploading through `onUpload`. */
 const composer = (
-  onSubmit: (prompt: string, sent?: { readonly attachments?: readonly string[] }) => void,
+  onSubmit: (prompt: string, sent?: { readonly attachments?: readonly string[]; readonly attachmentNames?: readonly string[] }) => void,
   onUpload: (file: UploadAttachment) => Promise<string>,
 ): Promise<HTMLElement> =>
   mount(<Composer disabled={false} placeholder="Message" onSubmit={onSubmit} onUpload={onUpload} onRetry={() => undefined} />);
@@ -37,15 +37,21 @@ const pdf = (): File => new File([new TextEncoder().encode("%PDF-1.4\n%%EOF\n")]
 
 describe("the composer with a PDF", () => {
   it("uploads the file, then sends a message of files alone naming it", async () => {
-    const sent: { prompt: string; attachments?: readonly string[] }[] = [];
+    const sent: { prompt: string; attachments?: readonly string[]; names?: readonly string[] }[] = [];
     const shown = await composer(
-      (prompt, extra) => void sent.push({ prompt, ...(extra?.attachments === undefined ? {} : { attachments: extra.attachments }) }),
+      (prompt, extra) =>
+        void sent.push({
+          prompt,
+          ...(extra?.attachments === undefined ? {} : { attachments: extra.attachments }),
+          ...(extra?.attachmentNames === undefined ? {} : { names: extra.attachmentNames }),
+        }),
       async () => "art-up-7",
     );
     await attach(shown, pdf());
     expect(shown.querySelector(".attachment-list")?.textContent).toContain("form.pdf");
     await send(shown);
-    expect(sent).toEqual([{ prompt: FILES_ONLY_PROMPT, attachments: ["art-up-7"] }]);
+    // Its name goes with it, for the message to show; the owner is sent only the id.
+    expect(sent).toEqual([{ prompt: FILES_ONLY_PROMPT, attachments: ["art-up-7"], names: ["form.pdf"] }]);
     expect(shown.querySelector(".attachment-list")).toBeNull();
   });
 

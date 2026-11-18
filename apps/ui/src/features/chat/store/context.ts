@@ -11,6 +11,7 @@ interface EntryExtra {
   readonly queued?: boolean;
   readonly toHome?: boolean;
   readonly carriesFiles?: true;
+  readonly fileNames?: readonly string[];
 }
 
 /**

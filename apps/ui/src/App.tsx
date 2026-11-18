@@ -305,6 +305,7 @@ export function App({
       ...(model === undefined ? {} : { model }),
       ...(sent?.asPrompt === true ? { asPrompt: true } : {}),
       ...(sent?.attachments === undefined ? {} : { attachments: sent.attachments }),
+      ...(sent?.attachmentNames === undefined ? {} : { attachmentNames: sent.attachmentNames }),
       ...(sent?.folderAttachments === undefined ? {} : { folderAttachments: sent.folderAttachments }),
       ...(fromIdeaId === undefined ? {} : { fromIdeaId }),
       viewing: current?.taskId,

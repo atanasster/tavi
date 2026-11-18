@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  ATTACHMENT_UPLOAD_IMAGE_MAX_BYTES,
   gifIsAnimated,
   PLAN_TOOL_ID,
   PlanUpdateInputSchema,
@@ -116,7 +117,7 @@ export function unviewableImage(bytes: Uint8Array): string | undefined {
 export const VIEWABLE_IMAGE_TYPES = /^image\/(png|jpeg|gif|webp)$/;
 
 /** The largest image put in front of a model. */
-export const MAX_VIEW_IMAGE_BYTES = 5_000_000;
+export const MAX_VIEW_IMAGE_BYTES = ATTACHMENT_UPLOAD_IMAGE_MAX_BYTES;
 
 export interface AssistantToolOptions {
   readonly searchHistory: (input: {

@@ -50,7 +50,10 @@ export interface CanvasProps {
   /** The name of the chat the next prompt goes to (`state.next`), when it has one beyond its first prompt. */
   readonly chatTitle?: string | undefined;
   /** `false`: the prompt was not sent, and stays in the box. `asPrompt`: never run as a plugin's slash command (a suggestion pressed). */
-  readonly onSubmit: (prompt: string, sent?: { readonly asPrompt?: boolean; readonly attachments?: readonly string[] }) => boolean | void;
+  readonly onSubmit: (
+    prompt: string,
+    sent?: { readonly asPrompt?: boolean; readonly attachments?: readonly string[]; readonly attachmentNames?: readonly string[] },
+  ) => boolean | void;
   /** Uploads a PDF, video or GIF the composer attaches. */
   readonly onUpload?: ((file: UploadAttachment) => Promise<string>) | undefined;
   readonly onLoadArtifacts?: CanvasStore["loadArtifacts"];

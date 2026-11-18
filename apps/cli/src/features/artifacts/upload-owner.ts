@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { chmodSync, closeSync, lstatSync, mkdirSync, openSync, readSync, rmSync, writeSync } from "node:fs";
+import { chmodSync, closeSync, lstatSync, mkdirSync, openSync, readFileSync, readSync, rmSync, writeSync } from "node:fs";
 import { join } from "node:path";
 
 import {
@@ -8,6 +8,7 @@ import {
   UPLOAD_CONTENT_TYPES,
   VIDEO_SNIFF_BYTES,
   folderFileName,
+  isUploadPhoto,
   untrustedLabel,
   uploadMaxBytes,
   type ArtifactRepositoryPort,
@@ -18,10 +19,11 @@ import {
 import { sniffMediaType } from "@tavi/runtime";
 
 import type { IpcAnswer } from "../../shared/ipc-decisions.js";
+import { unviewableImage } from "../tools/assistant.js";
 
 /**
  * `artifacts upload`: a PDF,
- * a video or an animated GIF the person attaches in the web UI, taken in
+ * a video, an animated GIF or a photo the person attaches in the web UI, taken in
  * chunk by chunk, in order, and kept as a channel attachment is: an approved,
  * untrusted artifact labelled `attachment`. What it is is read from its first
  * piece's bytes, never its name: that type's tools must be on and the file
@@ -104,7 +106,15 @@ const EXTENSIONS: Readonly<Record<UploadContentType, string>> = {
   "video/quicktime": "mov",
   "video/webm": "webm",
   "image/gif": "gif",
+  "image/png": "png",
+  "image/jpeg": "jpg",
 };
+
+/** What an upload of `contentType` is called in a refusal. */
+function kindOf(contentType: UploadContentType): string {
+  if (contentType === "application/pdf") return "a PDF";
+  return isUploadPhoto(contentType) ? "a photo" : "a video or GIF";
+}
 
 /** What an upload's bytes are, of the types it may be; undefined for anything else. */
 function uploadTypeOf(bytes: Uint8Array): UploadContentType | undefined {
@@ -135,21 +145,23 @@ export async function artifactsUploadCommand(
       // What the bytes are, not what the name says: a renamed file is refused at its first piece.
       const contentType = uploadTypeOf(bytes);
       if (contentType === undefined)
-        throw new TaviError("INVALID_INPUT", `${payload.name} is not a PDF, a video (MP4, MOV, WebM) or a GIF`);
-      // Only the tools that read this type are asked about: a video is taken with the PDF tools off, and so on.
+        throw new TaviError("INVALID_INPUT", `${payload.name} is not a PDF, a video (MP4, MOV, WebM), a GIF or a photo (PNG, JPEG)`);
+      // Only the tools that read this type are asked about: a video is taken with the PDF tools off, and so on;
+      // a photo needs neither, since `artifacts.view_image` shows it.
       if (contentType === "application/pdf" && deps.pdfEnabled !== undefined && !(await deps.pdfEnabled(payload.workspaceId)))
         throw new TaviError("UNSUPPORTED", "the PDF tools are off in this workspace (`tavi config set pdf.enabled on`)");
-      if (contentType !== "application/pdf" && deps.videoEnabled !== undefined && !(await deps.videoEnabled(payload.workspaceId)))
+      if (
+        contentType !== "application/pdf" &&
+        !isUploadPhoto(contentType) &&
+        deps.videoEnabled !== undefined &&
+        !(await deps.videoEnabled(payload.workspaceId))
+      )
         throw new TaviError(
           "UNSUPPORTED",
           "the video tools are off in this workspace, or FFmpeg is not installed (`tavi config set video.enabled on`, `tavi doctor`)",
         );
       const cap = uploadMaxBytes(contentType);
-      if (payload.size > cap)
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${payload.name}: ${contentType === "application/pdf" ? "a PDF" : "a video or GIF"} is at most ${String(cap / 1024 / 1024)} MiB`,
-        );
+      if (payload.size > cap) throw new TaviError("INVALID_INPUT", `${payload.name}: ${kindOf(contentType)} is at most ${capText(cap)}`);
       deps.checkSpace?.();
       mkdirSync(deps.stagingDirectory, { recursive: true, mode: 0o700 });
       // A link there would send the pieces elsewhere: refused before anything is written (the store refuses it too).
@@ -200,6 +212,9 @@ export async function artifactsUploadCommand(
       // Read again from the file the store will take: what is staged is what the first piece was sniffed as.
       if (uploadTypeOf(stagedHead(fd)) !== staged.contentType)
         throw new TaviError("INVALID_INPUT", `${payload.name} is not what its first piece said it was`);
+      // A photo a model would be refused (too many pixels, a damaged header) is refused now, not at its first look.
+      const unviewable = isUploadPhoto(staged.contentType) ? unviewableImage(readFileSync(staged.path)) : undefined;
+      if (unviewable !== undefined) throw new TaviError("INVALID_INPUT", `${payload.name} cannot be shown to a model: ${unviewable}`);
       closeSync(fd);
       staged.fd = undefined;
       const artifactId = `art-up-${randomBytes(20).toString("hex")}`;
@@ -234,4 +249,9 @@ export async function artifactsUploadCommand(
   } finally {
     bytes.fill(0);
   }
+}
+
+/** A cap as the refusal says it: whole MiB for the larger ones, MB for a photo's 5 000 000 bytes. */
+function capText(cap: number): string {
+  return cap % (1024 * 1024) === 0 ? `${String(cap / 1024 / 1024)} MiB` : `${String(cap / 1_000_000)} MB`;
 }

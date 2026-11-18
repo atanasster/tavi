@@ -7,7 +7,9 @@ import { plural } from "@tavi/contracts/util";
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
 import { useScrollIntoView } from "../../hooks/scroll.js";
 import { useAnnounce } from "../../hooks/use-announce.js";
+import { Icon } from "../../ui/Icon.js";
 import { Markdown } from "../../ui/Markdown.js";
+import { Modal } from "../../ui/Modal.js";
 import { TaviMark } from "../../ui/TaviMark.js";
 import { ConnectCard } from "../apps/ConnectCard.js";
 import { QuestionCard } from "../needs/NeedCard.js";
@@ -15,6 +17,7 @@ import { HandoffCard } from "../takeover/HandoffCard.js";
 import { Transcript } from "../transcript/Transcript.js";
 import { BrowserControlRow } from "../transcript/Receipts.js";
 import { Approvals } from "./Approvals.js";
+import { FILES_ONLY_PROMPT, inlinedFilesOf } from "./attachments.js";
 import { MessageActions, type RewindOffer } from "./MessageActions.js";
 import { latestPlan, planStep } from "./plan.js";
 import { Reviews } from "./Reviews.js";
@@ -42,19 +45,68 @@ export function lastingChatOf(run: CanvasRun, state: Pick<CanvasState, "home" | 
   if (run.toHome === true || (taskId !== undefined && taskId === state.home)) return true;
   return taskId !== undefined && state.directory?.rows.find((row) => row.taskId === taskId)?.origin === "messaging";
 }
-/** A person's message. A long one scrolls in its box, which a keyboard can do only from inside it: only then is it a tab stop. */
-function Prompt({ id, text }: { readonly id: string; readonly text: string }) {
+/**
+ * A person's message, its files as badges under it: a text file inlined in
+ * the prompt opens its lines in a dialog (never in the bubble, however long),
+ * an uploaded one is named. A long message
+ * scrolls in its box, which a keyboard can do only from inside it: only then
+ * is it a tab stop.
+ */
+export function Prompt({
+  id,
+  text,
+  fileNames = [],
+}: {
+  readonly id: string;
+  readonly text: string;
+  readonly fileNames?: readonly string[];
+}) {
+  const inlined = useMemo(() => inlinedFilesOf(text), [text]);
+  const hasFiles = inlined.files.length > 0 || fileNames.length > 0;
+  // A message of files alone says so to the owner; here its badges say it.
+  const said = hasFiles && inlined.text.trim() === FILES_ONLY_PROMPT ? "" : inlined.text;
   const box = useRef<HTMLParagraphElement>(null);
   const [scrolls, setScrolls] = useState(false);
+  const [viewing, setViewing] = useState<number | undefined>(undefined);
+  const viewed = viewing === undefined ? undefined : inlined.files[viewing];
   useLayoutEffect(() => {
     const { scrollHeight = 0, clientHeight = 0 } = box.current ?? {};
     setScrolls(scrollHeight > clientHeight);
-  }, [text]);
+  }, [said]);
   return (
-    <p className="prompt" id={id} ref={box} {...(scrolls ? { tabIndex: 0 } : {})}>
-      <span className="visually-hidden">you: </span>
-      {text}
-    </p>
+    <>
+      {said === "" ? null : (
+        <p className="prompt" id={id} ref={box} {...(scrolls ? { tabIndex: 0 } : {})}>
+          <span className="visually-hidden">you: </span>
+          {said}
+        </p>
+      )}
+      {hasFiles ? (
+        <ul className="prompt-files list-reset" aria-label="Attached files" {...(said === "" ? { id } : {})}>
+          {fileNames.map((name, index) => (
+            <li key={`upload-${index}`} className="prompt-file">
+              <span className="prompt-file-name" title={name}>
+                <Icon name="paperclip" size="sm" />
+                <span className="truncate">{name}</span>
+              </span>
+            </li>
+          ))}
+          {inlined.files.map((file, index) => (
+            <li key={`inline-${index}`} className="prompt-file">
+              <Button variant="bare" className="prompt-file-name" title={`Show ${file.name}`} onClick={() => setViewing(index)}>
+                <Icon name="paperclip" size="sm" />
+                <span className="truncate">{file.name}</span>
+              </Button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {viewed === undefined ? null : (
+        <Modal title={viewed.name} wide onClose={() => setViewing(undefined)}>
+          <pre className="prompt-file-text">{viewed.text}</pre>
+        </Modal>
+      )}
+    </>
   );
 }
 
@@ -180,7 +232,7 @@ export const RunView = memo(function RunView({
       ) : null}
       {run.prompt === "" ? null : (
         <div className="user-message" data-run={run.id} data-turn={firstTurn + (run.recordedPrompts?.length ?? 0)}>
-          <Prompt id={promptId} text={run.prompt} />
+          <Prompt id={promptId} text={run.prompt} {...(run.fileNames === undefined ? {} : { fileNames: run.fileNames })} />
           <MessageActions text={run.prompt} label="prompt" rewind={rewindOffer} onRepeat={repeat} />
         </div>
       )}

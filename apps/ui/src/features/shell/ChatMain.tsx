@@ -65,6 +65,7 @@ function retryChatParts(): void {
 export interface SentExtra {
   readonly asPrompt?: boolean;
   readonly attachments?: readonly string[];
+  readonly attachmentNames?: readonly string[];
   readonly folderAttachments?: ReturnType<typeof draftAttachments>;
 }
 

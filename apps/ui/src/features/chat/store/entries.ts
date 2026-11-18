@@ -61,6 +61,7 @@ export function installEntries(ctx: StoreContext): void {
       readonly queued?: boolean;
       readonly toHome?: boolean;
       readonly carriesFiles?: true;
+      readonly fileNames?: readonly string[];
     } = {},
   ): CanvasRun => ({
     id,

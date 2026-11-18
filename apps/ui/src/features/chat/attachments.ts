@@ -1,5 +1,6 @@
 import {
   ATTACHMENT_UPLOAD_CHUNK_CHARS,
+  ATTACHMENT_UPLOAD_IMAGE_MAX_BYTES,
   ATTACHMENT_UPLOAD_PDF_MAX_BYTES,
   ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES,
   IPC_MAX_PROMPT_CHARS,
@@ -14,13 +15,13 @@ interface TextAttachment {
   readonly text: string;
 }
 /**
- * A PDF, a video or a GIF:
+ * A PDF, a video, a GIF or a photo:
  * uploaded when the message is sent, and named by it, never inlined. The file
  * itself is kept, and read a slice at a time as it is sent, never whole.
  */
 export interface UploadAttachment {
   readonly kind: "upload";
-  readonly media: "pdf" | "video" | "gif";
+  readonly media: "pdf" | "video" | "gif" | "image";
   readonly name: string;
   readonly file: Blob;
 }
@@ -29,7 +30,8 @@ export const MAX_ATTACHMENT_BYTES = 48 * 1024;
 export const MAX_ATTACHMENTS = 5;
 const TEXT_FILE_ACCEPT = ".txt,.md,.csv,.tsv,.json,.yaml,.yml,.xml,.html,.css,.js,.jsx,.ts,.tsx,.py,.sh,.sql,.log,.rs,.go,.java,.c,.h,.cpp";
 const VIDEO_FILE_ACCEPT = ".mp4,.mov,.m4v,.webm,.gif";
-export const FILE_ACCEPT = `${TEXT_FILE_ACCEPT},.pdf,${VIDEO_FILE_ACCEPT}`;
+const IMAGE_FILE_ACCEPT = ".png,.jpg,.jpeg";
+export const FILE_ACCEPT = `${TEXT_FILE_ACCEPT},.pdf,${VIDEO_FILE_ACCEPT},${IMAGE_FILE_ACCEPT}`;
 /** What a message of files alone says: the owner takes no blank prompt. */
 export const FILES_ONLY_PROMPT = "(see the attached file)";
 
@@ -41,6 +43,11 @@ function headIs(media: UploadAttachment["media"], head: Uint8Array): boolean {
     new TextDecoder("latin1").decode(head.subarray(offset, offset + text.length)) === text;
   if (media === "pdf") return ascii(0, "%PDF-");
   if (media === "gif") return ascii(0, "GIF87a") || ascii(0, "GIF89a");
+  if (media === "image")
+    return (
+      [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((byte, index) => head[index] === byte) ||
+      (head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff)
+    );
   // An ISO media file (MP4, MOV, M4V), or Matroska's EBML header (WebM).
   return ascii(4, "ftyp") || (head[0] === 0x1a && head[1] === 0x45 && head[2] === 0xdf && head[3] === 0xa3);
 }
@@ -52,25 +59,36 @@ export async function readAttachment(file: File): Promise<Attachment> {
       ? "pdf"
       : extension === ".gif" || file.type === "image/gif"
         ? "gif"
-        : // Only the containers the owner takes: a Matroska or 3GP file is not attached as a video it would refuse.
-          VIDEO_FILE_ACCEPT.split(",").includes(extension) || ["video/mp4", "video/quicktime", "video/webm"].includes(file.type)
-          ? "video"
-          : undefined;
+        : IMAGE_FILE_ACCEPT.split(",").includes(extension) || ["image/png", "image/jpeg"].includes(file.type)
+          ? "image"
+          : // Only the containers the owner takes: a Matroska or 3GP file is not attached as a video it would refuse.
+            VIDEO_FILE_ACCEPT.split(",").includes(extension) || ["video/mp4", "video/quicktime", "video/webm"].includes(file.type)
+            ? "video"
+            : undefined;
   if (media !== undefined) {
-    const cap = media === "pdf" ? ATTACHMENT_UPLOAD_PDF_MAX_BYTES : ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES;
+    const cap =
+      media === "pdf"
+        ? ATTACHMENT_UPLOAD_PDF_MAX_BYTES
+        : media === "image"
+          ? ATTACHMENT_UPLOAD_IMAGE_MAX_BYTES
+          : ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES;
     if (file.size > cap)
-      throw new Error(`${file.name}: ${media === "pdf" ? "a PDF" : "a video or GIF"} is at most ${String(cap / 1024 / 1024)} MiB.`);
+      throw new Error(
+        media === "image"
+          ? `${file.name}: a photo is at most ${String(cap / 1_000_000)} MB.`
+          : `${file.name}: ${media === "pdf" ? "a PDF" : "a video or GIF"} is at most ${String(cap / 1024 / 1024)} MiB.`,
+      );
     // Only its head is read now: the rest is read a slice at a time as it is sent.
     const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
     if (!headIs(media, head))
       throw new Error(
-        `${file.name}: this file is not ${media === "pdf" ? "a PDF" : media === "gif" ? "a GIF" : "an MP4, MOV or WebM video"}.`,
+        `${file.name}: this file is not ${{ pdf: "a PDF", gif: "a GIF", image: "a PNG or JPEG photo", video: "an MP4, MOV or WebM video" }[media]}.`,
       );
     return { kind: "upload", media, name: file.name, file };
   }
   if (!TEXT_FILE_ACCEPT.split(",").includes(extension) && !file.type.startsWith("text/"))
     throw new Error(
-      `${file.name}: the canvas takes a PDF, a video (MP4, MOV, WebM), a GIF (read as a short clip), or a text or code file. A photo (PNG, JPEG) is read when it is sent from a messaging channel; it cannot be attached here yet.`,
+      `${file.name}: the canvas takes a PDF, a photo (PNG, JPEG), a video (MP4, MOV, WebM), a GIF (read as a short clip), or a text or code file.`,
     );
   if (file.size > MAX_ATTACHMENT_BYTES) throw new Error(`${file.name}: maximum file size is 48 KB.`);
   const text = new TextDecoder("utf-8", { fatal: true }).decode(await file.arrayBuffer());
@@ -86,7 +104,7 @@ function fenceFor(text: string): string {
 
 /**
  * The prompt with the text files inlined, each as its lines in a fence (shown
- * as a block in the message, never one escaped string); PDFs, videos and GIFs
+ * as a block in the message, never one escaped string); PDFs, photos, videos and GIFs
  * go by upload.
  */
 export function composePrompt(prompt: string, attachments: readonly Attachment[]): string {
@@ -103,6 +121,45 @@ export function composePrompt(prompt: string, attachments: readonly Attachment[]
   if (result.length > IPC_MAX_PROMPT_CHARS)
     throw new Error("The prompt and attachments exceed the 64K-character limit. Remove a file or shorten the prompt.");
   return result;
+}
+
+/** A text file a prompt carries inline, as `composePrompt` wrote it. */
+export interface InlinedFile {
+  readonly name: string;
+  readonly text: string;
+}
+
+/** One inlined file's block, at the start of what is left of the prompt: its name (JSON), its fence, its lines. */
+const INLINED_FILE = /^Attached file ("(?:[^"\\\n]|\\.)*") \(reference content\):\n(`{3,})\n([\s\S]*?)\n\2(?:\n\n|$)/;
+
+/**
+ * `prompt` as the person wrote it and the text files `composePrompt` inlined
+ * after it, so a message shows them as files rather than their whole text.
+ * Only the blocks it writes, at the prompt's end and each whole, are read as
+ * files: anything else is left in the text, as typed.
+ */
+export function inlinedFilesOf(prompt: string): { readonly text: string; readonly files: readonly InlinedFile[] } {
+  const start = prompt.startsWith("Attached file ") ? 0 : prompt.indexOf("\n\nAttached file ");
+  if (start < 0) return { text: prompt, files: [] };
+  let rest = prompt.slice(start === 0 ? 0 : start + 2);
+  const files: InlinedFile[] = [];
+  while (rest !== "") {
+    const match = INLINED_FILE.exec(rest);
+    const name = match === null ? undefined : nameOf(match[1] ?? "");
+    if (match === null || name === undefined) return { text: prompt, files: [] };
+    files.push({ name, text: match[3] ?? "" });
+    rest = rest.slice(match[0].length);
+  }
+  return { text: prompt.slice(0, start), files };
+}
+
+function nameOf(json: string): string | undefined {
+  try {
+    const name: unknown = JSON.parse(json);
+    return typeof name === "string" && name !== "" ? name : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export const uploadsOf = (attachments: readonly Attachment[]): readonly UploadAttachment[] => attachments.filter(isUpload);

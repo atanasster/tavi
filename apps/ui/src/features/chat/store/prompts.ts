@@ -73,6 +73,8 @@ export function installPrompts(ctx: StoreContext): void {
     if (ctx.state.unsent !== undefined) ctx.publish(without(ctx.state, "unsent"));
     const route = ctx.nextPrompt();
     const files = extra?.attachments !== undefined && extra.attachments.length > 0 ? extra.attachments : undefined;
+    // What the message shows of them: their names, as badges.
+    const shown = files !== undefined && extra?.attachmentNames !== undefined ? { fileNames: extra.attachmentNames } : {};
     // The one question open is a worker's: answered at its wait. A message with files is a turn of its own.
     if (files === undefined && route.kind === "answer" && route.waitId !== undefined && route.rootTaskId !== undefined) {
       ctx.answerWorker(route.rootTaskId, route.waitId, prompt);
@@ -104,6 +106,7 @@ export function installPrompts(ctx: StoreContext): void {
             queued: true,
             run: initialRunState({ taskId: busy }),
             ...(files === undefined ? {} : { carriesFiles: true as const }),
+            ...shown,
           }),
         ],
       });
@@ -132,12 +135,12 @@ export function installPrompts(ctx: StoreContext): void {
       for (const earlier of ctx.state.runs) if (earlier.run.taskId === taskId || earlier.continues === taskId) ctx.retire(earlier.id);
       ctx.publish({
         ...ctx.state,
-        runs: [...ctx.state.runs, ctx.entry(id, prompt, { continues: taskId, run: initialRunState({ taskId }) })],
+        runs: [...ctx.state.runs, ctx.entry(id, prompt, { continues: taskId, run: initialRunState({ taskId }), ...shown })],
       });
       ctx.continueTask(id, taskId, prompt, conversationId);
       return;
     }
-    ctx.publish({ ...ctx.state, runs: [...ctx.state.runs, ctx.entry(id, prompt, toHome ? { toHome } : {})] });
+    ctx.publish({ ...ctx.state, runs: [...ctx.state.runs, ctx.entry(id, prompt, { ...(toHome ? { toHome } : {}), ...shown })] });
     const payload = runPayload(
       id,
       prompt,

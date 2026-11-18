@@ -49,7 +49,10 @@ export function Composer({
   readonly retryPrompt?: string | undefined;
   readonly onRetry: (prompt: string) => void;
   /** `false`: the prompt was not sent, and stays in the box. */
-  readonly onSubmit: (prompt: string, sent?: { readonly attachments?: readonly string[] }) => boolean | void;
+  readonly onSubmit: (
+    prompt: string,
+    sent?: { readonly attachments?: readonly string[]; readonly attachmentNames?: readonly string[] },
+  ) => boolean | void;
   /** A PDF, video or GIF attached here, uploaded as the message is sent: its artifact id. Absent, they are refused. */
   readonly onUpload?: ((file: UploadAttachment) => Promise<string>) | undefined;
   /** A rewound message, put in the box to edit and send again; a new `key` puts it there again. `placeholder`: select its first [part] to type over. */
@@ -131,7 +134,7 @@ export function Composer({
       // Uploaded first, then named by the message; a refusal keeps the prompt and its files in the box.
       if (unconfigured) return;
       if (onUpload === undefined) {
-        setFileError("PDFs, videos and GIFs cannot be attached here.");
+        setFileError("PDFs, photos, videos and GIFs cannot be attached here.");
         return;
       }
       setReading(true);
@@ -142,7 +145,8 @@ export function Composer({
         return ids;
       })()
         .then((ids) => {
-          if (onSubmit(text || FILES_ONLY_PROMPT, { attachments: ids }) === false) return;
+          if (onSubmit(text || FILES_ONLY_PROMPT, { attachments: ids, attachmentNames: uploads.map((file) => file.name) }) === false)
+            return;
           setPrompt("");
           setAttachments([]);
           box.current?.focus();

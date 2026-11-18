@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { ATTACHMENT_UPLOAD_CHUNK_CHARS, ATTACHMENT_UPLOAD_PDF_MAX_BYTES, ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES } from "@tavi/contracts";
-import { composePrompt, readAttachment, uploadFile, uploadsOf, MAX_ATTACHMENT_BYTES } from "../../../src/features/chat/attachments.js";
+import {
+  ATTACHMENT_UPLOAD_CHUNK_CHARS,
+  ATTACHMENT_UPLOAD_IMAGE_MAX_BYTES,
+  ATTACHMENT_UPLOAD_PDF_MAX_BYTES,
+  ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES,
+} from "@tavi/contracts";
+import {
+  composePrompt,
+  inlinedFilesOf,
+  readAttachment,
+  uploadFile,
+  uploadsOf,
+  MAX_ATTACHMENT_BYTES,
+} from "../../../src/features/chat/attachments.js";
 
 describe("text attachments", () => {
   it("includes the real filename and complete content in the submitted prompt", async () => {
@@ -15,8 +27,8 @@ describe("text attachments", () => {
     expect(composePrompt("", [file])).not.toBe("");
   });
   it("rejects unsupported, oversized, invalid UTF-8 and disguised binary files", async () => {
-    await expect(readAttachment(new File(["x"], "image.png", { type: "image/png" }))).rejects.toThrow(
-      "A photo (PNG, JPEG) is read when it is sent from a messaging channel; it cannot be attached here yet.",
+    await expect(readAttachment(new File(["x"], "image.webp", { type: "image/webp" }))).rejects.toThrow(
+      "the canvas takes a PDF, a photo (PNG, JPEG), a video",
     );
     await expect(readAttachment(new File(["x".repeat(MAX_ATTACHMENT_BYTES + 1)], "notes.txt"))).rejects.toThrow("48 KB");
     await expect(readAttachment(new File([new Uint8Array([255])], "notes.txt"))).rejects.toThrow();
@@ -25,6 +37,41 @@ describe("text attachments", () => {
   it("bounds the whole prompt, attachment content included", () => {
     expect(() => composePrompt("x".repeat(65536), [{ name: "a.txt", text: "more" }])).toThrow("limit");
     expect(() => composePrompt("", [{ name: "a.txt", text: "\n".repeat(70000) }])).toThrow("limit");
+  });
+});
+
+describe("inlined text files, as a message shows them", () => {
+  it("reads back the files composePrompt inlined, and the person's words before them", async () => {
+    const notes = await readAttachment(new File(["# Notes\n\n```js\nx\n```\n"], "notes.md"));
+    const prompt = composePrompt("Summarize", [notes, { name: 'odd "name".txt', text: "" }]);
+    expect(inlinedFilesOf(prompt)).toEqual({
+      text: "Summarize",
+      files: [
+        { name: "notes.md", text: "# Notes\n\n```js\nx\n```" },
+        { name: 'odd "name".txt', text: "" },
+      ],
+    });
+    expect(inlinedFilesOf(composePrompt("", [notes])).text).toBe("");
+  });
+
+  it("leaves a prompt alone that only looks like one", () => {
+    expect(inlinedFilesOf("plain words")).toEqual({ text: "plain words", files: [] });
+    const typed = 'see below\n\nAttached file "x.md" (reference content):\n```\nnot closed';
+    expect(inlinedFilesOf(typed)).toEqual({ text: typed, files: [] });
+  });
+});
+
+describe("photo attachments", () => {
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
+  const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 16]);
+
+  it("uploads a PNG or JPEG by its bytes, and refuses a renamed file or one over 5 MB", async () => {
+    expect(await readAttachment(new File([png], "shot.png", { type: "image/png" }))).toMatchObject({ kind: "upload", media: "image" });
+    expect(await readAttachment(new File([jpeg], "photo.JPG"))).toMatchObject({ kind: "upload", media: "image" });
+    await expect(readAttachment(new File(["just text"], "fake.png"))).rejects.toThrow("not a PNG or JPEG photo");
+    const big = new Uint8Array(ATTACHMENT_UPLOAD_IMAGE_MAX_BYTES + 1);
+    big.set(png);
+    await expect(readAttachment(new File([big], "big.png"))).rejects.toThrow("a photo is at most 5 MB");
   });
 });
 
@@ -101,10 +148,10 @@ describe("video and GIF attachments", () => {
     await expect(readAttachment(new File([mp4], "loop.gif"))).rejects.toThrow("not a GIF");
     // A container the owner does not take is not attached as a video.
     await expect(readAttachment(new File([webm], "clip.mkv", { type: "video/x-matroska" }))).rejects.toThrow(
-      "the canvas takes a PDF, a video",
+      "the canvas takes a PDF, a photo (PNG, JPEG), a video",
     );
     await expect(readAttachment(new File([mp4], "clip.3gp", { type: "video/3gpp" }))).rejects.toThrow(
-      "the canvas takes a PDF, a video (MP4, MOV, WebM)",
+      "the canvas takes a PDF, a photo (PNG, JPEG), a video (MP4, MOV, WebM)",
     );
     // 21 MB is too big for a PDF, not for a video; 51 MB is too big for either.
     const sized = (size: number, head: Uint8Array): Uint8Array<ArrayBuffer> => {

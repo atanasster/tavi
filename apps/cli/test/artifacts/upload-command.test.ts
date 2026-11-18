@@ -61,6 +61,16 @@ const PDF = Buffer.from("%PDF-1.4\n1 0 obj << >> endobj\ntrailer << >>\n%%EOF\n"
 const MP4_HEAD = Buffer.from("000000186674797069736f6d0000020069736f6d69736f32", "hex");
 const mp4 = (size: number): Buffer => Buffer.concat([MP4_HEAD, Buffer.alloc(Math.max(0, size - MP4_HEAD.length))]);
 const GIF = Buffer.concat([Buffer.from("GIF89a", "latin1"), Buffer.alloc(32)]);
+/** A PNG's signature and its `IHDR` chunk, `width` × `height`: as much as says what it is and how large. */
+function png(width: number, height: number, size = 64): Buffer {
+  const header = Buffer.alloc(33);
+  Buffer.from("89504e470d0a1a0a0000000d49484452", "hex").copy(header);
+  header.writeUInt32BE(width, 16);
+  header.writeUInt32BE(height, 20);
+  header[24] = 8;
+  header[25] = 2;
+  return Buffer.concat([header, Buffer.alloc(Math.max(0, size - header.length))]);
+}
 
 /** `bytes` as upload chunks of `size` bytes each. */
 function chunks(bytes: Buffer, name: string, size: number, uploadId = "upload-0001"): ArtifactsUploadPayload[] {
@@ -133,6 +143,24 @@ describe("artifacts upload", () => {
       error: { code: "UNSUPPORTED", message: expect.stringContaining("video.enabled on") },
     });
     expect(await upload(videoOff, PDF, "form.pdf")).toMatchObject({ ok: true });
+  });
+
+  it("keeps a photo with the PDF and video tools off, and refuses one a model could not be shown", async () => {
+    const { deps, staging } = setup();
+    const toolsOff = { ...deps, pdfEnabled: async () => false, videoEnabled: async () => false };
+    expect(await upload(toolsOff, png(640, 480), "shot.png")).toMatchObject({
+      ok: true,
+      result: { attachment: { contentType: "image/png", name: "shot.png", byteSize: 64 } },
+    });
+    expect(await upload(toolsOff, png(9000, 9000), "huge.png")).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_INPUT", message: expect.stringContaining("huge.png cannot be shown to a model: it is 9000×9000 pixels") },
+    });
+    expect(await upload(toolsOff, png(640, 480, 5_000_001), "heavy.png", 1024 * 1024)).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_INPUT", message: "heavy.png: a photo is at most 5 MB" },
+    });
+    expect(readdirSync(staging)).toEqual([]);
   });
 
   it("refuses a renamed file by what its bytes are, whatever its name says", async () => {

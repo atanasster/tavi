@@ -67,13 +67,15 @@ export const ARTIFACT_STAGING_DIRECTORY = ".staging";
 export const ATTACHMENT_UPLOAD_PDF_MAX_BYTES = 20 * 1024 * 1024;
 /** A video or animated GIF `artifacts upload` takes at most. */
 export const ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES = 50 * 1024 * 1024;
+/** A photo (PNG, JPEG) `artifacts upload` takes at most: the largest picture `artifacts.view_image` puts in front of a model. */
+export const ATTACHMENT_UPLOAD_IMAGE_MAX_BYTES = 5_000_000;
 /** A file `artifacts upload` takes at most, of any type: each type's own cap is checked against what its bytes are. */
 export const ATTACHMENT_UPLOAD_MAX_BYTES = ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES;
 /** One upload chunk's base64: well inside an IPC frame. */
 export const ATTACHMENT_UPLOAD_CHUNK_CHARS = 512 * 1024;
 /**
  * `artifacts upload`: a PDF,
- * a video or an animated GIF the person attaches in the web UI, in base64
+ * a video, an animated GIF or a photo (PNG, JPEG) the person attaches in the web UI, in base64
  * chunks from offset 0, in order. The owner reads what the first chunk is
  * from its bytes, refuses a type whose tools are off or that is over its cap,
  * checks it again once the last is in, and keeps the file as an approved,
@@ -94,12 +96,25 @@ export const ArtifactsUploadPayloadSchema = z.strictObject({
     .regex(/^[A-Za-z0-9+/]*={0,2}$/),
 });
 export type ArtifactsUploadPayload = z.infer<typeof ArtifactsUploadPayloadSchema>;
-/** What `artifacts upload` takes, by what the bytes are: a PDF, a video in a container the decoder reads, an animated GIF. */
-export const UPLOAD_CONTENT_TYPES = ["application/pdf", "video/mp4", "video/quicktime", "video/webm", "image/gif"] as const;
+/** What `artifacts upload` takes, by what the bytes are: a PDF, a video in a container the decoder reads, an animated GIF, a photo. */
+export const UPLOAD_CONTENT_TYPES = [
+  "application/pdf",
+  "video/mp4",
+  "video/quicktime",
+  "video/webm",
+  "image/gif",
+  "image/png",
+  "image/jpeg",
+] as const;
 export type UploadContentType = (typeof UPLOAD_CONTENT_TYPES)[number];
 /** Each type's cap. */
 export function uploadMaxBytes(contentType: UploadContentType): number {
-  return contentType === "application/pdf" ? ATTACHMENT_UPLOAD_PDF_MAX_BYTES : ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES;
+  if (contentType === "application/pdf") return ATTACHMENT_UPLOAD_PDF_MAX_BYTES;
+  return isUploadPhoto(contentType) ? ATTACHMENT_UPLOAD_IMAGE_MAX_BYTES : ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES;
+}
+/** A still photo, which `artifacts.view_image` shows: no PDF or video tools are needed to read it. */
+export function isUploadPhoto(contentType: UploadContentType): contentType is "image/png" | "image/jpeg" {
+  return contentType === "image/png" || contentType === "image/jpeg";
 }
 export const UploadedAttachmentSchema = z.strictObject({
   artifactId: IdSchema,

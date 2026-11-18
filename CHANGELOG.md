@@ -32,6 +32,11 @@ change behaviour or stored data.
 
 ### Fixed
 
+- The canvas takes a photo (PNG or JPEG, up to 5 MB): it is uploaded when you
+  send and the chat looks at it, as it does a photo from a messaging channel.
+  A message shows its attached files as badges under your words; a text file
+  no longer fills the bubble with its whole content: press its badge to read
+  it in a dialog.
 - A canvas tab whose `tavi ui` restarted can be signed in again: opening the
   new link in that same tab now loads the page with it, where it used to
   change only the address. Settings and other pages there say why they cannot

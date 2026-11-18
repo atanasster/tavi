@@ -33,6 +33,52 @@
   line-height: var(--leading-normal);
 }
 
+/* A message's files, under it: a badge each; a text file's opens to its lines. */
+.prompt-files {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-1-5);
+  margin-top: var(--space-1-5);
+  max-width: 100%;
+}
+
+.prompt-file {
+  max-width: 100%;
+}
+
+.prompt-file-name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  padding: var(--space-1) var(--space-2-5);
+  border: var(--border-width) solid var(--line-firm);
+  border-radius: var(--radius-full);
+  background: hsl(var(--secondary));
+  font-size: var(--text-sm);
+}
+
+button.prompt-file-name {
+  cursor: pointer;
+  color: inherit;
+}
+
+button.prompt-file-name:hover {
+  border-color: hsl(var(--primary));
+}
+
+.prompt-file-text {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: var(--text-sm);
+  background: hsl(var(--muted));
+  border-radius: var(--radius-sm);
+}
+
 /* The assistant's face over its answer: the mark, then its name. */
 .assistant-heading {
   display: flex;

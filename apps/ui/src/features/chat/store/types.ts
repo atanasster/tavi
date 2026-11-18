@@ -86,6 +86,8 @@ export interface CanvasRun {
   readonly toHome?: boolean;
   /** It carries uploaded files: a turn of its own, never sent into a running one. */
   readonly carriesFiles?: true;
+  /** The uploaded files' names, shown on the message as it was sent: the prompt names none of them. */
+  readonly fileNames?: readonly string[];
   readonly recordedPrompts?: readonly string[];
   /** Its prompt is several recorded turns' prompts, read back from the task's record: no one turn. */
   readonly merged?: true;
@@ -220,6 +222,8 @@ export interface SubmitExtra {
   readonly asPrompt?: boolean;
   /** Files uploaded with `artifacts upload` the message carries , by artifact id. */
   readonly attachments?: readonly string[];
+  /** Their names, in the same order: shown on the message, never sent. */
+  readonly attachmentNames?: readonly string[];
   /** The idea whose *Try it* filled the box: a new chat it starts is linked to it. */
   readonly fromIdeaId?: string;
   /** Folders picked on the empty chat, by `browse` token: a chat (or Home) this message starts begins with them attached. */

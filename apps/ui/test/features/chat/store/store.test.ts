@@ -182,8 +182,11 @@ describe("the canvas store", () => {
     const { client, fake } = fakeClient();
     fake.queueRun({ ok: true, result: { taskId: "pdf-task", subscriptionId: "sub-1", conversationId: "op-pdf" } });
     const store = createCanvasStore(client, { ...options, mintKey: () => `pdf-${(turn += 1)}` });
-    store.submit("fill this in", { attachments: ["art-up-1"] });
+    store.submit("fill this in", { attachments: ["art-up-1"], attachmentNames: ["form.pdf"] });
     expect(fake.runs[0]?.payload).toMatchObject({ prompt: "fill this in", attachments: ["art-up-1"] });
+    // The names are the message's to show, never sent.
+    expect(JSON.stringify(fake.runs[0]?.payload)).not.toContain("form.pdf");
+    expect(store.getSnapshot().runs.at(-1)?.fileNames).toEqual(["form.pdf"]);
     await settle();
     const first = fake.runs[0]!.options.onEvent!;
     first(event("run.started", { runId: "pdf-task", threadId: "t", workspaceId: "default" }));

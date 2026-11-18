@@ -47,8 +47,9 @@ fresh install, with the model's waits sped up.
   tests in a sandbox.
 - **Use the web.** Search, fetch pages, or drive a real browser. When a site
   needs a sign-in or a CAPTCHA, you take over the page and hand it back.
-- **Read documents and video.** PDFs, scanned pages and forms; video frames,
-  transcripts and movement, all processed locally.
+- **Read documents, photos and video.** PDFs, scanned pages and forms; video
+  frames, transcripts and movement, all processed locally; and the photos you
+  attach or send from a channel, which the chat's model looks at.
 - **Connect your apps.** Google Calendar and Gmail, Todoist, Linear, Notion and
   any [MCP](docs/MCP.md) server, each with tools you review before a chat can
   use them.
