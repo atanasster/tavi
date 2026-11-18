@@ -440,7 +440,9 @@ describe("the system prompt editor", () => {
     // One story with the status line below it: a new chat, and an existing chat's next message, run under it.
     expect(container.textContent).toContain("A new chat, and each existing chat's next message, run under it");
     expect(container.textContent).not.toContain("Existing chats keep the prompt");
-    expect(container.textContent).toContain("applies from the next message in default");
+    // The workspace most people have is "this workspace"; another is named by its id.
+    expect(container.textContent).toContain("chats in this workspace");
+    expect(container.textContent).toContain("applies from the next message");
     expect(container.textContent).toContain(`The shipped default (${shipped.templateVersion})`);
     expect(container.textContent).toContain("compaction summary call uses its own dedicated prompt");
     // The shipped text is text, not markup the browser would execute.

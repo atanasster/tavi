@@ -14,6 +14,7 @@ import { Discover } from "./Discover.js";
 import { AppIcon } from "./AppIcon.js";
 import {
   GROUP_TITLES,
+  groupOf,
   HEALTH_BADGE,
   accountsLine,
   appMatches,
@@ -150,6 +151,9 @@ export function ConnectedApps({
   );
 }
 
+/** How many apps make the Connected list worth searching and filtering when every one works. */
+const APPS_FILTER_FROM = 6;
+
 function ConnectedList({
   revision,
   review,
@@ -190,13 +194,15 @@ function ConnectedList({
     (app) => appMatches(app, query) && (!needsYou || app.health !== "ready") && (category === undefined || app.category === category),
   );
   const categories = [...new Set(apps.map((app) => app.category))];
+  // A few apps that all work need no search or filters: they show once the list is long or something needs you.
+  const filtered = apps.length >= APPS_FILTER_FROM || apps.some((app) => groupOf(app.health) !== "connected");
   return (
     <>
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         <StatusNote note={note} />
       </LoadState>
       {data !== undefined && apps.length === 0 ? <EmptyApps onDiscover={onDiscover} /> : null}
-      {apps.length === 0 ? null : (
+      {!filtered ? null : (
         <div className="apps-filters">
           <SearchField value={query} placeholder="Search your apps" label="Search your apps" onChange={setQuery} />
           <FilterChip pressed={needsYou} onPick={() => setNeedsYou((current) => !current)}>
@@ -291,7 +297,8 @@ function AppRow({
           <Button variant="link" className="item-title" onClick={() => onOpen(app.appId)}>
             {app.name}
           </Button>
-          <span className={`badge badge-${badge.tone}`}>{badge.text}</span>
+          {/* A working app sits under Connected: its badge would say the heading again. */}
+          {app.health === "ready" ? null : <span className={`badge badge-${badge.tone}`}>{badge.text}</span>}
         </span>
         {/* An account named like its app (a channel's) says nothing the title does not. */}
         {accounts === app.name ? null : <span className="meta-sm">{accounts}</span>}

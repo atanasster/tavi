@@ -92,14 +92,16 @@ function Channels({ data, reload: reloadPage }: { data: Loaded; reload: () => vo
           <ul className="rows">
             {data.list.connections.map((connection) => {
               const descriptor = descriptorOf(connection.providerId);
+              const line = distinctParts(connection.label, [
+                labelOf(data.catalog, connection.providerId),
+                connection.accountIdentity,
+                connection.status.detail,
+              ]);
               return (
                 <li className="row" key={connection.connectionId}>
                   <div>
                     <strong>{connection.label}</strong> <StatusBadge status={connection.enabled ? connection.status.state : "disabled"} />
-                    <p className="settings-description">
-                      {labelOf(data.catalog, connection.providerId)} · {connection.accountIdentity}
-                      {connection.status.detail === undefined ? "" : ` · ${connection.status.detail}`}
-                    </p>
+                    {line === "" ? null : <p className="settings-description">{line}</p>}
                     <ActivityLine status={connection.status} />
                     {data.peopleKnown ? (
                       <AllowedLine people={data.people.filter((person) => person.connectionId === connection.connectionId)} />
@@ -353,6 +355,23 @@ function ConnectionPeople({
       )}
     </Modal>
   );
+}
+
+/**
+ * A connection's line under its name: the channel, the account and any
+ * detail, each said once, and none that only repeats the name ("Telegram ·
+ * Telegram" under a connection called Telegram).
+ */
+export function distinctParts(name: string, parts: readonly (string | undefined)[]): string {
+  const seen = new Set([name.trim().toLowerCase()]);
+  return parts
+    .flatMap((part) => {
+      const key = part?.trim().toLowerCase();
+      if (key === undefined || key === "" || seen.has(key)) return [];
+      seen.add(key);
+      return [part as string];
+    })
+    .join(" · ");
 }
 
 /** "last message received 14:02 · last sent 14:05", and why the last send failed. */

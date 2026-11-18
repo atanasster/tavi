@@ -28,6 +28,19 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Settings is simpler to scan. General and System prompt say "this
+  workspace" instead of its id `default`, and the timezone explanation sits
+  under **Timezone**. A model role's way back to the default says **Use
+  default** (Embedding: **Clear**). Web search names a provider once.
+  Credentials say what each stored key is for ("ollama API key", "Channel
+  token"). Connected apps hides the search and filters while there are few
+  apps that all work, and no longer badges each working app "Connected".
+  Channels no longer repeats a connection's name under it; Allowed people
+  lists who is allowed above the form to add someone. Plugins folds Tavi's
+  built-in plugins and a long tool list under their counts, Permissions
+  folds the rules shipped with Tavi under yours, Ideas says "Written by Tavi
+  itself" and offers **Unmute every section** only while one is muted, and
+  site recipes give their date as "Tue 17 Nov".
 - The Command Center is easier to read. Long chat titles and answers end in
   "…" instead of stopping mid-word. Schedule's **Coming up** shows the next
   two days, with the rest of the week behind **Show the rest of the week**,

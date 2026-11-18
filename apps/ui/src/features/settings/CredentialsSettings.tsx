@@ -38,6 +38,35 @@ function EncryptionStatus({ status }: { readonly status: CredentialEncryptionSta
 }
 
 /**
+ * What a stored reference is for, in words, from the shapes the owner names
+ * them in: a connection's API key (`ollama.apiKey.<id>`), a channel's secret
+ * (`channels.<id>.token`), a channel plugin's sign-in secret. Undefined for a
+ * reference that is already its own name (`openrouter`).
+ */
+export function credentialLabel(reference: string): string | undefined {
+  const pluginClient = /^channels\.plugin-client\.([^.]+)\.secret$/.exec(reference);
+  if (pluginClient !== null) return `${pluginClient[1]} sign-in secret`;
+  const channel = /^channels\.[^.]+\.([^.]+)$/.exec(reference);
+  if (channel !== null) return `Channel ${channel[1]}`;
+  const apiKey = /^(.+?)\.apiKey(?:\.[^.]+)?$/.exec(reference);
+  if (apiKey !== null) return `${apiKey[1]} API key`;
+  return undefined;
+}
+
+/** A stored reference: what it is for when that can be said, with the reference itself under it. */
+function CredentialName({ reference }: { readonly reference: string }) {
+  const label = credentialLabel(reference);
+  return label === undefined ? (
+    <code>{reference}</code>
+  ) : (
+    <span className="credential-name">
+      <strong>{label}</strong>
+      <code className="meta-sm">{reference}</code>
+    </span>
+  );
+}
+
+/**
  * The owner's credentials, as references only: a value is set
  * through a masked form, crosses the bridge once to the owner, and is never
  * read back — the list names what is stored, never what it holds.
@@ -66,7 +95,7 @@ export function CredentialsSettings() {
       <ul className="rows">
         {stored.map((reference) => (
           <li key={reference} className="row">
-            <code>{reference}</code>
+            <CredentialName reference={reference} />
             <span className="actions">
               <Button aria-label={`Replace ${reference}`} disabled={busy !== undefined} onClick={() => setSetting(reference)}>
                 Replace

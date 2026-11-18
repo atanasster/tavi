@@ -365,6 +365,60 @@ export function PeopleEditor({
   };
   return (
     <>
+      {/* Who is allowed comes first; the form to allow someone else follows it. */}
+      <StatusNote note={note || undefined} className="" />
+      {!shown.length ? (
+        <Empty>
+          {only === undefined
+            ? "No people are allowed in this workspace yet."
+            : `No one is allowed on ${only.label} yet: it answers no one until you allow a person.`}
+        </Empty>
+      ) : (
+        <ul className="rows">
+          {shown.map((person) => (
+            <li className="row" key={`${person.connectionId}:${person.externalSenderId}`}>
+              <div>
+                <strong>{person.displayName ?? person.principalId}</strong>
+                {person.principalId === data.operator ? (
+                  <>
+                    {" "}
+                    <span className="badge">you</span>
+                  </>
+                ) : null}
+                <p className="settings-description">
+                  {person.externalSenderId} · {connectionLabel(person.connectionId)}
+                  {person.trustUnverified === undefined ? "" : ` · trusts unverified messages (set by ${person.trustUnverified.setBy})`}
+                </p>
+              </div>
+              <div className="actions">
+                {person.trustUnverified === undefined ? null : (
+                  <Button
+                    variant="ghost"
+                    onClick={() =>
+                      void run("untrust", async () => {
+                        const answer = await request(client, {
+                          action: "allow",
+                          workspaceId,
+                          connectionId: person.connectionId,
+                          sender: person.externalSenderId,
+                          principalId: person.principalId,
+                          trustUnverified: false,
+                        });
+                        return mapOutcome(answer, () => "Their unverified messages are held again.");
+                      })
+                    }
+                  >
+                    Stop trusting unverified
+                  </Button>
+                )}
+                <Button variant="danger" onClick={() => setRemove(person)}>
+                  Revoke access
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
       {!connections.length ? (
         <Empty>Connect a channel in Channels before allowing people on it.</Empty>
       ) : (
@@ -453,54 +507,6 @@ export function PeopleEditor({
             if (done !== undefined) onAllowed?.(done);
           }}
         />
-      )}
-      <StatusNote note={note || undefined} className="" />
-      {!shown.length ? (
-        <Empty>
-          {only === undefined
-            ? "No people are allowed in this workspace yet."
-            : `No one is allowed on ${only.label} yet: it answers no one until you allow a person.`}
-        </Empty>
-      ) : (
-        <ul className="rows">
-          {shown.map((person) => (
-            <li className="row" key={`${person.connectionId}:${person.externalSenderId}`}>
-              <div>
-                <strong>{person.displayName ?? person.principalId}</strong>
-                {person.principalId === data.operator ? <span className="badge">you</span> : null}
-                <p className="settings-description">
-                  {person.externalSenderId} · {connectionLabel(person.connectionId)}
-                  {person.trustUnverified === undefined ? "" : ` · trusts unverified messages (set by ${person.trustUnverified.setBy})`}
-                </p>
-              </div>
-              <div className="actions">
-                {person.trustUnverified === undefined ? null : (
-                  <Button
-                    variant="ghost"
-                    onClick={() =>
-                      void run("untrust", async () => {
-                        const answer = await request(client, {
-                          action: "allow",
-                          workspaceId,
-                          connectionId: person.connectionId,
-                          sender: person.externalSenderId,
-                          principalId: person.principalId,
-                          trustUnverified: false,
-                        });
-                        return mapOutcome(answer, () => "Their unverified messages are held again.");
-                      })
-                    }
-                  >
-                    Stop trusting unverified
-                  </Button>
-                )}
-                <Button variant="danger" onClick={() => setRemove(person)}>
-                  Revoke access
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
       )}
       {remove ? (
         <Confirm

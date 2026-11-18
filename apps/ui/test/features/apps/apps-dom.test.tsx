@@ -515,8 +515,14 @@ describe("the Connected list", () => {
   it("filters by category when it lists more than one, and says when each must sign in again", async () => {
     const weekly = app({ accounts: [{ ...app().accounts[0]!, nextSignInBy: "2026-10-20T09:00:00.000Z" }] });
     const home = app({ appId: "home-app", name: "Home", category: "home", accounts: [] });
-    const { view } = await page([weekly, home]);
-    expect(view.textContent).toMatch(/Sign in again by /);
+    // A few apps that all work: no search, no filters, and no badge repeating the Connected heading.
+    const few = await page([weekly, home]);
+    expect(few.view.textContent).toMatch(/Sign in again by /);
+    expect(few.view.querySelector(".apps-filters")).toBeNull();
+    expect(few.view.querySelector(".apps-row .badge")).toBeNull();
+    unmountAll();
+    const more = [1, 2, 3, 4].map((index) => app({ appId: `extra-${index}`, name: `Extra ${index}`, accounts: [] }));
+    const { view } = await page([weekly, home, ...more]);
     await click(button(view, "Home"));
     expect([...view.querySelectorAll(".apps-row")].map((row) => row.querySelector("button")?.textContent)).toEqual(["Home"]);
   });

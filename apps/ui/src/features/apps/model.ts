@@ -35,7 +35,7 @@ export const HEALTH_BADGE: Readonly<
 /** The Connected list's groups: what needs you, what works, what is turned off. */
 export type AppGroup = "needs-you" | "connected" | "paused";
 
-function groupOf(health: AppHealth): AppGroup {
+export function groupOf(health: AppHealth): AppGroup {
   if (health === "ready") return "connected";
   if (health === "paused" || health === "off") return "paused";
   return "needs-you";

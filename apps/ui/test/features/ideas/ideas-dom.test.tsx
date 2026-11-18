@@ -470,7 +470,8 @@ describe("the Ideas tab", () => {
   });
 
   it("Settings → Ideas edits the brief, says when it looks next, and starts over only once confirmed", async () => {
-    const { client, sent } = owner({ nextAt: "2026-10-20T05:00:00.000Z" });
+    // A muted section: Unmute every section is offered only while one is.
+    const { client, sent } = owner({ nextAt: "2026-10-20T05:00:00.000Z", mutedCategories: ["shopping"] });
     const page = await mount(
       <InWorkspace client={client} workspaceId="default" timeZone="UTC">
         <IdeasSettings />

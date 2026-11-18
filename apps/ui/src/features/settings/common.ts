@@ -1,4 +1,4 @@
-import { MAX_SYSTEM_PROMPT_CODE_UNITS } from "@tavi/contracts";
+import { DEFAULT_WORKSPACE_ID, MAX_SYSTEM_PROMPT_CODE_UNITS } from "@tavi/contracts";
 
 /**
  * The canvas's settings: the owner's model connections and
@@ -34,3 +34,8 @@ export function restartNote(result: unknown, family: "models" | "search"): strin
 }
 
 export type FormErrors<T> = Partial<Record<keyof T, string>>;
+
+/** A workspace as a page names it: "this workspace" for the one most people have, its id for any other. */
+export function workspaceWords(workspaceId: string): string {
+  return workspaceId === DEFAULT_WORKSPACE_ID ? "this workspace" : `workspace ${workspaceId}`;
+}

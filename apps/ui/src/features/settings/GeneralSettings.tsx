@@ -15,6 +15,7 @@ import { timeZoneOptions, workspaceSettingsActions } from "./workspace-api.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
+import { workspaceWords } from "./common.js";
 
 /**
  * Settings → General: the workspace timezone,
@@ -51,9 +52,8 @@ export function GeneralSettings({
       title="General"
       description={
         <>
-          Settings for workspace {workspaceId}. The timezone is the one the agent states the current local time in, and resolves
-          &ldquo;tomorrow&rdquo; or &ldquo;next Monday at 10&rdquo; against. Change it here or with{" "}
-          <Command>tavi config set workspace.timezone Europe/Berlin</Command>.
+          How {workspaceWords(workspaceId)} works: its timezone, summaries, browser, video and the other settings below. Each also has a{" "}
+          <Command>tavi config</Command> command, named with it.
         </>
       }
     />
@@ -88,6 +88,10 @@ export function GeneralSettings({
         </>
       )}
       <h2>Timezone</h2>
+      <p className="muted">
+        The zone the agent tells the time in, and reads &ldquo;tomorrow&rdquo; or &ldquo;next Monday at 10&rdquo; against. Or use{" "}
+        <Command>tavi config set workspace.timezone Europe/Berlin</Command>.
+      </p>
       <p>
         <strong>{data.effective.timezone}</strong>{" "}
         <span className="muted">

@@ -215,3 +215,14 @@
   align-items: center;
   gap: var(--space-3);
 }
+
+/* Settings → Credentials: what a stored reference is for, the reference itself under it. */
+.credential-name {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.credential-name code {
+  overflow-wrap: anywhere;
+}

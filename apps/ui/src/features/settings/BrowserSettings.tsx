@@ -13,6 +13,7 @@ import { Failure, Notice } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
+import { shortDay } from "../../lib/time.js";
 
 /** The list as the field shows it: comma-separated, `none` for an empty one. */
 const hostsText = (hosts: readonly string[]): string => (hosts.length === 0 ? "none" : hosts.join(", "));
@@ -117,7 +118,7 @@ function SiteRecipes() {
             <strong>{recipe.host}</strong>{" "}
             <span className="muted">
               {recipe.steps.length} step{recipe.steps.length === 1 ? "" : "s"}, used {recipe.uses} time{recipe.uses === 1 ? "" : "s"}, last{" "}
-              {recipe.updatedAt.slice(0, 10)}
+              {shortDay(recipe.updatedAt.slice(0, 10))}
             </span>{" "}
             <Button
               variant="ghost"

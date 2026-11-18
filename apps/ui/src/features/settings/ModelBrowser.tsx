@@ -34,7 +34,7 @@ const ROLE_PURPOSE: Readonly<Record<ModelRole, string>> = {
   main: "Chat and agent work",
   extraction: "Pulls facts and structure out of text",
   compaction: "Summarises long conversations",
-  fast: "Quick, cheaper work that does not need main",
+  fast: "Quick, cheaper work that does not need the main model",
   embedding: "Turns text into vectors for search",
 };
 
@@ -402,10 +402,11 @@ function RoleLine({
             size="sm"
             disabled={busy !== undefined}
             // Embedding never falls back to the default: resetting it unbinds its model.
-            aria-label={row.role === "embedding" ? `Reset: unbind the model for ${name}` : `Reset: use the default for ${name}`}
+            // Said as what it does: back to the default, or, for Embedding, no model at all.
+            aria-label={row.role === "embedding" ? `Clear: unbind the model for ${name}` : `Use default for ${name}`}
             onClick={onReset}
           >
-            Reset
+            {row.role === "embedding" ? "Clear" : "Use default"}
           </Button>
         ) : null}
         <Button size="sm" disabled={busy !== undefined} aria-label={`Set the model for ${name}`} onClick={onPick}>

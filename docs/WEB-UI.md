@@ -1154,9 +1154,9 @@ tabs above the page. It has these views:
 - **Models**: roles first, the workspace default and each role, saying whether
   it has its own model, uses the default, or is not set. **Set** opens one
   searchable picker for the primary model and up to three ordered fallbacks,
-  with a test before saving; **Reset** returns a role to the default (Embedding,
-  which never uses the default, is unbound instead: memory search then matches
-  words only). Below, the
+  with a test before saving; **Use default** returns a role to the default
+  (Embedding, which never uses the default, has **Clear** instead, which unbinds
+  it: memory search then matches words only). Below, the
   connections, each with its model count, **Rediscover**, and **Manage**
   (replace its key, rebind its credential, remove it). Each connection has
   **Native video**, except a provider-managed one or an endpoint that takes no
@@ -1167,13 +1167,16 @@ tabs above the page. It has these views:
   on-screen-text analysers can run here ([VIDEO.md](VIDEO.md)). **Add
   connection** picks a provider, takes its key, discovers its models and, when
   the workspace has no default yet, asks for one.
-- **Web search**: add, test, enable, disable and remove providers.
+- **Web search**: add, test, enable, disable and remove providers, each named
+  once by its kind (its own id beside it only when that differs).
 - **System prompt**: the built-in base prompt, or a workspace's own, with the
   shipped text shown and an override saved as a revision.
 
   ![Settings → System prompt: the built-in default in an editor with its character count, Save, Discard and Write a custom prompt, and the shipped default folded below](assets/screens/settings-system-prompt.png)
 
-- **Credentials**: the stored references; set a value through a masked form
+- **Credentials**: the stored references, each with what it is for where its
+  name says so ("ollama API key", "Channel token") above the reference itself;
+  set a value through a masked form
   (sent once, never shown again) or delete one. A read-only line under the
   notice says whether the store is encrypted at rest and where its key is, as
   `tavi credentials key` does: "Encrypted; key in the macOS Keychain" (or the
@@ -1230,8 +1233,10 @@ tabs above the page. It has these views:
     Discord).
 - **Plugins**: built-in and installed plugins with their state in the running
   owner; install a plugin directory, approve or reject a version, enable or
-  disable, and edit an installed plugin's settings. The core built-ins, which
-  cannot be turned off, are folded under **Core (always on)**. An enabled
+  disable, and edit an installed plugin's settings. Tavi's other built-ins are
+  folded under **Built in · N** (opened when one is off or not ready), and the
+  core ones, which cannot be turned off, under **Core (always on)**. A plugin
+  with more than three tools folds them under **Tools · N**. An enabled
   plugin the owner has not loaded yet is badged **loads at next start**; one
   that only adds to the canvas applies at once and gets no such badge. Each
   **Approve** button is named by its visible words first (**Approve 1.0.0 of
@@ -1240,6 +1245,8 @@ tabs above the page. It has these views:
   See [PLUGINS.md](PLUGINS.md).
 - **Permissions**: the rules that decide a tool call before any approval round,
   and the grants approvals made; it lists, removes and revokes, and never adds.
+  Your rules come first; the ones shipped with Tavi are folded under
+  **Shipped with Tavi · N**, opened when an approval points at one.
   Each chat grant names its chat by title, as a link to it, with the task id
   beside it. See [SECURITY-MODEL.md](SECURITY-MODEL.md).
 - **Ideas** (when the owner offers it): what Ideas hides, mutes and excludes,

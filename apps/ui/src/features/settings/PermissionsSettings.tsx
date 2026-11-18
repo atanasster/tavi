@@ -74,6 +74,8 @@ export function PermissionsSettings({
   const { client, workspaceId } = useWorkspace();
   const [pointed] = useState(() => highlight ?? (typeof window === "undefined" ? undefined : ruleFromHash(window.location.hash)));
   const rules = useLoaded(() => permissionActions.rules(client, workspaceId));
+  const ownRules = (rules.data?.rules ?? []).filter((rule) => rule.source !== "shipped");
+  const shippedRules = (rules.data?.rules ?? []).filter((rule) => rule.source === "shipped");
   const pointedListed = pointed !== undefined && (rules.data?.rules ?? []).some((rule) => rule.ruleId === pointed);
   // Once the rules are read, the pointed-out one is brought into view.
   useEffect(() => {
@@ -235,7 +237,17 @@ export function PermissionsSettings({
       {rules.loading && rules.data === undefined ? (
         <Pending label="Loading rules…" className="notice" status />
       ) : (
-        <ul className="rows">{(rules.data?.rules ?? []).map(ruleRow)}</ul>
+        <>
+          {/* Your rules lead; the ones Tavi ships are folded under their count, opened when an approval points at one. */}
+          {ownRules.length === 0 ? <p className="muted">None of your own yet: Always allow on an approval adds one.</p> : null}
+          <ul className="rows">{ownRules.map(ruleRow)}</ul>
+          {shippedRules.length === 0 ? null : (
+            <details className="rules-shipped" open={shippedRules.some((rule) => rule.ruleId === pointed)}>
+              <summary className="disclosure">Shipped with Tavi · {shippedRules.length}</summary>
+              <ul className="rows">{shippedRules.map(ruleRow)}</ul>
+            </details>
+          )}
+        </>
       )}
       {pointed !== undefined && rules.data !== undefined && !pointedListed ? (
         <p className="muted">The rule that approval saved is no longer listed: it was removed.</p>

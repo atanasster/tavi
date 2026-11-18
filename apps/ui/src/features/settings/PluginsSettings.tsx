@@ -138,6 +138,9 @@ function phaseBadge(plugin: PluginView): string | undefined {
   return plugin.phase.replace("_", " ");
 }
 
+/** How many of a plugin's tools its row lists in a line; more are folded under their count. */
+const PLUGIN_TOOLS_SHOWN = 3;
+
 /**
  * Built-in and installed plugins: review, enable, configure, install
  * and remove. The owner decides every rule; this page only asks it.
@@ -219,7 +222,19 @@ export function PluginsSettings({
             )}
           </span>
           {plugin.description === "" ? null : <span className="settings-description">{plugin.description}</span>}
-          {plugin.tools.length === 0 ? null : <span className="muted">Tools: {plugin.tools.map(describePluginTool).join(", ")}</span>}
+          {plugin.tools.length === 0 ? null : plugin.tools.length <= PLUGIN_TOOLS_SHOWN ? (
+            <span className="muted">Tools: {plugin.tools.map(describePluginTool).join(", ")}</span>
+          ) : (
+            // A long tool list is a wall of text: folded under its count, each tool on a line of its own.
+            <details className="plugin-tools">
+              <summary className="disclosure muted">Tools · {plugin.tools.length}</summary>
+              <ul className="muted">
+                {plugin.tools.map((tool) => (
+                  <li key={describePluginTool(tool)}>{describePluginTool(tool)}</li>
+                ))}
+              </ul>
+            </details>
+          )}
           {router === undefined ? null : <span className="muted">{describeRouterDeclaration(router)}</span>}
           {runningVersion === undefined
             ? null
@@ -452,8 +467,15 @@ export function PluginsSettings({
         </AppLink>
         .
       </p>
-      <h2 className="settings-section-title">Built in</h2>
-      <ul className="rows">{optional.map(row)}</ul>
+      {/* Tavi's own plugins are folded under their count: what you installed is what the page leads with. One you turned
+          off, or one not ready, opens the fold, so its row is seen. */}
+      <details
+        className="plugins-builtin"
+        open={optional.some((plugin) => !plugin.enabled || (plugin.phase !== undefined && plugin.phase !== "ready"))}
+      >
+        <summary className="disclosure settings-section-title">Built in · {optional.length}</summary>
+        <ul className="rows">{optional.map(row)}</ul>
+      </details>
       {core.length === 0 ? null : (
         // Opened while a core plugin is not ready: its phase badge is in its row, which a closed fold would hide.
         <details className="plugins-core" open={core.some((plugin) => plugin.phase !== undefined && plugin.phase !== "ready")}>

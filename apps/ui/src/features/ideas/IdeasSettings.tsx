@@ -1,4 +1,10 @@
-import { IDEA_CATEGORY_LABELS, type IdeaBasisKind, type IdeasListAnswer, type IdeaSettings } from "@tavi/contracts";
+import {
+  BUILTIN_IDEAS_PROVIDER_ID,
+  IDEA_CATEGORY_LABELS,
+  type IdeaBasisKind,
+  type IdeasListAnswer,
+  type IdeaSettings,
+} from "@tavi/contracts";
 import { useEffect, useId, useState } from "react";
 
 import { whenLocal } from "../../lib/time.js";
@@ -191,7 +197,15 @@ export function IdeasSettings() {
           </p>
         ))}
         <p className="meta-sm">
-          Written by <code>{list.provider}</code>. Switch it with <Command>tavi ideas provider</Command> in a terminal.
+          {/* Tavi's own writer is said in words; another provider by its id, which is what the command takes. */}
+          {list.provider === BUILTIN_IDEAS_PROVIDER_ID ? (
+            "Written by Tavi itself."
+          ) : (
+            <>
+              Written by <code>{list.provider}</code>.
+            </>
+          )}{" "}
+          Switch it with <Command>tavi ideas provider</Command> in a terminal.
         </p>
         <p className="meta-sm">
           {lastLooked(list.lastRun, timeZone)}
@@ -293,14 +307,22 @@ export function IdeasSettings() {
         )}
       </Card>
       <Card as="div" level={2} title="Start over">
-        <p className="meta-sm">Forget everything hidden and set aside, or unmute every section at once.</p>
+        <p className="meta-sm">
+          Forget everything hidden and set aside{list.mutedCategories.length === 0 ? "" : ", or unmute every section at once"}.
+        </p>
         <p>
           <Button variant="secondary" size="sm" disabled={busy !== undefined} onClick={() => setConfirming("ledger")}>
             Forget what I hid
-          </Button>{" "}
-          <Button variant="secondary" size="sm" disabled={busy !== undefined} onClick={() => setConfirming("categories")}>
-            Unmute every section
           </Button>
+          {/* Offered only while a section is muted: with none, it would do nothing. */}
+          {list.mutedCategories.length === 0 ? null : (
+            <>
+              {" "}
+              <Button variant="secondary" size="sm" disabled={busy !== undefined} onClick={() => setConfirming("categories")}>
+                Unmute every section
+              </Button>
+            </>
+          )}
         </p>
       </Card>
       {confirming === undefined ? null : (

@@ -29,9 +29,9 @@ export function WebSearchSettings() {
         </Button>
       </PageHead>
       <Notice>
-        One enabled provider is used automatically; with several, choose one or a fallback order in the data directory&rsquo;s
-        web-providers.json, which is read when tavi serve starts. Adding or enabling a provider applies from the next turn, with no restart;
-        disabling one stops new calls at once.
+        An enabled provider answers the agent&rsquo;s web searches. Adding or enabling one applies from the next message, with no restart;
+        disabling one stops new searches at once. With several, their order is set in web-providers.json in the data directory, read when
+        tavi serve starts.
       </Notice>
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         <StatusNote note={note} />
@@ -41,9 +41,13 @@ export function WebSearchSettings() {
         {providers.map((provider) => (
           <li key={provider.providerId} className="row">
             <span>
-              <strong>{provider.providerId}</strong> {SEARCH_KIND_LABELS[provider.kind]}{" "}
+              {/* Named once: its kind's name, and its own id only when that says something more ("tavily" under Tavily does not). */}
+              <strong>{SEARCH_KIND_LABELS[provider.kind]}</strong>{" "}
+              {provider.providerId.toLowerCase() === SEARCH_KIND_LABELS[provider.kind].toLowerCase() ? null : (
+                <span className="muted">{provider.providerId} </span>
+              )}
               <span className="muted">
-                {provider.baseUrl ?? (provider.credentialRef === undefined ? "keyless" : `key ${provider.credentialRef}`)}
+                {provider.baseUrl ?? (provider.credentialRef === undefined ? "· no key needed" : `· key ${provider.credentialRef}`)}
               </span>
               {provider.enabled ? null : (
                 <>

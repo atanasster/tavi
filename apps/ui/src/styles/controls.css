@@ -552,9 +552,17 @@ summary.disclosure {
   margin-top: var(--space-1-5);
 }
 
-.plugins-core > summary {
+.plugins-core > summary,
+.plugins-builtin > summary,
+.rules-shipped > summary {
   margin-block: var(--space-4) var(--space-2);
   font-weight: var(--weight-semibold);
+}
+
+/* A plugin's long tool list, one tool a line under its count. */
+.plugin-tools ul {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-4);
 }
 
 /* Tabs over a panel: plain labels on a hairline, the current one underlined. */

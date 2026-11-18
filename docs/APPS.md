@@ -25,7 +25,9 @@ its key or first sign-in offers *Finish setting up* or *Sign in*, which reopens
 its sheet at that step; so does a key its server refused at its test, until a
 test passes. A missing key is named by its label (*It needs your Maps API
 key.*), and its command stores the key before naming it. *Needs you only* narrows the list, and so does
-`tavi apps list --needs-you`.
+`tavi apps list --needs-you`. The search and filters show once there are six
+apps or one needs you; a working app's row carries no badge, since it sits
+under **Connected**.
 
 An app whose key is not given yet, or was refused at its test, reads *Not set
 up*; `tavi apps list` prints the commands that store the key and name it. A

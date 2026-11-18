@@ -197,8 +197,8 @@ describe("the Models page", () => {
     });
 
     // Named by the word it shows first (WCAG 2.5.3), then what it does.
-    const reset = byLabel("Reset: use the default for main");
-    expect(reset?.textContent).toBe("Reset");
+    const reset = byLabel("Use default for main");
+    expect(reset?.textContent).toBe("Use default");
     await click(reset);
     expect(fake.writes.at(-1)?.payload).toMatchObject({ action: "clear-role", role: "main" });
   });

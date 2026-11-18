@@ -2,6 +2,8 @@ import { Failure, PageHead, Pending } from "../../ui/Parts.js";
 import { LoadError } from "./FormParts.js";
 import { SystemPromptEditor, useSystemPromptEditor } from "./SystemPromptEditor.js";
 import { useWorkspace } from "../shell/Workspace.js";
+import { DEFAULT_WORKSPACE_ID } from "@tavi/contracts";
+import { workspaceWords } from "./common.js";
 
 /**
  * Settings → System prompt.
@@ -32,8 +34,8 @@ export function SystemPromptSettings() {
       title="System prompt"
       description={
         <>
-          The base instructions for chats in {workspaceId}. A new chat, and each existing chat's next message, run under it. A persona is
-          appended after this text, and a routine's own pinned instructions always win.
+          The base instructions for chats in {workspaceWords(workspaceId)}. A new chat, and each existing chat's next message, run under it.
+          A persona is appended after this text, and a routine's own pinned instructions always win.
         </>
       }
     />
@@ -75,7 +77,7 @@ export function SystemPromptSettings() {
 
       <p>
         <strong>{saved.mode === "default" ? "Built-in default" : "Custom"}</strong> · revision {saved.revision} · applies from the next
-        message in {workspaceId}
+        message{workspaceId === DEFAULT_WORKSPACE_ID ? "" : ` in ${workspaceId}`}
       </p>
 
       <SystemPromptEditor editor={editor} />
