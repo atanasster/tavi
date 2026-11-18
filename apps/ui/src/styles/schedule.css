@@ -140,8 +140,9 @@ a.schedule-title:hover {
   gap: var(--space-2);
 }
 
+/* A to-do's note starts under its words, not under its tick. */
 .center-todo > p {
-  margin: var(--space-1) 0 0;
+  margin: var(--space-1) 0 0 calc(var(--size-check) + var(--space-2));
 }
 
 /* Add a to-do: the field and its button one height, the field taking the rest of the row. */
@@ -495,7 +496,8 @@ a.schedule-title:hover {
   }
 }
 
-/* Coming up's way to the rest of the week, under the days it shows. */
+/* Coming up's way to the rest of the week, under the days it shows, its text on the section's edge (turn.css). */
 .schedule-more {
   margin-top: var(--space-2);
+  margin-inline-start: calc(-1 * var(--space-2));
 }

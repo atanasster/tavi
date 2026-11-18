@@ -173,7 +173,7 @@ export function DoneReminders({
   if (entries.length === 0) return null;
   return (
     <details className="reminder-done">
-      <summary className="center-subhead">
+      <summary className="center-subhead disclosure">
         Done / missed{" "}
         <span>
           {entries.length} in the last {DONE_WINDOW_DAYS} days

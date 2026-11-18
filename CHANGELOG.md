@@ -28,6 +28,11 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Schedule, walked at desktop and phone width. Pause all stays on the
+  Recurring filter row, the name filter giving up width for it, rather than
+  wrapping onto a line alone. Done / missed shows the chevron it opens with.
+  A to-do's note starts under its words, not under its tick. Show the rest
+  of the week starts on the section's edge.
 - Heartbeat, walked at desktop and phone width. The day's limits are a row
   of four even fields with Save limits (now a button, not a ghost) under
   them; Signal sources tick in even columns; Where lists Home above the

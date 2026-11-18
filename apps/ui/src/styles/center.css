@@ -183,9 +183,15 @@
   color: hsl(var(--foreground));
 }
 
-/* In a toolbar of chips and small buttons the search is a small control too. */
+/* In a toolbar of chips and small buttons the search is a small control too, and gives up width before Pause all
+   gives up its place on the row. */
 .schedule-recurring-tools .center-search {
+  flex: 1 1 var(--card-min-xs);
   height: var(--control-height-sm);
+}
+
+.schedule-recurring-tools .center-search input {
+  width: 100%;
 }
 
 .schedule-recurring-tools .center-search input {
