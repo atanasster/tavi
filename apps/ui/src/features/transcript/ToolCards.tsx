@@ -423,13 +423,12 @@ export const ToolGroup = memo(function ToolGroup({ cards, failovers }: ToolGroup
             <ToolLine card={solo} />
           ) : (
             <>
-              {steps.length === 0 ? (
-                "Updated the plan"
-              ) : (
-                <>
-                  {current === undefined ? "Worked" : "Working"} · {plural(steps.length, "step")}
-                </>
-              )}
+              {/* Its words keep one line; the calls' names after them give way (ellipsis) in a narrow line. */}
+              <span className="tool-label">
+                {steps.length === 0
+                  ? "Updated the plan"
+                  : `${current === undefined ? "Worked" : "Working"} · ${plural(steps.length, "step")}`}
+              </span>
               <span className="tool-headline meta-base truncate">
                 {current === undefined ? tally(steps) : `${current.toolName} ${headlineOf(current) ?? ""}`.trimEnd()}
               </span>

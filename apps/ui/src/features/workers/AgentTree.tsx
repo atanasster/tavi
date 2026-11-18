@@ -180,14 +180,17 @@ export function AgentTree({
   return (
     <section className="agent-tree" aria-label="agent hierarchy">
       <div className="agent-tree-column">
-        <nav aria-label="task ancestry">
-          {tree?.ancestors.map((id) => (
-            <Button key={id} disabled={busy !== undefined} onClick={() => void act(id, () => onOpen(id))}>
-              {id} /
-            </Button>
-          ))}
-          <span>{taskId}</span>
-        </nav>
+        {/* A trail only for an agent with parents: a chat's own, alone, would be a bare task id. */}
+        {tree?.ancestors.length ? (
+          <nav aria-label="task ancestry">
+            {tree.ancestors.map((id) => (
+              <Button key={id} disabled={busy !== undefined} onClick={() => void act(id, () => onOpen(id))}>
+                {id} /
+              </Button>
+            ))}
+            <span>{taskId}</span>
+          </nav>
+        ) : null}
         <Failure message={error || undefined} />
         {!tree && !error ? <Pending label="Loading tree…" className="notice" status /> : null}
         {tree?.ancestryUnknown ? <p>Historical parent/root ancestry is incomplete.</p> : null}

@@ -28,6 +28,15 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- A chat's page, walked at desktop and phone width. A replayed turn that kept
+  only its prompt no longer shows an empty **Tavi** heading under it. The
+  chat panel's Hide button sits level with the chat's name rather than halfway
+  down its name and status, without the grey fill of an open control. A long
+  URL quoted in the panel (Schedule's "Runs …") breaks at the panel's edge
+  instead of widening it. On a phone a block of tool calls keeps "Worked · 2
+  steps" on one line, the calls' names giving way. A saved tool call that kept
+  no input or answer shows no chevron that opens to nothing, and a chat's
+  Agents view no longer starts with its own bare task id.
 - Approvals, walked at desktop and phone width. A tool call's "after
   reading …" line is spaced by the card's gap, not a paragraph's margins on
   top of it, and starts as a sentence. A pick-several question's tick sits

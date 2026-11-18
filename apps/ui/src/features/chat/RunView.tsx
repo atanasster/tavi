@@ -240,10 +240,23 @@ export const RunView = memo(function RunView({
           <MessageActions text={run.prompt} label="prompt" rewind={rewindOffer} onRepeat={repeat} />
         </div>
       )}
-      <div className="message-heading assistant-heading">
-        <TaviMark />
-        Tavi
-      </div>
+      {/* A replayed turn that kept only its prompt (its answer drawn as the next, promptless turn) names no one under it. */}
+      {transcript.length > 0 ||
+      status !== "completed" ||
+      outcome !== undefined ||
+      truncated ||
+      round !== undefined ||
+      waiting !== undefined ||
+      review !== undefined ||
+      run.queued === true ||
+      run.error !== undefined ||
+      run.notice !== undefined ||
+      run.remark !== undefined ? (
+        <div className="message-heading assistant-heading">
+          <TaviMark />
+          Tavi
+        </div>
+      ) : null}
       {truncated ? <Notice>Joined late: the start of this run is no longer held.</Notice> : null}
       <Transcript
         entries={shown.head}

@@ -92,6 +92,16 @@
   padding: var(--space-2-5) var(--space-3) var(--space-1-5) var(--space-4);
 }
 
+/* The hide button sits level with the chat's name, not halfway down its name and status. */
+.chat-panel-head > .tooltip-trigger {
+  align-self: flex-start;
+}
+
+/* The panel's own Hide button is always "open" where it is seen: no pressed fill, only its hover. */
+.chat-panel-head .chat-panel-toggle[aria-expanded="true"]:not(:hover) {
+  background: transparent;
+}
+
 .chat-panel-title {
   flex: 1;
   min-width: 0;
@@ -161,6 +171,8 @@
   overflow-y: auto;
   padding: 0 var(--space-4) var(--space-4);
   font-size: var(--text-base);
+  /* A long word (a URL quoted from a prompt) breaks at the panel's edge rather than widening it. */
+  overflow-wrap: anywhere;
 }
 
 /* A text action on a line of its own ("Set up a schedule…", "… in the Command Center →"): its word on the

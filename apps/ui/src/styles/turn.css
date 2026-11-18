@@ -444,6 +444,17 @@ button.prompt-file-name:hover {
   margin-right: var(--space-0-5);
 }
 
+/* A call that kept nothing to show (a saved call whose input and answer were not retained) opens to nothing:
+   its line stays level with its neighbours' but offers no chevron and no click. */
+.tool:not(:has(> :not(summary))) > summary {
+  cursor: default;
+  pointer-events: none;
+}
+
+.tool:not(:has(> :not(summary))) > summary::before {
+  visibility: hidden;
+}
+
 /* The scanned line: what this call touched, not what it is called. It alone gives way in a narrow line (ellipsis):
    the tool's name, its status and its time keep their words whole ("sandbox.r / un", "faile / d" otherwise). */
 .tool-headline {
