@@ -483,12 +483,3 @@ label.need-option:has(input:checked) {
 .need-question-text:focus-visible {
   border-radius: var(--radius-sm);
 }
-
-@media (--phone) {
-  .center-card-actions .button-sm,
-  .need-undo .button-sm,
-  .need-toast-actions .button-sm,
-  .button-sm.need-own-open {
-    min-height: var(--size-touch);
-  }
-}

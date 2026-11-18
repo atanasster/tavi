@@ -259,7 +259,7 @@ export function SessionDirectory({
         ),
       )}
       {directory?.nextCursor ? (
-        <Button size="sm" onClick={() => void store.loadSessions(filters.current, true)}>
+        <Button size="sm" className="sessions-more" onClick={() => void store.loadSessions(filters.current, true)}>
           Load older chats
         </Button>
       ) : null}

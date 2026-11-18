@@ -318,6 +318,11 @@ body.sidebar-resizing * {
   padding: var(--space-3);
 }
 
+/* Load older chats stands off the list above it. */
+.sidebar-body > .sessions-more {
+  margin-top: var(--space-2);
+}
+
 /* A side panel, collapsed: a column of icon buttons on the card surface. */
 .panel-rail {
   flex: none;

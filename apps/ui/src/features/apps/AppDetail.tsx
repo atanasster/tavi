@@ -366,7 +366,7 @@ export function AppDetail({
               </div>
             ) : null}
             {/* Turned off, its tools are not offered and it keeps everything: Turn it on again from the fix above. */}
-            {app.accounts.some((account) => account.on === true) ? (
+            {app.accounts.some((account) => account.on === true) || app.source.kind !== "channel" ? (
               <div className="actions">
                 {app.accounts
                   .filter((account) => account.on === true)
@@ -386,6 +386,12 @@ export function AppDetail({
                       Turn {app.accounts.length > 1 ? account.label : app.name} off
                     </Button>
                   ))}
+                {/* A channel is removed from Settings → Channels. */}
+                {app.source.kind === "channel" ? null : (
+                  <Button size="sm" variant="danger" disabled={busyNow} onClick={() => setRemoving(true)}>
+                    Remove {app.name}
+                  </Button>
+                )}
               </div>
             ) : null}
             {app.repairs.length === 0 ? null : (
@@ -394,11 +400,6 @@ export function AppDetail({
               </p>
             )}
           </Section>
-          {app.source.kind === "channel" ? null : (
-            <Button variant="danger" disabled={busyNow} onClick={() => setRemoving(true)}>
-              Remove {app.name}
-            </Button>
-          )}
           {connecting === undefined ? null : (
             <ConnectSheet
               client={client}

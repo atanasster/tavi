@@ -1,17 +1,6 @@
 /* Center → Heartbeat. */
-/* On a touch screen every heartbeat control is a full-size target. */
+/* On a touch screen a button keeps its look: its touch target is the invisible room controls.css gives it. */
 @media (hover: none) and (pointer: coarse) {
-  /* The switch keeps its track's height: its own ::before is the touch-sized target. */
-  .heartbeat-page button:not(.switch),
-  .heartbeat-page summary,
-  .heartbeat-page select,
-  .heartbeat-page input:not([type="checkbox"]):not([type="radio"]),
-  .heartbeat-item button,
-  .memory-card button,
-  .memory-used button,
-  .heartbeat-offer button {
-    min-height: var(--size-touch);
-  }
   /* A checkbox or radio is reached through its whole label, and sits on its first line when the label wraps. */
   .heartbeat-page label:has(> input[type="checkbox"]),
   .heartbeat-page label:has(> input[type="radio"]) {

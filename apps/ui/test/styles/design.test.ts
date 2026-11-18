@@ -151,10 +151,10 @@ it("styles every part of the question card, with phone-sized targets", () => {
   ]) {
     expect(css, part).toMatch(new RegExp(`${part.replace(".", "\\.")}[\\s,{:]`));
   }
-  // On a phone an option row and the card's small buttons are a thumb's height.
+  // On a phone an option row is a thumb's height; a small button keeps its look (its touch room is invisible).
   const phone = [...css.matchAll(/@media \(--phone\) \{([\s\S]*?)\n\}/g)].map((match) => match[1] ?? "").join("\n");
   expect(phone).toMatch(/\.need-option \{\s*min-height: var\(--size-touch-row\);/);
-  expect(phone).toMatch(/\.button-sm\.need-own-open \{\s*min-height: var\(--size-touch\);/);
+  expect(phone).not.toMatch(/\.button-sm[^{]*\{\s*min-height: var\(--size-touch\);/);
   expect(stylesheet("tokens.css")).toMatch(/--size-touch: 44px;/);
   expect(stylesheet("tokens.css")).toMatch(/--size-touch-row: 48px;/);
 });

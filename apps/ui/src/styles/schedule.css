@@ -466,7 +466,6 @@ a.schedule-title:hover {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .schedule-recurring-controls .button-sm,
   .row-menu-item {
     min-height: var(--size-touch);
   }

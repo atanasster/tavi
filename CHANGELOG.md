@@ -28,6 +28,13 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Buttons keep their size on a phone. An approval card's Allow once and
+  Deny, the undo bar, Heartbeat's buttons and a recurring task's controls
+  no longer grow to 44px tall on a narrow window or touch screen; the room a
+  thumb needs is an invisible target around each button, as everywhere else.
+  An app's Remove button now sits in its Advanced card beside Turn off,
+  rather than against the card's edge below it, and Save limits in Soul &
+  memory and Load older chats stand off what is above them.
 - One scrollbar, never two. On a phone, Settings and the Command Center
   scrolled both the page and the area holding the section tabs; now only
   the page scrolls. Long text you open in Soul & memory, a skill, the chat

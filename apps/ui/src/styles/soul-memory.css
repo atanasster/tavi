@@ -276,6 +276,11 @@
   font-size: var(--text-sm);
 }
 
+/* Save limits stands off the last field, as a form's actions do. */
+.memory-settings-limits > button {
+  margin-top: var(--space-3);
+}
+
 .memory-settings-limits input[type="number"] {
   width: var(--width-field-ch-sm);
 }
