@@ -88,9 +88,10 @@ export function IdeaMenu({
         <Icon name="ellipsis" size="sm" />
       </Button>
       {open ? (
-        <div ref={panel} id={`${ids}-menu`} className="idea-menu-panel">
+        <div ref={panel} id={`${ids}-menu`} className="idea-menu-panel surface-popover">
           <Button
-            variant="link"
+            variant="bare"
+            className="row-menu-item"
             disabled={busy}
             onClick={() =>
               void act(
@@ -104,7 +105,8 @@ export function IdeaMenu({
           {/* Routines repeat daily or weekly: a monthly idea is not offered as one. */}
           {idea.recurring === undefined || idea.recurring.cadence === "monthly" ? null : (
             <Button
-              variant="link"
+              variant="bare"
+              className="row-menu-item"
               disabled={busy}
               onClick={() =>
                 void (async () => {
@@ -121,7 +123,8 @@ export function IdeaMenu({
             </Button>
           )}
           <Button
-            variant="link"
+            variant="bare"
+            className="row-menu-item"
             disabled={busy}
             onClick={() => {
               setOpen(false);
@@ -131,28 +134,32 @@ export function IdeaMenu({
             Remind me…
           </Button>
           <Button
-            variant="link"
+            variant="bare"
+            className="row-menu-item"
             disabled={busy}
             onClick={signal({ signal: "more-like-this", id: idea.id }, `More like this next time, in ${section}.`)}
           >
             More like this
           </Button>
           <Button
-            variant="link"
+            variant="bare"
+            className="row-menu-item"
             disabled={busy}
             onClick={signal({ signal: "not-now", id: idea.id }, "Hidden for a week. Bring it back in Settings → Ideas.")}
           >
             Not now
           </Button>
           <Button
-            variant="link"
+            variant="bare"
+            className="row-menu-item"
             disabled={busy}
             onClick={signal({ signal: "not-interested", id: idea.id }, "Not offered again. Bring it back in Settings → Ideas.")}
           >
             Not interested
           </Button>
           <Button
-            variant="link"
+            variant="bare"
+            className="row-menu-item"
             disabled={busy}
             onClick={signal({ signal: "mute-category", id: idea.id }, `No more ${section} ideas. Unmute it in Settings → Ideas.`)}
           >
@@ -160,7 +167,8 @@ export function IdeaMenu({
           </Button>
           {sources.map((basis) => (
             <Button
-              variant="link"
+              variant="bare"
+              className="row-menu-item"
               key={`${basis.kind}:${basis.ref}`}
               disabled={busy}
               onClick={signal(

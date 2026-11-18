@@ -50,15 +50,12 @@
   font-weight: var(--weight-semibold);
 }
 
+/* Two cards a row in every section, so a section of one is as wide as a card in "For you"
+   (and its four sit two by two, never three and one); one a row when two would be too narrow. */
 .ideas-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--card-min-lg), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(max(var(--card-min-lg), (100% - var(--space-3)) / 2), 1fr));
   gap: var(--space-3);
-}
-
-/* "For you" holds four: two by two, never three and one left alone. A phone stacks them (below). */
-.ideas-for-you {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .idea-card {
@@ -75,6 +72,7 @@
   flex: 1;
   margin: 0;
   font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
 }
 
 .idea-icon {
@@ -95,9 +93,11 @@
   overflow-wrap: anywhere;
 }
 
+/* A link inside the line is the line's height, so "Why this" sits as close to "Uses" as any two lines. */
 .idea-meta .button-link {
+  min-height: 0;
+  padding: 0;
   color: inherit;
-  font-size: inherit;
   text-decoration: underline;
 }
 
@@ -142,22 +142,15 @@
   top: 100%;
   z-index: var(--z-popover);
   display: grid;
-  gap: var(--space-1);
   min-width: var(--width-popover-min);
   max-width: min(var(--width-popover), 80vw);
-  padding: var(--space-2) var(--space-3);
-  background: hsl(var(--popover));
-  color: hsl(var(--popover-foreground));
-  border: var(--border-width) solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-float);
+  margin-top: var(--space-1);
+  padding: var(--space-1);
 }
 
-/* Left-aligned as the canvas's other menus are, a two-line item too. */
-.idea-menu-panel .button-link {
+/* Its items are the row menu's (schedule.css), left-aligned, a two-line item too. */
+.idea-menu-panel .row-menu-item {
   justify-content: flex-start;
-  padding: var(--space-1) 0;
-  text-align: start;
   overflow-wrap: anywhere;
 }
 

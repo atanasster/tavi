@@ -48,7 +48,7 @@ Each template declares its required workspace capabilities (`requires`), which c
 The **Ideas** tab sits beside Chat when the owner offers it (`tavi serve` with this build).
 
 - **For you**: the four best ideas, two by two (stacked on a phone).
-- **The sections**: the rest, three per section, with *More* to see all of them.
+- **The sections**: the rest, three per section, two a row as in For you, with *More* to see all of them.
 - **The footer**: "That's all for now", when Tavi last looked (and why that look came to nothing, when it was skipped or failed), and when it will look next.
 
 Each card shows:

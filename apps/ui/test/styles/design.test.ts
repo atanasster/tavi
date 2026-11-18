@@ -303,9 +303,11 @@ describe("a checkbox with a description in a settings form", () => {
 });
 
 describe("an idea card's ⋯ menu", () => {
-  it("starts its items at the left, as the canvas's other menus do, a two-line one too", () => {
-    const rule = /\.idea-menu-panel \.button-link\s*\{([^}]*)\}/.exec(canvasCss())?.[1] ?? "";
+  it("draws its items as the row menu's, at the left, a two-line one too", () => {
+    const rule = /\.idea-menu-panel \.row-menu-item\s*\{([^}]*)\}/.exec(canvasCss())?.[1] ?? "";
     expect(rule).toMatch(/justify-content:\s*flex-start/);
-    expect(rule).toMatch(/text-align:\s*start/);
+    const item = /\n\.row-menu-item\s*\{([^}]*)\}/.exec(canvasCss())?.[1] ?? "";
+    expect(item).toMatch(/text-align:\s*left/);
+    expect(item).toMatch(/font-size:\s*var\(--text-control\)/);
   });
 });

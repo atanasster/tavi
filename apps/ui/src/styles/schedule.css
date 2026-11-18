@@ -209,7 +209,7 @@ a.schedule-title:hover {
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
   text-align: left;
-  font-size: var(--text-md);
+  font-size: var(--text-control);
   outline: var(--outline-width) solid transparent;
   outline-offset: calc(-1 * var(--outline-width));
 }

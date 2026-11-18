@@ -28,6 +28,13 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- The Ideas tab lays every section out two cards a row, so a section of one
+  is as wide as a card in For you rather than a narrow third. A card's ⋯
+  menu is drawn as the Center's row menus are, with each item tinted under
+  the pointer and ringed when focused. The "Why this" line is as close to
+  "Uses" as any two lines, card titles share the page's heading weight, and
+  Tune's Save is the primary button. Row menus' items are now the size of
+  other menu text.
 - Controls are the size of the text around them. Buttons, fields, menus and
   tabs use 13px text, and a field is exactly as tall as the button beside it
   (it used to grow a few pixels taller). The actions in a list's row (Channels,

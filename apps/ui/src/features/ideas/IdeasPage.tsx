@@ -306,7 +306,7 @@ export function IdeasPage({ onTry, onModels, onSettings, onOpenTask, onOpenMemor
         <>
           <section className="ideas-section" aria-labelledby={`${ids}-for-you`}>
             <h2 id={`${ids}-for-you`}>For you</h2>
-            <div className="ideas-grid ideas-for-you">{layout.forYou.map(card)}</div>
+            <div className="ideas-grid">{layout.forYou.map(card)}</div>
           </section>
           {layout.sections.map(({ category, ideas }) => {
             const expanded = open.has(category);
@@ -376,6 +376,7 @@ function Tune({ id, onSaved, onCancel }: { readonly id: string; readonly onSaved
       <BriefField id={`${id}-brief`} value={text} onChange={setText} />
       <div className="idea-actions">
         <Button
+          variant="primary"
           size="sm"
           disabled={busy || text === undefined}
           onClick={() => {
