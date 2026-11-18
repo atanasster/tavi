@@ -12,6 +12,7 @@ import { useRef, useState } from "react";
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
 import { formatBytes } from "../../lib/format.js";
 import { usePhone } from "../../hooks/page.js";
+import { Icon } from "../../ui/Icon.js";
 import { IconButton } from "../../ui/IconButton.js";
 import { Popover } from "../../ui/Popover.js";
 import { Failure, InlineConfirm, LoadState, StatusNote } from "../../ui/Parts.js";
@@ -43,10 +44,10 @@ import { useWorkspace } from "../shell/Workspace.js";
 
 const MODE_LABELS: Readonly<Record<ChatFolderMode, string>> = { ro: "read-only", rw: "read-write" };
 
-/** What the chip says of the chat's folder. */
+/** The folder button's name: what the chat works in. */
 function folderChipLabel(view: FolderView): string {
   if (view.unavailable !== undefined || view.primary === undefined) return "Folder unavailable";
-  return view.primary.kind === "managed" ? MANAGED_FOLDER_LABEL : `${view.primary.label}/…`;
+  return view.primary.kind === "managed" ? MANAGED_FOLDER_LABEL : `Folder ${view.primary.label}`;
 }
 
 /** The chip's tooltip: where the chat works, and what unavailable means for it. */
@@ -114,13 +115,15 @@ export function FolderChip({
     );
   return (
     <span className="folder-chip-wrap">
+      {/* A folder icon in the header's tools: what it holds is its name, and the full path its tooltip. */}
       <Button
         variant="ghost"
-        size="sm"
+        size={["icon", "sm"]}
         className={`folder-chip${unavailable ? " folder-chip-unavailable" : ""}`}
         ref={chip}
         aria-expanded={open}
         aria-haspopup="dialog"
+        aria-label={folderChipLabel(view)}
         title={folderChipTitle(view)}
         onClick={() => {
           // Opened again, it shows the folder as it is: the last change's note was for then.
@@ -128,7 +131,7 @@ export function FolderChip({
           setOpen(!open);
         }}
       >
-        <span className="truncate">{folderChipLabel(view)}</span>
+        <Icon name="folder" size="sm" />
       </Button>
       {unavailable ? (
         <Button size="sm" disabled={busy !== undefined} onClick={() => void reset()}>

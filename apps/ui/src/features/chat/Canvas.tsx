@@ -47,8 +47,6 @@ export interface CanvasProps {
    * follows this one, not `session`.
    */
   readonly acting?: Session | undefined;
-  /** The name of the chat the next prompt goes to (`state.next`), when it has one beyond its first prompt. */
-  readonly chatTitle?: string | undefined;
   /** `false`: the prompt was not sent, and stays in the box. `asPrompt`: never run as a plugin's slash command (a suggestion pressed). */
   readonly onSubmit: (
     prompt: string,
@@ -227,7 +225,6 @@ export function Canvas({
   state,
   session,
   acting,
-  chatTitle,
   onSubmit,
   onUpload,
   onLoadArtifacts = async () => undefined,
@@ -356,17 +353,6 @@ export function Canvas({
   const next = state.next ?? { kind: "new" as const };
   const toHome = next.kind === "home";
   const target = next.kind === "home" || next.kind === "new" ? undefined : next.taskId;
-  // A chat's name, when it has one beyond its first message: an untitled chat's
-  // title is that message, and the box saying "Message <the question>" reads as the question again.
-  const named = useMemo(() => {
-    if (chatTitle === undefined || target === undefined) return chatTitle;
-    const first = state.runs
-      .filter((run) => run.run.taskId === target || run.continues === target)
-      .map((run) => run.prompt.split("\n", 1)[0]?.trim() ?? "")
-      .find((line) => line !== "");
-    const title = trailingEllipsisOff(chatTitle).trim();
-    return first !== undefined && (first.startsWith(title) || title.startsWith(first)) ? undefined : chatTitle;
-  }, [chatTitle, target, state.runs]);
   const queued = next.kind === "queue" ? next.taskId : undefined;
   const queueBehind = useMemo(() => queuedBehind(queued, state.runs), [queued, state.runs]);
   // The one question open is answered by what is typed.
@@ -381,9 +367,8 @@ export function Canvas({
           : toHome || (target !== undefined && target === state.home)
             ? "Message Home…"
             : next.kind === "continue"
-              ? named === undefined
-                ? "Reply…"
-                : `Message ${trailingEllipsisOff(clip(named, 40))}…`
+              ? // The chat's title is in the header just above: the box says only what typing does.
+                "Continue this chat…"
               : state.privateDraft === true
                 ? "Start a private chat: memory off, forgotten a day after its last message…"
                 : next.kind === "new" && next.side === true
@@ -397,14 +382,18 @@ export function Canvas({
   return (
     <>
       {session !== undefined ? (
+        // One line: the title, its status (a dot on a phone, the word kept for a screen reader), what plugins say,
+        // then the chat's tools at the far end as icons — what it read that Tavi does not trust, its files, its memory.
         <header className="task-header">
           <h1 className="truncate">{session.title}</h1>
-          <span className={`badge badge-plain status-${session.status}`}>
-            {workersWait(workers) ? TASK_STATUS_LABELS["input-required"] : headerStatusLabel(session.status, session.taskId === state.home)}
+          <span className={`badge badge-plain task-status status-${session.status}`}>
+            <span className="status-dot" aria-hidden="true" />
+            <span className="status-word">
+              {workersWait(workers)
+                ? TASK_STATUS_LABELS["input-required"]
+                : headerStatusLabel(session.status, session.taskId === state.home)}
+            </span>
           </span>
-          {folderChip}
-          {memoryToggle}
-          {taintChip}
           {/* Plugins' status lines, kept across the chat's turns until cleared, and the newest notice. */}
           {Object.entries(pluginStatus).map(([pluginId, text]) => (
             <span key={`plugin-status:${pluginId}`} className="meta-base truncate" title={pluginId}>
@@ -416,13 +405,22 @@ export function Canvas({
               {pluginNotice.pluginId}: {pluginNotice.text}
             </span>
           )}
+          {taintChip === undefined && folderChip === undefined && memoryToggle === undefined ? null : (
+            <span className="task-tools">
+              {taintChip}
+              {folderChip}
+              {memoryToggle}
+            </span>
+          )}
         </header>
       ) : privateNew ? (
         // A new private chat says so before its first message, as its header will after.
         <header className="task-header">
           <h1 className="truncate">New private chat</h1>
-          <PrivateChatMark />
-          {folderChip}
+          <span className="task-tools">
+            <PrivateChatMark />
+            {folderChip}
+          </span>
         </header>
       ) : (
         <>
@@ -564,9 +562,4 @@ export function Canvas({
       )}
     </>
   );
-}
-
-/** A title before the placeholder's own "…": without the ellipsis or full stops it already ends in, so it is never doubled. */
-export function trailingEllipsisOff(title: string): string {
-  return title.replace(/[\s.…]+$/u, "");
 }

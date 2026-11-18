@@ -24,10 +24,14 @@ change behaviour or stored data.
   a memory icon with the count there. The figures strip along the bottom of
   the page is gone; its keyboard-shortcuts button is an icon at the right of
   the header. The "Enter to send · Shift+Enter for a new line" line under the
-  message box is now the second line of its placeholder, and a chat with no
-  name of its own beyond its first message says **Reply…** rather than
-  repeating that message. On a phone the chat panel's button sits at the right
-  of the row under the header instead of over the Send button.
+  message box is now the second line of its placeholder, and a chat being
+  continued says **Continue this chat…** rather than repeating its title. On a
+  phone the chat panel's button sits at the right of the row under the header
+  instead of over the Send button.
+- A chat's header is one line: its title and status, then its tools as icons
+  at the far end — an amber shield for content it read that Tavi does not
+  trust, a folder for its files, and its memory, raised while on. On a phone
+  the status is a coloured dot.
 - The canvas header no longer spells out the connection: Tavi's mark is in
   its colours when connected, grey when not, and breathes while it connects.
   At phone width the model picker sits between the attach and send buttons

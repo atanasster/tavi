@@ -209,13 +209,21 @@ input.secret {
   gap: var(--space-2);
 }
 
-/* The bar's way to the sheet: an icon at its far end, where there is a keyboard. */
+/* The bar's way to the sheet: an icon at its far end, where there is a
+   keyboard and room for it — not on a touch screen, nor at phone width, where
+   it would take a row of its own. */
 .bar-keys {
   flex: none;
   color: hsl(var(--muted-foreground));
 }
 
 @media (hover: none) and (pointer: coarse) {
+  .bar-keys {
+    display: none;
+  }
+}
+
+@media (--phone) {
   .bar-keys {
     display: none;
   }

@@ -190,7 +190,8 @@ describe("the chat header's taint chip", () => {
         }}
       />,
     );
-    expect(shown.querySelector(".taint-chip")?.textContent).toBe(
+    // An icon: what it read is its name.
+    expect(shown.querySelector(".taint-chip")?.getAttribute("aria-label")).toBe(
       "Untrusted content: Read news.example, mail you forwarded or quoted (via x.example), search results and 1 more",
     );
     const panel = shown.querySelector(".taint-panel");
@@ -267,6 +268,6 @@ describe("the chat header's taint chip", () => {
       </InWorkspace>,
     );
     await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
-    expect(shown.querySelector(".taint-chip")?.textContent).toContain("Read news.example");
+    expect(shown.querySelector(".taint-chip")?.getAttribute("aria-label")).toContain("Read news.example");
   });
 });

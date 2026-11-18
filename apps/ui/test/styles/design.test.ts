@@ -172,8 +172,9 @@ describe("a recurring row's switch on a phone", () => {
 });
 
 describe("the header's Keyboard button", () => {
-  it("leaves a touch screen, where there is no keyboard to press the shortcuts on", () => {
+  it("leaves a touch screen and a phone-width window, where it would take a row of its own", () => {
     expect(stylesheet("dialogs.css")).toMatch(/@media \(hover: none\) and \(pointer: coarse\) \{\s*\.bar-keys \{\s*display: none;/);
+    expect(stylesheet("dialogs.css")).toMatch(/@media \(--phone\) \{\s*\.bar-keys \{\s*display: none;/);
   });
 });
 

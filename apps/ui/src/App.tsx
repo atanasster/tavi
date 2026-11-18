@@ -119,7 +119,6 @@ export function App({
   const current = drafting ? undefined : shell.current;
   /** Where the next prompt goes, as the store will send it: what the composer names. */
   const next = state.next ?? { kind: "new" as const };
-  const nextTask = next.kind === "home" || next.kind === "new" ? undefined : next.taskId;
   const toHome = next.kind === "home";
   /** The idea whose *Try it* or chip filled the empty chat's box: its first message links the chat to it. */
   const [seededIdea, setSeededIdea] = useState<string>();
@@ -491,10 +490,6 @@ export function App({
                   offersOnboarding={offersOnboarding}
                   homeChat={homeChat}
                   toHome={toHome}
-                  chatTitle={
-                    (nextTask !== undefined && nextTask === current?.taskId ? chatSummary.title : undefined) ??
-                    state.directory?.rows.find((row) => row.taskId === nextTask)?.title
-                  }
                   memoryRow={memoryRow}
                   memoryRevision={feed.revisions.memory ?? 0}
                   skillRevision={feed.revisions.skill ?? 0}

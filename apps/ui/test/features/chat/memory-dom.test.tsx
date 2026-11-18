@@ -1822,7 +1822,7 @@ describe("a chat's memory in its header", () => {
     return { saves, save };
   }
 
-  it("turns the chat's memory off and back on from a named button, its words said as text", async () => {
+  it("turns the chat's memory off and back on from a named icon button", async () => {
     const fixture = owner();
     const page = await mount(
       <InWorkspace client={client} workspaceId="default">
@@ -1830,18 +1830,17 @@ describe("a chat's memory in its header", () => {
       </InWorkspace>,
     );
     const button = (): HTMLButtonElement => page.querySelector("button.memory-mode") as HTMLButtonElement;
-    expect(button().textContent).toContain("Memory on");
+    expect(button().classList.contains("memory-mode-on")).toBe(true);
     expect(button().getAttribute("aria-label")).toBe("Memory on: turn it off for this chat");
     await act(async () => button().click());
     await settle();
     expect(fixture.saves).toEqual(["off"]);
-    expect(button().textContent).toContain("Memory off");
     expect(button().classList.contains("memory-mode-off")).toBe(true);
     expect(button().getAttribute("aria-label")).toBe("Memory off: turn it on for this chat");
     await act(async () => button().click());
     await settle();
     expect(fixture.saves).toEqual(["off", "on"]);
-    expect(button().textContent).toContain("Memory on");
+    expect(button().getAttribute("aria-label")).toBe("Memory on: turn it off for this chat");
   });
 
   it("shows a private chat as a label with its words, never a button: private is never lifted", async () => {
@@ -1876,7 +1875,7 @@ describe("a chat's memory in its header", () => {
     expect(asked).toBe(1);
   });
 
-  it("the header toggle and the private label have text labels and no WCAG 2.1 A/AA violations axe can find", async () => {
+  it("the header toggle and the private mark are named and have no WCAG 2.1 A/AA violations axe can find", async () => {
     for (const mode of [undefined, "off", "private"] as const) {
       const page = await mount(
         <header className="task-header">
@@ -1886,7 +1885,10 @@ describe("a chat's memory in its header", () => {
           </InWorkspace>
         </header>,
       );
-      expect(page.textContent).toContain(memoryModeLabel(mode));
+      // An icon: its words are its name (the toggle's) or read to a screen reader (the private mark's).
+      const named =
+        page.querySelector("button.memory-mode")?.getAttribute("aria-label") ?? page.querySelector(".memory-mode-private")?.textContent;
+      expect(named).toContain(memoryModeLabel(mode));
       expect((await axe.run(page, AXE)).violations.map((violation) => `${violation.id}: ${violation.help}`)).toEqual([]);
       unmountAll();
     }

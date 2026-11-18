@@ -89,7 +89,6 @@ export function ChatMain({
   offersOnboarding,
   homeChat,
   toHome,
-  chatTitle,
   memoryRow,
   memoryRevision,
   skillRevision = 0,
@@ -120,7 +119,6 @@ export function ChatMain({
   readonly homeChat: boolean;
   readonly toHome: boolean;
   /** The name of the chat the next prompt goes to. */
-  readonly chatTitle: string | undefined;
   /** The chat on screen as the chat list reads it, for its memory toggle. */
   readonly memoryRow: NonNullable<ReturnType<CanvasStore["getSnapshot"]>["directory"]>["rows"][number] | undefined;
   /** The workspace's memory revision: a memory card reads again when it moves. */
@@ -288,7 +286,6 @@ export function ChatMain({
         state={state}
         session={current}
         acting={acting}
-        chatTitle={chatTitle}
         onSubmit={send}
         onUpload={uploadAttachment}
         onLoadArtifacts={store.loadArtifacts}

@@ -197,14 +197,11 @@
   /* Widths, mostly in the text's own units: a chip's cap, a menu beside it,
      a key cap's floor, a field sized to its digits, a flex item's basis, and
      a line of prose or an address held to a readable measure. */
-  --width-chip: 16em;
-  --width-chip-wide: 18em;
   --width-menu: 28em;
   --width-menu-wide: 32em;
   --width-key: 1.75em;
   --width-field-ch-sm: 8ch;
   --width-field-ch: 12ch;
-  --basis-title: 10em;
   --basis-tool-name: 14rem;
   --basis-select: 180px;
   --basis-heading: 240px;

@@ -448,10 +448,11 @@ turn, so untrusted content is held by the taint step, not by this. See
 
 ### The taint chip
 
-The chat header in the canvas, and `tavi chat`'s status line, carry a chip
-once the chat has read such content, naming up to three sources (`⚠ Read
-news.example and mail you forwarded or quoted (via x.example) (/taint)`). Its
-details — click it, or type `/taint` — say what the chat read, that a call
+The chat header in the canvas carries an amber shield among its tools once the
+chat has read such content, named and titled with up to three sources (`Read
+news.example and mail you forwarded or quoted (via x.example)`); `tavi chat`'s
+status line carries the same words as a chip (`⚠ Read news.example … (/taint)`).
+Its details — click it, or type `/taint` — say what the chat read, that a call
 sending data out, using a credential or changing something lasting asks you
 once, and the remedy: **Start a fresh chat**. *Fresh context* (`/compact`)
 does not clear it: the summary is written from the same content.

@@ -35,8 +35,9 @@ function memoryModeTitle(mode: ChatMemoryMode | undefined): string {
 /** A private chat's mark: never a toggle, its memory is off for good. Shown from before its first message. */
 export function PrivateChatMark() {
   return (
-    <span className="memory-mode memory-mode-private meta-base" title={memoryModeTitle("private")}>
-      <Icon name="ghost" size="sm" /> {memoryModeLabel("private")}
+    <span className="memory-mode memory-mode-private" title={memoryModeTitle("private")}>
+      <Icon name="ghost" size="sm" />
+      <span className="visually-hidden">{memoryModeLabel("private")}</span>
     </span>
   );
 }
@@ -71,16 +72,17 @@ export function MemoryModeToggle({
   };
   return (
     <>
+      {/* An icon in the header's tools: raised while memory is on, crossed out while off; its name says which. */}
       <Button
         variant="ghost"
-        size="sm"
-        className={`memory-mode${off ? " memory-mode-off" : ""}`}
+        size={["icon", "sm"]}
+        className={`memory-mode${off ? " memory-mode-off" : " memory-mode-on"}`}
         aria-label={`${label}: turn it ${off ? "on" : "off"} for this chat`}
         title={memoryModeTitle(shown)}
         disabled={busy}
         onClick={() => void toggle()}
       >
-        <Icon name={off ? "memory-off" : "memory"} size="sm" /> {label}
+        <Icon name={off ? "memory-off" : "memory"} size="sm" />
       </Button>
       {failure === undefined ? null : (
         <Failure as="span" className="meta-base">

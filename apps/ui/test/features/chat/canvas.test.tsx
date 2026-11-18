@@ -8,7 +8,7 @@ import type { TaskListRow } from "@tavi/contracts";
 import { Settings } from "../../../src/features/settings/SettingsPage.js";
 import { SettingsNav } from "../../../src/features/settings/SettingsNav.js";
 import { Bar } from "../../../src/features/shell/Bar.js";
-import { Canvas, trailingEllipsisOff } from "../../../src/features/chat/Canvas.js";
+import { Canvas } from "../../../src/features/chat/Canvas.js";
 import { SessionDirectory } from "../../../src/features/sessions/SessionDirectory.js";
 import { Details } from "../../../src/features/chat-panel/Details.js";
 import { replyFacts } from "../../../src/features/chat/reply-facts.js";
@@ -411,11 +411,11 @@ describe("the canvas", () => {
       continuing: "task-1",
       next: { kind: "continue", taskId: "task-1" },
     };
-    // Another chat: by its name; one whose name is only its first message is replied to, not named by the question again.
-    expect(placeholder(canvas({}, held))).toBe("Reply…");
-    expect(placeholder(canvas({ chatTitle: "first" }, held))).toBe("Reply…");
-    expect(/<textarea[^>]*placeholder="Reply…\nEnter to send · Shift\+Enter for a new line"/.test(canvas({}, held))).toBe(true);
-    expect(placeholder(canvas({ chatTitle: "Trip plans" }, held))).toBe("Message Trip plans…");
+    // Another chat: its title is in the header, so the box says only "Continue this chat…".
+    expect(placeholder(canvas({}, held))).toBe("Continue this chat…");
+    expect(/<textarea[^>]*placeholder="Continue this chat…\nEnter to send · Shift\+Enter for a new line"/.test(canvas({}, held))).toBe(
+      true,
+    );
     expect(
       placeholder(
         canvas(
@@ -423,7 +423,7 @@ describe("the canvas", () => {
           { connection: "ready", runs: [run("ui-1", "", done, { restored: true })], next: { kind: "continue", taskId: "task-1" } },
         ),
       ),
-    ).toBe("Reply…");
+    ).toBe("Continue this chat…");
     // A chat on screen that the next prompt does not continue (its prompt refused, say): never named.
     const refused: CanvasState = {
       connection: "ready",
@@ -945,11 +945,3 @@ function directory(homeChat: boolean, only?: readonly TaskListRow[], onHome?: ()
     </InWorkspace>,
   );
 }
-
-describe("the composer's placeholder", () => {
-  it("ends a chat's title in one ellipsis, whatever the title ends in", () => {
-    for (const title of ["Say hello in two words....", "Compare two Lisbon neighbourhoods near …", "Plan a trip"])
-      expect(`Message ${trailingEllipsisOff(title)}…`).not.toMatch(/(?:\.|…)…$/);
-    expect(trailingEllipsisOff("Plan a trip")).toBe("Plan a trip");
-  });
-});

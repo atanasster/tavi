@@ -175,18 +175,18 @@ describe("the folder chip", () => {
         <FolderChip taskId="t1" canBrowse />
       </InWorkspace>,
     );
-    expect(chip(page)?.textContent).toBe("Chat files");
+    expect(chip(page)?.getAttribute("aria-label")).toBe("Chat files");
     expect(page.querySelector(".folder-chip-mark")).toBeNull();
   });
 
-  it("names a host folder as <label>/…", async () => {
+  it("names a host folder as Folder <label>", async () => {
     const { client } = owner({ view: hostView });
     const page = await mount(
       <InWorkspace client={client} workspaceId="default">
         <FolderChip taskId="t1" canBrowse />
       </InWorkspace>,
     );
-    expect(chip(page)?.textContent).toBe("project/…");
+    expect(chip(page)?.getAttribute("aria-label")).toBe("Folder project");
     expect(chip(page)?.title).toContain("/home/me/project");
   });
 
@@ -197,11 +197,11 @@ describe("the folder chip", () => {
         <FolderChip taskId="t1" canBrowse />
       </InWorkspace>,
     );
-    expect(chip(page)?.textContent).toBe("Folder unavailable");
+    expect(chip(page)?.getAttribute("aria-label")).toBe("Folder unavailable");
     expect(chip(page)?.className).toContain("folder-chip-unavailable");
     await click(button(page, "Reset"));
     expect(sent.at(-1)).toEqual({ command: "folder", payload: { action: "reset", workspaceId: "default", taskId: "t1" } });
-    expect(chip(page)?.textContent).toBe("Chat files");
+    expect(chip(page)?.getAttribute("aria-label")).toBe("Chat files");
   });
 
   it("offers Reset for a folder record that no longer reads, as the owner answers it, which recovers it (decision j)", async () => {
@@ -215,7 +215,7 @@ describe("the folder chip", () => {
         <FolderChip taskId="t1" canBrowse />
       </InWorkspace>,
     );
-    expect(chip(page)?.textContent).toBe("Folder unavailable");
+    expect(chip(page)?.getAttribute("aria-label")).toBe("Folder unavailable");
     expect(chip(page)?.title).toContain("cannot be read");
     await click(chip(page));
     const panel = page.querySelector<HTMLElement>(".folder-panel")!;
@@ -223,7 +223,7 @@ describe("the folder chip", () => {
     expect(sent.some((one) => one.payload["action"] === "files")).toBe(false);
     await click(button(panel, "Reset"));
     expect(sent).toContainEqual({ command: "folder", payload: { action: "reset", workspaceId: "default", taskId: "t1" } });
-    expect(chip(page)?.textContent).toBe("Chat files");
+    expect(chip(page)?.getAttribute("aria-label")).toBe("Chat files");
   });
 
   it("keeps Reset for a folder that is gone on the phone", async () => {
@@ -267,7 +267,7 @@ describe("the folder chip", () => {
         }
       />,
     );
-    expect(page.querySelector(".task-header .folder-chip")?.textContent).toBe("Chat files");
+    expect(page.querySelector(".task-header .folder-chip")?.getAttribute("aria-label")).toBe("Chat files");
   });
 });
 

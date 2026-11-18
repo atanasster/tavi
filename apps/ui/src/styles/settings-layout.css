@@ -327,7 +327,7 @@
 .arg-origin-person { background: hsl(var(--positive) / var(--tint-strong)); }
 /* The chat header's taint chip and its details. */
 .taint-chip-wrap { position: relative; display: inline-flex; align-items: center; min-width: 0; }
-.taint-chip { display: inline-flex; align-items: center; gap: var(--space-1); min-width: 0; max-width: var(--width-chip-wide); white-space: nowrap; border: var(--border-width) solid hsl(var(--warning)); border-radius: var(--radius-full); color: hsl(var(--warning)); }
+.taint-chip { color: hsl(var(--warning)); }
 /* In place (no chip to anchor to) under the chip; by its chip, placed and kept in the window (`Popover`'s anchor). */
 .taint-panel { position: absolute; top: calc(100% + var(--space-1)); left: 0; white-space: normal; z-index: var(--z-popover); width: min(var(--width-menu), calc(100vw - 2 * var(--gutter))); display: grid; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: var(--border-width) solid var(--line-firm); border-radius: var(--radius); background: hsl(var(--background)); color: hsl(var(--foreground)); }
 .taint-panel-anchored { position: fixed; }

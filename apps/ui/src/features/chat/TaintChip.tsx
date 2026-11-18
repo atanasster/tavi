@@ -11,6 +11,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 
 import { loadTaskLabel } from "./tasks-api.js";
 import { Button } from "../../ui/Button.js";
+import { Icon } from "../../ui/Icon.js";
 import { Popover } from "../../ui/Popover.js";
 import { useWorkspace } from "../shell/Workspace.js";
 
@@ -87,18 +88,19 @@ export function TaintChipView({
   const chips = provenanceChips(label);
   return (
     <span className="taint-chip-wrap">
+      {/* A shield in the warning colour; what it read is its name and its tooltip, and the panel says the rest. */}
       <Button
         variant="ghost"
-        size="sm"
+        size={["icon", "sm"]}
         className="taint-chip"
         ref={chip}
         aria-expanded={open}
         aria-haspopup="dialog"
-        title="This chat read content Tavi does not trust"
+        aria-label={`Untrusted content: ${text}`}
+        title={`${text}: this chat read content Tavi does not trust`}
         onClick={onToggle}
       >
-        <span className="visually-hidden">Untrusted content: </span>
-        <span className="truncate">{text}</span>
+        <Icon name="shield-alert" size="sm" />
       </Button>
       {open ? (
         <Popover

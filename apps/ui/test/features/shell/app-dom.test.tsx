@@ -1306,7 +1306,7 @@ it("starts a new chat from the panel: an empty canvas until the next prompt's en
   const fake = fakeStore({ connection: "ready", runs: earlier, directory: listed(earlier), next: { kind: "continue", taskId: "old" } });
   const page = await mount(<App store={fake.store} client={silent} workspaceId="default" />);
   expect(page.querySelector(".task-header h1")?.textContent).toContain("Earlier question");
-  expect(page.querySelector("textarea")?.getAttribute("placeholder")?.split("\n")[0]).toBe("Reply…");
+  expect(page.querySelector("textarea")?.getAttribute("placeholder")?.split("\n")[0]).toBe("Continue this chat…");
   await click(page.querySelector('[aria-label="New chat"]'));
   expect(fake.acted).toEqual(["newTask"]);
   expect(page.querySelector(".task-header")).toBeNull();

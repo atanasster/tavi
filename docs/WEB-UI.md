@@ -411,9 +411,16 @@ Provider-reported tokens, once a turn ends, are in the chat panel's
 connection reports a context window to be a percentage of.
 
 The message box's placeholder says where a message goes (**Message Home…**,
-**Start a new chat…**, **Message Trip plans…** for a named chat, **Reply…** for
-one whose only name is its first message) and, with a keyboard, a second line,
-**Enter to send · Shift+Enter for a new line**.
+**Start a new chat…**, **Continue this chat…**: the chat's title is in the header
+above it) and, with a keyboard, a second line, **Enter to send · Shift+Enter for
+a new line**.
+
+The chat's header is one line: its title, its status (a coloured dot on a
+phone, the word read to a screen reader), and at the far end its tools as
+icons — an amber shield once it has read content Tavi does not trust (it opens
+what it read and **Start a fresh chat**), a folder for its working folder and
+files, and its memory, raised while on and crossed out while off. Each icon's
+tooltip and name say what it is.
 
 **Rewind to here** takes the chat back to before that message: after you
 confirm, the message, Tavi's answer and every later turn are removed from the
@@ -598,9 +605,10 @@ tavi tasks history <task-id> rewind --turn <n>
 
 ### Working folders
 
-The chat header's folder chip names where the open chat works: **Chat files**
-for its own folder, `<folder>/…` for a host folder. When the chat's folder is
-gone or no longer under a root, the chip says so and offers **Reset**, so a chat
+The chat header's folder icon names where the open chat works, in its tooltip
+and name: **Chat files** for its own folder, the host folder's path otherwise.
+When the chat's folder is gone or no longer under a root, the icon turns amber
+and **Reset** shows beside it, so a chat
 never needs a terminal to recover.
 
 The chip opens a panel listing the chat's folders (its own folder, a host folder
@@ -1285,7 +1293,7 @@ Details, Memory and Instructions tabs, the Trajectory, Held files and Agents vie
 `Ctrl` stands in for `Cmd` where there is no Cmd key. The approve and deny
 chords are deliberately awkward, and `Enter` alone never allows anything. These
 chords are the browser's to overrule, so each also has a button (the keyboard
-icon at the right end of the header, absent on a touch screen; the fold
+icon at the right end of the header, absent on a touch screen and at phone width; the fold
 controls on the chats list and the chat panel) and none depends on the chord surviving. The rest (a new chat,
 settings, the model picker) are buttons in that sheet rather than keys the page
 pretends to own.
