@@ -214,6 +214,7 @@ WSL1 cannot run the sandbox. On WSL2 keep the data directory on the Linux filesy
 | `tavi onboard` / `setup` | Set up what is still open / go through every step again |
 | `tavi serve` | Start the owner |
 | `tavi chat` / `ui` / `run` | Terminal UI / web canvas / one task per command |
+| `tavi remote connect` | Use the owner on another computer (a Mac mini, a server) from this one, over SSH |
 | `tavi needs` / `approvals` / `answer` | What waits on you, and how to answer it |
 | `tavi schedules` / `reminders` / `heartbeat` | Unattended work |
 | `tavi channels` / `apps` / `mcp` / `plugins` | Channels, connected apps, MCP servers and plugins |

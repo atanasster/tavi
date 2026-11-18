@@ -34,6 +34,7 @@ import type { ChatFolders, FolderSpace, FolderUsage } from "@tavi/runtime";
 import type { FolderReadScope } from "./fs-tools.js";
 import type { IpcAnswer } from "../../shared/ipc-decisions.js";
 import { GLYPHS } from "../../tui/theme.js";
+import { type RemoteFolders, remotePathOf } from "../remote/folders.js";
 
 /**
  * A chat's working folder over IPC: the
@@ -510,7 +511,14 @@ export async function browseCommand(
  * `tavi tasks folder`), as the owner takes it: `~` is their home, and a
  * relative path is the terminal's directory's.
  */
-export function hostPathOf(typed: string, cwd: string = process.cwd(), home: string = homedir()): string {
+export function hostPathOf(
+  typed: string,
+  cwd: string = process.cwd(),
+  home: string = homedir(),
+  /** The owner's computer, when it is not this one: see `remotePathOf`. */
+  remote?: RemoteFolders,
+): string {
+  if (remote !== undefined) return remotePathOf(typed, remote);
   const trimmed = typed.trim();
   if (trimmed === "~") return home;
   if (/^~[\\/]/.test(trimmed)) return join(home, trimmed.slice(2));

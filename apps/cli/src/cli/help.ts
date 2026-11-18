@@ -19,6 +19,7 @@ import { ABORT_USAGE, RUN_USAGE } from "../features/run/parse.js";
 import { SCHEDULES_USAGE } from "../features/schedules/parse.js";
 import { SEARCH_USAGE } from "../features/search/parse.js";
 import { SERVICE_USAGE } from "../features/service/parse.js";
+import { REMOTE_USAGE } from "../features/remote/parse.js";
 import { SKILLS_USAGE } from "../features/skills/parse.js";
 import { SYSTEM_PROMPT_USAGE } from "../features/system-prompt/parse.js";
 import { CANCEL_USAGE, RECOVER_USAGE } from "../features/tasks/parse.js";
@@ -65,6 +66,7 @@ Usage:
   tavi config <action>          Read and change workspace settings (timezone, summaries, browser thumbnails)
   tavi agents <action>          Manage named agent personas
   tavi service <action>         Generate a launchd/systemd unit that keeps serve alive
+  tavi remote connect <target>  Use the owner on another computer from this one, over SSH
   tavi sandbox <action>         Check the sandbox on this host, and set it up where it needs root once
   tavi bindings <action>        Link a channel sender to a Tavi user (a principal)
   tavi channels <action>        Add, change, test and remove channel connections
@@ -114,6 +116,7 @@ ${PERMISSIONS_USAGE}
 ${SYSTEM_PROMPT_USAGE}
 ${CONFIG_USAGE}
 ${SERVICE_USAGE}
+${REMOTE_USAGE}
 ${CREDENTIALS_USAGE}
 ${REPORTS_USAGE}
 ${LOGS_USAGE}

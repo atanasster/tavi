@@ -57,7 +57,13 @@ export async function runUi(
     return exit.unavailable;
   }
   if (owner === undefined) {
-    io.stderr(`tavi ui: no tavi owner is serving ${options.dataDirectory}; start \`tavi serve\` first\n`);
+    const { readRemoteMirror } = await import("@tavi/runtime/owner-attach");
+    const mirror = readRemoteMirror(options.dataDirectory);
+    io.stderr(
+      mirror === undefined
+        ? `tavi ui: no tavi owner is serving ${options.dataDirectory}; start \`tavi serve\` first\n`
+        : `tavi ui: no owner on ${mirror.target} is published in ${options.dataDirectory}; keep \`tavi remote connect ${mirror.target}\` running, and \`tavi serve\` running on ${mirror.target}\n`,
+    );
     return exit.unavailable;
   }
   // A bridge that could never reach this owner serves no page at all.

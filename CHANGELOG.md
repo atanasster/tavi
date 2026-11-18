@@ -6,6 +6,16 @@ change behaviour or stored data.
 
 ## Unreleased
 
+### Added
+
+- `tavi remote connect <ssh-target>` lets the clients on this computer use a
+  `tavi serve` on another one, such as a Mac mini on your network, over your
+  own SSH sign-in. It keeps a mirror directory (`~/.tavi-remote/<host>`) that
+  `tavi chat`, `tavi ui`, `tavi run` and the other commands name with
+  `--data-dir`, follows the owner when it restarts, and signs in again when the
+  connection drops. Clients of a remote owner no longer send it folders of
+  this computer, and the mirror is never opened as a data directory of its own.
+
 ### Changed
 
 - Ideas are chosen for what Tavi knows of you, not only for words you

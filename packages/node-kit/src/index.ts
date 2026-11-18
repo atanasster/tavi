@@ -103,3 +103,4 @@ export {
   shellOpen,
 } from "./win32.js";
 export { sameIdentity, type FileIdentity } from "./identity.js";
+export { REMOTE_MIRROR_FILE, type RemoteMirror, readRemoteMirrorFile } from "./remote-mirror.js";

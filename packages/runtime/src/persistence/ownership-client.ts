@@ -3,6 +3,7 @@ import { errorMessage, nowTimestamp } from "@tavi/contracts/util";
 import { WorkerChannel } from "./worker-channel.js";
 import { persistenceWorkerUrl } from "./worker-url.js";
 import type { AcquireOwnershipOptions } from "./ownership.js";
+import { readRemoteMirror, remoteMirrorRefusal } from "./remote-mirror.js";
 
 const ownerInfoSchema = z.strictObject({ dataDirectory: z.string(), lockPath: z.string(), sessionId: z.string(), acquiredAt: z.string() });
 
@@ -29,6 +30,9 @@ export class AsyncDataDirectoryOwner {
 
   static async acquire(options: AcquireOwnershipOptions): Promise<AsyncDataDirectoryOwner> {
     const { now, ...input } = options;
+    // A mirror of a remote owner is never owned here: no offline command, and no `tavi serve`, may open it.
+    const mirror = readRemoteMirror(options.dataDirectory);
+    if (mirror !== undefined) throw remoteMirrorRefusal(options.dataDirectory, mirror);
     const channel = new WorkerChannel(persistenceWorkerUrl("ownership-worker"), {
       execArgv: [],
       workerData: { ...input, acquiredAt: (now ?? nowTimestamp)() },

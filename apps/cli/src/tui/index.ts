@@ -64,6 +64,7 @@ import { ChatApp, RESERVED_ROWS } from "./app.js";
 import { roundCallIds } from "../shared/rounds.js";
 import { chatCommand, commandHelp, type FolderChange, helpRows } from "./commands.js";
 import { folderLines, hostPathOf } from "../features/folders/owner.js";
+import { clientCwdFor, remoteFoldersOf } from "../features/remote/folders.js";
 import { enterField, FORMS, formOutcome, formRequest, looksLikeCredential, openForm, type FormStep } from "./forms.js";
 import {
   agentsPane,
@@ -1794,7 +1795,8 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
     /**
      * `/folder`: the chat shown's working folder — shown, or
      * changed from its next message. A path is this terminal's: `~`
-     * and a relative path are resolved here, and the owner checks it against
+     * and a relative path are resolved here (for an owner on another computer,
+     * `~` is its home and a relative path is refused), and the owner checks it against
      * its `--fs-root` folders. `/folder reset` also recovers a folder that is
      * gone. Home's folder moves only by this.
      */
@@ -1809,13 +1811,23 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         );
         return;
       }
+      // A path for an owner on another computer is its own (`~` its home), and a relative one is refused here.
+      let path: string | undefined;
+      if (change?.kind === "set" || change?.kind === "add") {
+        try {
+          path = hostPathOf(change.path, undefined, undefined, remoteFoldersOf(options.dataDirectory));
+        } catch (error) {
+          store.notice(errorMessage(error));
+          return;
+        }
+      }
       const action =
         change === undefined
           ? { action: "show" }
           : change.kind === "set"
-            ? { action: "set", folder: { path: hostPathOf(change.path) } }
+            ? { action: "set", folder: { path } }
             : change.kind === "add"
-              ? { action: "attach", folder: { path: hostPathOf(change.path) }, ...(change.rw ? { mode: "rw" } : {}) }
+              ? { action: "attach", folder: { path }, ...(change.rw ? { mode: "rw" } : {}) }
               : change.kind === "drop"
                 ? { action: "detach", label: change.label }
                 : { action: "reset" };
@@ -1937,7 +1949,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         ...(memory === undefined ? {} : { memory }),
         // A chat this prompt starts may work in this terminal's directory, when the owner allows it;
         // Home never moves to it.
-        ...(target === "home" ? {} : { clientCwd: process.cwd() }),
+        ...(target === "home" ? {} : clientCwdFor(options.dataDirectory)),
       };
       // A refused or failed run made no chat: the next prompt starts the one `--no-memory` / `--private` asked for.
       const keepMemory = (): void => {

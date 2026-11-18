@@ -38,6 +38,7 @@ import { parseSandbox, type SandboxCommandOptions } from "../features/sandbox/pa
 import { parseSchedules, type SchedulesCommandOptions } from "../features/schedules/parse.js";
 import { parseSearch, type SearchCommandOptions } from "../features/search/parse.js";
 import { parseService, type ServiceCommandOptions } from "../features/service/parse.js";
+import { parseRemote, type RemoteCommandOptions } from "../features/remote/parse.js";
 import { parseSkills, type SkillsCommandOptions } from "../features/skills/parse.js";
 import { parseSystemPrompt, type SystemPromptCommandOptions } from "../features/system-prompt/parse.js";
 import {
@@ -121,6 +122,7 @@ export interface ParsedCommand {
     | "system-prompt"
     | "config"
     | "service"
+    | "remote"
     | "sandbox"
     | "approvals"
     | "help"
@@ -175,6 +177,7 @@ export interface ParsedCommand {
   readonly config?: ConfigCommandOptions;
   readonly projects?: ProjectsCommandOptions;
   readonly service?: ServiceCommandOptions;
+  readonly remote?: RemoteCommandOptions;
   readonly sandbox?: SandboxCommandOptions;
   /** `tavi backup`/`export`/`restore` — see `MaintenanceCommandOptions`. */
   readonly maintenance?: MaintenanceCommandOptions;
@@ -189,7 +192,7 @@ export interface ParsedCommand {
 }
 
 /** Commands that are only interactive: they have no JSON form, and `--format json` is refused saying so. */
-const NO_JSON_COMMANDS: ReadonlySet<string> = new Set(["chat", "ui", "serve"]);
+const NO_JSON_COMMANDS: ReadonlySet<string> = new Set(["chat", "ui", "serve", "remote"]);
 
 /** `--format <value>` / `--format=<value>` in `argv`: its value, whether it was given more than once, and `argv` without it. */
 function takeFormat(argv: readonly string[]): { readonly value?: string; readonly repeated: boolean; readonly rest: readonly string[] } {
@@ -298,6 +301,7 @@ function parseCommand(command: string | undefined, rest: readonly string[]): Par
   if (command === "answer") return parseAnswer(rest);
   if (command === "projects") return parseProjects(rest);
   if (command === "service") return parseService(rest);
+  if (command === "remote") return parseRemote(rest);
   if (command === "sandbox") return parseSandbox(rest);
   if (command === "artifacts") return parseArtifacts(rest);
   if (command === "recover") return parseRecover(rest);

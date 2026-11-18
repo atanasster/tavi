@@ -48,6 +48,7 @@ const PARSED_COMMANDS: Readonly<Record<ParsedCommand["command"], true>> = {
   "system-prompt": true,
   config: true,
   service: true,
+  remote: true,
   sandbox: true,
   approvals: true,
   help: true,

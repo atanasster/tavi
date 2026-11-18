@@ -22,6 +22,7 @@ tavi reset --yes                               # delete all data, as if tavi had
 
 - [The data directory](#the-data-directory)
 - [Running the owner](#running-the-owner)
+- [Using the owner from another computer](#using-the-owner-from-another-computer)
 - [A schedule's webhook](#a-schedules-webhook)
 - [Logs](#logs)
 - [Health: tavi doctor](#health-tavi-doctor)
@@ -143,6 +144,48 @@ An owner with active routines keeps their bookkeeping on a 30-second beat, as
 does one owing a routine's pause notice or holding a routine evaluation that
 waits for its setup. Due work a sleeping laptop missed runs within 30 seconds
 of waking.
+
+## Using the owner from another computer
+
+Clients reach an owner through a socket in its data directory, so out of the
+box they run on the owner's computer. `tavi remote connect` lets the clients
+on another computer — your laptop, with the owner on a Mac mini or a server —
+use it over SSH:
+
+```bash
+tavi remote connect brook@mini.lan
+```
+
+```bash
+tavi chat --data-dir ~/.tavi-remote/mini.lan
+```
+
+It signs in with your own `ssh` (keys, agent and `~/.ssh/config`; a password
+is asked in its terminal), forwards the owner's socket to a *mirror* directory
+here (`~/.tavi-remote/<host>`), and keeps a copy of the owner's token there,
+renewed whenever the owner restarts. Keep it running in a terminal of its own;
+Ctrl-C disconnects. Every client then works as it does on the owner's
+computer: `tavi chat`, `tavi ui` (the canvas on this computer's loopback),
+`tavi run`, `tavi tasks` and the configuration commands, with
+`--data-dir ~/.tavi-remote/<host>` or `TAVI_DATA_DIR` set to it.
+
+- **Everything runs there.** Turns, tools, the browser, desktop control and
+  every file a chat reads or writes are on the owner's computer, under its
+  `--fs-root` folders. A client of a mirror sends no folder of this computer:
+  a new chat works in its own folder there, and a folder you name is a path
+  there (`~` is the SSH user's home; a relative path is refused).
+- **The mirror is not a data directory.** It holds no database. While the
+  connection is down, clients say they cannot reach the owner rather than
+  opening it, and `tavi serve` refuses it.
+- **Same version on both sides.** Upgrade and restart the owner, then the
+  clients, together: a client refuses an owner that speaks another IPC
+  protocol.
+- **Who can use it.** The token copy is private to your user here (`0600`, in a
+  `0700` directory). Anyone who can act as your user on this computer can use
+  the owner while it is connected, as anyone who can act as that user there
+  can. Nothing listens on the network: the only way in is your SSH sign-in.
+- The owner's computer must run macOS or Linux. Options and every refusal:
+  [`tavi remote`](CLI.md#tavi-remote).
 
 ## A schedule's webhook
 

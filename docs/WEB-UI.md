@@ -38,7 +38,9 @@ match.
 
 ### Security
 
-- The canvas binds `127.0.0.1` only.
+- The canvas binds `127.0.0.1` only. To use an owner on another computer,
+  run `tavi remote connect` and `tavi ui --data-dir ~/.tavi-remote/<host>` on
+  this one ([OPERATIONS.md](OPERATIONS.md#using-the-owner-from-another-computer)).
 - The link's token, in the URL's fragment, works once, within a minute, and is
   exchanged for a session cookie and a secret the tab keeps. Both are needed to
   reach the owner, and no other local server can obtain the secret.

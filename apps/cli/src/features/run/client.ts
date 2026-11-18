@@ -1,6 +1,7 @@
 import { EXIT, reportFailure } from "../../cli/exit.js";
 import { hostPathOf } from "../folders/owner.js";
-import { IPC_NOT_RUNNING } from "@tavi/contracts";
+import { clientCwdFor, remoteFoldersOf } from "../remote/folders.js";
+import { IPC_NOT_RUNNING, TaviError } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 import type { TaviRuntime } from "../../runtime/types.js";
 import { attachToRunningTask, runOnOwner } from "./attached.js";
@@ -95,6 +96,17 @@ async function runAttached(options: ResolvedDataDirectory<RunCommandOptions>, io
   const asks = options.approval === "ask";
   const commands =
     options.attach === undefined ? ["run", ...(asks ? ["approvals", "approve"] : [])] : ["subscribe", "tasks", "approvals", "approve"];
+  // A folder for an owner on another computer is named as it is there; a path that cannot be is refused before anything is sent.
+  let folderPath: string | undefined;
+  if (options.folder !== undefined && options.home !== true) {
+    try {
+      folderPath = hostPathOf(options.folder, undefined, undefined, remoteFoldersOf(options.dataDirectory));
+    } catch (error) {
+      if (!(error instanceof TaviError) || error.code !== "INVALID_INPUT") throw error;
+      io.stderr(`tavi run: ${error.message}\n`);
+      return EXIT.usage;
+    }
+  }
   const client = await connectOwnerOrReport(options.dataDirectory, commands, io, EXIT);
   if (client === undefined || typeof client === "number") return client;
   try {
@@ -134,11 +146,11 @@ async function runAttached(options: ResolvedDataDirectory<RunCommandOptions>, io
         // this terminal's directory. Home keeps its own folder.
         ...(options.home === true
           ? {}
-          : options.folder !== undefined
-            ? { folder: { path: hostPathOf(options.folder) } }
+          : folderPath !== undefined
+            ? { folder: { path: folderPath } }
             : options.managed === true
               ? { folder: { managed: true as const } }
-              : { clientCwd: process.cwd() }),
+              : clientCwdFor(options.dataDirectory)),
       },
       follow,
     );

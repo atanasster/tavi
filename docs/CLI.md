@@ -60,6 +60,7 @@ The `tavi` Command Line Interface (CLI) is the primary user and operator interfa
   - [`tavi apps`](#tavi-apps)
   - [`tavi sandbox`](#tavi-sandbox)
   - [`tavi service`](#tavi-service)
+  - [`tavi remote`](#tavi-remote)
   - [`tavi prune`](#tavi-prune)
   - [`tavi inbox`](#tavi-inbox)
   - [Browser installation, allowlist and history](#browser-installation-allowlist-and-history)
@@ -105,6 +106,7 @@ Every command has `--help`; `tavi --help` lists them all. A page fits the termin
 | `tavi config` | Workspace settings: `get`, `set`, `unset` (see [tavi config](#tavi-config) for every key) |
 | `tavi plugins` / `mcp` / `apps` | Plugins: list, install, review, enable, configure ([PLUGINS.md](PLUGINS.md)) / MCP servers ([MCP.md](MCP.md)) / Connected apps ([APPS.md](APPS.md)) |
 | `tavi schedules` / `agents` / `projects` / `reports` / `service` | Unattended work (`tavi schedules agenda` lists every upcoming reminder, routine and schedule fire); `service` writes a launchd or systemd unit, or a Windows logon task, that keeps `serve` alive |
+| `tavi remote connect` | Use the owner on another computer from this one, over SSH ([OPERATIONS.md](OPERATIONS.md#using-the-owner-from-another-computer)) |
 | `tavi reminders` | Reminders: list, add (once, event, repeat), show, snooze, pause, resume, cancel |
 | `tavi todos` | To-dos: list, add, done, reopen, remove, export ([AUTOMATION.md](AUTOMATION.md#to-dos)) |
 | `tavi ideas` | Ideas Tavi offers you: list, try, dismiss, restore, refresh, brief, provider, digest, hours, budget, prepare, reset, on, off |
@@ -3053,6 +3055,29 @@ logs in and the brief silently never runs. For a headless machine, render a
 generated, never installed or reboot-tested, so that check is the operator's.
 
 ---
+
+### `tavi remote`
+
+Use a `tavi serve` running on another computer from this one, over SSH. See
+[Using the owner from another computer](OPERATIONS.md#using-the-owner-from-another-computer).
+
+```bash
+tavi remote connect <ssh-target> [options]
+```
+
+#### Actions
+- `connect`: Sign in to `<ssh-target>` (`user@host` or a `Host` alias from `~/.ssh/config`) with your own `ssh` — its config, keys and agent, and a password typed here when it asks — and keep a *mirror* directory on this computer connected to the owner there until Ctrl-C. While it runs, every client here (`tavi chat`, `tavi ui`, `tavi run`, `tavi tasks`, the configuration commands) reaches that owner by naming the mirror: `--data-dir ~/.tavi-remote/<host>` or `TAVI_DATA_DIR=~/.tavi-remote/<host>`.
+  - The mirror holds the owner's discovery, its endpoint rewritten to a local socket that SSH forwards to the owner's socket there, and a copy of its token (`0600`, in a `0700` directory). The owner's own socket is reached through a link in a private temporary directory on the remote computer (`mktemp -d`), since ssh cannot forward a path with a space in it; it is removed on disconnect.
+  - It reads the owner's discovery again every 2 seconds: an owner that restarts is followed (its new session and token are copied, and said), and one that stops is withdrawn from the mirror, so a client says it cannot reach it. A dropped connection is signed in again every 5 seconds; the first sign-in failing exits `4`.
+  - `remote.json` marks the mirror. It holds no data of its own: a client never falls back to opening it when the owner cannot be reached (exit `4`, naming `tavi remote connect`), no offline command can take it, and `tavi serve` refuses it (exit `4`).
+  - A client of a mirror sends the owner no folder of this computer: `tavi run` and `tavi chat` send no working directory (a new chat works in its own folder there), and a folder named with `--folder`, `/folder set|add` or `tavi tasks folder set|attach` is the remote computer's: `~` is the SSH user's home there, an absolute path is taken as written, and a relative path is refused (exit `2`).
+  - The owner's computer must run macOS or Linux, and the SSH user must be the one that runs `tavi serve` there. Both sides should run the same tavi version: a client refuses an owner speaking another IPC protocol, and `connect` warns of it.
+  - Anyone who can act as your user on this computer can use the owner while it is connected, as anyone who can act as that user there can.
+
+#### Options
+- `--data-dir <path>`: The mirror directory (default: `~/.tavi-remote/<host>`; never `$TAVI_DATA_DIR`, which names this computer's own data). It must be empty or an earlier mirror of the same target, and have no space or colon in its path and be short enough for a socket (exit `2` otherwise). A second `connect` on a mirror one already keeps is refused (exit `4`).
+- `--remote-data-dir <path>`: The owner's data directory there (default: Tavi's default for that user: `$XDG_DATA_HOME/tavi` when set, else `~/Library/Application Support/tavi` on macOS and `~/.local/share/tavi` on Linux). Absolute, or `~/…` for the SSH user's home.
+- `--ssh-option <opt>`: Pass `-o <opt>` to every ssh call (repeatable), e.g. `--ssh-option Port=2222`.
 
 ### `tavi prune`
 

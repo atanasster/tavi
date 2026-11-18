@@ -12,6 +12,7 @@ import { type CliIo, confirmOnTerminal } from "../../cli/io.js";
 import { CONFIG_TIMEOUT_MS } from "../../cli/owner.js";
 import { withStorePreservingOwnership } from "../../cli/store.js";
 import { emitJson } from "../../cli/output.js";
+import { remoteFoldersOf } from "../remote/folders.js";
 
 /**
  * `tavi tasks folder <task-id> [show|set <path>|attach <path> [--rw]|detach <label>|reset]`:
@@ -25,6 +26,17 @@ export async function taskFolderCli(
   options: TaskFolderOptions,
   format?: "text" | "json",
 ): Promise<number> {
+  // A folder for an owner on another computer is named as it is there; a path that cannot be is refused before anything is sent.
+  let folderPath = "";
+  if (options.action === "set" || options.action === "attach") {
+    try {
+      folderPath = hostPathOf(options.path ?? "", undefined, undefined, remoteFoldersOf(dataDirectory));
+    } catch (error) {
+      if (!(error instanceof TaviError) || error.code !== "INVALID_INPUT") throw error;
+      io.stderr(`tavi tasks folder: ${error.message}\n`);
+      return EXIT.usage;
+    }
+  }
   const client = await connectOwnerOrReport(dataDirectory, ["folder"], io, EXIT);
   if (typeof client === "number") return client;
   if (client === undefined) {
@@ -39,12 +51,12 @@ export async function taskFolderCli(
       options.action === "show"
         ? { action: "show", ...target }
         : options.action === "set"
-          ? { action: "set", ...target, folder: { path: hostPathOf(options.path ?? "") } }
+          ? { action: "set", ...target, folder: { path: folderPath } }
           : options.action === "attach"
             ? {
                 action: "attach",
                 ...target,
-                folder: { path: hostPathOf(options.path ?? "") },
+                folder: { path: folderPath },
                 ...(options.rw === true ? { mode: "rw" } : {}),
               }
             : options.action === "detach"

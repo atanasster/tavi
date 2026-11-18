@@ -1,6 +1,6 @@
 # The owner's IPC protocol
 
-While `tavi serve` owns a data directory, it is the owner: every other `tavi` command and the terminal UI are its clients, and the web canvas reaches it through the `tavi ui` bridge. They speak to it over an authenticated local socket in versioned messages. This page is for contributors who write or debug a client. It lists what a client sends, command by command, and what the owner answers.
+While `tavi serve` owns a data directory, it is the owner: every other `tavi` command and the terminal UI are its clients, and the web canvas reaches it through the `tavi ui` bridge. They speak to it over an authenticated local socket in versioned messages; a client on another computer reaches that socket through `tavi remote connect`'s SSH forward ([OPERATIONS.md](OPERATIONS.md#using-the-owner-from-another-computer)), and sends exactly what a local one does, except that it sends no `clientCwd` and names folders as the owner's computer does. This page is for contributors who write or debug a client. It lists what a client sends, command by command, and what the owner answers.
 
 Related pages:
 

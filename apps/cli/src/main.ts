@@ -333,6 +333,24 @@ export async function main(argv: readonly string[], options: MainOptions = {}): 
       }
       return configCommand(resolveCommand(parsed.config), io);
     }
+    case "remote": {
+      if (parsed.remote === undefined) {
+        io.stderr("remote requires an action\n");
+        return EXIT.usage;
+      }
+      const { remoteConnect } = await import("./features/remote/connect.js");
+      const { onInterrupt } = await import("./shared/interrupt.js");
+      let stop = (): void => undefined;
+      const stopped = new Promise<void>((resolveStop) => {
+        stop = resolveStop;
+      });
+      const off = onInterrupt(stop);
+      try {
+        return await remoteConnect(parsed.remote, io, { ok: EXIT.ok, usage: EXIT.usage, unavailable: EXIT.unavailable }, { stopped });
+      } finally {
+        off();
+      }
+    }
     case "service": {
       const { serviceCommand } = await import("./features/service/client.js");
       if (parsed.service === undefined) {
@@ -354,6 +372,26 @@ export async function main(argv: readonly string[], options: MainOptions = {}): 
       if (parsed.serve === undefined) {
         io.stderr("serve requires options\n");
         return EXIT.usage;
+      }
+      {
+        // A mirror of another computer's owner (`tavi remote connect`) is never served here: said first, before
+        // the first-run check (which would reach that owner) or a model target is resolved.
+        const dataDirectory = resolveCommand(parsed.serve).dataDirectory;
+        const { readRemoteMirror } = await import("@tavi/runtime/owner-attach");
+        let mirror;
+        try {
+          mirror = readRemoteMirror(dataDirectory);
+        } catch (error) {
+          io.stderr(`tavi serve: ${error instanceof Error ? error.message : String(error)}\n`);
+          return EXIT.unavailable;
+        }
+        if (mirror !== undefined) {
+          io.stderr(
+            `tavi serve: ${dataDirectory} mirrors the owner on ${mirror.target}, which serves it there; ` +
+              "to run an owner on this computer, give it a data directory of its own (--data-dir)\n",
+          );
+          return EXIT.unavailable;
+        }
       }
       {
         const stopped = await offerFirstRun(resolveCommand(parsed.serve).dataDirectory, io, options.onboard ?? {}, "serve");

@@ -1,0 +1,285 @@
+import { spawn } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+
+import { TaviError } from "@tavi/contracts";
+import { capture, temporaryDirectories } from "@tavi/test-support";
+import { afterEach, describe, expect, it } from "vitest";
+
+import { connectLiveOwner } from "../../src/cli/owner-connection.js";
+import { withStore } from "../../src/cli/store.js";
+import { hostPathOf } from "../../src/features/folders/owner.js";
+import {
+  type RemoteConnection,
+  type RemoteConnector,
+  type RemoteResult,
+  defaultMirrorDirectory,
+  mirrorPaths,
+  mirrorRefusal,
+  parsePublished,
+  publishedScript,
+  remoteConnect,
+  remoteDataDirectoryOf,
+  shellQuote,
+} from "../../src/features/remote/connect.js";
+import { clientCwdFor, remoteFoldersOf, remotePathOf } from "../../src/features/remote/folders.js";
+import { EXIT, main } from "../../src/main.js";
+import { serve, type ServeHandle } from "../../src/server/serve.js";
+import { fixtureServeOptions } from "../support/serve-fixture.js";
+
+/**
+ * `tavi remote connect`: clients on this computer, attached to an owner on
+ * another one through a mirror directory.
+ *
+ * The "other computer" here is this one: the connector runs each remote
+ * command with `/bin/sh` and forwards the socket by a link, which is what
+ * SSH's forward amounts to for a client. What is under test is everything
+ * around it: the mirror's files, following the owner's restarts, the refusal
+ * to open a mirror offline, and that clients send no path of this computer.
+ */
+
+const directories = temporaryDirectories({ prefix: "tavi-remote-" });
+const handles: ServeHandle[] = [];
+
+afterEach(async () => {
+  while (handles.length > 0) await handles.pop()?.shutdown("test cleanup");
+  directories.cleanup();
+});
+
+async function startOwner(directory: string): Promise<ServeHandle> {
+  const handle = await serve(
+    fixtureServeOptions(directory),
+    { dataDirectory: directory, drainDeadlineMs: 2_000 },
+    { stdout: () => {}, stderr: () => {}, isTty: false },
+  );
+  handles.push(handle);
+  return handle;
+}
+
+function sh(script: string): Promise<RemoteResult> {
+  return new Promise((resolve) => {
+    const child = spawn("/bin/sh", ["-c", script], { stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.setEncoding("utf8").on("data", (chunk: string) => (stdout += chunk));
+    child.stderr.setEncoding("utf8").on("data", (chunk: string) => (stderr += chunk));
+    child.on("close", (code) => resolve({ code: code ?? 1, stdout, stderr }));
+  });
+}
+
+/** A connector to this computer: each script in `/bin/sh`, the forward a link. `drop` ends the connection. */
+function localConnector(): { readonly connector: RemoteConnector; readonly drop: () => void; readonly scripts: string[] } {
+  let drop = (): void => undefined;
+  const scripts: string[] = [];
+  const connector: RemoteConnector = async () => {
+    let end = (_why: string): void => undefined;
+    const ended = new Promise<string>((resolve) => {
+      end = resolve;
+    });
+    drop = () => end("dropped");
+    const connection: RemoteConnection = {
+      run: (script) => {
+        scripts.push(script);
+        return sh(script);
+      },
+      forward: async (local, remote) => {
+        symlinkSync(remote, local);
+      },
+      ended,
+      close: async () => end("closed"),
+    };
+    return connection;
+  };
+  return { connector, drop: () => drop(), scripts };
+}
+
+async function until(condition: () => boolean, what: string, timeoutMs = 10_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (!condition()) {
+    if (Date.now() > deadline) throw new Error(`timed out waiting for ${what}`);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+}
+
+describe("tavi remote connect", () => {
+  it("attaches clients to the remote owner, follows its restart, and withdraws it on stop", async () => {
+    const remote = directories.create();
+    const mirror = join(directories.create(), "m");
+    await startOwner(remote);
+
+    const out = capture();
+    const { connector } = localConnector();
+    let stop = (): void => undefined;
+    const stopped = new Promise<void>((resolve) => {
+      stop = resolve;
+    });
+    const running = remoteConnect(
+      { action: "connect", target: "brook@mini.lan", mirrorDirectory: mirror, remoteDataDirectory: remote, sshOptions: [] },
+      out.io,
+      EXIT,
+      { connector, stopped, pollMs: 25, reconnectMs: 25 },
+    );
+    const paths = mirrorPaths(mirror);
+    await until(() => existsSync(paths.discovery), "the mirror's discovery");
+    expect(JSON.parse(readFileSync(paths.marker, "utf8"))).toMatchObject({
+      version: 1,
+      target: "brook@mini.lan",
+      remoteDataDirectory: remote,
+    });
+    expect(JSON.parse(readFileSync(paths.discovery, "utf8")).endpoint).toBe(paths.socket);
+
+    const client = await connectLiveOwner(mirror, ["tasks"]);
+    expect(client?.features).toContain("tasks");
+    client?.close();
+    expect(await main(["tasks", "--data-dir", mirror], { io: capture().io })).toBe(EXIT.ok);
+
+    // The owner restarts there: a new session and token, which the mirror follows.
+    const first = JSON.parse(readFileSync(paths.discovery, "utf8")).sessionId as string;
+    await handles.pop()?.shutdown("restart");
+    await until(() => !existsSync(paths.discovery), "the stopped owner withdrawn");
+    await expect(connectLiveOwner(mirror, ["tasks"])).rejects.toThrow(/Cannot reach the owner on brook@mini\.lan/);
+    await startOwner(remote);
+    await until(
+      () => existsSync(paths.discovery) && JSON.parse(readFileSync(paths.discovery, "utf8")).sessionId !== first,
+      "the new session",
+    );
+    const again = await connectLiveOwner(mirror, ["tasks"]);
+    again?.close();
+    expect(out.stdout()).toMatch(/Connected to the owner on brook@mini\.lan/);
+    expect(out.stdout()).toMatch(/No owner is running/);
+    expect(out.stdout()).toMatch(/is running again/);
+    expect(out.stdout().match(/Connected to the owner/g)).toHaveLength(1);
+
+    stop();
+    expect(await running).toBe(EXIT.ok);
+    expect(existsSync(paths.discovery)).toBe(false);
+    expect(existsSync(paths.token)).toBe(false);
+    expect(existsSync(paths.socket)).toBe(false);
+    // The private directory made there for the link is removed.
+    expect(out.stderr()).toBe("");
+  });
+
+  it("signs in again after the connection drops", async () => {
+    const remote = directories.create();
+    const mirror = join(directories.create(), "m");
+    await startOwner(remote);
+    const out = capture();
+    const local = localConnector();
+    let stop = (): void => undefined;
+    const stopped = new Promise<void>((resolve) => {
+      stop = resolve;
+    });
+    const running = remoteConnect(
+      { action: "connect", target: "mini", mirrorDirectory: mirror, remoteDataDirectory: remote, sshOptions: [] },
+      out.io,
+      EXIT,
+      { connector: local.connector, stopped, pollMs: 25, reconnectMs: 25 },
+    );
+    const paths = mirrorPaths(mirror);
+    await until(() => existsSync(paths.discovery), "the first connection");
+    local.drop();
+    await until(() => out.stderr().includes("ended; signing in again"), "the reconnect notice");
+    await until(() => existsSync(paths.discovery), "the second connection");
+    (await connectLiveOwner(mirror, ["tasks"]))?.close();
+    stop();
+    expect(await running).toBe(EXIT.ok);
+  });
+
+  it("is never opened as a data directory of its own", async () => {
+    const mirror = directories.create();
+    writeFileSync(
+      join(mirror, "remote.json"),
+      JSON.stringify({ version: 1, target: "mini", remoteDataDirectory: "/srv/tavi", remoteHome: "/home/brook" }),
+    );
+    // No owner published: a client is refused, never sent to the database.
+    await expect(connectLiveOwner(mirror, ["tasks"])).rejects.toThrow(/Cannot reach the owner on mini/);
+    const tasks = capture();
+    expect(await main(["tasks", "--data-dir", mirror], { io: tasks.io })).toBe(EXIT.unavailable);
+    expect(tasks.stderr()).toMatch(/tavi remote connect mini/);
+    // And no offline command (nor `tavi serve`) can own it.
+    await expect(withStore(mirror, async () => undefined)).rejects.toThrow(/mirrors the owner on mini \(\/srv\/tavi\)/);
+    expect(existsSync(join(mirror, "tavi.sqlite"))).toBe(false);
+  });
+
+  it("refuses a mirror directory that is another target's, holds data, or is too long for a socket", () => {
+    const dataDirectory = directories.create();
+    writeFileSync(join(dataDirectory, "tavi.sqlite"), "");
+    expect(mirrorRefusal(dataDirectory, "mini")).toMatch(/not empty and not a remote mirror/);
+    const other = directories.create();
+    writeFileSync(join(other, "remote.json"), JSON.stringify({ version: 1, target: "nas", remoteDataDirectory: "/d", remoteHome: "/h" }));
+    expect(mirrorRefusal(other, "mini")).toMatch(/mirrors nas, not mini/);
+    expect(mirrorRefusal(other, "nas")).toBeUndefined();
+    expect(mirrorRefusal("/tmp/has space/m", "mini")).toMatch(/space or a colon/);
+    expect(mirrorRefusal(`/tmp/${"x".repeat(80)}`, "mini")).toMatch(/too long/);
+    expect(mirrorRefusal(join(directories.create(), "f"), "mini")).toBeUndefined();
+  });
+
+  it("refuses a target that is not a host, and a second connect on the same mirror", async () => {
+    const usage = capture();
+    expect(await main(["remote", "connect", "-oProxyCommand=x"], { io: usage.io })).toBe(EXIT.usage);
+    expect(await main(["remote", "connect", "a;b"], { io: usage.io })).toBe(EXIT.usage);
+    expect(await main(["remote", "connect", "mini", "--ssh-option", "nonsense"], { io: usage.io })).toBe(EXIT.usage);
+
+    const mirror = join(directories.create(), "m");
+    const paths = mirrorPaths(mirror);
+    mkdirSync(paths.runtime, { recursive: true });
+    writeFileSync(paths.pid, String(process.ppid));
+    const out = capture();
+    const code = await remoteConnect({ action: "connect", target: "mini", mirrorDirectory: mirror, sshOptions: [] }, out.io, EXIT, {
+      connector: localConnector().connector,
+      stopped: new Promise(() => undefined),
+    });
+    expect(code).toBe(EXIT.unavailable);
+    expect(out.stderr()).toMatch(/already keeps/);
+    rmSync(paths.pid);
+  });
+});
+
+describe("what the remote side is read as", () => {
+  it("finds the owner's data directory as Tavi's default there", () => {
+    expect(remoteDataDirectoryOf({ home: "/Users/brook", system: "Darwin", xdgDataHome: "" })).toBe(
+      "/Users/brook/Library/Application Support/tavi",
+    );
+    expect(remoteDataDirectoryOf({ home: "/home/b", system: "Linux", xdgDataHome: "" })).toBe("/home/b/.local/share/tavi");
+    expect(remoteDataDirectoryOf({ home: "/home/b", system: "Linux", xdgDataHome: "/data" })).toBe("/data/tavi");
+    expect(remoteDataDirectoryOf({ home: "/home/b", system: "Linux", xdgDataHome: "" }, "~/t")).toBe("/home/b/t");
+    expect(() => remoteDataDirectoryOf({ home: "/home/b", system: "Linux", xdgDataHome: "" }, "t")).toThrow(/absolute/);
+  });
+
+  it("reads the owner's publication, and nothing that is not one", () => {
+    const discovery = { protocolVersion: 7, sessionId: "serve-1", endpoint: "/x/ipc.sock", pid: 1, startedAt: "now" };
+    expect(parsePublished(`${JSON.stringify(discovery)}\n--tavi-remote-token--\nabc=\n`)).toEqual({ discovery, token: "abc=" });
+    expect(parsePublished("{}\n--tavi-remote-token--\nabc")).toBeUndefined();
+    expect(parsePublished(JSON.stringify(discovery))).toBeUndefined();
+    expect(publishedScript("/Users/b/Library/Application Support/tavi")).toContain("'/Users/b/Library/Application Support/tavi/runtime'");
+    expect(shellQuote("it's")).toBe(`'it'\\''s'`);
+  });
+
+  it("names the default mirror after the host", () => {
+    expect(defaultMirrorDirectory("brook@mini.lan", "/Users/me")).toBe("/Users/me/.tavi-remote/mini.lan");
+    expect(defaultMirrorDirectory("[fe80::1]", "/Users/me")).toBe("/Users/me/.tavi-remote/_fe80__1_");
+  });
+});
+
+describe("folders sent to a remote owner", () => {
+  it("are the remote computer's: ~ its home, a relative path refused, and no terminal directory", () => {
+    const mirror = directories.create();
+    writeFileSync(
+      join(mirror, "remote.json"),
+      JSON.stringify({ version: 1, target: "mini", remoteDataDirectory: "/d", remoteHome: "/Users/brook" }),
+    );
+    const remote = remoteFoldersOf(mirror);
+    expect(remote).toEqual({ target: "mini", home: "/Users/brook" });
+    expect(remotePathOf("~", { target: "mini", home: "/Users/brook" })).toBe("/Users/brook");
+    expect(hostPathOf("~/notes", "/here", "/Users/me", remote)).toBe("/Users/brook/notes");
+    expect(hostPathOf("/srv/x/../y", "/here", "/Users/me", remote)).toBe("/srv/y");
+    expect(() => hostPathOf("notes", "/here", "/Users/me", remote)).toThrow(TaviError);
+    expect(() => hostPathOf("notes", "/here", "/Users/me", remote)).toThrow(/absolute path/);
+    expect(clientCwdFor(mirror, "/here")).toEqual({});
+
+    const local = directories.create();
+    expect(remoteFoldersOf(local)).toBeUndefined();
+    expect(clientCwdFor(local, "/here")).toEqual({ clientCwd: "/here" });
+    expect(hostPathOf("~/notes", "/here", "/Users/me")).toBe("/Users/me/notes");
+  });
+});

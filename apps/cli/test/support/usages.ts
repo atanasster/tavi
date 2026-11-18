@@ -29,6 +29,7 @@ import * as run from "../../src/features/run/parse.js";
 import * as sandbox from "../../src/features/sandbox/parse.js";
 import * as schedules from "../../src/features/schedules/parse.js";
 import * as search from "../../src/features/search/parse.js";
+import * as remote from "../../src/features/remote/parse.js";
 import * as service from "../../src/features/service/parse.js";
 import * as skills from "../../src/features/skills/parse.js";
 import * as systemPrompt from "../../src/features/system-prompt/parse.js";
@@ -66,6 +67,7 @@ export const usages: readonly [string, string][] = Object.entries({
   ...sandbox,
   ...schedules,
   ...search,
+  ...remote,
   ...service,
   ...skills,
   ...systemPrompt,

@@ -47,6 +47,8 @@ export async function connectLiveOwner(dataDirectory: string, commands: readonly
   // directory's own socket, with its current cookie and session, can only have
   // been answered by its live owner, so the ownership probe (a worker start,
   // the bulk of an attached command's cost) is spent only when it fails.
+  const mirror = attach.readRemoteMirror(dataDirectory);
+  if (mirror !== undefined) return requireCommands(await connectRemoteOwner(attach, dataDirectory, mirror), commands);
   const published = publishedOwner(attach, dataDirectory);
   let fastFailure: unknown;
   if (published !== undefined) {
@@ -98,6 +100,35 @@ export async function connectLiveOwner(dataDirectory: string, commands: readonly
 }
 
 type OwnerRecord = NonNullable<Awaited<ReturnType<typeof findLiveOwner>>>;
+
+/**
+ * The owner on another computer that `dataDirectory` mirrors (`tavi remote
+ * connect`): its published record or a refusal naming why it cannot be
+ * reached. Never `undefined`, and never the ownership probe: the mirror holds
+ * no database, so there is nothing to fall back to.
+ */
+async function connectRemoteOwner(
+  attach: typeof import("@tavi/runtime/owner-attach"),
+  dataDirectory: string,
+  mirror: import("@tavi/runtime/owner-attach").RemoteMirror,
+): Promise<IpcClient> {
+  const unreachable = (why: string, cause?: unknown): TaviError =>
+    new TaviError(
+      "UNAVAILABLE",
+      `Cannot reach the owner on ${mirror.target} through ${dataDirectory}: ${why}. ` +
+        `Keep \`tavi remote connect ${mirror.target}\` running, and \`tavi serve\` running on ${mirror.target}.`,
+      { details: { dataDirectory, remote: mirror.target }, ...(cause === undefined ? {} : { cause }) },
+    );
+  const published = publishedOwner(attach, dataDirectory);
+  if (published === undefined)
+    throw unreachable("no owner is published there (`tavi remote connect` is not running, or the remote owner is stopped)");
+  try {
+    return await attach.createIpcClient({ ...published, maxAttempts: 1 });
+  } catch (error) {
+    if (isProtocolMismatch(error)) throw error;
+    throw unreachable(errorMessage(error), error);
+  }
+}
 
 /**
  * The owner the discovery files name, when they are worth connecting to before

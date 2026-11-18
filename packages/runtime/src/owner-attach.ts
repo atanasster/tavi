@@ -13,3 +13,4 @@ export { clearDiscovery, clearToken, ipcPaths, readDiscovery, readStopping, read
 export { createIpcClient, type IpcClient, type IpcClientOptions } from "./ipc/transport.js";
 export { acquireDataDirectoryOwnership } from "./persistence/ownership-client.js";
 export { SERVE_SESSION_PREFIX, liveOwnerProcess } from "./persistence/owner-process.js";
+export { REMOTE_MIRROR_FILE, type RemoteMirror, readRemoteMirror, remoteMirrorRefusal } from "./persistence/remote-mirror.js";
