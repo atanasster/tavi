@@ -126,7 +126,7 @@ describe("the chat panel's Details tab", () => {
       </InWorkspace>,
     );
     expect(page.textContent).toContain("Tokens (last execution)");
-    expect(page.textContent).toContain("local/model");
+    expect(page.querySelector('dd[title="local/model"]')?.textContent).toBe("model");
     const empty = await mount(
       <InWorkspace workspaceId="default">
         <Details session={session()} />

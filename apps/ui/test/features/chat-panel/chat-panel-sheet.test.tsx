@@ -3,7 +3,6 @@ import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ChatPanel } from "../../../src/features/chat-panel/ChatPanel.js";
-import { SHEET_SWIPE_PX } from "../../../src/lib/layout.js";
 import { CHAT_SEEN_KEY, markSeen, seenRevision } from "../../../src/features/chat-panel/seen.js";
 import { mount, rerender, unmountAll } from "../../support/dom.js";
 
@@ -39,34 +38,49 @@ const drag = async (grip: HTMLElement, by: number) => {
 };
 
 describe("the chat panel as a phone sheet", () => {
-  it("moves between half and full height with a tap, a swipe or the arrow keys, and swipes shut from half", async () => {
+  it("takes the height a drag leaves it at, moves between half and full with a tap or steps with the arrow keys, and closes dragged low", async () => {
     const { panel, grip, onOpen } = await mountSheet();
+    // A drag of `percent` of the page's height (jsdom's is 768px).
+    const by = (percent: number) => (percent / 100) * window.innerHeight;
+    const height = () => panel.style.getPropertyValue("--chat-panel-sheet-height");
     expect(panel.className).toContain("sheet-half");
+    expect(height()).toBe("45dvh");
     await act(async () => grip.click());
     expect(panel.className).toContain("sheet-full");
+    expect(height()).toBe("90dvh");
     expect(grip.getAttribute("aria-label")).toBe("Shrink this chat's panel");
-    await drag(grip, SHEET_SWIPE_PX + 10);
+    await drag(grip, by(40));
+    expect(height()).toBe("50dvh");
     expect(panel.className).toContain("sheet-half");
-    await drag(grip, -(SHEET_SWIPE_PX + 10));
+    await drag(grip, -by(20));
+    expect(height()).toBe("70dvh");
     expect(panel.className).toContain("sheet-full");
-    // A short drag springs back, and the click a browser sends after it is not taken as a tap.
-    await drag(grip, 20);
+    // Never higher than full; the click a browser sends after a drag is not taken as a tap.
+    await drag(grip, -by(50));
     await act(async () => grip.click());
-    expect(panel.className).toContain("sheet-full");
+    expect(height()).toBe("90dvh");
     expect(panel.style.getPropertyValue("--chat-panel-sheet-drag")).toBe("");
     await act(async () => {
       grip.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
     });
-    expect(panel.className).toContain("sheet-half");
+    expect(height()).toBe("80dvh");
     await act(async () => {
       grip.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
     });
-    expect(panel.className).toContain("sheet-full");
-    await act(async () => {
-      grip.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
-    });
-    await drag(grip, SHEET_SWIPE_PX + 10);
+    expect(height()).toBe("90dvh");
+    // The height is kept for the next visit.
+    expect(window.localStorage.getItem("tavi.chatpanel.sheet")).toBe("90");
+    await drag(grip, by(70));
     expect(onOpen).toHaveBeenCalledWith(false);
+    expect(window.localStorage.getItem("tavi.chatpanel.sheet")).toBe("45");
+  });
+
+  it("opens at the height it was left at, and at half for one out of range", async () => {
+    window.localStorage.setItem("tavi.chatpanel.sheet", "72");
+    expect((await mountSheet()).panel.style.getPropertyValue("--chat-panel-sheet-height")).toBe("72dvh");
+    unmountAll();
+    window.localStorage.setItem("tavi.chatpanel.sheet", "5");
+    expect((await mountSheet()).panel.style.getPropertyValue("--chat-panel-sheet-height")).toBe("45dvh");
   });
 
   it("follows the finger while it drags", async () => {

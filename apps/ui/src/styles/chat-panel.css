@@ -460,6 +460,23 @@ button.chat-panel-item:hover {
   font-size: var(--text-sm);
 }
 
+/* Facts in words (a model's name, a count), in the page's own face. */
+.facts-plain dd {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* The ids a bug report wants, folded away at the foot of Details. */
+.chat-panel-technical {
+  margin-top: var(--space-4);
+}
+
+.chat-panel-technical summary {
+  cursor: pointer;
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-sm);
+}
+
 /* Between the phone and the docked width: over the transcript, not beside it. */
 @media (--overlay) {
   .chat-panel {

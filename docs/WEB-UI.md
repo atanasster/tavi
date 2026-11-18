@@ -165,8 +165,10 @@ browser, whether the panel was open, on which tab, and how wide.
 When the panel would leave the conversation narrower than 480px, the chats list
 folds to its rail first. Between 721px and 1279px the panel lies over the
 conversation rather than beside it. On a phone it is a sheet over the bottom of
-the page: tap its grip, swipe it or use the arrow keys on it to move between
-half and nearly full height, and swipe down from half to close it; shut, it is a
+the page: drag its grip to make it as tall as you like (from a quarter of the
+page to nearly all of it; dragged lower, it closes), tap the grip to move
+between half and nearly full height, or step it with the arrow keys. The page
+remembers the height in this browser. Shut, it is a
 single button in the corner, marked when any of its tabs has news. A browser
 handoff opens the panel by itself only beside the conversation: on a phone it
 stays as you left it, so the sheet never covers the card's **Take control**. On a phone
@@ -185,7 +187,8 @@ have started is kept).
 **Activity** starts with what the chat is waiting on you for (a round to
 approve, outputs to review, a question) with **Go to it**, and answers its
 question right there. Then the chat's timeline by day: each prompt it was given
-and how that turn stands, each task it delegated, and where the chat's
+and how that turn stands (a turn that stopped to ask you something says it was
+answered once you sent the next message), each task it delegated, and where the chat's
 instructions changed. A prompt scrolls the conversation to it (opening the
 recorded prompts a reload folds away); a delegated task opens in the chat. The
 task's plan (`plan.update`) shows as a checklist at the top.
@@ -195,9 +198,10 @@ task's plan (`plan.update`) shows as a checklist at the top.
 reminders asked for in it, each opening its page in the Command Center. **Remind me about this chat…** sets one from there (delivered in the
 app, listed with the chat).
 
-**Repeat this…**, in the Schedule tab and among a message's actions, opens the
-**Create schedule** form filled from the chat: its prompt (the chat's opening
-message, or the message the action is on), a name from the prompt's first line,
+**Set up a schedule…**, in the Schedule tab's **Repeat on a schedule** (which
+quotes the chat's opening message it would run again), and **Repeat this…**
+among a message's actions open the **Create schedule** form filled from the
+chat: its prompt (the chat's opening message, or the message the action is on), a name from the prompt's first line,
 and as allowed tools the read-only ones the chat used that a schedule may list —
 the owner's `schedules tools` answer, so scheduling writes (`schedules.*`,
 `routines.*`), MCP tools not approved read-only, form fills and `*` are never
@@ -227,8 +231,10 @@ long as it lasts: add one, or let the model propose one), what the chat
 **learned** for every chat, the memory **used in this chat** (each record its
 answers were given, its scope, and when it was last used, most recent first;
 a listing isn't a use, so what the model only looked through stays out),
-**Fresh context** (the chat's next message starts a new epoch), and the
-workspace's memory every chat inherits, folded under its count. A note can be
+its **History** — **Fresh context** (the chat's next message starts a new
+epoch) and **Forget history…** — and the workspace's memory every chat
+inherits, folded under its count. When proposals wait, the way to the Command
+Center at the foot says **Review N proposals**. A note can be
 made memory for every chat (**Remember everywhere**) and a lesson kept to this
 chat (**Keep to this chat**); proposals are kept or discarded here. **Forget
 history…** forgets the chat's saved history (see [Saved
@@ -241,7 +247,8 @@ focus on. They are the top layer of that chat's system prompt, after the base
 and any agent persona. A save applies from the chat's next message (never to a
 turn already running), every save is kept as a revision you can take back from
 **History**, and a save against instructions changed elsewhere is refused with
-your draft kept. In a new chat you can write them before the first message,
+your draft kept. **Discard** shows once you have edited them, **Clear** only
+while instructions are saved. In a new chat you can write them before the first message,
 which carries them. Below, the tab shows the prompt the chat's next turn gets
 (the workspace's base as it is now, then its instructions) with about how many
 tokens of the context budget it takes before memory and skills (warned when
@@ -251,9 +258,11 @@ apply wherever the owner runs it: the web canvas, the terminal, Telegram or
 email alike. `tavi tasks instructions <task-id> [show|history|set
 "<text>"|reset]` reads and saves the same instructions from a terminal.
 
-**Details** holds the task, its workspace and thread, its operation key, the
-workspace's model target and the models that made the chat's calls, any round
-waiting on a decision, how many artifacts the chat archived (with a way into
+**Details** says how many turns the chat took, the model it is set to and the
+models that made its calls (by name; the full id on hover), its token totals,
+any round waiting on a decision (only while one is), and folds the task, its
+workspace and thread, its operation key and the full model target under
+**Technical details**. It also shows how many artifacts the chat archived (with a way into
 **Held files**), and its open browser sessions (earlier ones are in the Command
 Center's **Browser**). It shows the actual model identities and
 provider-reported token totals once an execution reports them, covering the

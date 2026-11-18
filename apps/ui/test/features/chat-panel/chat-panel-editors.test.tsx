@@ -223,8 +223,12 @@ describe("the chat panel's instructions editor", () => {
         <Instructions session={session} editable onSettings={() => undefined} />
       </InWorkspace>,
     );
+    // With nothing saved there is nothing to clear: only Save and, once edited, Discard.
+    const names = () => [...fresh.querySelectorAll(".actions button")].map((each) => each.textContent);
+    expect(names()).toEqual(["Save"]);
     await type(fresh.querySelector(".chat-panel-editor textarea"), "Draft");
-    await click(button(fresh, "Clear"));
+    expect(names()).toEqual(["Save", "Discard"]);
+    await click(button(fresh, "Discard"));
     expect((fresh.querySelector(".chat-panel-editor textarea") as HTMLTextAreaElement).value).toBe("");
     expect(sent.some((entry) => entry.payload["action"] === "reset")).toBe(false);
   });
@@ -432,7 +436,7 @@ describe("the chat panel's memory, editable", () => {
       </InWorkspace>
     );
     const page = await mount(view("ui-1:completed:0"));
-    const context = page.querySelector('[aria-label="this chat\'s context"]') as HTMLElement;
+    const context = page.querySelector('[aria-label="this chat\'s history"]') as HTMLElement;
     await click(button(context, "Fresh context"));
     expect(sent.find((entry) => entry["action"] === "compact")).toMatchObject({
       command: "chat-context",
@@ -442,14 +446,14 @@ describe("the chat panel's memory, editable", () => {
     expect(context.textContent).toContain("Your next message starts a new epoch.");
     // Once that message starts a run, it is no longer true, and no longer said.
     await rerender(view("ui-1:completed:0|ui-2:running:0"));
-    expect(page.querySelector('[aria-label="this chat\'s context"]')?.textContent).not.toContain("Your next message starts a new epoch.");
+    expect(page.querySelector('[aria-label="this chat\'s history"]')?.textContent).not.toContain("Your next message starts a new epoch.");
     // An agent's task is no chat: it offers none.
     const agent = await mount(
       <InWorkspace client={memoryOwner("chat-x").client} workspaceId="default">
         <Memory session={session} editable />
       </InWorkspace>,
     );
-    expect(agent.querySelector('[aria-label="this chat\'s context"]')).toBeNull();
+    expect(agent.querySelector('[aria-label="this chat\'s history"]')).toBeNull();
   });
 
   it("forgets the chat's history, offering the memories it taught as a labelled box, and says what went", async () => {
@@ -459,7 +463,7 @@ describe("the chat panel's memory, editable", () => {
         <Memory session={chatSession} editable />
       </InWorkspace>,
     );
-    const history = page.querySelector('[aria-label="forget this chat\'s history"]') as HTMLElement;
+    const history = page.querySelector('[aria-label="this chat\'s history"]') as HTMLElement;
     await click(button(history, "Forget history…"));
     const box = history.querySelector('input[type="checkbox"]') as HTMLInputElement;
     expect(page.querySelector(`label[for="${box.id}"]`)?.textContent).toContain("Also forget the 2 memories this chat taught");
@@ -486,7 +490,7 @@ describe("the chat panel's memory, editable", () => {
         <Memory session={chatSession} editable />
       </InWorkspace>,
     );
-    const history = page.querySelector('[aria-label="forget this chat\'s history"]') as HTMLElement;
+    const history = page.querySelector('[aria-label="this chat\'s history"]') as HTMLElement;
     await click(button(history, "Forget history…"));
     await click(history.querySelector('input[type="checkbox"]') as HTMLInputElement);
     await click(button(history, "Forget history"));

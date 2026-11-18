@@ -1,4 +1,5 @@
 import { reminderIdOfTaskKey, type ReminderView } from "@tavi/contracts";
+import { clip } from "@tavi/contracts/util";
 import { useState } from "react";
 
 import { listSchedules } from "../center/schedules-api.js";
@@ -9,6 +10,7 @@ import { getReminder, listReminders } from "../center/reminders-api.js";
 import type { Outcome, SettingsClient } from "../../lib/ipc.js";
 import { loadTaskRecord } from "../chat/tasks-api.js";
 import { RepeatForms } from "../chat/RepeatThis.js";
+import { openingPrompt } from "../chat/repeat.js";
 import { CenterLink, CHAT_NOT_STARTED, NO_CHAT_SELECTED, Pending, StatusNote } from "../../ui/Parts.js";
 import type { Session } from "../shell/shell.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
@@ -101,6 +103,9 @@ async function loadChatSchedule(
   return { ok: true, value: { ...found, timezone: listed?.value.timezone } };
 }
 
+/** How much of the chat's first message the Repeat section quotes. */
+const REPEAT_PREVIEW_CHARS = 90;
+
 /**
  * The chat panel's Schedule tab: what started the chat, if a schedule or a
  * reminder did, and the reminders asked for in it, each opening its page in
@@ -177,6 +182,7 @@ function ChatScheduleView({
   const [added, setAdded] = useState<string>();
   const [repeating, setRepeating] = useState(false);
   const [repeated, setRepeated] = useState<string>();
+  const opening = openingPrompt(session.runs);
   if (data === undefined) return <Pending error={error} />;
   const today = todayIn(data.timezone);
   const origin = data.origin;
@@ -217,8 +223,15 @@ function ChatScheduleView({
         </section>
       )}
       {!repeat ? null : (
-        <section aria-label="repeat this chat">
-          <h4>Repeat this chat</h4>
+        <section aria-label="repeat on a schedule">
+          <h4>Repeat on a schedule</h4>
+          {/* Says what it repeats: the chat's first message, which the form fills in. Another message repeats from its own button. */}
+          {opening === "" ? null : (
+            <p className="chat-panel-repeat meta-sm">
+              Runs “{clip(opening, REPEAT_PREVIEW_CHARS, { squeeze: true })}” again on its own, on the days and times you pick. To repeat
+              another message, use the calendar button under it.
+            </p>
+          )}
           <StatusNote note={repeated} className="chat-panel-note meta-sm" />
           <Button
             variant="ghost"
@@ -229,7 +242,7 @@ function ChatScheduleView({
               setRepeating(true);
             }}
           >
-            Repeat this…
+            Set up a schedule…
           </Button>
           {repeating ? (
             <RepeatForms
@@ -245,9 +258,9 @@ function ChatScheduleView({
       )}
       {!reminders ? null : (
         <section aria-label="reminders from this chat">
-          <h4>Reminders from this chat</h4>
+          <h4>Reminders</h4>
           {data.reminders.length === 0 ? (
-            <Empty>None asked for here.</Empty>
+            <Empty>No reminders from this chat yet.</Empty>
           ) : (
             <ol className="chat-panel-timeline list-reset">
               {data.reminders.map((reminder) => (

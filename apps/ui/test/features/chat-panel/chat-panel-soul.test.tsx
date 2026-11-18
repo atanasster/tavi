@@ -75,7 +75,7 @@ describe("the chat panel's Memory tab, read-only", () => {
       "Sensitive record",
     ]);
     expect(page.querySelector(".chat-panel-records .chat-panel-item-detail")?.textContent).toBe("Preference · Personal");
-    expect(page.textContent).toContain("1 proposal waits for review in the Command Center.");
+    expect(page.querySelector(".chat-panel-center")?.textContent).toBe("Review 1 proposal in the Command Center →");
     await act(async () => (page.querySelector(".chat-panel-center") as HTMLButtonElement).click());
     expect(onCenter).toHaveBeenCalledOnce();
   });

@@ -29,8 +29,13 @@ export const CHAT_PANEL_SNAP_COLLAPSE_WIDTH = 200;
 /** What the transcript keeps beside the chat panel, in CSS px. */
 export const TRANSCRIPT_MIN_WIDTH = 480;
 
-/** How far (CSS px) the phone sheet's grip is dragged before it snaps to another height, or, down from half, closes. */
-export const SHEET_SWIPE_PX = 80;
+/**
+ * The phone sheet's heights, in percent of the page's: the lowest a drag can
+ * leave it at (dragged lower, it closes), where it opens and where a tap
+ * moves it, the highest, and how far one arrow key moves it. From
+ * `SHEET.fullFrom` up it counts as full height.
+ */
+export const SHEET = { min: 25, half: 45, full: 90, fullFrom: 60, step: 10 } as const;
 
 /** The keyboard's step on the chat panel's top slot's height handle, in CSS px. */
 export const TOP_SLOT_HEIGHT_STEP = 16;

@@ -73,7 +73,7 @@ export function Instructions({
       <Inherited version={`${version}|${saved}`} taskId={editable ? taskId : undefined} />
       <p>
         <Button variant="ghost" size="sm" onClick={onSettings}>
-          Edit the base in Settings →
+          Edit base instructions in Settings →
         </Button>
         {onSoul === undefined ? null : (
           <Button variant="ghost" size="sm" onClick={onSoul}>
@@ -243,21 +243,25 @@ function ChatInstructions({
         <Button variant="primary" size="sm" disabled={!dirty || saving || over} onClick={() => void save(text)}>
           {saving ? "Saving…" : "Save"}
         </Button>
-        <Button variant="ghost" size="sm" disabled={!dirty || saving} onClick={() => setDraft(saved)}>
-          Discard
-        </Button>
-        {/* With nothing saved, Clear empties the draft; otherwise it saves the empty revision. */}
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={saving || (saved === "" && text === "")}
-          onClick={() => {
-            setDraft("");
-            if (saved !== "") void save("");
-          }}
-        >
-          Clear
-        </Button>
+        {/* Discard is offered for an edit, Clear for saved instructions: each only when it would do something. */}
+        {dirty ? (
+          <Button variant="ghost" size="sm" disabled={saving} onClick={() => setDraft(saved)}>
+            Discard
+          </Button>
+        ) : null}
+        {saved === "" ? null : (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={saving}
+            onClick={() => {
+              setDraft("");
+              void save("");
+            }}
+          >
+            Clear
+          </Button>
+        )}
       </div>
       {data.revision === 0 ? null : (
         <History

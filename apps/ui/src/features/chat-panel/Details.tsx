@@ -14,6 +14,7 @@ import { formatBytes, formatCount } from "../../lib/format.js";
 import { fileKind, fileTitle, HeldFilePicture, ReviewBadge, showsImage } from "../chat/held-file.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
+import { reduceModelName } from "../../lib/model-name.js";
 
 /** The models that requested this chat's tool calls, as durable accounting names them, in first-seen order. */
 export function modelsUsed(session: Session): readonly string[] {
@@ -102,23 +103,16 @@ export function Details({
           )}
         </section>
       ) : null}
-      <dl className="facts">
-        <dt>Task</dt>
-        <dd>{session.taskId ?? "not admitted yet"}</dd>
-        <dt>Workspace</dt>
-        <dd>{last?.run.workspaceId ?? workspaceId}</dd>
-        <dt>Thread</dt>
-        <dd>{last?.run.threadId ?? "—"}</dd>
-        <dt>{turns > 1 ? `Operation key (turn ${turns} of ${turns})` : "Operation key"}</dt>
-        <dd>{turns === 0 ? "—" : (last?.id ?? "—")}</dd>
+      {/* What the chat ran on and how much, in words; its ids are under Technical details. */}
+      <dl className="facts facts-plain">
         <dt>Turns</dt>
         <dd>{turns}</dd>
-        <dt>Model target</dt>
-        <dd>{modelTarget ?? "—"}</dd>
+        <dt>Model</dt>
+        <dd title={modelTarget}>{modelTarget === undefined ? "—" : reduceModelName(modelTarget)}</dd>
         {models.length === 0 ? null : (
           <>
-            <dt>Models used</dt>
-            <dd>{models.join(", ")}</dd>
+            <dt>{models.length === 1 ? "Model used" : "Models used"}</dt>
+            <dd title={models.join(", ")}>{models.map(reduceModelName).join(", ")}</dd>
           </>
         )}
         {reported === undefined ? null : (
@@ -128,17 +122,17 @@ export function Details({
           </>
         )}
       </dl>
-      <h4>Waiting on a decision</h4>
-      {pending.length === 0 ? (
-        <Empty>Nothing.</Empty>
-      ) : (
-        <ul>
-          {pending.map((round) => (
-            <li key={`${round.taskId}:${round.steps}`}>
-              Round {round.steps}: {plural(round.requests.length, "call")}
-            </li>
-          ))}
-        </ul>
+      {pending.length === 0 ? null : (
+        <>
+          <h4>Waiting on a decision</h4>
+          <ul>
+            {pending.map((round) => (
+              <li key={`${round.taskId}:${round.steps}`}>
+                Round {round.steps}: {plural(round.requests.length, "call")}
+              </li>
+            ))}
+          </ul>
+        </>
       )}
       {client === undefined || session.taskId === undefined ? null : (
         <>
@@ -146,6 +140,25 @@ export function Details({
           <BrowserSessions client={client} taskId={session.taskId} version={chatVersion(session)} onBrowser={onBrowser} />
         </>
       )}
+      <details className="chat-panel-technical">
+        <summary>Technical details</summary>
+        <dl className="facts">
+          <dt>Task</dt>
+          <dd>{session.taskId ?? "not admitted yet"}</dd>
+          <dt>Workspace</dt>
+          <dd>{last?.run.workspaceId ?? workspaceId}</dd>
+          <dt>Thread</dt>
+          <dd>{last?.run.threadId ?? "—"}</dd>
+          <dt>{turns > 1 ? `Operation key (turn ${turns})` : "Operation key"}</dt>
+          <dd>{turns === 0 ? "—" : (last?.id ?? "—")}</dd>
+          {modelTarget === undefined ? null : (
+            <>
+              <dt>Model target</dt>
+              <dd>{modelTarget}</dd>
+            </>
+          )}
+        </dl>
+      </details>
     </>
   );
 }

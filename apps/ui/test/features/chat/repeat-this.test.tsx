@@ -155,7 +155,7 @@ describe("what Repeat this fills in from a chat", () => {
   });
 });
 
-describe("Repeat this in the chat panel", () => {
+describe("Set up a schedule in the chat panel", () => {
   const panel = (client: SettingsClient, session: Session, repeat = true) => (
     <InWorkspace client={client} workspaceId="default" timeZone="UTC">
       <Schedule session={session} reminders={false} repeat={repeat} onOpenReminder={() => undefined} onOpenRoutine={() => undefined} />
@@ -165,7 +165,7 @@ describe("Repeat this in the chat panel", () => {
   it("is offered only where the owner offers schedules", async () => {
     const { client } = owner();
     const page = await mountSettled(panel(client, chat([turn("r1", "Summarise my inbox")]), false));
-    expect(button(page, "Repeat this…")).toBeUndefined();
+    expect(button(page, "Set up a schedule…")).toBeUndefined();
   });
 
   it("opens the schedule form with the opening prompt and the listable tools, and creates nothing until Save", async () => {
@@ -180,7 +180,7 @@ describe("Repeat this in the chat panel", () => {
       turn("r2", "and again", [tool("pdf.fill")]),
     ]);
     const page = await mountSettled(panel(client, session));
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     expect(page.querySelector("dialog")?.textContent).toContain("Create schedule");
     expect(promptField(page)?.value).toBe("Summarise the reports");
     expect(page.querySelector<HTMLInputElement>('[aria-label="Schedule name"]')?.value).toBe("Summarise the reports");
@@ -199,7 +199,7 @@ describe("Repeat this in the chat panel", () => {
     await click(button(page, "Cancel"));
     expect(page.querySelector("dialog")).toBeNull();
     expect(sent).toEqual([]);
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     await addTool(page, "reports.write");
     expect(chips(page)).toEqual(["files.read", "reports.write"]);
     expect(offeredTools(page)).toEqual([]);
@@ -216,7 +216,7 @@ describe("Repeat this in the chat panel", () => {
         deliverTo: "home",
       }),
     ]);
-    expect(page.querySelector('[aria-label="repeat this chat"]')?.textContent).toContain("Summarise the reports created.");
+    expect(page.querySelector('[aria-label="repeat on a schedule"]')?.textContent).toContain("Summarise the reports created.");
   });
 
   it("says the form is on its way while the chat is read, rather than showing nothing", async () => {
@@ -232,7 +232,7 @@ describe("Repeat this in the chat panel", () => {
       },
     };
     const page = await mountSettled(panel(slow, chat([turn("r1", "Summarise my inbox")])));
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     const dialog = () => page.querySelector("dialog");
     expect(dialog()?.textContent).toContain("Reading this chat…");
     expect(button(page, "Cancel")).toBeDefined();
@@ -244,7 +244,7 @@ describe("Repeat this in the chat panel", () => {
   it("says so in the form when the chat read content Tavi does not trust", async () => {
     const { client } = owner(TAINTED);
     const page = await mountSettled(panel(client, chat([turn("r1", "Watch the news", [tool("reports.write")])])));
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     const dialog = page.querySelector("dialog");
     expect(dialog?.textContent).toContain("This chat read content Tavi does not trust (news.example).");
     expect(dialog?.textContent).toContain("the schedule runs unattended with those tools");
@@ -253,12 +253,12 @@ describe("Repeat this in the chat panel", () => {
   it("allows no tool ahead from a chat that read content Tavi does not trust, even one it used, and names one that writes once added", async () => {
     const { client, sent } = owner(TAINTED);
     const page = await mountSettled(panel(client, chat([turn("r1", "Watch the news", [tool("web_search"), tool("reports.write")])])));
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     expect(chips(page)).toEqual([]);
     expect(offeredTools(page)).toEqual(["web_search", "reports.write"]);
     await clickSettled(button(page, "Save schedule"));
     expect(sent[0]).toEqual(["schedules", expect.objectContaining({ action: "add", allow: [] })]);
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     await addTool(page, "reports.write");
     expect(chips(page)).toEqual(["reports.write"]);
     expect(page.querySelector("dialog")?.textContent).toContain("reports.write can change or send things without asking.");
@@ -267,7 +267,7 @@ describe("Repeat this in the chat panel", () => {
   it("allows no tool ahead when it could not read what the chat read, and says so", async () => {
     const { client } = owner(null, "label");
     const page = await mountSettled(panel(client, chat([turn("r1", "Watch the news", [tool("files.read")])])));
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     expect(page.querySelector("dialog")?.textContent).toContain("Tavi could not read whether this chat read content it does not trust.");
     expect(chips(page)).toEqual([]);
     expect(offeredTools(page)).toEqual(["files.read"]);
@@ -276,7 +276,7 @@ describe("Repeat this in the chat panel", () => {
   it("says it could not check the tools, rather than that they are not allowed, when the owner cannot list them", async () => {
     const { client } = owner(null, "tools");
     const page = await mountSettled(panel(client, chat([turn("r1", "Summarise the reports", [tool("reports.write")])])));
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     const text = page.querySelector("dialog")?.textContent;
     expect(text).not.toContain("Not allowed");
     expect(text).toContain("Tavi could not check which tools a schedule may list; add them yourself.");
@@ -289,7 +289,7 @@ describe("Repeat this in the chat panel", () => {
     const page = await mountSettled(
       panel(client, chat([turn("r1", "Find this week's AI papers", [tool("web_search"), tool("web_fetch")])])),
     );
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     expect(page.querySelector("dialog")?.textContent).toContain("Create routine");
     expect(objectiveField(page)?.value).toBe("Find this week's AI papers");
     await clickSettled(button(page, "Repeat it as a schedule instead"));
@@ -303,7 +303,7 @@ describe("Repeat this in the chat panel", () => {
     const page = await mountSettled(
       panel(client, chat([turn("r1", "Check recalls on my car", [tool("memory.search"), tool("web_search")], used(1))])),
     );
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     const dialog = page.querySelector("dialog");
     expect(dialog?.textContent).toContain("Create routine");
     expect(dialog?.textContent).toContain("A routine has no memory, and this chat read yours");
@@ -316,7 +316,7 @@ describe("Repeat this in the chat panel", () => {
     const page = await mountSettled(
       panel(client, chat([turn("r1", "Check recalls on my car", [tool("memory.search"), tool("web_search")], used(0))])),
     );
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     expect(page.querySelector("dialog")?.textContent).toContain("Create routine");
     expect(page.querySelector("dialog")?.textContent).not.toContain("memory");
   });
@@ -333,7 +333,7 @@ describe("Repeat this in the chat panel", () => {
         ]),
       ),
     );
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     expect(page.querySelector("dialog")?.textContent).toContain("and this chat read yours");
   });
 
@@ -343,7 +343,7 @@ describe("Repeat this in the chat panel", () => {
     const page = await mountSettled(
       panel(client, chat([turn("r1", "Check recalls on my car", [tool("memory.list"), tool("web_search")], listed)])),
     );
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     expect(page.querySelector("dialog")?.textContent).toContain("and this chat read yours");
   });
 
@@ -352,7 +352,7 @@ describe("Repeat this in the chat panel", () => {
     const page = await mountSettled(
       panel(client, chat([turn("r1", "Check recalls on my car", [tool("memory.search"), tool("web_search")])])),
     );
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     const dialog = page.querySelector("dialog");
     expect(dialog?.textContent).toContain("A routine has no memory: put what it needs in the objective.");
     expect(dialog?.textContent).not.toContain("read yours");
@@ -363,14 +363,14 @@ describe("Repeat this in the chat panel", () => {
     const page = await mountSettled(
       panel(client, chat([turn("r1", "Find this week's AI papers", [tool("web_search")], { records: [], preferences: 3, more: 0 })])),
     );
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     expect(page.querySelector("dialog")?.textContent).not.toContain("has no memory");
   });
 
   it("keeps what was typed when it switches between the routine and the schedule", async () => {
     const { client } = owner();
     const page = await mountSettled(panel(client, chat([turn("r1", "Find this week's AI papers", [tool("web_search")])])));
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     const objective = objectiveField(page);
     await act(async () => {
       if (objective) {
@@ -388,7 +388,7 @@ describe("Repeat this in the chat panel", () => {
     const { client } = owner();
     const long = `Find${" papers".repeat(5_000)}`;
     const page = await mountSettled(panel(client, chat([turn("r1", long, [tool("web_search")])])));
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     expect(objectiveField(page)?.value).toBe(long.slice(0, 20_000));
     expect(page.querySelector("dialog")?.textContent).toContain("shortened");
     await clickSettled(button(page, "Repeat it as a schedule instead"));
@@ -398,7 +398,7 @@ describe("Repeat this in the chat panel", () => {
   it("names the chat a routine is made from, so the owner can carry what it read", async () => {
     const { client, sent } = owner();
     const page = await mountSettled(panel(client, chat([turn("r1", "Find this week's AI papers", [tool("web_search")])])));
-    await clickSettled(button(page, "Repeat this…"));
+    await clickSettled(button(page, "Set up a schedule…"));
     await clickSettled(button(page, "Save routine"));
     expect(sent).toEqual([["routines", expect.objectContaining({ action: "create", fromTaskId: "task-1" })]]);
   });

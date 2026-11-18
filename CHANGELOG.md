@@ -28,6 +28,18 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- The chat panel on a phone can be dragged to any height between a quarter of
+  the page and nearly all of it, and remembers it; a tap on its grip still
+  moves between half and full. Its tabs are simpler: Schedule says which
+  message **Set up a schedule…** would run again (it was **Repeat this…**,
+  which did not say); Memory puts **Fresh context** and **Forget history…**
+  under one **History**, and its link to the Command Center says **Review N
+  proposals** when some wait; Activity no longer marks every turn
+  "Follow-up", says a turn that asked you something was answered once you
+  replied, and gives a run of decisions one time span; Instructions shows
+  **Discard** only for an edit and **Clear** only for saved instructions;
+  Details leads with turns, models (by name) and tokens, and folds the ids
+  under **Technical details**.
 - A chat's header is one line: its title and status, then its tools as icons
   at the far end — an amber shield for content it read that Tavi does not
   trust, a folder for its files, and its memory, raised while on. On a phone

@@ -129,11 +129,21 @@ describe("the chat panel's Activity tab", () => {
     ];
     const items = activityOf(record, session(runs));
     expect(items.map((item) => [item.title, item.turn, item.detail])).toEqual([
-      ["Now the blog", 3, "Follow-up · working"],
+      ["Now the blog", 3, "Working"],
       ["Delegated to researcher", undefined, "Agent task child-1"],
-      ["Try again", undefined, "Follow-up · refused"],
+      ["Try again", undefined, "Refused"],
       ["Audit the site", 1, "Started · completed"],
     ]);
+  });
+
+  it("says a turn that stopped for the reader was answered once a later message came, and waits only while it is the last", () => {
+    const record: RecordedTask = {
+      admissions: [
+        admission("a1", "start", "2026-10-01T09:00:00.000Z", "Book a table", "committed", "waiting"),
+        admission("a2", "reply", "2026-10-01T09:05:00.000Z", "For two", "committed", "waiting"),
+      ],
+    };
+    expect(activityOf(record, session([])).map((item) => item.detail)).toEqual(["Waiting for you", "Started · answered by your next message"]);
   });
 
   it("lists the approvals decided in the chat, which the transcript no longer shows", () => {

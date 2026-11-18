@@ -26,7 +26,7 @@ import {
   DEFAULT_CHAT_PANEL_WIDTH,
   MAX_CHAT_PANEL_WIDTH,
   MIN_CHAT_PANEL_WIDTH,
-  SHEET_SWIPE_PX,
+  SHEET,
   TRANSCRIPT_MIN_WIDTH,
 } from "../../lib/layout.js";
 
@@ -47,6 +47,7 @@ const CHAT_PANEL_ICONS: Readonly<Record<ChatPanelTab, IconName>> = {
 const CHAT_PANEL_WIDTH_KEY = "tavi.chatpanel.width";
 const CHAT_PANEL_OPEN_KEY = "tavi.chatpanel.open";
 const CHAT_PANEL_TAB_KEY = "tavi.chatpanel.tab";
+const CHAT_PANEL_SHEET_KEY = "tavi.chatpanel.sheet";
 
 export const CHAT_PANEL_BOUNDS: PanelBounds = {
   side: "right",
@@ -195,8 +196,23 @@ export function ChatPanel({
     focusAfter.current = "rail";
     onOpen(false);
   };
-  // On a phone the panel is a sheet: half the page or nearly all of it.
-  const [sheet, setSheet] = useState<SheetSnap>("half");
+  // On a phone the panel is a sheet the reader sizes: its height in percent of the page's, kept for the next visit.
+  const [height, setHeight] = useState(readSheetHeight);
+  const sheet: SheetSnap = height >= SHEET.fullFrom ? "full" : "half";
+  const resize = (next: number) => {
+    setHeight(next);
+    writeStored(CHAT_PANEL_SHEET_KEY, String(next));
+  };
+  // The page under the sheet reads its height too, to keep room to scroll above it: set on the page's body as well.
+  useEffect(() => {
+    const element = aside.current;
+    const holder = element?.closest<HTMLElement>(".body") ?? element;
+    if (!open || holder === null || holder === undefined) return;
+    holder.style.setProperty("--chat-panel-sheet-height", `${height}dvh`);
+    return () => {
+      holder.style.removeProperty("--chat-panel-sheet-height");
+    };
+  }, [open, height]);
   // A drag moves the sheet by a style on the element, not by state: the
   // panel's tabs are not rendered again for every move of a finger.
   const aside = useRef<HTMLElement>(null);
@@ -271,7 +287,7 @@ export function ChatPanel({
       ref={aside}
       className={`side-panel chat-panel sheet-${sheet}`}
       aria-label="this chat"
-      style={{ "--chat-panel-width": `${width}px` } as CSSProperties}
+      style={{ "--chat-panel-width": `${width}px`, "--chat-panel-sheet-height": `${height}dvh` } as CSSProperties}
       onFocus={() => {
         focusInside.current = true;
       }}
@@ -279,7 +295,15 @@ export function ChatPanel({
         focusInside.current = event.currentTarget.contains(event.relatedTarget);
       }}
     >
-      <SheetHandle snap={sheet} onSnap={setSheet} onDrag={dragSheet} onClose={close} />
+      <SheetHandle
+        height={height}
+        onResize={resize}
+        onDrag={dragSheet}
+        onClose={() => {
+          resize(SHEET.half);
+          close();
+        }}
+      />
       <div
         className={`panel-resizer chat-panel-resizer${dragging ? " active" : ""}`}
         role="separator"
@@ -428,40 +452,45 @@ function ChatTitle({
   );
 }
 
-/** The heights the phone sheet rests at. */
+/** Whether the phone sheet stands low or high: the plugin slot shows only when it is high. */
 export type SheetSnap = "half" | "full";
 
+/** The sheet's height as the reader last left it, in range; where it opens otherwise. */
+function readSheetHeight(): number {
+  const stored = Number(readStored(CHAT_PANEL_SHEET_KEY));
+  return Number.isFinite(stored) && stored >= SHEET.min && stored <= SHEET.full ? stored : SHEET.half;
+}
+
 /**
- * The phone sheet's grip (shown at 720px and narrower): a tap moves between
- * half and full height; a drag follows the finger, and released past
- * `SHEET_SWIPE_PX` it moves up to full, down to half, or down from half to
- * closed. Its arrow keys do the same, so it is never touch-only.
+ * The phone sheet's grip (shown at 720px and narrower): a drag sizes the
+ * sheet to where the finger lets go, between `SHEET.min` and `SHEET.full`,
+ * and lower than the least closes it; a tap moves between half and full
+ * height. Its arrow keys step the height, and down past the least close it,
+ * so it is never touch-only.
  */
 function SheetHandle({
-  snap,
-  onSnap,
+  height,
+  onResize,
   onDrag,
   onClose,
 }: {
-  readonly snap: SheetSnap;
-  readonly onSnap: (snap: SheetSnap) => void;
+  readonly height: number;
+  readonly onResize: (height: number) => void;
   readonly onDrag: (offset: number) => void;
   readonly onClose: () => void;
 }) {
   const start = useRef<number | undefined>(undefined);
   const moved = useRef(false);
-  const settle = (offset: number) => {
-    onDrag(0);
-    if (offset <= -SHEET_SWIPE_PX) onSnap("full");
-    else if (offset >= SHEET_SWIPE_PX) {
-      if (snap === "full") onSnap("half");
-      else onClose();
-    }
+  const settle = (next: number) => {
+    if (next < SHEET.min) onClose();
+    else onResize(Math.min(SHEET.full, Math.round(next)));
   };
+  const full = height >= SHEET.fullFrom;
   return (
     <Button
       className="chat-panel-grip"
-      aria-label={snap === "half" ? "Expand this chat's panel" : "Shrink this chat's panel"}
+      aria-label={full ? "Shrink this chat's panel" : "Expand this chat's panel"}
+      title="Drag to resize"
       onPointerDown={(event) => {
         start.current = event.clientY;
         moved.current = false;
@@ -477,7 +506,8 @@ function SheetHandle({
         if (start.current === undefined) return;
         const offset = event.clientY - start.current;
         start.current = undefined;
-        settle(offset);
+        onDrag(0);
+        if (moved.current) settle(height - (offset / window.innerHeight) * 100);
       }}
       onPointerCancel={() => {
         start.current = undefined;
@@ -488,18 +518,17 @@ function SheetHandle({
           moved.current = false;
           return;
         }
-        onSnap(snap === "half" ? "full" : "half");
+        onResize(full ? SHEET.half : SHEET.full);
       }}
       onKeyDown={(event) => {
         // A touch drag that brought no click must not swallow the next key press as its tap.
         moved.current = false;
         if (event.key === "ArrowUp") {
           event.preventDefault();
-          onSnap("full");
+          onResize(Math.min(SHEET.full, height + SHEET.step));
         } else if (event.key === "ArrowDown") {
           event.preventDefault();
-          if (snap === "full") onSnap("half");
-          else onClose();
+          settle(height - SHEET.step);
         }
       }}
     />

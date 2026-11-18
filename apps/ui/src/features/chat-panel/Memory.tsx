@@ -77,6 +77,7 @@ export function Memory({
   const { client, workspaceId } = useWorkspace();
   const { data, error, reload } = useLoaded(() => loadInherited(client, workspaceId), [version]);
   const taskId = session?.taskId;
+  const waiting = proposals !== undefined && proposals > 0;
   return (
     <>
       {editable !== true || taskId === undefined ? null : (
@@ -89,9 +90,6 @@ export function Memory({
             onChanged?.();
           }}
         />
-      )}
-      {proposals === undefined || proposals === 0 ? null : (
-        <p className="chat-panel-note meta-sm">{plural(proposals, "proposal waits", "proposals wait")} for review in the Command Center.</p>
       )}
       {data === undefined ? (
         <Pending error={error} />
@@ -117,7 +115,12 @@ export function Memory({
           )}
         </details>
       )}
-      <CenterLink what="Soul & memory" onCenter={onCenter} />
+      {/* Waiting proposals make the way to the Command Center say what waits there. */}
+      {waiting && onCenter === undefined ? (
+        <p className="chat-panel-note meta-sm">{plural(proposals, "proposal waits", "proposals wait")} for review in the Command Center.</p>
+      ) : (
+        <CenterLink what={waiting ? `Review ${plural(proposals, "proposal")}` : "Soul & memory"} onCenter={onCenter} />
+      )}
     </>
   );
 }
@@ -134,8 +137,16 @@ function ChatMemory({ version, taskId, onChanged }: { readonly version: string; 
         <p className="chat-panel-note meta-sm">This agent's task reads the notes of the chat it works for, shown here.</p>
       )}
       <ChatNotes version={version} chatTaskId={chatTaskId} readOnly={data.delegatedFrom !== undefined} onChanged={onChanged} />
-      {data.delegatedFrom === undefined ? <FreshContext taskId={taskId} version={version} /> : null}
-      {data.delegatedFrom === undefined ? <ForgetHistory version={version} taskId={taskId} onChanged={onChanged} /> : null}
+      {data.delegatedFrom === undefined ? (
+        <section aria-label="this chat's history">
+          <h4>History</h4>
+          <p className="chat-panel-note meta-sm">
+            A long chat summarizes its earlier turns by itself. Fresh context does it at your next message.
+          </p>
+          <FreshContext taskId={taskId} version={version} />
+          <ForgetHistory version={version} taskId={taskId} onChanged={onChanged} />
+        </section>
+      ) : null}
     </>
   );
 }
@@ -205,8 +216,7 @@ function ForgetHistory({
     onChanged();
   };
   return (
-    <section aria-label="forget this chat's history">
-      <h4>History</h4>
+    <>
       {asking ? (
         <InlineConfirm
           focusCancel
@@ -251,7 +261,7 @@ function ForgetHistory({
         </Button>
       )}
       <StatusNote note={said?.text} className={said?.failed === true ? "failure" : "chat-panel-note meta-sm"} />
-    </section>
+    </>
   );
 }
 
@@ -269,16 +279,12 @@ function FreshContext({ taskId, version }: { readonly taskId: string; readonly v
     return answer.ok ? undefined : answer.message;
   }, version.split("|").at(-1)?.split(":")[0] ?? "");
   return (
-    <section aria-label="this chat's context">
-      <h4>Context</h4>
-      <p className="chat-panel-note meta-sm">
-        A long chat summarizes its earlier turns by itself. Fresh context does it at your next message.
-      </p>
+    <>
       <Button variant="ghost" size="sm" disabled={state.busy} onClick={state.ask}>
         Fresh context
       </Button>
       <StatusNote note={state.said} className={state.failed === true ? "failure" : "chat-panel-note meta-sm"} />
-    </section>
+    </>
   );
 }
 

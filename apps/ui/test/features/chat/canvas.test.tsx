@@ -632,7 +632,9 @@ describe("the canvas", () => {
     expect(open).toContain("task-1");
     expect(open).toContain("thread-7");
     expect(open).toContain("<dt>Operation key</dt><dd>ui-1</dd>");
-    expect(open).toContain("Nothing.");
+    // The ids are folded under Technical details; nothing waiting says nothing.
+    expect(open).toContain("<summary>Technical details</summary>");
+    expect(open).not.toContain("Waiting on a decision");
   });
 
   it("says under a finished reply only the figures that have a source", () => {

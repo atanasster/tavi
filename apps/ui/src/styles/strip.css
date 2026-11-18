@@ -86,7 +86,7 @@
     bottom: 0;
     z-index: var(--z-drawer);
     width: auto;
-    height: calc(45dvh - var(--chat-panel-sheet-drag, 0px));
+    height: calc(var(--chat-panel-sheet-height) - var(--chat-panel-sheet-drag, 0px));
     max-height: calc(100dvh - var(--space-12));
     transition: height var(--duration-slow) var(--ease-standard);
     border-left: none;
@@ -95,18 +95,10 @@
     box-shadow: var(--shadow-lg);
   }
 
-  .chat-panel.sheet-full {
-    height: calc(90dvh - var(--chat-panel-sheet-drag, 0px));
-  }
-
   /* The page under an open sheet keeps room to scroll its foot (a list's last
      row, its Refresh) up above the sheet, not stop behind it. */
-  .body:has(.chat-panel.sheet-half) .runs {
-    padding-bottom: calc(45dvh + var(--space-4));
-  }
-
-  .body:has(.chat-panel.sheet-full) .runs {
-    padding-bottom: calc(90dvh + var(--space-4));
+  .body:has(.chat-panel) .runs {
+    padding-bottom: calc(var(--chat-panel-sheet-height) + var(--space-4));
   }
 
   /* Under a finger, the sheet follows it rather than easing after it. */

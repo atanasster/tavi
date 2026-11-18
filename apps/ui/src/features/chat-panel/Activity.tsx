@@ -137,13 +137,28 @@ export interface WaitingItem {
   };
 }
 
-/** How an admitted turn stands, in words. */
-function stateOf(admission: AdmissionRecord): string {
+/**
+ * How an admitted turn stands, in words. A turn that stopped to wait for the
+ * reader, `answered` by a later message, waits no more.
+ */
+function stateOf(admission: AdmissionRecord, answered: boolean): string {
   if (admission.state === "pending") return "queued";
   if (admission.state === "claimed") return "working";
   if (admission.state === "refused") return "refused";
   if (admission.state === "failed") return "failed";
-  return admission.result?.status === "waiting" ? "waiting" : (admission.result?.status ?? "done");
+  if (admission.result?.status === "waiting") return answered ? "answered by your next message" : "waiting for you";
+  return admission.result?.status ?? "done";
+}
+
+/** A follow-up's detail is its state alone; the first turn says it started the chat. */
+function turnDetail(admission: AdmissionRecord, answered: boolean): string {
+  const state = stateOf(admission, answered);
+  return admission.kind === "start" ? `Started · ${state}` : `${state.charAt(0).toUpperCase()}${state.slice(1)}`;
+}
+
+/** A fold's span of time: one time when its ends share the minute, else earliest–latest. */
+function foldSpan(earliest: string, latest: string): string {
+  return earliest === latest ? earliest : `${earliest}–${latest}`;
 }
 
 /**
@@ -184,7 +199,10 @@ export function activityOf(
       key: admission.admissionId,
       at: admission.createdAt,
       title: firstLine(prompt) || "(empty prompt)",
-      detail: `${admission.kind === "start" ? "Started" : "Follow-up"} · ${stateOf(admission)}`,
+      detail: turnDetail(
+        admission,
+        turns.slice(index + 1).some((later) => later.admission.state !== "refused"),
+      ),
       ...(turn === undefined ? {} : { turn }),
     });
   });
@@ -488,7 +506,7 @@ function Timeline({
                             </span>
                           </span>
                           <span className="chat-panel-item-detail meta-sm">
-                            Latest {localTime(latest.at, timeZone)} · earliest {localTime(entry.earliest.at, timeZone)}
+                            {foldSpan(localTime(entry.earliest.at, timeZone), localTime(latest.at, timeZone))}
                           </span>
                         </summary>
                         <ol className="chat-panel-timeline list-reset">
