@@ -28,6 +28,16 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- The Command Center is easier to read. Long chat titles and answers end in
+  "…" instead of stopping mid-word. Schedule's **Coming up** shows the next
+  two days, with the rest of the week behind **Show the rest of the week**,
+  separates "Added from" from a reminder's cadence, and says a to-do's due
+  date as "Sat 21 Nov". Approvals no longer names a lone tool twice, ends the
+  "after reading…" line with a full stop, and says "policy" once in History.
+  Heartbeat shows only its switch while off, and no row of zeros before it
+  has run. Browser folds sessions that never opened a page. Soul & memory
+  and Settings → System prompt offer **Discard changes** only after an edit,
+  and the new-routine form explains its first check in plain words.
 - The chat panel on a phone can be dragged to any height between a quarter of
   the page and nearly all of it, and remembers it; a tap on its grip still
   moves between half and full. Its tabs are simpler: Schedule says which

@@ -628,3 +628,15 @@ describe("where a task came from, and its follow-ups", () => {
     }
   });
 });
+
+describe("a task's title from its prompt", () => {
+  it("is the prompt's first line, ending in an ellipsis when it is cut", async () => {
+    const { displayTitleOf } = await import("../src/persistence/task-list.js");
+    const { TASK_TITLE_MAX } = await import("@tavi/contracts");
+    expect(displayTitleOf(null, "Short ask\nmore below")).toBe("Short ask");
+    const long = displayTitleOf(null, "word ".repeat(60));
+    expect(long).toHaveLength(TASK_TITLE_MAX);
+    expect(long?.endsWith("…")).toBe(true);
+    expect(displayTitleOf(null, "   ")).toBeUndefined();
+  });
+});

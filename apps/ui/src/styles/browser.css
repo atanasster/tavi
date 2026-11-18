@@ -140,6 +140,15 @@
   background: hsl(var(--primary) / var(--tint-subtle));
 }
 
+/* The sessions that opened no page, folded under the visited ones. */
+.browser-blank {
+  margin-top: var(--space-4);
+}
+
+.browser-blank > .browser-grid {
+  margin-top: var(--space-3);
+}
+
 .browser-more {
   margin: var(--space-2-5) 0 0;
   font-size: var(--text-sm);

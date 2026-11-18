@@ -116,7 +116,8 @@ export function RoundCard({
     );
   }
   const busy = outcome?.kind === "busy";
-  const tools = [...new Set(card.calls.map((call) => call.toolId))];
+  // A lone call titled by its tool alone names it in the heading: its chip would say it twice.
+  const tools = single !== undefined && what === single.toolId ? [] : [...new Set(card.calls.map((call) => call.toolId))];
   const partial = single === undefined && unticked.size > 0;
   const approve = (scope: ApprovalScope): void => {
     // Some calls unticked: those approved once, the rest rejected.
@@ -179,7 +180,7 @@ export function RoundCard({
       <h3>{single === undefined ? `${card.calls.length} tool calls wait together` : what}</h3>
       {card.provenance === undefined ? null : (
         <p className="center-card-provenance meta">
-          {card.provenance}
+          {/[.!?]$/.test(card.provenance) ? card.provenance : `${card.provenance}.`}
           <span className="center-card-why"> {TAINTED_CALL_WORDS}</span>
         </p>
       )}

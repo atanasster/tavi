@@ -11,6 +11,7 @@ import {
   TASK_NEEDS,
   TASK_NEEDS_LIMIT,
   TASK_PROMPT_TEXT_MAX,
+  TASK_TITLE_MAX,
   TASK_PROMPTS_LIMIT,
   TaskListFiltersSchema,
   TaskListResultSchema,
@@ -60,14 +61,14 @@ export const FOLLOW_UP_SQL = (a: string) =>
 const REMINDER_ID_SQL = (k: string) =>
   `CASE WHEN substr(${k}, 1, ${REMINDER_TASK_KEY_PREFIX.length})='${REMINDER_TASK_KEY_PREFIX}' AND length(${k}) > ${REMINDER_TASK_KEY_PREFIX.length + REMINDER_TASK_KEY_ISO_LENGTH + 1}
     THEN substr(${k}, ${REMINDER_TASK_KEY_PREFIX.length + 1}, length(${k}) - ${REMINDER_TASK_KEY_PREFIX.length + REMINDER_TASK_KEY_ISO_LENGTH + 1}) END`;
-/** A task's title: the first line of its prompt, at most 120 characters. */
-const taskTitleOf = (prompt: string): string => prompt.split(/\r?\n/)[0]!.slice(0, 120);
+/** A task's title: the first line of its prompt, clipped with an ellipsis to TASK_TITLE_MAX. */
+const taskTitleOf = (prompt: string): string => clip(prompt.split(/\r?\n/)[0]!.trim(), TASK_TITLE_MAX);
 /**
  * The title a task is shown under: its generated title when it has one, else
  * the first line of its prompt; undefined when neither says anything.
  */
 export function displayTitleOf(generated: string | null, prompt: string | null): string | undefined {
-  if (typeof generated === "string" && generated.trim() !== "") return generated.slice(0, 120);
+  if (typeof generated === "string" && generated.trim() !== "") return clip(generated, TASK_TITLE_MAX);
   if (typeof prompt === "string" && taskTitleOf(prompt).trim() !== "") return taskTitleOf(prompt);
   return undefined;
 }
@@ -83,10 +84,10 @@ export function listedTitleOf(row: {
   readonly prompt: string | null;
 }): { readonly title: string; readonly titleSource: "reader" | "home" | "generated" | "prompt" } | undefined {
   if (typeof row.title_override === "string" && row.title_override.length > 0)
-    return { title: row.title_override.slice(0, 120), titleSource: "reader" };
+    return { title: clip(row.title_override, TASK_TITLE_MAX), titleSource: "reader" };
   // A Home is called Home, whatever was asked in it.
   if (row.chat_kind === "home") return { title: "Home", titleSource: "home" };
-  if (typeof row.title === "string" && row.title.length > 0) return { title: row.title.slice(0, 120), titleSource: "generated" };
+  if (typeof row.title === "string" && row.title.length > 0) return { title: clip(row.title, TASK_TITLE_MAX), titleSource: "generated" };
   if (typeof row.prompt === "string") return { title: taskTitleOf(row.prompt), titleSource: "prompt" };
   return undefined;
 }
@@ -324,7 +325,7 @@ export function queryTaskList(db: Database, input: TaskListFilters): TaskListRes
       ...listedTitleOf(row),
       summary: typeof row.summary === "string" && row.summary.length > 0 ? row.summary : null,
       summaryState: row.summary_state,
-      ...(row.final_text === null ? {} : { lastText: row.final_text.slice(0, 256) }),
+      ...(row.final_text === null ? {} : { lastText: clip(row.final_text, 256) }),
       needs: [
         row.approval ? "approval" : null,
         row.review ? "review" : null,

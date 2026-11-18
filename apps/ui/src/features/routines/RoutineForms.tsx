@@ -259,10 +259,7 @@ export function CreateRoutine({
               </p>
             </>
           )}
-          <p>
-            The owner creates a specialist and evaluates both model roles before activation. Next start is provisional until evaluation
-            passes.
-          </p>
+          <p>Before it starts, Tavi checks that the routine works with your models; the next run shown waits for that check to pass.</p>
           {error ? <Failure>{error}</Failure> : null}
           <FormActions saving={busy} label="Save routine" onCancel={onClose} />
         </BusyFieldset>

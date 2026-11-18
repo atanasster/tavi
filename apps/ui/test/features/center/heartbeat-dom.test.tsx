@@ -263,8 +263,10 @@ describe("Center → Heartbeat", () => {
     );
     expect(page.querySelector("h1")?.textContent).toBe("Heartbeat");
     expect(heartbeatSwitch(page)?.getAttribute("aria-checked")).toBe("false");
-    expect(button(page, "Check now")?.disabled).toBe(true);
-    expect(page.textContent).toContain("Last check never");
+    // Off and never checked: the switch alone, and no figures to show.
+    expect(button(page, "Check now")).toBeUndefined();
+    expect(page.querySelector('[aria-label="Pause"]')).toBeNull();
+    expect(page.querySelector(".heartbeat-status")).toBeNull();
     expect(page.textContent).toContain("Nothing yet");
     for (const suggestion of HEARTBEAT_SUGGESTIONS) expect(page.textContent).toContain(suggestion);
     await click(heartbeatSwitch(page));

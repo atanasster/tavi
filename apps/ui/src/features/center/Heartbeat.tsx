@@ -145,23 +145,26 @@ export function Heartbeat({
               })
             }
           />
-          <Button
-            size="sm"
-            disabled={!config.enabled || paused !== undefined || !answer.hostRunning}
-            title={answer.hostRunning ? undefined : "The heartbeat runs in tavi serve"}
-            onClick={() =>
-              void checkHeartbeatNow(client, workspaceId).then((outcome) => {
-                if (!outcome.ok) setFailure(outcome.message);
-                else {
-                  setFailure(undefined);
-                  setNote(outcome.value.status === "started" ? "Checking now." : "A check is running; this one follows it.");
-                }
-              })
-            }
-          >
-            Check now
-          </Button>
-          {paused === undefined ? (
+          {/* Checking and pausing are for a heartbeat that is on: off, the switch is the only control. */}
+          {!config.enabled ? null : (
+            <Button
+              size="sm"
+              disabled={paused !== undefined || !answer.hostRunning}
+              title={answer.hostRunning ? undefined : "The heartbeat runs in tavi serve"}
+              onClick={() =>
+                void checkHeartbeatNow(client, workspaceId).then((outcome) => {
+                  if (!outcome.ok) setFailure(outcome.message);
+                  else {
+                    setFailure(undefined);
+                    setNote(outcome.value.status === "started" ? "Checking now." : "A check is running; this one follows it.");
+                  }
+                })
+              }
+            >
+              Check now
+            </Button>
+          )}
+          {!config.enabled && paused === undefined ? null : paused === undefined ? (
             <label className="heartbeat-pause">
               <span className="visually-hidden">Pause</span>
               <Select
@@ -205,17 +208,24 @@ export function Heartbeat({
           ){paused.until === undefined ? "" : ` until ${whenLocal(paused.until, timezone)}`}.
         </Notice>
       )}
-      <p className="meta-sm heartbeat-status">
-        Last check{" "}
-        {logError !== undefined
-          ? "unknown"
-          : last === undefined
-            ? "never"
-            : `${localTime(last.createdAt, timezone)} · ${logLine(last).toLowerCase()}`}
-        {" · "}next {answer.state?.nextTickAt === undefined ? "none" : localTime(answer.state.nextTickAt, timezone)}
-        {" · "}today {figures.checks} checks · {figures.deep} looked deeper · {formatCount(figures.tokens)} tokens ·{" "}
-        {figures.usd === null ? "cost unknown" : `$${figures.usd.toFixed(2)}`}
-      </p>
+      {/* Said only when there is something to say: a heartbeat that is off and never checked has no figures. */}
+      {logError === undefined && last === undefined && answer.state?.nextTickAt === undefined ? null : (
+        <p className="meta-sm heartbeat-status">
+          Last check{" "}
+          {logError !== undefined
+            ? "unknown"
+            : last === undefined
+              ? "never"
+              : `${localTime(last.createdAt, timezone)} · ${logLine(last).toLowerCase()}`}
+          {answer.state?.nextTickAt === undefined ? null : <> · next {localTime(answer.state.nextTickAt, timezone)}</>}
+          {figures.checks === 0 ? null : (
+            <>
+              {" · "}today {figures.checks} checks · {figures.deep} looked deeper · {formatCount(figures.tokens)} tokens ·{" "}
+              {figures.usd === null ? "cost unknown" : `$${figures.usd.toFixed(2)}`}
+            </>
+          )}
+        </p>
+      )}
 
       {items.length === 0 && itemsError === undefined ? null : (
         <section aria-labelledby={`${ids}-items`}>

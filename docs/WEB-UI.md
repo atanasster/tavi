@@ -734,7 +734,9 @@ addresses `/routines` and `/settings/schedules` open it.
   that chat), and how soon ("in 14 h", moving each minute even on an idle
   page). A fire that is late but will still run
   says **Overdue — runs shortly**; the section says when more fires fall in the
-  week than it lists, and names any schedule it could not read.
+  week than it lists, and names any schedule it could not read. The first two
+  days with something in them show; **Show the rest of the week (N more)**
+  lists the others.
 - **Recurring** lists repeating reminders, routines, plain schedules and,
   where the owner has one, the heartbeat, as one kind of row sorted by next
   run (soonest first; anything paused or with nothing due last). Each row
@@ -1093,7 +1095,8 @@ so the topic is not offered again for 30 days). See [SKILLS.md](SKILLS.md).
 
 Browser shows the sites the agent is on or was on in the last 30 days, one card
 per browser session: **Open now** for sessions still open, then **Earlier**,
-newest first, with **Load older**. The two newest live cards show the page live,
+newest first, with **Load older**; sessions that never reached a page are
+folded under **N sessions that opened no page**. The two newest live cards show the page live,
 with **Take control**; a session whose task ended (**Ended**) offers it too, for
 the page it kept. The section is described in
 [BROWSER.md](BROWSER.md#browser-history).

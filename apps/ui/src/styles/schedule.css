@@ -488,3 +488,8 @@ a.schedule-title:hover {
     grid-column: 3;
   }
 }
+
+/* Coming up's way to the rest of the week, under the days it shows. */
+.schedule-more {
+  margin-top: var(--space-2);
+}

@@ -25,21 +25,27 @@ export function useChatTitle(client: SettingsClient, taskId: string | undefined)
 export function AddedFrom({
   reminder,
   onFollow,
+  lead,
 }: {
   readonly reminder: Pick<ReminderView, "createdBy" | "originTaskId">;
   readonly onFollow: (taskId: string) => Promise<void>;
+  /** What goes before it on a line it shares (" · "), only when it shows. */
+  readonly lead?: string | undefined;
 }) {
   const { client } = useWorkspace();
   const taskId = reminder.originTaskId;
   const title = useChatTitle(client, taskId);
   if (reminder.createdBy !== "agent" || taskId === undefined) return null;
   return (
-    <span className="reminder-origin meta">
-      Added from{" "}
-      <AppLink href={taskPath(taskId)} onFollow={() => void onFollow(taskId)}>
-        {title ?? "a chat"}
-      </AppLink>
-    </span>
+    <>
+      {lead}
+      <span className="reminder-origin meta">
+        Added from{" "}
+        <AppLink href={taskPath(taskId)} onFollow={() => void onFollow(taskId)}>
+          {title ?? "a chat"}
+        </AppLink>
+      </span>
+    </>
   );
 }
 /** A link to a reminder's page inside Schedule. */

@@ -203,12 +203,14 @@ describe("Schedule's Coming up", () => {
       </InWorkspace>,
     );
     expect(asked).toContainEqual({ command: "schedules", payload: { action: "agenda", workspaceId: "default" } });
-    expect([...page.querySelectorAll(".schedule-day")].map((day) => day.getAttribute("aria-label"))).toEqual([
-      "Today, Tuesday 29 Sep",
-      "Tomorrow, Wednesday 30 Sep",
-      "Thursday 1 Oct",
-      "Friday 2 Oct",
-    ]);
+    const days = () => [...page.querySelectorAll(".schedule-day")].map((day) => day.getAttribute("aria-label"));
+    // The first two days show; the rest of the week waits behind a button that counts it.
+    expect(days()).toEqual(["Today, Tuesday 29 Sep", "Tomorrow, Wednesday 30 Sep"]);
+    const more = page.querySelector<HTMLButtonElement>(".schedule-more");
+    expect(more?.textContent).toBe("Show the rest of the week (2 more)");
+    await act(async () => more?.click());
+    expect(days()).toEqual(["Today, Tuesday 29 Sep", "Tomorrow, Wednesday 30 Sep", "Thursday 1 Oct", "Friday 2 Oct"]);
+    expect(more?.textContent).toBe("Show less");
     const tomorrow = section(page, "Tomorrow, Wednesday 30 Sep");
     expect(tomorrow?.querySelector("time")?.textContent).toBe("21:00");
     expect(tomorrow?.querySelector(".schedule-kind")?.textContent).toBe("Routine");
@@ -296,6 +298,7 @@ describe("Schedule's Coming up", () => {
     expect(link?.getAttribute("href")).toBe("/center/schedule/routines/r1");
     await act(async () => link?.click());
     expect(opened).toEqual(["r1"]);
+    await act(async () => page.querySelector<HTMLButtonElement>(".schedule-more")?.click());
     const standup = section(page, "Friday 2 Oct")?.querySelector<HTMLAnchorElement>("a.schedule-title");
     expect(standup?.getAttribute("href")).toBe("/center/schedule/schedules/s2");
     await act(async () => standup?.click());

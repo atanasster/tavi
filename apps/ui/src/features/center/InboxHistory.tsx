@@ -240,7 +240,8 @@ function HistoryRow({
           </AppLink>
         )}
       </td>
-      <td>{[by ?? "—", ...(via === undefined ? [] : [via])].join(" · ")}</td>
+      {/* A decision made by policy is "policy" by and via: said once. */}
+      <td>{[by ?? "—", ...(via === undefined || via === by ? [] : [via])].join(" · ")}</td>
       <td>
         {item.kind === "approval" && item.scope !== undefined ? (
           <>

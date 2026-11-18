@@ -1,5 +1,6 @@
 import type { AgendaAnswer, AgendaItem } from "@tavi/contracts";
 import type { ReactNode } from "react";
+import { useState } from "react";
 
 import { AppLink } from "../shell/AppLink.js";
 import { centerPath, routinePath, schedulePath } from "../shell/route.js";
@@ -11,11 +12,20 @@ import { cadenceText } from "./schedule-model.js";
 import { agendaReminderText } from "./reminder-model.js";
 import { ReminderLink } from "./ReminderRows.js";
 import { Empty } from "../../ui/Empty.js";
+import { Button } from "../../ui/Button.js";
+
+/** How many of the week's days Coming up shows before the rest is asked for. */
+const DAYS_SHOWN = 2;
 
 /** A list as `useLoaded` holds it. */
 type Loaded<T> = ReturnType<typeof useLoaded<T>>;
 
-/** The next seven days, grouped under the workspace zone's days, soonest first; "in 14 h" moves each minute. */
+/**
+ * The next seven days, grouped under the workspace zone's days, soonest first;
+ * "in 14 h" moves each minute. The first two days with something in them
+ * show; the rest of the week waits behind a button, since a few repeating
+ * schedules fill a week with the same rows.
+ */
 export function ComingUp({
   agenda,
   hidden,
@@ -52,6 +62,9 @@ export function ComingUp({
   // The agenda is in time order, so an occurrence's day follows the one before it.
   const items = answer?.items.filter((item) => hidden?.has(`${item.kind}:${item.id}`) !== true);
   const days = items === undefined ? [] : groupByDay(items, (item) => item.at, timeZone);
+  const [whole, setWhole] = useState(false);
+  const shown = whole ? days : days.slice(0, DAYS_SHOWN);
+  const rest = days.slice(DAYS_SHOWN).reduce((count, day) => count + day.items.length, 0);
   return (
     <>
       <h2 className="center-subhead">
@@ -71,7 +84,7 @@ export function ComingUp({
         <p className="muted schedule-skipped">Left out, their stored schedule cannot be read: {answer.skipped.join(", ")}</p>
       ) : null}
       {!quiet && items?.length === 0 ? <Empty className="center-empty">Nothing runs in the next 7 days.</Empty> : null}
-      {days.map((day) => {
+      {shown.map((day) => {
         const label = longDay(day.date, today);
         const relative = relativeDay(day.date, today, "future")?.replace(/^./, (first) => first.toUpperCase());
         return (
@@ -99,6 +112,11 @@ export function ComingUp({
           </section>
         );
       })}
+      {rest === 0 ? null : (
+        <Button variant="ghost" size="sm" className="schedule-more" aria-expanded={whole} onClick={() => setWhole(!whole)}>
+          {whole ? "Show less" : `Show the rest of the week (${rest} more)`}
+        </Button>
+      )}
     </>
   );
 }

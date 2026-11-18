@@ -858,7 +858,7 @@ describe("the history", () => {
     expect(of("approvals", "history").at(-1)?.payload).toMatchObject({ cursor: "next-1", limit: 50 });
     expect(rows()).toHaveLength(6);
     expect(rows()[5]?.slice(0, 2)).toEqual(["Expired", "https://bahn.debrowser.navigate"]);
-    expect(rows()[5]?.[3]).toBe("policy · policy");
+    expect(rows()[5]?.[3]).toBe("policy");
     expect(page.querySelector(".center-more")).toBeNull();
   });
 

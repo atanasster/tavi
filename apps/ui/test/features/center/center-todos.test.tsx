@@ -55,7 +55,7 @@ describe("the to-do list", () => {
       ["groceries", ["Buy milk"]],
       ["inbox", ["Call the plumber", "Pay rent"]],
     ]);
-    expect(dueText(rent, "Europe/Berlin")).toBe("due 2026-10-05");
+    expect(dueText(rent, "Europe/Berlin")).toBe("due Mon 5 Oct");
     expect(dueText(plumber, "Europe/Berlin")).toMatch(/^due Fri,? 2 Oct,? 17:00$/);
     expect(dueText(milk, "Europe/Berlin")).toBeUndefined();
   });

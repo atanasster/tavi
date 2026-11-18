@@ -185,6 +185,8 @@ export function Browser({
   const today = summary?.today ?? todayIn(timeZone, now);
   const people = summary?.people ?? {};
   const closed = earlier?.items ?? [];
+  const visited = closed.filter((item) => item.pages > 0);
+  const blank = closed.filter((item) => item.pages === 0);
   // A session that closed between the two reads is shown once, as closed.
   const closedIds = new Set(closed.map((item) => item.sessionId));
   const open = (live?.items ?? []).filter((item) => !closedIds.has(item.sessionId));
@@ -262,7 +264,14 @@ export function Browser({
           <h2 id="browser-earlier-title" className="center-day-head">
             Earlier
           </h2>
-          <ul className="browser-grid list-reset">{closed.map(card)}</ul>
+          {visited.length === 0 ? null : <ul className="browser-grid list-reset">{visited.map(card)}</ul>}
+          {/* A session that never reached a page has nothing to show but its task: folded, so the visited ones lead. */}
+          {blank.length === 0 ? null : (
+            <details className="browser-blank">
+              <summary className="disclosure">{plural(blank.length, "session")} that opened no page</summary>
+              <ul className="browser-grid list-reset">{blank.map(card)}</ul>
+            </details>
+          )}
         </section>
       )}
       {earlier?.nextCursor === undefined ? null : <LoadMore busy={older.busy} onLoad={loadOlder} />}

@@ -333,6 +333,7 @@ const schedule = (client: SettingsClient, extra: Partial<React.ComponentProps<ty
 describe("reminders in Schedule's Coming up", () => {
   it("shows each reminder with an amber square node, its label and its cadence", async () => {
     const page = await mount(schedule(owner().client));
+    await click(page.querySelector(".schedule-more"));
     const rows = [...page.querySelectorAll(".schedule-item-reminder")];
     expect(rows).toHaveLength(4);
     expect(rows.map((row) => row.querySelector(".schedule-kind")?.textContent)).toEqual(["Reminder", "Reminder", "Reminder", "Reminder"]);

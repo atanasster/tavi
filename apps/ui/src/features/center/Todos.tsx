@@ -8,6 +8,7 @@ import { Icon } from "../../ui/Icon.js";
 import { Failure, LoadError } from "../../ui/Parts.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { addTodo, listTodos, setTodoStatus } from "./reminders-api.js";
+import { shortDay } from "../../lib/time.js";
 
 /**
  * To-dos in Schedule: the workspace's open to-dos (the same list a chat adds
@@ -23,10 +24,10 @@ export function todosByList(todos: readonly Todo[]): readonly { readonly list: s
   return [...lists].map(([list, items]) => ({ list, todos: items }));
 }
 
-/** A to-do's due as the row says it: a date as written, a time in the workspace's zone. */
+/** A to-do's due as the row says it: a date as a short day ("Mon 5 Oct"), a time in the workspace's zone. */
 export function dueText(todo: Todo, timeZone: string): string | undefined {
   if (todo.due === undefined) return undefined;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(todo.due)) return `due ${todo.due}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(todo.due)) return `due ${shortDay(todo.due)}`;
   const at = new Date(todo.due).toLocaleString("en-GB", {
     timeZone,
     weekday: "short",

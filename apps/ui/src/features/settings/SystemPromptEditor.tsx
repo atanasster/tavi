@@ -327,9 +327,12 @@ export function SystemPromptEditor({
             {/* Said only when it is the change: going back to the shipped prompt from a custom one. */}
             {saving ? "Saving…" : draft.mode === "default" && dirty ? "Save (use the shipped default)" : "Save"}
           </Button>
-          <Button disabled={saving || !dirty} onClick={editor.discard}>
-            Discard changes
-          </Button>
+          {/* Offered for an edit only: with nothing changed there is nothing to discard. */}
+          {dirty ? (
+            <Button disabled={saving} onClick={editor.discard}>
+              Discard changes
+            </Button>
+          ) : null}
           {draft.mode === "custom" ? (
             <Button disabled={saving} onClick={editor.stageDefault}>
               {defaultLabel}

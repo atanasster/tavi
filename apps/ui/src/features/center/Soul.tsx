@@ -439,9 +439,11 @@ function PersonaEditor({
             <Button variant="primary" type="submit" disabled={!canSave}>
               {saving ? "Saving…" : "Save persona"}
             </Button>
-            <Button disabled={saving || !dirty} onClick={persona.discard}>
-              Discard changes
-            </Button>
+            {dirty ? (
+              <Button disabled={saving} onClick={persona.discard}>
+                Discard changes
+              </Button>
+            ) : null}
           </div>
         </form>
       )}
@@ -500,7 +502,7 @@ export function SoulAndMemory({
         className="center-head"
         id="center-soul-title"
         title="Soul & memory"
-        description="Who the agent is told to be, and what it knows about you. Changes apply from the next message."
+        description="Who the agent is told to be, and what it knows about you."
       />
       {agentsError === undefined ? null : <LoadError error={`Agents could not be listed: ${agentsError}`} reload={listed.reload} />}
       <div className="soul-split">

@@ -363,7 +363,7 @@ export function Schedule({
               {reminder === undefined ? null : (
                 <ReminderPerson principalId={reminder.principalId} people={people} show={showPerson} lead=" · " />
               )}
-              {reminder === undefined ? null : <AddedFrom reminder={reminder} onFollow={onFollow} />}
+              {reminder === undefined ? null : <AddedFrom reminder={reminder} onFollow={onFollow} lead=" · " />}
             </>
           );
         }}
