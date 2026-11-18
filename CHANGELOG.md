@@ -28,6 +28,17 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Heartbeat, walked at desktop and phone width. The day's limits are a row
+  of four even fields with Save limits (now a button, not a ghost) under
+  them; Signal sources tick in even columns; Where lists Home above the
+  Channel and To fields, which fill the row; Forget heartbeat history is in
+  red and sits on the Provider field's line; with no lines yet, Edit reads
+  "Add a line", and it and History start on the text's edge. The rail's
+  Heartbeat chip is as wide as its words. A fieldset among form fields no
+  longer sits 2px in from them. An extra tool's description cut short ends
+  in an ellipsis rather than mid-word. On a phone, a Command Center or
+  Settings page opened directly now shows its own tab in the strip, also
+  after the tabs' counts arrive and widen it.
 - Buttons keep their size on a phone. An approval card's Allow once and
   Deny, the undo bar, Heartbeat's buttons and a recurring task's controls
   no longer grow to 44px tall on a narrow window or touch screen; the room a

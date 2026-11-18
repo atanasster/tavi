@@ -127,7 +127,7 @@ export function HeartbeatMore({
           <label>
             Urgent messages an hour <input name="hourly" type="number" required min={1} max={60} defaultValue={config.maxNowPerHour} />
           </label>
-          <Button variant="ghost" size="sm" type="submit">
+          <Button size="sm" type="submit">
             Save limits
           </Button>
         </form>
@@ -331,7 +331,13 @@ export function HeartbeatMore({
             </Button>
           </p>
         ) : (
-          <Button variant="ghost" size="sm" disabled={answer.state === undefined} onClick={() => setConfirmForget(true)}>
+          <Button
+            variant="danger-ghost"
+            size="sm"
+            className="heartbeat-forget"
+            disabled={answer.state === undefined}
+            onClick={() => setConfirmForget(true)}
+          >
             Forget heartbeat history
           </Button>
         )}

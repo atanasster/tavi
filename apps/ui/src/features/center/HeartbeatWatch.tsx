@@ -68,7 +68,7 @@ export function HeartbeatWatch({
               size="sm"
               onClick={() => setEditing({ text: config.instructions, base: config.instructions, revision })}
             >
-              Edit
+              {lines.length === 0 ? "Add a line" : "Edit"}
             </Button>
             <Button
               variant="ghost"

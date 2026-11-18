@@ -8,6 +8,16 @@
     align-items: baseline;
     min-height: var(--size-touch);
   }
+  /* Each tick is already a thumb's height: no row gap on top of it, only room under the group's help. */
+  .settings-fields > .heartbeat-tell,
+  .settings-fields > .heartbeat-sources,
+  .settings-fields > .heartbeat-tools {
+    row-gap: 0;
+  }
+  .heartbeat-sources > p,
+  .heartbeat-tools > p {
+    margin-bottom: var(--space-2);
+  }
 }
 .heartbeat-status {
   margin-block: var(--space-2) var(--space-4);
@@ -20,6 +30,10 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   margin-block: var(--space-2);
+}
+/* A ghost button's text starts on the text's edge, as a message's actions do (turn.css). */
+.heartbeat-actions > .ghost:first-child {
+  margin-inline-start: calc(-1 * var(--space-2));
 }
 .heartbeat-editor {
   width: 100%;
@@ -59,24 +73,65 @@
 .heartbeat-more {
   margin-block: var(--space-4);
 }
-/* Where it messages: a plain list at the form's size, not a bulleted one at the page's. */
+/* Where it messages: what it already uses on one line, the form to add another under it. */
+.settings-fields > .heartbeat-targets {
+  flex-direction: column;
+  align-items: stretch;
+}
+/* A plain list at the form's size, not a bulleted one at the page's. */
 .heartbeat-targets ul {
-  margin-block: 0 var(--space-2);
+  margin-block: 0;
   padding: 0;
   list-style: none;
   font-size: var(--text-control);
 }
-.heartbeat-target-form,
-.heartbeat-limits {
+.heartbeat-target-form {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: end;
 }
+/* Channel and To share the row and fill it; on a phone each takes a line of its own. */
+.heartbeat-target-form > label {
+  flex: 1 1 var(--card-min-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  font-size: var(--text-control);
+  font-weight: var(--weight-medium);
+}
 /* A button sits on the fields' line, not centred on their labels as a button otherwise is (controls.css). */
 .heartbeat-target-form > button,
-.heartbeat-limits > button {
+.settings-fields > .heartbeat-forget {
   align-self: end;
+}
+/* The day's limits: a row of their own, four even fields, Save under them. */
+.settings-fields > .heartbeat-limits {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--card-min-xs), 1fr));
+  gap: var(--space-3) var(--space-4);
+  align-items: end;
+}
+.heartbeat-limits > label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  font-size: var(--text-control);
+  font-weight: var(--weight-medium);
+}
+.heartbeat-limits > button {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+/* Signal sources: even columns of ticks, not a run that wraps wherever a name ends. */
+.settings-fields > .heartbeat-sources {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-min-md), 1fr));
+  gap: var(--space-2) var(--space-4);
+}
+.heartbeat-sources > p {
+  grid-column: 1 / -1;
 }
 /* Each section of the page apart from the one above it. */
 .heartbeat-page > section ~ section {
@@ -85,6 +140,8 @@
 .heartbeat-log li {
   padding-block: var(--space-1);
 }
+/* A chip as wide as its words, not the rail's width. */
 .heartbeat-pill {
+  justify-self: start;
   margin-block-end: var(--space-2);
 }

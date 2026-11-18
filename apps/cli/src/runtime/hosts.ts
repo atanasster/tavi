@@ -10,6 +10,7 @@ import {
   mcpServerAllowed,
   pluginRunningVersion,
 } from "@tavi/contracts";
+import { clip } from "@tavi/contracts/util";
 import { channelDescriptorOf } from "../features/channels/catalog.js";
 import { flightToolsSilentIn } from "../features/flights/host.js";
 import { HeartbeatProviderRegistry, HeartbeatProviderStates, HeartbeatSignalRegistry } from "@tavi/agent-host/heartbeat-host";
@@ -212,7 +213,7 @@ export function composeHosts(composed: FoldersContext) {
     return [
       ...tools.list().filter((tool) => tool.effect === "read-only" && plugins.some((pluginId) => tool.id.startsWith(`${pluginId}.`))),
       ...mcpHost.bridge.readOnlyTools(),
-    ].map((tool) => ({ id: tool.id, description: tool.description.slice(0, 300) }));
+    ].map((tool) => ({ id: tool.id, description: clip(tool.description, 300, { squeeze: true }) }));
   };
   const heartbeatOptions: HeartbeatOptions = heartbeatOptionsFor(
     overrides.heartbeatTiming?.intervalFloorMs ?? HEARTBEAT_PRODUCTION_OPTIONS.floorMs,

@@ -117,6 +117,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
+  /* Not the browser's 2px each side: a fieldset's edges line up with the fields around it. */
+  margin: 0;
   border: var(--border-width) solid var(--line);
   border-radius: var(--radius);
   padding: var(--space-3);

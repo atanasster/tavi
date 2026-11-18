@@ -113,7 +113,7 @@ flowchart LR
 
 The header has *On/Off* and, while it is on, *Check now* (when the heartbeat runs in this owner) and *Pause* (for an hour, 4 hours, a day, or until you resume), then the last check, the next one, and — once it has checked today — today's checks, deeper looks, tokens and cost ("cost unknown" while the model is unpriced). Off and never run, it shows no figures.
 
-- *Edit* changes the instructions in place (if they were changed elsewhere while you edited, Save is refused once with why and the page reads them again; Save again to keep yours) and *History* lists earlier versions.
+- *Edit* (*Add a line* while there are none) changes the instructions in place (if they were changed elsewhere while you edited, Save is refused once with why and the page reads them again; Save again to keep yours) and *History* lists earlier versions.
 - The log lists every check — why it ran when not on schedule, how many memories it used, and what a mod held back — filtered to what told you something, what was skipped or what failed.
 - The page reads the heartbeat again every couple of seconds while it is open, so a new check shows up without a reload; if a read fails, it says so above the last good figures.
 - The rail beside every Center section shows a pill: on and the next check, off, or paused, read again every 30 seconds.
