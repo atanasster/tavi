@@ -821,16 +821,24 @@
   border-bottom: 0;
 }
 
+/* What was asked is the row's subject: never squeezed to a word a line by the columns beside it. */
 .center-history-request {
   display: grid;
   justify-items: start;
   gap: var(--space-1);
+  min-width: var(--width-cell-min);
   max-width: var(--width-cell-max);
   overflow-wrap: anywhere;
 }
 
 .center-history a {
   font-size: var(--text-sm);
+}
+
+/* A task's title may hold an address with no place to break: it wraps inside its column rather than widening the table. */
+.center-history-task {
+  min-width: var(--width-cell-min);
+  overflow-wrap: anywhere;
 }
 
 .center-history-when {

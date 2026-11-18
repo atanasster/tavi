@@ -231,7 +231,7 @@ function HistoryRow({
           ) : null}
         </div>
       </td>
-      <td>
+      <td className="center-history-task">
         {item.taskId === undefined ? (
           "—"
         ) : (

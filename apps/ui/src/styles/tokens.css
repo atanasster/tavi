@@ -196,6 +196,7 @@
   --width-label: 80px;
   --width-table-min: 600px;
   --width-cell-max: 340px;
+  --width-cell-min: 200px;
   --width-thumb: 10rem;
   --width-thumb-md: 12rem;
   --width-thumb-wide: 32rem;
@@ -223,6 +224,7 @@
   --card-min-tile: 12rem;
   --card-min-tile-md: 15rem;
   --card-min-tile-lg: 16rem;
+  --card-min-pane: 380px;
   /* Heights: a chart strip, text areas, and the cap on a scrolling block. */
   --height-strip: 72px;
   --height-textarea-sm: 56px;

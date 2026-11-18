@@ -28,6 +28,14 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Command Center reads better beside the sidebar and the rail. Soul & memory
+  stacks its two panes whenever the column is too narrow for both, rather
+  than squeezing a memory proposal to a few words a line. The Approvals
+  history keeps what was asked readable and wraps a long task title inside
+  its column. A review waiting on you is labelled like the other cards. In
+  Heartbeat, Add sits level with the field beside it, the sections have room
+  between them, "Where" is a plain list at the form's size, and on a phone
+  each Tell me choice's radio sits on its first line.
 - The Ideas tab lays every section out two cards a row, so a section of one
   is as wide as a card in For you rather than a narrow third. A card's ⋯
   menu is drawn as the Center's row menus are, with each item tinted under

@@ -12,11 +12,11 @@
   .heartbeat-offer button {
     min-height: var(--size-touch);
   }
-  /* A checkbox or radio is reached through its whole label. */
+  /* A checkbox or radio is reached through its whole label, and sits on its first line when the label wraps. */
   .heartbeat-page label:has(> input[type="checkbox"]),
   .heartbeat-page label:has(> input[type="radio"]) {
     display: inline-flex;
-    align-items: center;
+    align-items: baseline;
     min-height: var(--size-touch);
   }
 }
@@ -70,8 +70,12 @@
 .heartbeat-more {
   margin-block: var(--space-4);
 }
+/* Where it messages: a plain list at the form's size, not a bulleted one at the page's. */
 .heartbeat-targets ul {
-  margin-block-end: var(--space-2);
+  margin-block: 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-control);
 }
 .heartbeat-target-form,
 .heartbeat-limits {
@@ -79,6 +83,15 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: end;
+}
+/* A button sits on the fields' line, not centred on their labels as a button otherwise is (controls.css). */
+.heartbeat-target-form > button,
+.heartbeat-limits > button {
+  align-self: end;
+}
+/* Each section of the page apart from the one above it. */
+.heartbeat-page > section ~ section {
+  margin-top: var(--space-6);
 }
 .heartbeat-log li {
   padding-block: var(--space-1);

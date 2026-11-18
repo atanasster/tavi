@@ -1,20 +1,14 @@
-/* Soul & memory: two panes side by side from
-   --wide (960 px), stacked below; nothing in either scrolls the page sideways. */
+/* Soul & memory: two panes side by side when the column has room for both, stacked otherwise
+   (beside the sidebar and the rail a wide window's column is narrow); nothing in either scrolls the page sideways. */
 .center-main > .soul {
   max-width: var(--width-page-xwide);
 }
 
 .soul-split {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--card-min-pane)), 1fr));
   gap: var(--space-4);
   align-items: start;
-}
-
-@media (--wide) {
-  .soul-split {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
 }
 
 .soul-pane {

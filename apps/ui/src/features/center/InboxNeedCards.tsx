@@ -68,7 +68,7 @@ export function ReviewNeedCard({
   return (
     <li className="center-card" aria-label={`Review: ${title}`} hidden={hidden} tabIndex={-1}>
       <div className="center-card-top">
-        <code className="center-tool">review</code>
+        <span className="center-risk-tag eyebrow">Review</span>
       </div>
       <h3>{row.artifactCount === 1 ? "A result waits for your review" : `${row.artifactCount} results wait for your review`}</h3>
       <p className="center-card-ctx meta">
