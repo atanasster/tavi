@@ -323,6 +323,53 @@ describe("the composer's model picker", () => {
     const visibleOptions = [...document.querySelectorAll<HTMLElement>(".select-option")];
     expect(visibleOptions.some((opt) => opt.textContent?.includes("Nova 2 Lite"))).toBe(true);
     expect(visibleOptions.every((opt) => !opt.textContent?.includes("Model 5"))).toBe(true);
+    // The chosen model is filtered out of the list, and still named on the button.
+    expect(page.querySelector(".model-select")?.textContent).toContain("Model 1");
+  });
+
+  it("says which connection each model is from when there are several, and finds them by it", async () => {
+    const local = { ...listed("gemma4:12b", "gemma4:12b"), connectionId: "ollama" };
+    const client: SettingsClient = {
+      request: async (_family, input) => {
+        const action = (input as { action: string }).action;
+        if (action === "list")
+          return {
+            ok: true,
+            result: [
+              { connectionId: "ollama", label: "Ollama", kind: "openai-compatible" },
+              { connectionId: "openrouter", label: "OpenRouter", kind: "openai-compatible" },
+            ],
+          } as never;
+        if (action === "roles") return { ok: true, result: { resolved: [] } } as never;
+        if (action === "show")
+          return {
+            ok: true,
+            result: {
+              catalog: [local, ...Array.from({ length: 9 }, (_, i) => listed(`model-${i}`, `Model ${i}`))].filter(
+                (model) => model.connectionId === (input as { connectionId: string }).connectionId,
+              ),
+            },
+          } as never;
+        return { ok: true, result: {} } as never;
+      },
+    };
+    radixShims();
+    const page = await mount(picker(client, "ollama/gemma4:12b"));
+    await openList(page);
+    const detail = (name: string) =>
+      [...document.querySelectorAll<HTMLElement>(".select-option")]
+        .find((option) => option.textContent?.startsWith(name))
+        ?.querySelector(".select-option-detail")?.textContent;
+    expect(detail("gemma4:12b")).toBe("Ollama");
+    expect(detail("Model 3")).toBe("OpenRouter");
+    // The connection is searchable, and not part of the name the button shows.
+    const search = document.querySelector<HTMLInputElement>(".select-search-input")!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(search, "ollama");
+      search.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect([...document.querySelectorAll(".select-option")].map((option) => option.textContent)).toEqual(["gemma4:12bOllama"]);
+    expect(page.querySelector(".model-select")?.textContent).toBe("gemma4:12b");
   });
 
   it("focuses the currently selected model on open, and down arrow moves to the next model", async () => {

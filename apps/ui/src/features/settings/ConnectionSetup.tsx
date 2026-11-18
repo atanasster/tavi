@@ -255,6 +255,27 @@ export function ManageConnectionModal({
     );
   }
   const newKey = key.trim() !== "";
+  const keyField = (
+    <>
+      <label className="connection-key">
+        {connection.localOnly ? "API key" : "Replace the API key"}
+        <input
+          aria-label={`New key for ${connection.label}`}
+          {...SECRET_INPUT}
+          maxLength={SETTINGS_BOUNDS.value}
+          value={key}
+          placeholder="Paste a new key"
+          onChange={(event) => setKey(event.target.value)}
+        />
+      </label>
+      {newKey ? (
+        <label>
+          <input type="checkbox" checked={replace} onChange={(event) => setReplace(event.target.checked)} /> Replace the stored value,
+          including for connections that share it
+        </label>
+      ) : null}
+    </>
+  );
   return (
     <Modal title={connection.label} busy={working} onClose={onClose}>
       <form
@@ -268,23 +289,18 @@ export function ManageConnectionModal({
           <p className="connection-form-lead">
             <code>{connection.baseUrl}</code>
           </p>
-          <label className="connection-key">
-            Replace the API key
-            <input
-              aria-label={`New key for ${connection.label}`}
-              {...SECRET_INPUT}
-              maxLength={SETTINGS_BOUNDS.value}
-              value={key}
-              placeholder="Paste a new key"
-              onChange={(event) => setKey(event.target.value)}
-            />
-          </label>
-          {newKey ? (
-            <label>
-              <input type="checkbox" checked={replace} onChange={(event) => setReplace(event.target.checked)} /> Replace the stored value,
-              including for connections that share it
-            </label>
-          ) : null}
+          {/* A server on this computer usually takes no key: the field is there for one that does, folded away. */}
+          {connection.localOnly ? (
+            <details className="connection-advanced" open={newKey}>
+              <summary>Set an API key</summary>
+              <div className="settings-fields">
+                <p>A local server usually takes none. Enter one only if you turned on its authentication.</p>
+                {keyField}
+              </div>
+            </details>
+          ) : (
+            keyField
+          )}
           <details className="connection-advanced">
             <summary>Credential reference</summary>
             <div className="settings-fields">
@@ -308,7 +324,10 @@ export function ManageConnectionModal({
           <section className="danger-zone">
             {removing ? (
               <>
-                <p>Remove {connection.label}? Roles that use it fall back to the next model. Its key stays in Credentials.</p>
+                <p>
+                  Remove {connection.label} and the models it found? A role or the default that uses it must be pointed at another model
+                  first. Its key stays in Credentials.
+                </p>
                 <div className="danger-zone-actions">
                   <Button variant="ghost" onClick={() => setRemoving(false)}>
                     Keep it
@@ -331,7 +350,7 @@ export function ManageConnectionModal({
           <FormActions
             saving={working}
             disabled={newKey ? !replace : reference === connection.credentialRef}
-            label={newKey ? "Save new key" : "Rebind credential"}
+            label={newKey ? "Save new key" : "Save reference"}
             cancelLabel="Close"
             onCancel={onClose}
           />

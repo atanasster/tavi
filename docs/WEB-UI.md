@@ -309,7 +309,8 @@ results go and what it runs, is on the card itself, and **Details** keeps the
 exact command and the full input; a call that waited on you, such as a question or a **Connect** card, runs again once you answer and stays one card), **Stop** to abort a running turn. After a task finishes, the next prompt continues it, and the prompt box
 names the chat it goes to. A finished chat started elsewhere (from Telegram, a
 schedule, `tavi run`) is continued too. **Retry** after a failed turn sends the
-prompt again in the same chat. A turn you stop isn't a failure: it says "You
+prompt again in the same chat; a new chat started after it offers **Send**,
+not the old chat's **Retry**. A turn you stop isn't a failure: it says "You
 stopped this.", the chat and the chats list read **stopped** (Home reads
 **ready**), there is no **Retry**, and the next prompt continues the chat, with
 its history, whether you come back later or the owner has restarted since. Tavi
@@ -353,7 +354,11 @@ still choose another model for new chats. Nothing needs a restart: the owner
 reads its models at each turn. The footer strip names the open chat's model. An
 owner with no model configured refuses every run, so the composer holds Send,
 keeping the prompt, until one is picked. The control beside it opens model
-settings; with nothing discovered yet, the picker is that link.
+settings; with nothing discovered yet, the picker is that link. With more than
+one connection, each model in the list says which it comes from (**Ollama**,
+**OpenRouter**), and the search finds models by it; the list opens above the
+composer and stays there as a search narrows it, and the picker keeps naming
+the chat's model while the search hides it.
 
 A new chat suggests up to three prompts (a chat to continue, your best ideas, or
 what Tavi can do here), each filling the box, never sending; see
@@ -610,7 +615,10 @@ Along the bottom is one strip of figures:
 - **elapsed**: the time the chat actually worked, summed over its turns on the
   owner's own timestamps. A round waiting on your approval, a question waiting
   on your answer and the hours between one turn and the next are not in it (a
-  chat read back from its record sums its executions' runs);
+  chat read back from its record sums its executions' runs). It moves as the
+  owner reports work, never on a clock, so a model reading a long prompt on a
+  local server shows no time until it answers; a new chat shows none of the
+  previous chat's;
 - **tool calls**, counted from the transcript whether or not a card has
   scrolled out of the window;
 - **Model**: the model the owner runs, by its own name (`Model: gemini-3.8-flash`);

@@ -1,7 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { fakeFetch } from "@tavi/test-support";
 
-import { createOpenAiCompatibleTransport, observedFetch, type WireObservation } from "../src/models/openai-stream-compat.js";
+import {
+  createOpenAiCompatibleTransport,
+  observedFetch,
+  promptTextChars,
+  truncatedPromptReason,
+  type WireObservation,
+} from "../src/models/openai-stream-compat.js";
 
 /**
  * The OpenAI-compatible transport shim.
@@ -492,5 +498,32 @@ describe("observedFetch", () => {
     const observation: WireObservation = {};
     await observedFetch(createOpenAiCompatibleTransport(inner), observation)("https://example.test/embed", { body: "{}" });
     expect(observation).toEqual({});
+  });
+});
+
+describe("a prompt the server cut", () => {
+  it("counts a body's message text and tools, never an image's bytes", () => {
+    const body = JSON.stringify({
+      messages: [
+        { role: "system", content: "abcd" },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "ef" },
+            { type: "image_url", image_url: { url: `data:image/png;base64,${"A".repeat(5000)}` } },
+          ],
+        },
+      ],
+      tools: [{ type: "function" }],
+    });
+    expect(promptTextChars(body)).toBe(6 + JSON.stringify([{ type: "function" }]).length);
+    expect(promptTextChars("not json")).toBeUndefined();
+  });
+
+  it("explains a count far under what was sent, and lets a plausible or short one be", () => {
+    expect(truncatedPromptReason(2051, 110_000)).toContain("Raise the server's context length to 64K or more");
+    expect(truncatedPromptReason(25_000, 110_000)).toBeUndefined();
+    expect(truncatedPromptReason(10, 12_000)).toBeUndefined();
+    expect(truncatedPromptReason(undefined, 110_000)).toBeUndefined();
   });
 });

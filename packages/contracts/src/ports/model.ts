@@ -23,7 +23,7 @@ interface ModelConfigRepositoryPortDefinition {
   getConnection(connectionId: string): ModelConnection | undefined;
   upsertConnection(connection: ModelConnection): ModelConnection;
   deleteConnection(connectionId: string): boolean;
-  /** Connections referenced by any stored catalog entry or role binding. */
+  /** Connections a role binding or a workspace default names (a connection's own catalog is not a reference). */
   referencedConnectionIds(): readonly string[];
   listCatalog(connectionId: string): readonly ModelCatalogEntry[];
   replaceCatalog(connectionId: string, entries: readonly ModelCatalogEntry[]): void;

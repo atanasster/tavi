@@ -249,7 +249,7 @@ describe("tavi models", () => {
     // A configuration conflict is a usage-level refusal; exit 5 means "another
     // process owns the data directory".
     expect(code).toBe(EXIT.usage);
-    expect(refused.stderr()).toContain("still referenced");
+    expect(refused.stderr()).toContain("still used by a model role");
 
     const rebound = capture();
     expect(await main(["models", "rebind", "local", "--credential", "other.token", "--data-dir", directory], { io: rebound.io })).toBe(

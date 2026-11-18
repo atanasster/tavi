@@ -138,11 +138,16 @@ describe("tavi models under a live owner", ATTACHED, () => {
     expect(unknownRole.code).toBe(EXIT.usage);
     expect((await tavi(["models", "show", "nowhere", ...at])).code).toBe(EXIT.unavailable);
 
-    // The recorded test is a catalog entry that still references it: a conflict
-    // with stored configuration, a usage-level refusal as offline.
+    // A default that names it is a conflict with stored configuration, a
+    // usage-level refusal as offline; its own recorded test is not.
+    await tavi(["models", "set-default", "--connection", "local", ...at]);
     const referenced = await tavi(["models", "remove", "local", ...at]);
     expect(referenced.code).toBe(EXIT.usage);
-    expect(referenced.stderr).toContain("still referenced");
+    expect(referenced.stderr).toContain("still used by a model role or a workspace default");
+    await tavi(["models", "clear-default", ...at]);
+    const local = await tavi(["models", "remove", "local", ...at]);
+    expect(local.code, local.stderr).toBe(EXIT.ok);
+    expect(await config.getConnection("local")).toBeUndefined();
 
     await tavi(["models", "add", "spare", "--base-url", "http://127.0.0.1:9/v1", "--credential", "spare.key", ...at]);
     const removed = await tavi(["models", "remove", "spare", ...at]);

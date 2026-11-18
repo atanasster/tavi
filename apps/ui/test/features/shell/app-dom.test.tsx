@@ -1338,6 +1338,17 @@ it("starts a new chat from the panel: an empty canvas until the next prompt's en
   expect(page.querySelector(".task-header h1")?.textContent).toContain("Earlier question");
 });
 
+it("starts a new chat after a failed one with Send and no figures: neither the failure's Retry nor its elapsed time", async () => {
+  const earlier = [run("live", "Earlier question", { taskId: "old", status: "failed" }, { activeMs: 64_000 })];
+  const fake = fakeStore({ connection: "ready", runs: earlier, directory: listed(earlier), next: { kind: "continue", taskId: "old" } });
+  const page = await mount(<App store={fake.store} client={silent} workspaceId="default" />);
+  expect(page.querySelector(".composer button[type=submit]")?.textContent).toBe("Retry");
+  expect(page.querySelector(".strip")?.textContent).toContain("elapsed 1m 04s");
+  await click(page.querySelector('[aria-label="New chat"]'));
+  expect(page.querySelector(".composer button[type=submit]")?.textContent).toBe("Send");
+  expect(page.querySelector(".strip")?.textContent).toContain("elapsed —");
+});
+
 it("on a phone, starts with the sessions sidebar folded and folds it again once a chat is picked", async () => {
   const original = window.matchMedia;
   window.matchMedia = ((query: string) => ({

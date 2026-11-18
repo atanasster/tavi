@@ -151,7 +151,7 @@ export const MODEL_PROVIDER_PRESETS: readonly ModelProviderPreset[] = [
     requiresKey: false,
     localOnly: true,
     docsUrl: "https://docs.ollama.com/api/openai-compatibility",
-    note: "The local server ignores the compatibility credential. No cloud key is needed.",
+    note: "Runs on this computer and needs no key. A turn with Tavi's tools is about 22K tokens: set Ollama's context length (its Settings, or OLLAMA_CONTEXT_LENGTH) to 32K or more.",
   },
   {
     id: "lmstudio",
@@ -290,6 +290,11 @@ export const StreamTimeoutSecondsSchema = z.number().int().min(1).max(MAX_STREAM
 export const STREAM_FIRST_BYTE_SECONDS = 60;
 export const STREAM_REASONING_FIRST_BYTE_SECONDS = 180;
 export const STREAM_IDLE_SECONDS = 90;
+/**
+ * A local server's first-output deadline when its connection sets none: it reads the whole prompt before its first
+ * byte, at a few hundred tokens a second on a desktop GPU, so a turn's tools and history take minutes.
+ */
+export const STREAM_LOCAL_FIRST_BYTE_SECONDS = 600;
 
 export const ModelConnectionSchema = z.object({
   /** Host projection of an approved provider instance; edited through plugin configuration. */
@@ -330,7 +335,7 @@ export const ModelConnectionSchema = z.object({
   wireApi: z.enum(WIRE_APIS).optional(),
   /**
    * How long a call waits for the provider's first output before it fails over, in seconds. Absent: 60, or 180 for a
-   * call that reasons first (`STREAM_FIRST_BYTE_SECONDS`).
+   * call that reasons first (`STREAM_FIRST_BYTE_SECONDS`), or 600 for a server on this computer.
    */
   streamFirstByteSeconds: StreamTimeoutSecondsSchema.optional(),
   /** How long a streaming reply may go quiet between chunks before it fails over, in seconds. Absent: 90. */

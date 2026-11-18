@@ -360,6 +360,19 @@ input[type="radio"] {
   left: var(--space-1-5);
 }
 
+/* Where an option is from (a model's connection): after its name, quieter, at the row's end. */
+.select-option-detail {
+  flex: none;
+  margin-left: auto;
+  padding-left: var(--space-3);
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-xs);
+}
+
+.select-option[data-highlighted] .select-option-detail {
+  color: inherit;
+}
+
 .select-option[data-disabled] {
   opacity: var(--opacity-disabled);
   pointer-events: none;

@@ -15,7 +15,7 @@ import { styleNonce } from "../lib/csp-nonce.js";
 import { Icon } from "./Icon.js";
 import { Button } from "./Button.js";
 
-type Option = ReactElement<{ value?: string; children?: ReactNode; disabled?: boolean }>;
+type Option = ReactElement<{ value?: string; children?: ReactNode; disabled?: boolean; "data-detail"?: string }>;
 function optionsIn(children: ReactNode): Option[] {
   return Children.toArray(children).flatMap((child) => {
     if (!isValidElement<{ children?: ReactNode }>(child)) return [];
@@ -35,6 +35,7 @@ export function Select({
   contentClassName,
   searchable,
   searchPlaceholder = "Search…",
+  side = "bottom",
   ...props
 }: {
   children: ReactNode;
@@ -49,6 +50,8 @@ export function Select({
   contentClassName?: string;
   searchable?: boolean;
   searchPlaceholder?: string;
+  /** Where the list opens, when there is room: `top` for a control at the foot of the page, so a search does not move it. */
+  side?: "top" | "bottom";
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -104,7 +107,8 @@ export function Select({
   const tokens = query.split(/\s+/).filter(Boolean);
   const filteredOptions = query
     ? options.filter((option) => {
-        const text = `${String(option.props.children ?? "")} ${option.props.value ?? ""}`.toLowerCase();
+        const text =
+          `${String(option.props.children ?? "")} ${option.props["data-detail"] ?? ""} ${option.props.value ?? ""}`.toLowerCase();
         return tokens.every((tok) => text.includes(tok));
       })
     : options;
@@ -196,7 +200,10 @@ export function Select({
         data-value={value}
         className={className === undefined ? "select-trigger" : `select-trigger ${className}`}
       >
-        <Primitive.Value />
+        {/* Its own label, not the list's: a search that filters the chosen option out of the list must not blank it. */}
+        <Primitive.Value>
+          {options.find((option) => (option.props.value ?? String(option.props.children ?? "")) === value)?.props.children}
+        </Primitive.Value>
         <Primitive.Icon aria-hidden="true">
           <Icon name="chevron-down" size="sm" />
         </Primitive.Icon>
@@ -205,6 +212,7 @@ export function Select({
       <Primitive.Content
         ref={contentRef}
         position="popper"
+        side={side}
         sideOffset={6}
         className={contentClassName === undefined ? "select-content surface-popover" : `select-content surface-popover ${contentClassName}`}
         onKeyDown={handleContentKeyDown}
@@ -283,6 +291,9 @@ export function Select({
                   <Icon name="check" size="sm" />
                 </Primitive.ItemIndicator>
                 <Primitive.ItemText>{option.props.children}</Primitive.ItemText>
+                {option.props["data-detail"] === undefined ? null : (
+                  <span className="select-option-detail">{option.props["data-detail"]}</span>
+                )}
               </Primitive.Item>
             );
           })}

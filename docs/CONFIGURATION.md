@@ -261,12 +261,23 @@ fails with a note to raise the limit or pick another model.
 
 A provider that stalls counts as a provider fault: a call that has had no
 output for 60 seconds (180 for a call that reasons first: a reasoning effort
-asked for, an OpenAI reasoning model, or a Claude model that takes an effort),
-or that goes quiet for 90 seconds mid-reply, is given up and fails over. A
-slow endpoint, such as a large local model, can be given longer with
+asked for, an OpenAI reasoning model, or a Claude model that takes an effort;
+600 for a server on this computer, which reads the whole prompt before it
+answers), or that goes quiet for 90 seconds mid-reply, is given up and fails
+over. A model's thinking counts as output even where the stream carries it in a
+field of its own, as Ollama's does. A slow endpoint can be given longer with
 `tavi models add <id> ... --first-byte-timeout <seconds>` and
 `--idle-timeout <seconds>` (1 to 3600; `default` puts one back); the setting
 is kept across edits while the endpoint stays the same.
+
+A local server's context length is its own setting, not the model's: Ollama
+runs every model at 4,096 tokens unless told otherwise, and Tavi's prompt with
+its tools runs to about 22K. Such a server silently cuts what does not fit, and
+answers whatever end of the prompt it kept, so a call whose server reports
+reading far less than was sent (under one token per eight characters) fails
+with a note saying so and naming the setting to raise. On Ollama, set the
+context length in its Settings or with `OLLAMA_CONTEXT_LENGTH` (32K or more),
+or make a model of your own with `PARAMETER num_ctx 32768` in a Modelfile.
 
 ### Roles
 

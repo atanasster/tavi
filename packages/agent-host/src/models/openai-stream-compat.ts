@@ -101,6 +101,13 @@ export interface WireObservation {
   readonly reasoningEffort?: string;
   prefixHash?: string;
   cacheUsageReported?: boolean;
+  /**
+   * When the stream last carried a `data:` line (not a keep-alive comment): what the call's deadlines count, since
+   * the SDK reads a line of reasoning in a field it does not know, such as Ollama's `reasoning`, as no output at all.
+   */
+  lastDataAt?: number;
+  /** The prompt's text as sent, in characters: its messages' words and the tool definitions, never an image's bytes. */
+  promptChars?: number;
 }
 
 /**
@@ -113,6 +120,52 @@ export const WIRE_OBSERVATION = Symbol("tavi.wireObservation");
 /** `fetch` for one call: the connection's transport, told where to record what it sees. */
 export function observedFetch(transport: typeof globalThis.fetch, observation: WireObservation): typeof globalThis.fetch {
   return (input, init) => transport(input, { ...init, [WIRE_OBSERVATION]: observation } as RequestInit);
+}
+
+/** A Chat Completions body's prompt text in characters: each message's text and the tools as sent, no images. */
+export function promptTextChars(body: unknown): number | undefined {
+  if (typeof body !== "string") return undefined;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    return undefined;
+  }
+  if (parsed === null || typeof parsed !== "object") return undefined;
+  const { messages, tools } = parsed as { readonly messages?: unknown; readonly tools?: unknown };
+  if (!Array.isArray(messages)) return undefined;
+  let chars = Array.isArray(tools) ? JSON.stringify(tools).length : 0;
+  for (const message of messages as unknown[]) {
+    const content = (message as { readonly content?: unknown } | null)?.content;
+    if (typeof content === "string") chars += content.length;
+    else if (Array.isArray(content))
+      for (const part of content as unknown[]) {
+        const text = (part as { readonly text?: unknown } | null)?.text;
+        if (typeof text === "string") chars += text.length;
+      }
+    const calls = (message as { readonly tool_calls?: unknown } | null)?.tool_calls;
+    if (Array.isArray(calls)) chars += JSON.stringify(calls).length;
+  }
+  return chars;
+}
+
+/**
+ * Why a reply cannot be trusted when the server read far less of the prompt than was sent: fewer than one token per
+ * eight characters, where text runs three to four. A local server does this silently when its context is smaller than
+ * the prompt (Ollama's default is 4,096 tokens), and its reply then answers whatever end of the prompt it kept.
+ */
+export function truncatedPromptReason(promptTokens: number | undefined, promptChars: number | undefined): string | undefined {
+  // Under 16,000 characters a prompt fits the smallest context a server runs (4,096 tokens), and a short count is noise.
+  if (promptTokens === undefined || promptTokens === 0 || promptChars === undefined || promptChars < 16_000) return undefined;
+  if (promptTokens * 8 >= promptChars) return undefined;
+  const sent = Math.round(promptChars / 4 / 1000);
+  // Room for the prompt and a reply, at a size servers offer.
+  const needed = Math.max(8, 2 ** Math.ceil(Math.log2(((promptChars / 4) * 1.25) / 1000)));
+  return (
+    `The model server read only ${promptTokens.toLocaleString("en-US")} tokens of a prompt of about ${String(sent)}K: ` +
+    "its context is smaller than the prompt, so it cut the request and its reply would not answer it. " +
+    `Raise the server's context length to ${String(needed)}K or more — on Ollama, in its Settings (Context length) or with OLLAMA_CONTEXT_LENGTH.`
+  );
 }
 
 /** The usage object a streamed `data:` line carries, if any. */
@@ -513,6 +566,8 @@ export function createOpenAiCompatibleTransport(
       // Before the markers are turned into a provider's own or dropped: the loop's choice of where the prefix ends.
       const prefixHash = wirePrefixHash(hasPartBreakpoints(body) ? body : (cachedBody ?? body));
       if (prefixHash !== undefined) observation.prefixHash = prefixHash;
+      const promptChars = promptTextChars(finalBody ?? init?.body);
+      if (promptChars !== undefined) observation.promptChars = promptChars;
     }
     const { [WIRE_OBSERVATION]: _observation, ...plainInit } = (init ?? {}) as RequestInit & {
       readonly [WIRE_OBSERVATION]?: WireObservation;
@@ -546,6 +601,7 @@ export function createOpenAiCompatibleTransport(
             // The line's own trailing `\r` (CRLF streams) is re-added below.
             const hasCr = line.endsWith("\r");
             const body = hasCr ? line.slice(0, -1) : line;
+            if (observation !== undefined && body.startsWith("data:")) observation.lastDataAt = Date.now();
             observeUsage(body);
             const replaced = patchToolCallIndexes(body, extras, pending);
             out.push(`${replaced ?? body}${hasCr ? "\r" : ""}`);

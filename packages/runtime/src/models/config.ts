@@ -317,13 +317,13 @@ export class ModelConfigService implements ModelConfigPort {
       });
     }
     assertEditable(existing);
-    // A connection that a role or the catalog still names must not vanish
-    // underneath them: the operator would otherwise discover the hole at the
-    // next task instead of here.
+    // A connection that a role or a default still names must not vanish
+    // underneath it: the operator would otherwise discover the hole at the
+    // next task instead of here. Its own discovered models go with it.
     if (this.#repository.referencedConnectionIds().includes(connectionId)) {
       throw new TaviError(
         "CONFLICT",
-        `Connection ${connectionId} is still referenced by a model role, workspace default or catalog entry`,
+        `Connection ${connectionId} is still used by a model role or a workspace default: point them at another model first`,
         { details: { connectionId } },
       );
     }

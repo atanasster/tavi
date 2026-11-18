@@ -72,6 +72,8 @@ time, with the real screens.
   configure ([PRIVACY](docs/PRIVACY.md)).
 - **Any model.** OpenRouter, OpenAI, Anthropic, Gemini, a local Ollama, or any
   OpenAI-compatible endpoint, with separate roles for a main and a fast model.
+  A local model needs a context of 32K tokens or more: Ollama's default is 4K
+  ([CONFIGURATION](docs/CONFIGURATION.md#failover)).
 - **Safe by default.** Risky tool calls wait for your approval. Content from
   the web or from other people marks a chat as untrusted, so its next outward
   action asks you first. Commands, plugins and file parsers run in an OS

@@ -87,17 +87,20 @@ export class SqliteModelConfigRepository implements ModelConfigRepositoryPort {
     return connection;
   }
 
+  /** The connection, and the models it discovered with it: they are its own, and mean nothing without it. */
   deleteConnection(connectionId: string): boolean {
-    const result = this.#store.handle.prepare("DELETE FROM tavi_model_connections WHERE connection_id = ?").run(connectionId);
-    return result.changes > 0;
+    return this.#store.transaction(() => {
+      this.#store.handle.prepare("DELETE FROM tavi_model_catalog WHERE connection_id = ?").run(connectionId);
+      const result = this.#store.handle.prepare("DELETE FROM tavi_model_connections WHERE connection_id = ?").run(connectionId);
+      return result.changes > 0;
+    });
   }
 
+  /** The connections a role or a workspace default names: what removing one would leave pointing at nothing. */
   referencedConnectionIds(): readonly string[] {
     const rows = this.#store.handle
       .prepare(
-        `SELECT DISTINCT connection_id FROM tavi_model_catalog
-         UNION
-         SELECT DISTINCT connection_id FROM tavi_model_roles
+        `SELECT DISTINCT connection_id FROM tavi_model_roles
          UNION
          SELECT DISTINCT connection_id FROM tavi_model_workspace_defaults`,
       )

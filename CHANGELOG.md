@@ -36,6 +36,26 @@ change behaviour or stored data.
 
 ### Fixed
 
+- Chatting with a local Ollama model works: its thinking, which Ollama streams
+  in a field of its own, counts as output, so a model that thinks for minutes
+  is no longer given up after 60 seconds, and a server on this computer gets
+  ten minutes to read a long prompt before its first word. When a server reads
+  far less of the prompt than was sent — Ollama runs at a 4,096-token context
+  unless told otherwise, and silently cuts the rest — the turn fails with a
+  note naming the setting to raise, instead of showing a reply to a question
+  it never saw. The Ollama connection says the context it needs, and its
+  **Manage** dialog no longer leads with an API key it does not take.
+- The composer's model picker says which connection each model comes from
+  when there are several, finds models by it, keeps naming the chat's model
+  while a search hides it, and no longer jumps below the composer as a search
+  narrows the list. A new chat started after a failed one offers **Send**, not
+  the old chat's **Retry**, and the footer no longer shows the previous chat's
+  elapsed time and tool calls.
+- A model connection can be removed once it has discovered its models: its
+  catalog goes with it (**Remove this connection…** and `tavi models remove`
+  used to refuse any connection that had found a model). Removal is still
+  refused while a role or the workspace default uses it, and the dialog now
+  says so instead of promising a fallback.
 - The canvas takes a photo (PNG or JPEG, up to 5 MB): it is uploaded when you
   send and the chat looks at it, as it does a photo from a messaging channel.
   A message shows its attached files as badges under your words; a text file

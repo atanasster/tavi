@@ -478,7 +478,8 @@ export function App({
                   state={state}
                   store={store}
                   current={current}
-                  acting={shell.acting}
+                  // A new chat's first prompt starts it: there is no failed turn of its own to retry.
+                  acting={drafting ? undefined : shell.acting}
                   nav={nav}
                   model={chatModel}
                   pane={pane}
@@ -597,7 +598,8 @@ export function App({
         </div>
         <ShellOverlays
           setup={setup}
-          stats={shell.stats}
+          // A new chat's figures are its own, none yet: never those of the chat it replaced on screen.
+          stats={drafting ? undefined : shell.stats}
           target={target}
           targetError={targetError}
           chatModelLabel={chatModelLabel}

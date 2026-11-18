@@ -6,6 +6,7 @@ import {
   defangVideoSentinels,
   newVideoSentinel,
   observedFetch,
+  truncatedPromptReason,
   type WireObservation,
 } from "./openai-stream-compat.js";
 import { openaiExplicitCacheModel, type CallCachePolicy } from "./prompt-cache.js";
@@ -68,10 +69,12 @@ import {
   compactObservationForModel,
   STREAM_FIRST_BYTE_SECONDS,
   STREAM_IDLE_SECONDS,
+  STREAM_LOCAL_FIRST_BYTE_SECONDS,
   STREAM_REASONING_FIRST_BYTE_SECONDS,
 } from "@tavi/contracts";
 import { definedOnly, errorMessage } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
+import { isLocalEndpoint } from "../schedulers/task-summarizer.js";
 
 /** The one tool whose result may put an image in front of the model. */
 const VIEW_IMAGE_TOOL_ID = "artifacts.view_image";
@@ -673,14 +676,22 @@ export function createAiSdkModelAdapter(options: AiSdkModelAdapterOptions): Mode
       let callerAborted = false;
       // One first-output deadline for the whole call: the SDK's own parts before the reply do not restart it.
       const firstByteBy = Date.now() + deadlines.firstByteMs;
+      let lastPartAt = Date.now();
+      // A data line the transport read counts too: a thinking model on Ollama streams its reasoning in a field the SDK
+      // drops, and the SDK holds every part back until the reply's first words, which can be minutes away.
+      const deadlineAt = (): number => {
+        const heard = wire.lastDataAt;
+        if (started) return Math.max(lastPartAt, heard ?? 0) + deadlines.idleMs;
+        return heard === undefined ? firstByteBy : heard + deadlines.idleMs;
+      };
       for (;;) {
-        const waitMs = started ? deadlines.idleMs : Math.max(0, firstByteBy - Date.now());
-        const next = await nextWithin(parts, waitMs, streamOptions.signal, () => {
+        const next = await nextWithin(parts, deadlineAt, streamOptions.signal, () => {
           stallError = {
             code: "provider",
-            message: started
-              ? `The provider sent nothing for ${deadlines.idleMs / 1000} s mid-reply`
-              : `The provider sent no output within ${deadlines.firstByteMs / 1000} s`,
+            message:
+              started || wire.lastDataAt !== undefined
+                ? `The provider sent nothing for ${deadlines.idleMs / 1000} s mid-reply`
+                : `The provider sent no output within ${deadlines.firstByteMs / 1000} s`,
             retryable: true,
           };
           stall.abort();
@@ -694,7 +705,10 @@ export function createAiSdkModelAdapter(options: AiSdkModelAdapterOptions): Mode
         if (next.done === true) break;
         const part = next.value;
         // The SDK's own bookkeeping comes before any byte of the reply, so only the reply's own parts start it.
-        if (part.type !== "start" && part.type !== "start-step") started = true;
+        if (part.type !== "start" && part.type !== "start-step") {
+          started = true;
+          lastPartAt = Date.now();
+        }
         switch (part.type) {
           case "text-delta": {
             const previous = text.get(part.id) ?? "";
@@ -793,6 +807,10 @@ export function createAiSdkModelAdapter(options: AiSdkModelAdapterOptions): Mode
     }
     if (streamError !== undefined) {
       return failure(request, streamError, joinText(text), toolCalls, usage);
+    }
+    const truncated = truncatedPromptReason(usage.inputTokens, wire.promptChars);
+    if (truncated !== undefined) {
+      return failure(request, { code: "invalid_request", message: truncated, retryable: false }, joinText(text), toolCalls, usage);
     }
 
     // An abort that lands while the stream is draining must not be reported as
@@ -1640,24 +1658,34 @@ function abortedOutcome(request: ModelRequest): ModelOutcome {
   };
 }
 
-/** A stream's deadlines in milliseconds: the connection's own, else the defaults — a reasoning call's first longer. */
+/**
+ * A stream's deadlines in milliseconds: the connection's own, else the defaults — a reasoning call's first longer, and
+ * a local server's longest, since it reads the whole prompt before it sends anything.
+ */
 export function streamDeadlinesOf(
-  connection: Pick<ProviderConnection, "streamFirstByteSeconds" | "streamIdleSeconds">,
+  connection: Pick<ProviderConnection, "streamFirstByteSeconds" | "streamIdleSeconds"> & { readonly baseUrl?: string },
   request: Pick<ModelRequest, "model" | "reasoningEffort">,
 ): { readonly firstByteMs: number; readonly idleMs: number } {
   const bare = request.model.slice(request.model.lastIndexOf("/") + 1);
   const reasons = request.reasoningEffort !== undefined || openaiReasoningModel(bare) || anthropicTakesEffort(bare);
-  const firstByte = connection.streamFirstByteSeconds ?? (reasons ? STREAM_REASONING_FIRST_BYTE_SECONDS : STREAM_FIRST_BYTE_SECONDS);
+  const firstByte =
+    connection.streamFirstByteSeconds ??
+    (connection.baseUrl !== undefined && isLocalEndpoint(connection.baseUrl)
+      ? STREAM_LOCAL_FIRST_BYTE_SECONDS
+      : reasons
+        ? STREAM_REASONING_FIRST_BYTE_SECONDS
+        : STREAM_FIRST_BYTE_SECONDS);
   return { firstByteMs: firstByte * 1000, idleMs: (connection.streamIdleSeconds ?? STREAM_IDLE_SECONDS) * 1000 };
 }
 
 /**
- * The iterator's next part, or `stalled` once `timeoutMs` passes without one (`onStall` runs first), or `aborted`
+ * The iterator's next part, or `stalled` once `deadlineAt()` passes without one (`onStall` runs first), or `aborted`
  * once `signal` aborts: a hung provider settles the call either way, whatever its transport does with the abort.
+ * The deadline is read again when it comes, so one that moved on in the meantime is waited for anew.
  */
 function nextWithin<T>(
   iterator: AsyncIterator<T>,
-  timeoutMs: number,
+  deadlineAt: () => number,
   signal: AbortSignal,
   onStall: () => void,
 ): Promise<IteratorResult<T> | "stalled" | "aborted"> {
@@ -1671,11 +1699,24 @@ function nextWithin<T>(
       settle();
       resolve("aborted");
     };
-    const timer = setTimeout(() => {
-      settle();
-      resolve("stalled");
-      onStall();
-    }, timeoutMs);
+    let timer: ReturnType<typeof setTimeout>;
+    const arm = (): void => {
+      const armedFor = deadlineAt();
+      timer = setTimeout(
+        () => {
+          // Waited anew only for a deadline that moved since it was set: output came meanwhile.
+          if (deadlineAt() > armedFor) {
+            arm();
+            return;
+          }
+          settle();
+          resolve("stalled");
+          onStall();
+        },
+        Math.max(0, armedFor - Date.now()),
+      );
+    };
+    arm();
     signal.addEventListener("abort", aborted, { once: true });
     iterator.next().then(
       (result) => {

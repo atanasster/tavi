@@ -172,11 +172,23 @@ describe("model connections", () => {
     const { store, service } = fixture();
     service.putConnection(connection);
     service.setWorkspaceDefault({ workspaceId: "ws", target: { connectionId: "local-ollama", model: "m" } });
-    expect(() => service.removeConnection("local-ollama")).toThrowError(/still referenced/);
+    expect(() => service.removeConnection("local-ollama")).toThrowError(/still used by a model role or a workspace default/);
 
     service.clearWorkspaceDefault("ws");
     service.removeConnection("local-ollama");
     expect(service.listConnections()).toEqual([]);
+    store.close();
+  });
+
+  it("removes a connection with the models it discovered, which name nothing else", () => {
+    const { store, service } = fixture();
+    service.putConnection(connection);
+    service.putCatalogEntry({ connectionId: "local-ollama", modelId: "gemma4:12b", provenance: "live" });
+    service.removeConnection("local-ollama");
+    expect(service.listConnections()).toEqual([]);
+    // Added again, it starts with no models of the old one's.
+    service.putConnection(connection);
+    expect(service.listCatalog("local-ollama")).toEqual([]);
     store.close();
   });
 });

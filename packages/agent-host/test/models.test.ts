@@ -2790,6 +2790,47 @@ describe("a provider stream that stalls", () => {
     }
   });
 
+  it("counts a local model's thinking, in a field the SDK drops, as output against the deadlines", async () => {
+    vi.useFakeTimers();
+    try {
+      // Ollama's OpenAI wire: a thinking model streams `reasoning` with empty `content` before its answer.
+      const thinking = (delta: Record<string, unknown>, finish: string | null) => ({
+        id: "chatcmpl-think",
+        object: "chat.completion.chunk",
+        created: 1,
+        model: "gemma4:12b",
+        choices: [{ index: 0, delta: { content: "", ...delta }, finish_reason: finish }],
+      });
+      const frames = [
+        thinking({ role: "assistant", reasoning: "Target:" }, null),
+        thinking({ reasoning: " a ginger cat" }, null),
+        thinking({ reasoning: " name." }, null),
+        thinking({ content: "Marmalade." }, null),
+        thinking({}, "stop"),
+      ];
+      // A frame every 50 s: three minutes of thinking under a 60 s first-output deadline.
+      const paced = () =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            async start(controller) {
+              for (const frame of frames) {
+                await new Promise((resolve) => setTimeout(resolve, 50_000));
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(frame)}\n\n`));
+              }
+              controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+              controller.close();
+            },
+          }),
+          { status: 200, headers: { "content-type": "text/event-stream" } },
+        );
+      const pending = adapterOn(paced).adapter.stream(request(), { signal: new AbortController().signal, onEvent: () => {} });
+      expect(await settledBy(pending, 251_000)).toBe(true);
+      expect(await pending).toMatchObject({ status: "completed", text: "Marmalade." });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("still reports the caller's abort of a stalled stream as an abort, at once", async () => {
     vi.useFakeTimers();
     try {
@@ -2807,6 +2848,15 @@ describe("a provider stream that stalls", () => {
     }
   });
 
+  it("waits ten minutes for a server on this computer to read the prompt, unless its connection says otherwise", () => {
+    expect(streamDeadlinesOf({ baseUrl: "http://localhost:11434/v1" }, { model: "gemma4:12b" })).toEqual({
+      firstByteMs: 600_000,
+      idleMs: 90_000,
+    });
+    expect(streamDeadlinesOf({ baseUrl: "http://127.0.0.1:1234/v1", streamFirstByteSeconds: 30 }, { model: "m" }).firstByteMs).toBe(30_000);
+    expect(streamDeadlinesOf({ baseUrl: "https://openrouter.ai/api/v1" }, { model: "m" }).firstByteMs).toBe(60_000);
+  });
+
   it("chooses the deadlines from the connection, else from whether the call reasons first", () => {
     expect(streamDeadlinesOf({}, { model: "fixture-model" })).toEqual({ firstByteMs: 60_000, idleMs: 90_000 });
     expect(streamDeadlinesOf({}, { model: "fixture-model", reasoningEffort: "low" })).toEqual({ firstByteMs: 180_000, idleMs: 90_000 });
@@ -2817,5 +2867,47 @@ describe("a provider stream that stalls", () => {
       firstByteMs: 30_000,
       idleMs: 20_000,
     });
+  });
+});
+
+describe("a server that cuts the prompt to fit its context", () => {
+  const adapterReporting = (promptTokens: number) =>
+    createAiSdkModelAdapter({
+      connections: [{ connectionId: "fixture", kind: "openai-compatible", baseUrl: "http://localhost:11434/v1", credentialRef: "k" }],
+      readSecret: async () => "test-key",
+      fetch: fakeFetch(
+        async () =>
+          new Response(
+            sse([
+              textChunk("How can I help you today?", null),
+              textChunk("", "stop", { prompt_tokens: promptTokens, completion_tokens: 7, total_tokens: promptTokens + 7 }),
+            ]),
+            { status: 200, headers: { "content-type": "text/event-stream" } },
+          ),
+      ),
+    });
+  // About 30K tokens of tools before the question, as a turn with Tavi's tools sends.
+  const long = request({
+    tools: Array.from({ length: 60 }, (_, index) => ({
+      id: `fixture.tool${String(index)}`,
+      name: `fixture_tool${String(index)}`,
+      description: "A tool. ".repeat(250),
+      inputJsonSchema: z.toJSONSchema(z.object({ message: z.string() }), { io: "input" }),
+    })),
+  });
+
+  it("fails the call, saying how to fix it, when the server read far less than was sent", async () => {
+    // Ollama at its default 4,096-token context: what the reply answers is not the question.
+    const outcome = await adapterReporting(2051).stream(long, { signal: new AbortController().signal, onEvent: () => {} });
+    expect(outcome).toMatchObject({ status: "failed", error: { code: "invalid_request", retryable: false } });
+    expect(outcome.error?.message).toContain("read only 2,051 tokens");
+    expect(outcome.error?.message).toContain("OLLAMA_CONTEXT_LENGTH");
+  });
+
+  it("keeps a reply whose server read the whole prompt, and a short prompt's whatever its count", async () => {
+    const whole = await adapterReporting(30_000).stream(long, { signal: new AbortController().signal, onEvent: () => {} });
+    expect(whole).toMatchObject({ status: "completed", text: "How can I help you today?" });
+    const short = await adapterReporting(3).stream(request(), { signal: new AbortController().signal, onEvent: () => {} });
+    expect(short.status).toBe("completed");
   });
 });

@@ -55,6 +55,8 @@ export function ModelPicker({
   const infoButtonRef = useRef<HTMLButtonElement>(null);
 
   const models = data?.models ?? [];
+  // Models from more than one place say where each is from: a local server's beside a gateway's hundreds.
+  const connections = new Set(models.map((model) => model.connectionId));
   const known = models.some((model) => `${model.connectionId}/${model.modelId}` === target);
   const selectedModel =
     models.find((entry) => `${entry.connectionId}/${entry.modelId}` === target) ??
@@ -108,6 +110,7 @@ export function ModelPicker({
             aria-label="Chat model"
             className="model-select"
             contentClassName="compact"
+            side="top"
             value={known ? (target ?? "") : ""}
             disabled={saving}
             onChange={(event) => void pick(event.target.value)}
@@ -119,6 +122,9 @@ export function ModelPicker({
                 key={`${model.connectionId}/${model.modelId}`}
                 value={`${model.connectionId}/${model.modelId}`}
                 disabled={model.state === "unavailable"}
+                {...(connections.size > 1 && !formatOptionLabel(model, models).endsWith(`(${model.connectionLabel})`)
+                  ? { "data-detail": model.connectionLabel }
+                  : {})}
               >
                 {formatOptionLabel(model, models)}
               </option>
