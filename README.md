@@ -29,10 +29,13 @@ Everything it knows stays in one folder on your machine. There is no account
 and no telemetry, and you choose the model: a cloud provider, or one running
 locally.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screens/chat-answer-dark.png">
-  <img src="docs/assets/screens/chat-answer.png" alt="The web canvas: the chats list, a Home chat with a question and Tavi's answer, and the composer">
-</picture>
+<a href="https://youtu.be/-CyhAOg-zIA">
+  <img src="docs/assets/demo/demo-poster.jpg" alt="Play the 80-second demo video on YouTube: the web canvas answering with a vegetarian dinner it chose from what it remembers about you" width="100%">
+</a>
+
+▶ **[Watch the 80-second demo](https://youtu.be/-CyhAOg-zIA)**: `tavi chat` in a terminal, the web canvas
+asking before it opens a browser, and the same chat on a phone. A real run on a
+fresh install, with the model's waits sped up.
 
 ## What Tavi does
 
