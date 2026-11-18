@@ -121,17 +121,18 @@
 }
 
 /* Chats opened by hand on a phone: the stack scrolls, and the chat below them
-   keeps its whole height rather than giving it to them. */
+   keeps its whole height rather than giving it to them. Not a section nav (Center,
+   Settings), a strip of tabs over a page that scrolls by itself: one scrollbar, the page's. */
 @media (--phone) {
-  .body:has(> .sidebar) {
+  .body:has(> .sidebar:not(.center-nav)) {
     overflow-y: auto;
   }
 
-  .body:has(> .sidebar) > * {
+  .body:has(> .sidebar:not(.center-nav)) > * {
     flex: none;
   }
 
-  .body:has(> .sidebar) > .main {
+  .body:has(> .sidebar:not(.center-nav)) > .main {
     height: 100%;
   }
 }

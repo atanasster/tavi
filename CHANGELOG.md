@@ -28,6 +28,18 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- One scrollbar, never two. On a phone, Settings and the Command Center
+  scrolled both the page and the area holding the section tabs; now only
+  the page scrolls. Long text you open in Soul & memory, a skill, the chat
+  panel's instructions or Settings → System prompt runs its full length
+  instead of sitting in a scroll box inside the scrolling page.
+- Settings: a paragraph under a page title keeps a readable width rather
+  than the page's full width. Form help, legends and checkbox labels are
+  the size of the labels around them. A checkbox's description stays under
+  it when the field beside it is taller. Each model connection's status dot
+  sits on its name's line. Credentials kept unencrypted are said in the
+  warning colour. A plugin's Hook activity opens with a chevron like its
+  Tools list, and Settings → Ideas' Save brief is the primary button.
 - In a chat, the side panel's text actions ("Set up a schedule…", "… in the
   Command Center →") start on the same edge as the text above them, one a
   line, and the composer's model picker is as tall as Send.

@@ -236,7 +236,9 @@ describe("the layout's breakpoints are one set of numbers", () => {
     const short = (name: string) => stylesheet(name).slice(stylesheet(name).indexOf("@media (--short)"));
     expect(short("composer.css")).toMatch(/\.composer textarea \{\s*flex: 1 1 0;\s*width: auto;\s*min-height: var\(--control-height\);/);
     expect(short("composer.css")).toMatch(/\.composer-hint \{\s*display: none;/);
-    expect(stylesheet("strip.css")).toMatch(/\.body:has\(> \.sidebar\) > \.main \{\s*height: 100%;/);
+    expect(stylesheet("strip.css")).toMatch(/\.body:has\(> \.sidebar:not\(\.center-nav\)\) > \.main \{\s*height: 100%;/);
+    // A section nav's strip (Center, Settings) is not that stack: its page scrolls alone, one scrollbar, not two.
+    expect(stylesheet("strip.css")).not.toMatch(/\.body:has\(> \.sidebar\) /);
   });
 
   it("states a width only in breakpoints.css", () => {

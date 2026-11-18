@@ -45,9 +45,16 @@
   letter-spacing: var(--tracking-tighter);
 }
 
-/* Prose keeps a readable measure however wide the page is. */
-:where(.settings) p {
+/* Prose keeps a readable measure however wide the page is: a paragraph straight under the page too,
+   which `.settings > *` would otherwise give the page's whole width. */
+:where(.settings) p,
+.settings > p {
   max-width: var(--width-prose);
+}
+
+/* Narrower than the column, a paragraph under the page starts on the column's left edge, not in its middle. */
+.settings > p {
+  margin-inline: max(0%, (100% - var(--width-page)) / 2) auto;
 }
 
 .settings-description {
@@ -235,4 +242,9 @@
 
 .credential-name code {
   overflow-wrap: anywhere;
+}
+
+/* Credentials kept in the clear: a warning, said in its colour. */
+.credential-encryption-off {
+  color: hsl(var(--warning));
 }

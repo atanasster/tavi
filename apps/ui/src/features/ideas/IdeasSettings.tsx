@@ -225,6 +225,7 @@ export function IdeasSettings() {
         <BriefField id={`${ids}-brief`} value={brief} onChange={setBriefDraft} />
         <p>
           <Button
+            variant="primary"
             size="sm"
             disabled={busy !== undefined || brief === data.brief}
             onClick={() => void run("brief", () => said(briefSaved(settings))(setBrief(client, workspaceId, brief ?? "")))}

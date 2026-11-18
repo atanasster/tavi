@@ -237,8 +237,6 @@
   --height-clip-sm: 10rem;
   --height-clip: 20rem;
   --height-clip-md: 24rem;
-  --height-clip-lg: 28rem;
-  --height-clip-xl: 32rem;
   --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   /* The display face, used with restraint: the wordmark, Welcome's title and a page's title. */
   --font-display: "Bricolage Grotesque Variable", "Bricolage Grotesque", var(--font-sans);

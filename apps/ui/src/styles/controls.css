@@ -591,7 +591,13 @@ input[type="radio"] {
   transform: rotate(45deg);
 }
 
+/* A button that shows and hides what follows it is drawn as a summary is: the chevron, then its words. */
+button.disclosure[aria-expanded="true"]::before {
+  transform: rotate(45deg);
+}
+
 /* A summary standing alone (not styled by its panel): a row, so the chevron has a box to draw in. */
+button.disclosure,
 summary.disclosure {
   display: flex;
   align-items: center;

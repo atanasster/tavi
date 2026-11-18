@@ -269,8 +269,8 @@ export function PluginsSettings({
           {plugin.mods === undefined && plugin.commands === undefined ? null : (
             <span>
               <Button
-                variant="ghost"
-                size="sm"
+                variant="bare"
+                className="disclosure muted"
                 aria-expanded={expanded.has(plugin.id)}
                 aria-label={`Hook activity for ${plugin.id}`}
                 onClick={() => toggleActivity(plugin.id)}

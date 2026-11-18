@@ -177,10 +177,10 @@
   color: hsl(var(--primary));
 }
 
+/* Opened, a layer's text runs its full length: the page scrolls it, not a box of its own inside the page. */
 .soul-layer-detail pre,
 .soul-layer-detail p,
 .soul-shipped {
-  max-height: var(--height-clip);
   margin: var(--space-1-5) 0 0;
   font-size: var(--text-sm);
 }
@@ -462,8 +462,6 @@
 }
 
 .soul-skill-body {
-  max-height: var(--height-clip-xl);
-  overflow: auto;
   white-space: pre-wrap;
   word-break: break-word;
   font-size: var(--text-sm);

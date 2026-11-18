@@ -351,9 +351,8 @@ label.need-option:has(input:checked) {
   color: hsl(var(--muted-foreground));
 }
 
+/* A call's arguments, opened under Details: their full length, the page scrolling them rather than a box inside it. */
 .center-card-call pre {
-  max-height: var(--height-scroll-sm);
-  overflow: auto;
   margin: var(--space-1) 0 var(--space-2);
   padding: var(--space-2);
   border-radius: var(--radius-sm);

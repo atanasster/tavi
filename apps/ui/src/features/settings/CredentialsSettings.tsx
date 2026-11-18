@@ -23,7 +23,8 @@ import { useWorkspace } from "../shell/Workspace.js";
 /** Whether the store is encrypted at rest, and where its key is: read-only, as `tavi credentials key` says it. */
 function EncryptionStatus({ status }: { readonly status: CredentialEncryptionStatus }) {
   return (
-    <p className="credential-encryption muted">
+    // Unencrypted is a warning, not a note: said in the warning colour.
+    <p className={status.kept === "none" ? "credential-encryption credential-encryption-off" : "credential-encryption muted"}>
       {status.kept === "none" ? (
         <>
           Not encrypted: run <Command>tavi credentials encrypt</Command>
