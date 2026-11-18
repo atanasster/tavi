@@ -17,7 +17,9 @@ tavi ui [--print-url] [--port <n>] [--data-dir <path>]
 `--port` names one) and bridges it to the running owner (exit `4` without
 one). It opens a one-time link in your browser (`--print-url` prints it
 instead); press **Enter** where `tavi ui` runs for another link (a new tab needs
-its own), and Ctrl-C to stop it. The owner and its runs are untouched.
+its own), and Ctrl-C to stop it. The owner and its runs are untouched. A tab
+whose sign-in has ended (`tavi ui` restarted, or 12 hours passed) says so; open
+a new link in that same tab and it loads again and signs in with it.
 
 To open the link, `tavi ui` hands it to your system's opener. On macOS that is
 `osascript`, which reads the link on stdin, so it is never on a command line.

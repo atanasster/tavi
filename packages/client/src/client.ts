@@ -19,6 +19,7 @@ import {
   type RunResult,
   type SubscribeResult,
 } from "@tavi/contracts";
+import { errorMessage } from "@tavi/contracts/util";
 
 import {
   CLIENT_DISCONNECTED,
@@ -639,7 +640,9 @@ class ReconnectingClient implements TaviClient {
     const deadline = timeoutMs ?? (isAdmission(command, payload) ? ADMISSION_TIMEOUT_MS : REQUEST_TIMEOUT_MS);
     for (let send = 1; ; send += 1) {
       const connection = await this.#ready();
-      if (connection === undefined) return disconnected("this client is closed");
+      // Closed for a reason (a refused session, say): that reason, which says what to do, not just that it closed.
+      if (connection === undefined)
+        return disconnected(this.#failure === undefined ? "this client is closed" : errorMessage(this.#failure));
       const requestId = this.#nextRequestId();
       const response = await connection.request(command, payload, requestId, {
         timeoutMs: deadline,

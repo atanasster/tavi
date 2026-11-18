@@ -71,3 +71,27 @@ export async function startPage(host: PageHost): Promise<void> {
   }
   host.render(client);
 }
+
+/** A `tavi ui` link's fragment: its one-time token, 32 random bytes in base64url. */
+const LINK_FRAGMENT = /^#[A-Za-z0-9_-]{43}$/;
+
+/** What watching for a new link needs from the page: a test passes fakes. */
+export interface LinkWatchHost {
+  readonly location: Pick<PageLocation, "pathname" | "hash">;
+  readonly addEventListener: (type: "hashchange", listener: () => void) => void;
+  /** Load the page again, at its current address. */
+  readonly reload: () => void;
+}
+
+/**
+ * A new link opened in a tab already showing the page: the page loads again
+ * and signs in with it. Its address differs from the tab's only in the
+ * fragment, so the browser does not load it — it only changes the fragment —
+ * and a tab whose `tavi ui` restarted would otherwise keep its ended session.
+ * Only a token at the page's root counts: a settings anchor is never one.
+ */
+export function watchForNewLink(host: LinkWatchHost): void {
+  host.addEventListener("hashchange", () => {
+    if (host.location.pathname === "/" && LINK_FRAGMENT.test(host.location.hash)) host.reload();
+  });
+}

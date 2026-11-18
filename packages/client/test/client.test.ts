@@ -405,6 +405,9 @@ describe("reconnecting", () => {
     expect(String(ended)).toContain("cannot read");
     // The client says why it closed, for a host to report it.
     expect(client.failure).toBe(ended);
+    // A request after is answered with that reason too, not only that the client is closed.
+    const after = await client.request("tasks", {});
+    expect(after.error?.message).toContain("cannot read");
     await scheduler.advance(60_000);
     expect(dialer.discoveries).toBe(1);
     expect(owner.connections).toHaveLength(1);

@@ -12,7 +12,7 @@ import { App } from "./App.js";
 import { createCanvasStore } from "./features/chat/store/store.js";
 import type { RememberedTask, TaskMemory } from "./features/chat/store/types.js";
 import type { PageNavigation } from "./features/shell/route.js";
-import { startPage } from "./features/startup/start.js";
+import { startPage, watchForNewLink } from "./features/startup/start.js";
 import { readStoredJson, writeStoredJson } from "./lib/storage.js";
 import { ViewBoundary } from "./ui/ViewBoundary.js";
 import "./styles/index.css";
@@ -62,6 +62,11 @@ adoptStyleNonce();
 const root = document.getElementById("root");
 if (root !== null) {
   const view = createRoot(root);
+  watchForNewLink({
+    location: window.location,
+    addEventListener: (type, listener) => window.addEventListener(type, listener),
+    reload: () => window.location.reload(),
+  });
   void startPage({
     ...(tabStorage === undefined ? {} : { storage: tabStorage }),
     location: window.location,

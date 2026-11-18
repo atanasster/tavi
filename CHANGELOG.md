@@ -32,6 +32,12 @@ change behaviour or stored data.
 
 ### Fixed
 
+- A canvas tab whose `tavi ui` restarted can be signed in again: opening the
+  new link in that same tab now loads the page with it, where it used to
+  change only the address. Settings and other pages there say why they cannot
+  load (open a new link) rather than "this client is closed".
+- The **Chat folder** panel of a new chat no longer opens partly off the left
+  edge of the window; a panel that opens by its button is moved back inside.
 - Approvals in a chat that reads Bulgarian or Russian pages no longer all warn
   of "possible prompt injection (mixed-script)". The warning now needs Latin
   words forged with Cyrillic or Greek look-alike letters (such as a fake

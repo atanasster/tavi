@@ -1,8 +1,9 @@
-import { useEffect, useRef, type DependencyList, type KeyboardEvent, type ReactNode, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, type DependencyList, type KeyboardEvent, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 
 import { useAnchoredPosition, type Anchoring } from "../hooks/use-anchored-position.js";
 import { useDismiss, type DismissedBy } from "../hooks/use-dismiss.js";
+import { POPOVER_EDGE_PX } from "../lib/layout.js";
 
 /** What closed a popover: one of `useDismiss`'s ways out, or Tab past its edge (an anchored one). */
 export type PopoverClosedBy = DismissedBy | "tab";
@@ -19,8 +20,9 @@ const TAB_STOPS =
  * running turn) skips it. Where focus goes as it closes is the opener's: it
  * hears how it closed.
  *
- * Without `anchor` it sits where it is in the page, placed by its own CSS,
- * and takes an Escape pressed inside its parent (it and its toggle) only.
+ * Without `anchor` it sits where it is in the page, placed by its own CSS —
+ * moved sideways, when that runs it off the window, to keep inside it — and
+ * takes an Escape pressed inside its parent (it and its toggle) only.
  * With `anchor` (its toggle) it is portaled to the page's end and placed
  * beside it (`position: fixed`; `data-ready` once placed, so it is never
  * seen at 0,0), and so it hears Escape before the page does, closes on a
@@ -75,6 +77,23 @@ export function Popover({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
+  // In place, kept inside the window: CSS places it by its toggle, which may sit too near an edge for it.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `deps` is the caller's list of what changes its size.
+  useLayoutEffect(() => {
+    const element = box.current;
+    if (anchored || element === null) return;
+    const fit = (): void => {
+      // Measured where its CSS puts it; a style left empty is no style.
+      element.style.removeProperty("translate");
+      if (element.getAttribute("style") === "") element.removeAttribute("style");
+      const shift = keepInside(element.getBoundingClientRect(), document.documentElement.clientWidth);
+      if (shift !== 0) element.style.translate = `${shift}px 0`;
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [anchored, ...deps]);
+
   /** Tab out of an anchored popover (it is at the page's end) goes on beside its anchor, and closes it. */
   const leaveByTab = (event: KeyboardEvent<HTMLElement>): void => {
     if (event.key !== "Tab" || anchor === undefined) return;
@@ -120,4 +139,17 @@ export function Popover({
     </Element>
   );
   return anchored ? createPortal(popover, document.body) : popover;
+}
+
+/**
+ * How far to move a box sideways to keep it `POPOVER_EDGE_PX` inside a window
+ * `width` wide: right when it runs off the left, left when off the right (but
+ * never past the left), and not at all when it fits or has no width.
+ */
+export function keepInside(box: Pick<DOMRect, "left" | "right">, width: number): number {
+  // Not laid out (no width): nothing to keep inside.
+  if (box.right <= box.left) return 0;
+  if (box.left < POPOVER_EDGE_PX) return POPOVER_EDGE_PX - box.left;
+  if (box.right > width - POPOVER_EDGE_PX) return Math.max(width - POPOVER_EDGE_PX - box.right, POPOVER_EDGE_PX - box.left);
+  return 0;
 }

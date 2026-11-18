@@ -1,7 +1,7 @@
 import type { TaviClient } from "@tavi/client/browser";
 import { describe, expect, it } from "vitest";
 
-import { SESSION_SECRET_KEY, startPage, type PageHost, type PageStorage } from "../../../src/features/startup/start.js";
+import { SESSION_SECRET_KEY, startPage, watchForNewLink, type PageHost, type PageStorage } from "../../../src/features/startup/start.js";
 
 /** The page's start: scrub, exchange, connect, render — in that order. */
 
@@ -85,5 +85,47 @@ describe("startPage", () => {
     const reloaded = host({ hash: "", storage: refusing });
     await startPage(reloaded.page);
     expect(reloaded.steps).toEqual([expect.stringContaining("message Open this page from the link")]);
+  });
+});
+
+describe("watchForNewLink", () => {
+  const TOKEN = "18kCYRWNCKB9-RYpKhxqgLYc7x-LQB2RFesJcFxkXlw";
+
+  function watched(pathname: string) {
+    const location = { pathname, hash: "" };
+    let changed: (() => void) | undefined;
+    let reloads = 0;
+    watchForNewLink({
+      location,
+      addEventListener: (_type, listener) => {
+        changed = listener;
+      },
+      reload: () => {
+        reloads += 1;
+      },
+    });
+    return {
+      open: (hash: string) => {
+        location.hash = hash;
+        changed?.();
+      },
+      reloads: () => reloads,
+    };
+  }
+
+  it("loads the page again when a new link is opened in the tab", () => {
+    const tab = watched("/");
+    tab.open(`#${TOKEN}`);
+    expect(tab.reloads()).toBe(1);
+  });
+
+  it("leaves an anchor, an emptied fragment, or a page off the root alone", () => {
+    const root = watched("/");
+    root.open("#rule-shell");
+    root.open("");
+    expect(root.reloads()).toBe(0);
+    const settings = watched("/settings/permissions");
+    settings.open(`#${TOKEN}`);
+    expect(settings.reloads()).toBe(0);
   });
 });

@@ -2,7 +2,7 @@
 import { act, useRef, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import { Popover, type PopoverClosedBy } from "../../src/ui/Popover.js";
+import { Popover, keepInside, type PopoverClosedBy } from "../../src/ui/Popover.js";
 import { button, click, mount } from "../support/dom.js";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -135,5 +135,17 @@ describe("Popover", () => {
     await press(document.activeElement, "Tab", { shiftKey: true });
     expect(document.querySelector(".test-popover")).toBeNull();
     expect(document.activeElement).toBe(button(page, "Toggle"));
+  });
+});
+
+describe("keepInside", () => {
+  it("moves an in-place popover back inside the window by the edge it runs off, and leaves one that fits", () => {
+    // Opened right-aligned from a chip near the left: it ran 120 px off the left edge.
+    expect(keepInside({ left: -120, right: 280 }, 800)).toBe(128);
+    expect(keepInside({ left: 600, right: 900 }, 800)).toBe(-108);
+    expect(keepInside({ left: 8, right: 792 }, 800)).toBe(0);
+    // Wider than the window: its left edge is the one kept.
+    expect(keepInside({ left: 4, right: 900 }, 800)).toBe(4);
+    expect(keepInside({ left: 0, right: 0 }, 800)).toBe(0);
   });
 });
