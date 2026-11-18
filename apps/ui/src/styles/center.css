@@ -698,6 +698,16 @@
   overflow: hidden;
 }
 
+/* What the chat read before the call: spaced by the card's gap, not a paragraph's 1em on top of it, and starting as a
+   sentence though the owner words it as a clause ("after reading …"). */
+.center-card-provenance {
+  margin: 0;
+}
+
+.center-card-provenance::first-letter {
+  text-transform: uppercase;
+}
+
 /* A card's accent stripe down its left edge. */
 .center-card::before,
 .need::before {

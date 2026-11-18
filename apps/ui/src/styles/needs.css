@@ -110,6 +110,11 @@ label.need-option {
   grid-template-columns: var(--size-avatar-sm) var(--size-avatar-sm) 1fr auto;
 }
 
+/* A pick-several option's tick sits level with its number and words, not 4px above them. */
+label.need-option > input {
+  margin-top: calc((var(--size-avatar-xs) - var(--size-check)) / 2);
+}
+
 .need-option:hover:enabled,
 label.need-option:hover {
   background: hsl(var(--secondary) / var(--alpha-muted));
