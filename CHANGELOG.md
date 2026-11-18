@@ -13,7 +13,7 @@ change behaviour or stored data.
   own SSH sign-in. It keeps a mirror directory (`~/.tavi-remote/<host>`) that
   `tavi chat`, `tavi ui`, `tavi run` and the other commands name with
   `--data-dir`, follows the owner when it restarts, and signs in again when the
-  connection drops. Clients of a remote owner no longer send it folders of
+  connection drops. The canvas shows the remote owner's plugin pages too. Clients of a remote owner no longer send it folders of
   this computer, and the mirror is never opened as a data directory of its own.
 
 ### Changed

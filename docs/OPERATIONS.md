@@ -174,6 +174,9 @@ computer: `tavi chat`, `tavi ui` (the canvas on this computer's loopback),
   `--fs-root` folders. A client of a mirror sends no folder of this computer:
   a new chat works in its own folder there, and a folder you name is a path
   there (`~` is the SSH user's home; a relative path is refused).
+- **Plugin pages come along.** The mirror keeps a copy of each plugin
+  version installed there, so the canvas here shows a plugin's own pages and
+  icons; installs and removals there are followed.
 - **The mirror is not a data directory.** It holds no database. While the
   connection is down, clients say they cannot reach the owner rather than
   opening it, and `tavi serve` refuses it.

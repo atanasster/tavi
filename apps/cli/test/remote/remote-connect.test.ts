@@ -21,6 +21,7 @@ import {
   remoteConnect,
   remoteDataDirectoryOf,
   shellQuote,
+  untarFrom,
 } from "../../src/features/remote/connect.js";
 import { clientCwdFor, remoteFoldersOf, remotePathOf } from "../../src/features/remote/folders.js";
 import { EXIT, main } from "../../src/main.js";
@@ -84,6 +85,10 @@ function localConnector(): { readonly connector: RemoteConnector; readonly drop:
       },
       forward: async (local, remote) => {
         symlinkSync(remote, local);
+      },
+      copy: (script, directory) => {
+        scripts.push(script);
+        return untarFrom("/bin/sh", ["-c", script], directory);
       },
       ended,
       close: async () => end("closed"),
@@ -157,6 +162,54 @@ describe("tavi remote connect", () => {
     expect(existsSync(paths.socket)).toBe(false);
     // The private directory made there for the link is removed.
     expect(out.stderr()).toBe("");
+  });
+
+  it("copies the remote owner's installed plugin versions for the canvas, and follows installs and removals", async () => {
+    const remote = directories.create();
+    const mirror = join(directories.create(), "m");
+    const install = (folder: string, text: string): void => {
+      mkdirSync(join(remote, "plugins", folder, "ui"), { recursive: true });
+      writeFileSync(join(remote, "plugins", folder, "ui", "index.html"), text);
+      writeFileSync(join(remote, "plugins", folder, "plugin.json"), "{}");
+    };
+    install("acme.panel/1.0.0", "<p>one</p>");
+    mkdirSync(join(remote, "plugins", ".dev", "acme.local"), { recursive: true });
+    // A plugin's home is its own private state: never copied.
+    mkdirSync(join(remote, "plugins", "acme.panel", "home"), { recursive: true });
+    writeFileSync(join(remote, "plugins", "acme.panel", "home", "secret.txt"), "private");
+    await startOwner(remote);
+    const out = capture();
+    let stop = (): void => undefined;
+    const stopped = new Promise<void>((resolve) => {
+      stop = resolve;
+    });
+    const running = remoteConnect(
+      { action: "connect", target: "mini", mirrorDirectory: mirror, remoteDataDirectory: remote, sshOptions: [] },
+      out.io,
+      EXIT,
+      { connector: localConnector().connector, stopped, pollMs: 25, reconnectMs: 25 },
+    );
+    const paths = mirrorPaths(mirror);
+    const copied = (folder: string): string => join(paths.plugins, folder, "ui", "index.html");
+    await until(() => existsSync(copied("acme.panel/1.0.0")), "the installed plugin copied");
+    expect(readFileSync(copied("acme.panel/1.0.0"), "utf8")).toBe("<p>one</p>");
+    expect(existsSync(join(paths.plugins, ".dev"))).toBe(false);
+    expect(existsSync(join(paths.plugins, "acme.panel", "home"))).toBe(false);
+
+    // A new version installed there arrives; the one removed there goes.
+    install("acme.panel/1.1.0", "<p>two</p>");
+    rmSync(join(remote, "plugins", "acme.panel", "1.0.0"), { recursive: true });
+    await until(
+      () => existsSync(copied("acme.panel/1.1.0")) && !existsSync(join(paths.plugins, "acme.panel", "1.0.0")),
+      "the plugin update",
+    );
+    expect(readFileSync(copied("acme.panel/1.1.0"), "utf8")).toBe("<p>two</p>");
+
+    stop();
+    expect(await running).toBe(EXIT.ok);
+    expect(out.stderr()).toBe("");
+    // The mirror stays a mirror with its plugin copies in it.
+    expect(mirrorRefusal(mirror, "mini")).toBeUndefined();
   });
 
   it("signs in again after the connection drops", async () => {
@@ -248,7 +301,16 @@ describe("what the remote side is read as", () => {
 
   it("reads the owner's publication, and nothing that is not one", () => {
     const discovery = { protocolVersion: 7, sessionId: "serve-1", endpoint: "/x/ipc.sock", pid: 1, startedAt: "now" };
-    expect(parsePublished(`${JSON.stringify(discovery)}\n--tavi-remote-token--\nabc=\n`)).toEqual({ discovery, token: "abc=" });
+    expect(parsePublished(`${JSON.stringify(discovery)}\n--tavi-remote-token--\nabc=\n`)).toEqual({
+      discovery,
+      token: "abc=",
+      plugins: [],
+    });
+    expect(
+      parsePublished(
+        `${JSON.stringify(discovery)}\n--tavi-remote-token--\nabc=\n--tavi-remote-plugins--\nb.p/2.0.0\na.p/1.0.0\na.p/home\n../x\n.dev/a\n*/*/\n`,
+      ),
+    ).toEqual({ discovery, token: "abc=", plugins: ["a.p/1.0.0", "b.p/2.0.0"] });
     expect(parsePublished("{}\n--tavi-remote-token--\nabc")).toBeUndefined();
     expect(parsePublished(JSON.stringify(discovery))).toBeUndefined();
     expect(publishedScript("/Users/b/Library/Application Support/tavi")).toContain("'/Users/b/Library/Application Support/tavi/runtime'");

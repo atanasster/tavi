@@ -1,5 +1,5 @@
 import { type ChildProcess, spawn } from "node:child_process";
-import { chmodSync, existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, posix, resolve } from "node:path";
 
@@ -42,6 +42,14 @@ const SOCKET_PATH_MAX = 103;
 const CONTROL_PATH_SUFFIX = 17;
 /** Where the remote owner's discovery and token begin in what the poll reads. */
 const SEPARATOR = "--tavi-remote-token--";
+/** Where the list of its installed plugin versions begins. */
+const PLUGINS_SEPARATOR = "--tavi-remote-plugins--";
+/**
+ * An installed plugin version's folder under `plugins/`: `<id>/<semver>`, as
+ * plugin installs name them. Nothing else there is copied — not a plugin's
+ * `home` (its own private state), nor a dev plugin's snapshot (`.dev`).
+ */
+const PLUGIN_FOLDER = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}\/\d+\.\d+\.\d+(?:-[0-9a-z]+(?:\.[0-9a-z]+)*)?$/;
 
 export interface RemoteIo {
   readonly stdout: (text: string) => void;
@@ -61,6 +69,8 @@ export interface RemoteConnection {
   run(script: string): Promise<RemoteResult>;
   /** Forward `localSocket` here to `remoteSocket` there, for as long as the connection lasts. */
   forward(localSocket: string, remoteSocket: string): Promise<void>;
+  /** Run `script` there, which writes a tar archive to its output, and unpack it into `directory` here. */
+  copy(script: string, directory: string): Promise<void>;
   /** Settles, with why, when the connection ends. */
   readonly ended: Promise<string>;
   close(): Promise<void>;
@@ -88,6 +98,8 @@ export interface MirrorPaths {
   readonly control: string;
   readonly pid: string;
   readonly marker: string;
+  /** The remote owner's installed plugin versions, copied for the canvas's plugin pages. */
+  readonly plugins: string;
 }
 
 export function mirrorPaths(directory: string): MirrorPaths {
@@ -102,6 +114,7 @@ export function mirrorPaths(directory: string): MirrorPaths {
     control: join(runtime, "ssh"),
     pid: join(runtime, "connect.pid"),
     marker: join(directory, REMOTE_MIRROR_FILE),
+    plugins: join(directory, "plugins"),
   };
 }
 
@@ -156,7 +169,7 @@ export function mirrorRefusal(directory: string, target: string): string | undef
   if (mirror !== undefined) {
     return mirror.target === target ? undefined : `${directory} mirrors ${mirror.target}, not ${target}; pick another --data-dir`;
   }
-  const entries = readdirSync(directory).filter((entry) => entry !== "runtime");
+  const entries = readdirSync(directory).filter((entry) => entry !== "runtime" && entry !== "plugins");
   return entries.length === 0
     ? undefined
     : `${directory} is not empty and not a remote mirror (it may be a data directory of its own); pick another --data-dir`;
@@ -181,10 +194,19 @@ function withdraw(paths: MirrorPaths): void {
   rmSync(paths.token, { force: true });
 }
 
-/** What the remote owner publishes: its discovery and token, or undefined when none is running. */
-export function parsePublished(stdout: string): { readonly discovery: IpcDiscovery; readonly token: string } | undefined {
+/** What the remote owner publishes. */
+export interface Published {
+  readonly discovery: IpcDiscovery;
+  readonly token: string;
+  /** Its installed plugin versions, `<id>/<version>`, sorted. */
+  readonly plugins: readonly string[];
+}
+
+/** What the remote owner publishes: its discovery, token and plugin versions, or undefined when none is running. */
+export function parsePublished(stdout: string): Published | undefined {
   const at = stdout.indexOf(`\n${SEPARATOR}\n`);
   if (at < 0) return undefined;
+  const pluginsAt = stdout.indexOf(`\n${PLUGINS_SEPARATOR}\n`, at);
   let json: unknown;
   try {
     json = JSON.parse(stdout.slice(0, at));
@@ -192,22 +214,112 @@ export function parsePublished(stdout: string): { readonly discovery: IpcDiscove
     return undefined;
   }
   const discovery = IpcDiscoverySchema.safeParse(json);
-  const token = stdout.slice(at + SEPARATOR.length + 2).trim();
+  const token = stdout.slice(at + SEPARATOR.length + 2, pluginsAt < 0 ? undefined : pluginsAt).trim();
   if (!discovery.success || token === "" || /\s/.test(token)) return undefined;
-  return { discovery: discovery.data, token };
+  const plugins =
+    pluginsAt < 0
+      ? []
+      : stdout
+          .slice(pluginsAt + PLUGINS_SEPARATOR.length + 2)
+          .split("\n")
+          .filter((line) => PLUGIN_FOLDER.test(line))
+          .sort();
+  return { discovery: discovery.data, token, plugins };
 }
 
 /** Copy the remote owner's publication into the mirror, its endpoint the forwarded socket. Token first: a client reads discovery, then the token. */
-function publish(paths: MirrorPaths, published: { readonly discovery: IpcDiscovery; readonly token: string }): void {
+function publish(paths: MirrorPaths, published: Published): void {
   writeFileSync(paths.token, published.token, { mode: 0o600 });
   chmodSync(paths.token, 0o600);
   writeJsonAtomic(paths.discovery, { ...published.discovery, endpoint: paths.socket }, { mode: 0o600 });
 }
 
-/** The shell script that prints the owner's discovery, the separator and its token; exit 3 when none is published. */
+/**
+ * The shell script that prints the owner's discovery, the separator, its
+ * token, and then its installed plugin versions (`<id>/<version>`, one a
+ * line); exit 3 when none is published.
+ */
 export function publishedScript(remoteDataDirectory: string): string {
   const runtime = shellQuote(posix.join(remoteDataDirectory, "runtime"));
-  return `cd ${runtime} 2>/dev/null && [ -f ipc.json ] && [ -f ipc.token ] || exit 3; cat ipc.json && printf '\\n%s\\n' ${shellQuote(SEPARATOR)} && cat ipc.token`;
+  const plugins = shellQuote(posix.join(remoteDataDirectory, "plugins"));
+  return (
+    `cd ${runtime} 2>/dev/null && [ -f ipc.json ] && [ -f ipc.token ] || exit 3; ` +
+    `cat ipc.json && printf '\\n%s\\n' ${shellQuote(SEPARATOR)} && cat ipc.token && printf '\\n%s\\n' ${shellQuote(PLUGINS_SEPARATOR)} && ` +
+    `{ cd ${plugins} 2>/dev/null && for d in */*/; do [ -d "$d" ] && printf '%s\\n' "\${d%/}"; done; true; }`
+  );
+}
+
+/**
+ * Make the mirror's `plugins/` hold exactly the remote owner's installed
+ * plugin versions, so the canvas bridge here serves their pages and icons as
+ * it would there. Each is copied whole (the route checks the folder against
+ * the hash the owner approved, so a partial or stale copy is never served):
+ * into a staging folder, then moved into place. `fresh` copies every one
+ * again, for an owner that restarted (a version reinstalled in place).
+ */
+async function syncPlugins(
+  connection: RemoteConnection,
+  remoteDataDirectory: string,
+  paths: MirrorPaths,
+  wanted: readonly string[],
+  fresh: boolean,
+): Promise<void> {
+  makePrivateDirectory(paths.plugins);
+  const have = new Set<string>();
+  for (const id of readdirSync(paths.plugins)) {
+    if (id.startsWith(".")) continue;
+    for (const version of readdirSync(join(paths.plugins, id))) have.add(`${id}/${version}`);
+  }
+  const keep = new Set(wanted);
+  for (const folder of have) {
+    if (keep.has(folder) && !fresh) continue;
+    rmSync(join(paths.plugins, folder), { recursive: true, force: true });
+    have.delete(folder);
+  }
+  for (const id of readdirSync(paths.plugins)) {
+    if (!id.startsWith(".") && readdirSync(join(paths.plugins, id)).length === 0) rmSync(join(paths.plugins, id), { recursive: true });
+  }
+  const remotePlugins = posix.join(remoteDataDirectory, "plugins");
+  for (const folder of wanted) {
+    if (have.has(folder) || !PLUGIN_FOLDER.test(folder)) continue;
+    const staging = join(paths.plugins, `.incoming-${process.pid}`);
+    rmSync(staging, { recursive: true, force: true });
+    makePrivateDirectory(staging);
+    try {
+      await connection.copy(`cd ${shellQuote(remotePlugins)} && tar -cf - -- ${shellQuote(folder)}`, staging);
+      const [id = "", version = ""] = folder.split("/");
+      makePrivateDirectory(join(paths.plugins, id));
+      renameSync(join(staging, id, version), join(paths.plugins, id, version));
+    } finally {
+      rmSync(staging, { recursive: true, force: true });
+    }
+  }
+}
+
+/** Run `command` and unpack the tar archive it writes into `directory`, rejecting if either fails. */
+export function untarFrom(command: string, args: readonly string[], directory: string): Promise<void> {
+  return new Promise((resolveCopy, rejectCopy) => {
+    const source = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
+    // `-P` is never passed: tar strips a leading / and refuses a name with `..` in it.
+    const unpack = spawn("tar", ["-xf", "-", "-C", directory], { stdio: ["pipe", "ignore", "pipe"] });
+    source.stdout.pipe(unpack.stdin);
+    let stderr = "";
+    const collect = (chunk: Buffer): void => {
+      stderr = (stderr + chunk.toString("utf8")).slice(-2_000);
+    };
+    source.stderr.on("data", collect);
+    unpack.stderr.on("data", collect);
+    const codes = Promise.all([
+      new Promise<number>((done) => source.on("close", (code) => done(code ?? 1))),
+      new Promise<number>((done) => unpack.on("close", (code) => done(code ?? 1))),
+    ]);
+    source.on("error", rejectCopy);
+    unpack.on("error", rejectCopy);
+    void codes.then(([sent, unpacked]) => {
+      if (sent === 0 && unpacked === 0) resolveCopy();
+      else rejectCopy(new Error(`copying failed (${stderr.trim() || `exit ${sent}/${unpacked}`})`));
+    });
+  });
 }
 
 /** `tavi remote connect`: keep the mirror connected until stopped. */
@@ -337,6 +449,8 @@ async function keepConnected(
     let token: string | undefined;
     let said: "none" | "owner" | undefined;
     let connectedOnce = false;
+    let syncedSession: string | undefined;
+    let syncedPlugins: string | undefined;
     let ended = false;
     void connection.ended.then(() => {
       ended = true;
@@ -360,7 +474,21 @@ async function keepConnected(
           );
           said = "none";
         }
-      } else if (published.discovery.sessionId !== session || published.token !== token) {
+      } else {
+        // Installed plugin versions first, so a page the canvas asks for is here once clients can reach the owner.
+        const fresh = published.discovery.sessionId !== syncedSession;
+        const listed = published.plugins.join("\n");
+        if (fresh || listed !== syncedPlugins) {
+          try {
+            await syncPlugins(connection, remoteDataDirectory, paths, published.plugins, fresh);
+          } catch (error) {
+            io.stderr(`tavi remote connect: plugin pages from ${options.target} could not be copied here: ${errorMessage(error)}\n`);
+          }
+          syncedSession = published.discovery.sessionId;
+          syncedPlugins = listed;
+        }
+      }
+      if (published !== undefined && (published.discovery.sessionId !== session || published.token !== token)) {
         publish(paths, published);
         session = published.discovery.sessionId;
         token = published.token;
@@ -373,7 +501,9 @@ async function keepConnected(
         io.stdout(
           connectedOnce
             ? `The owner on ${options.target} is running again (session ${session}); clients here follow it.\n`
-            : `Connected to the owner on ${options.target} (${remoteDataDirectory}, session ${session}).\n` +
+            : !first
+              ? `Connected to ${options.target} again (session ${session}); clients here follow it.\n`
+              : `Connected to the owner on ${options.target} (${remoteDataDirectory}, session ${session}).\n` +
                 `Use it from this computer with --data-dir ${paths.directory}, or TAVI_DATA_DIR=${paths.directory}:\n` +
                 `  tavi chat --data-dir ${paths.directory}\n` +
                 `Ctrl-C disconnects.\n`,
@@ -463,6 +593,7 @@ const openSshConnector: RemoteConnector = async (target, controlPath, sshOptions
   }
   return {
     run: (script) => runSsh([...control, "-o", "BatchMode=yes", "--", target, script]),
+    copy: (script, directory) => untarFrom("ssh", [...control, "-o", "BatchMode=yes", "--", target, script], directory),
     forward: async (localSocket, remoteSocket) => {
       const result = await runSsh([...control, "-O", "forward", "-L", `${localSocket}:${remoteSocket}`, "--", target]);
       if (result.code !== 0) throw new Error(`ssh could not forward the owner's socket: ${result.stderr.trim() || `exit ${result.code}`}`);
