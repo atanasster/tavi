@@ -120,8 +120,10 @@ export function PermissionsSettings({
       {/* The server removes only an allow rule from a page: dropping a deny or ask rule widens what runs unasked. */}
       {rule.source === "operator" && rule.decision === "allow" ? (
         <span className="actions">
+          {/* A row's action in a long list: small and red text only, so the rules read before their buttons. */}
           <Button
-            variant="danger"
+            variant="danger-ghost"
+            size="sm"
             disabled={busy !== undefined}
             onClick={() => void run(`rule:${rule.ruleId}`, () => permissionActions.remove(client, workspaceId, rule.ruleId))}
           >

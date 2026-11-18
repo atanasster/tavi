@@ -282,7 +282,7 @@ function History({ taskId, onUse }: { readonly taskId: string; readonly onUse: (
   const [open, setOpen] = useState(false);
   return (
     <details className="chat-panel-inherited" onToggle={(event) => setOpen((event.target as HTMLDetailsElement).open)}>
-      <summary>History</summary>
+      <summary className="disclosure">History</summary>
       {open ? <HistoryList taskId={taskId} onUse={onUse} /> : null}
     </details>
   );
@@ -330,7 +330,9 @@ function Inherited({
   );
   return (
     <details className="chat-panel-inherited" open={taskId === undefined}>
-      <summary>{taskId === undefined ? "Layers a new chat is given" : "The prompt this chat's next turn gets"}</summary>
+      <summary className="disclosure">
+        {taskId === undefined ? "Layers a new chat is given" : "The prompt this chat's next turn gets"}
+      </summary>
       <p className="chat-panel-note meta-sm">
         {taskId === undefined
           ? "These are the layers a new chat is given now; a workspace edit reaches every chat from its next message."

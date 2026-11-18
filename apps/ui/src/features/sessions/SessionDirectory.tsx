@@ -258,7 +258,11 @@ export function SessionDirectory({
           </section>
         ),
       )}
-      {directory?.nextCursor ? <Button onClick={() => void store.loadSessions(filters.current, true)}>Load older chats</Button> : null}
+      {directory?.nextCursor ? (
+        <Button size="sm" onClick={() => void store.loadSessions(filters.current, true)}>
+          Load older chats
+        </Button>
+      ) : null}
       {directory?.needsTruncated ? <p>Needs inbox reached its limit; more chats may need you.</p> : null}
       {/* Below the list, so Home stays first; one fixed name, whether the archive is shown is its pressed state. */}
       <Button variant="ghost" size="sm" className="archived-toggle" aria-pressed={archived} onClick={() => setArchived((value) => !value)}>

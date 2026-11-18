@@ -425,7 +425,7 @@ body.sidebar-resizing * {
   display: grid;
   gap: var(--space-1-5);
   min-width: 0;
-  font-size: var(--text-base);
+  font-size: var(--text-control);
   font-weight: var(--weight-medium);
 }
 

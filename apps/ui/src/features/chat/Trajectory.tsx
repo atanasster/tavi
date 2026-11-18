@@ -49,7 +49,7 @@ export function Trajectory({ session }: { readonly session: Session }) {
         const sum = cards.reduce((value, card) => value + (card.durationMs ?? 0), 0);
         return (
           <details key={run.id}>
-            <summary>
+            <summary className="disclosure">
               {run.recordedHistory ? "Recorded chat" : `Turn ${index + 1}`} — {cards.length} tool calls, {formatElapsed(sum)} known tool
               time{cards.some((card) => card.durationMs === undefined) ? " + unmeasured calls" : ""}
             </summary>
@@ -60,7 +60,7 @@ export function Trajectory({ session }: { readonly session: Session }) {
               const duration = children.reduce((value, card) => value + (card.durationMs ?? 0), 0);
               return (
                 <details key={attempt}>
-                  <summary>
+                  <summary className="disclosure">
                     Attempt {attempt} — {formatElapsed(duration)} known tool time
                   </summary>
                   <div className="trajectory-columns">Tool · Duration · Model · Retained detail size</div>
@@ -93,9 +93,11 @@ const Call = memo(function Call({
   const bytes = useMemo(() => retainedBytes(card), [card.input, card.output]);
   return (
     <details className={`trajectory-call ${durationBand(card.durationMs, total)}`} onToggle={(event) => setOpen(event.currentTarget.open)}>
-      <summary>
-        <code>{card.toolName}</code> · {card.durationMs === undefined ? "Duration not recorded" : formatElapsed(card.durationMs)} ·{" "}
-        {card.model ?? "Model not recorded"} · {bytes === undefined ? "Size unavailable" : `${bytes} retained bytes`}
+      <summary className="disclosure">
+        <span>
+          <code>{card.toolName}</code> · {card.durationMs === undefined ? "Duration not recorded" : formatElapsed(card.durationMs)} ·{" "}
+          {card.model ?? "Model not recorded"} · {bytes === undefined ? "Size unavailable" : `${bytes} retained bytes`}
+        </span>
       </summary>
       {open ? <CallDetails card={card} client={client} taskId={taskId} workspaceId={workspaceId} /> : null}
     </details>

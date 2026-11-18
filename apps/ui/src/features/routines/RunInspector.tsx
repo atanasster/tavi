@@ -193,7 +193,7 @@ export function RunInspector({
               ]}
             />
             <details>
-              <summary>Immutable run configuration and researcher instructions</summary>
+              <summary className="disclosure">Immutable run configuration and researcher instructions</summary>
               <pre>{json(value.run.snapshot)}</pre>
             </details>
           </Section>

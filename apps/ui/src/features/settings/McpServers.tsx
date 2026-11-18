@@ -41,7 +41,7 @@ const OVERLAP = "the model may pick either";
 function DefinitionChanges({ changes }: { readonly changes: NonNullable<McpReviewTool["changedFields"]> }) {
   return (
     <details open className="mcp-definition-changes">
-      <summary>What changed since it was approved</summary>
+      <summary className="disclosure">What changed since it was approved</summary>
       <ul>
         {changes.fields.map((change) => (
           <li key={change.field}>
@@ -226,7 +226,7 @@ export function DiscoverPanel({
   };
   return (
     <details className="settings-panel">
-      <summary>Discover servers in the MCP Registry</summary>
+      <summary className="disclosure">Discover servers in the MCP Registry</summary>
       <form
         className="actions mcp-search"
         role="search"
@@ -431,7 +431,7 @@ export function McpReviewModal({
           )}
           {review.instructions === undefined ? null : (
             <details>
-              <summary>Its instructions (shown to you, never to the model)</summary>
+              <summary className="disclosure">Its instructions (shown to you, never to the model)</summary>
               <pre>{review.instructions}</pre>
             </details>
           )}

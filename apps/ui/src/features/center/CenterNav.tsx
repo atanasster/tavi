@@ -6,6 +6,7 @@ import { SidebarFrame } from "../shell/SidebarFrame.js";
 import { decisionCount, tasksToday } from "./model.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Button } from "../../ui/Button.js";
+import { useCurrentNavInView } from "../../ui/useCurrentNavInView.js";
 
 const SECTION_ICONS: Readonly<Record<CenterSection, IconName>> = {
   activity: "center-activity",
@@ -95,6 +96,7 @@ export function CenterNav({
   readonly onCollapse?: (() => void) | undefined;
 }) {
   const { workspaceId } = useWorkspace();
+  useCurrentNavInView(section);
   return (
     <SidebarFrame title="Command Center" label="Command Center sections" className="center-nav" onCollapse={onCollapse}>
       <ul className="center-nav-list list-reset">

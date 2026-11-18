@@ -503,7 +503,9 @@ function SkillVersionViewer({
 function SkillTrace({ trace, error }: { readonly trace: SkillsTraceAnswer | undefined; readonly error: string | undefined }) {
   return (
     <details className="soul-skill-trace" open>
-      <summary>What the task did{trace === undefined ? "" : ` (${trace.calls.length + trace.more} tool calls)`}</summary>
+      <summary className="disclosure">
+        What the task did{trace === undefined ? "" : ` (${trace.calls.length + trace.more} tool calls)`}
+      </summary>
       {trace === undefined ? (
         <p className="muted">{error === undefined ? "Reading the task's tool calls…" : `The tool calls could not be read: ${error}`}</p>
       ) : trace.calls.length === 0 ? (

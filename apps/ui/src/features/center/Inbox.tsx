@@ -506,7 +506,7 @@ export function ApprovalsInbox({
       )}
       {resolved.length === 0 ? null : (
         <details className="center-resolved">
-          <summary>Resolved just now ({resolved.length})</summary>
+          <summary className="disclosure">Resolved just now ({resolved.length})</summary>
           <ul>
             {resolved.map((line) => (
               <li key={line.key}>{line.text}</li>

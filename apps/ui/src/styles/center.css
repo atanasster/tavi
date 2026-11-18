@@ -183,6 +183,17 @@
   color: hsl(var(--foreground));
 }
 
+/* In a toolbar of chips and small buttons the search is a small control too. */
+.schedule-recurring-tools .center-search {
+  height: var(--control-height-sm);
+}
+
+.schedule-recurring-tools .center-search input {
+  min-height: 0;
+  padding-block: 0;
+  font-size: var(--text-control-sm);
+}
+
 /* The day strip: tasks per day, a bar each, the busiest day full height. */
 .center-strip-card {
   margin-bottom: var(--space-5);

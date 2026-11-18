@@ -334,13 +334,14 @@ a.schedule-title:hover {
 
 /* An on/off switch: the pause toggle of a recurring row. Off, its track is
    the full border colour, so the switch keeps a visible edge on the card;
-   24px tall, the least target a pointer is promised. */
+   drawn at the size of a line of text, with a 24px target around it (the least a pointer is promised). */
 .switch {
   position: relative;
   flex: none;
   width: var(--size-switch-width);
   min-width: var(--size-switch-width);
-  height: var(--control-height-xs);
+  height: var(--size-switch-height);
+  min-height: var(--size-switch-height);
   border-radius: var(--radius-full);
   background: hsl(var(--border));
   cursor: pointer;
@@ -356,6 +357,12 @@ a.schedule-title:hover {
   border-radius: var(--radius-round);
   background: hsl(var(--card));
   transition: transform var(--duration-slow);
+}
+
+.switch::before {
+  content: "";
+  position: absolute;
+  inset: calc((var(--size-switch-height) - var(--control-height-xs)) / 2) 0;
 }
 
 .switch[aria-checked="true"] {

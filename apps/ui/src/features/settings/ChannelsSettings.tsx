@@ -109,11 +109,12 @@ function Channels({ data, reload: reloadPage }: { data: Loaded; reload: () => vo
                   </div>
                   <div className="actions">
                     {/* Its app's page in Connected apps: signing in, who may use it, and what it did. A channel's app is named by its provider. */}
-                    <AppLink href={appsPath({ appId: connection.providerId })} className="button-sm" onFollow={undefined}>
+                    <AppLink href={appsPath({ appId: connection.providerId })} className="button-sm ghost" onFollow={undefined}>
                       Open app
                     </AppLink>
                     <Button
                       variant="ghost"
+                      size="sm"
                       aria-label={`People on ${connection.label}`}
                       onClick={() => setPeopleOf(connection.connectionId)}
                     >
@@ -121,6 +122,7 @@ function Channels({ data, reload: reloadPage }: { data: Loaded; reload: () => vo
                     </Button>
                     <Button
                       variant="ghost"
+                      size="sm"
                       aria-label={`Test ${connection.label}`}
                       disabled={connection.status.state !== "running"}
                       onClick={() => setTesting(connection)}
@@ -129,13 +131,14 @@ function Channels({ data, reload: reloadPage }: { data: Loaded; reload: () => vo
                     </Button>
                     {/* A group channel's rooms: whether each reads its recent messages, and the room and contact grants. */}
                     {descriptor?.groups !== undefined ? (
-                      <Button variant="ghost" aria-label={`Rooms of ${connection.label}`} onClick={() => setRooms(connection)}>
+                      <Button variant="ghost" size="sm" aria-label={`Rooms of ${connection.label}`} onClick={() => setRooms(connection)}>
                         Rooms
                       </Button>
                     ) : null}
                     {descriptor !== undefined ? (
                       <Button
                         variant="ghost"
+                        size="sm"
                         aria-label={`Edit ${connection.label}`}
                         onClick={() => setEditing({ descriptor, connection })}
                       >
@@ -143,7 +146,7 @@ function Channels({ data, reload: reloadPage }: { data: Loaded; reload: () => vo
                       </Button>
                     ) : null}
                     {/* Removable with its channel gone too (an uninstalled plugin's): removing needs nothing of the channel. */}
-                    <Button variant="danger" aria-label={`Remove ${connection.label}`} onClick={() => setRemove(connection)}>
+                    <Button variant="danger" size="sm" aria-label={`Remove ${connection.label}`} onClick={() => setRemove(connection)}>
                       Remove
                     </Button>
                   </div>

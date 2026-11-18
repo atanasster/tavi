@@ -588,10 +588,11 @@ its root element. They are `PLUGIN_UI_THEME_TOKENS` in `@tavi/contracts`:
   `--card-foreground`, `--primary`, `--primary-foreground`, `--secondary`,
   `--muted`, `--muted-foreground`, `--accent`, `--destructive`, `--positive`,
   `--warning`, `--info`, `--border`, `--ring`;
-- type sizes: `--text-2xs` (10px), `--text-xs` (11px), `--text-sm` (12px),
-  `--text-meta` (12.5px), `--text-base` (13px), `--text-md` (14px),
-  `--text-lg` (15px), `--text-xl` (16px), `--text-2xl` (18px), `--text-3xl`
-  (22px), `--text-4xl` (26px), `--text-5xl` (40px);
+- type sizes: `--text-2xs` (11px), `--text-xs` (12px), `--text-sm` (12.5px),
+  `--text-meta` (13px, the canvas's control and form text), `--text-base`
+  (14px), `--text-md` (15px), `--text-lg` (16px), `--text-xl` (17px),
+  `--text-2xl` (18px), `--text-3xl` (22px), `--text-4xl` (26px), `--text-5xl`
+  (40px);
 - line heights: `--leading-none` (1), `--leading-tight` (1.3),
   `--leading-snug` (1.4), `--leading-normal` (1.5), `--leading-relaxed` (1.6),
   and fixed `--leading-4` (16px), `--leading-4-5` (18px), `--leading-5` (20px);
@@ -656,7 +657,7 @@ if (message.theme?.colorScheme === "light" || message.theme?.colorScheme === "da
 
 The radius tokens given in `rem` (`--radius`, `--radius-lg`, and `--radius-sm`
 built on `--radius`) resolve against the plugin page's own root font size,
-which is the browser's 16px unless the plugin sets it; the canvas root is 14px.
+which is the browser's 16px unless the plugin sets it; the canvas root is 15px.
 
 The example's `live.js` and the built-in view (`packages/builtin/browser-view`)
 do exactly this.

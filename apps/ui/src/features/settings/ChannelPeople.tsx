@@ -411,7 +411,7 @@ export function PeopleEditor({
                     Stop trusting unverified
                   </Button>
                 )}
-                <Button variant="danger" onClick={() => setRemove(person)}>
+                <Button variant="danger" size="sm" onClick={() => setRemove(person)}>
                   Revoke access
                 </Button>
               </div>

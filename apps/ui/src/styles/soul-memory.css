@@ -253,6 +253,11 @@
   margin: var(--space-3) var(--space-4) 0;
 }
 
+/* The settings are a form: its words are a control's size, as its fields are. */
+.memory-settings {
+  font-size: var(--text-control);
+}
+
 /* The memory Settings card: two switches, and the limits under More. */
 .memory-settings-list li,
 .memory-settings-limits p {

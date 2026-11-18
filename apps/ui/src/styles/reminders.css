@@ -13,10 +13,6 @@
   color: hsl(var(--warning));
 }
 
-.schedule-sub .reminder-origin::before {
-  content: " · ";
-}
-
 .reminder-meta {
   display: flex;
   flex-wrap: wrap;

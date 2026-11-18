@@ -37,7 +37,7 @@ export function VideoModels({
   const count = on.size;
   return (
     <details className="video-models">
-      <summary>Native video{count === 0 ? "" : ` · on for ${String(count)}`}</summary>
+      <summary className="disclosure">Native video{count === 0 ? "" : ` · on for ${String(count)}`}</summary>
       <p className="muted">
         A model turned on is sent a whole clip (MP4, MOV or WebM, up to {String(VIDEO_LIMITS.viewMaxDurationSec / 60)} minutes and{" "}
         {String(VIDEO_LIMITS.viewMaxBytes / 1024 / 1024)} MiB) in a chat someone is in; every other model, and every routine, sees the

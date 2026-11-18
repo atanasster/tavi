@@ -119,7 +119,7 @@ export function RoutineSettingsView({ snapshot, state }: { readonly snapshot: Ro
     <>
       <Summary items={fields.map((field) => [field.label, field.value] as const)} />
       <details>
-        <summary>Raw configuration (JSON)</summary>
+        <summary className="disclosure">Raw configuration (JSON)</summary>
         <pre>{json(snapshot)}</pre>
         <pre>{json(state)}</pre>
       </details>
@@ -174,7 +174,7 @@ export function RevisionChanges({
         </>
       )}
       <details>
-        <summary>Raw configuration (JSON)</summary>
+        <summary className="disclosure">Raw configuration (JSON)</summary>
         <pre>{json(snapshot)}</pre>
       </details>
     </div>

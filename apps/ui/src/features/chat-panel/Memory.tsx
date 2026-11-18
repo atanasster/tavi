@@ -95,7 +95,7 @@ export function Memory({
         <Pending error={error} />
       ) : (
         <details className="chat-panel-inherited">
-          <summary>
+          <summary className="disclosure">
             Global memory ({data.records.length}
             {data.more ? "+" : ""})
           </summary>
@@ -402,7 +402,12 @@ function ChatNotes({
             }}
           >
             <Field id={id} label="A note for this chat" labelClassName="visually-hidden">
-              <input value={note} placeholder="Add a note for this chat" onChange={(event) => setNote(event.target.value)} />
+              <input
+                className="field-sm"
+                value={note}
+                placeholder="Add a note for this chat"
+                onChange={(event) => setNote(event.target.value)}
+              />
             </Field>
             <Button variant="ghost" size="sm" type="submit" disabled={busy || note.trim() === ""}>
               Add

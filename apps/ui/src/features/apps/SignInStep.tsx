@@ -218,7 +218,7 @@ export function SignInStep({
       ) : null}
       {byCode ? null : (
         <details className="apps-elsewhere" open={elsewhere} onToggle={(event) => setElsewhere((event.target as HTMLDetailsElement).open)}>
-          <summary>Signing in from another computer?</summary>
+          <summary className="disclosure">Signing in from another computer?</summary>
           <p>
             <strong>A. Tunnel.</strong> On that computer run <code>{tunnelCommand(port === "" ? "<port>" : port)}</code>{" "}
             <Button size="sm" onClick={() => copy(tunnelCommand(port === "" ? "<port>" : port))}>
@@ -269,7 +269,7 @@ export function SignInStep({
               }}
             />
             <details className="apps-paste-parts" open={phone}>
-              <summary>Or type its code and state</summary>
+              <summary className="disclosure">Or type its code and state</summary>
               <label>
                 code{" "}
                 <input

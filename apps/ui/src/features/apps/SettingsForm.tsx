@@ -55,7 +55,7 @@ export function SettingsForm({
       {fields.filter((each) => !each.advanced).map(field)}
       {advanced.length === 0 ? null : (
         <details className="apps-more-settings">
-          <summary>More settings</summary>
+          <summary className="disclosure">More settings</summary>
           {advanced.map(field)}
         </details>
       )}

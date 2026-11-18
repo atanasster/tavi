@@ -28,6 +28,19 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Controls are the size of the text around them. Buttons, fields, menus and
+  tabs use 13px text, and a field is exactly as tall as the button beside it
+  (it used to grow a few pixels taller). The actions in a list's row (Channels,
+  Credentials, Plugins, Web search, Permissions, Allowed people) are small, and
+  a row's Remove in Permissions is red text instead of a red box. Settings'
+  text is 13px with a readable line length, and a section's heading is never
+  larger than the page's title. Badges, switches and checkboxes are smaller;
+  primary buttons are no longer bold; a reminder's Done is outlined instead of
+  filled. Every fold opens with the same chevron. On a touch screen a field's
+  text is 16px, so iOS no longer zooms in on it, and each button keeps a 44px
+  target around its smaller look. On a phone the Settings and Command Center
+  strips scroll to the page you are on. Fixed: a reminder's line in Coming up
+  showed "· ·", and the Heartbeat day chips were underlined.
 - Settings is simpler to scan. General and System prompt say "this
   workspace" instead of its id `default`, and the timezone explanation sits
   under **Timezone**. A model role's way back to the default says **Use

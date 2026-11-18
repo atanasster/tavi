@@ -18,7 +18,7 @@ export function LayerRow({ layer }: { readonly layer: SystemPromptLayer }) {
         <small>{layerSource(layer)}</small>
         {layer.generated && layer.detail !== undefined ? (
           <details className="soul-layer-detail">
-            <summary>{layer.sample ? "Sample facts" : "What it holds"}</summary>
+            <summary className="disclosure">{layer.sample ? "Sample facts" : "What it holds"}</summary>
             {layer.sample ? <pre>{layer.detail}</pre> : <p>{layer.detail}</p>}
           </details>
         ) : null}

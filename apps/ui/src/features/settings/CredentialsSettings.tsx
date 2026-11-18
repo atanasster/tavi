@@ -97,10 +97,11 @@ export function CredentialsSettings() {
           <li key={reference} className="row">
             <CredentialName reference={reference} />
             <span className="actions">
-              <Button aria-label={`Replace ${reference}`} disabled={busy !== undefined} onClick={() => setSetting(reference)}>
+              <Button size="sm" aria-label={`Replace ${reference}`} disabled={busy !== undefined} onClick={() => setSetting(reference)}>
                 Replace
               </Button>
               <Button
+                size="sm"
                 variant="danger"
                 aria-label={`Delete ${reference}`}
                 disabled={busy !== undefined}

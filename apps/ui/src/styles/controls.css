@@ -3,11 +3,14 @@
    dropdown, tooltips, segmented and underlined tabs, a flat card, and the
    utilities. Imported before the layouts so a component class can specialise
    a base control. */
+/* The page's typeface, not the browser's; the size is each control's own (--text-control), never the
+   surrounding block's, so a field is as tall as the button beside it wherever it sits. */
 button,
 input,
 select,
 textarea {
-  font: inherit;
+  font-family: inherit;
+  font-feature-settings: inherit;
 }
 
 /* The base button is ai-finance's `outline` variant: a hairline, no fill. */
@@ -20,14 +23,14 @@ button {
   flex-shrink: 0;
   max-width: 100%;
   min-height: var(--control-height);
-  font-size: var(--text-md);
+  font-size: var(--text-control);
   font-weight: var(--weight-medium);
-  line-height: var(--leading-5);
+  line-height: var(--leading-4-5);
   border: var(--border-width) solid hsl(var(--input));
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   background: transparent;
   color: hsl(var(--foreground));
-  padding: var(--space-1-5) var(--space-3-5);
+  padding: var(--space-1) var(--space-3);
   cursor: pointer;
   user-select: none;
   transition: background-color var(--duration-base), border-color var(--duration-base), color var(--duration-base);
@@ -47,8 +50,8 @@ textarea:disabled {
 
 .button-sm {
   min-height: var(--control-height-sm);
-  padding: var(--space-1) var(--space-2-5);
-  font-size: var(--text-sm);
+  padding: var(--space-0-5) var(--space-2);
+  font-size: var(--text-control-sm);
   border-radius: var(--radius-sm);
 }
 
@@ -61,6 +64,19 @@ textarea:disabled {
 .ghost:hover:enabled:not(:where([aria-disabled="true"])),
 .ghost.active,
 .ghost[aria-expanded="true"] {
+  color: hsl(var(--foreground));
+  background: hsl(var(--secondary) / var(--alpha-half));
+}
+
+/* A link drawn as a quiet button, beside real ones in a row of actions: it goes somewhere, they act. */
+a.ghost {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+}
+
+a.ghost:hover {
   color: hsl(var(--foreground));
   background: hsl(var(--secondary) / var(--alpha-half));
 }
@@ -79,7 +95,6 @@ textarea:disabled {
   background: hsl(var(--primary));
   border-color: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
-  font-weight: var(--weight-semibold);
   box-shadow: var(--shadow-xs);
 }
 
@@ -92,7 +107,6 @@ textarea:disabled {
   background: hsl(var(--destructive));
   border-color: hsl(var(--destructive));
   color: hsl(var(--destructive-foreground));
-  font-weight: var(--weight-semibold);
   box-shadow: var(--shadow-xs);
 }
 
@@ -133,6 +147,9 @@ button.danger:hover:enabled {
   padding: 0;
   border: 0;
   background: none;
+  /* Drawn as something else, it takes that thing's text, not a control's. */
+  font-size: inherit;
+  line-height: inherit;
 }
 
 /* A bare button that reads as a link: the text, underlined on hover. It is
@@ -143,6 +160,9 @@ button.danger:hover:enabled {
   padding: var(--space-0-5) 0;
   border: 0;
   background: none;
+  /* A link in a line is the line's size. */
+  font-size: inherit;
+  line-height: inherit;
   color: hsl(var(--foreground));
   text-align: left;
   text-decoration: none;
@@ -168,13 +188,31 @@ button[aria-disabled="true"] {
 :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea) {
   min-width: 0;
   min-height: var(--field-height);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1) var(--space-2-5);
   border: var(--border-width) solid hsl(var(--input));
   border-radius: var(--radius-sm);
   background: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-size: var(--text-md);
-  line-height: var(--leading-5);
+  font-size: var(--text-control);
+  line-height: var(--leading-4-5);
+}
+
+/* A label is the size of the field it names, so the two read as one; a component may still set its own. */
+:where(label, legend) {
+  font-size: var(--text-control);
+}
+
+/* A field in a row of small controls: as tall as a small button. */
+.field-sm {
+  min-height: var(--control-height-sm);
+  padding-block: var(--space-0-5);
+  font-size: var(--text-control-sm);
+}
+
+/* Several lines: room above and below the first and last. */
+:where(textarea) {
+  padding-block: var(--space-2);
+  line-height: var(--leading-normal);
 }
 
 :where(input, select, textarea):focus-visible {
@@ -194,8 +232,8 @@ input[type="checkbox"],
 input[type="radio"] {
   flex: none;
   accent-color: hsl(var(--primary));
-  width: var(--icon-size-sm);
-  height: var(--icon-size-sm);
+  width: var(--size-check);
+  height: var(--size-check);
   margin: 0;
   /* In a line of text (a bare label) the box centres on the words beside it,
      not on their baseline; in a flex row this does nothing. */
@@ -230,6 +268,25 @@ input[type="radio"] {
   .button-icon.button-xs {
     width: var(--size-touch);
     height: var(--size-touch);
+  }
+
+  /* Text a field is typed into is 16px on a touch screen: iOS zooms the page into a smaller one on focus. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  select,
+  textarea {
+    font-size: var(--text-lg);
+  }
+
+  /* A button keeps its look and gains a touch target's room around it: an invisible box at least 44px each way. A
+     component that places its button itself (position) keeps its own. */
+  :where(button:not(.button-bare)) {
+    position: relative;
+  }
+
+  :where(button:not(.button-bare))::after {
+    content: "";
+    position: absolute;
+    inset: min(0px, calc(50% - var(--size-touch) / 2));
   }
 }
 
@@ -329,10 +386,10 @@ input[type="radio"] {
   display: flex;
   align-items: center;
   min-height: var(--control-height);
-  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-8);
+  padding: var(--space-1-5) var(--space-3) var(--space-1-5) var(--space-8);
   border-radius: var(--radius-sm);
-  font-size: var(--text-md);
-  line-height: var(--leading-5);
+  font-size: var(--text-control);
+  line-height: var(--leading-4-5);
   cursor: default;
   outline: var(--outline-width) solid transparent;
   outline-offset: calc(-1 * var(--outline-width));
@@ -351,9 +408,9 @@ input[type="radio"] {
 
 /* A compact list: rows at the search field's own size, so a long list of names shows more of itself. */
 .select-content.compact .select-option {
-  min-height: var(--control-height-sm);
+  min-height: var(--control-height-xs);
   padding: var(--space-1) var(--space-2) var(--space-1) var(--space-7);
-  font-size: var(--text-sm);
+  font-size: var(--text-control-sm);
 }
 
 .select-content.compact .select-check {
@@ -579,7 +636,7 @@ summary.disclosure {
   border-radius: 0;
   /* Outranks the base button's hover fill: a tab marks its state with its underline. */
   background: none;
-  font-size: var(--text-base);
+  font-size: var(--text-control);
   color: hsl(var(--muted-foreground));
 }
 
@@ -763,6 +820,12 @@ summary.disclosure {
 .cadence-day {
   min-width: var(--size-avatar-md);
   justify-content: center;
+}
+
+/* A day's short name is an abbreviation for the screen reader; on the chip it is a word, not underlined. */
+.cadence-day abbr {
+  text-decoration: none;
+  cursor: inherit;
 }
 
 .cadence-label {

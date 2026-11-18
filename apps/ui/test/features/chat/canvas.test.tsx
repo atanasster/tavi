@@ -633,7 +633,7 @@ describe("the canvas", () => {
     expect(open).toContain("thread-7");
     expect(open).toContain("<dt>Operation key</dt><dd>ui-1</dd>");
     // The ids are folded under Technical details; nothing waiting says nothing.
-    expect(open).toContain("<summary>Technical details</summary>");
+    expect(open).toContain('<summary class="disclosure">Technical details</summary>');
     expect(open).not.toContain("Waiting on a decision");
   });
 

@@ -42,8 +42,9 @@ export function UnseenReminderCards({
               {fire.late === true ? " · late" : ""}
             </span>
             <span className="reminder-card-actions">
+              {/* Outlined, not filled: several reminders stack in the rail, and a filled bar on each was the loudest thing on
+                  the page. The snoozes are quieter still. */}
               <Button
-                variant="primary"
                 size="sm"
                 aria-label={`Done: ${fire.text}`}
                 disabled={busy !== undefined}
@@ -58,6 +59,7 @@ export function UnseenReminderCards({
               </Button>
               {([10, 60] as const).map((minutes) => (
                 <Button
+                  variant="ghost"
                   size="sm"
                   key={minutes}
                   aria-label={`Snooze ${minutes === 10 ? "10 min" : "1 h"}: ${fire.text}`}

@@ -543,7 +543,7 @@ function ClientStep({
       </label>
       {fileProblem === undefined ? null : <p role="alert">{fileProblem}</p>}
       <details>
-        <summary>More: paste the client id and secret instead</summary>
+        <summary className="disclosure">More: paste the client id and secret instead</summary>
         <Field id={idField} label="Client id">
           <input value={clientId} autoComplete="off" spellCheck={false} onChange={(event) => setClientId(event.target.value)} />
         </Field>

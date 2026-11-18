@@ -142,7 +142,7 @@ function SiteRecipes() {
               </Notice>
             )}
             <details>
-              <summary>Steps</summary>
+              <summary className="disclosure">Steps</summary>
               <ol>
                 {recipe.steps.map((step, index) => (
                   <li key={index}>{recipeStepText(step)}</li>

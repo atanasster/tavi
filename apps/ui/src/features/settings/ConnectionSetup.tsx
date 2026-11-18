@@ -159,7 +159,7 @@ function ConnectionDetails({
           />
         </label>
         <details className="connection-advanced" open={custom || (touched && detailsProblem)}>
-          <summary>Connection details</summary>
+          <summary className="disclosure">Connection details</summary>
           <div className="settings-fields">
             <label>
               Endpoint
@@ -292,7 +292,7 @@ export function ManageConnectionModal({
           {/* A server on this computer usually takes no key: the field is there for one that does, folded away. */}
           {connection.localOnly ? (
             <details className="connection-advanced" open={newKey}>
-              <summary>Set an API key</summary>
+              <summary className="disclosure">Set an API key</summary>
               <div className="settings-fields">
                 <p>A local server usually takes none. Enter one only if you turned on its authentication.</p>
                 {keyField}
@@ -302,7 +302,7 @@ export function ManageConnectionModal({
             keyField
           )}
           <details className="connection-advanced">
-            <summary>Credential reference</summary>
+            <summary className="disclosure">Credential reference</summary>
             <div className="settings-fields">
               <label>
                 Stored as

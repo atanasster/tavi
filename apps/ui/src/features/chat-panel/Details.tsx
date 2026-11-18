@@ -141,7 +141,7 @@ export function Details({
         </>
       )}
       <details className="chat-panel-technical">
-        <summary>Technical details</summary>
+        <summary className="disclosure">Technical details</summary>
         <dl className="facts">
           <dt>Task</dt>
           <dd>{session.taskId ?? "not admitted yet"}</dd>

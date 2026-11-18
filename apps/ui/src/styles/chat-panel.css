@@ -127,7 +127,6 @@
 .chat-panel-rename input {
   flex: 1;
   min-width: 0;
-  font: inherit;
   font-size: var(--text-md);
   font-weight: var(--weight-semibold);
 }
@@ -393,8 +392,6 @@ button.chat-panel-item:hover {
   width: 100%;
   min-height: var(--height-textarea-lg);
   resize: vertical;
-  font: inherit;
-  font-size: var(--text-base);
 }
 
 .chat-panel-editor .actions {
@@ -429,8 +426,6 @@ button.chat-panel-item:hover {
 .chat-panel-add input {
   flex: 1;
   min-width: 0;
-  font: inherit;
-  font-size: var(--text-base);
 }
 
 .chat-panel-budget.warn {

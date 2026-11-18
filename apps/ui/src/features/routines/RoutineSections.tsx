@@ -95,7 +95,7 @@ export function RoutineResearcher({
       }
     >
       <details open>
-        <summary>
+        <summary className="disclosure">
           Researcher instructions · {value.revision.snapshot.agent.name} · version {value.revision.snapshot.agent.revision}
         </summary>
         <pre>{value.revision.snapshot.agent.instructions}</pre>
@@ -117,7 +117,7 @@ export function RoutineResearcher({
         </Notice>
       ) : null}
       <details>
-        <summary>Current models, permissions, report and delivery settings</summary>
+        <summary className="disclosure">Current models, permissions, report and delivery settings</summary>
         <RoutineSettingsView snapshot={value.revision.snapshot} state={value.state} />
       </details>
     </Section>

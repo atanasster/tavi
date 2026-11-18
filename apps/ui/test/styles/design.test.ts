@@ -171,6 +171,36 @@ describe("a recurring row's switch on a phone", () => {
   });
 });
 
+describe("a control's text is the size of the text it sits in", () => {
+  const rule = (selector: string) => new RegExp(`\\n${selector} \\{([^}]*)\\}`).exec(stylesheet("controls.css"))?.[1] ?? "";
+
+  it("sizes a button, a field and a menu option by the control tokens, not the page's", () => {
+    expect(rule("button")).toContain("font-size: var(--text-control);");
+    expect(rule("\\.button-sm")).toContain("font-size: var(--text-control-sm);");
+    expect(rule("\\.select-option")).toContain("font-size: var(--text-control);");
+    expect(stylesheet("controls.css")).toMatch(/:where\(input:not[^{]*\{[^}]*font-size: var\(--text-control\);/);
+  });
+
+  it("makes a field exactly as tall as the button beside it", () => {
+    expect(stylesheet("tokens.css")).toContain("--field-height: var(--control-height);");
+  });
+
+  it("never lets a field take its block's font back (`font: inherit` beat the field's size, and a field grew past its button)", () => {
+    const css = canvasCss().replace(/\/\*[\s\S]*?\*\//g, "");
+    const offenders = [...css.matchAll(/\n([^{}\n@][^{}]*)\{([^}]*)\}/g)]
+      .filter(([, selectors, body]) => /\b(input|textarea|select)\b/.test(selectors!) && /\bfont: inherit;/.test(body!))
+      .map(([, selectors]) => selectors!.trim());
+    expect(offenders).toEqual([]);
+  });
+
+  it("types into a field at 16px on a touch screen, where iOS zooms into a smaller one, and gives a button a touch target's room", () => {
+    const touch = /@media \(hover: none\) and \(pointer: coarse\) \{([\s\S]*?)\n\}/.exec(stylesheet("controls.css"))?.[1] ?? "";
+    expect(touch).toMatch(/textarea \{\s*font-size: var\(--text-lg\);/);
+    expect(touch).toMatch(/::after \{[^}]*inset: min\(0px, calc\(50% - var\(--size-touch\) \/ 2\)\);/);
+    expect(stylesheet("tokens.css")).toContain("--text-lg: 16px;");
+  });
+});
+
 describe("the header's Keyboard button", () => {
   it("leaves a touch screen and a phone-width window, where it would take a row of its own", () => {
     expect(stylesheet("dialogs.css")).toMatch(/@media \(hover: none\) and \(pointer: coarse\) \{\s*\.bar-keys \{\s*display: none;/);

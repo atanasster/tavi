@@ -109,12 +109,14 @@
   --icon-size-sm: 16px;
   --icon-size-xs: 13px;
   --icon-size-2xs: 10px;
-  --control-height: 36px;
-  --control-height-sm: 32px;
+  /* Two densities: a control's text is the size of the text it sits in (13px UI text), and a field is exactly as
+     tall as the button beside it. The small density is a row's actions, a toolbar, a chip. */
+  --control-height: 30px;
+  --control-height-sm: 26px;
   --control-height-xs: 24px;
   --control-height-search: 26px;
   --control-height-tab: 28px;
-  --control-height-view: 30px;
+  --control-height-view: 28px;
   /* Fields match the button so a field and its action line up in a row. */
   --field-height: var(--control-height);
   /* Bars: the top bar, and the sidebar's and the transcript's header bars. */
@@ -143,8 +145,11 @@
   --size-node: 11px;
   --size-node-column: 20px;
   --size-node-column-sm: 16px;
-  --size-switch-width: 40px;
-  --size-switch-thumb: 20px;
+  --size-switch-width: 34px;
+  --size-switch-thumb: 16px;
+  --size-switch-height: 20px;
+  /* A checkbox or radio: about the height of a capital in 13px text plus its descender. */
+  --size-check: 14px;
   --size-grip: 36px;
   --size-grip-thick: 4px;
   --size-grip-zone: 20px;
@@ -250,6 +255,9 @@
   --text-xl: 17px;
   /* An answer's prose. */
   --text-answer: 15.5px;
+  /* A control's text: a button's, a field's, an option's, a segment's, a tab's. */
+  --text-control: var(--text-meta);
+  --text-control-sm: var(--text-sm);
   --text-2xl: 18px;
   --text-3xl: 22px;
   --text-4xl: 26px;

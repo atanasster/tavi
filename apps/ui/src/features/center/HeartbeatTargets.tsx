@@ -103,7 +103,7 @@ export function HeartbeatTargets({
           <label>
             To <input value={to} maxLength={256} onChange={(event) => setTo(event.target.value)} />
           </label>
-          <Button variant="ghost" size="sm" type="submit" disabled={proposed.to === "" || known}>
+          <Button type="submit" disabled={proposed.to === "" || known}>
             Add
           </Button>
         </form>

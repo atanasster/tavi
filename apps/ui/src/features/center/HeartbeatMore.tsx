@@ -57,7 +57,7 @@ export function HeartbeatMore({
   const { config, revision } = answer;
   return (
     <details className="heartbeat-more">
-      <summary>More</summary>
+      <summary className="disclosure">More</summary>
       <div className="settings-fields">
         <label>
           Look deeper{" "}

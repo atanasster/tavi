@@ -58,6 +58,7 @@ export function WebSearchSettings() {
             </span>
             <span className="actions">
               <Button
+                size="sm"
                 aria-label={`Test ${provider.providerId}`}
                 disabled={busy !== undefined}
                 onClick={() => void run(`test:${provider.providerId}`, () => searchActions.test(client, provider.providerId))}
@@ -65,6 +66,7 @@ export function WebSearchSettings() {
                 {busy === `test:${provider.providerId}` ? "Testing…" : "Test"}
               </Button>
               <Button
+                size="sm"
                 aria-label={`${provider.enabled ? "Disable" : "Enable"} ${provider.providerId}`}
                 disabled={busy !== undefined}
                 onClick={() =>
@@ -74,6 +76,7 @@ export function WebSearchSettings() {
                 {provider.enabled ? "Disable" : "Enable"}
               </Button>
               <Button
+                size="sm"
                 variant="danger"
                 aria-label={`Remove ${provider.providerId}`}
                 disabled={busy !== undefined}

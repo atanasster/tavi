@@ -135,7 +135,7 @@ export function Discover({
         <DiscoverPanel busy={busy !== undefined} onAdd={addServer} />
       </section>
       <details className="apps-by-address">
-        <summary>Add an MCP server by its address or npm package</summary>
+        <summary className="disclosure">Add an MCP server by its address or npm package</summary>
         <AddServerForm busy={busy !== undefined} onAdd={addServer} />
       </details>
       {switching === undefined ? null : (

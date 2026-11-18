@@ -226,7 +226,7 @@ export const RunView = memo(function RunView({
       ) : null}
       {run.recordedPrompts?.length ? (
         <details>
-          <summary>Recorded prompts (replay may be partial)</summary>
+          <summary className="disclosure">Recorded prompts (replay may be partial)</summary>
           {run.recordedPrompts.map((prompt, index) => (
             <p key={index} data-turn={firstTurn + index}>
               {prompt}

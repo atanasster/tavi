@@ -269,7 +269,7 @@ export function MemorySettingsCard({
         </li>
       </ul>
       <details className="memory-settings-more">
-        <summary>More</summary>
+        <summary className="disclosure">More</summary>
         <p>
           <Field
             id={`${id}-retrieval`}

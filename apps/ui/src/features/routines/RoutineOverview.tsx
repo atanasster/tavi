@@ -453,7 +453,7 @@ function EvaluationText({ evaluation }: { readonly evaluation: RoutineDetail["ev
       <CodeText text={summary} />
       {measured === undefined ? null : (
         <details className="routine-evaluation-measured">
-          <summary>What it measured</summary>
+          <summary className="disclosure">What it measured</summary>
           {measured}
         </details>
       )}

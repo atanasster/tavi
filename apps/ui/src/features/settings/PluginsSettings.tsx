@@ -369,6 +369,7 @@ export function PluginsSettings({
                   {/* A version that cannot be a worker is approved only in-process, after a confirmation; one that can is a worker unless the operator chooses otherwise. */}
                   {version.workerRefusal === undefined ? (
                     <Button
+                      size="sm"
                       // The visible words first, so a voice-control user saying them reaches it (WCAG 2.5.3).
                       aria-label={`Approve ${version.version} of ${plugin.id}`}
                       disabled={busy !== undefined}
@@ -379,6 +380,7 @@ export function PluginsSettings({
                   ) : null}
                   {version.runsOwnerCode && version.mcp === undefined ? (
                     <Button
+                      size="sm"
                       variant={version.workerRefusal === undefined ? "ghost" : undefined}
                       aria-label={
                         version.workerRefusal === undefined
@@ -392,6 +394,7 @@ export function PluginsSettings({
                     </Button>
                   ) : null}
                   <Button
+                    size="sm"
                     variant="danger"
                     aria-label={`Reject ${plugin.id} ${version.version}`}
                     disabled={busy !== undefined}
@@ -403,6 +406,7 @@ export function PluginsSettings({
               ))}
           {plugin.core ? null : (
             <Button
+              size="sm"
               aria-label={`${plugin.enabled ? "Disable" : "Enable"} ${plugin.id}`}
               disabled={busy !== undefined || (plugin.kind !== "builtin" && !plugin.enabled && !approved)}
               onClick={() =>
@@ -420,12 +424,13 @@ export function PluginsSettings({
           {Object.keys(plugin.configFields).length === 0 &&
           (pluginRunningVersion(plugin)?.capabilities?.length ?? 0) === 0 &&
           (plugin.instances?.length ?? 0) === 0 ? null : (
-            <Button aria-label={`Settings for ${plugin.id}`} disabled={busy !== undefined} onClick={() => setConfiguring(plugin)}>
+            <Button size="sm" aria-label={`Settings for ${plugin.id}`} disabled={busy !== undefined} onClick={() => setConfiguring(plugin)}>
               Settings
             </Button>
           )}
           {plugin.kind !== "builtin" ? (
             <Button
+              size="sm"
               variant="danger"
               aria-label={`Remove ${plugin.id}`}
               disabled={busy !== undefined || plugin.enabled}

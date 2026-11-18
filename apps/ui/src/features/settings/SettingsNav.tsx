@@ -2,6 +2,7 @@ import { Button } from "../../ui/Button.js";
 import { SETTINGS_GROUPS, SETTINGS_VIEWS, type SettingsView } from "../shell/route.js";
 import { SidebarFrame } from "../shell/SidebarFrame.js";
 import { useWorkspace } from "../shell/Workspace.js";
+import { useCurrentNavInView } from "../../ui/useCurrentNavInView.js";
 
 /**
  * Settings' own nav, in the left column the chats list holds elsewhere: the
@@ -21,6 +22,7 @@ export function SettingsNav({
   readonly onCollapse?: (() => void) | undefined;
 }) {
   const { workspaceId } = useWorkspace();
+  useCurrentNavInView(view);
   const label = (value: SettingsView): string => SETTINGS_VIEWS.find((item) => item.value === value)?.label ?? value;
   return (
     <SidebarFrame title="Settings" label="settings" className="center-nav settings-nav" onCollapse={onCollapse}>
