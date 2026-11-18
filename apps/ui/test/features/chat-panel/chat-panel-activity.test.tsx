@@ -143,7 +143,10 @@ describe("the chat panel's Activity tab", () => {
         admission("a2", "reply", "2026-10-01T09:05:00.000Z", "For two", "committed", "waiting"),
       ],
     };
-    expect(activityOf(record, session([])).map((item) => item.detail)).toEqual(["Waiting for you", "Started · answered by your next message"]);
+    expect(activityOf(record, session([])).map((item) => item.detail)).toEqual([
+      "Waiting for you",
+      "Started · answered by your next message",
+    ]);
   });
 
   it("lists the approvals decided in the chat, which the transcript no longer shows", () => {
