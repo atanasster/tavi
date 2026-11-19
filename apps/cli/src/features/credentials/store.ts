@@ -62,6 +62,23 @@ export function credentialsEncrypted(dataDirectory: string): boolean {
 }
 
 /**
+ * What `serve` start and `tavi doctor` say of a credential store that holds
+ * values but is not encrypted at rest — a data directory from before
+ * encryption, or one opened where no OS keychain could keep a key (headless
+ * Linux without a Secret Service). `undefined` when the store is encrypted,
+ * empty, or cannot be listed (its own commands report why).
+ */
+export async function plainCredentialStoreWarning(dataDirectory: string): Promise<string | undefined> {
+  if (credentialsEncrypted(dataDirectory)) return undefined;
+  const count = await listCredentialRefs(dataDirectory).then(
+    (listing) => listing.valid.length,
+    () => 0,
+  );
+  if (count === 0) return undefined;
+  return `the credential store is not encrypted at rest: ${count} ${count === 1 ? "credential is" : "credentials are"} kept as plain 0600 files in ${credentialsDirectory(dataDirectory)}, readable by anything that can read the data directory; tavi credentials encrypt`;
+}
+
+/**
  * Whether `dataDirectory` is opened for the first time: no database yet, and
  * no credential key. Read before the database is created.
  */

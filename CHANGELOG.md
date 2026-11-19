@@ -18,6 +18,10 @@ change behaviour or stored data.
 
 ### Changed
 
+- A credential store that holds values but is not encrypted at rest — where no
+  OS keychain could keep a key, such as Linux without a Secret Service — is no
+  longer silent: `tavi serve` warns at start and `tavi doctor` says so under
+  `credentialStore`, naming `tavi credentials encrypt`.
 - Each answer in the canvas says, on the line of its copy and read-aloud
   buttons, how long it worked, the model that answered and its tool calls
   (`2m 05s · gemma4-32k:latest · 3 tool calls`), and the memories it used are

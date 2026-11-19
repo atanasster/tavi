@@ -9,6 +9,7 @@ import {
   credentialsEncrypted,
   createLocalCredentialStore,
   encryptCredentialDirectory,
+  plainCredentialStoreWarning,
   provisionCredentialKey,
 } from "../../src/features/credentials/store.js";
 import { resetDataDirectoryAndKey, resetSummary } from "../../src/features/maintenance/reset.js";
@@ -141,5 +142,25 @@ describe("tavi credentials encrypt with a keychain", () => {
     expect(result.keyCreated).toBe(true);
     expect(result.keychain).toBeUndefined();
     expect(readFileSync(join(directory, "credentials.key"), "utf8")).toMatch(/^[0-9a-f]{64}\n$/);
+  });
+});
+
+describe("a plain credential store with values in it", () => {
+  it("is said, with the count and the fix, so a store a keychain-less host left plain is never silent", async () => {
+    const directory = directories.create();
+    expect(await plainCredentialStoreWarning(directory)).toBeUndefined();
+    await createLocalCredentialStore(directory).setSecret("model.key", "sk-live-value");
+    await createLocalCredentialStore(directory).setSecret("other.key", "sk-live-other");
+    const warning = await plainCredentialStoreWarning(directory);
+    expect(warning).toContain("2 credentials");
+    expect(warning).toContain("not encrypted at rest");
+    expect(warning).toContain("tavi credentials encrypt");
+  });
+
+  it("is not said once the store is encrypted", async () => {
+    const directory = directories.create();
+    await createLocalCredentialStore(directory).setSecret("model.key", "sk-live-value");
+    await encryptCredentialDirectory(directory, undefined);
+    expect(await plainCredentialStoreWarning(directory)).toBeUndefined();
   });
 });

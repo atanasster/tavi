@@ -18,6 +18,7 @@ import { SITE_NOTES_DIRECTORY } from "../features/browser/site-notes.js";
 import { chatContextCommand } from "../features/tasks/history-owner.js";
 import { FolderPicks, browseCommand, folderCommand } from "../features/folders/owner.js";
 import { AttachmentUploads, artifactsUploadCommand } from "../features/artifacts/upload-owner.js";
+import { plainCredentialStoreWarning } from "../features/credentials/store.js";
 import { SkillService, measureFolder, SERVE_SESSION_PREFIX } from "@tavi/runtime";
 import { centerCommand } from "./center.js";
 import { createHealthWatch, type HealthWatch } from "../features/doctor/health.js";
@@ -416,6 +417,10 @@ export async function serve(
       mode: weak.mode,
       ...(runtime.taintPolicy === undefined ? {} : { via: "serve --taint-policy" }),
     });
+
+  // A credential store left plain (no OS keychain could keep a key) is said at start, as tavi doctor reports it.
+  const plainStore = await plainCredentialStoreWarning(options.dataDirectory);
+  if (plainStore !== undefined) runtime.logger.warn(plainStore);
 
   // A turn the last owner's unclean stop cut off waits for the person: said once at start, as `tavi doctor` reports it.
   const stranded = await strandedAdmissions(runtime).catch((error: unknown) => {

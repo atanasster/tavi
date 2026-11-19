@@ -11,6 +11,7 @@ import { pdfConfinement, pdfOcrAssets } from "../pdf/host.js";
 import { engineWarnings, parentProxyChecks, sandboxDoctorSection } from "../sandbox/setup.js";
 import { findUv } from "../mcp/pypi.js";
 import { schemaTokenCount } from "../mcp/review.js";
+import { credentialsEncrypted, plainCredentialStoreWarning } from "../credentials/store.js";
 import {
   sandboxConfines,
   type SandboxStatus,
@@ -958,6 +959,11 @@ export async function buildDoctorDocument(
     memory: await memoryDoctor(runtime),
     // The taint gate: the mode in force and what it asked, or would have asked, in 7 days.
     taint: await taintDoctor(runtime),
+    // The credential store: whether it is encrypted at rest, and a warning when values sit in it plain.
+    credentialStore: {
+      encrypted: credentialsEncrypted(runtime.dataDirectory),
+      ...definedOnly({ warning: await plainCredentialStoreWarning(runtime.dataDirectory) }),
+    },
     // Web search: whether it is offered, and whether the seeded rule still lets it run without asking.
     webSearch: await webSearchDoctor(runtime),
     // The sandbox: one tier for sandbox.run, MCP servers and the PDF children, with its cause and fix.
