@@ -14,7 +14,12 @@ export function BriefField({
   readonly onChange: (text: string) => void;
 }) {
   return (
-    <Field id={id} label="What should ideas favour or avoid? Read as you write it.">
+    <Field
+      id={id}
+      label="What should Ideas favour or avoid?"
+      hint="Ideas read it word for word, at their next look."
+      hintClassName="meta-sm"
+    >
       <textarea
         rows={3}
         maxLength={IDEA_BRIEF_MAX}

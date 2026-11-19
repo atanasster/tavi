@@ -28,6 +28,7 @@ import {
 } from "./ideas-api.js";
 import { Card } from "../../ui/Card.js";
 import { Button } from "../../ui/Button.js";
+import { RowAction } from "../../ui/RowAction.js";
 import { useTimeZone, useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
 
@@ -159,7 +160,7 @@ export function IdeasSettings() {
                   event.target.checked ? "Ideas are on." : "Ideas are off: none are looked for or shown.",
                 )
               }
-            />{" "}
+            />
             Look for ideas
           </label>
         </p>
@@ -172,30 +173,10 @@ export function IdeasSettings() {
               onChange={(event) =>
                 change("chips", { chips: event.target.checked }, event.target.checked ? "Suggestions are on." : "Suggestions are off.")
               }
-            />{" "}
+            />
             Suggest prompts in an empty chat
           </label>
         </p>
-        <p className="meta-sm">Ideas may read:</p>
-        {SOURCES.map((source) => (
-          <p key={source.key}>
-            <label>
-              <input
-                type="checkbox"
-                checked={settings.sources[source.key]}
-                disabled={busy !== undefined}
-                onChange={(event) =>
-                  change(
-                    `source-${source.key}`,
-                    { sources: { [source.key]: event.target.checked } },
-                    event.target.checked ? "Ideas may read it again." : "Ideas no longer read it, and stop quoting it.",
-                  )
-                }
-              />{" "}
-              {source.label}
-            </label>
-          </p>
-        ))}
         <p className="meta-sm">
           {/* Tavi's own writer is said in words; another provider by its id, which is what the command takes. */}
           {list.provider === BUILTIN_IDEAS_PROVIDER_ID ? (
@@ -221,6 +202,28 @@ export function IdeasSettings() {
           Set it with <Command>tavi ideas digest</Command> in a terminal.
         </p>
       </Card>
+      {/* What a look reads, apart from when it looks: each one a switch, named as the reader knows it. */}
+      <Card as="div" level={2} title="What Ideas may read">
+        {SOURCES.map((source) => (
+          <p key={source.key}>
+            <label>
+              <input
+                type="checkbox"
+                checked={settings.sources[source.key]}
+                disabled={busy !== undefined}
+                onChange={(event) =>
+                  change(
+                    `source-${source.key}`,
+                    { sources: { [source.key]: event.target.checked } },
+                    event.target.checked ? "Ideas may read it again." : "Ideas no longer read it, and stop quoting it.",
+                  )
+                }
+              />
+              {source.label}
+            </label>
+          </p>
+        ))}
+      </Card>
       <Card as="div" level={2} title="Your brief">
         <BriefField id={`${ids}-brief`} value={brief} onChange={setBriefDraft} />
         <p>
@@ -243,8 +246,7 @@ export function IdeasSettings() {
               <span>
                 {idea.title} <span className="meta-sm">({idea.status === "snoozed" ? "not now" : "not interested"})</span>
               </span>
-              <Button
-                size="sm"
+              <RowAction
                 disabled={busy !== undefined}
                 onClick={() =>
                   void run(`restore-${idea.id}`, () => said(`${idea.title}: back.`)(restoreIdea(client, workspaceId, idea.id)))
@@ -252,7 +254,7 @@ export function IdeasSettings() {
                 aria-label={`Bring back ${idea.title}`}
               >
                 Bring back
-              </Button>
+              </RowAction>
             </div>
           ))
         )}
@@ -264,8 +266,7 @@ export function IdeasSettings() {
           list.mutedCategories.map((category) => (
             <div key={category} className="item-row">
               <span>{IDEA_CATEGORY_LABELS[category]}</span>
-              <Button
-                size="sm"
+              <RowAction
                 disabled={busy !== undefined}
                 onClick={() =>
                   void run(`unmute-${category}`, () =>
@@ -277,20 +278,19 @@ export function IdeasSettings() {
                 aria-label={`Unmute ${IDEA_CATEGORY_LABELS[category]}`}
               >
                 Unmute
-              </Button>
+              </RowAction>
             </div>
           ))
         )}
       </Card>
       <Card as="div" level={2} title="Sources not used">
         {excluded.length === 0 ? (
-          <p className="meta-sm">None: every source ideas may read is used.</p>
+          <p className="meta-sm">None: every source Ideas may read is used.</p>
         ) : (
           excluded.map((source) => (
             <div key={source.ref} className="item-row">
               <span>{sourceLabel(source)}</span>
-              <Button
-                size="sm"
+              <RowAction
                 disabled={busy !== undefined}
                 onClick={() =>
                   void run(`include-${source.ref}`, () =>
@@ -302,7 +302,7 @@ export function IdeasSettings() {
                 aria-label={`Use ${sourceLabel(source)} again`}
               >
                 Use again
-              </Button>
+              </RowAction>
             </div>
           ))
         )}

@@ -28,6 +28,11 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Settings → Ideas is easier to scan. What Ideas may read has its own card,
+  apart from the switches and when Ideas look; a switch whose words wrap
+  keeps them beside its box; the brief asks its question as its label, with
+  how it is read as a note under the box; and Bring back, Unmute and Use
+  again are drawn as every list row's ordinary action is.
 - Settings → Permissions reads more cleanly. A rule's note starts as a
   sentence, without the "yours:" or "shipped with Tavi:" in front, and the
   shipped rules no longer each say "All workspaces" under a heading that

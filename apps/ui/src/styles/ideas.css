@@ -154,6 +154,27 @@
   overflow-wrap: anywhere;
 }
 
+/* The brief's hint sits under its box, closer than the paragraphs around it. */
+.ideas-settings textarea {
+  display: block;
+}
+
+.ideas-settings textarea + p {
+  margin-top: var(--space-1-5);
+}
+
+/* A switch whose words wrap keeps them beside its box, the box on their first line. */
+.ideas-settings p > label:has(> input[type="checkbox"]) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-2);
+  align-items: start;
+}
+
+.ideas-settings p > label > input[type="checkbox"] {
+  margin-block-start: calc((1lh - var(--size-check)) / 2);
+}
+
 .ideas-settings .item-row {
   display: flex;
   align-items: center;

@@ -418,6 +418,23 @@ describe("the Ideas tab", () => {
       "A source (x-1)",
     ]);
     const button = (label: string) => page.querySelector(`button[aria-label="${label}"]`);
+    // A row's undo is drawn as every list row's ordinary action is: small words.
+    expect(button("Bring back I can help with travel.hotels")?.className).toBe("button-sm ghost");
+    // What a look reads is its own card, apart from the switches and when it looks.
+    const cards = [...page.querySelectorAll(".section-card")].map((card) => ({
+      title: card.querySelector("h2")?.textContent,
+      boxes: [...card.querySelectorAll('input[type="checkbox"]')].length,
+    }));
+    expect(cards.slice(0, 2)).toEqual([
+      { title: "Switches", boxes: 2 },
+      { title: "What Ideas may read", boxes: 3 },
+    ]);
+    // The brief's question is its label; how it is read is its hint.
+    const brief = page.querySelector("textarea");
+    expect(page.querySelector(`label[for="${brief?.id}"]`)?.textContent).toBe("What should Ideas favour or avoid?");
+    expect(page.querySelector(`#${CSS.escape(brief?.getAttribute("aria-describedby") ?? "")}`)?.textContent).toBe(
+      "Ideas read it word for word, at their next look.",
+    );
     await click(button("Bring back I can help with travel.hotels"));
     await click(button("Unmute Shopping & style"));
     await click(button("Use A chat (task-9) again"));
