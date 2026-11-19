@@ -5,7 +5,7 @@ import { localDayWithYear } from "../../lib/time.js";
 import { settingsPath } from "../shell/route.js";
 import { useTimeZone } from "../shell/Workspace.js";
 import { HEALTH_BADGE, signInByWords } from "./model.js";
-import { Button } from "../../ui/Button.js";
+import { RowAction, ROW_LINK_CLASS } from "../../ui/RowAction.js";
 
 /**
  * One account of an app: who it
@@ -89,7 +89,7 @@ export function AccountRow({
       </span>
       {account.readOnly ? (
         <span className="actions">
-          <AppLink href={settingsPath("messaging")} className="button-sm" onFollow={undefined}>
+          <AppLink href={settingsPath("messaging")} className={ROW_LINK_CLASS} onFollow={undefined}>
             {account.health === "ready" ? "Open in Channels" : `Reconnect ${appName} in Channels`}
           </AppLink>
         </span>
@@ -159,7 +159,7 @@ export function AccountRow({
             </label>
           )}
           {onReconnect === undefined ? null : (
-            <Button size="sm" disabled={busy} onClick={onReconnect}>
+            <RowAction disabled={busy} onClick={onReconnect}>
               {account.health !== "not-set-up"
                 ? "Reconnect"
                 : !signsIn
@@ -167,17 +167,17 @@ export function AccountRow({
                   : account.signedInAt === undefined
                     ? "Sign in"
                     : "Reconnect"}
-            </Button>
+            </RowAction>
           )}
           {onTest === undefined ? null : (
-            <Button size="sm" disabled={busy} onClick={onTest}>
+            <RowAction disabled={busy} onClick={onTest}>
               Test
-            </Button>
+            </RowAction>
           )}
           {canDisconnect ? (
-            <Button variant="danger" size="sm" disabled={busy} onClick={onDisconnect}>
+            <RowAction tone="danger" disabled={busy} onClick={onDisconnect}>
               Disconnect
-            </Button>
+            </RowAction>
           ) : null}
         </span>
       )}

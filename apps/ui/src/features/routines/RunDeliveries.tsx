@@ -3,7 +3,7 @@ import { useState } from "react";
 import { when } from "../../lib/time.js";
 import { Section, StatusBadge } from "../../ui/Parts.js";
 import { operationKey, type routineStep, type RunInspection } from "./api.js";
-import { Button } from "../../ui/Button.js";
+import { RowAction } from "../../ui/RowAction.js";
 
 /** Each delivery with its receipts; a resend needs the duplicate risk acknowledged, a target resume does not. */
 export function Deliveries({
@@ -53,8 +53,7 @@ export function Deliveries({
                   </div>
                   <StatusBadge status={job.status} />
                   <div className="item-actions">
-                    <Button
-                      size="sm"
+                    <RowAction
                       disabled={!acknowledged || busy !== undefined}
                       onClick={() =>
                         void change(
@@ -65,9 +64,8 @@ export function Deliveries({
                       }
                     >
                       {job.data.text === undefined ? "Resend original PDF" : "Resend original message"}
-                    </Button>
-                    <Button
-                      size="sm"
+                    </RowAction>
+                    <RowAction
                       disabled={busy !== undefined}
                       onClick={() =>
                         void change(
@@ -78,7 +76,7 @@ export function Deliveries({
                       }
                     >
                       Resume this delivery target
-                    </Button>
+                    </RowAction>
                   </div>
                 </li>
               );

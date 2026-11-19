@@ -235,10 +235,10 @@
   width: var(--width-field-slug);
 }
 
-/* On a phone a row's text buttons (a channel's, a web search provider's) wrap under its name: their words on its edge,
-   their padding outside it. */
+/* On a phone a row's actions wrap under its name: led by a text button (`RowAction`), its words start on the name's
+   edge, its padding outside it. */
 @media (--phone) {
-  .row > .row-text-actions {
+  .row > .actions > .ghost:first-child {
     margin-inline-start: calc(-1 * var(--space-2));
   }
 }

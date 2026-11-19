@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { Button } from "../../ui/Button.js";
+import { RowAction } from "../../ui/RowAction.js";
 import { AppLink } from "../shell/AppLink.js";
 import { Switch } from "./PlainSchedules.js";
 
@@ -112,15 +113,14 @@ export function RecurringRow({
       </div>
       <div className="schedule-recurring-controls">
         {runNow === undefined ? null : (
-          <Button
-            size="sm"
+          <RowAction
             aria-label={`Run now: ${name}`}
             title={runNow.title}
             disabled={busy || runNow.disabled === true}
             onClick={runNow.onRun}
           >
             Run now
-          </Button>
+          </RowAction>
         )}
         <Switch
           on={toggle.on}

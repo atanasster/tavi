@@ -18,6 +18,7 @@ import { useAction, useFormSubmit } from "../../hooks/use-action.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
+import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 
 /** Whether the store is encrypted at rest, and where its key is: read-only, as `tavi credentials key` says it. */
@@ -101,18 +102,17 @@ export function CredentialsSettings() {
           <li key={reference} className="row">
             <CredentialName reference={reference} />
             <span className="actions">
-              <Button size="sm" aria-label={`Replace ${reference}`} disabled={busy !== undefined} onClick={() => setSetting(reference)}>
+              <RowAction aria-label={`Replace ${reference}`} disabled={busy !== undefined} onClick={() => setSetting(reference)}>
                 Replace
-              </Button>
-              <Button
-                size="sm"
-                variant="danger"
+              </RowAction>
+              <RowAction
+                tone="danger"
                 aria-label={`Delete ${reference}`}
                 disabled={busy !== undefined}
                 onClick={() => setDeleting(reference)}
               >
                 Delete
-              </Button>
+              </RowAction>
             </span>
           </li>
         ))}

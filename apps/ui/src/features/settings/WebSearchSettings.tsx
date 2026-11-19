@@ -11,6 +11,7 @@ import { useLoaded } from "../../hooks/use-loaded.js";
 import { WebSearchFormModal } from "./WebSearchFormModal.js";
 import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
+import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 
 /** The owner's web search providers. One is used automatically; several need a selection or fallback chain in web-providers.json. */
@@ -61,20 +62,15 @@ export function WebSearchSettings() {
                 </>
               )}
             </span>
-            {/* Text buttons, as a channel's row has them: Remove alone keeps its danger outline. */}
-            <span className="actions row-text-actions">
-              <Button
-                variant="ghost"
-                size="sm"
+            <span className="actions">
+              <RowAction
                 aria-label={`Test ${provider.providerId}`}
                 disabled={busy !== undefined}
                 onClick={() => void run(`test:${provider.providerId}`, () => searchActions.test(client, provider.providerId))}
               >
                 {busy === `test:${provider.providerId}` ? "Testing…" : "Test"}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
+              </RowAction>
+              <RowAction
                 aria-label={`${provider.enabled ? "Disable" : "Enable"} ${provider.providerId}`}
                 disabled={busy !== undefined}
                 onClick={() =>
@@ -82,16 +78,15 @@ export function WebSearchSettings() {
                 }
               >
                 {provider.enabled ? "Disable" : "Enable"}
-              </Button>
-              <Button
-                size="sm"
-                variant="danger"
+              </RowAction>
+              <RowAction
+                tone="danger"
                 aria-label={`Remove ${provider.providerId}`}
                 disabled={busy !== undefined}
                 onClick={() => setRemoving(provider)}
               >
                 Remove
-              </Button>
+              </RowAction>
             </span>
           </li>
         ))}

@@ -7,7 +7,7 @@ import { FormActions } from "../settings/FormParts.js";
 import { correctMemory, forgetMemory, forgetWaitsFor, getMemory } from "./memory-api.js";
 import { readOnly } from "./memory-model.js";
 import { type Context, untilLine, RecordMeta, RecordText, useReveal, RevealButton } from "./MemoryRecord.js";
-import { Button } from "../../ui/Button.js";
+import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Field } from "../../ui/Field.js";
 
@@ -163,12 +163,12 @@ export function MemoryRow({
           {item.redacted ? <RevealButton reveal={reveal} disabled={busy} /> : null}
           {locked ? null : (
             <>
-              <Button variant="ghost" size="sm" disabled={busy} onClick={() => startCorrect()}>
+              <RowAction disabled={busy} onClick={() => startCorrect()}>
                 Correct
-              </Button>
-              <Button variant="danger-ghost" size="sm" disabled={busy} onClick={() => setMode({ kind: "forget" })}>
+              </RowAction>
+              <RowAction tone="danger" disabled={busy} onClick={() => setMode({ kind: "forget" })}>
                 Forget
-              </Button>
+              </RowAction>
             </>
           )}
         </div>

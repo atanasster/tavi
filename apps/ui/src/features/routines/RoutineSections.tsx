@@ -4,6 +4,7 @@ import type { useLoaded } from "../../hooks/use-loaded.js";
 import { firstLine } from "../../lib/format.js";
 import { when } from "../../lib/time.js";
 import { Button } from "../../ui/Button.js";
+import { RowAction } from "../../ui/RowAction.js";
 import { LoadError, LoadMore, Notice, Section, StatusBadge } from "../../ui/Parts.js";
 import { runEffort, type RoutineOverviewData, type RunSummary } from "./api.js";
 import { RoutineSettingsView } from "./RoutineSettings.js";
@@ -46,13 +47,12 @@ export function RoutineRuns({
               {item.headline ? <span className="item-meta meta-sm">{firstLine(item.headline, 120)}</span> : null}
             </div>
             <StatusBadge status={item.status} />
-            <Button
-              size="sm"
+            <RowAction
               aria-label={`Inspect the run of ${when(item.startedAt ?? item.claimedAt, timeZone)}`}
               onClick={() => onOpenRun(item.runId)}
             >
               Inspect
-            </Button>
+            </RowAction>
           </li>
         ))}
       </ul>

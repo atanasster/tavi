@@ -27,6 +27,7 @@ import { useAction } from "../../hooks/use-action.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
+import { RowAction } from "../../ui/RowAction.js";
 import { useTimeZone, useWorkspace } from "../shell/Workspace.js";
 import { when } from "../../lib/time.js";
 import { InstallPluginModal, PluginSettingsModal } from "./PluginModals.js";
@@ -369,20 +370,20 @@ export function PluginsSettings({
                 <span key={version.version}>
                   {/* A version that cannot be a worker is approved only in-process, after a confirmation; one that can is a worker unless the operator chooses otherwise. */}
                   {version.workerRefusal === undefined ? (
-                    <Button
-                      size="sm"
+                    <RowAction
+                      tone="awaited"
                       // The visible words first, so a voice-control user saying them reaches it (WCAG 2.5.3).
                       aria-label={`Approve ${version.version} of ${plugin.id}`}
                       disabled={busy !== undefined}
                       onClick={() => void run(`approve:${plugin.id}`, () => pluginActions.decide(client, plugin.id, version.version, true))}
                     >
                       Approve {version.version}
-                    </Button>
+                    </RowAction>
                   ) : null}
                   {version.runsOwnerCode && version.mcp === undefined ? (
-                    <Button
-                      size="sm"
-                      variant={version.workerRefusal === undefined ? "ghost" : undefined}
+                    <RowAction
+                      // The only way to approve a version that cannot be a worker is what the row waits on; beside Approve it is an option.
+                      tone={version.workerRefusal === undefined ? "plain" : "awaited"}
                       aria-label={
                         version.workerRefusal === undefined
                           ? `Approve in-process: ${plugin.id} ${version.version}`
@@ -392,22 +393,20 @@ export function PluginsSettings({
                       onClick={() => setUnsandboxing({ plugin, version })}
                     >
                       {version.workerRefusal === undefined ? "Approve in-process…" : `Approve ${version.version} in-process…`}
-                    </Button>
+                    </RowAction>
                   ) : null}
-                  <Button
-                    size="sm"
-                    variant="danger"
+                  <RowAction
+                    tone="danger"
                     aria-label={`Reject ${plugin.id} ${version.version}`}
                     disabled={busy !== undefined}
                     onClick={() => void run(`reject:${plugin.id}`, () => pluginActions.decide(client, plugin.id, version.version, false))}
                   >
                     Reject
-                  </Button>
+                  </RowAction>
                 </span>
               ))}
           {plugin.core ? null : (
-            <Button
-              size="sm"
+            <RowAction
               aria-label={`${plugin.enabled ? "Disable" : "Enable"} ${plugin.id}`}
               disabled={busy !== undefined || (plugin.kind !== "builtin" && !plugin.enabled && !approved)}
               onClick={() =>
@@ -420,19 +419,18 @@ export function PluginsSettings({
               }
             >
               {plugin.enabled ? "Disable" : "Enable"}
-            </Button>
+            </RowAction>
           )}
           {Object.keys(plugin.configFields).length === 0 &&
           (pluginRunningVersion(plugin)?.capabilities?.length ?? 0) === 0 &&
           (plugin.instances?.length ?? 0) === 0 ? null : (
-            <Button size="sm" aria-label={`Settings for ${plugin.id}`} disabled={busy !== undefined} onClick={() => setConfiguring(plugin)}>
+            <RowAction aria-label={`Settings for ${plugin.id}`} disabled={busy !== undefined} onClick={() => setConfiguring(plugin)}>
               Settings
-            </Button>
+            </RowAction>
           )}
           {plugin.kind !== "builtin" ? (
-            <Button
-              size="sm"
-              variant="danger"
+            <RowAction
+              tone="danger"
               aria-label={`Remove ${plugin.id}`}
               disabled={busy !== undefined || plugin.enabled}
               // Why it cannot be pressed: an enabled plugin is turned off before it is removed.
@@ -440,7 +438,7 @@ export function PluginsSettings({
               onClick={() => setRemoving(plugin)}
             >
               Remove
-            </Button>
+            </RowAction>
           ) : null}
         </span>
       </li>

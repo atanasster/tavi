@@ -28,6 +28,17 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- A list row's buttons look the same on every page. An ordinary action
+  (**Test**, **Disable**, **Settings**, **Replace**, **Set**, **Rediscover**,
+  **Run now**, **Inspect**) is small words with no box. Only an action that
+  removes, revokes or ends something (**Remove**, **Delete**, **Revoke**,
+  **Disconnect**, **Forget**) has an outline, in red. The one action a row is
+  waiting on (**Approve** a plugin version, **Set** a default model not yet
+  chosen) is filled. Before, Plugins, Credentials, Models, an app's accounts and
+  the Connected apps list drew their actions as outlined buttons while Channels
+  and Web search used words, and Permissions and memory drew **Remove** and
+  **Forget** as red words. On a phone, a row whose actions wrap under its name
+  starts them on the name's edge.
 - Settings → Plugins, walked at desktop and phone width. A plugin's
   **Settings** dialog names each field as its plugin labels it ("Your
   contact", "AFDC key") rather than by its key, and each field's explanation

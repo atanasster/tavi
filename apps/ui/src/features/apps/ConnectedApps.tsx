@@ -26,6 +26,7 @@ import {
   primaryRepair,
 } from "./model.js";
 import { Button } from "../../ui/Button.js";
+import { RowAction } from "../../ui/RowAction.js";
 import { Command } from "../../ui/Command.js";
 
 /**
@@ -307,8 +308,7 @@ function AppRow({
       </span>
       {repair === undefined || repair.kind === "cli-only" ? null : (
         <span className="actions">
-          <Button
-            size="sm"
+          <RowAction
             onClick={() =>
               onOpen(
                 app.appId,
@@ -317,7 +317,7 @@ function AppRow({
             }
           >
             {repair.title}
-          </Button>
+          </RowAction>
         </span>
       )}
     </li>

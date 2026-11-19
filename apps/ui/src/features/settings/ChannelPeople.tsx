@@ -19,6 +19,7 @@ import { PairingLinkBox, claimedSenderLabel, shownPairingCode } from "../../ui/Q
 import { Select } from "../../ui/Select.js";
 import { request, type Loaded, labelOf } from "./channels-api.js";
 import { Button } from "../../ui/Button.js";
+import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { ChannelNotRunning, notRunningChannel } from "./ChannelNotRunning.js";
 
@@ -402,8 +403,7 @@ export function PeopleEditor({
               </div>
               <div className="actions">
                 {person.trustUnverified === undefined ? null : (
-                  <Button
-                    variant="ghost"
+                  <RowAction
                     onClick={() =>
                       void run("untrust", async () => {
                         const answer = await request(client, {
@@ -419,11 +419,11 @@ export function PeopleEditor({
                     }
                   >
                     Stop trusting unverified
-                  </Button>
+                  </RowAction>
                 )}
-                <Button variant="danger" size="sm" onClick={() => setRemove(person)}>
+                <RowAction tone="danger" onClick={() => setRemove(person)}>
                   Revoke access
-                </Button>
+                </RowAction>
               </div>
             </li>
           ))}

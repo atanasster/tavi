@@ -21,6 +21,7 @@ import { RoomsAndGrants, Ingress } from "./ChannelRooms.js";
 import { request, type Loaded, load, labelOf } from "./channels-api.js";
 import { TestSend } from "./ChannelTestSend.js";
 import { Button } from "../../ui/Button.js";
+import { RowAction, ROW_LINK_CLASS } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
 
@@ -108,48 +109,36 @@ function Channels({ data, reload: reloadPage }: { data: Loaded; reload: () => vo
                       <AllowedLine people={data.people.filter((person) => person.connectionId === connection.connectionId)} />
                     ) : null}
                   </div>
-                  <div className="actions row-text-actions">
+                  <div className="actions">
                     {/* Its app's page in Connected apps: signing in, who may use it, and what it did. A channel's app is named by its provider. */}
-                    <AppLink href={appsPath({ appId: connection.providerId })} className="button-sm ghost" onFollow={undefined}>
+                    <AppLink href={appsPath({ appId: connection.providerId })} className={ROW_LINK_CLASS} onFollow={undefined}>
                       Open app
                     </AppLink>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      aria-label={`People on ${connection.label}`}
-                      onClick={() => setPeopleOf(connection.connectionId)}
-                    >
+                    <RowAction aria-label={`People on ${connection.label}`} onClick={() => setPeopleOf(connection.connectionId)}>
                       People
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    </RowAction>
+                    <RowAction
                       aria-label={`Test ${connection.label}`}
                       disabled={connection.status.state !== "running"}
                       onClick={() => setTesting(connection)}
                     >
                       Test
-                    </Button>
+                    </RowAction>
                     {/* A group channel's rooms: whether each reads its recent messages, and the room and contact grants. */}
                     {descriptor?.groups !== undefined ? (
-                      <Button variant="ghost" size="sm" aria-label={`Rooms of ${connection.label}`} onClick={() => setRooms(connection)}>
+                      <RowAction aria-label={`Rooms of ${connection.label}`} onClick={() => setRooms(connection)}>
                         Rooms
-                      </Button>
+                      </RowAction>
                     ) : null}
                     {descriptor !== undefined ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        aria-label={`Edit ${connection.label}`}
-                        onClick={() => setEditing({ descriptor, connection })}
-                      >
+                      <RowAction aria-label={`Edit ${connection.label}`} onClick={() => setEditing({ descriptor, connection })}>
                         Edit
-                      </Button>
+                      </RowAction>
                     ) : null}
                     {/* Removable with its channel gone too (an uninstalled plugin's): removing needs nothing of the channel. */}
-                    <Button variant="danger" size="sm" aria-label={`Remove ${connection.label}`} onClick={() => setRemove(connection)}>
+                    <RowAction tone="danger" aria-label={`Remove ${connection.label}`} onClick={() => setRemove(connection)}>
                       Remove
-                    </Button>
+                    </RowAction>
                   </div>
                 </li>
               );
@@ -453,13 +442,13 @@ export function ChannelAppConnections({ providerId }: { providerId: string }) {
                   ) : null}
                 </div>
                 <div className="actions">
-                  <Button variant="ghost" aria-label={`People on ${connection.label}`} onClick={() => setPeopleOf(connection.connectionId)}>
+                  <RowAction aria-label={`People on ${connection.label}`} onClick={() => setPeopleOf(connection.connectionId)}>
                     People
-                  </Button>
+                  </RowAction>
                   {descriptor !== undefined ? (
-                    <Button variant="ghost" aria-label={`Edit ${connection.label}`} onClick={() => setEditing(connection)}>
+                    <RowAction aria-label={`Edit ${connection.label}`} onClick={() => setEditing(connection)}>
                       Edit
-                    </Button>
+                    </RowAction>
                   ) : null}
                 </div>
               </li>

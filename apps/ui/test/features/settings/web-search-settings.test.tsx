@@ -36,7 +36,6 @@ describe("Settings → Web search", () => {
     expect(rows[1]?.querySelector(".badge")?.textContent).toBe("disabled");
     expect(rows[0]?.querySelector('button[aria-label="Test tavily"]')?.className).toContain("ghost");
     expect(rows[0]?.querySelector('button[aria-label="Disable tavily"]')?.className).toContain("ghost");
-    expect(rows[0]?.querySelector(".row-text-actions")).not.toBeNull();
     // A file and a command, set as code rather than breaking at the file name's hyphen as prose.
     expect([...view.querySelectorAll("code")].map((code) => code.textContent)).toEqual(["web-providers.json", "tavi serve"]);
   });

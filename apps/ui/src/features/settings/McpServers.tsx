@@ -16,6 +16,7 @@ import { Modal } from "../../ui/Modal.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
+import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 
 /**
@@ -323,7 +324,7 @@ function DiscoverEntry({
             onChange={(event) => setSlug(event.target.value)}
           />
           {entry.options.map((option) => (
-            <Button
+            <RowAction
               key={option.key}
               disabled={busy || !/^[a-z][a-z0-9]{0,18}$/.test(slug)}
               title={`${option.summary}${option.settings.length + option.credentials.length === 0 ? "" : `; then set ${[...option.settings, ...option.credentials].join(", ")}`}`}
@@ -331,7 +332,7 @@ function DiscoverEntry({
               onClick={() => void onAdd(slug, { kind: "registry", name: entry.name, version: entry.version, option: option.key })}
             >
               Add ({option.kind === "remote" ? "remote" : option.kind})
-            </Button>
+            </RowAction>
           ))}
         </span>
       )}

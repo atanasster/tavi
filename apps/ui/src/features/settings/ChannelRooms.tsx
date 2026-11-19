@@ -17,6 +17,7 @@ import { ActionNote, BusyFieldset, Failure, StatusBadge, StatusNote } from "../.
 import { Select } from "../../ui/Select.js";
 import { request } from "./channels-api.js";
 import { Button } from "../../ui/Button.js";
+import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
 
@@ -125,8 +126,7 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
                   ) : null}
                 </div>
                 <div className="actions">
-                  <Button
-                    variant="ghost"
+                  <RowAction
                     disabled={busy}
                     aria-label={`${room.context === "recent" ? "Stop reading" : "Read"} recent messages in ${room.label}`}
                     onClick={() =>
@@ -146,9 +146,9 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
                     }
                   >
                     {room.context === "recent" ? "Read only the message" : "Read recent messages"}
-                  </Button>
-                  <Button
-                    variant="danger"
+                  </RowAction>
+                  <RowAction
+                    tone="danger"
                     disabled={busy}
                     aria-label={`Remove room ${room.label}`}
                     onClick={() =>
@@ -159,7 +159,7 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
                     }
                   >
                     Remove
-                  </Button>
+                  </RowAction>
                 </div>
               </li>
             );
@@ -212,8 +212,7 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
                   </p>
                 </div>
                 <div className="actions">
-                  <Button
-                    variant="ghost"
+                  <RowAction
                     disabled={busy}
                     aria-label={`Add ${waiting.roomName ?? waiting.conversationId} as a room`}
                     onClick={() =>
@@ -224,10 +223,10 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
                     }
                   >
                     Add as room
-                  </Button>
+                  </RowAction>
                   {/* The bot leaves where its channel can; elsewhere the refusal says to remove it in the room itself. */}
-                  <Button
-                    variant="danger"
+                  <RowAction
+                    tone="danger"
                     disabled={busy}
                     aria-label={`Leave ${waiting.roomName ?? waiting.conversationId}`}
                     onClick={() =>
@@ -238,7 +237,7 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
                     }
                   >
                     Leave
-                  </Button>
+                  </RowAction>
                 </div>
               </li>
             ))}
@@ -269,8 +268,8 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
               </div>
               {grant.inForce ? (
                 <div className="actions">
-                  <Button
-                    variant="danger"
+                  <RowAction
+                    tone="danger"
                     disabled={busy}
                     aria-label={`Revoke ${grant.grantId}`}
                     onClick={() =>
@@ -281,7 +280,7 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
                     }
                   >
                     Revoke
-                  </Button>
+                  </RowAction>
                 </div>
               ) : null}
             </li>

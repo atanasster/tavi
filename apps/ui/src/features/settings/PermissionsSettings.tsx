@@ -19,7 +19,7 @@ import { LoadError } from "./FormParts.js";
 import { useAction } from "../../hooks/use-action.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { Empty } from "../../ui/Empty.js";
-import { Button } from "../../ui/Button.js";
+import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { AppLink } from "../shell/AppLink.js";
 import { taskPath } from "../shell/route.js";
@@ -120,15 +120,13 @@ export function PermissionsSettings({
       {/* The server removes only an allow rule from a page: dropping a deny or ask rule widens what runs unasked. */}
       {rule.source === "operator" && rule.decision === "allow" ? (
         <span className="actions">
-          {/* A row's action in a long list: small and red text only, so the rules read before their buttons. */}
-          <Button
-            variant="danger-ghost"
-            size="sm"
+          <RowAction
+            tone="danger"
             disabled={busy !== undefined}
             onClick={() => void run(`rule:${rule.ruleId}`, () => permissionActions.remove(client, workspaceId, rule.ruleId))}
           >
             Remove
-          </Button>
+          </RowAction>
         </span>
       ) : null}
     </li>
@@ -164,13 +162,13 @@ export function PermissionsSettings({
           </span>
         </span>
         <span className="actions">
-          <Button
-            variant="danger"
+          <RowAction
+            tone="danger"
             disabled={busy !== undefined}
             onClick={() => void run(`grant:${grant.grantId}`, () => permissionActions.revoke(client, workspaceId, grant.grantId))}
           >
             Revoke
-          </Button>
+          </RowAction>
         </span>
       </li>
     );

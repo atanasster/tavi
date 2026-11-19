@@ -27,6 +27,7 @@ import { useLoaded } from "../../hooks/use-loaded.js";
 import { EmptyState } from "../../ui/Empty.js";
 import { Card } from "../../ui/Card.js";
 import { Button } from "../../ui/Button.js";
+import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 
 /** What each role is for, in the words the table shows under its name. */
@@ -320,19 +321,19 @@ function RolesTable({
           </div>
           <div className="role-actions">
             {fallback !== undefined ? (
-              <Button variant="ghost" size="sm" disabled={busy !== undefined} aria-label="Clear the default model" onClick={onClearDefault}>
+              <RowAction disabled={busy !== undefined} aria-label="Clear the default model" onClick={onClearDefault}>
                 Clear
-              </Button>
+              </RowAction>
             ) : null}
-            <Button
-              variant={fallback === undefined ? "primary" : undefined}
-              size="sm"
+            <RowAction
+              // No default yet: setting one is what the row waits on.
+              tone={fallback === undefined ? "awaited" : "plain"}
               disabled={busy !== undefined}
               aria-label="Set the default model"
               onClick={() => onPick({ slot: "default" })}
             >
               Set
-            </Button>
+            </RowAction>
           </div>
         </li>
         {rows.map((row) => (
@@ -397,9 +398,7 @@ function RoleLine({
       </div>
       <div className="role-actions">
         {row.source === "override" ? (
-          <Button
-            variant="ghost"
-            size="sm"
+          <RowAction
             disabled={busy !== undefined}
             // Embedding never falls back to the default: resetting it unbinds its model.
             // Said as what it does: back to the default, or, for Embedding, no model at all.
@@ -407,11 +406,11 @@ function RoleLine({
             onClick={onReset}
           >
             {row.role === "embedding" ? "Clear" : "Use default"}
-          </Button>
+          </RowAction>
         ) : null}
-        <Button size="sm" disabled={busy !== undefined} aria-label={`Set the model for ${name}`} onClick={onPick}>
+        <RowAction disabled={busy !== undefined} aria-label={`Set the model for ${name}`} onClick={onPick}>
           Set
-        </Button>
+        </RowAction>
       </div>
     </li>
   );
@@ -458,12 +457,12 @@ function ConnectionRow({
         {videoOff ? null : <VideoModels connection={connection} models={models} busy={busy} onSwitch={onVideo} onProbe={onProbeVideo} />}
       </div>
       <div className="connection-actions">
-        <Button size="sm" aria-label={`Rediscover ${connection.label}'s models`} disabled={busy !== undefined} onClick={onRediscover}>
+        <RowAction aria-label={`Rediscover ${connection.label}'s models`} disabled={busy !== undefined} onClick={onRediscover}>
           {discovering ? "Discovering…" : "Rediscover"}
-        </Button>
-        <Button variant="ghost" size="sm" aria-label={`Manage ${connection.label}`} disabled={busy !== undefined} onClick={onManage}>
+        </RowAction>
+        <RowAction aria-label={`Manage ${connection.label}`} disabled={busy !== undefined} onClick={onManage}>
           Manage
-        </Button>
+        </RowAction>
       </div>
     </li>
   );
