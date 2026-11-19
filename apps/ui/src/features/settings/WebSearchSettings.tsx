@@ -31,8 +31,8 @@ export function WebSearchSettings() {
       </PageHead>
       <Notice>
         An enabled provider answers the agent&rsquo;s web searches. Adding or enabling one applies from the next message, with no restart;
-        disabling one stops new searches at once. With several, their order is set in <code className="file-name">web-providers.json</code> in the data directory,
-        read when <Command>tavi serve</Command> starts.
+        disabling one stops new searches at once. With several, their order is set in <code className="file-name">web-providers.json</code>{" "}
+        in the data directory, read when <Command>tavi serve</Command> starts.
       </Notice>
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         <PageNote tone={tone} note={note} />

@@ -122,8 +122,13 @@ describe("the system prompt editor", () => {
     );
     const container = await mount(editor(client));
     await click(button(container, "Write a custom prompt"));
+    // A first custom prompt is being written: there is no saved one yet to go back to.
+    expect(container.textContent).not.toContain("only stages the change");
     await setText(field(container), "  custom base\n");
     await click(button(container, "Save"));
+    // Said as every settings page's saved note is: boxed, held in view a moment.
+    expect(container.querySelector(".page-note")?.textContent).toBe("Saved. Changes apply from the next message in this workspace.");
+    expect(container.textContent).toContain("only stages the change");
     expect(sent.at(-1)).toEqual({ action: "set", workspaceId: "default", text: "  custom base\n", expectedRevision: 0 });
     expect(container.textContent).toContain("Custom");
     expect(container.textContent).toContain("revision 1");

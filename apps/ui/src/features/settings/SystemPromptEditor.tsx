@@ -15,7 +15,7 @@ import {
 import type { SettingsClient } from "../../lib/ipc.js";
 import { copyDraft } from "../../lib/clipboard.js";
 import { useUnsavedGuard } from "../../hooks/page.js";
-import { Failure, StatusNote } from "../../ui/Parts.js";
+import { Failure, PageNote } from "../../ui/Parts.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { Button } from "../../ui/Button.js";
 
@@ -343,8 +343,8 @@ export function SystemPromptEditor({
             </Button>
           )}
         </div>
-        {/* How going back works, where there is a custom prompt to go back from. */}
-        {draft.mode === "custom" || dirty ? (
+        {/* How going back works, where a saved custom prompt is there to go back from: not while a first one is being written. */}
+        {saved.mode === "custom" ? (
           <p>
             {defaultLabel} only stages the change: the shipped text is shown, and Save clears the override. Merely looking at the built-in
             prompt never stores it as a custom one.
@@ -352,7 +352,8 @@ export function SystemPromptEditor({
         ) : null}
       </form>
 
-      <StatusNote note={note} className="" />
+      {/* Boxed and held in view a moment, as every settings page's saved note is. */}
+      <PageNote note={note} tone="note" />
 
       {conflict === undefined ? null : (
         <ConflictNotice message={conflict} what="prompt" disabled={saving} onReload={editor.reloadSaved} onCopy={editor.copyDraft} />

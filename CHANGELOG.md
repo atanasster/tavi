@@ -28,6 +28,12 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Settings → System prompt, walked at desktop and phone width. The prompt's
+  box sits a little apart from its label instead of 2px under it, and
+  **Saved.** or **Cleared.** is the boxed note held in view a moment, as on the
+  other settings pages and the Command Center's prompt editor. The note on how
+  **Restore default** works appears only when a custom prompt is saved, not
+  while a first one is still being written.
 - Settings → Web search, walked at desktop and phone width. A provider's
   **Test** and **Disable** are text buttons, as a channel's are, with only
   **Remove** outlined, and on a phone they start on the provider's name. A

@@ -315,6 +315,9 @@
 }
 
 .settings textarea.prompt-text {
+  display: block;
+  /* Apart from its label as a field's control is, not 2px under an inline label. */
+  margin-top: var(--space-1-5);
   font-family: var(--font-mono);
 }
 
