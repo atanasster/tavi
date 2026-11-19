@@ -18,6 +18,8 @@ change behaviour or stored data.
 
 ### Changed
 
+- An approval or question email that carries single-use links now says that
+  anyone with the message can use them, and not to forward it.
 - A credential store that holds values but is not encrypted at rest — where no
   OS keychain could keep a key, such as Linux without a Secret Service — is no
   longer silent: `tavi serve` warns at start and `tavi doctor` says so under

@@ -173,6 +173,12 @@ export const LINK_LABELS: Readonly<Record<ApprovalScope | "deny", string>> = {
   deny: "Reject",
 };
 
+/**
+ * Said under every set of single-use links: a link is a bearer capability, so
+ * whoever holds the message can use it (a critical round still asks for the PIN).
+ */
+export const LINK_BEARER_NOTE = "Anyone with this message can use these links: do not forward it.";
+
 /** A link's label; a grouped round's names the group. */
 export function linkLabel(choice: ApprovalScope | "deny", group: string | undefined, name: string | undefined): string {
   if (group === undefined || choice === "deny" || choice === "once") return LINK_LABELS[choice];

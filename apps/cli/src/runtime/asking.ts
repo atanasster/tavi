@@ -10,7 +10,13 @@ import {
 } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 import type { createWorkflowAdapter, WorkflowAdapterOptions } from "@tavi/agent-host/workflow";
-import { questionButtons, questionSubject, questionToken, renderQuestionText } from "../features/approvals/channel-approval-text.js";
+import {
+  LINK_BEARER_NOTE,
+  questionButtons,
+  questionSubject,
+  questionToken,
+  renderQuestionText,
+} from "../features/approvals/channel-approval-text.js";
 import { createInjectionDetector } from "@tavi/runtime";
 import { injectionClassifierFor } from "./injection-classifier.js";
 import { destinationAllowed, destinationRefusal } from "../features/channels/destination.js";
@@ -176,7 +182,9 @@ export function composeAsking(composed: ApprovalsContext) {
     const textFor = async (connection: string): Promise<string> => {
       const lines =
         choices === undefined ? [] : await channelApprovals.questionLinkLines({ taskId, waitId, choices, connectionId: connection });
-      return lines.length === 0 ? text : `${text}\n\nOr open a link — each asks you to confirm, and works once:\n${lines.join("\n")}`;
+      return lines.length === 0
+        ? text
+        : `${text}\n\nOr open a link — each asks you to confirm, and works once. ${LINK_BEARER_NOTE}\n${lines.join("\n")}`;
     };
     // Called with the wait's row already active,
     // and never on a resumed turn: `waitFor` returns the settled outcome

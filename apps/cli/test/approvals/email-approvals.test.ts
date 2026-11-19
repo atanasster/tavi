@@ -165,6 +165,8 @@ describe("approval links", () => {
     // Once, for the rest of the task, and reject — `always` is not offered for a call with no subjects.
     expect(links).toHaveLength(3);
     expect(announcement?.text).toContain("Approve for the rest of this chat: https://mail.example.test/tavi/i/");
+    // The links are bearer capabilities: whoever holds the email can use them, so it says not to forward it.
+    expect(announcement?.text).toContain("Anyone with this message can use these links: do not forward it.");
 
     const described = await runtime.channelApprovals.describeLink(links[0] ?? "");
     expect(described).toMatchObject({ ok: true, view: { choiceLabel: "Approve once", needsPin: false } });

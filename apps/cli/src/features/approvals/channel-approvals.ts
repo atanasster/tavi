@@ -52,6 +52,7 @@ import {
   questionReceipt,
   questionToken,
   renderRoundText,
+  LINK_BEARER_NOTE,
   ROUND_BUTTON,
   ROUND_TOKEN_SHAPE,
   roundExpiryLine,
@@ -546,7 +547,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
         recordedText +
         (linkLines.length === 0
           ? ""
-          : `\n\nOr open a link — each asks you to confirm before it decides, and works once:\n${linkLines.join("\n")}`);
+          : `\n\nOr open a link — each asks you to confirm before it decides, and works once. ${LINK_BEARER_NOTE}\n${linkLines.join("\n")}`);
       // An email carries the round's token in its subject, so a bare
       // "approve" in a reply names this round.
       const subject =
