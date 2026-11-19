@@ -3,6 +3,7 @@ import type { WorkspaceGrant } from "@tavi/runtime";
 import { MEMORY_PROPOSE_ALLOW_RULE_ID } from "@tavi/contracts";
 
 import type { TaviRuntime, TaviRuntimeOptions } from "../../src/runtime/types.js";
+import { serve, type ServeHandle } from "../../src/server/serve.js";
 
 /**
  * The runtime options a test's owner composes with: one `default`
@@ -36,6 +37,35 @@ export function fixtureRuntimeOptions(dataDirectory: string, overrides: Partial<
 /** Options for `serve`: `fixtureRuntimeOptions` with the schedule sweep off, so no schedule fires mid-test. */
 export function fixtureServeOptions(dataDirectory: string, overrides: Partial<TaviRuntimeOptions> = {}): TaviRuntimeOptions {
   return fixtureRuntimeOptions(dataDirectory, { scheduleSweepEnabled: false, ...overrides });
+}
+
+/**
+ * Owners a test serves on its own data directories, with fixture options and no output: `start` serves one,
+ * `stopLast` shuts down the newest (an owner's restart), `stopAll` every one still running (an `afterEach`).
+ */
+export function fixtureOwners(): {
+  readonly start: (directory: string) => Promise<ServeHandle>;
+  readonly stopLast: (reason: string) => Promise<void>;
+  readonly stopAll: () => Promise<void>;
+} {
+  const handles: ServeHandle[] = [];
+  return {
+    start: async (directory) => {
+      const handle = await serve(
+        fixtureServeOptions(directory),
+        { dataDirectory: directory, drainDeadlineMs: 2_000 },
+        { stdout: () => {}, stderr: () => {}, isTty: false },
+      );
+      handles.push(handle);
+      return handle;
+    },
+    stopLast: async (reason) => {
+      await handles.pop()?.shutdown(reason);
+    },
+    stopAll: async () => {
+      while (handles.length > 0) await handles.pop()?.shutdown("test cleanup");
+    },
+  };
 }
 
 /**

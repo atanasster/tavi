@@ -1,6 +1,8 @@
 import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { errorMessage } from "@tavi/contracts/util";
+
 import { EXIT } from "./cli/exit.js";
 import { BUILD_ID } from "./build-id.js";
 import { UsageError, parseArgs, type ParsedCommand } from "./cli/parse.js";
@@ -382,7 +384,7 @@ export async function main(argv: readonly string[], options: MainOptions = {}): 
         try {
           mirror = readRemoteMirror(dataDirectory);
         } catch (error) {
-          io.stderr(`tavi serve: ${error instanceof Error ? error.message : String(error)}\n`);
+          io.stderr(`tavi serve: ${errorMessage(error)}\n`);
           return EXIT.unavailable;
         }
         if (mirror !== undefined) {

@@ -17,16 +17,14 @@
   // `notices` is the root's own script (`pnpm --workspace-root run notices`), which knip reads as a binary.
   "ignoreBinaries": [
     "chflags",
-    "du",
     "ffmpeg",
+    "ffprobe",
     "jq",
     "ldd",
     "llama-server",
     "lsattr",
     "mkfifo",
     "notices",
-    "pgrep",
-    "pkill",
     "reg",
     "sandbox-exec",
     "say",

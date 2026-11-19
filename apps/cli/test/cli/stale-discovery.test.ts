@@ -11,8 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { connectLiveOwner } from "../../src/cli/owner-connection.js";
 import { EXIT, main } from "../../src/main.js";
-import { serve, type ServeHandle } from "../../src/server/serve.js";
-import { fixtureServeOptions } from "../support/serve-fixture.js";
+import { fixtureOwners } from "../support/serve-fixture.js";
 
 /** Ownership probes an attached command started: each is a worker, the cost the connect-first path avoids. */
 const probes = vi.hoisted(() => ({ count: 0 }));
@@ -41,26 +40,17 @@ vi.mock("@tavi/runtime/owner-attach", async (importOriginal) => {
 
 const directories = temporaryDirectories({ prefix: "tavi-stale-discovery-" });
 
-const handles: ServeHandle[] = [];
+const owners = fixtureOwners();
+const startOwner = owners.start;
 
 beforeEach(() => {
   probes.count = 0;
 });
 
 afterEach(async () => {
-  while (handles.length > 0) await handles.pop()?.shutdown("test cleanup");
+  await owners.stopAll();
   directories.cleanup();
 });
-
-async function startOwner(directory: string): Promise<ServeHandle> {
-  const handle = await serve(
-    fixtureServeOptions(directory),
-    { dataDirectory: directory, drainDeadlineMs: 2_000 },
-    { stdout: () => {}, stderr: () => {}, isTty: false },
-  );
-  handles.push(handle);
-  return handle;
-}
 
 /**
  * Leave a socket file behind exactly as a SIGKILLed owner does: a child binds

@@ -3,6 +3,7 @@ import { act, startTransition, Suspense } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { delay } from "../../../src/lib/delay.js";
 import { lazyModule } from "../../../src/ui/lazy-module.js";
 import { ViewBoundary } from "../../../src/ui/ViewBoundary.js";
 
@@ -65,13 +66,12 @@ describe("lazyModule", () => {
     const actEnvironment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
     actEnvironment.IS_REACT_ACT_ENVIRONMENT = false;
     const errors = vi.spyOn(console, "error");
-    const wait = (ms: number) => new Promise((done) => setTimeout(done, ms));
     try {
       const page = lazyModule(() => new Promise<typeof Page>((resolve) => setTimeout(() => resolve(Page), 5)));
       host = document.createElement("div");
       const own = createRoot(host);
       own.render(<Suspense fallback={<p>loading</p>}>none</Suspense>);
-      await wait(20);
+      await delay(20);
       startTransition(() =>
         own.render(
           <Suspense fallback={<p>loading</p>}>

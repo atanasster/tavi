@@ -352,7 +352,6 @@ const RULES: readonly Rule[] = [
         paths: [
           "packages/builtin/desktop/test/bridge.test.ts",
           "packages/builtin/limits/test/limits.real.test.ts",
-          "packages/builtin/pdf/test/host.test.ts",
           "packages/builtin/telegram/test/connector.test.ts",
         ],
         reason: "The package does not depend on @tavi/test-support.",

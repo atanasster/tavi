@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync
 import { join } from "node:path";
 
 import { TaviError } from "@tavi/contracts";
-import { capture, temporaryDirectories } from "@tavi/test-support";
+import { capture, delay, temporaryDirectories } from "@tavi/test-support";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { connectLiveOwner } from "../../src/cli/owner-connection.js";
@@ -25,8 +25,7 @@ import {
 } from "../../src/features/remote/connect.js";
 import { clientCwdFor, remoteFoldersOf, remotePathOf } from "../../src/features/remote/folders.js";
 import { EXIT, main } from "../../src/main.js";
-import { serve, type ServeHandle } from "../../src/server/serve.js";
-import { fixtureServeOptions } from "../support/serve-fixture.js";
+import { fixtureOwners } from "../support/serve-fixture.js";
 
 /**
  * `tavi remote connect`: clients on this computer, attached to an owner on
@@ -40,22 +39,13 @@ import { fixtureServeOptions } from "../support/serve-fixture.js";
  */
 
 const directories = temporaryDirectories({ prefix: "tavi-remote-" });
-const handles: ServeHandle[] = [];
+const owners = fixtureOwners();
+const startOwner = owners.start;
 
 afterEach(async () => {
-  while (handles.length > 0) await handles.pop()?.shutdown("test cleanup");
+  await owners.stopAll();
   directories.cleanup();
 });
-
-async function startOwner(directory: string): Promise<ServeHandle> {
-  const handle = await serve(
-    fixtureServeOptions(directory),
-    { dataDirectory: directory, drainDeadlineMs: 2_000 },
-    { stdout: () => {}, stderr: () => {}, isTty: false },
-  );
-  handles.push(handle);
-  return handle;
-}
 
 function sh(script: string): Promise<RemoteResult> {
   return new Promise((resolve) => {
@@ -98,11 +88,32 @@ function localConnector(): { readonly connector: RemoteConnector; readonly drop:
   return { connector, drop: () => drop(), scripts };
 }
 
+/** `tavi remote connect` to `target` running until `stop`, polling and reconnecting fast; `running` is its exit code. */
+function connecting(
+  target: string,
+  remote: string,
+  mirror: string,
+  connector: RemoteConnector,
+  out: ReturnType<typeof capture>,
+): { readonly stop: () => void; readonly running: Promise<number> } {
+  let stop = (): void => undefined;
+  const stopped = new Promise<void>((resolve) => {
+    stop = resolve;
+  });
+  const running = remoteConnect(
+    { action: "connect", target, mirrorDirectory: mirror, remoteDataDirectory: remote, sshOptions: [] },
+    out.io,
+    EXIT,
+    { connector, stopped, pollMs: 25, reconnectMs: 25 },
+  );
+  return { stop: () => stop(), running };
+}
+
 async function until(condition: () => boolean, what: string, timeoutMs = 10_000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (!condition()) {
     if (Date.now() > deadline) throw new Error(`timed out waiting for ${what}`);
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await delay(20);
   }
 }
 
@@ -114,16 +125,7 @@ describe("tavi remote connect", () => {
 
     const out = capture();
     const { connector } = localConnector();
-    let stop = (): void => undefined;
-    const stopped = new Promise<void>((resolve) => {
-      stop = resolve;
-    });
-    const running = remoteConnect(
-      { action: "connect", target: "brook@mini.lan", mirrorDirectory: mirror, remoteDataDirectory: remote, sshOptions: [] },
-      out.io,
-      EXIT,
-      { connector, stopped, pollMs: 25, reconnectMs: 25 },
-    );
+    const { stop, running } = connecting("brook@mini.lan", remote, mirror, connector, out);
     const paths = mirrorPaths(mirror);
     await until(() => existsSync(paths.discovery), "the mirror's discovery");
     expect(JSON.parse(readFileSync(paths.marker, "utf8"))).toMatchObject({
@@ -140,7 +142,7 @@ describe("tavi remote connect", () => {
 
     // The owner restarts there: a new session and token, which the mirror follows.
     const first = JSON.parse(readFileSync(paths.discovery, "utf8")).sessionId as string;
-    await handles.pop()?.shutdown("restart");
+    await owners.stopLast("restart");
     await until(() => !existsSync(paths.discovery), "the stopped owner withdrawn");
     await expect(connectLiveOwner(mirror, ["tasks"])).rejects.toThrow(/Cannot reach the owner on brook@mini\.lan/);
     await startOwner(remote);
@@ -179,16 +181,7 @@ describe("tavi remote connect", () => {
     writeFileSync(join(remote, "plugins", "acme.panel", "home", "secret.txt"), "private");
     await startOwner(remote);
     const out = capture();
-    let stop = (): void => undefined;
-    const stopped = new Promise<void>((resolve) => {
-      stop = resolve;
-    });
-    const running = remoteConnect(
-      { action: "connect", target: "mini", mirrorDirectory: mirror, remoteDataDirectory: remote, sshOptions: [] },
-      out.io,
-      EXIT,
-      { connector: localConnector().connector, stopped, pollMs: 25, reconnectMs: 25 },
-    );
+    const { stop, running } = connecting("mini", remote, mirror, localConnector().connector, out);
     const paths = mirrorPaths(mirror);
     const copied = (folder: string): string => join(paths.plugins, folder, "ui", "index.html");
     await until(() => existsSync(copied("acme.panel/1.0.0")), "the installed plugin copied");
@@ -218,16 +211,7 @@ describe("tavi remote connect", () => {
     await startOwner(remote);
     const out = capture();
     const local = localConnector();
-    let stop = (): void => undefined;
-    const stopped = new Promise<void>((resolve) => {
-      stop = resolve;
-    });
-    const running = remoteConnect(
-      { action: "connect", target: "mini", mirrorDirectory: mirror, remoteDataDirectory: remote, sshOptions: [] },
-      out.io,
-      EXIT,
-      { connector: local.connector, stopped, pollMs: 25, reconnectMs: 25 },
-    );
+    const { stop, running } = connecting("mini", remote, mirror, local.connector, out);
     const paths = mirrorPaths(mirror);
     await until(() => existsSync(paths.discovery), "the first connection");
     local.drop();
