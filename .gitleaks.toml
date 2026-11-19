@@ -30,6 +30,7 @@ paths = ['''(^|/)tests?/''']
 regexTarget = "secret"
 regexes = [
   '''^sk_live_SUPERSECRET$''',
+  '''^UPPERHEX0123456789$''',
   '''^[rs]k_(live|test)_51H8abcdefghijklmnop$''',
   '''^glpat-abcdefghij0123456789$''',
   '''^AKIAABCDEFGHIJKLMNOP$''',
