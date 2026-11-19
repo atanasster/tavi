@@ -127,11 +127,13 @@ const RULES: readonly Rule[] = [
   {
     name: "a tavi command in a raw <code>",
     instead: "Command from src/ui/Command.tsx, which wraps a command only between its words, never at the hyphen of a flag",
-    pattern: /<code(?:\s+className="[^"]*")?>tavi\b/g,
+    // `tavi` and a space or the tag's end: `tavi-plugin.json` is a file's name, not a command.
+    pattern: /<code(?:\s+className="[^"]*")?>tavi\b(?!-)/g,
     owner: (path) => path === "ui/Command.tsx",
     allowed: [],
     planted: ["use <code>tavi reset --yes</code>.", '<code className="meta">tavi doctor</code>'],
-    nearMiss: "<Command>tavi reset --yes</Command>\n<code>travel.googleFlights off</code>",
+    nearMiss:
+      '<Command>tavi reset --yes</Command>\n<code>travel.googleFlights off</code>\n<code className="file-name">tavi-plugin.json</code>',
   },
 ];
 

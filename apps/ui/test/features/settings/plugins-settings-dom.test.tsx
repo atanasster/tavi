@@ -779,3 +779,54 @@ it("edits provider-only instances and sends validated credential references thro
   });
   expect(view.textContent).toContain("Restart the owner");
 });
+
+it("names a plugin's settings by their labels, each with one hint under its own field, and marks a row's state as a state", async () => {
+  const places: PluginView = {
+    ...base,
+    id: "places.open",
+    kind: "external",
+    runsOwnerCode: true,
+    name: "Places",
+    description: "Configured with `tavi places`.",
+    enabled: true,
+    core: false,
+    phase: "stopped",
+    activeVersion: "0.1.0",
+    configFields: {
+      contact: { type: "string", label: "Contact", description: "An email or URL OpenStreetMap can reach you at." },
+      afdcKey: { type: "credential", description: "Your free api.data.gov key." },
+    },
+  };
+  const client: SettingsClient = {
+    request: async (_command, payload) =>
+      (payload as { action: string }).action === "list"
+        ? ({ ok: true, result: { plugins: [places] } } as ClientResponse)
+        : ({ ok: true, result: {} } as ClientResponse),
+  };
+  const view = await mount(
+    <InWorkspace client={client}>
+      <PluginsSettings />
+    </InWorkspace>,
+  );
+  const row = view.querySelector("#plugin-row-places\\.open")!;
+  // Backticks in a description are code, not literal marks; its phase is a toned state; Remove says why it is off.
+  expect(row.querySelector(".settings-description code")?.textContent).toBe("tavi places");
+  expect(row.textContent).not.toContain("`");
+  expect(row.querySelector(".badge.badge-muted")?.textContent).toBe("stopped");
+  expect(byAria(view, "Remove places.open")?.getAttribute("title")).toBe("Disable it first to remove it");
+
+  await click(byAria(view, "Settings for places.open"));
+  const dialog = document.querySelector("dialog")!;
+  const labels = [...dialog.querySelectorAll("label")].map((label) => label.textContent);
+  expect(labels).toEqual(["Contact", "afdcKey"]);
+  const hintOf = (label: string) => {
+    const input = dialog.querySelector<HTMLInputElement>(
+      `#${[...dialog.querySelectorAll("label")].find((l) => l.textContent === label)!.htmlFor}`,
+    )!;
+    return document.getElementById(input.getAttribute("aria-describedby")!)?.textContent;
+  };
+  expect(hintOf("Contact")).toBe("An email or URL OpenStreetMap can reach you at.");
+  expect(hintOf("afdcKey")).toBe(
+    "Your free api.data.gov key. A credential reference, never the secret: store the value under it in the Credentials view.",
+  );
+});

@@ -88,6 +88,13 @@
   margin-top: var(--space-2);
 }
 
+/* A field's hint hangs under its own control, by the form's gap alone: with a paragraph's margins it sat as far from
+   its field as from the next one's label (a plugin's settings). */
+.form > :is(input, select, textarea, .password) + p,
+.form > label:has(> input[type="checkbox"]) + p {
+  margin: 0;
+}
+
 .form .actions {
   justify-content: flex-end;
   margin-top: var(--space-3);

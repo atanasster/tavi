@@ -47,8 +47,18 @@ export function InstallPluginModal({
           submit();
         }}
       >
-        <Field label="Plugin directory" error={touched ? problem : undefined}>
-          <input value={path} placeholder="/path/to/plugin (contains tavi-plugin.json)" onChange={(event) => setPath(event.target.value)} />
+        {/* What the folder holds is its hint, not its placeholder: a phone's field cut the placeholder short. */}
+        <Field
+          label="Plugin directory"
+          hint={
+            <>
+              The folder that holds its <code className="file-name">tavi-plugin.json</code>.
+            </>
+          }
+          hintClassName="muted"
+          error={touched ? problem : undefined}
+        >
+          <input value={path} placeholder="/path/to/plugin" onChange={(event) => setPath(event.target.value)} />
         </Field>
         <Notice>The directory is copied and pinned by its hash. It does not run until you approve and enable it.</Notice>
         <FormFailure message={failure} />
@@ -123,34 +133,48 @@ export function PluginSettingsModal({
         {hasProviders ? <ProviderInstancesEditor declarations={declarations} instances={instances} onChange={setInstances} /> : null}
         {fields.map(([key, field]) => {
           const id = `${baseId}-${key}`;
+          // Its own name where the manifest gives one ("Adzuna app id"), else its key.
+          const name = field.label ?? key;
+          // What it is for, then for a key what goes in it: one hint, under its own field and read with it.
+          const hint = [
+            field.description,
+            field.type === "credential"
+              ? "A credential reference, never the secret: store the value under it in the Credentials view."
+              : undefined,
+          ]
+            .filter((part) => part !== undefined)
+            .join(" ");
           return (
             <Fragment key={key}>
               {field.type === "boolean" ? (
-                <label htmlFor={id}>
-                  <input
-                    id={id}
-                    type="checkbox"
-                    checked={values[key] === "true"}
-                    onChange={(event) => setValues({ ...values, [key]: event.target.checked ? "true" : "false" })}
-                  />{" "}
-                  {key}
-                  {field.required === true ? " (required)" : ""}
-                </label>
+                <>
+                  <label htmlFor={id}>
+                    <input
+                      id={id}
+                      type="checkbox"
+                      checked={values[key] === "true"}
+                      aria-describedby={hint === "" ? undefined : `${id}-hint`}
+                      onChange={(event) => setValues({ ...values, [key]: event.target.checked ? "true" : "false" })}
+                    />{" "}
+                    {name}
+                    {field.required === true ? " (required)" : ""}
+                  </label>
+                  {hint === "" ? null : (
+                    <p id={`${id}-hint`} className="muted">
+                      {hint}
+                    </p>
+                  )}
+                </>
               ) : (
                 <Field
                   id={id}
                   label={
                     <>
-                      {key}
+                      {name}
                       {field.required === true ? " (required)" : ""}
                     </>
                   }
-                  {...(field.type === "credential"
-                    ? {
-                        hint: "A credential reference, never the secret: store the value under it in the Credentials view.",
-                        hintClassName: "muted",
-                      }
-                    : {})}
+                  {...(hint === "" ? {} : { hint, hintClassName: "muted" })}
                 >
                   <input
                     type={field.type === "number" ? "number" : "text"}
@@ -160,7 +184,6 @@ export function PluginSettingsModal({
                   />
                 </Field>
               )}
-              {field.description === undefined ? null : <p className="muted">{field.description}</p>}
             </Fragment>
           );
         })}

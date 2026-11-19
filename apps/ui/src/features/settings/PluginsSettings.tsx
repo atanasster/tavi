@@ -18,7 +18,7 @@ import { plural } from "@tavi/contracts/util";
 
 import { pluginActions } from "./plugins-api.js";
 import type { Outcome } from "../../lib/ipc.js";
-import { Failure, LoadState, Notice, PageHead, PageNote } from "../../ui/Parts.js";
+import { Failure, LoadState, Notice, PageHead, PageNote, StatusBadge } from "../../ui/Parts.js";
 import { CanvasPluginsSettings } from "./CanvasPluginsSettings.js";
 import { AppLink } from "../shell/AppLink.js";
 import { appsPath } from "../shell/route.js";
@@ -207,9 +207,10 @@ export function PluginsSettings({
             {awaitingReview ? (
               <span className="badge badge-warning">awaits review</span>
             ) : plugin.enabled ? null : (
-              <span className="badge">disabled</span>
+              <StatusBadge status="disabled" />
             )}
-            {phase === undefined ? null : <span className="badge">{phase}</span>}
+            {/* A state, toned as a state is everywhere (muted, or a failure's colour): the kind tags beside it stay plain. */}
+            {phase === undefined ? null : <StatusBadge status={phase} />}
             {isolationBadge(plugin) === undefined ? null : (
               <span
                 className="badge"
@@ -221,7 +222,7 @@ export function PluginsSettings({
               </span>
             )}
           </span>
-          {plugin.description === "" ? null : <span className="settings-description">{plugin.description}</span>}
+          {plugin.description === "" ? null : <span className="settings-description">{withCode(plugin.description)}</span>}
           {plugin.tools.length === 0 ? null : plugin.tools.length <= PLUGIN_TOOLS_SHOWN ? (
             <span className="muted">Tools: {plugin.tools.map(describePluginTool).join(", ")}</span>
           ) : (
@@ -434,6 +435,8 @@ export function PluginsSettings({
               variant="danger"
               aria-label={`Remove ${plugin.id}`}
               disabled={busy !== undefined || plugin.enabled}
+              // Why it cannot be pressed: an enabled plugin is turned off before it is removed.
+              title={plugin.enabled ? "Disable it first to remove it" : undefined}
               onClick={() => setRemoving(plugin)}
             >
               Remove

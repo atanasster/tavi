@@ -28,6 +28,17 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Settings → Plugins, walked at desktop and phone width. A plugin's
+  **Settings** dialog names each field as its plugin labels it ("Your
+  contact", "AFDC key") rather than by its key, and each field's explanation
+  sits right under that field as one hint, read with it, instead of a separate
+  paragraph as far from its field as from the next one. A row's state
+  (**stopped**, **disabled**, **failed**) is toned as states are elsewhere, apart
+  from the plain **worker** tag beside it, and a description's `commands`
+  are set as code instead of showing their backticks. A greyed **Remove** says,
+  on hover, to disable the plugin first. The Install dialog's placeholder, cut
+  short on a phone, is now `/path/to/plugin`, with "The folder that holds its
+  `tavi-plugin.json`" under the field.
 - Settings → Allowed people, walked at desktop and phone width. **Person
   allowed** and **Access revoked** are the boxed note held in view a moment,
   as on the other settings pages, rather than a bare line above the list. The
