@@ -42,10 +42,16 @@ export function writeChecksums(directory) {
   writeFileSync(join(directory, "SHA256SUMS"), `${sums.join("\n")}\n`);
 }
 
-/** The `## <heading>` section of the changelog, without its heading, or `undefined`. */
+/**
+ * The `## <heading>` section of the changelog, without its heading line, or
+ * `undefined`. A heading may go on after the version: `## 0.2.0 — 2026-11-20`.
+ */
 export function changelogSection(changelog, heading) {
   const lines = changelog.split("\n");
-  const start = lines.findIndex((line) => line.trim() === `## ${heading}`);
+  const start = lines.findIndex((line) => {
+    const trimmed = line.trim();
+    return trimmed === `## ${heading}` || trimmed.startsWith(`## ${heading} `);
+  });
   if (start === -1) return undefined;
   const end = lines.findIndex((line, index) => index > start && line.startsWith("## "));
   return lines

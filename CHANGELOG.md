@@ -4,7 +4,10 @@ All notable changes to Tavi are recorded here. The project follows
 [Semantic Versioning](https://semver.org); before 1.0, a minor version may
 change behaviour or stored data.
 
-## Unreleased
+## 0.2.0 — 2026-11-20
+
+The first release with a prebuilt install, from the release's `install.sh`
+([README](README.md#quick-install)).
 
 ### Added
 

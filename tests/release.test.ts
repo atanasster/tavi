@@ -963,9 +963,11 @@ describe("the prebuilt installer", () => {
   });
 
   it("takes a release's notes from its changelog section", () => {
-    const changelog = "# Changelog\n\n## Unreleased\n\n- new\n\n## 0.1.0\n\n- first\n";
+    const changelog = "# Changelog\n\n## Unreleased\n\n- new\n\n## 0.10.0 — 2026-12-01\n\n- tenth\n\n## 0.1.0 — first release\n\n- first\n";
     expect(changelogSection(changelog, "Unreleased")).toBe("- new");
+    // A heading may go on after its version, but a version never matches a longer one.
     expect(changelogSection(changelog, "0.1.0")).toBe("- first");
+    expect(changelogSection(changelog, "0.10.0")).toBe("- tenth");
     expect(changelogSection(changelog, "9.9.9")).toBeUndefined();
   });
 
