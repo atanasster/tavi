@@ -93,9 +93,9 @@ walkGuide("extend/write-a-channel-plugin", {
     "approve-it-enable-it-and-add-a-connection": async (walk) => {
       const page = await walk.page();
       const row = page.locator(`[id="plugin-row-${ID}"]`);
-      await row.getByRole("button", { name: `Approve 1.0.0 in-process: ${ID}`, exact: true }).click();
-      // A channel cannot run as a confined worker: the confirmation says what approving it in-process lets it do.
-      await page.getByRole("dialog").getByRole("button", { name: "Approve in-process (unsandboxed)" }).click();
+      // A channel cannot run as a confined worker: the page names the terminal command, the only way to approve it in-process.
+      await expect(row.textContent()).resolves.toContain(`tavi plugins approve ${ID} 1.0.0 --in-process`);
+      walk.tavi("plugins", "approve", ID, "1.0.0", "--in-process");
       await expect.poll(() => plugin(walk, ID)?.versions[0]?.reviewState, { timeout: 15_000 }).toBe("approved");
       await row.getByRole("button", { name: `Enable ${ID}` }).click();
       await expect.poll(() => plugin(walk, ID)?.enabled, { timeout: 15_000 }).toBe(true);

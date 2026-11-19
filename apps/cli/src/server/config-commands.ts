@@ -1564,6 +1564,13 @@ export async function pluginsCommand(
   input: import("@tavi/contracts").PluginsPayload,
   actor: string,
 ): Promise<IpcAnswer<unknown>> {
+  // From a page, an in-process (unsandboxed) approval is refused, as MCP's weaker sandbox is: it stays the CLI's.
+  if (actor === operatorActor(true) && input.action === "approve" && input.inProcess === true) {
+    return refuse(
+      "NOT_AUTHORIZED",
+      `a page cannot approve a plugin to run in-process (unsandboxed); use \`tavi plugins approve ${input.pluginId} ${input.version} --in-process\``,
+    );
+  }
   const boundBefore = "pluginId" in input && input.pluginId !== undefined ? runtime.routerProviders.bound(input.pluginId) : undefined;
   const answer = await answering(() =>
     runPluginAction(runtime.plugins.registry, input, actor, runtime.plugins, {

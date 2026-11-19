@@ -27,7 +27,7 @@ Run `tavi plugins show acme.units` to see what you'd be trusting: its tools, eac
 
 Open **Settings → Plugins**. The plugin is listed under **Installed** as **awaits review**, with what the version declares. Choose **Approve 0.1.0**, then **Enable**. It runs as a confined worker that can only reach its own folder.
 
-![Settings → Plugins: Units, acme.units, awaits review, version 0.1.0 declaring the read-only tool acme.units.convert, with Approve 0.1.0, Approve in-process…, Reject, Enable and Remove](../../assets/use-cases/extend/install-a-plugin/03-approve-and-enable-it.webp)
+![Settings → Plugins: Units, acme.units, awaits review, version 0.1.0 declaring the read-only tool acme.units.convert, with Approve 0.1.0, Reject, Enable and Remove](../../assets/use-cases/extend/install-a-plugin/03-approve-and-enable-it.webp)
 
 ## 4. Restart Tavi
 

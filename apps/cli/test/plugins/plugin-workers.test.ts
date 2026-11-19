@@ -11,6 +11,7 @@ import type { TaviRuntime } from "../../src/runtime/types.js";
 import { parseArgs, UsageError } from "../../src/cli/parse.js";
 import { runPluginAction } from "../../src/features/plugins/actions.js";
 import { buildDoctorDocument } from "../../src/features/doctor/reports.js";
+import { pluginsCommand } from "../../src/server/config-commands.js";
 import { fixtureServeOptions } from "../support/serve-fixture.js";
 
 /** Plugins approved as workers: the approval's choice, and the owner registering what the worker did. */
@@ -122,6 +123,34 @@ describe("approving a plugin", () => {
     );
     const view = await runtime.plugins.registry.show("acme.worker");
     expect(view.versions[0]).toMatchObject({ isolation: "in-process" });
+  });
+});
+
+describe("an in-process approval from a page", () => {
+  it("is refused, as MCP's weaker sandbox is: it stays the CLI's, and the version stays unapproved", async () => {
+    const dataDirectory = temp();
+    const runtime = await compose(dataDirectory);
+    await runtime.plugins.registry.install(
+      plugin(
+        { isolation: "in-process", tools: [{ name: "echo", effect: "read-only", description: "Echo" }] },
+        "export function register() {}",
+      ),
+      "operator",
+    );
+    const refused = await pluginsCommand(
+      runtime,
+      { action: "approve", pluginId: "acme.worker", version: "1.0.0", inProcess: true },
+      "operator:ui",
+    );
+    expect(refused).toMatchObject({
+      ok: false,
+      error: { code: "NOT_AUTHORIZED", message: expect.stringContaining("tavi plugins approve acme.worker 1.0.0 --in-process") },
+    });
+    expect((await runtime.plugins.registry.show("acme.worker")).versions[0]).toMatchObject({ reviewState: "proposed" });
+    // The CLI's own approval still takes it.
+    expect(
+      await pluginsCommand(runtime, { action: "approve", pluginId: "acme.worker", version: "1.0.0", inProcess: true }, "operator:cli"),
+    ).toMatchObject({ ok: true });
   });
 });
 

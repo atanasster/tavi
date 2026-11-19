@@ -12,7 +12,7 @@ reference is in [CLI.md](CLI.md#tavi-plugins).
 
 ## Managing plugins
 
-![Settings → Plugins: one installed plugin awaiting review, with Approve, Approve in-process, Reject, Enable and Remove, then the optional built-ins](assets/screens/settings-plugins.png)
+![Settings → Plugins: one installed plugin awaiting review, with Approve, Reject, Enable and Remove, then the optional built-ins](assets/screens/settings-plugins.png)
 
 Tavi's plugin registry lets the operator list, install, review, enable
 and configure plugins from `tavi plugins` or the **Plugins** view of `tavi ui`.
@@ -910,8 +910,10 @@ Approval decides where a plugin's code runs:
 Settings → Plugins on the canvas shows the same choice: each version under
 review says whether it would run as a worker (with its network domains and raw
 secrets) or why it cannot, a running plugin is tagged `worker` or
-`UNSANDBOXED`, and **Approve in-process…** asks once more, saying what it
-grants, before it sends the approval `--in-process` would. The owner logs a warning each time it
+`UNSANDBOXED`, and **Approve** approves a version as a worker. An in-process
+approval is the terminal's alone, as an MCP server's weaker sandbox is: the
+owner refuses one from a page, and a version that cannot be a worker names the
+`tavi plugins approve … --in-process` command instead. The owner logs a warning each time it
 loads a plugin in its own process.
 
 `tavi plugins audit` (and `doctor`, under each such plugin's entry as `audit`)

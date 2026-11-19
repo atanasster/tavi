@@ -11,7 +11,7 @@
 <text x="20" y="146.0" xml:space="preserve"><tspan fill="#132620">active version: 0.1.0</tspan></text>
 <text x="20" y="165.0" xml:space="preserve"><tspan fill="#132620">files: ~/tavi-demo/plugins/acme.units/&lt;version&gt;</tspan></text>
 <text x="20" y="184.0" xml:space="preserve"><tspan fill="#132620">versions:</tspan></text>
-<text x="20" y="203.0" xml:space="preserve"><tspan fill="#132620">  0.1.0 approved        sha256 cac8a09fd55ffa52…        installed 2026-11-07 16:39 UTC</tspan></text>
+<text x="20" y="203.0" xml:space="preserve"><tspan fill="#132620">  0.1.0 approved        sha256 cac8a09fd55ffa52…        installed 2026-11-19 18:06 UTC</tspan></text>
 <text x="20" y="222.0" xml:space="preserve"><tspan fill="#132620">    runs as a confined worker</tspan></text>
 <text x="20" y="241.0" xml:space="preserve"><tspan fill="#132620">tools:</tspan></text>
 <text x="20" y="260.0" xml:space="preserve"><tspan fill="#132620">  acme.units.convert    read-only       Convert a value between km/mi, kg/lb or C/F</tspan></text>

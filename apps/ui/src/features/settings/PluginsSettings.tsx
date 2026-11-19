@@ -32,6 +32,7 @@ import { useTimeZone, useWorkspace } from "../shell/Workspace.js";
 import { when } from "../../lib/time.js";
 import { InstallPluginModal, PluginSettingsModal } from "./PluginModals.js";
 import { Command } from "../../ui/Command.js";
+import { LIVE_POLL_MS, usePoll } from "../../hooks/use-poll.js";
 
 type PluginVersionView = PluginView["versions"][number];
 
@@ -52,6 +53,10 @@ function isolationReview(version: PluginVersionView): string {
       : ` It holds the real values of ${version.rawSecrets.join(", ")} (raw secrets), not placeholders.`;
   return ` ${where}${raw}`;
 }
+
+/** A version only `tavi plugins approve --in-process` can approve: owner code that cannot be a confined worker. */
+const needsTerminal = (version: PluginVersionView): boolean =>
+  version.workerRefusal !== undefined && version.runsOwnerCode && version.mcp === undefined;
 
 /** Text whose `backticked` spans (a tool id, as a hook's reads name it) are shown as code, not as backticks. */
 function withCode(text: string): ReactNode {
@@ -171,8 +176,6 @@ export function PluginsSettings({
   const [installing, setInstalling] = useState(false);
   const [configuring, setConfiguring] = useState<PluginView | undefined>();
   const [removing, setRemoving] = useState<PluginView | undefined>();
-  // A version the operator chose to approve in the owner's process: asked once more, saying what that grants.
-  const [unsandboxing, setUnsandboxing] = useState<{ readonly plugin: PluginView; readonly version: PluginVersionView } | undefined>();
   // The plugins whose hook activity is shown: read with `show` when opened.
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const toggleActivity = (pluginId: string): void =>
@@ -182,6 +185,11 @@ export function PluginsSettings({
       return next;
     });
   const plugins = data?.plugins ?? [];
+  // A version that can only be approved in-process waits on the terminal: read again while one does, and on return to the page.
+  const waitsOnTerminal = plugins.some((plugin) =>
+    plugin.versions.some((version) => version.reviewState === "proposed" && needsTerminal(version)),
+  );
+  usePoll(reload, LIVE_POLL_MS, { enabled: waitsOnTerminal, visibility: true }, [reload]);
   // MCP servers are installed plugins too, with a section of their own.
   const external = plugins.filter((plugin) => plugin.kind !== "builtin" && plugin.kind !== "mcp");
   const builtin = plugins.filter((plugin) => plugin.kind === "builtin");
@@ -367,8 +375,9 @@ export function PluginsSettings({
                 </span>
               ))
             : proposed.map((version) => (
-                <span key={version.version}>
-                  {/* A version that cannot be a worker is approved only in-process, after a confirmation; one that can is a worker unless the operator chooses otherwise. */}
+                // A cluster, so the terminal command keeps the actions' gap from Reject.
+                <span key={version.version} className="cluster">
+                  {/* A version that can be a worker is approved as one here; one that cannot is approved in-process from the terminal. */}
                   {version.workerRefusal === undefined ? (
                     <RowAction
                       tone="awaited"
@@ -380,20 +389,12 @@ export function PluginsSettings({
                       Approve {version.version}
                     </RowAction>
                   ) : null}
-                  {version.runsOwnerCode && version.mcp === undefined ? (
-                    <RowAction
-                      // The only way to approve a version that cannot be a worker is what the row waits on; beside Approve it is an option.
-                      tone={version.workerRefusal === undefined ? "plain" : "awaited"}
-                      aria-label={
-                        version.workerRefusal === undefined
-                          ? `Approve in-process: ${plugin.id} ${version.version}`
-                          : `Approve ${version.version} in-process: ${plugin.id}`
-                      }
-                      disabled={busy !== undefined}
-                      onClick={() => setUnsandboxing({ plugin, version })}
-                    >
-                      {version.workerRefusal === undefined ? "Approve in-process…" : `Approve ${version.version} in-process…`}
-                    </RowAction>
+                  {needsTerminal(version) ? (
+                    // In-process (unsandboxed) is approved from the terminal only, as MCP's weaker sandbox is: the owner refuses it from a page.
+                    <span className="note">
+                      Approve {version.version} in-process with{" "}
+                      <Command>{`tavi plugins approve ${plugin.id} ${version.version} --in-process`}</Command>
+                    </span>
                   ) : null}
                   <RowAction
                     tone="danger"
@@ -525,19 +526,6 @@ export function PluginsSettings({
             }
             return outcome;
           }}
-        />
-      ) : null}
-      {unsandboxing !== undefined ? (
-        <Confirm
-          title={`Approve ${unsandboxing.plugin.id} ${unsandboxing.version.version} in-process (unsandboxed)?`}
-          message={`${unsandboxing.version.workerRefusal === undefined ? "It could run as a confined worker. " : `It cannot run as a confined worker: ${unsandboxing.version.workerRefusal}. `}Approved in-process, its code runs in the owner's process with the owner's privileges: it can read the data directory, reach the network and anything else the owner can. This is tavi plugins approve --in-process. Each new version asks again.`}
-          action="Approve in-process (unsandboxed)"
-          onClose={() => setUnsandboxing(undefined)}
-          onConfirm={() =>
-            run(`approve:${unsandboxing.plugin.id}`, () =>
-              pluginActions.decide(client, unsandboxing.plugin.id, unsandboxing.version.version, true, true),
-            )
-          }
         />
       ) : null}
       {removing !== undefined ? (

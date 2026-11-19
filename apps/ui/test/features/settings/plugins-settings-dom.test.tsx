@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act } from "react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ClientResponse } from "@tavi/client/browser";
 import type { PluginView } from "@tavi/contracts";
@@ -579,7 +579,7 @@ describe("Plugins settings", () => {
     );
   });
 
-  it("shows where each version would run, and approves one that cannot be a worker only in-process, after a confirmation", async () => {
+  it("shows where each version would run, and leaves an in-process approval to the CLI", async () => {
     const proposed = {
       reviewState: "proposed",
       contentHash: "e".repeat(64),
@@ -660,29 +660,24 @@ describe("Plugins settings", () => {
     expect(view.textContent).toContain(
       "Approved, it runs as a confined worker, reaching only api.acme.test. It holds the real values of token (raw secrets), not placeholders.",
     );
-    // A refused worker offers no plain approval, which the owner would refuse.
+    // A refused worker offers no plain approval, which the owner would refuse, and no in-process one: that is the CLI's.
     expect(byAria(view, "Approve 1.1.0 of acme.chat")).toBeNull();
-    await click(byAria(view, "Approve 1.1.0 in-process: acme.chat"));
-    expect(document.querySelector("dialog")?.textContent).toContain("its code runs in the owner's process with the owner's privileges");
-    expect(sent.some((item) => item["action"] === "approve")).toBe(false);
-    await click(button(document.body, "Approve in-process (unsandboxed)"));
-    expect(sent.find((item) => item["action"] === "approve")).toEqual({
-      action: "approve",
-      pluginId: "acme.chat",
-      version: "1.1.0",
-      inProcess: true,
-    });
-    expect(announced()).toBe("acme.chat@1.1.0 approved, to run UNSANDBOXED in the owner's process.");
+    expect(byAria(view, "Approve 1.1.0 in-process: acme.chat")).toBeNull();
+    expect(view.textContent).toContain("Approve 1.1.0 in-process with tavi plugins approve acme.chat 1.1.0 --in-process");
     expect(document.querySelector("dialog")).toBeNull();
-    // One that can be a worker is approved as one, or in-process by choice.
+    // Approved in the terminal, the page reads the list again when the person comes back to it.
+    const listed = sent.filter((item) => item["action"] === "list").length;
+    document.dispatchEvent(new Event("visibilitychange"));
+    await vi.waitFor(() => expect(sent.filter((item) => item["action"] === "list").length).toBeGreaterThan(listed));
+    // One that can be a worker is approved as one; the page offers no in-process choice.
     await click(byAria(view, "Approve 2.0.0 of acme.tool"));
     expect(sent.filter((item) => item["action"] === "approve").at(-1)).toEqual({
       action: "approve",
       pluginId: "acme.tool",
       version: "2.0.0",
     });
-    await click(byAria(view, "Approve in-process: acme.tool 2.0.0"));
-    expect(document.querySelector("dialog")?.textContent).toContain("It could run as a confined worker.");
+    expect(byAria(view, "Approve in-process: acme.tool 2.0.0")).toBeNull();
+    expect(sent.some((item) => item["inProcess"] !== undefined)).toBe(false);
   });
 
   it("shows the owner's refusal in words", async () => {

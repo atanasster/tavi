@@ -145,13 +145,13 @@ export function register({ registerChannel, z, TaviError }) {
 
 ## 3. Review what it reaches
 
-Open **Settings → Plugins**. Before any of its code runs, the plugin says it **receives messages from outside and can send as you on Parrot**, and lists its webhook route with its size limit. A channel runs inside Tavi's own process, never as a confined worker, so the only way to approve it is **Approve 1.0.0 in-process…**: approve only code you have read.
+Open **Settings → Plugins**. Before any of its code runs, the plugin says it **receives messages from outside and can send as you on Parrot**, and lists its webhook route with its size limit. A channel runs inside Tavi's own process, never as a confined worker, so it is approved in-process, and only from the terminal: the row names the command. Approve only code you have read.
 
-![The acme.parrot row awaiting review: receives messages from outside and can send as you on Parrot, its inbox webhook route and body cap, with Approve 1.0.0 in-process…, Reject and Remove](../../assets/use-cases/extend/write-a-channel-plugin/03-review-what-it-reaches.webp)
+![The acme.parrot row awaiting review: receives messages from outside and can send as you on Parrot, its inbox webhook route and body cap, with the tavi plugins approve acme.parrot 1.0.0 --in-process command to run, Reject and Remove](../../assets/use-cases/extend/write-a-channel-plugin/03-review-what-it-reaches.webp)
 
 ## 4. Approve it, enable it and add a connection
 
-Choose **Approve 1.0.0 in-process…**, confirm with **Approve in-process (unsandboxed)**, and choose **Enable** (or `tavi plugins approve acme.parrot 1.0.0 --in-process` and `tavi plugins enable acme.parrot`), and restart `tavi serve`. Then add a connection with your API's address and the two secrets, each read from a file: `tavi channels add parrot --apiUrl https://parrot.example/api --secret-file apiToken=./parrot-token --secret-file webhookSecret=./parrot-webhook-secret`. **Settings → Channels** offers the same form, drawn from your manifest, and shows the connection running, with **No one allowed** until you allow someone.
+Run `tavi plugins approve acme.parrot 1.0.0 --in-process`, choose **Enable** (or `tavi plugins enable acme.parrot`), and restart `tavi serve`. Then add a connection with your API's address and the two secrets, each read from a file: `tavi channels add parrot --apiUrl https://parrot.example/api --secret-file apiToken=./parrot-token --secret-file webhookSecret=./parrot-webhook-secret`. **Settings → Channels** offers the same form, drawn from your manifest, and shows the connection running, with **No one allowed** until you allow someone.
 
 ![Settings → Channels: the Parrot connection, running, marked No one allowed: it answers no one until you allow a person on it](../../assets/use-cases/extend/write-a-channel-plugin/04-approve-it-enable-it-and-add-a-connection.webp)
 

@@ -274,22 +274,11 @@ export const pluginActions = {
     };
   },
   /**
-   * Approve or reject a version. An approval runs it as a confined worker
-   * unless `inProcess`, as `tavi plugins approve --in-process` does.
+   * Approve or reject a version. A page's approval runs it as a confined
+   * worker: an in-process one is `tavi plugins approve --in-process`'s alone.
    */
-  async decide(
-    client: SettingsClient,
-    pluginId: string,
-    version: string,
-    approve: boolean,
-    inProcess = false,
-  ): Promise<Outcome<string | undefined>> {
-    const written = await ask<PluginWrite>(client, "plugins", {
-      action: approve ? "approve" : "reject",
-      pluginId,
-      version,
-      ...(approve && inProcess ? { inProcess: true } : {}),
-    });
+  async decide(client: SettingsClient, pluginId: string, version: string, approve: boolean): Promise<Outcome<string | undefined>> {
+    const written = await ask<PluginWrite>(client, "plugins", { action: approve ? "approve" : "reject", pluginId, version });
     if (!written.ok) return written;
     const isolation = (written.value.result as { isolation?: string } | undefined)?.isolation;
     const where =

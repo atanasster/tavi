@@ -18,6 +18,11 @@ change behaviour or stored data.
 
 ### Changed
 
+- Approving a plugin to run in-process (unsandboxed) is the terminal's alone,
+  as an MCP server's weaker sandbox is: Settings → Plugins no longer offers
+  **Approve in-process…**, names `tavi plugins approve <id> <version>
+  --in-process` for a version that cannot be a worker, and the owner refuses an
+  in-process approval from a page.
 - An approval or question email that carries single-use links now says that
   anyone with the message can use them, and not to forward it.
 - A credential store that holds values but is not encrypted at rest — where no
