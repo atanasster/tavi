@@ -347,9 +347,10 @@ it("says which tasks an origin-scoped rule covers: an ipc rule covers the termin
   );
   const origins = [...page.querySelectorAll("li.row")].map((row) => row.querySelector(".rule-origin")?.textContent ?? null);
   expect(origins).toEqual([
-    " · only tasks started in a terminal or on the web",
-    " · only tasks started on the web",
-    " · only tasks started from a chat",
+    // With no note before it, the scope is the line's start, not a clause after nothing.
+    "Only tasks started in a terminal or on the web",
+    "Only tasks started on the web",
+    "Only tasks started from a chat",
     null,
   ]);
 });
@@ -382,6 +383,78 @@ it("marks a rule an app's page set as holding in every workspace", async () => {
   );
   const rows = [...page.querySelectorAll("li.row")].map((row) => row.textContent?.includes("All workspaces") === true);
   expect(rows).toEqual([true, false]);
+});
+
+it("tags a rule's source only where its list does not say it, and starts its note as a sentence", async () => {
+  const rule = (ruleId: string, source: "operator" | "shipped" | "flag", note: string) => ({
+    ruleId,
+    workspaceId: "*",
+    toolPattern: "sandbox.run",
+    decision: "allow",
+    source,
+    note,
+    createdBy: "me",
+    createdVia: "cli",
+    createdAt: "2026-01-01T00:00:00Z",
+  });
+  const client: SettingsClient = {
+    request: (_command, payload) =>
+      Promise.resolve({
+        ok: true,
+        result:
+          (payload as { action: string }).action === "rules"
+            ? { rules: [rule("o1", "operator", "approved always"), rule("f1", "flag", "from a flag"), rule("s1", "shipped", "reads only")] }
+            : { grants: [] },
+      }),
+  };
+  const page = await mount(
+    <InWorkspace client={client} workspaceId="default">
+      <PermissionsSettings />
+    </InWorkspace>,
+  );
+  const rows = [...page.querySelectorAll("li.row")].map((row) => ({
+    tags: [...row.querySelectorAll(".badge:not(.badge-ok)")].map((badge) => badge.textContent),
+    note: row.querySelector(".muted")?.textContent,
+  }));
+  expect(rows).toEqual([
+    { tags: ["All workspaces"], note: "Approved always" },
+    { tags: ["All workspaces", "serve --allow"], note: "From a flag" },
+    // Under "Shipped with Tavi", which holds everywhere: neither is said again.
+    { tags: [], note: "Reads only" },
+  ]);
+  expect(page.textContent).not.toContain("yours");
+});
+
+it("leads a grant's row with the site it reaches, then its tools", async () => {
+  const grant = (grantId: string, toolId: string) => ({
+    grantId,
+    taskId: "task-1",
+    workspaceId: "default",
+    toolId,
+    argMatcher: "the-internet.herokuapp.com",
+    approvalId: "a1",
+    createdBy: "me",
+    createdAt: "2026-01-01T00:00:00Z",
+  });
+  const client: SettingsClient = {
+    request: (_command, payload) =>
+      Promise.resolve({
+        ok: true,
+        result:
+          (payload as { action: string }).action === "rules"
+            ? { rules: [] }
+            : { grants: [grant("g1", "browser.act"), grant("g2", "browser.navigate")] },
+      }),
+  };
+  const page = await mount(
+    <InWorkspace client={client} workspaceId="default">
+      <PermissionsSettings />
+    </InWorkspace>,
+  );
+  const line = page.querySelector("li.row .rule-info > span");
+  expect(line?.textContent).toBe("the-internet.herokuapp.com — browser.act, browser.navigate");
+  // A site stays whole rather than breaking at its hyphen.
+  expect(line?.querySelector("code")?.className).toBe("file-name");
 });
 
 it("shows one decision's session grants as one row with one Revoke", async () => {

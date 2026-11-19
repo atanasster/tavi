@@ -82,6 +82,12 @@
   margin-top: 0;
 }
 
+/* A field's hint under its control, in its own column: help's weight, not its label's. */
+.settings-fields > label > .settings-description {
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-relaxed);
+}
+
 .settings-fields > p,
 .settings-fields > fieldset,
 .settings-fields > div,

@@ -28,6 +28,12 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Settings → Permissions reads more cleanly. A rule's note starts as a
+  sentence, without the "yours:" or "shipped with Tavi:" in front, and the
+  shipped rules no longer each say "All workspaces" under a heading that
+  already says where they come from; a rule from `serve --allow` is tagged so.
+  A chat grant leads with the site it reaches, kept whole, before its tools,
+  and the injection detector's note sits under its own field.
 - A list row's buttons look the same on every page. An ordinary action
   (**Test**, **Disable**, **Settings**, **Replace**, **Set**, **Rediscover**,
   **Run now**, **Inspect**) is small words with no box. Only an action that

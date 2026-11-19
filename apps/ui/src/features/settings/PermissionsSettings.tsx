@@ -25,11 +25,19 @@ import { AppLink } from "../shell/AppLink.js";
 import { taskPath } from "../shell/route.js";
 import { Command } from "../../ui/Command.js";
 
-const RULE_SOURCES: Readonly<Record<ToolRule["source"], string>> = {
-  shipped: "shipped with Tavi",
+/**
+ * Where a rule came from, as a tag beside it — only where its list does not
+ * already say: the shipped ones sit under "Shipped with Tavi", and the rest
+ * are yours unless the owner was started with `serve --allow`.
+ */
+const RULE_SOURCE_TAGS: Readonly<Partial<Record<ToolRule["source"], string>>> = {
   flag: "serve --allow",
-  operator: "yours",
 };
+
+/** A note as a line of its own: its first letter raised (`approved always…` → `Approved always…`). */
+function sentence(note: string): string {
+  return note.charAt(0).toUpperCase() + note.slice(1);
+}
 
 /**
  * The tasks a rule scoped to an origin applies to. A rule scoped to `ipc`
@@ -92,7 +100,7 @@ export function PermissionsSettings({
   const { busy, note, tone, run } = useAction(reload);
   // A matcher came from a call's subjects: what it would hide is marked.
   const describe = (entry: { readonly argMatcher?: string | undefined }) =>
-    entry.argMatcher === undefined ? "any call" : <code>{displaySafe(entry.argMatcher)}</code>;
+    entry.argMatcher === undefined ? "any call" : <code className="file-name">{displaySafe(entry.argMatcher)}</code>;
   const ruleRow = (rule: ToolRule) => (
     <li
       key={rule.ruleId}
@@ -104,18 +112,30 @@ export function PermissionsSettings({
         <span>
           <span className={`badge ${RULE_TONES[rule.decision]}`}>{rule.decision}</span> <code>{rule.toolPattern}</code> — {describe(rule)}
           {/* A rule an app's page set holds in every workspace. */}
-          {rule.workspaceId === "*" ? (
+          {/* Every shipped rule holds everywhere: its list says so once. */}
+          {rule.workspaceId === "*" && rule.source !== "shipped" ? (
             <>
               {" "}
               <span className="badge badge-muted">All workspaces</span>
             </>
           ) : null}
+          {RULE_SOURCE_TAGS[rule.source] === undefined ? null : (
+            <>
+              {" "}
+              <span className="badge">{RULE_SOURCE_TAGS[rule.source]}</span>
+            </>
+          )}
         </span>
-        <span className="muted">
-          {RULE_SOURCES[rule.source]}
-          {rule.note === undefined ? "" : `: ${rule.note}`}
-          {rule.origin === undefined ? null : <span className="rule-origin"> · only {RULE_ORIGINS[rule.origin]}</span>}
-        </span>
+        {rule.note === undefined && rule.origin === undefined ? null : (
+          <span className="muted">
+            {rule.note === undefined ? "" : sentence(rule.note)}
+            {rule.origin === undefined ? null : (
+              <span className="rule-origin">
+                {rule.note === undefined ? "Only" : " · only"} {RULE_ORIGINS[rule.origin]}
+              </span>
+            )}
+          </span>
+        )}
       </span>
       {/* The server removes only an allow rule from a page: dropping a deny or ask rule widens what runs unasked. */}
       {rule.source === "operator" && rule.decision === "allow" ? (
@@ -142,14 +162,16 @@ export function PermissionsSettings({
     grant === undefined ? null : (
       <li key={grant.grantId} className="row">
         <span className="rule-info">
+          {/* What it reaches leads (a site, a path), then the tools: a browser decision's six names never push the site to a line of its own. */}
           <span>
+            {grant.argMatcher === undefined ? null : <>{describe(grant)} — </>}
             {[grant, ...rest].map((entry, index) => (
               <Fragment key={entry.grantId}>
                 {index === 0 ? "" : ", "}
                 <code>{entry.toolId}</code>
               </Fragment>
-            ))}{" "}
-            — {describe(grant)}
+            ))}
+            {grant.argMatcher === undefined ? " — any call" : null}
           </span>
           <span className="muted">
             {/* The chat as the reader knows it: its title, a link to it, with its id beside it. */}
@@ -217,11 +239,6 @@ export function PermissionsSettings({
                   void run("detector", () => workspaceSettingsActions.setInjectionDetector(client, workspaceId, mode, detector.revision))
                 }
               />
-            )}
-            {detector === undefined ? null : (
-              <p>
-                A likely injection in a page, an email or a result adds a warning to the next call's approval. It never decides for you.
-              </p>
             )}
             {taint?.taintPolicy === undefined ? null : (
               <p>
@@ -337,6 +354,7 @@ function InjectionDetectorSetting({
       Injection detector
       <Select
         aria-label="injection detector"
+        aria-describedby="injection-detector-hint"
         value={mode}
         disabled={busy}
         onChange={(event) => onChange(event.target.value as InjectionDetectorMode)}
@@ -347,6 +365,10 @@ function InjectionDetectorSetting({
           </option>
         ))}
       </Select>
+      {/* What it does, under its own field rather than across both. */}
+      <span id="injection-detector-hint" className="settings-description">
+        A likely injection in a page, an email or a result adds a warning to the next call's approval. It never decides for you.
+      </span>
     </label>
   );
 }
