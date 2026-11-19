@@ -8,6 +8,13 @@ change behaviour or stored data.
 
 ### Added
 
+- A prebuilt install for people who are not building Tavi: each GitHub
+  Release carries the packed packages, `install.sh` and `SHA256SUMS`, and
+  `curl -fsSL https://github.com/atanasster/tavi/releases/latest/download/install.sh | sh`
+  checks Node, verifies every package, installs into `~/.tavi/app` with the
+  browser tools, and links `tavi` into `~/.local/bin`. A `v<version>` tag
+  publishes one after installing it on fresh Linux and macOS runners
+  (`.github/workflows/release.yml`).
 - `tavi remote connect <ssh-target>` lets the clients on this computer use a
   `tavi serve` on another one, such as a Mac mini on your network, over your
   own SSH sign-in. It keeps a mirror directory (`~/.tavi-remote/<host>`) that

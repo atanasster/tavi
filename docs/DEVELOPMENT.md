@@ -12,8 +12,8 @@ You need Node.js `>= 22.22.2`, pnpm `12.16.1` (`corepack enable`; the
 repository pins it in `packageManager`), and macOS, Linux or WSL2. Native
 Windows is not supported for running Tavi yet; to build and test there, see
 [WINDOWS](WINDOWS.md#install), which also needs the Microsoft Visual C++
-runtime. Tavi runs from a clone of the repository: there is
-no npm package yet.
+runtime. This page builds Tavi from a clone; to install a prebuilt release
+instead, see the [README](../README.md#quick-install) and [Releases](#releases).
 
 - `pnpm install` refuses a Node.js older than the floor.
 - On Node 25 and later, run `npm install -g corepack` before `corepack enable`.
@@ -491,6 +491,7 @@ flowchart LR
   demand["Run workflow, or a pull request labelled sandbox-matrix"] --> matrix["sandbox.yml: the sandbox matrix"]
   matrix --> linux["Linux jobs on ubuntu-24.04 and ubuntu-24.04-arm"]
   matrix --> mac["macOS jobs on macos-15 and macos-15-intel"]
+  tag["a v<version> tag, or Run workflow"] --> release_yml["release.yml: pack, install on Linux and macOS, publish (tags only)"]
 ```
 
 | Job | Runs |
@@ -554,7 +555,32 @@ pnpm run test:release
 ```
 
 It needs the public registry, `npm` on `PATH` and POSIX `tar`, so it is not
-part of the default suite; when skipped it says so.
+part of the default suite; when skipped it says so. With it, the same file
+installs the packed tarballs through `scripts/install.sh`, as a person
+installing a release does; without it, it still checks that the installer
+refuses a package that does not match `SHA256SUMS` and asks for the
+`engines` Node.
+
+## Releases
+
+A release is the packed tarballs of every package a `tavi` install needs (the
+set the release gate installs), `install.sh` and `SHA256SUMS`, attached to a
+GitHub Release. `.github/workflows/release.yml` makes one from a tag:
+
+1. Set `version` in `apps/cli/package.json` (and the packages beside it), and
+   move `## Unreleased` in `CHANGELOG.md` under `## <version>`: the release's
+   notes are that section.
+2. Tag the commit `v<version>` and push the tag. The `pack` job refuses a tag
+   that does not match the CLI's version, runs the release gate and
+   `node scripts/pack-release.mjs`; the `install` job installs that release
+   with `install.sh` on fresh Linux and macOS runners and runs the installed
+   `tavi`; only then does `publish` create the GitHub Release.
+
+Run the workflow by hand (**Run workflow**) to pack and test-install without
+publishing. Locally, `node scripts/pack-release.mjs` writes
+`release/<version>/` (git-ignored), and
+`TAVI_RELEASE_BASE=$PWD/release/<version> sh scripts/install.sh` installs from
+it (`TAVI_HOME` and `TAVI_BIN_DIR` keep it apart from your own install).
 
 ## Third-party notices
 

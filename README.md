@@ -148,7 +148,20 @@ is in [ARCHITECTURE](docs/ARCHITECTURE.md).
 
 ## Quick install
 
-Tavi runs from a clone of this repository; there is no npm package yet.
+On macOS, Linux or WSL2 with Node.js `>= 22.22.2`, install the latest release:
+
+```bash
+curl -fsSL https://github.com/atanasster/tavi/releases/latest/download/install.sh | sh
+```
+
+The installer checks every package against the release's `SHA256SUMS`,
+installs them into `~/.tavi/app` and links `tavi` into `~/.local/bin`, with
+Playwright and Chromium for the browser tools. Run it again to update; your
+data directory is not touched. `TAVI_VERSION=0.1.0` picks a release,
+`TAVI_HOME` and `TAVI_BIN_DIR` move the install, and `TAVI_SKIP_CHROMIUM=1`
+leaves the browser tools out.
+
+To build from source instead:
 
 ```bash
 git clone https://github.com/atanasster/tavi.git
@@ -181,9 +194,9 @@ login, see [OPERATIONS](docs/OPERATIONS.md).
 | Need | What | For |
 | --- | --- | --- |
 | Required | Node.js `>= 22.22.2` | everything |
-| Required | pnpm `12.16.1` | building from the clone (`corepack enable`) |
+| From source | pnpm `12.16.1` | building from a clone (`corepack enable`); the installer needs only npm |
 | Linux | bubblewrap, socat and ripgrep | the sandbox (macOS has one built in); `tavi sandbox check` says what is missing |
-| Optional | Chromium | the browser tools and PDF reports; `pnpm install` installs it |
+| Optional | Chromium | the browser tools and PDF reports; the installer and `pnpm install` install it |
 | Optional | FFmpeg, whisper.cpp | the video tools and transcription |
 | Optional | uv | Python MCP servers |
 

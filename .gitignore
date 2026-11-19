@@ -64,3 +64,6 @@ packages/builtin/desktop/native/tavi-desktop-helper
 # The demo video: raw scenes (scripts/docs/demo-record.mjs) and the cut (demo-edit.mjs)
 /.demo-recording/
 /.demo-video/
+
+# Prebuilt release packs (scripts/pack-release.mjs)
+release/

@@ -1,4 +1,5 @@
-import { existsSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -22,6 +23,7 @@ import { importedBy } from "./support/imports.js";
 import { run } from "./support/process.js";
 import { directorySize, walk } from "./support/tree.js";
 import { underTerminal } from "./support/terminal.js";
+import { changelogSection, writeChecksums } from "../scripts/pack-release.mjs";
 
 /** Windows skips this file's POSIX cases (`POSIX_ONLY` says why). */
 const posixOnly = needsPosix(import.meta.url);
@@ -943,4 +945,86 @@ describe.skipIf(posixOnly)("clean core-only install", () => {
     },
     300_000,
   );
+});
+
+/**
+ * The prebuilt installer (`scripts/install.sh`, attached to each GitHub
+ * Release by `scripts/pack-release.mjs`): what it asks of the machine, what it
+ * refuses before installing anything, and — in the install gate — a real
+ * install from the packed artifacts, as a person runs it.
+ */
+describe("the prebuilt installer", () => {
+  const installer = join(repositoryRoot, "scripts", "install.sh");
+
+  it("asks for the Node every package's engines field asks for", () => {
+    const floor = /^NODE_FLOOR="([^"]+)"$/m.exec(readFileSync(installer, "utf8"))?.[1];
+    const engines = (JSON.parse(readFileSync(join(repositoryRoot, "package.json"), "utf8")) as { engines: { node: string } }).engines.node;
+    expect(`>=${floor}`).toBe(engines);
+  });
+
+  it("takes a release's notes from its changelog section", () => {
+    const changelog = "# Changelog\n\n## Unreleased\n\n- new\n\n## 0.1.0\n\n- first\n";
+    expect(changelogSection(changelog, "Unreleased")).toBe("- new");
+    expect(changelogSection(changelog, "0.1.0")).toBe("- first");
+    expect(changelogSection(changelog, "9.9.9")).toBeUndefined();
+  });
+
+  describe.skipIf(posixOnly)("from a release folder", () => {
+    /** Run the installer against `release`, into a fresh home; its status, output and where it would install. */
+    const install = (release: string, extra: NodeJS.ProcessEnv = {}) => {
+      const home = temporaryDirectory("tavi-installer-home-");
+      const result = spawnSync("sh", [installer], {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          TAVI_RELEASE_BASE: release,
+          TAVI_HOME: join(home, "tavi"),
+          TAVI_BIN_DIR: join(home, "bin"),
+          npm_config_cache: join(home, ".npm-cache"),
+          ...extra,
+        },
+      });
+      return { status: result.status, output: `${result.stdout}${result.stderr}`, home };
+    };
+
+    it("refuses a package that does not match SHA256SUMS, installing nothing", () => {
+      const release = temporaryDirectory("tavi-installer-release-");
+      writeFileSync(join(release, "tavi-cli-0.1.0.tgz"), "not the packed bytes");
+      writeFileSync(join(release, "SHA256SUMS"), `${"0".repeat(64)}  tavi-cli-0.1.0.tgz\n`);
+      const { status, output, home } = install(release);
+      expect(status).toBe(1);
+      expect(output).toContain("does not match SHA256SUMS; nothing was installed");
+      expect(existsSync(join(home, "tavi", "app"))).toBe(false);
+      expect(existsSync(join(home, "bin", "tavi"))).toBe(false);
+    });
+
+    it("refuses a SHA256SUMS that names a file outside the release", () => {
+      const release = temporaryDirectory("tavi-installer-release-");
+      writeFileSync(join(release, "SHA256SUMS"), `${"0".repeat(64)}  ../elsewhere.tgz\n`);
+      const { status, output } = install(release);
+      expect(status).toBe(1);
+      expect(output).toContain("names an unexpected file: ../elsewhere.tgz");
+    });
+
+    it.skipIf(!installGateEnabled)(
+      "installs the packed artifacts and links a tavi that runs, as a person runs it",
+      () => {
+        const release = temporaryDirectory("tavi-installer-release-");
+        for (const entry of packages) copyFileSync(tarballPath(entry), join(release, basename(tarballPath(entry))));
+        copyFileSync(installer, join(release, "install.sh"));
+        writeChecksums(release);
+        const { status, output, home } = install(release, { TAVI_SKIP_CHROMIUM: "1", npm_config_update_notifier: "false" });
+        expect(status, output).toBe(0);
+        expect(output).toContain("next: tavi setup");
+        const cliVersion = (JSON.parse(readFileSync(join(repositoryRoot, "apps", "cli", "package.json"), "utf8")) as { version: string })
+          .version;
+        const data = join(home, "data");
+        mkdirSync(data, { recursive: true, mode: 0o700 });
+        expect(
+          run(join(home, "bin", "tavi"), ["--version"], { encoding: "utf8", env: { ...process.env, TAVI_DATA_DIR: data } }).trim(),
+        ).toContain(cliVersion);
+      },
+      900_000,
+    );
+  });
 });
