@@ -62,6 +62,46 @@
   margin-inline: calc(max(0%, (100% - var(--width-page)) / 2) - var(--space-2)) auto;
 }
 
+/* A section's lone text button (Clear browser profile…, Forget all recipes, Reset instance…): its words on the
+   column's edge with the paragraph above it, its padding outside it. */
+.settings > .actions > :is(.ghost, .button-danger-ghost):only-child,
+.danger-zone-actions > .button-danger-ghost:only-child {
+  margin-inline-start: calc(-1 * var(--space-3));
+}
+
+/* A video's days: the number and its unit stay on one line, never "days" alone under the field. */
+.video-days {
+  white-space: nowrap;
+}
+
+/* On a phone the zone fills the row beside Save, so Use host zone always takes the line under them: its words on
+   the column's edge, its padding outside it. */
+@media (--phone) {
+  .timezone-actions > .select-trigger {
+    flex: 1 1 50%;
+  }
+
+  .timezone-actions > .ghost:last-child {
+    margin-inline-start: calc(-1 * var(--space-3));
+  }
+}
+
+/* Site recipes: one hairline row per site, its name, counts and buttons on one line and its steps under them. */
+.site-recipes {
+  margin-block: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-recipes > li {
+  padding: var(--space-2) 0;
+  border-bottom: var(--border-width) solid var(--line-soft);
+}
+
+.site-recipes > li:first-child {
+  border-top: var(--border-width) solid var(--line-soft);
+}
+
 .settings-description {
   margin: var(--space-1) 0 0;
   color: hsl(var(--muted-foreground));

@@ -103,7 +103,7 @@ export function GeneralSettings({
         </span>
       </p>
       <form
-        className="actions"
+        className="actions timezone-actions"
         onSubmit={(event) => {
           event.preventDefault();
           if (unchanged) return;

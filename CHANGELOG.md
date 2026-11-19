@@ -28,6 +28,13 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Settings → General, walked at desktop and phone width. A section's lone text
+  button (**Clear browser profile…**, **Forget all recipes**, **Reset
+  instance…**) starts on the page's edge with the paragraph above it instead of
+  13px in, and Site recipes are hairline rows rather than a bulleted list. On a
+  phone the timezone field fills the row beside **Save**, with **Use host zone**
+  on the edge under them, and the video setting keeps "30 days" together
+  instead of leaving "days" alone under its field.
 - Settings → Channels, walked at desktop and phone width. In a channel's
   **People** dialog the **Pair with a code** / **Allow person** row lines up
   with the Allow a person fields above it; before, it started 24px to their

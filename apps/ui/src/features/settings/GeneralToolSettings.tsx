@@ -65,17 +65,19 @@ export function VideoTools({ answer, busy, run }: SettingSectionProps) {
       >
         <label>
           Keep videos from chats and uploads for{" "}
-          <input
-            name="days"
-            type="number"
-            min={1}
-            max={MAX_VIDEO_KEEP_DAYS}
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            aria-label="days a video is kept"
-            disabled={busy !== undefined}
-          />{" "}
-          days
+          <span className="video-days">
+            <input
+              name="days"
+              type="number"
+              min={1}
+              max={MAX_VIDEO_KEEP_DAYS}
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              aria-label="days a video is kept"
+              disabled={busy !== undefined}
+            />{" "}
+            days
+          </span>
         </label>
         <Button variant="primary" type="submit" disabled={busy !== undefined || !validDays || draft === shown}>
           {busy === "video-days" ? "Saving…" : "Save"}
