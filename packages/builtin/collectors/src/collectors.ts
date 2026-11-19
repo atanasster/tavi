@@ -506,13 +506,15 @@ async function gcpMetrics(accessToken: string, project: CollectorProject, now: D
   if (gcp === undefined) throw new TaviError("INVALID_INPUT", "this project has no Cloud Billing export configured");
   const month = isoDate(now).slice(0, 7).replace("-", "");
   if (!/^\d{6}$/.test(month)) throw new TaviError("INTERNAL", "could not derive the billing month");
-  const query = ["SELECT ROUND(SUM(cost), 2) AS cost", `FROM ${gcp.billingTable}`, `WHERE invoice.month = '${month}'`, "LIMIT 1"].join(" ");
+  // The table cannot be a parameter (it is held to the validated allowlist); the month is one, so no value reaches the SQL text.
+  const query = ["SELECT ROUND(SUM(cost), 2) AS cost", `FROM ${gcp.billingTable}`, "WHERE invoice.month = @month", "LIMIT 1"].join(" ");
+  const queryParameters = [{ name: "month", parameterType: { type: "STRING" }, parameterValue: { value: month } }];
   const response = await doFetch(
     `https://bigquery.googleapis.com/bigquery/v2/projects/${encodeURIComponent(gcp.billingProjectId)}/queries`,
     {
       method: "POST",
       headers: { authorization: `Bearer ${accessToken}`, "content-type": "application/json" },
-      body: JSON.stringify({ query, useLegacySql: false, maxResults: 10 }),
+      body: JSON.stringify({ query, parameterMode: "NAMED", queryParameters, useLegacySql: false, maxResults: 10 }),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     },
   );

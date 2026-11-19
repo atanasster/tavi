@@ -845,6 +845,41 @@ describe("the project registry", () => {
   });
 });
 
+describe("gcp.billing's query", () => {
+  it("passes the billing month as a query parameter, never in the SQL text", async () => {
+    const bodies: unknown[] = [];
+    const routed = stubFetch({
+      "oauth2.googleapis.com/token": { body: { access_token: "tok" } },
+      "bigquery.googleapis.com/": { body: { rows: [{ f: [{ v: "12.5" }] }] } },
+    });
+    const impl = (async (input: string | URL | Request, init?: RequestInit) => {
+      if (String(input).includes("bigquery.googleapis.com")) bodies.push(JSON.parse(String(init?.body)));
+      return routed.impl(input, init);
+    }) as typeof fetch;
+    const config = {
+      googleServiceAccountRef: "google.serviceAccount",
+      projects: [{ id: "acme", gcp: { billingProjectId: "billing-proj", billingTable: "proj.billing.export" } }],
+    };
+    const registry = new ToolRegistry();
+    registerCollectorTools(registry, {
+      dataDirectory: projectDirectory(config),
+      secretReader: secretReader({ "google.serviceAccount": serviceAccountJson }),
+      projects: registryFixture(config),
+      fetchImpl: impl,
+      now: () => new Date("2026-09-16T07:00:00Z"),
+    });
+    await toolResult(registry, "gcp.billing", { projectId: "acme" });
+    expect(bodies).toHaveLength(1);
+    const body = bodies[0] as { query: string; parameterMode?: string; queryParameters?: unknown };
+    expect(body.query).not.toContain("202609");
+    expect(body.query).toContain("@month");
+    expect(body).toMatchObject({
+      parameterMode: "NAMED",
+      queryParameters: [{ name: "month", parameterType: { type: "STRING" }, parameterValue: { value: "202609" } }],
+    });
+  });
+});
+
 describe("collector tools — repaired defects", () => {
   it("refuses an unconfigured source instead of calling the provider with an empty id", async () => {
     const stub = stubFetch({ "oauth2.googleapis.com/token": { body: { access_token: "tok" } } });
