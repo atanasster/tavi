@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { signsIn, type AppToolView, type ConnectableApp } from "@tavi/contracts";
 
 import { AppLink } from "../shell/AppLink.js";
-import { LoadState, Notice, Section, StatusNote } from "../../ui/Parts.js";
+import { BackLink, LoadState, Notice, Section, StatusNote } from "../../ui/Parts.js";
 import { Select } from "../../ui/Select.js";
 import { settingsPath } from "../shell/route.js";
 import { mcpActions, pluginActions } from "../settings/plugins-api.js";
@@ -85,9 +85,7 @@ export function AppDetail({
   const busyNow = busy !== undefined;
   return (
     <section className="settings apps-detail">
-      <Button variant="ghost" onClick={onBack}>
-        ← Connected apps
-      </Button>
+      <BackLink label="Connected apps" onBack={onBack} />
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         <StatusNote note={note} />
       </LoadState>

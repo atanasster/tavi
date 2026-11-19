@@ -32,6 +32,28 @@
 .apps-title-line > .badge {
   margin: 0;
 }
+/* An app's recent activity is a log, up to 50 lines a page: hairline rows, not a card each. */
+.settings .apps-activity {
+  gap: 0;
+}
+.settings .apps-activity > .row {
+  padding: var(--space-2) 0;
+  border: 0;
+  border-bottom: var(--border-width) solid var(--line-soft);
+  border-radius: 0;
+  background: none;
+}
+/* The chat a line happened in, at most two lines: its badge and time stay in view below it. */
+.apps-activity .apps-title-line > a {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.apps-activity-meta > .badge {
+  margin: 0;
+}
 /* A channel's setup notes: one per line, its link last. */
 .apps-account-setup {
   display: flex;
@@ -72,6 +94,17 @@
 }
 .apps-card .actions {
   margin-top: auto;
+}
+/* Its description is spaced by the card's gap alone, as its name and icon are, not a paragraph's margins too. */
+.apps-card > p.muted {
+  margin: 0;
+}
+/* Its tags sit with its button at the card's foot, so the cards in a row line them up whatever their descriptions. */
+.apps-card > .apps-badges {
+  margin-top: auto;
+}
+.apps-card > .apps-badges + .actions {
+  margin-top: 0;
 }
 .apps-badges {
   display: flex;

@@ -83,9 +83,10 @@ export function RecentActivity({
                     >
                       {row.title}
                     </AppLink>
-                    <span className={`badge badge-${words.tone}`}>{words.text}</span>
                   </span>
-                  <span className="meta-sm">
+                  {/* What happened and when, on one line under the chat it happened in. */}
+                  <span className="apps-activity-meta cluster meta-sm">
+                    <span className={`badge badge-${words.tone}`}>{words.text}</span>
                     <time dateTime={row.at}>{whenLocalWithYear(row.at, timeZone)}</time>
                   </span>
                 </span>

@@ -28,6 +28,14 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Settings → Connected apps, walked at desktop and phone width. Discover's
+  cards keep their tags with their button at the foot, so the cards in a row
+  line them up, and a card's description is spaced like its name rather than
+  by a paragraph's margins too. An app's Recent activity is a hairline log
+  instead of a bordered card per line, its state and time on one line under the
+  chat it happened in and that chat's title held to two lines; on Places the
+  section went from about 5,400px to 3,300px tall. An app's "← Connected apps"
+  has its arrow on the page's left edge.
 - Settings → Models, walked at desktop and phone width. A connection's
   Rediscover and Manage sit level with its name instead of dropping to the
   middle of an opened Native video list, and on a phone a role's Clear and Set

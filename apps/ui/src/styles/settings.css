@@ -57,6 +57,11 @@
   margin-inline: max(0%, (100% - var(--width-page)) / 2) auto;
 }
 
+/* A drilled-in page's way back, straight under the page: its arrow on the column's left edge, its padding outside it. */
+.settings > .back-link {
+  margin-inline: calc(max(0%, (100% - var(--width-page)) / 2) - var(--space-2)) auto;
+}
+
 .settings-description {
   margin: var(--space-1) 0 0;
   color: hsl(var(--muted-foreground));
