@@ -145,7 +145,8 @@
 .memory-proposals,
 .reminder-card,
 .handoff-card,
-.center-health {
+.center-health,
+.credential-encryption-off {
   border: var(--border-width) solid hsl(var(--warning) / var(--alpha-faint));
   border-radius: var(--radius-lg);
   background: hsl(var(--warning) / var(--tint-soft));
@@ -252,5 +253,6 @@
 
 /* Credentials kept in the clear: a warning, said in its colour. */
 .credential-encryption-off {
+  padding: var(--space-2-5) var(--space-3-5);
   color: hsl(var(--warning));
 }

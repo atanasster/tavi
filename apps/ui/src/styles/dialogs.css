@@ -40,6 +40,10 @@
   font-size: var(--text-2xl);
   font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-tight);
+  /* A title naming something long (Replace channels.6557…token) breaks inside the dialog, not past its close button:
+     wider than the dialog, it scrolled the whole dialog sideways and took its padding off the left. */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .modal-content {

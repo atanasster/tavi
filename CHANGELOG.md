@@ -28,6 +28,12 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Settings → Credentials, walked at desktop and phone width. A dialog whose
+  title names something long (**Replace channels.6557…token**) wraps the title
+  instead of scrolling the whole dialog sideways and losing its left padding;
+  this holds for every dialog. "Not encrypted: run tavi credentials encrypt"
+  is a boxed warning, and on a phone the page's description sits under its
+  title, above **Set a credential**, rather than after the button.
 - Settings → Connected apps, walked at desktop and phone width. Discover's
   cards keep their tags with their button at the foot, so the cards in a row
   line them up, and a card's description is spaced like its name rather than

@@ -82,12 +82,15 @@ export function CredentialsSettings() {
   const stored = data?.credentials ?? [];
   return (
     <section className="settings">
-      <PageHead className="settings-head" title="Credentials">
+      <PageHead
+        className="settings-head"
+        title="Credentials"
+        description="Values are stored by the owner and never shown here. Model connections and search providers name them by reference."
+      >
         <Button variant="primary" disabled={busy !== undefined} onClick={() => setSetting("")}>
           Set a credential
         </Button>
       </PageHead>
-      <Notice>Values are stored by the owner and never shown here. Model connections and search providers name them by reference.</Notice>
       {data?.encryption === undefined ? null : <EncryptionStatus status={data.encryption} />}
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         <StatusNote note={note} />
