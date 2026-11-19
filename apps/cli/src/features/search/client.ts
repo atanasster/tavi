@@ -2,7 +2,7 @@ import { emitError, jsonText } from "../../cli/output.js";
 import { EXIT, reportCommandFailure } from "../../cli/exit.js";
 import { terminalText } from "../../shared/terminal-text.js";
 import { TaviError, type SearchProviderConfig, type SearchWriteResult, type WebSearchResult, type WebSearchKind } from "@tavi/contracts";
-import { definedOnly, nowTimestamp } from "@tavi/contracts/util";
+import { definedOnly, nowTimestamp, plural } from "@tavi/contracts/util";
 import { createLocalCredentialStore } from "../credentials/store.js";
 import { createWebSearchAdapter, searchKeyProblem } from "./web-search.js";
 import type { SearchCommandOptions } from "./parse.js";
@@ -24,7 +24,7 @@ export async function searchCommand(options: ResolvedDataDirectory<SearchCommand
     print(
       answer,
       terminalText(
-        `${options.providerId} answered ${answer.sources.length} result(s)${answer.content === undefined ? "" : `, and: ${answer.content.slice(0, 200)}`}\n` +
+        `${options.providerId} answered with ${plural(answer.sources.length, "result")}${answer.content === undefined ? "" : `, and: ${answer.content.slice(0, 200)}`}\n` +
           answer.sources.map((entry) => `  ${entry.title ?? new URL(entry.url).hostname}\n    ${entry.url}\n`).join(""),
       ),
     );

@@ -34,6 +34,11 @@ kbd {
   white-space: nowrap;
 }
 
+/* A short file name in prose (`web-providers.json`) stays whole rather than breaking at its hyphen. */
+.file-name {
+  white-space: nowrap;
+}
+
 /* Figures line up: tables use tabular figures. */
 table {
   font-variant-numeric: tabular-nums;

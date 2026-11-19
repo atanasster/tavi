@@ -4,7 +4,8 @@ import type { SearchProviderConfig } from "@tavi/contracts";
 
 import { SEARCH_KIND_LABELS, saveWebSearchProvider, searchActions } from "./search-api.js";
 import { Confirm } from "../../ui/Confirm.js";
-import { Failure, LoadState, Notice, PageHead, PageNote } from "../../ui/Parts.js";
+import { Command } from "../../ui/Command.js";
+import { Failure, LoadState, Notice, PageHead, PageNote, StatusBadge } from "../../ui/Parts.js";
 import { useAction } from "../../hooks/use-action.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { WebSearchFormModal } from "./WebSearchFormModal.js";
@@ -30,8 +31,8 @@ export function WebSearchSettings() {
       </PageHead>
       <Notice>
         An enabled provider answers the agent&rsquo;s web searches. Adding or enabling one applies from the next message, with no restart;
-        disabling one stops new searches at once. With several, their order is set in web-providers.json in the data directory, read when
-        tavi serve starts.
+        disabling one stops new searches at once. With several, their order is set in <code className="file-name">web-providers.json</code> in the data directory,
+        read when <Command>tavi serve</Command> starts.
       </Notice>
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         <PageNote tone={tone} note={note} />
@@ -47,17 +48,23 @@ export function WebSearchSettings() {
                 <span className="muted">{provider.providerId} </span>
               )}
               <span className="muted">
-                {provider.baseUrl ?? (provider.credentialRef === undefined ? "· no key needed" : `· key ${provider.credentialRef}`)}
+                {provider.baseUrl === undefined
+                  ? provider.credentialRef === undefined
+                    ? "· no key needed"
+                    : `· key ${provider.credentialRef}`
+                  : `· ${provider.baseUrl}`}
               </span>
               {provider.enabled ? null : (
                 <>
                   {" "}
-                  <span className="badge">disabled</span>
+                  <StatusBadge status="disabled" />
                 </>
               )}
             </span>
-            <span className="actions">
+            {/* Text buttons, as a channel's row has them: Remove alone keeps its danger outline. */}
+            <span className="actions row-text-actions">
               <Button
+                variant="ghost"
                 size="sm"
                 aria-label={`Test ${provider.providerId}`}
                 disabled={busy !== undefined}
@@ -66,6 +73,7 @@ export function WebSearchSettings() {
                 {busy === `test:${provider.providerId}` ? "Testing…" : "Test"}
               </Button>
               <Button
+                variant="ghost"
                 size="sm"
                 aria-label={`${provider.enabled ? "Disable" : "Enable"} ${provider.providerId}`}
                 disabled={busy !== undefined}
@@ -88,14 +96,20 @@ export function WebSearchSettings() {
           </li>
         ))}
       </ul>
-      {data?.truncated === true ? <Notice>More providers exist than are listed here: `tavi search list` shows them all.</Notice> : null}
+      {data?.truncated === true ? (
+        <Notice>
+          More providers exist than are listed here: <Command>tavi search list</Command> shows them all.
+        </Notice>
+      ) : null}
       {unreadable.length > 0 ? (
-        <Failure alert={false}>Unreadable providers, left out: {unreadable.join(", ")}. Remove them with `tavi search remove`.</Failure>
+        <Failure alert={false}>
+          Unreadable providers, left out: {unreadable.join(", ")}. Remove them with <Command>tavi search remove</Command>.
+        </Failure>
       ) : null}
       {removing !== undefined ? (
         <Confirm
           title={`Remove ${removing.providerId}?`}
-          message={`web_search stops asking ${removing.providerId}.${removing.credentialRef === undefined ? "" : ` Its key ${removing.credentialRef} stays stored.`}`}
+          message={`The agent's web searches stop going to ${removing.providerId}.${removing.credentialRef === undefined ? "" : ` Its key ${removing.credentialRef} stays stored.`}`}
           action="Remove"
           onClose={() => setRemoving(undefined)}
           onConfirm={() => run(`remove:${removing.providerId}`, () => searchActions.remove(client, removing))}

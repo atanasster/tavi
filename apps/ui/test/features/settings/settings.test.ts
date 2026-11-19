@@ -350,7 +350,7 @@ describe("the web search form", () => {
     );
     expect(await searchActions.setEnabled(fake, "home", true)).toEqual({ ok: true, value: expect.stringContaining("Restart") });
     expect(await searchActions.setEnabled(fake, "home", false)).toEqual({ ok: true, value: "home disabled." });
-    expect(await searchActions.test(fake, "home")).toEqual({ ok: true, value: "home answered 2 result(s)." });
+    expect(await searchActions.test(fake, "home")).toEqual({ ok: true, value: "home answered with 2 results." });
     expect(await searchActions.remove(fake, { providerId: "brave", credentialRef: "search.brave" })).toEqual({
       ok: true,
       value: "brave removed. Its key search.brave stays stored; the Credentials view deletes it.",

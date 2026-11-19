@@ -108,7 +108,7 @@ function Channels({ data, reload: reloadPage }: { data: Loaded; reload: () => vo
                       <AllowedLine people={data.people.filter((person) => person.connectionId === connection.connectionId)} />
                     ) : null}
                   </div>
-                  <div className="actions channel-actions">
+                  <div className="actions row-text-actions">
                     {/* Its app's page in Connected apps: signing in, who may use it, and what it did. A channel's app is named by its provider. */}
                     <AppLink href={appsPath({ appId: connection.providerId })} className="button-sm ghost" onFollow={undefined}>
                       Open app

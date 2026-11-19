@@ -114,7 +114,7 @@ describe("tavi search", () => {
     await main(["search", "add", "home", "--kind", "searxng", "--base-url", instance.url, "--data-dir", data], { io: capture().io });
     const tested = capture();
     expect(await main(["search", "test", "home", "--query", "tavi orchestrator", "--data-dir", data], { io: tested.io })).toBe(EXIT.ok);
-    expect(tested.stdout()).toBe("home answered 1 result(s)\n  Tavi\n    https://tavi.example/\n");
+    expect(tested.stdout()).toBe("home answered with 1 result\n  Tavi\n    https://tavi.example/\n");
     expect(instance.requests).toEqual(["/search?q=tavi+orchestrator&format=json"]);
 
     // A keyed provider whose key is not stored fails its test, naming the fix.

@@ -86,7 +86,11 @@ export function WebSearchFormModal({
           onBaseUrl={(baseUrl) => set({ baseUrl })}
           onApiKey={(apiKey) => set({ apiKey })}
         />
-        {keyToStore(values) !== "" ? <Notice>Stored as the credential {searchKeyReference(values.providerId)}.</Notice> : null}
+        {keyToStore(values) !== "" ? (
+          <Notice>
+            Stored as the credential <code>{searchKeyReference(values.providerId)}</code>.
+          </Notice>
+        ) : null}
         <FormFailure message={failure} />
         <FormActions saving={saving} disabled={saving || (touched && !valid)} cancelDisabled={saving} label="Save" onCancel={onClose} />
       </form>

@@ -7,6 +7,8 @@ import {
   type WebSearchResult,
 } from "@tavi/contracts";
 
+import { plural } from "@tavi/contracts/util";
+
 import { ask, mapOutcome, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { SETTINGS_BOUNDS, restartNote, type FormErrors } from "./common.js";
 import { credentialActions } from "./credentials-api.js";
@@ -137,6 +139,6 @@ export const searchActions = {
   async test(client: SettingsClient, providerId: string): Promise<Outcome<string | undefined>> {
     // The owner's search test answers what a search answers.
     const tested = await ask<WebSearchResult>(client, "search", { action: "test", providerId });
-    return mapOutcome(tested, (value) => `${providerId} answered ${value.sources.length} result(s).`);
+    return mapOutcome(tested, (value) => `${providerId} answered with ${plural(value.sources.length, "result")}.`);
   },
 };

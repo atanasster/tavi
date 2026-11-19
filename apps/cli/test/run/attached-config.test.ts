@@ -306,7 +306,7 @@ describe("tavi agents and projects under a live owner", ATTACHED, () => {
       expect((await tavi(["search", "list", ...at])).stdout).toBe(`home\tsearxng\t${baseUrl}\tenabled\n`);
       const tested = await tavi(["search", "test", "home", "--query", "tavi orchestrator", ...at]);
       expect(tested.code, tested.stderr).toBe(EXIT.ok);
-      expect(tested.stdout).toBe("home answered 1 result(s)\n  Tavi\n    https://tavi.example/\n");
+      expect(tested.stdout).toBe("home answered with 1 result\n  Tavi\n    https://tavi.example/\n");
       expect(searches).toEqual(["/search?q=tavi+orchestrator&format=json"]);
 
       const disabled = await tavi(["search", "disable", "home", ...at]);

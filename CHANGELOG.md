@@ -28,6 +28,17 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Settings → Web search, walked at desktop and phone width. A provider's
+  **Test** and **Disable** are text buttons, as a channel's are, with only
+  **Remove** outlined, and on a phone they start on the provider's name. A
+  disabled provider shows a muted status rather than a pill that looked like
+  a button, and a SearXNG provider's address follows a "·" like the other
+  details. `web-providers.json` and `tavi serve` are set as code and no longer
+  break at the hyphen, and the notes for a long or partly unreadable list show
+  their commands as code instead of literal backticks. **Test** says "answered
+  with 5 results" (also in `tavi search test`), the add dialog sets the key's
+  credential name as code, and removing a provider says "The agent's web
+  searches stop going to tavily" instead of naming the `web_search` tool.
 - Settings dialogs and saved states, walked again. A page's note after a
   save (**Saved.**, a refusal) is a boxed note that stays on screen for a few
   seconds while you scroll, then settles in place; a refusal is said as an
