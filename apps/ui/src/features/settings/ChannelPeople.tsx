@@ -14,7 +14,7 @@ import { mapOutcome } from "../../lib/ipc.js";
 import { when } from "../../lib/time.js";
 import { Confirm } from "../../ui/Confirm.js";
 import { Empty } from "../../ui/Empty.js";
-import { ActionNote, BusyFieldset, Failure, Notice } from "../../ui/Parts.js";
+import { ActionNote, BusyFieldset, Failure, Notice, PageNote } from "../../ui/Parts.js";
 import { PairingLinkBox, claimedSenderLabel, shownPairingCode } from "../../ui/QrCode.js";
 import { Select } from "../../ui/Select.js";
 import { request, type Loaded, labelOf } from "./channels-api.js";
@@ -249,9 +249,11 @@ export function PersonFields({
           aria-label="Display name"
           maxLength={MESSAGING_DISPLAY_NAME_MAX}
           value={value.name}
-          placeholder="Shown in Center; the person ID otherwise"
+          placeholder="e.g. Sam"
           onChange={(event) => onChange({ ...value, name: event.target.value })}
         />
+        {/* Said under the field, as the fields above say theirs: a phone's field cut this short as a placeholder. */}
+        <span className="settings-description">Shown in Center; the person ID otherwise.</span>
       </label>
       {descriptor?.sender.authentication === "per-message" ? (
         <label>
@@ -369,7 +371,12 @@ export function PeopleEditor({
   return (
     <>
       {/* Who is allowed comes first; the form to allow someone else follows it. */}
-      <ActionNote tone={tone} note={note || undefined} className="" />
+      {/* On Allowed people the page's own note, boxed and held in view; in a channel's People dialog a plain line. */}
+      {only === undefined ? (
+        <PageNote tone={tone} note={note || undefined} />
+      ) : (
+        <ActionNote tone={tone} note={note || undefined} className="" />
+      )}
       {!shown.length ? (
         <Empty>
           {only === undefined
@@ -514,7 +521,7 @@ export function PeopleEditor({
       {remove ? (
         <Confirm
           title="Revoke access?"
-          message={`Block new incoming messages from ${remove.displayName === undefined ? remove.externalSenderId : `${remove.displayName} (${remove.externalSenderId})`} on ${connectionLabel(remove.connectionId)}. Turns already running are not cancelled.`}
+          message={`Block new incoming messages from ${remove.displayName ?? remove.principalId} (${remove.externalSenderId}) on ${connectionLabel(remove.connectionId)}. Turns already running are not cancelled.`}
           action="Revoke access"
           onClose={() => setRemove(undefined)}
           onConfirm={() =>

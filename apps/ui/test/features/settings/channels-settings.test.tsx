@@ -1224,3 +1224,18 @@ it("reads the connections again while the page is open, so a connection's last m
     vi.useRealTimers();
   }
 });
+
+it("on Allowed people, says an allowed person as the page's note, the display name's use under its field, and a revoke by the person's ID", async () => {
+  const bo = { connectionId: "pager-1", externalSenderId: "+15550199", principalId: "bo", workspaceId: "default" };
+  await mount(true, list.connections, [bo]);
+  // A placeholder a phone cut short is now an example, its meaning said under the field.
+  expect(field("Display name").getAttribute("placeholder")).toBe("e.g. Sam");
+  expect(field("Display name").closest("label")?.textContent).toContain("Shown in Center; the person ID otherwise.");
+  await fill("Phone number", "+15550123");
+  await fill("Person ID", "cy");
+  await submit(host.querySelector("form")!);
+  expect(host.querySelector(".page-note")?.textContent).toBe("Person allowed: their messages on this channel now reach Tavi.");
+  // A person with no display name is named by their person ID, as their row is.
+  await act(async () => [...host.querySelectorAll("button")].find((button) => button.textContent === "Revoke access")!.click());
+  expect(host.querySelector("dialog")?.textContent).toContain("Block new incoming messages from bo (+15550199) on Pager.");
+});

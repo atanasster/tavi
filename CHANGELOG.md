@@ -28,6 +28,14 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Settings → Allowed people, walked at desktop and phone width. **Person
+  allowed** and **Access revoked** are the boxed note held in view a moment,
+  as on the other settings pages, rather than a bare line above the list. The
+  Display name field's placeholder, cut short on a phone, is now an example
+  ("e.g. Sam"), with "Shown in Center; the person ID otherwise." under the
+  field as the fields above it have. Revoking a person with no display name
+  names them by their person ID as well as their number ("walktest
+  (1000000001)"), as their row does, instead of the number alone.
 - Settings → System prompt, walked at desktop and phone width. The prompt's
   box sits a little apart from its label instead of 2px under it, and
   **Saved.** or **Cleared.** is the boxed note held in view a moment, as on the
