@@ -33,6 +33,13 @@
   gap: var(--space-1-5);
 }
 
+/* On a phone the actions wrap under the description: Refresh's icon lines up with its text, not a button's padding in. */
+@media (--phone) {
+  .ideas-head-actions > .ghost:first-child {
+    margin-inline-start: calc(-1 * var(--space-2));
+  }
+}
+
 .ideas-tune {
   display: grid;
   gap: var(--space-2);
@@ -142,7 +149,8 @@
   top: 100%;
   z-index: var(--z-popover);
   display: grid;
-  min-width: var(--width-popover-min);
+  /* Wide enough that "Not interested in Shopping & style" and a chat's name take a line or two, not three. */
+  min-width: var(--width-popover-sm);
   max-width: min(var(--width-popover), 80vw);
   margin-top: var(--space-1);
   padding: var(--space-1);
@@ -154,13 +162,18 @@
   overflow-wrap: anywhere;
 }
 
-/* The brief's hint sits under its box, closer than the paragraphs around it. */
-.ideas-settings textarea {
+/* The brief's hint sits under its box, closer than the paragraphs around it, the same space in Settings as in
+   the tab's Tune (whose grid gap is that space already). */
+:is(.ideas-settings, .ideas-tune) textarea {
   display: block;
 }
 
 .ideas-settings textarea + p {
-  margin-top: var(--space-1-5);
+  margin-top: var(--space-2);
+}
+
+.ideas-tune textarea + p {
+  margin-top: 0;
 }
 
 /* A switch whose words wrap keeps them beside its box, the box on their first line. */

@@ -28,6 +28,10 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- The Ideas tab: an idea's ⋯ menu is wider, so its longer items take a line
+  or two rather than three; on a phone Refresh lines up with the text above
+  it; and the brief's note in Tune sits as close under its box as it does in
+  Settings.
 - Settings → Ideas is easier to scan. What Ideas may read has its own card,
   apart from the switches and when Ideas look; a switch whose words wrap
   keeps them beside its box; the brief asks its question as its label, with
