@@ -221,8 +221,9 @@
   min-width: 0;
 }
 
+/* Wide enough for the longest name it takes (19 letters), so its default is read whole. */
 .mcp-slug {
-  width: var(--width-field-ch);
+  width: var(--width-field-slug);
 }
 
 /* A panel's inline field row (Channels → Connections: the channel to add, then Add). */

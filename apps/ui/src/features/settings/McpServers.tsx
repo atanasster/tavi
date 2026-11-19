@@ -287,8 +287,9 @@ function DiscoverEntry({
       <span className="plugin-info">
         <span>
           <strong>{entry.title ?? entry.name}</strong>{" "}
+          {/* Its registry name only when the title is another: a listing without one shows the name once. */}
           <span className="muted">
-            {entry.name} {entry.version}
+            {entry.title === undefined || entry.title === entry.name ? entry.version : `${entry.name} ${entry.version}`}
           </span>{" "}
           {entry.labels.length === 0 ? (
             <span className="badge">not installable</span>
@@ -309,9 +310,12 @@ function DiscoverEntry({
       </span>
       {entry.options.length === 0 ? null : (
         <span className="actions">
+          {/* The name it is added under, said beside its field: a bare box of letters reads as nothing. */}
+          <label className="mcp-slug-label meta-sm" htmlFor={`${id}-slug`}>
+            Name
+          </label>
           <input
             id={`${id}-slug`}
-            aria-label="Name"
             className="mcp-slug"
             value={slug}
             pattern="[a-z][a-z0-9]{0,18}"

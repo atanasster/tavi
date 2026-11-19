@@ -35,7 +35,10 @@ change behaviour or stored data.
   instead of a bordered card per line, its state and time on one line under the
   chat it happened in and that chat's title held to two lines; on Places the
   section went from about 5,400px to 3,300px tall. An app's "← Connected apps"
-  has its arrow on the page's left edge.
+  has its arrow on the page's left edge. In the MCP Registry's results, the
+  name a server is added under has a visible **Name** label and a field wide
+  enough for its longest (19 letters), so its default is read whole; a
+  listing whose title is its registry name shows that name once.
 - Settings → Models, walked at desktop and phone width. A connection's
   Rediscover and Manage sit level with its name instead of dropping to the
   middle of an opened Native video list, and on a phone a role's Clear and Set
