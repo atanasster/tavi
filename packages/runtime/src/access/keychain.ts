@@ -84,6 +84,21 @@ export function credentialKeychainOfKind(kind: CredentialKeychainKind): Credenti
   return kind === "macos" ? MACOS_KEYCHAIN : LIBSECRET_KEYCHAIN;
 }
 
+/** A keychain account or key as Tavi makes them: lowercase hex, nothing a command line could split or extend. */
+const KEYCHAIN_TOKEN = /^[0-9a-f]{16,128}$/;
+
+/**
+ * The line `security -i` reads to add a key. `security -i` splits its line on
+ * spaces and reads a newline as the next command, so the account and the key
+ * are held to hex here, by construction: a caller that passes anything else
+ * is refused before any tool runs, not quoted.
+ */
+export function macosAddCommand(account: string, secret: string): string {
+  if (!KEYCHAIN_TOKEN.test(account)) throw new Error("a keychain account must be lowercase hex");
+  if (!KEYCHAIN_TOKEN.test(secret)) throw new Error("a keychain key must be lowercase hex");
+  return `add-generic-password -s ${CREDENTIAL_KEYCHAIN_SERVICE} -a ${account} -l ${CREDENTIAL_KEYCHAIN_SERVICE} -w ${secret}\n`;
+}
+
 const MACOS_KEYCHAIN: CredentialKeychain = {
   kind: "macos",
   label: "the macOS Keychain",
@@ -97,8 +112,7 @@ const MACOS_KEYCHAIN: CredentialKeychain = {
   async add(account, secret) {
     // `security -i` reads the command from standard input, so the key is not in any process's arguments.
     // No `-U`: an existing item is refused, never replaced.
-    const command = `add-generic-password -s ${CREDENTIAL_KEYCHAIN_SERVICE} -a ${account} -l ${CREDENTIAL_KEYCHAIN_SERVICE} -w ${secret}\n`;
-    const result = await runTool(SECURITY, ["-i"], command);
+    const result = await runTool(SECURITY, ["-i"], macosAddCommand(account, secret));
     if (result.code !== 0) throw new Error(`security add-generic-password exited ${result.code}: ${result.stderr.trim()}`);
   },
   async delete(account) {

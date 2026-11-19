@@ -2,6 +2,7 @@ import { chmodSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync, wri
 import { join } from "node:path";
 
 import {
+  CREDENTIAL_KEYCHAIN_SERVICE,
   createCredentialKey,
   createEncryptedFileSecretStore,
   createKeychainCredentialKey,
@@ -17,6 +18,8 @@ import {
 
 import { afterEach, describe, expect, it } from "vitest";
 import { temporaryDirectories } from "@tavi/test-support";
+
+import { macosAddCommand } from "../src/access/keychain.js";
 
 /**
  * The credential key kept in the OS keychain. Every test here uses an
@@ -235,5 +238,23 @@ describe("Windows Credential Manager as the keychain", () => {
     await expect(keychain.get("data-1")).rejects.toThrow(/did not answer within 20 ms/);
     await expect(keychain.add("data-1", "key")).rejects.toThrow(/did not answer/);
     await expect(keychain.delete("data-1")).rejects.toThrow(/did not answer/);
+  });
+});
+
+describe("the macOS Keychain's add line", () => {
+  const account = "0123456789abcdef0123456789abcdef";
+  const key = "ab".repeat(32);
+
+  it("carries a hex account and key as security -i reads them", () => {
+    expect(macosAddCommand(account, key)).toBe(
+      `add-generic-password -s ${CREDENTIAL_KEYCHAIN_SERVICE} -a ${account} -l ${CREDENTIAL_KEYCHAIN_SERVICE} -w ${key}\n`,
+    );
+  });
+
+  it("refuses an account or key that could split the line or start another command", () => {
+    for (const bad of ["with space", "x\ndelete-keychain", "UPPERHEX0123456789", "short", ""]) {
+      expect(() => macosAddCommand(bad, key)).toThrow(/account must be lowercase hex/);
+      expect(() => macosAddCommand(account, bad)).toThrow(/key must be lowercase hex/);
+    }
   });
 });
