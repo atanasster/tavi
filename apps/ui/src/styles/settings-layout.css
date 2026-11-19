@@ -184,8 +184,9 @@
 }
 
 /* Inside a dialog the form's action row is the sticky footer; the settings
-   grid's own action rule must not undo that. */
-.modal-content .settings-fields > .actions {
+   grid's own action rule must not undo that. A form in a panel inside the
+   dialog (People → Allow a person) keeps its row on its own fields' edge. */
+.modal-content .settings-fields > .actions:not(.settings-panel .actions, .row .actions) {
   margin: var(--space-3) calc(-1 * var(--space-6)) 0;
 }
 
@@ -224,6 +225,13 @@
 /* Wide enough for the longest name it takes (19 letters), so its default is read whole. */
 .mcp-slug {
   width: var(--width-field-slug);
+}
+
+/* On a phone a connection's text buttons wrap under its name: their words on its edge, their padding outside it. */
+@media (--phone) {
+  .row > .channel-actions {
+    margin-inline-start: calc(-1 * var(--space-2));
+  }
 }
 
 /* A panel's inline field row (Channels → Connections: the channel to add, then Add). */

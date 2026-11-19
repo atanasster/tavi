@@ -28,6 +28,11 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Settings → Channels, walked at desktop and phone width. In a channel's
+  **People** dialog the **Pair with a code** / **Allow person** row lines up
+  with the Allow a person fields above it; before, it started 24px to their
+  left. On a phone a connection's buttons wrap under its name with the first
+  button's word lined up with the name.
 - Settings → Credentials, walked at desktop and phone width. A dialog whose
   title names something long (**Replace channels.6557…token**) wraps the title
   instead of scrolling the whole dialog sideways and losing its left padding;
