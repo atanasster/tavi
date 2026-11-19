@@ -68,6 +68,11 @@
   overflow-wrap: anywhere;
 }
 
+/* A run's result is Markdown: its own paragraphs and lists set the lines, not the source's line breaks. */
+div.chat-notice-summary {
+  white-space: normal;
+}
+
 /* "Earlier chats": one line until opened. */
 .chat-notice-list > summary {
   cursor: pointer;
@@ -83,6 +88,11 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   margin-top: var(--space-1-5);
+}
+
+/* Its actions are words: the first one's starts under the notice's text, not a button's padding in. */
+.chat-notice-actions > .ghost:first-child {
+  margin-inline-start: calc(-1 * var(--space-2));
 }
 
 /* Epoch dividers: where a chat rolled over, between its turns. */

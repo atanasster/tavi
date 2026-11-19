@@ -3,6 +3,8 @@ import { plural } from "@tavi/contracts/util";
 import { useState, type ReactNode } from "react";
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
 import { Button } from "../../ui/Button.js";
+import { Markdown } from "../../ui/Markdown.js";
+import { RowAction } from "../../ui/RowAction.js";
 
 /**
  * A chat's notices: what a run delivered to
@@ -95,7 +97,12 @@ export function NoticeCards({
                 <span className="visually-hidden">{KIND_LABELS[notice.kind]}: </span>
                 {notice.title}
               </p>
-              {notice.summary === "" ? null : <p className="chat-notice-summary">{notice.summary}</p>}
+              {/* What a run said, drawn as its answer is (a list, bold), not as its Markdown's raw marks; its links ask first, as a worker's do. */}
+              {notice.summary === "" ? null : (
+                <div className="chat-notice-summary">
+                  <Markdown text={notice.summary} tainted />
+                </div>
+              )}
             </>
           )}
           {notice.sourceTaskId === undefined &&
@@ -106,9 +113,7 @@ export function NoticeCards({
             notice.kind === "mcp") ? null : (
             <div className="chat-notice-actions">
               {notice.sourceTaskId !== undefined && onOpen !== undefined ? (
-                <Button variant="ghost" size="sm" onClick={() => onOpen(notice.sourceTaskId as string)}>
-                  Open {OPEN_LABELS[notice.kind] ?? "run"}
-                </Button>
+                <RowAction onClick={() => onOpen(notice.sourceTaskId as string)}>Open {OPEN_LABELS[notice.kind] ?? "run"}</RowAction>
               ) : null}
               {/* A conversation's notice is metadata only, with no output to reply about; a side chat is answered in itself, by opening it; a folder notice is about this chat itself. */}
               {notice.sourceTaskId !== undefined &&
@@ -116,9 +121,9 @@ export function NoticeCards({
               notice.kind !== "conversation" &&
               notice.kind !== "side-chat-settled" &&
               notice.kind !== "folder" ? (
-                <Button size="sm" disabled={!connected} onClick={() => onReply(notice)}>
+                <RowAction disabled={!connected} onClick={() => onReply(notice)}>
                   Reply in a side chat
-                </Button>
+                </RowAction>
               ) : null}
             </div>
           )}

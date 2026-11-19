@@ -20,6 +20,7 @@ import type { Session } from "../../../src/features/shell/shell.js";
 import type { CanvasRun, WorkerNeeds } from "../../../src/features/chat/store/types.js";
 import { WorkerNeedCards } from "../../../src/features/workers/WorkerNeeds.js";
 import { EpochDivider, NoticeCards, epochDividersByRun, noticesByRun } from "../../../src/features/chat/Notices.js";
+import { markdownReady } from "../../../src/ui/Markdown.js";
 import { InWorkspace } from "../../support/workspace.js";
 import { flush, mountSettled, unmountAll } from "../../support/dom.js";
 
@@ -841,6 +842,26 @@ describe("notices in a chat", () => {
     expect(replied).toEqual(["notice-2"]);
     await act(async () => buttons.find((button) => button.textContent?.startsWith("Show 1 earlier"))?.click());
     expect(host.querySelectorAll(".chat-notice")).toHaveLength(4);
+  });
+
+  it("draws a run's result as Markdown, and its actions as words", async () => {
+    await markdownReady;
+    const host = await mount(
+      <NoticeCards
+        notices={[notice(1, { summary: "Completed\nHere are your to-dos:\n\n**inbox**\n* Buy stamps\n* Repot the fern" })]}
+        connected
+        onOpen={() => undefined}
+        onReply={() => undefined}
+      />,
+    );
+    const summary = host.querySelector(".chat-notice-summary");
+    expect(summary?.querySelector("strong")?.textContent).toBe("inbox");
+    expect([...(summary?.querySelectorAll("li") ?? [])].map((item) => item.textContent)).toEqual(["Buy stamps", "Repot the fern"]);
+    expect(summary?.textContent).not.toContain("**");
+    expect([...host.querySelectorAll(".chat-notice-actions button")].map((button) => button.className)).toEqual([
+      "button-sm ghost",
+      "button-sm ghost",
+    ]);
   });
 
   it("shows earlier chats without actions, and nothing for no notices", async () => {

@@ -28,6 +28,10 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- A run's notice in Home shows what the run said as it would in a chat — a
+  list as a list, bold as bold — rather than its raw `**` and `*` marks, and
+  its Open run and Reply in a side chat are both words, lined up with the
+  notice's text.
 - The Ideas tab: an idea's ⋯ menu is wider, so its longer items take a line
   or two rather than three; on a phone Refresh lines up with the text above
   it; and the brief's note in Tune sits as close under its box as it does in
