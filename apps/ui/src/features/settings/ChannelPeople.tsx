@@ -14,7 +14,7 @@ import { mapOutcome } from "../../lib/ipc.js";
 import { when } from "../../lib/time.js";
 import { Confirm } from "../../ui/Confirm.js";
 import { Empty } from "../../ui/Empty.js";
-import { BusyFieldset, Failure, Notice, StatusNote } from "../../ui/Parts.js";
+import { ActionNote, BusyFieldset, Failure, Notice } from "../../ui/Parts.js";
 import { PairingLinkBox, claimedSenderLabel, shownPairingCode } from "../../ui/QrCode.js";
 import { Select } from "../../ui/Select.js";
 import { request, type Loaded, labelOf } from "./channels-api.js";
@@ -51,7 +51,10 @@ function PairingPanel({
   const question = useRef<HTMLParagraphElement>(null);
   const panel = useRef<HTMLElement>(null);
   // The panel opens below the form, often past the dialog's fold: bring the code into view (Mac mini tests).
-  useEffect(() => panel.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" }), []);
+  // In braces: a browser whose scrollIntoView returns a promise must not hand React that promise as the cleanup.
+  useEffect(() => {
+    panel.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+  }, []);
   const who = pairing.name ?? pairing.principalId;
   const check = useCallback(async (): Promise<void> => {
     generation.current += 1;
@@ -301,7 +304,7 @@ export function PeopleEditor({
   const [person, setPerson] = useState(NO_PERSON);
   const [remove, setRemove] = useState<Loaded["people"][number]>();
   // Each action ends in its note and a fresh list.
-  const { busy, note, run, say } = useAction(reload);
+  const { busy, note, tone, run, say } = useAction(reload);
   const connection = connections.find((candidate) => candidate.connectionId === connectionId);
   const descriptor =
     connection === undefined ? undefined : data.catalog.find((candidate) => candidate.providerId === connection.providerId);
@@ -366,7 +369,7 @@ export function PeopleEditor({
   return (
     <>
       {/* Who is allowed comes first; the form to allow someone else follows it. */}
-      <StatusNote note={note || undefined} className="" />
+      <ActionNote tone={tone} note={note || undefined} className="" />
       {!shown.length ? (
         <Empty>
           {only === undefined

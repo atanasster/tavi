@@ -5,7 +5,7 @@ import type { WorkspaceSettingsAnswer } from "@tavi/contracts";
 import { useAction } from "../../hooks/use-action.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import type { Outcome } from "../../lib/ipc.js";
-import { PageHead, Pending, StatusNote } from "../../ui/Parts.js";
+import { PageHead, PageNote, Pending } from "../../ui/Parts.js";
 import { Select } from "../../ui/Select.js";
 import { BrowserProfile, NoThumbnailHosts } from "./BrowserSettings.js";
 import { LoadError } from "./FormParts.js";
@@ -40,7 +40,7 @@ export function GeneralSettings({
 }) {
   const { client, workspaceId } = useWorkspace();
   const { data, error, loading, reload } = useLoaded<WorkspaceSettingsAnswer>(() => workspaceSettingsActions.load(client, workspaceId));
-  const { busy, note, run } = useAction(reload);
+  const { busy, note, tone, run } = useAction(reload);
   const [draft, setDraft] = useState<string | undefined>();
   // Each answer resets the picker to what is in effect, so after a save (or a
   // refused one) it shows the owner's value rather than the last pick.
@@ -74,7 +74,7 @@ export function GeneralSettings({
     <section className="settings" aria-label="general">
       {heading}
       {error === undefined ? null : <LoadError error={error} reload={reload} />}
-      <StatusNote note={note} />
+      <PageNote tone={tone} note={note} />
       {onRunSetup === undefined ? null : (
         <>
           <h2>Setup</h2>

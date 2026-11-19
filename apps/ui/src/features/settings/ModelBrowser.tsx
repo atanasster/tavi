@@ -17,7 +17,7 @@ import {
 import { loadVideoStatus, type VideoStatus } from "./video-api.js";
 import { workspaceSettingsActions } from "./workspace-api.js";
 import type { Outcome } from "../../lib/ipc.js";
-import { Failure, LoadState, PageHead, StatusNote } from "../../ui/Parts.js";
+import { Failure, LoadState, PageHead, PageNote } from "../../ui/Parts.js";
 import { Confirm } from "../../ui/Confirm.js";
 import { AddConnectionModal, ManageConnectionModal } from "./ConnectionSetup.js";
 import { VideoAnalyzerStatus, VideoModels } from "./VideoModels.js";
@@ -57,7 +57,7 @@ export function ModelBrowser() {
   // With `tavi.video` off nothing reads a video: its switches and analysers are not shown.
   const settings = useLoaded(() => workspaceSettingsActions.load(client, workspaceId));
   const videoOff = settings.data?.disabledPlugins?.includes("tavi.video") === true;
-  const { busy, note, run, say } = useAction(reload);
+  const { busy, note, tone, run, say } = useAction(reload);
   const [adding, setAdding] = useState(false);
   const [managing, setManaging] = useState<ConnectionSummary | undefined>();
   const [picking, setPicking] = useState<Picking | undefined>();
@@ -111,7 +111,7 @@ export function ModelBrowser() {
           </Button>
         ) : null}
       </PageHead>
-      <StatusNote note={note} />
+      <PageNote tone={tone} note={note} />
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         {(data?.failures ?? []).map((failure) => (
           <Failure key={failure.connectionId} alert={false}>

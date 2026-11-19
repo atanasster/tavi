@@ -20,7 +20,9 @@ import {
   InlineConfirm,
   LoadMore,
   LoadState,
+  PAGE_NOTE_HELD_MS,
   PageHead,
+  PageNote,
   Pending,
   StatusNote,
 } from "../../src/ui/Parts.js";
@@ -199,6 +201,21 @@ describe("shared parts", () => {
     expect(described?.outerHTML).toBe(
       '<header class="center-head"><div><h1 id="t">Activity</h1><p class="settings-description">Every task.</p></div></header>',
     );
+  });
+
+  it("holds a page's new note in view for a while, then lets it settle under the head; a refusal is an alert", async () => {
+    vi.useFakeTimers();
+    try {
+      const host = await mount(<PageNote note="Saved." tone="note" />);
+      const note = () => host.querySelector(".page-note");
+      expect(note()?.className).toBe("notice page-note page-note-held");
+      await act(async () => vi.advanceTimersByTime(PAGE_NOTE_HELD_MS));
+      expect(note()?.className).toBe("notice page-note");
+      const refused = await mount(<PageNote note="stale revision" tone="failure" />);
+      expect(refused.querySelector('.page-note[role="alert"]')?.className).toBe("failure page-note page-note-held");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("renders a drilled-in page's head, its title focusable", async () => {

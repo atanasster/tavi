@@ -18,7 +18,7 @@ import { plural } from "@tavi/contracts/util";
 
 import { pluginActions } from "./plugins-api.js";
 import type { Outcome } from "../../lib/ipc.js";
-import { Failure, LoadState, Notice, PageHead, StatusNote } from "../../ui/Parts.js";
+import { Failure, LoadState, Notice, PageHead, PageNote } from "../../ui/Parts.js";
 import { CanvasPluginsSettings } from "./CanvasPluginsSettings.js";
 import { AppLink } from "../shell/AppLink.js";
 import { appsPath } from "../shell/route.js";
@@ -159,7 +159,7 @@ export function PluginsSettings({
 }) {
   const { client } = useWorkspace();
   const { data, error, loading, reload } = useLoaded(() => pluginActions.list(client));
-  const { busy, note, run, say } = useAction(reload);
+  const { busy, note, tone, run, say } = useAction(reload);
   /** `work`, and once the owner accepted it, `pluginId`'s status lines off the chats. */
   const turnsOff =
     (pluginId: string, work: () => Promise<Outcome<string | undefined>>) => async (): Promise<Outcome<string | undefined>> => {
@@ -459,7 +459,7 @@ export function PluginsSettings({
         canvas, which applies at once. Disabling a loaded external plugin stops its calls immediately.
       </Notice>
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
-        <StatusNote note={note} />
+        <PageNote tone={tone} note={note} />
       </LoadState>
       <h2 className="settings-section-title">Installed</h2>
       {data !== undefined && external.length === 0 ? <Empty>No plugin is installed.</Empty> : null}

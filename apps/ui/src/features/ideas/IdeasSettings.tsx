@@ -8,7 +8,7 @@ import {
 import { useEffect, useId, useState } from "react";
 
 import { whenLocal } from "../../lib/time.js";
-import { PageHead, Pending, StatusNote } from "../../ui/Parts.js";
+import { PageHead, PageNote, Pending } from "../../ui/Parts.js";
 import { mapOutcome, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { Confirm } from "../../ui/Confirm.js";
 import { LoadError } from "../settings/FormParts.js";
@@ -111,7 +111,7 @@ export function IdeasSettings() {
   const { client, workspaceId } = useWorkspace();
   const timeZone = useTimeZone();
   const { data, error, loading, reload } = useLoaded(() => loadAll(client, workspaceId));
-  const { busy, note, run } = useAction(reload);
+  const { busy, note, tone, run } = useAction(reload);
   const [brief, setBriefDraft] = useState<string>();
   const [confirming, setConfirming] = useState<"ledger" | "categories">();
   const ids = useId();
@@ -144,7 +144,7 @@ export function IdeasSettings() {
     <section className="settings ideas-settings" aria-label="ideas">
       {heading}
       {loadError}
-      <StatusNote note={note} />
+      <PageNote tone={tone} note={note} />
       <Card as="div" level={2} title="Switches">
         <p>
           <label>

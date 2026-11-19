@@ -8,7 +8,7 @@ import {
 } from "./credentials-api.js";
 import { Command } from "../../ui/Command.js";
 import type { Outcome } from "../../lib/ipc.js";
-import { Failure, LoadState, Notice, PageHead, StatusNote } from "../../ui/Parts.js";
+import { Failure, LoadState, Notice, PageHead, PageNote } from "../../ui/Parts.js";
 import { Confirm } from "../../ui/Confirm.js";
 import { Modal } from "../../ui/Modal.js";
 import { FormActions, FormFailure } from "./FormParts.js";
@@ -75,7 +75,7 @@ function CredentialName({ reference }: { readonly reference: string }) {
 export function CredentialsSettings() {
   const { client } = useWorkspace();
   const { data, error, loading, reload } = useLoaded(() => credentialActions.list(client));
-  const { busy, note, run, say } = useAction(reload);
+  const { busy, note, tone, run, say } = useAction(reload);
   /** The reference being set: "" for a new one. */
   const [setting, setSetting] = useState<string | undefined>();
   const [deleting, setDeleting] = useState<string | undefined>();
@@ -93,7 +93,7 @@ export function CredentialsSettings() {
       </PageHead>
       {data?.encryption === undefined ? null : <EncryptionStatus status={data.encryption} />}
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
-        <StatusNote note={note} />
+        <PageNote tone={tone} note={note} />
       </LoadState>
       {data !== undefined && stored.length === 0 ? <Empty>No credential is stored.</Empty> : null}
       <ul className="rows">

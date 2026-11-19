@@ -13,7 +13,7 @@ import {
 
 import { workspaceSettingsActions } from "./workspace-api.js";
 import { permissionActions } from "./plugins-api.js";
-import { Notice, PageHead, Pending, StatusNote } from "../../ui/Parts.js";
+import { Notice, PageHead, PageNote, Pending } from "../../ui/Parts.js";
 import { Select } from "../../ui/Select.js";
 import { LoadError } from "./FormParts.js";
 import { useAction } from "../../hooks/use-action.js";
@@ -89,7 +89,7 @@ export function PermissionsSettings({
     grants.reload();
     settings.reload();
   };
-  const { busy, note, run } = useAction(reload);
+  const { busy, note, tone, run } = useAction(reload);
   // A matcher came from a call's subjects: what it would hide is marked.
   const describe = (entry: { readonly argMatcher?: string | undefined }) =>
     entry.argMatcher === undefined ? "any call" : <code>{displaySafe(entry.argMatcher)}</code>;
@@ -193,7 +193,7 @@ export function PermissionsSettings({
         Add a rule with <Command>tavi permissions add</Command>, or by approving a call with <em>Always allow</em>. This page removes only
         allow rules; remove a deny or ask rule with <Command>tavi permissions rm</Command>, since dropping one widens what runs unasked.
       </Notice>
-      <StatusNote note={note} />
+      <PageNote tone={tone} note={note} />
       {taint === undefined && detector === undefined ? null : (
         <section className="settings-panel" aria-label="untrusted content">
           <h2 className="settings-section-title">Untrusted content</h2>

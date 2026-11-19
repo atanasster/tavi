@@ -78,6 +78,16 @@
   gap: var(--space-1-5);
 }
 
+/* A field's refusal sits under its own field, by the form's gap alone, not a paragraph's margins that leave it
+   halfway to the next field's label; and each field after the first starts a little apart from the one above. */
+.form > .failure {
+  margin: 0;
+}
+
+.form > label:not(:first-child) {
+  margin-top: var(--space-2);
+}
+
 .form .actions {
   justify-content: flex-end;
   margin-top: var(--space-3);

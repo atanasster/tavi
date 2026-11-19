@@ -256,6 +256,30 @@ describe("how long videos are kept, in Settings → General", () => {
   });
 });
 
+describe("a save the owner refuses, in Settings → General", () => {
+  it("is said as a failure, an alert, not in the grey of a saved one", async () => {
+    const { client } = owner({});
+    const refusing: SettingsClient = {
+      request: (command, payload) =>
+        command === "workspace-settings" && (payload as Record<string, unknown>)["action"] === "set"
+          ? Promise.resolve({ ok: false, error: { code: "CONFLICT", message: "stale revision" } } as never)
+          : client.request(command, payload),
+    };
+    const page = await mount(
+      <InWorkspace client={refusing} workspaceId="default">
+        <GeneralSettings />
+      </InWorkspace>,
+    );
+    const field = page.querySelector<HTMLInputElement>('input[aria-label="days a video is kept"]') as HTMLInputElement;
+    await type(field, "7");
+    await act(async () => field.closest("form")?.requestSubmit());
+    await settle();
+    const alert = page.querySelector('[role="alert"]');
+    expect(alert?.textContent).toContain("stale revision");
+    expect(page.querySelector(".settings > p.notice")).toBeNull();
+  });
+});
+
 describe("a plugin turned off in Settings → General", () => {
   it("shows no setting only the browser, flight search or video plugin reads while it is off", async () => {
     const page = async (disabledPlugins?: string[]) =>

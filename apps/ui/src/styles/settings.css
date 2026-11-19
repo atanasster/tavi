@@ -102,6 +102,25 @@
   border-top: var(--border-width) solid var(--line-soft);
 }
 
+/* What a page's last action said (`PageNote`): a boxed line under the page's head. Just after it changes it is held
+   (`.page-note-held`) at the scrolling page's top or foot, so a save or a clear far from the head is answered in view;
+   then it settles back to its place rather than covering the page. */
+.page-note {
+  width: fit-content;
+  margin-block: 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--line-soft);
+  border-radius: var(--radius);
+  background: hsl(var(--card));
+}
+
+.page-note-held {
+  position: sticky;
+  inset-block: var(--space-2);
+  z-index: var(--z-raised);
+  box-shadow: var(--shadow-float);
+}
+
 .settings-description {
   margin: var(--space-1) 0 0;
   color: hsl(var(--muted-foreground));
@@ -264,8 +283,22 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  flex: 1;
+  /* Beside the code while it has room for the command; under it on a phone, not squeezed into a column a word wide. */
+  flex: 1 1 var(--width-select-min);
   min-width: 0;
+}
+
+/* Beside the code: the /link command over its Copy button, the button's words on the command's edge, so a narrow
+   column never wraps the button under the command with its padding showing. */
+.pairing-details > .pairing-command {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.pairing-details > .pairing-command > .ghost {
+  margin-inline-start: calc(-1 * var(--space-2));
+  align-self: flex-start;
 }
 
 .pairing-command .settings-description {

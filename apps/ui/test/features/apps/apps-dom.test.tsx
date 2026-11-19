@@ -1247,6 +1247,32 @@ describe("the connect sheet", () => {
     await axeClean(view);
   });
 
+  it("asks a keyed app's required address beside its key, and saves both", async () => {
+    const { clientSetup: _setup, ...base } = app();
+    const home: ConnectableApp = {
+      ...base,
+      auth: {
+        kind: "api-key",
+        fields: [{ key: "token", label: "A long-lived access token", type: "credential", required: true, advanced: false }],
+      },
+      settings: [
+        { key: "url", label: "Its MCP address", type: "url", required: true, advanced: false },
+        { key: "token", label: "A long-lived access token", type: "credential", required: true, advanced: false },
+      ],
+    };
+    const { view, sent } = await page([home], { tab: "connected", appId: "calendar-app" });
+    await click(button(view, "Reconnect"));
+    const dialog = view.querySelector("dialog") as HTMLElement;
+    expect(labelled(dialog, "Its MCP address")).toBeTruthy();
+    await type(labelled(dialog, "Its MCP address"), "http://home.local:8123/mcp_server/sse");
+    await type(labelled(dialog, "A long-lived access token"), "ha-token");
+    await click(button(dialog, "Save and test"));
+    expect(sent.find((entry) => entry.payload["action"] === "configure")?.payload).toMatchObject({
+      values: { url: "http://home.local:8123/mcp_server/sse", token: "ha-token" },
+    });
+    await axeClean(view);
+  });
+
   it("says a key is stored encrypted only when the credential store is, and plainly otherwise", async () => {
     const { clientSetup: _setup, ...base } = app();
     const maps: ConnectableApp = {

@@ -153,6 +153,9 @@ export function TestSend({
               {descriptor?.target.help === undefined ? null : <span className="settings-description">{descriptor.target.help}</span>}
             </label>
           )}
+          {/* What the send said, over the footer it answers rather than under it. */}
+          <StatusNote note={result} />
+          <Failure message={failure} />
           <div className="actions">
             <Button variant="ghost" onClick={onClose}>
               Close
@@ -163,8 +166,6 @@ export function TestSend({
           </div>
         </BusyFieldset>
       </form>
-      <StatusNote note={result} />
-      <Failure message={failure} />
       {offerAllow && descriptor !== undefined ? (
         <AllowFromTest
           connectionId={connection.connectionId}

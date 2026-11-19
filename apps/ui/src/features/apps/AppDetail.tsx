@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { signsIn, type AppToolView, type ConnectableApp } from "@tavi/contracts";
 
 import { AppLink } from "../shell/AppLink.js";
-import { BackLink, LoadState, Notice, Section, StatusNote } from "../../ui/Parts.js";
+import { BackLink, LoadState, Notice, PageNote, Section } from "../../ui/Parts.js";
 import { Select } from "../../ui/Select.js";
 import { settingsPath } from "../shell/route.js";
 import { mcpActions, pluginActions } from "../settings/plugins-api.js";
@@ -67,7 +67,7 @@ export function AppDetail({
     loaded.reload();
     setAppRevision((revision) => revision + 1);
   }, [loaded.reload]);
-  const { busy, note, run } = useAction(reload);
+  const { busy, note, tone, run } = useAction(reload);
   const [reviewing, setReviewing] = useState<string | undefined>(review);
   const [logs, setLogs] = useState<string | undefined>();
   const [disconnecting, setDisconnecting] = useState<string | undefined>();
@@ -87,7 +87,7 @@ export function AppDetail({
     <section className="settings apps-detail">
       <BackLink label="Connected apps" onBack={onBack} />
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
-        <StatusNote note={note} />
+        <PageNote tone={tone} note={note} />
       </LoadState>
       {app === undefined ? null : (
         <>

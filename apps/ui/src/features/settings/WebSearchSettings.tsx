@@ -4,7 +4,7 @@ import type { SearchProviderConfig } from "@tavi/contracts";
 
 import { SEARCH_KIND_LABELS, saveWebSearchProvider, searchActions } from "./search-api.js";
 import { Confirm } from "../../ui/Confirm.js";
-import { Failure, LoadState, Notice, PageHead, StatusNote } from "../../ui/Parts.js";
+import { Failure, LoadState, Notice, PageHead, PageNote } from "../../ui/Parts.js";
 import { useAction } from "../../hooks/use-action.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { WebSearchFormModal } from "./WebSearchFormModal.js";
@@ -16,7 +16,7 @@ import { useWorkspace } from "../shell/Workspace.js";
 export function WebSearchSettings() {
   const { client } = useWorkspace();
   const { data, error, loading, reload } = useLoaded(() => searchActions.list(client));
-  const { busy, note, run, say } = useAction(reload);
+  const { busy, note, tone, run, say } = useAction(reload);
   const [adding, setAdding] = useState(false);
   const [removing, setRemoving] = useState<SearchProviderConfig | undefined>();
   const providers = data?.providers ?? [];
@@ -34,7 +34,7 @@ export function WebSearchSettings() {
         tavi serve starts.
       </Notice>
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
-        <StatusNote note={note} />
+        <PageNote tone={tone} note={note} />
       </LoadState>
       {data !== undefined && providers.length === 0 ? <Empty>No provider is configured.</Empty> : null}
       <ul className="rows">

@@ -277,6 +277,24 @@ it("pairs a person with a code: shown to send, then who sent it, allowed on conf
   expect(field("Person ID").value).toBe("");
 });
 
+it("closes a pairing in a browser whose scrollIntoView returns a promise, without taking the page down", async () => {
+  // Newer Chrome returns a promise from the scroll methods; an effect that returned it handed React a cleanup that is
+  // not a function, and cancelling a pairing showed "This page could not be shown".
+  const before = Element.prototype.scrollIntoView;
+  Element.prototype.scrollIntoView = (() => Promise.resolve()) as unknown as typeof before;
+  try {
+    await mount(true);
+    await fill("Person ID", "bo");
+    await act(async () => [...host.querySelectorAll("button")].find((button) => button.textContent === "Pair with a code")!.click());
+    expect(host.querySelector("code[data-pairing-code]")).not.toBeNull();
+    await act(async () => [...host.querySelectorAll("button")].find((button) => button.textContent === "Cancel")!.click());
+    expect(host.querySelector("code[data-pairing-code]")).toBeNull();
+    expect(host.textContent).not.toContain("could not be shown");
+  } finally {
+    Element.prototype.scrollIntoView = before;
+  }
+});
+
 it("says a code can't reach a connection that isn't running in the canvas's words, linking to Channels (QA 2033)", async () => {
   const message =
     "Pager isn't running: Pager getMe failed for connection pager-1: Unauthorized. Fix it in Settings → Channels (or `tavi channels list`) first: a code sent to it could not arrive.";
@@ -1042,10 +1060,10 @@ it("removing a purging channel's connection says what goes in 24 hours, how to e
   );
   await click("Remove Pager");
   expect(host.textContent).toContain(
-    "In 24 hours Tavi erases what it brought in, as its channel's terms require: 2 conversation(s), 9 message(s), 1 file(s) and 4 chat note(s) its chats taught.",
+    "In 24 hours Tavi erases what it brought in, as its channel's terms require: 2 conversations, 9 messages, 1 file and 4 chat notes its chats taught.",
   );
   expect(host.textContent).toContain("tavi tasks history task-1 export");
-  expect(host.textContent).toContain("Delivery targets on it go too: routine target(s) t-1 and 1 heartbeat target(s).");
+  expect(host.textContent).toContain("Delivery targets on it go too: routine target t-1 and 1 heartbeat target.");
   expect(writes.some((write) => write["action"] === "delete")).toBe(false);
   await act(async () =>
     [...host.querySelectorAll("dialog button")]

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { AppCategory, AppHealth, ConnectableApp } from "@tavi/contracts";
 
 import { ANNOUNCER_ID } from "../shell/a11y.js";
-import { FilterChip, LoadState, PageHead, SearchField, StatusNote } from "../../ui/Parts.js";
+import { FilterChip, LoadState, PageHead, PageNote, SearchField } from "../../ui/Parts.js";
 import { mcpActions } from "../settings/plugins-api.js";
 import { appActions } from "./apps-api.js";
 import { useAction } from "../../hooks/use-action.js";
@@ -171,7 +171,7 @@ function ConnectedList({
   // A plugin installed or removed elsewhere shows here without a reload.
   const { data, error, loading, reload } = useLoaded(() => appActions.list(client, workspaceId), [revision]);
   const [category, setCategory] = useState<AppCategory | undefined>();
-  const { busy, note, run } = useAction(reload);
+  const { busy, note, tone, run } = useAction(reload);
   const [query, setQuery] = useState("");
   const [needsYou, setNeedsYou] = useState(false);
   const apps = data?.apps ?? [];
@@ -199,7 +199,7 @@ function ConnectedList({
   return (
     <>
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
-        <StatusNote note={note} />
+        <PageNote tone={tone} note={note} />
       </LoadState>
       {data !== undefined && apps.length === 0 ? <EmptyApps onDiscover={onDiscover} /> : null}
       {!filtered ? null : (

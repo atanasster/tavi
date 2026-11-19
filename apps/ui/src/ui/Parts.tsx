@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, type HTMLAttributes, type KeyboardEvent, type ReactNode, type Ref } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type HTMLAttributes, type KeyboardEvent, type ReactNode, type Ref } from "react";
 import { Icon } from "./Icon.js";
 import { Card } from "./Card.js";
 import { useAnnounce } from "../hooks/use-announce.js";
@@ -244,6 +244,30 @@ export function ActionNote({
     <Failure message={note} alert={announce !== false} {...(className === undefined ? {} : { className })} />
   ) : (
     <StatusNote note={note} {...(className === undefined ? {} : { className })} {...(announce === undefined ? {} : { announce })} />
+  );
+}
+
+/** How long a page's new note stays in view while the page scrolls, before it settles back under the page's head. */
+export const PAGE_NOTE_HELD_MS = 6000;
+
+/**
+ * What a page's action said, for the whole page (`ActionNote`'s note and tone): a boxed line under the page's head
+ * (`.page-note`). For a few seconds after it changes it is held in view (`.page-note-held`), so a save or a clear far
+ * down a long page is answered where the reader is; then it settles back, rather than covering the page as it scrolls.
+ */
+export function PageNote({ note, tone }: { readonly note: string | undefined; readonly tone: ActionTone }) {
+  const [held, setHeld] = useState(false);
+  useEffect(() => {
+    if (note === undefined) return;
+    setHeld(true);
+    const timer = window.setTimeout(() => setHeld(false), PAGE_NOTE_HELD_MS);
+    return () => window.clearTimeout(timer);
+  }, [note, tone]);
+  const className = held ? "page-note page-note-held" : "page-note";
+  return tone === "failure" ? (
+    <Failure message={note} className={className} />
+  ) : (
+    <StatusNote note={note} className={`notice ${className}`} />
   );
 }
 

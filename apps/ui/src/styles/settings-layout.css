@@ -29,6 +29,14 @@
   min-width: 0;
 }
 
+/* First in a dialog's body (after a form's focus anchor, if any), the fields start at the body's own padding, not
+   a page section's gap below it. */
+.modal-content > .settings-fields:first-child,
+.modal-content > form > .settings-fields:first-child,
+.modal-content > form > .visually-hidden:first-child + .settings-fields {
+  margin-top: 0;
+}
+
 .settings-fields > label,
 .settings-panel > label {
   display: flex;
@@ -249,6 +257,13 @@
 
 .settings-panel > .settings-section-title {
   margin-top: 0;
+}
+
+/* A panel's row that leads with a text button (People → Pair with a code; a pairing's Cancel, Not me): its words on
+   the panel's edge with the text above, its padding outside it. */
+.settings-panel > .actions > .ghost:first-child,
+.settings-panel > .settings-fields > .actions > .ghost:first-child {
+  margin-inline-start: calc(-1 * var(--space-3));
 }
 
 /* Routines reuse semantic controls and theme tokens; long immutable data wraps on narrow screens. */

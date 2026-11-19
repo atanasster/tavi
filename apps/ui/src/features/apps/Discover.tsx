@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import type { CatalogEntry, CatalogRef } from "@tavi/contracts";
 
-import { LoadState, SearchField, StatusNote } from "../../ui/Parts.js";
+import { LoadState, PageNote, SearchField } from "../../ui/Parts.js";
 import { Select } from "../../ui/Select.js";
 import { mcpActions } from "../settings/plugins-api.js";
 import { ChannelSheet } from "./ChannelSheet.js";
@@ -50,7 +50,7 @@ export function Discover({
   }, [typed]);
   // Tavi's own entries come from the owner's catalog, filtered here; the registry is searched by its own panel below.
   const { data, error, loading, reload } = useLoaded(() => appActions.catalog(client, workspaceId, ""));
-  const { busy, note, run } = useAction(reload);
+  const { busy, note, tone, run } = useAction(reload);
   const words = query.trim().toLowerCase();
   const sections = (data?.catalog.sections ?? [])
     .filter((section) => section.section !== "registry")
@@ -101,7 +101,7 @@ export function Discover({
     <div className="apps-discover">
       <SearchField value={typed} placeholder="Search Tavi's apps" label="Search apps" onChange={setTyped} />
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
-        <StatusNote note={note} />
+        <PageNote tone={tone} note={note} />
       </LoadState>
       {data !== undefined && sections.every((section) => section.entries.length === 0) ? (
         <Empty>Nothing of Tavi's matches "{query}". Search the MCP Registry below.</Empty>

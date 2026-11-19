@@ -69,8 +69,18 @@ export const HOMEASSISTANT_PRESET: McpPreset = {
   name: "Home Assistant",
   description: "Control exposed entities through Home Assistant's MCP server.",
   config: {
-    url: { type: "string", required: true, description: "e.g. http://homeassistant.local:8123/api/mcp" },
-    token: { type: "credential", required: true, description: "A long-lived access token (Profile → Security)" },
+    url: {
+      type: "string",
+      required: true,
+      label: "Its MCP address",
+      description: "e.g. http://homeassistant.local:8123/api/mcp",
+    },
+    token: {
+      type: "credential",
+      required: true,
+      label: "A long-lived access token",
+      description: "A long-lived access token (Profile → Security)",
+    },
   },
   block: {
     transport: "http",

@@ -1,5 +1,7 @@
 import { ChatModelSchema, MODEL_ROLES, type ModelCatalogEntry, type ModelConnection, type ModelRoleBinding } from "@tavi/contracts";
 
+import { plural } from "@tavi/contracts/util";
+
 import { formatTokens } from "../../lib/format.js";
 import { ask, mapOutcome, read, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { restartNote } from "./common.js";
@@ -407,7 +409,7 @@ export const modelActions = {
   async discover(client: SettingsClient, connectionId: string): Promise<Outcome<string | undefined>> {
     const found = await ask<{ readonly models?: readonly unknown[] }>(client, "models", { action: "discover", connectionId });
     return mapOutcome(found, (value) =>
-      [`Discovered ${value.models?.length ?? 0} model(s).`, restartNote(value, "models")].filter(Boolean).join(" "),
+      [`Discovered ${plural(value.models?.length ?? 0, "model")}.`, restartNote(value, "models")].filter(Boolean).join(" "),
     );
   },
   async test(client: SettingsClient, connectionId: string, model: string): Promise<Outcome<string | undefined>> {

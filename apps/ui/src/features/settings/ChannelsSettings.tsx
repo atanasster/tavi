@@ -1,3 +1,4 @@
+import { plural } from "@tavi/contracts/util";
 import { useCallback, useEffect, useState } from "react";
 
 import type { ChannelConnectionView, ChannelDescriptor, ChannelField, ChannelsRemovePreviewAnswer } from "@tavi/contracts";
@@ -9,7 +10,7 @@ import { when } from "../../lib/time.js";
 import { Confirm } from "../../ui/Confirm.js";
 import { Empty } from "../../ui/Empty.js";
 import { Modal } from "../../ui/Modal.js";
-import { Failure, LoadState, Notice, PageHead, StatusBadge, StatusNote } from "../../ui/Parts.js";
+import { Failure, LoadState, Notice, PageHead, PageNote, StatusBadge, StatusNote } from "../../ui/Parts.js";
 import { Select } from "../../ui/Select.js";
 import { AppLink } from "../shell/AppLink.js";
 import { useChannelNames } from "../shell/ChannelNames.js";
@@ -75,7 +76,7 @@ function Channels({ data, reload: reloadPage }: { data: Loaded; reload: () => vo
   const [rooms, setRooms] = useState<ChannelConnectionView>();
   const [remove, setRemove] = useState<ChannelConnectionView>();
   const [peopleOf, setPeopleOf] = useState<string>();
-  const { note, run, say } = useAction(reload);
+  const { note, tone, run, say } = useAction(reload);
   const descriptorOf = (providerId: string): ChannelDescriptor | undefined =>
     data.catalog.find((descriptor) => descriptor.providerId === providerId);
   return (
@@ -181,7 +182,7 @@ function Channels({ data, reload: reloadPage }: { data: Loaded; reload: () => vo
           <Empty>No channel is installed.</Empty>
         )}
       </section>
-      <StatusNote note={note || undefined} />
+      <PageNote tone={tone} note={note || undefined} />
       <Ingress data={data.list} reload={reload} />
       {editing ? (
         <ConnectionForm
@@ -281,11 +282,11 @@ function RemoveConnection({
         onConfirm={() => onConfirm(false)}
       />
     );
-  const notes = preview.notes === undefined ? "the chat notes its chats taught" : `${String(preview.notes)} chat note(s) its chats taught`;
+  const notes = preview.notes === undefined ? "the chat notes its chats taught" : `${plural(preview.notes, "chat note")} its chats taught`;
   return (
     <Confirm
       title="Remove and erase?"
-      message={`Close ${connection.label}, delete its saved secrets and stop the people allowed on it. In 24 hours Tavi erases what it brought in, as its channel's terms require: ${String(preview.conversations)} conversation(s), ${String(preview.messages)} message(s), ${String(preview.files)} file(s) and ${notes}. Adding the same account back before then cancels it; to keep everything, disable it instead.`}
+      message={`Close ${connection.label}, delete its saved secrets and stop the people allowed on it. In 24 hours Tavi erases what it brought in, as its channel's terms require: ${plural(preview.conversations, "conversation")}, ${plural(preview.messages, "message")}, ${plural(preview.files, "file")} and ${notes}. Adding the same account back before then cancels it; to keep everything, disable it instead.`}
       action="Remove and erase"
       onClose={onClose}
       onConfirm={() => onConfirm(true)}
@@ -309,9 +310,12 @@ function RemoveConnection({
       ) : null}
       {preview.routineTargets.length || preview.heartbeats ? (
         <p className="settings-description">
-          Delivery targets on it go too:{preview.routineTargets.length ? ` routine target(s) ${preview.routineTargets.join(", ")}` : ""}
+          Delivery targets on it go too:
+          {preview.routineTargets.length
+            ? ` ${preview.routineTargets.length === 1 ? "routine target" : "routine targets"} ${preview.routineTargets.join(", ")}`
+            : ""}
           {preview.routineTargets.length && preview.heartbeats ? " and" : ""}
-          {preview.heartbeats ? ` ${String(preview.heartbeats)} heartbeat target(s)` : ""}.
+          {preview.heartbeats ? ` ${plural(preview.heartbeats, "heartbeat target")}` : ""}.
         </p>
       ) : null}
     </Confirm>

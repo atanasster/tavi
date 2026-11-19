@@ -28,6 +28,21 @@ change behaviour or stored data.
   continued says **Continue this chat…** rather than repeating its title. On a
   phone the chat panel's button sits at the right of the row under the header
   instead of over the Send button.
+- Settings dialogs and saved states, walked again. A page's note after a
+  save (**Saved.**, a refusal) is a boxed note that stays on screen for a few
+  seconds while you scroll, then settles in place; a refusal is said as an
+  error, not as a quiet status. The notes of a dialog (the Rooms grant, a
+  connection's settings, **Test**) sit above its Save and Cancel row instead
+  of under it, where the sticky row hid them. Counts read "1 conversation",
+  "1 heartbeat target", "Discovered 1 model" rather than "1 conversations".
+  Pairing a person on a phone puts the `/link` command and its **Copy**
+  button under the QR code instead of in a column one word wide, and closing a
+  pairing no longer crashes the People dialog in newer browsers. Connecting
+  Home Assistant asks for its address beside its token in the key step, where
+  before it said it needed a url and showed only the token field; each field
+  is named in words ("Its MCP address", "A long-lived access token"). An app
+  whose tools are not listed yet says so in one sentence, and its connect
+  sheet's **Cancel** is a plain text button.
 - Settings → General, walked at desktop and phone width. A section's lone text
   button (**Clear browser profile…**, **Forget all recipes**, **Reset
   instance…**) starts on the page's edge with the paragraph above it instead of

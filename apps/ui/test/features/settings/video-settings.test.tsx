@@ -199,7 +199,10 @@ describe("native video per model", () => {
     expect(byLabel("Send whole videos to llama")?.getAttribute("aria-checked")).toBe("false");
     // A probe that did not pass says the owner's reason, not that the model misread it.
     await click(byLabel("Probe whether dud watches video"));
-    expect(announced()).toBe("The video probe of dud did not pass: it gave no answer within 60 s");
+    // A refusal is the page's alert, said at once, not a polite note.
+    expect(document.querySelector('.page-note[role="alert"]')?.textContent).toBe(
+      "The video probe of dud did not pass: it gave no answer within 60 s",
+    );
     // OpenAI's preset takes no video: frames only, so no switch is offered.
     expect(byLabel("Send whole videos to gpt-x")).toBeNull();
     expect([...document.querySelectorAll(".video-models")]).toHaveLength(1);
@@ -225,7 +228,10 @@ describe("native video per model", () => {
     await browse(owner([{ ...openrouter, connectionId: "refusing", label: "Refusing" }]).client);
     await click(byLabel("Send whole videos to google/gemini-2.5-flash"));
     expect(document.querySelector(".modal")).toBeNull();
-    expect(announced()).toBe("Connection refusing has native video on for 32 models, the most");
+    // A refusal is the page's alert, said at once, not a polite note.
+    expect(document.querySelector('.page-note[role="alert"]')?.textContent).toBe(
+      "Connection refusing has native video on for 32 models, the most",
+    );
     expect(byLabel("Send whole videos to google/gemini-2.5-flash")?.getAttribute("aria-checked")).toBe("false");
   });
 

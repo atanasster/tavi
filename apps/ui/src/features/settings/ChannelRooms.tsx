@@ -13,7 +13,7 @@ import {
 import { useAction } from "../../hooks/use-action.js";
 import { Empty } from "../../ui/Empty.js";
 import { Modal } from "../../ui/Modal.js";
-import { BusyFieldset, Failure, StatusBadge, StatusNote } from "../../ui/Parts.js";
+import { ActionNote, BusyFieldset, Failure, StatusBadge, StatusNote } from "../../ui/Parts.js";
 import { Select } from "../../ui/Select.js";
 import { request } from "./channels-api.js";
 import { Button } from "../../ui/Button.js";
@@ -341,6 +341,9 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
               {scopeKind === "contact" ? <option value="allow">Allow (asked, as anywhere)</option> : null}
             </Select>
           </label>
+          {/* What the last grant or revoke said, over the footer it answers rather than under it. */}
+          <StatusNote note={note} />
+          <Failure message={failure} />
           <div className="actions">
             <Button variant="ghost" onClick={onClose}>
               Close
@@ -351,8 +354,6 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
           </div>
         </BusyFieldset>
       </form>
-      <StatusNote note={note} />
-      <Failure message={failure} />
     </Modal>
   );
 }
@@ -360,7 +361,7 @@ export function Ingress({ data, reload }: { data: ChannelsListAnswer; reload: ()
   const { client } = useWorkspace();
   const [port, setPort] = useState(data.ingress.port);
   const [publicUrl, setPublicUrl] = useState(data.ingress.publicUrl ?? "");
-  const { busy, note, run } = useAction(reload);
+  const { busy, note, tone, run } = useAction(reload);
   const save = (): Promise<void> =>
     run("ingress", async () => {
       const answer = await request<ChannelsIngressAnswer>(client, { action: "ingress", port, publicUrl: publicUrl.trim() });
@@ -417,7 +418,7 @@ export function Ingress({ data, reload }: { data: ChannelsListAnswer; reload: ()
           </Button>
         </div>
       </BusyFieldset>
-      <StatusNote note={note || undefined} />
+      <ActionNote tone={tone} note={note || undefined} />
     </form>
   );
 }

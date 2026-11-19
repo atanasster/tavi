@@ -153,6 +153,8 @@ export function ConnectionForm({
               {field.help === undefined ? null : <span className="settings-description">{field.help}</span>}
             </label>
           ))}
+          {/* The owner's refusal, over the footer it answers rather than under it. */}
+          <Failure message={failure} />
           <div className="actions">
             <Button variant="ghost" onClick={onClose}>
               Cancel
@@ -163,7 +165,6 @@ export function ConnectionForm({
           </div>
         </BusyFieldset>
       </form>
-      <Failure message={failure} />
     </Modal>
   );
 }

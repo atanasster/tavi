@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 
-import type { AppAccountView, AppClientSetupStep, AppMailboxAccess, AppSharing, ConnectableApp } from "@tavi/contracts";
-import { definedOnly } from "@tavi/contracts/util";
+import type { AppAccountView, AppClientSetupStep, AppMailboxAccess, AppSettingField, AppSharing, ConnectableApp } from "@tavi/contracts";
+import { definedOnly, plural } from "@tavi/contracts/util";
 
 import { useCopied } from "../../hooks/page.js";
 import { Failure } from "../../ui/Parts.js";
@@ -239,6 +239,9 @@ export function ConnectSheet({
         {step === "key" && app.auth.kind === "api-key" ? (
           <KeyStep
             auth={app.auth}
+            // A required setting that is not a key (Home Assistant's address) is asked here too, or the setup could
+            // never finish in this sheet.
+            settings={app.settings.filter((field) => field.required && field.type !== "credential" && !field.advanced)}
             // What its setup waits for (a key not given, or refused), as the list says it.
             note={
               connecting?.health === "not-set-up"
@@ -373,26 +376,29 @@ function WhatItCanDo({
     .filter((entry) => entry.items.length > 0);
   return (
     <div className="apps-step stack">
-      <p>
-        {app.name} will be able to{authorsWords(app) ? ", in its author's words" : ""}:
-      </p>
+      {/* With no access to list, one sentence: never a lead-in to an empty list. */}
       {byAccess.length === 0 ? (
-        <p className="muted">
+        <p>
           {app.tools.length === 0
-            ? "It offers no tools yet: they are listed once it is reviewed."
-            : `${String(app.tools.length)} tools, listed on its page.`}
+            ? `${app.name} offers no tools yet: they are listed once it is reviewed.`
+            : `${app.name} offers ${plural(app.tools.length, "tool")}, listed on its page.`}
         </p>
       ) : (
-        <dl className="apps-scopes">
-          {byAccess.map(({ access, items }) => (
-            <div key={access}>
-              <dt>{ACCESS_TITLES[access]}</dt>
-              {items.map((scope) => (
-                <dd key={scope.scope}>{scope.says}</dd>
-              ))}
-            </div>
-          ))}
-        </dl>
+        <>
+          <p>
+            {app.name} will be able to{authorsWords(app) ? ", in its author's words" : ""}:
+          </p>
+          <dl className="apps-scopes">
+            {byAccess.map(({ access, items }) => (
+              <div key={access}>
+                <dt>{ACCESS_TITLES[access]}</dt>
+                {items.map((scope) => (
+                  <dd key={scope.scope}>{scope.says}</dd>
+                ))}
+              </div>
+            ))}
+          </dl>
+        </>
       )}
       <p className="muted">
         Calls go to{" "}
@@ -451,7 +457,9 @@ function WhatItCanDo({
         </fieldset>
       )}
       <div className="actions">
-        <Button onClick={onClose}>Cancel</Button>
+        <Button variant="ghost" onClick={onClose}>
+          Cancel
+        </Button>
         <Button variant="primary" disabled={busy} onClick={() => onNext(definedOnly({ calendar, mailbox, receives }))}>
           Next
         </Button>
@@ -573,6 +581,7 @@ function ClientStep({
 /** A key's steps, each with the page it opens, and its fields: saved, then tested with the server at once. */
 function KeyStep({
   auth,
+  settings = [],
   note,
   stored,
   busy,
@@ -580,6 +589,8 @@ function KeyStep({
   onSave,
 }: {
   readonly auth: Extract<ConnectableApp["auth"], { readonly kind: "api-key" }>;
+  /** Its required settings that are not keys, asked before them: blank keeps one already saved. */
+  readonly settings?: readonly AppSettingField[];
   /** Why its setup is not finished: its key is missing, or was refused. */
   readonly note?: string | undefined;
   /** What its key field says of where the value goes. */
@@ -590,6 +601,7 @@ function KeyStep({
 }) {
   const fieldId = useId();
   const [values, setValues] = useState<Readonly<Record<string, string>>>({});
+  // A required setting may already be saved (a key refused later): only the keys must be given here.
   const ready = auth.fields.every((field) => field.required !== true || (values[field.key] ?? "").trim() !== "");
   return (
     <form
@@ -607,6 +619,21 @@ function KeyStep({
           ))}
         </ol>
       )}
+      {settings.map((field) => (
+        <Field key={field.key} id={`${fieldId}-${field.key}`} label={field.label} hint={field.help}>
+          {(control) => (
+            <input
+              {...control}
+              type={field.type === "url" ? "url" : "text"}
+              value={values[field.key] ?? ""}
+              placeholder={field.placeholder}
+              autoComplete="off"
+              spellCheck={false}
+              onChange={(event) => setValues((before) => ({ ...before, [field.key]: event.target.value }))}
+            />
+          )}
+        </Field>
+      ))}
       {auth.fields.map((field, index) => (
         <Field key={field.key} id={`${fieldId}-${String(index)}`} label={field.label}>
           {(control) =>
