@@ -292,6 +292,46 @@ describe("configuration commands under an owner", () => {
     expect(listed.result).not.toHaveProperty("warning");
   });
 
+  it("replaces a model in the request's workspace only: a preview first, the change once confirmed", async () => {
+    const { client } = await owner();
+    const models = (payload: Record<string, unknown>, requestId: string) => client.request("models", payload, requestId);
+    await models(
+      { action: "add", connectionId: "lumen", baseUrl: "http://127.0.0.1:3/v1", credentialRef: "lumen.apiKey", model: "lumen-1" },
+      "add-lumen",
+    );
+    await models({ action: "set-role", role: "main", connectionId: "lumen", model: "lumen-1" }, "role-own");
+    await models({ action: "set-role", role: "main", connectionId: "lumen", model: "lumen-1", workspaceId: "team" }, "role-team");
+    const replace = {
+      action: "replace",
+      connectionId: "lumen",
+      model: "lumen-1",
+      replaceWith: { connectionId: "lumen", model: "lumen-2" },
+    };
+
+    const preview = await models(replace, "preview");
+    expect(preview.ok, JSON.stringify(preview.error)).toBe(true);
+    expect((preview.result as { usedBy: { kind: string; workspaceId?: string }[] }).usedBy).toContainEqual(
+      expect.objectContaining({ kind: "role", workspaceId: "default" }),
+    );
+    expect((preview.result as { usedBy: { workspaceId?: string }[] }).usedBy.some((use) => use.workspaceId === "team")).toBe(false);
+    let reads = 0;
+    const mainModel = async (workspaceId: string) =>
+      (
+        (await models({ action: "roles", workspaceId }, `roles-${workspaceId}-${(reads += 1)}`)).result as {
+          roles: { role: string; target: { model: string } }[];
+        }
+      ).roles.find((entry) => entry.role === "main")?.target.model;
+    expect(await mainModel("default")).toBe("lumen-1");
+
+    const done = await models({ ...replace, confirmed: true }, "confirmed");
+    expect((done.result as { changed: { kind: string }[]; failed: unknown[] }).failed).toEqual([]);
+    expect(await mainModel("default")).toBe("lumen-2");
+    expect(await mainModel("team")).toBe("lumen-1");
+
+    const { replaceWith: _, ...missing } = replace;
+    expect((await models(missing, "no-with")).error?.code).toBe("INVALID_INPUT");
+  });
+
   it("warns when a key another connection uses at another origin is shared, and a refused test names both and the way out", async () => {
     const { client } = await owner();
     const models = (payload: Record<string, unknown>, requestId: string) => client.request("models", payload, requestId);
