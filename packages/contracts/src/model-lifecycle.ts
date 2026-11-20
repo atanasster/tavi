@@ -183,3 +183,47 @@ export function lifecycleWarningText(warning: LifecycleWarning): string {
       return `price changes${when}`;
   }
 }
+
+/** Where a model is used: what a lifecycle check covers and `models replace` moves. */
+export const MODEL_USE_KINDS = [
+  "connection-default",
+  "video",
+  "workspace-default",
+  "role",
+  "role-fallback",
+  "routine",
+  "routine-fallback",
+  "heartbeat",
+  "activity-summary",
+  "chat",
+] as const;
+export type ModelUseKind = (typeof MODEL_USE_KINDS)[number];
+
+/** One place a model is used. */
+export interface ModelUse {
+  readonly kind: ModelUseKind;
+  readonly workspaceId?: string;
+  /** The role, or the routine's name and stage. */
+  readonly detail?: string;
+  /** For `chat`: how many chats chose the model. */
+  readonly count?: number;
+}
+
+/** What a use asks of a model that replaces a retiring one. */
+export const REPLACEMENT_KINDS = ["agent", "cheap", "embedding", "video"] as const;
+export type ReplacementKind = (typeof REPLACEMENT_KINDS)[number];
+
+/** Rhumb's pick for one kind of use. */
+export interface ReplacementPick {
+  readonly for: ReplacementKind;
+  readonly model: string;
+  readonly reason?: string;
+}
+
+/** What may replace a model that retires or is redirected: suggestions, never applied. */
+export interface ModelReplacements {
+  /** The provider's redirect target: its choice, which can be a smaller model. */
+  readonly provider?: { readonly model: string; readonly via?: string };
+  /** Rhumb's pick per kind of use, the old model left out. */
+  readonly rhumb: readonly ReplacementPick[];
+}

@@ -1,4 +1,4 @@
-import type { ChosenModelTarget, ModelTarget } from "@tavi/contracts";
+import type { ChosenModelTarget, ModelTarget, ModelUse } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 import type { TaviRuntime } from "../../runtime/types.js";
 
@@ -9,28 +9,7 @@ import type { TaviRuntime } from "../../runtime/types.js";
  * fallback is as worth knowing as a retired primary.
  */
 
-export const MODEL_USE_KINDS = [
-  "connection-default",
-  "video",
-  "workspace-default",
-  "role",
-  "role-fallback",
-  "routine",
-  "routine-fallback",
-  "heartbeat",
-  "activity-summary",
-  "chat",
-] as const;
-export type ModelUseKind = (typeof MODEL_USE_KINDS)[number];
-
-export interface ModelUse {
-  readonly kind: ModelUseKind;
-  readonly workspaceId?: string;
-  /** The role, or the routine's name and stage. */
-  readonly detail?: string;
-  /** For `chat`: how many chats chose the model. */
-  readonly count?: number;
-}
+export type { ModelUse };
 
 export interface ModelTargetInUse {
   readonly connectionId: string;

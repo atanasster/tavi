@@ -1,17 +1,11 @@
-import { RHUMB_CREDENTIAL_REF } from "@tavi/contracts";
+import { RHUMB_CREDENTIAL_REF, type ModelReplacements, type ModelUse, type ModelUseKind, type ReplacementKind } from "@tavi/contracts";
 
 import { ask, mapOutcome, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { credentialActions } from "./credentials-api.js";
 
 export const RHUMB_SIGN_UP_URL = "https://rhumbdata.com/sign-up";
 
-/** What may replace a model that retires or is redirected: suggestions, never applied. */
-export interface ModelReplacements {
-  /** The provider's redirect target: its choice, which can be a smaller model. */
-  readonly provider?: { readonly model: string; readonly via?: string };
-  /** Rhumb's pick per kind of use. */
-  readonly rhumb: readonly { readonly for: "agent" | "cheap" | "embedding" | "video"; readonly model: string; readonly reason?: string }[];
-}
+export type { ModelReplacements };
 
 /** One model in use that warns, as `models sync` and `models lifecycle` answer it. */
 export interface LifecycleWarningRow {
@@ -23,7 +17,7 @@ export interface LifecycleWarningRow {
   readonly replacements?: ModelReplacements;
 }
 
-const USES: Readonly<Record<ModelReplacements["rhumb"][number]["for"], string>> = {
+const USES: Readonly<Record<ReplacementKind, string>> = {
   agent: "with tools",
   cheap: "background, cheaper",
   embedding: "embeddings",
@@ -83,12 +77,9 @@ export interface ModelRef {
   readonly model: string;
 }
 
-/** One place a model is used, as `models replace` answers it. */
-export interface ModelUseRow {
-  readonly kind: string;
-  readonly workspaceId?: string;
-  readonly detail?: string;
-  readonly count?: number;
+/** One place a model is used, as `models replace` answers it: a newer owner may name a kind this page does not know. */
+export interface ModelUseRow extends Omit<ModelUse, "kind"> {
+  readonly kind: ModelUseKind | (string & {});
 }
 
 interface ReplaceAnswer {

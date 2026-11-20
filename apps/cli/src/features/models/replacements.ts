@@ -1,7 +1,16 @@
-import type { LifecycleLevel, ModelLifecycle } from "@tavi/contracts";
+import {
+  REPLACEMENT_KINDS,
+  type LifecycleLevel,
+  type ModelLifecycle,
+  type ModelReplacements,
+  type ModelUse,
+  type ReplacementKind,
+  type ReplacementPick,
+} from "@tavi/contracts";
 
 import { rhumbModelId, type RhumbCall } from "./rhumb-client.js";
-import type { ModelUse } from "./targets-in-use.js";
+
+export type { ModelReplacements };
 
 /**
  * Replacements for a model in use that retires or is redirected: the
@@ -9,25 +18,8 @@ import type { ModelUse } from "./targets-in-use.js";
  * each kind of use. Suggestions only: nothing is switched here.
  */
 
-/** What a use asks of its replacement. */
-export const REPLACEMENT_KINDS = ["agent", "cheap", "embedding", "video"] as const;
-export type ReplacementKind = (typeof REPLACEMENT_KINDS)[number];
-
 /** Levels that get a replacement: an info notice does not. */
 const REPLACED_LEVELS: ReadonlySet<LifecycleLevel> = new Set(["warning", "error"]);
-
-export interface ReplacementPick {
-  readonly for: ReplacementKind;
-  readonly model: string;
-  readonly reason?: string;
-}
-
-export interface ModelReplacements {
-  /** The provider's redirect target: its choice, which can be a smaller model. */
-  readonly provider?: { readonly model: string; readonly via?: string };
-  /** Rhumb's pick per kind of use, the old model left out. */
-  readonly rhumb: readonly ReplacementPick[];
-}
 
 /** The kind of replacement a use asks for: the main work needs tools, background work the same on a cheap budget. */
 export function replacementKindOf(use: ModelUse): ReplacementKind {
