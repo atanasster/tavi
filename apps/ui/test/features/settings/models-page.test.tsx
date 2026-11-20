@@ -52,10 +52,16 @@ function owner(start: {
   disabledPlugins?: string[];
   lifecycle?: Record<string, BrowsedModel["lifecycle"]>;
   replacements?: Record<string, ModelReplacements>;
+  /** Credentials already stored when the page opens. */
+  credentials?: string[];
+  /** A credential store that refuses every write. */
+  storeFails?: boolean;
+  /** An owner whose sync finds no key. */
+  syncNoKey?: boolean;
 }) {
   const writes: { command: string; payload: Record<string, unknown> }[] = [];
   const connections = [...start.connections];
-  const stored = new Set<string>();
+  const stored = new Set<string>(start.credentials ?? []);
   const client: SettingsClient = {
     request: async (command, raw) => {
       const payload = raw as Record<string, unknown>;
@@ -65,8 +71,10 @@ function owner(start: {
         return { ok: true, result: start.disabledPlugins === undefined ? {} : { disabledPlugins: start.disabledPlugins } };
       if (command === "credentials") {
         if (action === "list") return { ok: true, result: { credentials: [...stored], unusable: [] } };
-        if (action === "set") stored.add(String(payload["reference"]));
         writes.push({ command, payload });
+        if (action === "set" && start.storeFails === true)
+          return { ok: false, error: { code: "UNAVAILABLE", message: "the keychain is locked" } };
+        if (action === "set") stored.add(String(payload["reference"]));
         return { ok: true, result: {} };
       }
       if (action === "list") return { ok: true, result: connections };
@@ -127,6 +135,8 @@ function owner(start: {
           localOnly: false,
         });
       if (action === "discover") return { ok: true, result: { models: [{}, {}, {}] } };
+      if (action === "sync" && start.syncNoKey === true)
+        return { ok: true, result: { skipped: "no-key", hint: "Store a Rhumb key first." } };
       if (action === "sync")
         return {
           ok: true,
@@ -327,6 +337,46 @@ describe("the Models page", () => {
     });
     expect(fake.writes.some((write) => write.command === "models" && write.payload["action"] === "sync")).toBe(true);
     expect(host.textContent).toContain("openai/gpt-5 retires on 2026-12-11");
+  });
+
+  it("keeps a key the store refused, to try again, and stores nothing blank", async () => {
+    const roles: RolesDocument = { workspaceDefault: null, resolved: [], roles: [] };
+    const fake = owner({ connections: [local], roles, storeFails: true });
+    const host = await mountSettled(
+      <InWorkspace client={fake.client} workspaceId="default">
+        <ModelBrowser />
+      </InWorkspace>,
+    );
+    const store = () => byText("Store key") as HTMLButtonElement | null;
+    await type(host.querySelector<HTMLInputElement>("#rhumb-key"), "   ");
+    expect(store()?.disabled).toBe(true);
+    await type(host.querySelector<HTMLInputElement>("#rhumb-key"), "rk_test_2");
+    await click(store());
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(host.textContent).toContain("the keychain is locked");
+    // The form stays, with the key in it, for another try.
+    expect(host.querySelector<HTMLInputElement>("#rhumb-key")?.value).toBe("rk_test_2");
+    expect(store()?.disabled).toBe(false);
+    expect(host.textContent).not.toContain("Check now");
+  });
+
+  it("offers Check now, and no form, when a key is already stored; a sync without one says why", async () => {
+    const roles: RolesDocument = { workspaceDefault: null, resolved: [], roles: [] };
+    const fake = owner({ connections: [local], roles, credentials: ["rhumb"], syncNoKey: true });
+    const host = await mountSettled(
+      <InWorkspace client={fake.client} workspaceId="default">
+        <ModelBrowser />
+      </InWorkspace>,
+    );
+    expect(host.querySelector("#rhumb-key")).toBeNull();
+    expect(host.textContent).toContain("A Rhumb key is stored");
+    await click(byText("Check now"));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(host.textContent).toContain("Store a Rhumb key first.");
   });
 
   it("names the models in use that retire above the roles, and counts them on their connection", async () => {
