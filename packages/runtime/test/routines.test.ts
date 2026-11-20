@@ -125,6 +125,27 @@ describe("versioned routine owner service", () => {
     expect(service.get(scope, first.routine.routineId).routine.activeRevision).toBe(1);
     expect(second.revision.snapshot.models.research.primary.model).toBe("research-v1");
   });
+  it("reads each routine's models from the revision it runs, in one query, leaving archived ones out", () => {
+    const { service } = fixture(true);
+    const first = service.create(scope, input());
+    const id = first.routine.routineId;
+    // A draft runs its latest revision once it passes: its models count.
+    expect(service.modelsInUse(scope)).toEqual([{ routineId: id, name: "LLM news", models: first.revision.snapshot.models }]);
+    const active = service.finishEvaluation(scope, id, 1, true, "passes");
+    const research = { primary: { connectionId: "fixture", model: "research-v2" }, fallbacks: [] };
+    service.update(scope, {
+      routineId: id,
+      operationKey: "edit-models",
+      expectedVersion: active.routine.version,
+      snapshot: { ...first.revision.snapshot, models: { ...first.revision.snapshot.models, research } },
+      changeSummary: "New research model",
+    });
+    // The unchecked revision does not run yet: the active one's models stand.
+    expect(service.modelsInUse(scope)[0]?.models.research.primary.model).toBe("research-v1");
+    service.setStatus(scope, id, service.get(scope, id).routine.version, "archived");
+    expect(service.modelsInUse(scope)).toEqual([]);
+    expect(service.modelsInUse({ ...scope, principalId: "other" })).toEqual([]);
+  });
   it("does not enable a passed routine before its execution adapter is installed", () => {
     const { service, store } = fixture();
     const first = service.create(scope, input());

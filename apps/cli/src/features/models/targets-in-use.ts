@@ -63,7 +63,7 @@ export interface TargetSources {
   readonly activitySummaryModel: (workspaceId: string) => Promise<ModelTarget | undefined>;
   readonly heartbeatModel: (scope: Scope) => Promise<ModelTarget | undefined>;
   readonly chosenTargets: (scope: Scope) => Promise<readonly ChosenModelTarget[]>;
-  /** Each routine's current models, by stage; `complete` is false when only the first page of routines was read. */
+  /** The models of the revision each routine runs, by stage; `complete` is false when only the first page of routines was read. */
   readonly routineModels: (scope: Scope) => Promise<{ readonly routines: readonly RoutineModels[]; readonly complete: boolean }>;
 }
 
@@ -99,14 +99,12 @@ export function targetSourcesOf(runtime: Pick<TaviRuntime, "store" | "access" | 
     heartbeatModel: async (scope) => (await repositories.heartbeats.get(scope.workspaceId, scope.principalId))?.config.model,
     chosenTargets: (scope) => runtime.routerRepository.chosenTargets(scope),
     routineModels: async (scope) => {
-      const listed = await runtime.routines.list(scope, ROUTINES_READ_MAX);
-      const routines = await Promise.all(
-        listed.map(async (routine) => ({
-          name: routine.name,
-          stages: (await runtime.routines.get(scope, routine.routineId)).revision.snapshot.models,
-        })),
-      );
-      return { routines, complete: listed.length < ROUTINES_READ_MAX };
+      // One request: each routine's running revision (active, else latest); archived ones run nothing.
+      const listed = await runtime.routines.modelsInUse(scope, ROUTINES_READ_MAX);
+      return {
+        routines: listed.map((routine) => ({ name: routine.name, stages: routine.models })),
+        complete: listed.length < ROUTINES_READ_MAX,
+      };
     },
   };
 }

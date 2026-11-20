@@ -60,6 +60,9 @@ change behaviour or stored data.
 
 ### Changed
 
+- A routine's models count as in use (doctor, `tavi models sync`, Settings →
+  Models) from the revision it runs, not an edit still waiting for its check,
+  and an archived routine's not at all; they are read in one request.
 - A model whose end a catalog claimed, but its provider never confirmed, is
   still noticed once that day has passed: "may have retired on …".
 - `tavi models suggest` uses a Rhumb key stored as the credential `rhumb`

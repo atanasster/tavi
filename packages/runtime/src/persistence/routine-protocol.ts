@@ -28,6 +28,7 @@ export const ROUTINE_METHODS = {
   routines: [
     "get",
     "list",
+    "modelsInUse",
     "ownerOf",
     "owners",
     "revisions",

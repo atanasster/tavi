@@ -200,6 +200,13 @@ const LEGACY_MODEL_CALLS_KEY = "routines.model_calls_raised";
 const SYSTEM_AUTHOR = "tavi";
 
 /** All mutations run on the owner's application database; never the checkpoint DB. */
+/** A routine's name and the models of the revision it runs. */
+export interface RoutineModelsInUse {
+  readonly routineId: string;
+  readonly name: string;
+  readonly models: RoutineSnapshot["models"];
+}
+
 export class RoutineService implements RoutineServicePort {
   readonly store: SqliteStore;
   readonly options: RoutineServiceOptions;
@@ -318,6 +325,32 @@ export class RoutineService implements RoutineServicePort {
         storedRoutineProvenance(row.latest_provenance_json),
       );
       return { ...record(row), nextRunAt: row.next_run_at, triggers, ...(provenance === undefined ? {} : { provenance }) };
+    });
+  }
+  /**
+   * Each routine's models, in one query: those of the revision it runs (the
+   * active one, else the latest, which runs once its check passes). An
+   * archived routine runs nothing and is left out; so is a revision this
+   * build cannot read.
+   */
+  modelsInUse(scope: RoutineScope, limit = 100): readonly RoutineModelsInUse[] {
+    parse(RoutineScopeSchema, scope);
+    if (!Number.isInteger(limit) || limit < 1 || limit > 200) invalid("List limit must be 1–200");
+    const rows = this.store.handle
+      .prepare(`SELECT r.routine_id, r.name, json_extract(rev.snapshot_json, '$.models') AS models_json
+      FROM tavi_routines r
+      JOIN tavi_routine_revisions rev ON rev.routine_id = r.routine_id AND rev.revision = COALESCE(r.active_revision, r.latest_revision)
+      WHERE r.workspace_id = ? AND r.principal_id = ? AND r.status <> 'archived' ORDER BY r.updated_at DESC, r.routine_id LIMIT ?`)
+      .all(scope.workspaceId, scope.principalId, limit) as { routine_id: string; name: string; models_json: string | null }[];
+    return rows.flatMap((row) => {
+      let stored: unknown;
+      try {
+        stored = JSON.parse(row.models_json ?? "null");
+      } catch {
+        return [];
+      }
+      const models = RoutineSnapshotSchema.shape.models.safeParse(stored);
+      return models.success ? [{ routineId: row.routine_id, name: row.name, models: models.data }] : [];
     });
   }
   revisions(scope: RoutineScope, routineId: string, limit = 50, beforeRevision?: number): RoutineRevisionPage {
