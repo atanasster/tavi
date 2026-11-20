@@ -34,7 +34,6 @@ catalog:
 # versions (security fixes, or a bump the plan in hand calls for), never
 # floating ranges. Drop an entry once it has aged out.
 minimumReleaseAgeExclude:
-  - node-forge@1.4.2
   - "@anthropic-ai/sandbox-runtime@0.0.83"
   - playwright-core@1.65.1
   - playwright@1.65.1
@@ -66,7 +65,7 @@ overrides:
   # (knip, vitest's optional jsdom peer) resolves its own.
   'undici@7': 7.30.2
   'undici@8': 8.12.4
-  node-forge: 1.4.2
+  node-forge: 1.4.3
   katex: 0.19.0
   source-map-js: 1.2.2
   fast-uri: 3.1.9
