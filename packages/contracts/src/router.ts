@@ -327,6 +327,11 @@ export interface RouterProvider {
   status?(settings: Readonly<Record<string, unknown>>): Promise<Readonly<Record<string, string | boolean>>>;
 }
 
+/** A model chosen for chats, and how many chats chose it. */
+export interface ChosenModelTarget extends ModelTarget {
+  readonly chats: number;
+}
+
 /** Host-owned durable boundary. No raw candidate descriptions or task text are stored here. */
 interface RouterRepositoryPortDefinition {
   configureWithPrices(
@@ -359,6 +364,8 @@ interface RouterRepositoryPortDefinition {
    * is the chat's, not an execution's.
    */
   chooseRoute(scope: RouterScope, taskId: string, target: ModelTarget, at: string): TaskRoute;
+  /** The models people chose for their chats in this scope (routes of origin `explicit`), with how many chats chose each. */
+  chosenTargets(scope: RouterScope): readonly ChosenModelTarget[];
   disclosure(scope: RouterScope, taskId: string, attemptId: string): ToolDisclosure | undefined;
   contextProjections(scope: RouterScope, taskId: string): readonly ContextProjectionSnapshot[];
   saveContextProjection(scope: RouterScope, fence: RouterFence, projection: ContextProjectionSnapshot): void;

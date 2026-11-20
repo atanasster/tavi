@@ -16,6 +16,7 @@ import {
   type RouterReceipt,
   type RouterScope,
   type RouterSettings,
+  type ChosenModelTarget,
   type ModelTarget,
   type TaskRoute,
   type ToolDisclosure,
@@ -306,6 +307,23 @@ export class RouterRepository implements RouterRepositoryPort {
         .run(taskId, JSON.stringify(route));
       return route;
     })();
+  }
+
+  chosenTargets(scope: RouterScope): readonly ChosenModelTarget[] {
+    this.assertScope(scope);
+    const rows = this.store.handle
+      .prepare(
+        `SELECT json_extract(r.data, '$.target.connectionId') AS connection_id, json_extract(r.data, '$.target.model') AS model, COUNT(*) AS chats
+           FROM tavi_task_routes r JOIN tavi_tasks t ON t.task_id = r.task_id
+          WHERE t.workspace_id = ? AND t.principal_id = ? AND json_extract(r.data, '$.origin') = 'explicit'
+          GROUP BY 1, 2 ORDER BY 1, 2`,
+      )
+      .all(scope.workspaceId, scope.principalId) as { connection_id: unknown; model: unknown; chats: number }[];
+    return rows.flatMap((row) =>
+      typeof row.connection_id === "string" && typeof row.model === "string"
+        ? [{ connectionId: row.connection_id, model: row.model, chats: row.chats }]
+        : [],
+    );
   }
 
   disclosure(scope: RouterScope, taskId: string, attemptId: string): ToolDisclosure | undefined {

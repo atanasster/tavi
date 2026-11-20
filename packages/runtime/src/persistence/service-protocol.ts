@@ -35,6 +35,7 @@ export const SERVICE_METHODS = methodTable<PersistenceServicesPort>()({
     "route",
     "saveRoute",
     "chooseRoute",
+    "chosenTargets",
     "disclosure",
     "contextProjections",
     "saveContextProjection",

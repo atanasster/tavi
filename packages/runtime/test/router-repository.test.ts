@@ -188,6 +188,47 @@ describe("router reservations and recovery", () => {
       f.repo.chooseRoute({ workspaceId: "other", principalId: "p" }, "task-1", { connectionId: "main", model: "m" }, at),
     ).toThrow(expect.objectContaining({ code: "NOT_AUTHORIZED" }));
   });
+  it("counts the models people chose for their chats, never a route the router saved", () => {
+    const f = fixture();
+    f.repo.saveRoute(scope, f.fence, {
+      taskId: "task-1",
+      target: { connectionId: "fast", model: "m" },
+      fallback: [],
+      origin: "router",
+      configRevision: 0,
+      createdAt: at,
+    });
+    expect(f.repo.chosenTargets(scope)).toEqual([]);
+    f.repo.chooseRoute(scope, "task-1", { connectionId: "main", model: "other" }, at);
+    expect(f.repo.chosenTargets(scope)).toEqual([{ connectionId: "main", model: "other", chats: 1 }]);
+    const p = f.store.asPort().repositories;
+    const admit = (principalId: string, id: string): void => {
+      p.tasks.admit({
+        ...scope,
+        principalId,
+        operationKey: `start-${id}`,
+        kind: "start",
+        intent: { prompt: "hello" },
+        checkpointNamespace: "",
+        newTaskId: () => id,
+        newThreadId: () => `thread-${id}`,
+        newAdmissionId: () => `admission-${id}`,
+        now: () => at,
+      });
+    };
+    admit("alice", "task-2");
+    admit("bob", "task-bob");
+    const bob = { ...scope, principalId: "bob" };
+    const workspace = new RouterRepository(f.store, (actor) => actor.workspaceId === scope.workspaceId);
+    f.repo.chooseRoute(scope, "task-2", { connectionId: "main", model: "other" }, at);
+    workspace.chooseRoute(bob, "task-bob", { connectionId: "main", model: "bobs" }, at);
+    expect(f.repo.chosenTargets(scope)).toEqual([{ connectionId: "main", model: "other", chats: 2 }]);
+    expect(workspace.chosenTargets(bob)).toEqual([{ connectionId: "main", model: "bobs", chats: 1 }]);
+    expect(() => f.repo.chosenTargets({ workspaceId: "other", principalId: "p" })).toThrow(
+      expect.objectContaining({ code: "NOT_AUTHORIZED" }),
+    );
+  });
+
   it("persists routes and reservations across a database restart without repeating decisions", () => {
     const directory = directories.create("tavi-router-");
     const path = join(directory, "tavi.sqlite");
