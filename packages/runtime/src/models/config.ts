@@ -3,6 +3,7 @@ import {
   MODEL_ROLES,
   ModelCatalogEntrySchema,
   ModelConnectionSchema,
+  ModelLifecycleEntrySchema,
   ModelTargetInputSchema,
   TaviError,
   assertSafeHeaders,
@@ -19,6 +20,7 @@ import {
   type ModelCatalogEntryInput,
   type ModelConnection,
   type ModelConnectionInput,
+  type ModelLifecycleEntry,
   type ModelResolution,
   type ModelRole,
   type ModelRoleBinding,
@@ -354,6 +356,33 @@ export class ModelConfigService implements ModelConfigPort {
     this.getConnection(connectionId);
     const parsed = entries.map((entry, index) => this.#parseCatalogEntry(connectionId, entry, index));
     this.#repository.replaceCatalog(connectionId, parsed);
+  }
+
+  listModelLifecycle(): readonly ModelLifecycleEntry[] {
+    return this.#repository.listLifecycle();
+  }
+
+  /** Every entry is validated, and must be the connection's own, before the connection's lifecycles are replaced. */
+  replaceModelLifecycle(connectionId: string, entries: readonly ModelLifecycleEntry[]): void {
+    this.getConnection(connectionId);
+    const parsed = entries.map((entry, index) => {
+      const result = ModelLifecycleEntrySchema.safeParse(entry);
+      if (!result.success)
+        throw new TaviError("INVALID_INPUT", `Lifecycle entry ${index} is not valid: ${result.error.issues[0]?.message ?? "invalid"}`, {
+          details: { connectionId, index },
+        });
+      if (result.data.connectionId !== connectionId)
+        throw new TaviError("INVALID_INPUT", `Lifecycle entry ${index} belongs to ${result.data.connectionId}, not ${connectionId}`, {
+          details: { connectionId, index },
+        });
+      return result.data;
+    });
+    const repeated = parsed.find((entry, index) => parsed.findIndex((other) => other.modelId === entry.modelId) !== index);
+    if (repeated !== undefined)
+      throw new TaviError("INVALID_INPUT", `Lifecycle entries name ${repeated.modelId} more than once`, {
+        details: { connectionId, modelId: repeated.modelId },
+      });
+    this.#repository.replaceLifecycle(connectionId, parsed);
   }
 
   getWorkspaceDefault(workspaceId: string): ModelWorkspaceDefault | undefined {

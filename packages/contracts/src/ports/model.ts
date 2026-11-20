@@ -1,3 +1,4 @@
+import type { ModelLifecycleEntry } from "../model-lifecycle.js";
 import type { ModelCallSite, ModelEmbedOutcome, ModelEmbedRequest, ModelEvent, ModelOutcome, ModelRequest } from "../model.js";
 import type {
   ModelCatalogEntry,
@@ -41,6 +42,10 @@ interface ModelConfigRepositoryPortDefinition {
   getRoleBinding(workspaceId: string, role: ModelRole): ModelRoleBinding | undefined;
   setRoleBinding(binding: ModelRoleBinding): ModelRoleBinding;
   clearRoleBinding(workspaceId: string, role: ModelRole): boolean;
+  /** Every stored model lifecycle, by connection and model. */
+  listLifecycle(): readonly ModelLifecycleEntry[];
+  /** Replace one connection's lifecycles: a sync writes the whole of what it learned about the connection at once. */
+  replaceLifecycle(connectionId: string, entries: readonly ModelLifecycleEntry[]): void;
 }
 
 export type ModelConfigRepositoryPort = AsyncRepository<ModelConfigRepositoryPortDefinition>;
@@ -94,6 +99,10 @@ type ModelConfigPortDefinition = {
   putCatalogEntry(input: ModelCatalogEntryInput): ModelCatalogEntry;
   /** Replace a connection's whole catalog; the connection id comes from the call. */
   replaceCatalog(connectionId: string, entries: readonly ModelCatalogEntryInput[]): void;
+  /** What Rhumb last said of each model's lifecycle (`model-lifecycle.ts`), by connection and model. */
+  listModelLifecycle(): readonly ModelLifecycleEntry[];
+  /** Replace a connection's lifecycles; each entry must be the connection's own. */
+  replaceModelLifecycle(connectionId: string, entries: readonly ModelLifecycleEntry[]): void;
   getWorkspaceDefault(workspaceId: string): ModelWorkspaceDefault | undefined;
   setWorkspaceDefault(input: { readonly workspaceId: string; readonly target: ModelTargetInput }): ModelWorkspaceDefault;
   clearWorkspaceDefault(workspaceId: string): void;

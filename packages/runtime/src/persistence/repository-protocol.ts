@@ -48,6 +48,8 @@ export const REPOSITORY_METHODS = methodTable<AsyncPersistenceRepositories>()({
     "getRoleBinding",
     "setRoleBinding",
     "clearRoleBinding",
+    "listLifecycle",
+    "replaceLifecycle",
   ],
   memory: [
     "insertRecord",

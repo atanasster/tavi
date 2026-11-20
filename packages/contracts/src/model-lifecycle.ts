@@ -49,6 +49,14 @@ export const ModelLifecycleSchema = z.strictObject({
 });
 export type ModelLifecycle = z.infer<typeof ModelLifecycleSchema>;
 
+/** A lifecycle as stored: one model of one connection. */
+export const ModelLifecycleEntrySchema = z.strictObject({
+  connectionId: z.string().min(1).max(64),
+  modelId: z.string().min(1).max(256),
+  lifecycle: ModelLifecycleSchema,
+});
+export type ModelLifecycleEntry = z.infer<typeof ModelLifecycleEntrySchema>;
+
 export const LIFECYCLE_LEVELS = ["error", "warning", "info"] as const;
 export type LifecycleLevel = (typeof LIFECYCLE_LEVELS)[number];
 

@@ -404,6 +404,12 @@
     },
     {
       "type": "index",
+      "name": "sqlite_autoindex_tavi_model_lifecycle_1",
+      "tbl_name": "tavi_model_lifecycle",
+      "sql": null
+    },
+    {
+      "type": "index",
       "name": "sqlite_autoindex_tavi_model_price_sheets_1",
       "tbl_name": "tavi_model_price_sheets",
       "sql": null
@@ -2216,6 +2222,12 @@
     },
     {
       "type": "table",
+      "name": "tavi_model_lifecycle",
+      "tbl_name": "tavi_model_lifecycle",
+      "sql": "CREATE TABLE tavi_model_lifecycle (\n  connection_id    TEXT NOT NULL,\n  model_id         TEXT NOT NULL,\n  lifecycle_json   TEXT NOT NULL,\n  PRIMARY KEY (connection_id, model_id)\n)"
+    },
+    {
+      "type": "table",
       "name": "tavi_model_price_sheets",
       "tbl_name": "tavi_model_price_sheets",
       "sql": "CREATE TABLE tavi_model_price_sheets (\n  revision TEXT PRIMARY KEY,\n  connection_id TEXT NOT NULL,\n  model TEXT NOT NULL,\n  effective_at TEXT NOT NULL,\n  data TEXT NOT NULL\n)"
@@ -3145,6 +3157,10 @@
       },
       {
         "migration_id": "0030_schedule_fire_stopped",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0031_model_lifecycle",
         "applied_at": "<timestamp>"
       }
     ]

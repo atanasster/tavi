@@ -76,6 +76,8 @@ export const SERVICE_METHODS = methodTable<PersistenceServicesPort>()({
     "listCatalog",
     "putCatalogEntry",
     "replaceCatalog",
+    "listModelLifecycle",
+    "replaceModelLifecycle",
     "getWorkspaceDefault",
     "setWorkspaceDefault",
     "clearWorkspaceDefault",

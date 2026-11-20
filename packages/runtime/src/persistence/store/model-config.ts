@@ -2,10 +2,12 @@ import type { ModelConfigRepositoryPort } from "../internal-contracts.js";
 import {
   ModelCatalogEntrySchema,
   ModelConnectionSchema,
+  ModelLifecycleSchema,
   presetPdfInput,
   ModelRoleBindingSchema,
   type ModelCatalogEntry,
   type ModelConnection,
+  type ModelLifecycleEntry,
   type ModelRole,
   type ModelRoleBinding,
   type ModelTarget,
@@ -91,6 +93,7 @@ export class SqliteModelConfigRepository implements ModelConfigRepositoryPort {
   deleteConnection(connectionId: string): boolean {
     return this.#store.transaction(() => {
       this.#store.handle.prepare("DELETE FROM tavi_model_catalog WHERE connection_id = ?").run(connectionId);
+      this.#store.handle.prepare("DELETE FROM tavi_model_lifecycle WHERE connection_id = ?").run(connectionId);
       const result = this.#store.handle.prepare("DELETE FROM tavi_model_connections WHERE connection_id = ?").run(connectionId);
       return result.changes > 0;
     });
@@ -149,6 +152,33 @@ export class SqliteModelConfigRepository implements ModelConfigRepositoryPort {
         discoveredAt: entry.discoveredAt ?? null,
       });
     return entry;
+  }
+
+  listLifecycle(): readonly ModelLifecycleEntry[] {
+    const rows = this.#store.handle
+      .prepare("SELECT connection_id, model_id, lifecycle_json FROM tavi_model_lifecycle ORDER BY connection_id, model_id")
+      .all() as LifecycleRow[];
+    // A cache of what Rhumb said, rewritten whole by each sync: a row this build cannot read is left out, not an error.
+    return rows.flatMap((row) => {
+      let stored: unknown;
+      try {
+        stored = JSON.parse(row.lifecycle_json);
+      } catch {
+        return [];
+      }
+      const parsed = ModelLifecycleSchema.safeParse(stored);
+      return parsed.success ? [{ connectionId: row.connection_id, modelId: row.model_id, lifecycle: parsed.data }] : [];
+    });
+  }
+
+  replaceLifecycle(connectionId: string, entries: readonly ModelLifecycleEntry[]): void {
+    this.#store.transaction(() => {
+      this.#store.handle.prepare("DELETE FROM tavi_model_lifecycle WHERE connection_id = ?").run(connectionId);
+      const insert = this.#store.handle.prepare(
+        "INSERT INTO tavi_model_lifecycle (connection_id, model_id, lifecycle_json) VALUES (@connectionId, @modelId, @lifecycleJson)",
+      );
+      for (const entry of entries) insert.run({ connectionId, modelId: entry.modelId, lifecycleJson: JSON.stringify(entry.lifecycle) });
+    });
   }
 
   downgradeCapabilities(connectionId: string): void {
@@ -282,6 +312,12 @@ function toConnection(row: ConnectionRow): ModelConnection {
     },
     "model connection",
   );
+}
+
+interface LifecycleRow {
+  readonly connection_id: string;
+  readonly model_id: string;
+  readonly lifecycle_json: string;
 }
 
 interface CatalogRow {

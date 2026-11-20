@@ -279,6 +279,62 @@ describe("model catalog", () => {
   });
 });
 
+describe("model lifecycle", () => {
+  const lifecycle = {
+    status: "deprecated",
+    retiresOn: "2026-11-30",
+    catalogVersion: "2026-11-20.1",
+    checkedAt: "2026-11-20T08:00:00.000Z",
+  } as const;
+
+  it("replaces a connection's lifecycles whole, and removes them with the connection", () => {
+    const { store, service } = fixture();
+    service.putConnection(connection);
+    service.replaceModelLifecycle("local-ollama", [
+      { connectionId: "local-ollama", modelId: "old", lifecycle },
+      { connectionId: "local-ollama", modelId: "kept", lifecycle: { ...lifecycle, status: "ga" } },
+    ]);
+    service.replaceModelLifecycle("local-ollama", [{ connectionId: "local-ollama", modelId: "kept", lifecycle }]);
+    expect(service.listModelLifecycle()).toEqual([{ connectionId: "local-ollama", modelId: "kept", lifecycle }]);
+    service.removeConnection("local-ollama");
+    expect(service.listModelLifecycle()).toEqual([]);
+    store.close();
+  });
+
+  it("refuses an entry of another connection or an invalid one, keeping what was there", () => {
+    const { store, service } = fixture();
+    service.putConnection(connection);
+    service.replaceModelLifecycle("local-ollama", [{ connectionId: "local-ollama", modelId: "kept", lifecycle }]);
+    expect(() => service.replaceModelLifecycle("local-ollama", [{ connectionId: "other", modelId: "x", lifecycle }])).toThrow(TaviError);
+    expect(() =>
+      service.replaceModelLifecycle("local-ollama", [
+        { connectionId: "local-ollama", modelId: "x", lifecycle: { ...lifecycle, retiresOn: "2026-02-30" } },
+      ]),
+    ).toThrow(/not valid/);
+    expect(() => service.replaceModelLifecycle("missing", [])).toThrow(TaviError);
+    expect(() =>
+      service.replaceModelLifecycle("local-ollama", [
+        { connectionId: "local-ollama", modelId: "x", lifecycle },
+        { connectionId: "local-ollama", modelId: "x", lifecycle },
+      ]),
+    ).toThrow(/more than once/);
+    expect(service.listModelLifecycle()).toHaveLength(1);
+    store.close();
+  });
+
+  it("leaves out a stored lifecycle this build cannot read", () => {
+    const { store, service } = fixture();
+    store.handle
+      .prepare(
+        `INSERT INTO tavi_model_lifecycle (connection_id, model_id, lifecycle_json)
+         VALUES ('c', 'm', '{"status":"sunset"}'), ('c', 'n', '{not json')`,
+      )
+      .run();
+    expect(service.listModelLifecycle()).toEqual([]);
+    store.close();
+  });
+});
+
 describe("role resolution", () => {
   it("prefers a role override, then the workspace default, and refuses when neither is set", () => {
     const { store, service } = fixture();

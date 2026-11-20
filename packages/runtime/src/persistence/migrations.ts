@@ -680,6 +680,19 @@ END`);
       db.exec("CREATE INDEX tavi_schedule_fires_recent_idx ON tavi_schedule_fires (schedule_id, at)");
     },
   },
+  {
+    // What Rhumb last said of each model's lifecycle (retired, retiring, redirected), by connection and model. Its
+    // own table: model discovery rewrites the catalog, and a model in use may not be in the catalog at all.
+    id: "0031_model_lifecycle",
+    up: (db) => {
+      db.exec(`CREATE TABLE tavi_model_lifecycle (
+  connection_id    TEXT NOT NULL,
+  model_id         TEXT NOT NULL,
+  lifecycle_json   TEXT NOT NULL,
+  PRIMARY KEY (connection_id, model_id)
+)`);
+    },
+  },
 ];
 
 /**
@@ -824,6 +837,7 @@ export const APPLICATION_TABLES = [
   "tavi_model_catalog",
   "tavi_model_workspace_defaults",
   "tavi_model_roles",
+  "tavi_model_lifecycle",
   "tavi_search_providers",
   "tavi_model_price_sheets",
   "tavi_provider_attempts",
