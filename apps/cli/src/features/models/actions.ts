@@ -211,9 +211,7 @@ export async function connectionSummaries(service: ModelConfigService, workspace
 export async function connectionDocument(service: ModelConfigService, connectionId: string): Promise<Record<string, unknown>> {
   const connection = await service.getConnection(connectionId);
   // What the last lifecycle sync stored of each model, for its badge: never a call to Rhumb.
-  const lifecycles = new Map(
-    (await service.listModelLifecycle(connection.connectionId)).map((entry) => [entry.modelId, entry.lifecycle]),
-  );
+  const lifecycles = new Map((await service.listModelLifecycle(connection.connectionId)).map((entry) => [entry.modelId, entry.lifecycle]));
   return {
     connection: connectionRecord(connection),
     catalog: (await service.listCatalog(connection.connectionId)).map((entry) => {
