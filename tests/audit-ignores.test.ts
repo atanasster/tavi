@@ -1,6 +1,4 @@
 import { readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 
 /**
@@ -10,8 +8,8 @@ import { expect, it } from "vitest";
  * stale and must go, so it cannot silently cover a later, different problem.
  */
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const read = (path: string): string => readFileSync(join(root, path), "utf8");
+/** A file at the repository root, which this folder sits in. */
+const read = (path: string): string => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
 /** Each accepted advisory: the package and the versions it affects. A new ignore adds its line here. */
 const ACCEPTED: Readonly<Record<string, { readonly name: string; readonly affected: (version: string) => boolean }>> = {
