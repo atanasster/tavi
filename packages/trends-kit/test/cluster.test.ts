@@ -204,7 +204,8 @@ describe("coordination, near-duplicates and topics", () => {
     const result = clusterItems(wave, { minClusterSize: 1 });
     expect(result.excluded).toEqual([{ reason: "near-duplicate", count: 2_499 }]);
     expect(result.valid).toBe(1);
-    expect(performance.now() - started).toBeLessThan(15_000);
+    // Coverage instruments every line it runs, slowing this several times over: the bound is checked without it.
+    if (process.env["TAVI_COVERAGE"] !== "1") expect(performance.now() - started).toBeLessThan(15_000);
   });
 
   it("quotes whole characters only, never half an emoji", () => {
