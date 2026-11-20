@@ -63,6 +63,7 @@ export * from "./model.js";
 export * from "./model-accounting.js";
 export * from "./router.js";
 export * from "./models-config.js";
+export * from "./model-lifecycle.js";
 export * from "./pdf.js";
 export * from "./pdf-classify.js";
 export * from "./confinement.js";
