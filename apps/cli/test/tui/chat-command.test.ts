@@ -25,6 +25,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { ChatApp, RESERVED_ROWS } from "../../src/tui/app.js";
 import { chatInkOptions, runChat, type ChatStats } from "../../src/tui/index.js";
 import { ChatStore, MAX_LIVE_ROWS } from "../../src/tui/store.js";
+import { createLocalCredentialStore } from "../../src/features/credentials/store.js";
 import { EXIT, main } from "../../src/main.js";
 import type { ServeHandle } from "../../src/server/serve.js";
 import { ATTACHED, capture, turns, useAttachedOwners } from "../support/attached-owner.js";
@@ -3171,7 +3172,9 @@ describe("tavi chat under a live owner", ATTACHED, () => {
     await waitFor(() => tty.output().includes("value (hidden)"));
     await key("sk-live-owner-9876\r");
     await waitFor(() => tty.output().includes("✓ credential stripe.apiKey stored"));
-    expect(readFileSync(join(directory, "credentials", "stripe.apiKey"), "utf8").trim()).toBe("sk-live-owner-9876");
+    // Stored encrypted (a new directory is), and it reads back as typed.
+    expect(readFileSync(join(directory, "credentials", "stripe.apiKey"), "utf8")).not.toContain("sk-live-owner-9876");
+    expect(await createLocalCredentialStore(directory).getSecret("stripe.apiKey")).toBe("sk-live-owner-9876");
     expect(statSync(join(directory, "credentials", "stripe.apiKey")).mode & 0o777).toBe(0o600);
     await key("/credentials\r");
     await waitFor(() => tty.output().includes("─ credentials (the owner's store) ─"));

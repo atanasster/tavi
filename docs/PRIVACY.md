@@ -106,8 +106,9 @@ shows the bindings.
 ## What stays on your machine
 
 The database, chat archives and files, credentials (encrypted at rest from
-the start in a new data directory where the OS keychain keeps the key, and
-otherwise after `tavi credentials encrypt`), approvals, memory and the browser
+the start in a new data directory, under a key in the OS keychain or else in
+`credentials.key`; in a directory from before, after `tavi credentials
+encrypt`), approvals, memory and the browser
 profiles (`<data>/browser-profiles/`) are in your data directory. `tavi backup`
 copies the database and files; credentials only with `--include-credentials`,
 and never the credentials key or the browser profiles. A key kept in the OS

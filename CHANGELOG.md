@@ -33,6 +33,15 @@ change behaviour or stored data.
   service, makes the credential the key's home once it holds the same key
   (`--to-file` moves it back). A page cannot move the key.
 
+### Changed
+
+- A new data directory is encrypted at rest from its first open even where
+  there is no OS keychain (Linux without a Secret Service, or
+  `TAVI_CREDENTIAL_KEYCHAIN=off`): the key is written to `credentials.key`
+  (0600), as `tavi credentials encrypt` does. A directory from before is left
+  as it is, and the startup and doctor warning still names a plain store that
+  holds values.
+
 ### Fixed
 
 - Under a systemd unit, confined children (sandboxed commands, plugin

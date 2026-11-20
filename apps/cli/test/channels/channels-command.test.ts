@@ -1,4 +1,4 @@
-import { readdirSync, writeFileSync } from "node:fs";
+import { readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
@@ -59,6 +59,11 @@ const telegram = fakeFetch(async (url, init) => {
     init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))),
   );
 });
+
+/** A data directory from before new ones were encrypted: its key removed, so the store is plain. */
+function plainStore(directory: string): void {
+  rmSync(join(directory, "credentials.key"));
+}
 
 async function owner(messagingAllowedDestinations?: readonly string[], oauthFetchOverride?: typeof fetch) {
   const directory = directories.create("tavi-channels-command-");
@@ -130,7 +135,8 @@ describe("the channels command", () => {
   });
 
   it("names the Google app as Google, not by its channel's label, when its client secret needs an encrypted store", async () => {
-    const { run } = await owner();
+    const { run, directory } = await owner();
+    plainStore(directory);
     await expect(
       run({ action: "oauth-client", providerId: "gmail", clientId: "shared.apps.googleusercontent.com", clientSecret: "s" }),
     ).rejects.toThrow(/^Google's OAuth client secret is kept only in an encrypted credential store/);
@@ -642,6 +648,7 @@ describe("the channels command", () => {
 
   it("keeps the operator's own OAuth app for a channel, once for all its connections, never showing it", async () => {
     const { run, directory } = await owner();
+    plainStore(directory);
     registerChannelDescriptor({
       providerId: "inbox-oauth",
       label: "Inbox",
@@ -1027,6 +1034,7 @@ describe("the channels command", () => {
       return new Response("{}", { status: 404 });
     });
     const { run, directory } = await owner(undefined, provider);
+    plainStore(directory);
     const oauth = (providerId: string, redirect: "loopback-any-port" | "public") =>
       registerChannelDescriptor({
         providerId,

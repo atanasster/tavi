@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import type { CredentialKeychain } from "@tavi/runtime";
@@ -50,22 +50,33 @@ describe("a new data directory's credential key", () => {
     expect(credentialsEncrypted(directory)).toBe(true);
   });
 
-  it("is not made where there is no keychain, or it refuses: the store stays plain, as before", async () => {
+  it("is a key file where there is no keychain, or it refuses: the store is encrypted all the same", async () => {
     for (const keychain of [null, memoryKeychain({ refuse: true }).keychain]) {
       const directory = directories.create();
       await open(directory, keychain);
-      expect(readdirSync(directory)).not.toContain("credentials.key");
-      expect(credentialsEncrypted(directory)).toBe(false);
+      expect(readFileSync(join(directory, "credentials.key"), "utf8")).toMatch(/^[0-9a-f]{64}\n$/);
+      expect(statSync(join(directory, "credentials.key")).mode & 0o777).toBe(0o600);
+      expect(credentialsEncrypted(directory)).toBe(true);
+      // A credential stored now is written encrypted, and the startup warning has nothing to say.
+      await createLocalCredentialStore(directory).setSecret("model.key", "sk-live-value");
+      expect(readFileSync(join(directory, "credentials", "model.key"), "utf8")).toMatch(/^tavi-enc:v1:/);
+      expect(await plainCredentialStoreWarning(directory)).toBeUndefined();
     }
   });
 
   it("is never added to a directory that existed before: an unencrypted one stays unencrypted", async () => {
     const directory = directories.create();
     await open(directory, null);
+    // A directory from before keys were provisioned: a database, and no key.
+    rmSync(join(directory, "credentials.key"));
+    await createLocalCredentialStore(directory).setSecret("model.key", "sk-live-value");
     const { keychain, items } = memoryKeychain();
     await open(directory, keychain);
+    await open(directory, null);
     expect(items.size).toBe(0);
     expect(readdirSync(directory)).not.toContain("credentials.key");
+    expect(readFileSync(join(directory, "credentials", "model.key"), "utf8")).toBe("sk-live-value");
+    expect(await plainCredentialStoreWarning(directory)).toContain("tavi credentials encrypt");
   });
 
   it("leaves a directory encrypted with a key file as it was, and still reads it", async () => {
@@ -89,8 +100,17 @@ describe("provisioning and reset", () => {
     const directory = directories.create();
     await createLocalCredentialStore(directory).setSecret("model.key", "sk-live-value");
     const { keychain } = memoryKeychain();
-    expect(await provisionCredentialKey(directory, keychain)).toBe("created");
+    expect(await provisionCredentialKey(directory, keychain)).toBe("keychain");
     expect(readFileSync(join(directory, "credentials", "model.key"), "utf8")).toMatch(/^tavi-enc:v1:/);
+  });
+
+  it("encrypts a value stored before a key file was created, where there is no keychain", async () => {
+    const directory = directories.create();
+    await createLocalCredentialStore(directory).setSecret("model.key", "sk-live-value");
+    expect(await provisionCredentialKey(directory, null)).toBe("file");
+    expect(readFileSync(join(directory, "credentials", "model.key"), "utf8")).toMatch(/^tavi-enc:v1:/);
+    expect(await createLocalCredentialStore(directory).getSecret("model.key")).toBe("sk-live-value");
+    expect(await provisionCredentialKey(directory, null)).toBe("exists");
   });
 
   it("deletes the keychain item with the directory, and says so", async () => {

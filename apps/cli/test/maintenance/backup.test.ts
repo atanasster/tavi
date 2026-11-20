@@ -160,7 +160,10 @@ describe("tavi backup", () => {
     const included = join(directories.create("tavi-backup-out-"), "with");
     expect(await main(["backup", "--out", included, "--include-credentials", "--data-dir", directory], { io: capture().io })).toBe(EXIT.ok);
     expect(readdirSync(join(included, "credentials"))).toEqual(["acme.key"]);
-    expect(readFileSync(join(included, "credentials", "acme.key"), "utf8")).toBe("sk-test-value");
+    // Copied as stored: encrypted, since a new directory is, and the key is never in the backup.
+    expect(readFileSync(join(included, "credentials", "acme.key"), "utf8")).toBe(readFileSync(join(credentials, "acme.key"), "utf8"));
+    expect(readFileSync(join(included, "credentials", "acme.key"), "utf8")).toMatch(/^tavi-enc:v1:/);
+    expect(existsSync(join(included, "credentials.key"))).toBe(false);
     expect(existsSync(credentials)).toBe(true);
   });
   it("carries the workspace prompt setting and a task snapshot through backup and restore", async () => {
@@ -515,7 +518,10 @@ describe("tavi restore", () => {
       EXIT.ok,
     );
     expect(JSON.parse(restored.stdout()).restoredFiles).toEqual(["credentials/"]);
-    expect(readFileSync(join(destination, "credentials", "acme.key"), "utf8")).toBe("sk-restored");
+    // Restored as backed up (encrypted): the key comes back apart from the snapshot.
+    expect(readFileSync(join(destination, "credentials", "acme.key"), "utf8")).toBe(
+      readFileSync(join(source, "credentials", "acme.key"), "utf8"),
+    );
   });
 
   it("refuses a snapshot carrying migrations this build does not know, which is why a downgrade is a restore", async () => {

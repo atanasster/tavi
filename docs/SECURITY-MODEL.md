@@ -1077,11 +1077,12 @@ The gate (`packages/builtin/desktop/src/gates.ts`), on every action:
   --include-credentials` makes one — does not carry the key. Where the OS
   keychain is available (macOS Keychain, a libsecret Secret Service, Windows
   Credential Manager) the key is kept there instead, `credentials.key` holding
-  only a reference, and a new data directory is encrypted from its first open.
-  Where there is none (Linux without a Secret Service on a session bus, or
-  `TAVI_CREDENTIAL_KEYCHAIN=off`), a new data directory starts plain until
-  `tavi credentials encrypt`, and `tavi serve` and `tavi doctor` warn while a
-  plain store holds values;
+  only a reference. A new data directory is encrypted from its first open:
+  where there is no keychain (Linux without a Secret Service on a session bus,
+  or `TAVI_CREDENTIAL_KEYCHAIN=off`) under a key in `credentials.key` itself
+  (0600; on a headless service it can be moved into a systemd credential). A
+  directory from before stays as it was, and `tavi serve` and `tavi doctor`
+  warn while a plain store holds values until `tavi credentials encrypt`;
   the key reaches the keychain tool on standard input, never in its arguments
   (on Windows no tool runs: Credential Manager is called in process). A sign-in's token
   and a client secret are kept only when the store is encrypted. Under a

@@ -749,13 +749,9 @@ describe("configuration commands under an owner", () => {
     expect((await client.request("credentials", { action: "set", reference: "blank.key", value: "  \n " }, "blank")).error?.code).toBe(
       "INVALID_INPUT",
     );
-    // Encrypted at rest on the owner, as offline: idempotent, the values still resolved.
+    // A new directory is encrypted from its first open: a value is written encrypted, and encrypt is idempotent on the owner.
     await client.request("credentials", { action: "set", reference: "kept.apiKey", value: "sk-kept" }, "kept");
     expect((await client.request("credentials", { action: "encrypt" }, "encrypt")).result).toMatchObject({
-      keyCreated: true,
-      encrypted: ["kept.apiKey"],
-    });
-    expect((await client.request("credentials", { action: "encrypt" }, "encrypt-again")).result).toMatchObject({
       keyCreated: false,
       encrypted: [],
       alreadyEncrypted: ["kept.apiKey"],

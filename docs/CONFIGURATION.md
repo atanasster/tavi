@@ -74,11 +74,12 @@ or when the keychain refuses or does not answer within a few seconds,
 `credentials.key` holds the key itself, as before.
 
 A **new data directory** is encrypted from its first open, with no step of its
-own, when the keychain takes the key: so a sign-in's token or an OAuth client
-secret can be kept from the start. Without a keychain a new directory stays
-plain until `tavi credentials encrypt`, as before; while a plain store holds
-values, `tavi serve` warns at start and `tavi doctor` says so under
-`credentialStore`. A directory that existed
+own: so a sign-in's token or an OAuth client secret can be kept from the
+start. The key goes to the keychain when it takes it; without one (or with
+`TAVI_CREDENTIAL_KEYCHAIN=off`) `credentials.key` is the key itself (0600), as
+`tavi credentials encrypt` makes it. While a plain store holds values — a
+directory from before, or one whose key file could not be written — `tavi
+serve` warns at start and `tavi doctor` says so under `credentialStore`. A directory that existed
 before, whether plain or encrypted with a key file, is left as it is: nothing
 is migrated. A value `tavi credentials set` stored before the first open is
 encrypted when the key is created. Each key has a keychain account of its own,

@@ -220,10 +220,9 @@ describe("Gmail through the UI", () => {
     await page.getByRole("button", { name: "Allow person" }).click();
     await page.getByText("ana@example.com ·").waitFor({ timeout: 20_000 });
 
-    // Signed in: encryption first, the operator's OAuth app, then Google.
+    // Signed in: the operator's OAuth app (the store is encrypted from the directory's first open), then Google.
     await page.goto(`${bridge.origin}/settings/messaging`);
     await page.getByRole("button", { name: /Edit Gmail/ }).click();
-    await page.getByRole("button", { name: "Encrypt credentials" }).click();
     await page.getByLabel("OAuth client ID").fill("operator-client.apps.googleusercontent.com");
     await page.getByLabel("OAuth client secret").fill("operator-secret");
     await page.getByRole("button", { name: "Save OAuth app" }).click();

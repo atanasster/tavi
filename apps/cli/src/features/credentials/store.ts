@@ -92,21 +92,32 @@ export function isNewDataDirectory(dataDirectory: string): boolean {
 
 /**
  * Turn on encryption for a new data directory, with no step of its own: the
- * key goes to the OS keychain and `credentials.key` refers to it, and a value
- * `tavi credentials set` stored before then is encrypted under it. Where there
- * is no keychain, or it refuses or does not answer, nothing is written and the
- * store stays plain, as before — `tavi credentials encrypt` still turns it on.
- * Never fails the caller: a store that stays plain is not an error.
+ * key goes to the OS keychain and `credentials.key` refers to it; where there
+ * is no keychain, or it refuses or does not answer, `credentials.key` is the
+ * key itself (0600), as `tavi credentials encrypt` makes it. A value `tavi
+ * credentials set` stored before then is encrypted under it. Only a new
+ * directory: one that existed before is never migrated (`plainCredentialStoreWarning`
+ * says while it stays plain). Never fails the caller: if even the key file
+ * cannot be written, the store stays plain and that warning says so.
  */
 export async function provisionCredentialKey(
   dataDirectory: string,
   keychain: CredentialKeychain | null | undefined = systemCredentialKeychain(),
-): Promise<"created" | "exists" | "unavailable"> {
-  if (keychain === null || keychain === undefined) return "unavailable";
-  const outcome = await createKeychainCredentialKey(credentialKeyFile(dataDirectory), keychain).catch(() => "unavailable" as const);
-  if (outcome === "created" && existsSync(credentialsDirectory(dataDirectory))) {
+): Promise<"keychain" | "file" | "exists" | "unavailable"> {
+  const keyFile = credentialKeyFile(dataDirectory);
+  const inKeychain =
+    keychain === null || keychain === undefined
+      ? ("unavailable" as const)
+      : await createKeychainCredentialKey(keyFile, keychain).catch(() => "unavailable" as const);
+  if (inKeychain === "exists") return "exists";
+  let outcome: "keychain" | "file" | "exists" | "unavailable" = "keychain";
+  if (inKeychain === "unavailable") {
+    const created = await createCredentialKey(keyFile).catch(() => undefined);
+    outcome = created === undefined ? "unavailable" : created ? "file" : "exists";
+  }
+  if ((outcome === "keychain" || outcome === "file") && existsSync(credentialsDirectory(dataDirectory))) {
     // Left plain, it stays readable: `tavi credentials encrypt` finishes what this could not.
-    await encryptCredentialDirectory(dataDirectory, keychain).catch(() => undefined);
+    await encryptCredentialDirectory(dataDirectory, keychain ?? undefined).catch(() => undefined);
   }
   return outcome;
 }

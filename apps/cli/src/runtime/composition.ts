@@ -64,8 +64,8 @@ export async function composeTaviRuntime(options: TaviRuntimeOptions, overrides:
         ...buildStoreOptions(options),
         ...(overrides.inspectCheckpoints === true ? { checkpointMode: "inspect" as const } : {}),
       }));
-    // A new data directory's credential store is encrypted from the start where the OS keychain can keep the
-    // key; elsewhere, and in every directory that existed before, it stays as it was.
+    // A new data directory's credential store is encrypted from the start: the key in the OS keychain where it
+    // can keep it, else in credentials.key. Every directory that existed before stays as it was.
     if (fresh) await provisionCredentialKey(options.dataDirectory, overrides.credentialKeychain);
     return await buildRuntime(store, options, overrides, ownership, sessionId);
   } catch (error) {
