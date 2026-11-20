@@ -21,8 +21,18 @@ with you once a fix is ready.
 
 ## Supported versions
 
-Tavi is pre-1.0 and runs from a clone: fixes land on `main`. Update your
-checkout (`git pull`, `pnpm install`, `pnpm run build`) to pick them up.
+Tavi is pre-1.0. Security fixes land on `main` and ship in the next release;
+only the latest release on
+[GitHub Releases](https://github.com/atanasster/tavi/releases) gets them, and
+older releases are not patched.
+
+- **Installed with `install.sh`:** run the installer again to update to the
+  latest release; your data directory is not touched
+  ([README](README.md#quick-install)).
+- **Running from a clone:** `git pull`, `pnpm install`, `pnpm run build` picks
+  up a fix as soon as it lands on `main`, before a release carries it.
+
+`tavi --version` says which release you run (and, from a clone, the commit).
 
 ## Critical dependencies
 
