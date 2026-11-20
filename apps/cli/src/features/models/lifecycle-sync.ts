@@ -299,6 +299,21 @@ export async function storedLifecycleReport(
   };
 }
 
+/** What the last sync stored of a runtime's models in use, for today: doctor's and `models lifecycle`'s, with no network. */
+export async function runtimeLifecycleReport(
+  runtime: Pick<TaviRuntime, "store" | "access" | "routines" | "routerRepository" | "clock">,
+): Promise<StoredLifecycleReport> {
+  const service = runtime.store.services.modelConfig;
+  return await storedLifecycleReport(
+    {
+      stored: async () => await service.listModelLifecycle(),
+      inUse: () => modelTargetsInUse(targetSourcesOf(runtime)),
+      connections: async () => await service.listConnections(),
+    },
+    new Date(runtime.clock.now()),
+  );
+}
+
 /**
  * The Rhumb key: `RHUMB_KEY` (or `RESOLVER_KEY`) when set, else the credential
  * store's `rhumb`; `undefined` for neither. A stored key that cannot be read

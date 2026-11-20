@@ -205,7 +205,7 @@ field at a time.
 | `/answer [<n> <text>]` | List the questions open in this chat, its workers' included; with a number, answer that one |
 | `/new` | With Home off, the next prompt starts a new chat; with Home on, it does what `/side` does |
 | `/needs`, `/agents`, `/schedules`, `/approvals` | Print a status snapshot (`/needs`: every question, approval and review waiting on you, and where to answer each; `/agents`: the workspace's agents and the followed chat's mailbox) |
-| `/credentials`, `/models`, `/plugins` | List stored references; connections, default and roles; plugins, their state and what awaits review |
+| `/credentials`, `/models`, `/plugins` | List stored references; connections, default, roles and what the last model lifecycle sync says of the models in use (retired, redirected, retiring); plugins, their state and what awaits review |
 | `/credentials set [ref]` | Store a credential; the value is typed masked, never shown |
 | `/models add`, `/models set-default`, `/models set-role`, `/models test` | Configure models a field at a time |
 | `/help` (or `/?`) | List the commands, wrapped to the terminal's width |

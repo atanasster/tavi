@@ -1343,10 +1343,25 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           return answer.ok ? credentialsPane(answer.result as Parameters<typeof credentialsPane>[0]) : answer;
         },
         models: async () => {
-          const [connections, roles] = await Promise.all([read("models", {}), read("models", { action: "roles" })]);
+          const [connections, roles, lifecycle] = await Promise.all([
+            read("models", {}),
+            read("models", { action: "roles" }),
+            // An older owner has no such read: the pane goes without its lifecycle lines.
+            read("models", { action: "lifecycle" }),
+          ]);
           if (!connections.ok) return connections;
           if (!roles.ok) return roles;
-          return modelsPane(connections.result as ConnectionSummary[], roles.result as Parameters<typeof modelsPane>[1], workspaceId);
+          return modelsPane(
+            connections.result as ConnectionSummary[],
+            roles.result as Parameters<typeof modelsPane>[1],
+            workspaceId,
+            lifecycle.ok
+              ? (lifecycle.result as Parameters<typeof modelsPane>[3])
+              : // An older owner refuses the action itself: no lifecycle lines. Any other failure is said.
+                lifecycle.error?.code === "INVALID_INPUT"
+                ? undefined
+                : { problem: lifecycle.error?.message ?? "no answer" },
+          );
         },
         needs: async () => {
           const answer = await owner.request("approvals", { action: "needs", workspaceId }, { timeoutMs: READ_TIMEOUT_MS }).catch(failedOf);

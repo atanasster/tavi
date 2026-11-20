@@ -5,7 +5,7 @@ import { StatusNote } from "../../ui/Parts.js";
 import { Popover } from "../../ui/Popover.js";
 import { Select } from "../../ui/Select.js";
 import { Tooltip } from "../../ui/Tooltip.js";
-import { loadModels, type BrowsedModel } from "../settings/models-api.js";
+import { lifecycleNotice, loadModels, type BrowsedModel } from "../settings/models-api.js";
 import type { Outcome } from "../../lib/ipc.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { formatCount } from "../../lib/format.js";
@@ -30,6 +30,12 @@ function formatOptionLabel(model: BrowsedModel, models: readonly BrowsedModel[])
   return reduced;
 }
 
+/** ` · Retiring` after a model whose lifecycle warns (not a mere notice); nothing otherwise. */
+function lifecycleSuffix(model: BrowsedModel): string {
+  const notice = lifecycleNotice(model);
+  return notice === undefined || notice.level === "info" ? "" : ` · ${notice.label}`;
+}
+
 /**
  * The composer's model picker: the models every connection has discovered
  * (`models discover`, the catalog the Models view browses). What a pick does
@@ -49,7 +55,10 @@ export function ModelPicker({
 }) {
   const { client, workspaceId } = useWorkspace();
   const { data, error, reload } = useLoaded(() => loadModels(client, workspaceId));
-  const [note, setNote] = useState<string>();
+  // A pick's note, with the model the chat had and the one picked: shown while the chat holds either (a refused
+  // pick leaves the old one), never on another chat's model.
+  const [picked, setPicked] = useState<{ readonly from: string | undefined; readonly to: string; readonly note: string | undefined }>();
+  const note = picked !== undefined && (picked.from === target || picked.to === target) ? picked.note : undefined;
   const [saving, setSaving] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const infoButtonRef = useRef<HTMLButtonElement>(null);
@@ -58,6 +67,10 @@ export function ModelPicker({
   // Models from more than one place say where each is from: a local server's beside a gateway's hundreds.
   const connections = new Set(models.map((model) => model.connectionId));
   const known = models.some((model) => `${model.connectionId}/${model.modelId}` === target);
+  // The chat's own model, when it warns: said under the picker until a pick's own note replaces it.
+  const chosen = models.find((model) => `${model.connectionId}/${model.modelId}` === target);
+  const chosenNotice = chosen === undefined ? undefined : lifecycleNotice(chosen);
+  const chosenLifecycle = chosenNotice === undefined || chosenNotice.level === "info" ? undefined : `This model ${chosenNotice.text}.`;
   const selectedModel =
     models.find((entry) => `${entry.connectionId}/${entry.modelId}` === target) ??
     (target !== undefined ? models.find((entry) => entry.modelId === target) : undefined);
@@ -68,7 +81,11 @@ export function ModelPicker({
     setSaving(true);
     const written = await onPick(model.connectionId, model.modelId);
     setSaving(false);
-    setNote(written.ok ? written.value : written.message);
+    // A pick of a model that warns says so with the pick's own note, announced together.
+    const notice = written.ok ? lifecycleNotice(model) : undefined;
+    const warns = notice !== undefined && notice.level !== "info" ? `This model ${notice.text}.` : undefined;
+    const said = written.ok ? written.value : written.message;
+    setPicked({ from: target, to: value, note: said === undefined ? warns : warns === undefined ? said : `${said} ${warns}` });
     reload();
   };
 
@@ -127,6 +144,8 @@ export function ModelPicker({
                   : {})}
               >
                 {formatOptionLabel(model, models)}
+                {/* A model that retires, is retired or redirected says so where it is picked. */}
+                {lifecycleSuffix(model)}
               </option>
             ))}
           </Select>
@@ -136,6 +155,8 @@ export function ModelPicker({
         </Tooltip>
       </div>
       <StatusNote note={note} className="composer-hint model-note" />
+      {/* The chat's model's lifecycle, when no pick's note already says it: a standing line, not an announcement. */}
+      <StatusNote note={note === undefined ? chosenLifecycle : undefined} className="composer-hint model-note" announce={false} />
       {infoOpen ? (
         <Popover
           id={popoverId}

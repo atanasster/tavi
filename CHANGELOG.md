@@ -18,6 +18,9 @@ change behaviour or stored data.
   names are sent, and no model is ever changed for you. The key may also be
   stored as the credential `rhumb`: `tavi setup` offers it once a cloud model
   works, and Settings → Models has a **Model retirements** card for it.
+  Settings → Models shows a banner for the roles' models that retire or are
+  redirected, the chat's model picker marks them, and the TUI's `/models`
+  ends with them.
 - `tavi serve` (at start) and `tavi doctor` (`mcp.weakerSandbox`) name each
   approved MCP server that runs unsandboxed or in the nested sandbox while
   this host's sandbox now confines more, with the way to move it: add the

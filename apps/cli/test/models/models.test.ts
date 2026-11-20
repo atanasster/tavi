@@ -8,7 +8,7 @@ import { SqliteStore } from "../support/database-fixture.js";
 import { afterEach, afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { EXIT, main } from "../../src/main.js";
-import { modelRolesDocument } from "../../src/features/models/actions.js";
+import { connectionDocument, modelRolesDocument } from "../../src/features/models/actions.js";
 
 /**
  * `tavi models`.
@@ -476,6 +476,29 @@ describe("tavi models", () => {
     await main(["--help"], { io: captured.io });
     expect(captured.stdout()).toContain("tavi models <action>");
     expect(captured.stdout()).toContain("set-role <role>");
+  });
+});
+
+describe("models show's lifecycle", () => {
+  it("carries each catalog row's stored lifecycle, and none for a model never synced", async () => {
+    const store = await SqliteStore.open({ databasePath: ":memory:", inMemory: true });
+    const service = new ModelConfigService(store.asPort());
+    await service.putConnection({ connectionId: "openai", label: "OpenAI", baseUrl: "https://api.openai.com/v1", credentialRef: "openai" });
+    await service.replaceCatalog("openai", [
+      { connectionId: "openai", modelId: "gpt-5", provenance: "catalog", state: "available" },
+      { connectionId: "openai", modelId: "gpt-6", provenance: "catalog", state: "available" },
+    ]);
+    const lifecycle = {
+      status: "deprecated" as const,
+      retiresOn: "2026-12-11",
+      catalogVersion: "v",
+      checkedAt: "2026-11-20T08:00:00.000Z",
+    };
+    await service.replaceModelLifecycle("openai", [{ connectionId: "openai", modelId: "gpt-5", lifecycle }]);
+    const catalog = (await connectionDocument(service, "openai"))["catalog"] as { modelId: string; lifecycle?: unknown }[];
+    expect(catalog.find((row) => row.modelId === "gpt-5")?.lifecycle).toEqual(lifecycle);
+    expect(catalog.find((row) => row.modelId === "gpt-6")).not.toHaveProperty("lifecycle");
+    store.close();
   });
 });
 

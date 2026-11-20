@@ -103,6 +103,29 @@ function owner(): { readonly client: SettingsClient } {
 }
 
 describe("the composer's model picker", () => {
+  it("says when the chat's model is retired, and marks one retiring in the list", async () => {
+    const lifecycle = (retiresOn: string) => ({
+      status: "deprecated",
+      retiresOn,
+      catalogVersion: "v",
+      checkedAt: "2026-11-01T00:00:00.000Z",
+    });
+    const today = new Date().toISOString().slice(0, 10);
+    const soon = new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10);
+    const client = catalog([
+      { ...listed("old", "Old"), lifecycle: lifecycle(today) },
+      { ...listed("next", "Next"), lifecycle: lifecycle(soon) },
+      listed("fine", "Fine"),
+    ] as never);
+    radixShims();
+    const page = await mount(picker(client, "openrouter/old"));
+    expect(page.querySelector(".model-note")?.textContent).toBe(`This model retired on ${today}.`);
+    await openList(page);
+    const options = [...document.querySelectorAll('[role="option"]')].map((option) => option.textContent ?? "");
+    expect(options.some((text) => text.includes("Next") && text.includes("Retiring"))).toBe(true);
+    expect(options.some((text) => text.includes("Fine") && text.includes("·"))).toBe(false);
+  });
+
   it("lists the discovered models, the current default selected and an unavailable one disabled", async () => {
     const { client } = owner();
     const page = await mount(picker(client, "openrouter/gpt-4.1-mini"));

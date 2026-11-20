@@ -210,14 +210,24 @@ export async function connectionSummaries(service: ModelConfigService, workspace
 /** `models show`: the connection and its catalog, each entry marked stale if the connection changed since. */
 export async function connectionDocument(service: ModelConfigService, connectionId: string): Promise<Record<string, unknown>> {
   const connection = await service.getConnection(connectionId);
+  // What the last lifecycle sync stored of each model, for its badge: never a call to Rhumb.
+  const lifecycles = new Map(
+    (await service.listModelLifecycle())
+      .filter((entry) => entry.connectionId === connection.connectionId)
+      .map((entry) => [entry.modelId, entry.lifecycle]),
+  );
   return {
     connection: connectionRecord(connection),
-    catalog: (await service.listCatalog(connection.connectionId)).map((entry) => ({
-      ...entry,
-      // Discovery describes the connection as it was: an edit since then makes
-      // the listing stale even though the rows remain.
-      stale: isDiscoveryStale(entry, connection),
-    })),
+    catalog: (await service.listCatalog(connection.connectionId)).map((entry) => {
+      const lifecycle = lifecycles.get(entry.modelId);
+      return {
+        ...entry,
+        // Discovery describes the connection as it was: an edit since then makes
+        // the listing stale even though the rows remain.
+        stale: isDiscoveryStale(entry, connection),
+        ...(lifecycle === undefined ? {} : { lifecycle }),
+      };
+    }),
   };
 }
 

@@ -14,11 +14,13 @@ import {
   type ModelsData,
   type RoleRow,
   type TargetRef,
+  lifecycleNotice,
+  rolesLifecycleNotices,
 } from "./models-api.js";
 import { loadVideoStatus, type VideoStatus } from "./video-api.js";
 import { workspaceSettingsActions } from "./workspace-api.js";
 import type { Outcome } from "../../lib/ipc.js";
-import { Failure, LoadState, PageHead, PageNote } from "../../ui/Parts.js";
+import { Failure, LoadState, Notice, PageHead, PageNote } from "../../ui/Parts.js";
 import { Confirm } from "../../ui/Confirm.js";
 import { AddConnectionModal, ManageConnectionModal } from "./ConnectionSetup.js";
 import { VideoAnalyzerStatus, VideoModels } from "./VideoModels.js";
@@ -143,6 +145,7 @@ export function ModelBrowser() {
 
       {data !== undefined && hasConnections ? (
         <>
+          <LifecycleBanner data={data} />
           <RolesTable
             data={data}
             busy={busy}
@@ -459,6 +462,10 @@ function ConnectionRow({
   const models = data.models.filter((model) => model.connectionId === connection.connectionId);
   const failed = data.failures.some((failure) => failure.connectionId === connection.connectionId);
   const stale = models.some((model) => model.stale);
+  const warning = models.filter((model) => {
+    const notice = lifecycleNotice(model);
+    return notice !== undefined && notice.level !== "info";
+  }).length;
   const health = failed || models.length === 0 ? "warn" : "ok";
   const discovering = busy === `discover:${connection.connectionId}`;
   return (
@@ -474,6 +481,7 @@ function ConnectionRow({
           {hostOf(connection.baseUrl)} ·{" "}
           {failed ? "models could not be read" : models.length === 0 ? "no models discovered" : plural(models.length, "model")}
           {stale ? " · list is stale" : ""}
+          {warning > 0 ? ` · ${plural(warning, "model")} retired, retiring or redirected` : ""}
         </span>
         {videoOff ? null : <VideoModels connection={connection} models={models} busy={busy} onSwitch={onVideo} onProbe={onProbeVideo} />}
       </div>
@@ -486,5 +494,38 @@ function ConnectionRow({
         </RowAction>
       </div>
     </li>
+  );
+}
+
+/**
+ * The models in use (the default, the running target, the roles and their
+ * fallbacks) that are retired, redirected or retiring soon, from the last
+ * lifecycle sync: said above the roles, since Tavi never changes a model for
+ * you. Nothing shows when none is.
+ */
+function LifecycleBanner({ data }: { readonly data: ModelsData }) {
+  const notices = rolesLifecycleNotices(data);
+  if (notices.length === 0) return null;
+  const retired = notices.some(({ notice }) => notice.level === "error");
+  const Line = retired ? Failure : Notice;
+  // A named section, not a live region: it is there when the page opens, and says nothing new while it stays.
+  return (
+    <section className="lifecycle-banner" aria-labelledby="lifecycle-banner-title">
+      <h2 id="lifecycle-banner-title" className="visually-hidden">
+        Models in use that retire
+      </h2>
+      <Line {...(retired ? { alert: false } : {})}>
+        {retired
+          ? "A model in use is retired: pick another with Set."
+          : "A model in use retires or is redirected, now or soon. Tavi never switches it for you: pick another with Set when ready."}
+      </Line>
+      <ul className="list-reset">
+        {notices.map(({ target, notice }) => (
+          <li key={target}>
+            <strong>{target}</strong> {notice.text}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

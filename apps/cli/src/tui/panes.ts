@@ -251,6 +251,21 @@ export function modelsPane(
     readonly resolved?: readonly ResolvedRole[];
   },
   workspaceId: string,
+  /** What the last lifecycle sync says of the models in use; absent from an owner that does not report it. */
+  lifecycle?:
+    | {
+        readonly checkedAt: string | null;
+        readonly stale?: boolean;
+        readonly unchecked?: readonly string[];
+        readonly warnings: readonly {
+          readonly connectionId: string;
+          readonly model: string;
+          readonly level: string;
+          readonly says: readonly string[];
+        }[];
+        readonly hint?: string;
+      }
+    | { readonly problem: string },
 ): string[] {
   const lines = [header("models", workspaceId), "  connections (shared by every workspace):"];
   if (connections.length === 0) lines.push("    none (/models add adds one)");
@@ -274,7 +289,33 @@ export function modelsPane(
     if (nowhere.length > 0) lines.push(`  unbound, resolving to nothing: ${nowhere.join(", ")}`);
   }
   if (roles.roles.length > 0) lines.push("  (role bindings are configuration: the owner's own runs use the default)");
+  if (lifecycle !== undefined) lines.push(...lifecycleLines(lifecycle));
   return lines;
+}
+
+/**
+ * The models pane's lifecycle lines, as doctor says them: a gap (stale, not
+ * yet checked) before any all-clear, and a mere notice (a deprecation with no
+ * date) left to doctor, as the canvas leaves it.
+ */
+function lifecycleLines(lifecycle: NonNullable<Parameters<typeof modelsPane>[3]>): string[] {
+  if ("problem" in lifecycle) return [`  lifecycle: could not be read (${lifecycle.problem})`];
+  if (lifecycle.checkedAt === null) return [`  lifecycle: not checked${lifecycle.hint === undefined ? "" : ` (${lifecycle.hint})`}`];
+  const shown = lifecycle.warnings.filter((warning) => warning.level !== "info");
+  const unchecked = lifecycle.unchecked ?? [];
+  const gaps = [
+    ...(lifecycle.stale === true ? ["  lifecycle: stale, the daily sync has not run (tavi models sync)"] : []),
+    ...(unchecked.length === 0 ? [] : [`  lifecycle: not yet checked: ${unchecked.join(", ")}`]),
+  ];
+  if (shown.length === 0 && gaps.length === 0)
+    return [`  lifecycle: no model in use is retiring or redirected (checked ${lifecycle.checkedAt.slice(0, 10)})`];
+  return [
+    ...gaps,
+    ...shown.map(
+      (warning) =>
+        `  ${warning.level === "error" ? GLYPHS.failed : GLYPHS.flagged} ${warning.connectionId}/${warning.model} ${warning.says.join("; ")}`,
+    ),
+  ];
 }
 
 /** The owner's plugins: each one's state there, and what awaits review. Changes are `tavi plugins` or the canvas's. */

@@ -460,6 +460,45 @@ describe("the panes", () => {
       "  default: none (/models set-default)",
     ]);
   });
+
+  it("ends with what the last lifecycle sync says of the models in use", () => {
+    const empty = { workspaceDefault: null, roles: [] };
+    expect(modelsPane([], empty, "w", { checkedAt: null, warnings: [], hint: "set RHUMB_KEY" }).at(-1)).toBe(
+      "  lifecycle: not checked (set RHUMB_KEY)",
+    );
+    expect(modelsPane([], empty, "w", { checkedAt: "2026-11-20T08:00:00.000Z", warnings: [] }).at(-1)).toBe(
+      "  lifecycle: no model in use is retiring or redirected (checked 2026-11-20)",
+    );
+    const lines = modelsPane([], empty, "w", {
+      checkedAt: "2026-11-20T08:00:00.000Z",
+      warnings: [
+        { connectionId: "openai", model: "gpt-5", level: "error", says: ["retired on 2026-11-19"] },
+        {
+          connectionId: "gemini",
+          model: "gemini-2.5-pro",
+          level: "warning",
+          says: ["answered and billed as gemini-3.8-flash on 2026-12-01"],
+        },
+      ],
+    });
+    expect(lines.slice(-2).map((line) => line.replace(/^ {2}\S+ /u, ""))).toEqual([
+      "openai/gpt-5 retired on 2026-11-19",
+      "gemini/gemini-2.5-pro answered and billed as gemini-3.8-flash on 2026-12-01",
+    ]);
+    expect(modelsPane([], empty, "w").some((line) => line.includes("lifecycle"))).toBe(false);
+    // A gap is said before any all-clear; a mere notice is doctor's.
+    expect(
+      modelsPane([], empty, "w", {
+        checkedAt: "2026-11-01T08:00:00.000Z",
+        stale: true,
+        unchecked: ["openai/gpt-6"],
+        warnings: [{ connectionId: "openai", model: "o3", level: "info", says: ["deprecated on 2026-10-01"] }],
+      }).slice(-2),
+    ).toEqual(["  lifecycle: stale, the daily sync has not run (tavi models sync)", "  lifecycle: not yet checked: openai/gpt-6"]);
+    expect(modelsPane([], empty, "w", { problem: "the owner timed out" }).at(-1)).toBe(
+      "  lifecycle: could not be read (the owner timed out)",
+    );
+  });
 });
 
 describe("needsPane", () => {

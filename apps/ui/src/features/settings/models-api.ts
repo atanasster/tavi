@@ -1,4 +1,15 @@
-import { ChatModelSchema, MODEL_ROLES, type ModelCatalogEntry, type ModelConnection, type ModelRoleBinding } from "@tavi/contracts";
+import {
+  ChatModelSchema,
+  lifecycleWarnings,
+  lifecycleWarningText,
+  MODEL_ROLES,
+  worstLifecycleLevel,
+  type LifecycleLevel,
+  type ModelCatalogEntry,
+  type ModelConnection,
+  type ModelLifecycle,
+  type ModelRoleBinding,
+} from "@tavi/contracts";
 
 import { plural } from "@tavi/contracts/util";
 
@@ -26,6 +37,65 @@ export interface BrowsedModel extends ModelCatalogEntry {
   readonly providerManaged?: boolean;
   /** Discovered before the connection last changed. */
   readonly stale: boolean;
+  /** What the last lifecycle sync (Rhumb) stored of it; absent when none ran or an older owner. */
+  readonly lifecycle?: ModelLifecycle;
+}
+
+/** A model's lifecycle today, as a badge says it: its worst level and each warning in words; none when nothing warns. */
+export interface LifecycleNotice {
+  readonly level: LifecycleLevel;
+  /** A badge's word: Retired, Redirected, Retiring, or Notice. */
+  readonly label: string;
+  readonly text: string;
+}
+
+export function lifecycleNotice(
+  model: Pick<BrowsedModel, "lifecycle">,
+  today: string = new Date().toISOString().slice(0, 10),
+): LifecycleNotice | undefined {
+  if (model.lifecycle === undefined) return undefined;
+  const warnings = lifecycleWarnings(model.lifecycle, today);
+  const level = worstLifecycleLevel(warnings);
+  if (level === undefined) return undefined;
+  const first = warnings[0]?.code;
+  const label =
+    first === "retired"
+      ? "Retired"
+      : first === "redirected"
+        ? "Redirected"
+        : first === "redirects_soon"
+          ? "Redirecting"
+          : first === "retires_soon"
+            ? "Retiring"
+            : "Notice";
+  return { level, label, text: warnings.map(lifecycleWarningText).join("; ") };
+}
+
+/**
+ * The targets the workspace's default, the owner's running target and the roles name (fallbacks too) whose
+ * model warns today: what the Models page's banner lists. A target whose model
+ * the catalog does not list has no lifecycle here and is not named.
+ */
+export function rolesLifecycleNotices(
+  data: Pick<ModelsData, "models" | "roles">,
+  today?: string,
+): readonly { readonly target: string; readonly notice: LifecycleNotice }[] {
+  const targets = [
+    ...(data.roles.workspaceDefault === null ? [] : [data.roles.workspaceDefault.target]),
+    // With no default saved, what the owner runs for a turn is its own: as much in use.
+    ...(data.roles.activeTarget === undefined || data.roles.activeTarget === null ? [] : [data.roles.activeTarget]),
+    ...(data.roles.roles ?? []).flatMap((binding) => [binding.target, ...binding.fallback]),
+  ];
+  const seen = new Set<string>();
+  return targets.flatMap((target) => {
+    if (target.model === undefined) return [];
+    const key = `${target.connectionId}/${target.model}`;
+    if (seen.has(key)) return [];
+    seen.add(key);
+    const model = data.models.find((entry) => entry.connectionId === target.connectionId && entry.modelId === target.model);
+    const notice = model === undefined ? undefined : lifecycleNotice(model, today);
+    return notice === undefined || notice.level === "info" ? [] : [{ target: key, notice }];
+  });
 }
 
 export type ModelRole = (typeof MODEL_ROLES)[number];
@@ -72,10 +142,14 @@ export async function loadModels(client: SettingsClient, workspaceId: string): P
   const [roles, ...shown] = await Promise.all([
     ask<RolesDocument>(client, "models", { action: "roles", workspaceId }),
     ...connections.map((connection) =>
-      ask<{ readonly catalog: readonly (ModelCatalogEntry & { readonly stale?: boolean })[] }>(client, "models", {
-        action: "show",
-        connectionId: connection.connectionId,
-      }),
+      ask<{ readonly catalog: readonly (ModelCatalogEntry & { readonly stale?: boolean; readonly lifecycle?: ModelLifecycle })[] }>(
+        client,
+        "models",
+        {
+          action: "show",
+          connectionId: connection.connectionId,
+        },
+      ),
     ),
   ]);
   if (!roles.ok) return roles;

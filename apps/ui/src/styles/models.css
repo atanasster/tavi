@@ -492,3 +492,10 @@
   display: flex;
   gap: var(--space-2);
 }
+
+/* Models the roles use that retire or are redirected: above the roles table. */
+.lifecycle-banner {
+  display: grid;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+}

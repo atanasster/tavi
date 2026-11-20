@@ -367,7 +367,11 @@ settings; with nothing discovered yet, the picker is that link. With more than
 one connection, each model in the list says which it comes from (**Ollama**,
 **OpenRouter**), and the search finds models by it; the list opens above the
 composer and stays there as a search narrows it, and the picker keeps naming
-the chat's model while the search hides it.
+the chat's model while the search hides it. After a lifecycle sync
+(`tavi models sync`, or the owner's daily one, with a Rhumb key), a model that
+is retired, redirected or retiring within 30 days says so in the list
+(` · Retiring`, ` · Redirected`, ` · Retired`), and when the chat's own model
+does, a line under the picker says what and when. Nothing is switched for you.
 
 A new chat suggests up to three prompts (a chat to continue, your best ideas, or
 what Tavi can do here), each filling the box, never sending; see
@@ -1166,7 +1170,10 @@ tabs above the page. It has these views:
   **Video analysers** checks FFmpeg and which pose, transcription and
   on-screen-text analysers can run here ([VIDEO.md](VIDEO.md)). **Add
   connection** picks a provider, takes its key, discovers its models and, when
-  the workspace has no default yet, asks for one. **Model retirements**
+  the workspace has no default yet, asks for one. Above the roles, a banner
+  names the models the default and the roles (fallbacks too) use that the
+  last lifecycle sync says are retired, redirected or retiring within 30 days;
+  each connection's line counts its models that are. **Model retirements**
   stores a free [Rhumb](https://rhumbdata.com/sign-up) key (as the
   credential `rhumb`), after which the owner checks daily which models in use
   retire, are redirected or change price; with one stored, **Check now** runs

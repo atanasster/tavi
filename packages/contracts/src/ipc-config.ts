@@ -90,6 +90,8 @@ export const MODELS_ACTIONS = [
   "video-status",
   // What Rhumb says of the models in use: stores their lifecycle, never changes a model.
   "sync",
+  // Read-only: what the last sync stored of the models in use, for today (doctor's `modelConfiguration.lifecycle`).
+  "lifecycle",
 ] as const;
 
 export const ModelsPayloadSchema = z.object({

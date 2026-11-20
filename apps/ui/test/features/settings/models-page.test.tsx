@@ -2,7 +2,14 @@
 import { act } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { roleRows, type ConnectionSummary, type RolesDocument } from "../../../src/features/settings/models-api.js";
+import {
+  lifecycleNotice,
+  roleRows,
+  rolesLifecycleNotices,
+  type BrowsedModel,
+  type ConnectionSummary,
+  type RolesDocument,
+} from "../../../src/features/settings/models-api.js";
 import type { SettingsClient } from "../../../src/lib/ipc.js";
 import { ModelBrowser } from "../../../src/features/settings/ModelBrowser.js";
 import { announced, freshAnnouncer } from "../../announced.js";
@@ -38,7 +45,12 @@ const local: ConnectionSummary = {
 };
 
 /** A stateful owner: connections added through the page appear in its next `list`. */
-function owner(start: { connections: ConnectionSummary[]; roles: RolesDocument; disabledPlugins?: string[] }) {
+function owner(start: {
+  connections: ConnectionSummary[];
+  roles: RolesDocument;
+  disabledPlugins?: string[];
+  lifecycle?: Record<string, BrowsedModel["lifecycle"]>;
+}) {
   const writes: { command: string; payload: Record<string, unknown> }[] = [];
   const connections = [...start.connections];
   const stored = new Set<string>();
@@ -67,6 +79,7 @@ function owner(start: { connections: ConnectionSummary[]; roles: RolesDocument; 
               provenance: "live",
               state: "available",
               capabilities: modelId === "a" ? ["tools"] : [],
+              ...(start.lifecycle?.[modelId] === undefined ? {} : { lifecycle: start.lifecycle[modelId] }),
             })),
           },
         };
@@ -93,6 +106,54 @@ function owner(start: { connections: ConnectionSummary[]; roles: RolesDocument; 
 }
 
 describe("the Models page", () => {
+  it("says each model's lifecycle today, and which models the default and roles use that warn", () => {
+    const at = { catalogVersion: "v", checkedAt: "2026-11-01T00:00:00.000Z" };
+    const model = (modelId: string, lifecycle?: BrowsedModel["lifecycle"]): BrowsedModel => ({
+      connectionId: "openai",
+      modelId,
+      provenance: "live",
+      state: "available",
+      capabilities: [],
+      connectionLabel: "OpenAI",
+      stale: false,
+      ...(lifecycle === undefined ? {} : { lifecycle }),
+    });
+    const today = "2026-11-20";
+    expect(lifecycleNotice(model("a"), today)).toBeUndefined();
+    expect(lifecycleNotice(model("a", { status: "ga", ...at }), today)).toBeUndefined();
+    expect(lifecycleNotice(model("a", { status: "deprecated", retiresOn: "2026-11-19", ...at }), today)).toMatchObject({
+      level: "error",
+      label: "Retired",
+    });
+    expect(lifecycleNotice(model("a", { status: "ga", redirect: { to: "b", on: "2026-12-01" }, ...at }), today)).toMatchObject({
+      level: "warning",
+      label: "Redirecting",
+    });
+    const models = [
+      model("gpt-5", { status: "deprecated", retiresOn: "2026-12-11", ...at }),
+      model("o3", { status: "deprecated", deprecatedOn: "2026-10-01", ...at }),
+      model("gpt-4.1", { status: "ga", ...at }),
+    ];
+    const roles: RolesDocument = {
+      workspaceDefault: { target: { connectionId: "openai", model: "gpt-5" } },
+      resolved: [],
+      roles: [
+        {
+          workspaceId: "default",
+          role: "fast",
+          target: { connectionId: "openai", model: "gpt-4.1" },
+          fallback: [
+            { connectionId: "openai", model: "gpt-5" },
+            { connectionId: "openai", model: "o3" },
+          ],
+          updatedAt: "2026-11-01T00:00:00.000Z",
+        } as never,
+      ],
+    };
+    // gpt-5 once though named twice; o3's deprecation is a notice only, not a banner.
+    expect(rolesLifecycleNotices({ models, roles }, today).map((entry) => entry.target)).toEqual(["openai/gpt-5"]);
+  });
+
   it("resolves each role to its own chain, the default, or nothing", () => {
     const main = {
       workspaceId: "default",
@@ -233,6 +294,24 @@ describe("the Models page", () => {
     });
     expect(fake.writes.some((write) => write.command === "models" && write.payload["action"] === "sync")).toBe(true);
     expect(host.textContent).toContain("openai/gpt-5 retires on 2026-12-11");
+  });
+
+  it("names the models in use that retire above the roles, and counts them on their connection", async () => {
+    const soon = new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10);
+    const roles: RolesDocument = { workspaceDefault: null, activeTarget: { connectionId: "local", model: "a" }, resolved: [], roles: [] };
+    const fake = owner({
+      connections: [local],
+      roles,
+      lifecycle: { a: { status: "deprecated", retiresOn: soon, catalogVersion: "v", checkedAt: "2026-11-20T08:00:00.000Z" } },
+    });
+    const host = await mountSettled(
+      <InWorkspace client={fake.client} workspaceId="default">
+        <ModelBrowser />
+      </InWorkspace>,
+    );
+    const banner = host.querySelector('[aria-labelledby="lifecycle-banner-title"]');
+    expect(banner?.textContent).toContain(`local/a retires on ${soon}`);
+    expect(host.querySelector(".connection-item")?.textContent).toContain("1 model retired, retiring or redirected");
   });
 
   it("shows no video controls while tavi.video is off", async () => {
