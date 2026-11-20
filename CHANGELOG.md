@@ -25,6 +25,14 @@ change behaviour or stored data.
   a bump must pass. A repository test fails once an ignored audit advisory no
   longer matches an installed package.
 
+### Fixed
+
+- Under a systemd unit, confined children (sandboxed commands, plugin
+  workers, MCP servers, the PDF, video and browser children) could read the
+  credentials systemd hands the owner (`$CREDENTIALS_DIRECTORY`, from
+  `tavi service unit --credential`): they run as the unit's own user, and the
+  folder was not on the owner's read-deny list. It is now.
+
 ## 0.2.0 — 2026-11-20
 
 The first release with a prebuilt install, from the release's `install.sh`

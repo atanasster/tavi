@@ -444,7 +444,10 @@ your `PATH` on a mounted drive stays readable. On WSL `/mnt` holds every
 Windows drive, your Windows profile with it, and is closed the same way: attach
 a folder under `/mnt` or open it with `--sandbox-read` to reach it. Your own `/tmp` entries stay readable. The owner's own temporary directory, where Tavi spools other chats' data, does not, and
 neither does the owner's private staging folder (`<tmp>/tavi-<uid>`), which
-MCP servers and the PDF parser cannot read either.
+MCP servers and the PDF parser cannot read either. Under a systemd unit, the
+credentials systemd hands the owner (`$CREDENTIALS_DIRECTORY`, the unit's
+`LoadCredential=` and `LoadCredentialEncrypted=` files) are closed to every
+confined child too, though they run as the unit's own user.
 
 **Taint through folders.** What a tainted chat's shell writes marks the
 folder: a side chat or worker that later reads it, by the file tools or the

@@ -96,14 +96,17 @@ export interface OwnerReadRoots {
  * the person's home, the data directory, and every folder the owner was given
  * for its chats; on WSL also every Windows drive (the Windows profile with it),
  * at `/mnt` or wherever `/etc/wsl.conf` mounts them, and the interop folder
- * (`wslDenyRoots`). srt reads by deny list, so a folder outside `$HOME` the owner was
- * given must be named here, or every child could read it.
+ * (`wslDenyRoots`); and, under a systemd unit, the credentials systemd hands it
+ * (`$CREDENTIALS_DIRECTORY`, `/run/credentials/<unit>`: readable by the unit's
+ * own user, so by every child of it). srt reads by deny list, so a folder outside
+ * `$HOME` the owner was given must be named here, or every child could read it.
  */
 export function ownerDenyRead(
   roots: OwnerReadRoots,
   home: string = homedir(),
   wsl: WslVersion | undefined = wslVersion(),
   wslRoots: () => readonly string[] = () => wslDenyRoots(),
+  credentialsDirectory: string | undefined = process.env["CREDENTIALS_DIRECTORY"],
 ): readonly string[] {
   return [
     ...new Set(
@@ -114,6 +117,7 @@ export function ownerDenyRead(
         ...(roots.devPlugins ?? []),
         ...(roots.sandboxRead ?? []),
         ...(wsl === undefined ? [] : wslRoots()),
+        ...(credentialsDirectory === undefined || credentialsDirectory === "" ? [] : [credentialsDirectory]),
       ].map((path) => resolvePath(path)),
     ),
   ];

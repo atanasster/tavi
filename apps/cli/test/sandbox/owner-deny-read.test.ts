@@ -75,6 +75,22 @@ describe("the owner's read denies", () => {
     expect(ownerDenyRead({ dataDirectory: data }, homedir(), undefined)).toEqual([homedir(), data]);
   });
 
+  it("name the credentials systemd hands a unit ($CREDENTIALS_DIRECTORY), which its own user could otherwise read", () => {
+    const { data } = roots();
+    const credentials = "/run/credentials/tavi.service";
+    expect(ownerDenyRead({ dataDirectory: data }, homedir(), undefined, () => [], credentials)).toEqual([homedir(), data, credentials]);
+    // Read from the environment by default: an owner started by systemd has it set.
+    const before = process.env["CREDENTIALS_DIRECTORY"];
+    process.env["CREDENTIALS_DIRECTORY"] = credentials;
+    try {
+      expect(ownerDenyRead({ dataDirectory: data }, homedir(), undefined)).toContain(credentials);
+    } finally {
+      if (before === undefined) delete process.env["CREDENTIALS_DIRECTORY"];
+      else process.env["CREDENTIALS_DIRECTORY"] = before;
+    }
+    expect(ownerDenyRead({ dataDirectory: data }, homedir(), undefined, () => [], "")).toEqual([homedir(), data]);
+  });
+
   it("deny a plugin worker every --fs-root, --dev-plugin and --sandbox-read folder", async () => {
     const { data, fsRoot, devPlugin, sandboxRead } = roots();
     const confinement = recording();
