@@ -286,6 +286,14 @@ give the same cause and fix.
 and asked for again at `approve`. The sandbox limits what a server can reach,
 not what a call may do: its tools still go through approvals.
 
+An approved version keeps the state it was approved in, even after the
+sandbox is fixed (`tavi mcp probe` probes it in that state again). While a
+server runs weaker than this host now supports, `tavi serve` warns at start
+and `tavi doctor` lists it under `mcp.weakerSandbox`. To move it, add the
+server again with a new `--version` (its probe runs in the sandbox), then
+review and approve that version. Tavi never moves it for you: the server
+might not run under the stronger sandbox.
+
 `scripts/mcp-sandbox-matrix.sh` runs the sandbox tests on macOS and, in
 Docker, on Linux with bubblewrap, where namespaces are refused, and nested.
 

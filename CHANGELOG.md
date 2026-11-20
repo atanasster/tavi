@@ -4,6 +4,17 @@ All notable changes to Tavi are recorded here. The project follows
 [Semantic Versioning](https://semver.org); before 1.0, a minor version may
 change behaviour or stored data.
 
+## Unreleased
+
+### Added
+
+- `tavi serve` (at start) and `tavi doctor` (`mcp.weakerSandbox`) name each
+  approved MCP server that runs unsandboxed or in the nested sandbox while
+  this host's sandbox now confines more, with the way to move it: add the
+  server again with a new `--version`, which probes in the sandbox, and
+  approve that version. Nothing is moved for you: the server might not run
+  under the stronger sandbox.
+
 ## 0.2.0 — 2026-11-20
 
 The first release with a prebuilt install, from the release's `install.sh`

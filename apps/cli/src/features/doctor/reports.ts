@@ -11,6 +11,7 @@ import { pdfConfinement, pdfOcrAssets } from "../pdf/host.js";
 import { engineWarnings, parentProxyChecks, sandboxDoctorSection } from "../sandbox/setup.js";
 import { findUv } from "../mcp/pypi.js";
 import { schemaTokenCount } from "../mcp/review.js";
+import { weakerSandboxServersOf } from "../mcp/sandbox-nudge.js";
 import { credentialsEncrypted, plainCredentialStoreWarning } from "../credentials/store.js";
 import {
   sandboxConfines,
@@ -777,6 +778,13 @@ async function mcpDoctor(runtime: TaviRuntime, check: Promise<SandboxStatus>): P
           cause: sandbox.cause,
           fix: "a stdio server runs only with --unsandboxed (or --nested in a container that masks /proc) until this is fixed",
         },
+    // A server approved weaker than this host now confines: the operator's to move, with a new version.
+    ...(await (async () => {
+      const weaker = await weakerSandboxServersOf(runtime, () => sandbox);
+      return weaker.length === 0
+        ? {}
+        : { weakerSandbox: weaker.map(({ pluginId, version, sandboxState, warning }) => ({ pluginId, version, sandboxState, warning })) };
+    })()),
     // Python servers are fetched with uv and run on an interpreter it manages.
     // A Node server granted domains reaches them through its proxy only on Node 22.21 or later.
     node: {

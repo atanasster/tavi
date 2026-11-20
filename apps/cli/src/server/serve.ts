@@ -6,7 +6,14 @@ import {
   routerProviderState,
   runningProviderReadiness,
 } from "../features/router/owner.js";
-import type { AppsCatalogAnswer, ConnectableApp, ResetInstanceResult, ModEnvelope, PluginCommandsAnswer } from "@tavi/contracts";
+import type {
+  AppsCatalogAnswer,
+  ConnectableApp,
+  ResetInstanceResult,
+  ModEnvelope,
+  PluginCommandsAnswer,
+  SandboxStatus,
+} from "@tavi/contracts";
 import { MOD_COMMAND_TEXT_MAX_CHARS, maskPluginText } from "@tavi/contracts";
 import { channelsCommand } from "../features/channels/owner.js";
 import { uiPreferencesCommand } from "../features/ui/preferences.js";
@@ -19,6 +26,7 @@ import { chatContextCommand } from "../features/tasks/history-owner.js";
 import { FolderPicks, browseCommand, folderCommand } from "../features/folders/owner.js";
 import { AttachmentUploads, artifactsUploadCommand } from "../features/artifacts/upload-owner.js";
 import { plainCredentialStoreWarning } from "../features/credentials/store.js";
+import { weakerSandboxServersOf } from "../features/mcp/sandbox-nudge.js";
 import { SkillService, measureFolder, SERVE_SESSION_PREFIX } from "@tavi/runtime";
 import { centerCommand } from "./center.js";
 import { createHealthWatch, type HealthWatch } from "../features/doctor/health.js";
@@ -421,6 +429,21 @@ export async function serve(
   // A credential store left plain (no OS keychain could keep a key) is said at start, as tavi doctor reports it.
   const plainStore = await plainCredentialStoreWarning(options.dataDirectory);
   if (plainStore !== undefined) runtime.logger.warn(plainStore);
+
+  // An MCP server approved weaker than this host now confines is said at start, as tavi doctor reports it.
+  // Off the start path, and the sandbox probed only when such a server exists: nothing waits on this.
+  void (async () => {
+    const status = async (): Promise<SandboxStatus> => {
+      const current = runtime.sandboxHost.current();
+      return current.tier === "checking" ? await runtime.sandboxHost.check() : current;
+    };
+    for (const weaker of await weakerSandboxServersOf(runtime, status))
+      runtime.logger.warn(weaker.warning, { pluginId: weaker.pluginId, version: weaker.version, sandboxState: weaker.sandboxState });
+  })().catch((error: unknown) => {
+    runtime.logger.warn("MCP servers' sandbox states could not be read to warn of a weaker one; `tavi doctor` checks them", {
+      error: errorMessage(error),
+    });
+  });
 
   // A turn the last owner's unclean stop cut off waits for the person: said once at start, as `tavi doctor` reports it.
   const stranded = await strandedAdmissions(runtime).catch((error: unknown) => {
