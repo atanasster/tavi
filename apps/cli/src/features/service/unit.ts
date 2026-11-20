@@ -1,4 +1,5 @@
 import { TaviError } from "@tavi/contracts";
+import { SYSTEMD_CREDENTIAL_KEY_NAME } from "@tavi/runtime";
 
 /**
  * Service units for `tavi serve`: what keeps it running when no one started it.
@@ -80,9 +81,11 @@ export interface SystemdServiceOptions {
    * `LoadCredential=<name>:<path>` lines: secrets systemd hands the unit as
    * files at `/run/credentials/<unit>/<name>`, where a `serve` flag that takes
    * a file (`--api-key-file`, …) reads them; the
-   * header names each path. System units only.
+   * header names each path. `encrypted`: `LoadCredentialEncrypted=`, for a
+   * file `systemd-creds encrypt` wrote (the credential key's home,
+   * `tavi-credential-key`). System units only.
    */
-  readonly credentials?: readonly { readonly name: string; readonly path: string }[];
+  readonly credentials?: readonly { readonly name: string; readonly path: string; readonly encrypted?: boolean }[];
   /** Whether the account was named for this unit to create: the header says how. */
   readonly createUser?: boolean;
 }
@@ -329,11 +332,14 @@ function renderSystemdUnit(input: RenderServiceUnitInput, args: readonly string[
         `Refusing to render a unit whose writable path ${JSON.stringify(path)} holds whitespace or a control character; move it to a path without`,
       );
   if (scope === "user" && (options.credentials ?? []).length > 0)
-    throw new TaviError("INVALID_INPUT", "--credential is for a system unit; a user unit reads its secrets as the operator does");
+    throw new TaviError(
+      "INVALID_INPUT",
+      "--credential and --credential-encrypted are for a system unit; a user unit reads its secrets as the operator does",
+    );
   const underHome = writable.some((path) => path === "/home" || path.startsWith("/home/") || path === "/root" || path.startsWith("/root/"));
   const credentials = (options.credentials ?? []).map(
     (credential) =>
-      `LoadCredential=${systemdWord("a credential name", credential.name)}:${systemdPathEscape(systemdWord("a credential path", credential.path))}`,
+      `${credential.encrypted === true ? "LoadCredentialEncrypted" : "LoadCredential"}=${systemdWord("a credential name", credential.name)}:${systemdPathEscape(systemdWord("a credential path", credential.path))}`,
   );
   const header =
     scope === "user"
@@ -356,8 +362,11 @@ function renderSystemdUnit(input: RenderServiceUnitInput, args: readonly string[
 #   sudo install -d -o ${user} -m 0700 ${input.dataDirectory}`
             : ""
         }${(options.credentials ?? [])
-          .map(
-            (credential) => `
+          .map((credential) =>
+            credential.name === SYSTEMD_CREDENTIAL_KEY_NAME && credential.encrypted === true
+              ? `
+# Credential ${credential.name} is the credential key: once the unit runs, \`tavi credentials key --to-systemd\` makes it the key's home`
+              : `
 # Credential ${credential.name} reaches serve as /run/credentials/${input.label}.service/${credential.name} (pass that path to the flag that reads it)`,
           )
           .join("")}${

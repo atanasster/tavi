@@ -24,6 +24,14 @@ change behaviour or stored data.
   and weekly, and `SECURITY.md` has a "Critical dependencies" section on what
   a bump must pass. A repository test fails once an ignored audit advisory no
   longer matches an installed package.
+- On a headless Linux service the credential key can be kept as a systemd
+  credential, encrypted by `systemd-creds` and handed decrypted to the service
+  alone, rather than in the clear in `credentials.key` beside the data.
+  `tavi credentials key --export` pipes the key to `systemd-creds encrypt`,
+  `tavi service unit --credential-encrypted` adds the `LoadCredentialEncrypted=`
+  line, and `tavi credentials key --to-systemd`, run against the started
+  service, makes the credential the key's home once it holds the same key
+  (`--to-file` moves it back). A page cannot move the key.
 
 ### Fixed
 

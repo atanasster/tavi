@@ -149,7 +149,14 @@ export const ChatModelSchema = z.object({
 });
 export type ChatModel = z.infer<typeof ChatModelSchema>;
 
-export const CREDENTIALS_ACTIONS = ["list", "set", "delete", "encrypt"] as const;
+export const CREDENTIALS_ACTIONS = ["list", "set", "delete", "encrypt", "key"] as const;
+
+/**
+ * Where `key` moves the at-rest key on the owner: to the systemd credential the
+ * owner's unit loads, or from it back into `credentials.key`. Only the owner
+ * systemd started reads that credential; a page is refused either way.
+ */
+export const CREDENTIAL_KEY_OWNER_HOMES = ["file", "systemd"] as const;
 
 export const CredentialsPayloadSchema = z.object({
   action: z.enum(CREDENTIALS_ACTIONS),
@@ -166,6 +173,8 @@ export const CredentialsPayloadSchema = z.object({
     .min(1)
     .max(16 * 1024)
     .optional(),
+  /** `key`: where to move the key; absent, where it is kept. */
+  to: z.enum(CREDENTIAL_KEY_OWNER_HOMES).optional(),
 });
 export type CredentialsPayload = z.infer<typeof CredentialsPayloadSchema>;
 

@@ -68,7 +68,10 @@ async function noteKeychainKey(options: ResolvedDataDirectory<ServiceCommandOpti
   io.stderr(
     `\nwarning: the credential key for ${options.dataDirectory} is kept in the OS keychain (credentials.key only refers to it). ` +
       `${where}, and every encrypted credential fails as UNAVAILABLE. ` +
-      `Move the key into the 0600 file first, as the account that owns the keychain item: tavi credentials key --to-file --data-dir ${shellWord(options.dataDirectory)}\n`,
+      `Move the key into the 0600 file first, as the account that owns the keychain item: tavi credentials key --to-file --data-dir ${shellWord(options.dataDirectory)}` +
+      (options.kind === "systemd" && options.scope !== "user"
+        ? "; then, to keep it off the disk in the clear, encrypt it into a systemd credential (`tavi credentials key --to-systemd`)\n"
+        : "\n"),
   );
 }
 

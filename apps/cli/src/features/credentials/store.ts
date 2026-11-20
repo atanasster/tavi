@@ -17,13 +17,17 @@ import {
   deleteKeychainCredentialKey,
   ENCRYPTED_SECRET_FAMILY,
   encryptSecret,
+  credentialKeySystemdName,
   moveCredentialKeyToFile,
   moveCredentialKeyToKeychain,
+  moveCredentialKeyToSystemd,
+  SYSTEMD_CREDENTIAL_KEY_NAME,
   readCredentialKey,
   systemCredentialKeychain,
   type CredentialKeychain,
   type CredentialKeyMove,
   type CredentialKeyReference,
+  type CredentialKeySystemdMove,
 } from "@tavi/runtime";
 
 /**
@@ -131,39 +135,61 @@ export async function forgetCredentialKeyItem(item: CredentialKeyReference, keyc
 /** Where `tavi credentials key` says the at-rest key is kept. */
 export interface CredentialKeyLocation {
   readonly keyFile: string;
-  /** `none`: no key, the store is plain; `file`: `keyFile` is the key; `keychain`: `keyFile` refers to an item there. */
-  readonly kept: "none" | "file" | "keychain";
+  /**
+   * `none`: no key, the store is plain; `file`: `keyFile` is the key; `keychain`: `keyFile` refers to an item there;
+   * `systemd`: `keyFile` refers to a systemd credential, which only the service systemd starts with it reads.
+   */
+  readonly kept: "none" | "file" | "keychain" | "systemd";
   /** For `keychain`: which one, and the item. */
   readonly keychain?: string;
   readonly item?: CredentialKeyReference;
+  /** For `systemd`: the credential's name. */
+  readonly systemd?: string;
 }
 
 /** Where `dataDirectory`'s credential key is kept; the key itself is never read. */
 export async function credentialKeyLocation(dataDirectory: string): Promise<CredentialKeyLocation> {
   const keyFile = credentialKeyFile(dataDirectory);
   if (!existsSync(keyFile)) return { keyFile, kept: "none" };
+  const systemd = await credentialKeySystemdName(keyFile);
+  if (systemd !== undefined) return { keyFile, kept: "systemd", systemd };
   const item = await credentialKeyReference(keyFile);
   return item === undefined
     ? { keyFile, kept: "file" }
     : { keyFile, kept: "keychain", keychain: credentialKeychainOfKind(item.kind).label, item };
 }
 
-/** What `tavi credentials key --to-file|--to-keychain` did. */
-export type CredentialKeyMoveResult = CredentialKeyMove & { readonly keyFile: string; readonly to: "file" | "keychain" };
+/** Where `tavi credentials key` moves the key to. */
+export type CredentialKeyHome = "file" | "keychain" | "systemd";
+
+/** What `tavi credentials key --to-file|--to-keychain|--to-systemd` did. */
+export type CredentialKeyMoveResult = (CredentialKeyMove | CredentialKeySystemdMove) & {
+  readonly keyFile: string;
+  readonly to: CredentialKeyHome;
+};
 
 /**
- * Move `dataDirectory`'s credential key into `credentials.key` itself, or
- * into the OS keychain (`tavi credentials key`). The same key moves, so no
- * value is re-encrypted, and none is read. Moving to the keychain needs one:
- * `keychain` defaults to this machine's, and there may be none.
+ * Move `dataDirectory`'s credential key into `credentials.key` itself, into
+ * the OS keychain, or to the systemd credential `tavi-credential-key`
+ * (`tavi credentials key`). The same key moves, so no value is re-encrypted.
+ * Moving to the keychain needs one: `keychain` defaults to this machine's,
+ * and there may be none. Moving to or from a systemd credential needs the
+ * credentials systemd handed this process (`credentialsDirectory`, by default
+ * `$CREDENTIALS_DIRECTORY`): the owner under its unit runs it.
  */
 export async function moveCredentialKey(
   dataDirectory: string,
-  to: "file" | "keychain",
+  to: CredentialKeyHome,
   keychain: CredentialKeychain | undefined = to === "keychain" ? systemCredentialKeychain() : undefined,
+  credentialsDirectory?: string,
 ): Promise<CredentialKeyMoveResult> {
   const keyFile = credentialKeyFile(dataDirectory);
-  if (to === "file") return { keyFile, to, ...(await moveCredentialKeyToFile(keyFile, keychain === undefined ? {} : { keychain })) };
+  const options = {
+    ...(keychain === undefined ? {} : { keychain }),
+    ...(credentialsDirectory === undefined ? {} : { credentialsDirectory }),
+  };
+  if (to === "file") return { keyFile, to, ...(await moveCredentialKeyToFile(keyFile, options)) };
+  if (to === "systemd") return { keyFile, to, ...(await moveCredentialKeyToSystemd(keyFile, SYSTEMD_CREDENTIAL_KEY_NAME, options)) };
   if (keychain === undefined) {
     throw new TaviError(
       "UNAVAILABLE",

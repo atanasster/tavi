@@ -2,6 +2,8 @@ export interface CliIo {
   readonly stdout: (chunk: string) => void;
   readonly stderr: (chunk: string) => void;
   readonly isTty: boolean;
+  /** Whether standard output alone is a terminal (`isTty` asks of both ends); absent, `isTty` answers. */
+  readonly stdoutTty?: boolean;
   /** The terminal's width; absent in a pipe. */
   readonly columns?: number | undefined;
 }
@@ -10,6 +12,7 @@ export const DEFAULT_IO: CliIo = {
   stdout: (chunk) => process.stdout.write(chunk),
   stderr: (chunk) => process.stderr.write(chunk),
   isTty: process.stdin.isTTY === true && process.stdout.isTTY === true,
+  stdoutTty: process.stdout.isTTY === true,
   get columns() {
     return process.stdout.columns;
   },

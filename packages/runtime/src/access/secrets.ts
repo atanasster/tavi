@@ -6,6 +6,8 @@ import {
   type SecretSourceKind,
   type SecretStorePort,
 } from "@tavi/contracts";
+import { join } from "node:path";
+
 import { errorMessage } from "@tavi/contracts/util";
 import { NoFollowReadError, privacyProblem, privateExpectation, readNoFollow, writeFileAtomicAsync } from "@tavi/node-kit";
 import {
@@ -153,6 +155,8 @@ export interface EncryptedFileSecretStoreOptions extends FileSecretStoreOptions 
   readonly keyFile: string;
   /** The keychain a key the file refers to is read from; by default the one its reference names. Tests inject one. */
   readonly keychain?: CredentialKeychain;
+  /** Where a key kept as a systemd credential is read; by default `$CREDENTIALS_DIRECTORY`. Tests inject one. */
+  readonly credentialsDirectory?: string;
 }
 
 type WritableStore = SecretStorePort & {
@@ -181,7 +185,10 @@ const isWritable = (store: SecretStorePort): store is WritableStore =>
  */
 export function createEncryptedFileSecretStore(options: EncryptedFileSecretStoreOptions): SecretStorePort {
   const inner = createFileSecretStore(options);
-  const keyOptions = options.keychain === undefined ? {} : { keychain: options.keychain };
+  const keyOptions: CredentialKeyOptions = {
+    ...(options.keychain === undefined ? {} : { keychain: options.keychain }),
+    ...(options.credentialsDirectory === undefined ? {} : { credentialsDirectory: options.credentialsDirectory }),
+  };
   const getSecret = async (keyRef: string): Promise<string | null> => {
     const raw = await inner.getSecret(keyRef);
     if (raw === null || !raw.startsWith(ENCRYPTED_SECRET_FAMILY)) return raw;
@@ -273,6 +280,68 @@ const KEYCHAIN_ACCOUNT_PATTERN = /^[0-9a-f]{32}$/;
 export interface CredentialKeyOptions {
   /** The keychain a referenced key is read from (or created in); by default the one the reference names. */
   readonly keychain?: CredentialKeychain;
+  /**
+   * Where systemd put this process's credentials, for a key kept as one
+   * (`LoadCredentialEncrypted=`); by default `$CREDENTIALS_DIRECTORY`, which
+   * only a process systemd started with that line has.
+   */
+  readonly credentialsDirectory?: string;
+}
+
+/** The systemd credential name `tavi credentials key --to-systemd` keeps the key under. */
+export const SYSTEMD_CREDENTIAL_KEY_NAME = "tavi-credential-key";
+/** A systemd credential name: what `LoadCredentialEncrypted=<name>:` and `systemd-creds --name=` take. */
+const SYSTEMD_CREDENTIAL_NAME_PATTERN = /^(?!\.{1,2}$)[A-Za-z0-9_.-]{1,64}$/;
+/** `tavi-keychain:v1:systemd:<name>`: the key is the systemd credential `<name>`, not a keychain item. */
+const SYSTEMD_REFERENCE_PREFIX = `${KEYCHAIN_REFERENCE_PREFIX}systemd:`;
+
+/** The systemd credential a key file names, or `undefined` when it names none (a key, a keychain item, another form). */
+function parseSystemdReference(text: string): string | undefined {
+  if (!text.startsWith(SYSTEMD_REFERENCE_PREFIX)) return undefined;
+  const name = text.slice(SYSTEMD_REFERENCE_PREFIX.length);
+  return SYSTEMD_CREDENTIAL_NAME_PATTERN.test(name) ? name : undefined;
+}
+
+/** The systemd credential `keyFile` refers to, or `undefined` when it is a key, a keychain reference, or absent. */
+export async function credentialKeySystemdName(keyFile: string): Promise<string | undefined> {
+  const raw = await readPrivateFile(keyFile, "The credential key");
+  return raw === undefined ? undefined : parseSystemdReference(raw.trim());
+}
+
+/**
+ * The key systemd handed this process as the credential `name`, or a typed
+ * error naming what is missing: no credentials at all (a process systemd did
+ * not start with the line), no credential of that name, or one that is not a
+ * key. `keyFile` is named so the operator knows which directory asked.
+ */
+async function systemdCredentialKey(keyFile: string, name: string, directory: string | undefined): Promise<Buffer> {
+  const credentials = directory ?? process.env["CREDENTIALS_DIRECTORY"];
+  if (credentials === undefined || credentials === "") {
+    throw new TaviError(
+      "UNAVAILABLE",
+      `The credential key ${keyFile} is kept as the systemd credential ${name}, which only a process systemd starts with ` +
+        `LoadCredentialEncrypted=${name}:<file> can read: run this against the running service, or under \`systemd-run\` with that line`,
+      { details: { keyFile } },
+    );
+  }
+  const text = await readPrivateFile(join(credentials, name), "The systemd credential");
+  if (text === undefined) {
+    throw new TaviError(
+      "UNAVAILABLE",
+      `The credential key ${keyFile} is kept as the systemd credential ${name}, but this process's credentials (${credentials}) ` +
+        `have none of that name: its unit needs LoadCredentialEncrypted=${name}:<file> (\`tavi service unit --credential-encrypted\`)`,
+      { details: { keyFile } },
+    );
+  }
+  if (!isKeyText(text.trim())) {
+    throw new TaviError(
+      "UNAVAILABLE",
+      `The systemd credential ${name} is not a ${CREDENTIAL_KEY_BYTES * 8}-bit key as ${CREDENTIAL_KEY_BYTES * 2} hex characters; ` +
+        "encrypt the key itself into it (`tavi credentials key --export | systemd-creds encrypt …`)",
+      { details: { keyFile } },
+    );
+  }
+  return Buffer.from(text.trim(), "hex");
 }
 
 /**
@@ -285,6 +354,8 @@ export async function readCredentialKey(keyFile: string, options: CredentialKeyO
   const raw = await readPrivateFile(keyFile, "The credential key");
   if (raw === undefined) return undefined;
   const text = raw.trim();
+  const systemd = parseSystemdReference(text);
+  if (systemd !== undefined) return systemdCredentialKey(keyFile, systemd, options.credentialsDirectory);
   if (text.startsWith(KEYCHAIN_REFERENCE_FAMILY)) return readKeychainKey(keyFile, text, options.keychain);
   if (!/^[0-9a-fA-F]+$/.test(text) || text.length !== CREDENTIAL_KEY_BYTES * 2) {
     throw new TaviError(
@@ -397,6 +468,22 @@ export type CredentialKeyMove =
    */
   | { readonly moved: true; readonly item: CredentialKeyReference; readonly keychain: string; readonly deleteError?: string };
 
+/** What moving the key to or from a systemd credential did: `systemd` is the credential's name. */
+export type CredentialKeySystemdMove =
+  | { readonly moved: false }
+  /**
+   * It moved. To the credential: `item` and `keychain` name the keychain item it
+   * left, when it was in one, and `deleteError` why that item could not be
+   * deleted. From the credential, into its file: only `systemd`.
+   */
+  | {
+      readonly moved: true;
+      readonly systemd: string;
+      readonly item?: CredentialKeyReference;
+      readonly keychain?: string;
+      readonly deleteError?: string;
+    };
+
 /**
  * Move the at-rest key out of the OS keychain into `keyFile` itself (`tavi
  * credentials key --to-file`): for a backup that must restore on another
@@ -407,8 +494,13 @@ export type CredentialKeyMove =
  * or the key, both the same key), read back, and only then is the keychain
  * item deleted. A key file already is left as it is.
  */
-export async function moveCredentialKeyToFile(keyFile: string, options: CredentialKeyOptions = {}): Promise<CredentialKeyMove> {
+export async function moveCredentialKeyToFile(
+  keyFile: string,
+  options: CredentialKeyOptions = {},
+): Promise<CredentialKeyMove | CredentialKeySystemdMove> {
   const before = await existingKeyText(keyFile);
+  const systemd = parseSystemdReference(before);
+  if (systemd !== undefined) return moveSystemdKeyToFile(keyFile, before, systemd, options);
   if (!before.startsWith(KEYCHAIN_REFERENCE_FAMILY)) {
     // Checked, so a damaged key file is said rather than called moved.
     await readCredentialKey(keyFile);
@@ -444,6 +536,15 @@ export async function moveCredentialKeyToFile(keyFile: string, options: Credenti
  */
 export async function moveCredentialKeyToKeychain(keyFile: string, keychain: CredentialKeychain): Promise<CredentialKeyMove> {
   const before = await existingKeyText(keyFile);
+  const systemd = parseSystemdReference(before);
+  if (systemd !== undefined) {
+    throw new TaviError(
+      "CONFLICT",
+      `The credential key ${keyFile} is kept as the systemd credential ${systemd}; move it into its file first ` +
+        "(`tavi credentials key --to-file`, against the running service)",
+      { details: { keyFile } },
+    );
+  }
   if (before.startsWith(KEYCHAIN_REFERENCE_FAMILY)) return { moved: false };
   const key = await readCredentialKey(keyFile);
   if (key === undefined) throw new TaviError("UNAVAILABLE", `The credential key ${keyFile} vanished as it was read`);
@@ -479,6 +580,99 @@ export async function moveCredentialKeyToKeychain(keyFile: string, keychain: Cre
   }
   keychainCache(keychain).set(account, key);
   return { moved: true, item, keychain: keychain.label };
+}
+
+/**
+ * Make the systemd credential `name` the at-rest key's home (`tavi credentials
+ * key --to-systemd`), run by a process systemd started with
+ * `LoadCredentialEncrypted=<name>:<file>` — the owner under its unit. The
+ * credential is never written here: the operator encrypts this directory's key
+ * into it (`--export` piped to `systemd-creds encrypt`). It is read through
+ * `$CREDENTIALS_DIRECTORY` and must hold the very key `keyFile` holds or
+ * refers to; only then is `keyFile` replaced by a reference to it, read back
+ * through the credential, and a keychain item it left deleted. A credential
+ * that is missing or holds another key changes nothing, so no move loses the key.
+ */
+export async function moveCredentialKeyToSystemd(
+  keyFile: string,
+  name: string,
+  options: CredentialKeyOptions = {},
+): Promise<CredentialKeySystemdMove> {
+  if (!SYSTEMD_CREDENTIAL_NAME_PATTERN.test(name))
+    throw new TaviError("INVALID_INPUT", `${name} is not a systemd credential name (letters, digits, _ . -; at most 64)`);
+  const before = await existingKeyText(keyFile);
+  const current = parseSystemdReference(before);
+  if (current === name) return { moved: false };
+  if (current !== undefined) {
+    throw new TaviError(
+      "CONFLICT",
+      `The credential key ${keyFile} is kept as the systemd credential ${current}; move it into its file first`,
+      { details: { keyFile } },
+    );
+  }
+  const key = await readCredentialKey(keyFile, options);
+  if (key === undefined) throw new TaviError("UNAVAILABLE", `The credential key ${keyFile} vanished as it was read`);
+  const held = await systemdCredentialKey(keyFile, name, options.credentialsDirectory);
+  const { timingSafeEqual } = await import("node:crypto");
+  if (held.length !== key.length || !timingSafeEqual(held, key)) {
+    throw new TaviError(
+      "CONFLICT",
+      `The systemd credential ${name} holds a different key from ${keyFile}; nothing changed. ` +
+        `Encrypt this directory's key into it: \`tavi credentials key --export | systemd-creds encrypt --name=${name} - <file>\``,
+      { details: { keyFile } },
+    );
+  }
+  const item = parseKeychainReference(before);
+  await replaceKeyFile(keyFile, before, `${SYSTEMD_REFERENCE_PREFIX}${name}\n`);
+  const written = await readCredentialKey(keyFile, options).catch(() => undefined);
+  if (written === undefined || !written.equals(key)) {
+    // Never left pointing at nothing: what was there goes back.
+    await writeFileAtomicAsync(keyFile, `${before}\n`, { mode: SAFE_FILE_MODE, durable: true });
+    throw new TaviError(
+      "INTERNAL",
+      `The credential key ${keyFile} did not read back through the systemd credential ${name}; nothing changed`,
+    );
+  }
+  if (item === undefined) return { moved: true, systemd: name };
+  const keychain = options.keychain ?? credentialKeychainOfKind(item.kind);
+  try {
+    await deleteKeychainCredentialKey(item, keychain);
+    return { moved: true, systemd: name, item, keychain: keychain.label };
+  } catch (error) {
+    return { moved: true, systemd: name, item, keychain: keychain.label, deleteError: errorMessage(error) };
+  }
+}
+
+/** The key read from the systemd credential `name` and written into `keyFile` itself (0600), read back before it counts. */
+async function moveSystemdKeyToFile(
+  keyFile: string,
+  before: string,
+  name: string,
+  options: CredentialKeyOptions,
+): Promise<CredentialKeySystemdMove> {
+  const key = await systemdCredentialKey(keyFile, name, options.credentialsDirectory);
+  await replaceKeyFile(keyFile, before, `${key.toString("hex")}\n`);
+  const written = await readCredentialKey(keyFile);
+  if (written === undefined || !written.equals(key)) {
+    await writeFileAtomicAsync(keyFile, `${before}\n`, { mode: SAFE_FILE_MODE, durable: true });
+    throw new TaviError(
+      "INTERNAL",
+      `The credential key ${keyFile} did not read back as written; it is still the systemd credential ${name}`,
+    );
+  }
+  return { moved: true, systemd: name };
+}
+
+/**
+ * The at-rest key as hex (`tavi credentials key --export`), for `systemd-creds
+ * encrypt` to take on its standard input: from the file, the keychain item or
+ * the systemd credential `keyFile` names. The caller refuses a terminal.
+ */
+export async function exportCredentialKey(keyFile: string, options: CredentialKeyOptions = {}): Promise<string> {
+  await existingKeyText(keyFile);
+  const key = await readCredentialKey(keyFile, options);
+  if (key === undefined) throw new TaviError("UNAVAILABLE", `The credential key ${keyFile} vanished as it was read`);
+  return key.toString("hex");
 }
 
 /** `keyFile`'s text, trimmed; a missing key is refused, since there is nothing to move. */

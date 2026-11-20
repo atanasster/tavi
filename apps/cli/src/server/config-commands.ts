@@ -65,6 +65,7 @@ import {
   createLocalCredentialStore,
   credentialKeyFile,
   credentialKeyLocation,
+  moveCredentialKey,
   encryptCredentialDirectory,
   listCredentialRefs,
   plainCredentialValue,
@@ -835,9 +836,26 @@ export function credentialsCommand(deps: ConfigDependencies, input: CredentialsP
         case "encrypt":
           // The same routine offline: the key created if absent, each value rewritten encrypted.
           return await encryptCredentialDirectory(deps.dataDirectory);
+        case "key":
+          return await credentialKeyOnOwner(deps, input.to);
       }
     }),
   );
+}
+
+/**
+ * `credentials key --to-systemd|--to-file` against the service: only the
+ * process systemd started with `LoadCredentialEncrypted=` reads that
+ * credential, so the move that checks it, or reads it back into the file,
+ * runs here. Never from a page: where the key that opens every credential is
+ * kept is the operator's to change, at the terminal. Without `to`, where it is.
+ */
+async function credentialKeyOnOwner(deps: ConfigDependencies, to: CredentialsPayload["to"]): Promise<unknown> {
+  if (deps.fromBridge === true) {
+    throw new TaviError("NOT_AUTHORIZED", "a page cannot move the credential key; use `tavi credentials key` at the terminal");
+  }
+  if (to === undefined) return await credentialKeyLocation(deps.dataDirectory);
+  return await moveCredentialKey(deps.dataDirectory, to);
 }
 
 /** `reports` — the report history `tavi reports list` and `trends` read, from the owner's own store while it runs. */

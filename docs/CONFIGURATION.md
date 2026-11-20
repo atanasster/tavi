@@ -96,6 +96,30 @@ it. On Linux, `secret-tool clear service tavi-credential-key account <account>`
 does the same. Keep the items whose accounts are named in the `credentials.key`
 files of the data directories you still use.
 
+On a **headless Linux server** run as a system unit there is no keychain, and
+`credentials.key` would hold the key in the clear beside the data. A systemd
+credential can hold it instead, encrypted with the host key (and the TPM, where
+there is one) by `systemd-creds`, and handed decrypted only to the service:
+
+```bash
+tavi credentials key --export | sudo systemd-creds encrypt --name=tavi-credential-key - /etc/tavi/credential-key.cred
+tavi service unit --credential-encrypted tavi-credential-key=/etc/tavi/credential-key.cred --out tavi.service
+# install and start the unit as its header says, then, with it running:
+tavi credentials key --to-systemd
+```
+
+`--export` refuses to write to a terminal. `--to-systemd` runs on the service,
+the one process that reads the credential (under `$CREDENTIALS_DIRECTORY`,
+which every confined child is denied): it checks the credential holds the very
+key `credentials.key` holds, and only then replaces the file with a reference
+(`tavi-keychain:v1:systemd:tavi-credential-key`), reads the key back through
+it, and deletes the file's copy. Nothing is re-encrypted. From then on only the
+service reads the credentials: a command run without it (`tavi credentials
+set` with the service stopped) fails `UNAVAILABLE`, naming the line it needs.
+`tavi credentials key --to-file`, with the service running, moves the key back
+into the file. The encrypted file is bound to that machine: keep a copy of the
+key elsewhere (`--export`, before the move) for a restore anywhere else.
+
 Naming conventions:
 
 | Reference | Used for |

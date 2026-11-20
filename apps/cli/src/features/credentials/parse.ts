@@ -26,8 +26,8 @@ Actions:
                              to it), else in credentials.key (0600); idempotent.
                              Keep the key: without it the values cannot be
                              read, and it is never regenerated
-  key                        Say where the key is kept: credentials.key, or
-                             the OS keychain it refers to
+  key                        Say where the key is kept: credentials.key, the
+                             OS keychain it refers to, or a systemd credential
   key --to-file              Move the key out of the keychain into
                              credentials.key (0600): for a backup that restores
                              on another machine, or a system service, launchd
@@ -37,11 +37,24 @@ Actions:
                              keychain item is deleted once the file is written
   key --to-keychain          Move the key from credentials.key into the OS
                              keychain; credentials.key then refers to it
+  key --export               Write the key (hex) to standard output, for
+                             \`systemd-creds encrypt\` to take; refused when
+                             standard output is a terminal
+  key --to-systemd           On a headless Linux service: make the systemd
+                             credential tavi-credential-key the key's home.
+                             Encrypt the key into it first (--export piped to
+                             systemd-creds encrypt), install the unit with
+                             --credential-encrypted, start it, then run this:
+                             the running service checks the credential holds
+                             the same key before credentials.key refers to it.
+                             --to-file moves it back, also through the service
 
 Options:
   --file <path>          Source file for set (0600, not a symlink)
   --to-file              key: move the key into credentials.key
   --to-keychain          key: move the key into the OS keychain
+  --to-systemd           key: move the key to the systemd credential
+  --export               key: print the key for systemd-creds encrypt
   --format <text|json>   Output format for list, encrypt and key (default: text)
   --data-dir <path>      Data directory (${DATA_DIR_DEFAULT_HELP})
   -h, --help             Show this help
@@ -54,7 +67,9 @@ export interface CredentialsCommandOptions {
   /** Required for set. */
   readonly file?: string;
   /** For key: where to move the key; absent, `key` only says where it is. */
-  readonly keyTo?: "file" | "keychain";
+  readonly keyTo?: "file" | "keychain" | "systemd";
+  /** For key: write the key itself to standard output (`--export`), for `systemd-creds encrypt`. */
+  readonly keyExport?: boolean;
   readonly format: OutputFormat;
   readonly dataDirectory?: string;
 }
@@ -86,7 +101,7 @@ export function parseCredentials(argv: readonly string[]): ParsedCommand {
   const args = parseFlags(rest, {
     usage: CREDENTIALS_USAGE,
     valued: allowedFlags[resolvedAction],
-    switches: resolvedAction === "key" ? ["--to-file", "--to-keychain"] : [],
+    switches: resolvedAction === "key" ? ["--to-file", "--to-keychain", "--to-systemd", "--export"] : [],
     unknown: (name) => `credentials ${action} does not accept ${name}`,
   });
   if (args === "help") return { command: "help", usage: CREDENTIALS_USAGE };
@@ -103,10 +118,10 @@ export function parseCredentials(argv: readonly string[]): ParsedCommand {
   if (resolvedAction === "key" && credentialRef !== undefined) {
     throw new UsageError("credentials key takes no credential reference: it acts on the store's key", CREDENTIALS_USAGE);
   }
-  const toFile = args.switches.has("--to-file");
-  const toKeychain = args.switches.has("--to-keychain");
-  if (toFile && toKeychain) throw new UsageError("credentials key takes --to-file or --to-keychain, not both", CREDENTIALS_USAGE);
-  const keyTo = toFile ? "file" : toKeychain ? "keychain" : undefined;
+  const keyFlags = (["--to-file", "--to-keychain", "--to-systemd", "--export"] as const).filter((flag) => args.switches.has(flag));
+  if (keyFlags.length > 1) throw new UsageError(`credentials key takes one of ${keyFlags.join(", ")}, not both`, CREDENTIALS_USAGE);
+  const keyExport = keyFlags[0] === "--export";
+  const keyTo = keyFlags[0] === undefined || keyExport ? undefined : (keyFlags[0].slice("--to-".length) as "file" | "keychain" | "systemd");
   if (resolvedAction !== "list" && resolvedAction !== "encrypt" && resolvedAction !== "key" && credentialRef === undefined) {
     throw new UsageError(`credentials ${resolvedAction} needs a credential reference`, CREDENTIALS_USAGE);
   }
@@ -129,6 +144,7 @@ export function parseCredentials(argv: readonly string[]): ParsedCommand {
       ...(credentialRef === undefined ? {} : { credentialRef }),
       ...(file === undefined ? {} : { file }),
       ...(keyTo === undefined ? {} : { keyTo }),
+      ...(keyExport ? { keyExport } : {}),
       format,
       ...dataDirectoryFlag(flags),
     },

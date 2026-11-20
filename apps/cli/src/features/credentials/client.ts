@@ -1,10 +1,11 @@
 import { emitJson } from "../../cli/output.js";
 import { EXIT, reportCommandFailure } from "../../cli/exit.js";
 import { errorMessage, plural } from "@tavi/contracts/util";
-import { CREDENTIAL_KEYCHAIN_SERVICE, ModelConfigService } from "@tavi/runtime";
+import { CREDENTIAL_KEYCHAIN_SERVICE, exportCredentialKey, ModelConfigService, SYSTEMD_CREDENTIAL_KEY_NAME } from "@tavi/runtime";
 import {
   assertSecretReference,
   createLocalCredentialStore,
+  credentialKeyFile,
   credentialKeyLocation,
   encryptCredentialDirectory,
   listCredentialRefs,
@@ -91,18 +92,26 @@ export async function credentialsCommand(options: ResolvedDataDirectory<Credenti
 }
 
 /**
- * `tavi credentials key [--to-file|--to-keychain]`, always here and never on
+ * `tavi credentials key [--to-file|--to-keychain|--export]`, here and not on
  * an owner: an owner run as a service may be exactly the process that cannot
  * reach the keychain, and this command needs it. Nor does it take the
  * directory's ownership, so a running service need not stop: it touches only
  * `credentials.key`, replaced whole with a rename after checking it is
  * unchanged, and an owner reads that file on each access — before the move or
  * after it, it finds the same key.
+ *
+ * A key kept as a systemd credential is the exception: only the service
+ * systemd started reads it, so `--to-systemd`, and `--to-file` away from one,
+ * run on the owner, and with none running they are refused.
  */
 async function credentialKeyCommand(options: ResolvedDataDirectory<CredentialsCommandOptions>, io: CliIo): Promise<number> {
   try {
+    if (options.keyExport === true) return await exportKey(options.dataDirectory, io);
+    const location = await credentialKeyLocation(options.dataDirectory);
+    const onService = options.keyTo === "systemd" || (options.keyTo === "file" && location.kept === "systemd");
+    if (onService) return await credentialKeyOnService(options, io);
     if (options.keyTo === undefined) {
-      renderCredentialKeyLocation(await credentialKeyLocation(options.dataDirectory), options.format, io);
+      renderCredentialKeyLocation(location, options.format, io);
       return EXIT.ok;
     }
     const result = await moveCredentialKey(options.dataDirectory, options.keyTo);
@@ -111,6 +120,39 @@ async function credentialKeyCommand(options: ResolvedDataDirectory<CredentialsCo
   } catch (error) {
     return reportCommandFailure(error, io, "credentials key failed");
   }
+}
+
+/** `--export`: the key, for `systemd-creds encrypt` on standard input; never onto a terminal, where it would stay on screen. */
+async function exportKey(dataDirectory: string, io: CliIo): Promise<number> {
+  if (io.stdoutTty ?? io.isTty) {
+    io.stderr(
+      "credentials key --export writes the key itself: pipe it, as in " +
+        `\`tavi credentials key --export | systemd-creds encrypt --name=${SYSTEMD_CREDENTIAL_KEY_NAME} - <file>\`, never to a terminal\n`,
+    );
+    return EXIT.usage;
+  }
+  io.stdout(`${await exportCredentialKey(credentialKeyFile(dataDirectory))}\n`);
+  return EXIT.ok;
+}
+
+/** A move to or from the systemd credential, on the running service, which alone reads it. */
+async function credentialKeyOnService(options: ResolvedDataDirectory<CredentialsCommandOptions>, io: CliIo): Promise<number> {
+  const to = options.keyTo === "systemd" ? "systemd" : "file";
+  const onOwner = await configOnOwner(options.dataDirectory, "credentials", io, {
+    label: `tavi credentials key --to-${to}`,
+    mutates: true,
+    build: () => Promise.resolve({ action: "key", to }),
+    render: (result) => {
+      renderCredentialKeyMove(result as CredentialKeyMoveResult, options.format, io);
+      return EXIT.ok;
+    },
+  });
+  if (onOwner !== undefined) return onOwner;
+  io.stderr(
+    `credentials key --to-${to}: only the service systemd starts with LoadCredentialEncrypted=${SYSTEMD_CREDENTIAL_KEY_NAME}:<file> ` +
+      "reads that credential; start it (`tavi service install --credential-encrypted …`) and run this again\n",
+  );
+  return EXIT.unavailable;
 }
 
 /** `credentials delete`'s answer, and on stderr the connections still naming the key, with the way back. */
@@ -136,6 +178,11 @@ function renderCredentialKeyLocation(location: CredentialKeyLocation, format: Ou
       `the credential key is in ${location.keyFile}; keep a copy of it, but not with the data directory's backups: ` +
         "a backup that holds both gives away every credential\n",
     );
+  else if (location.kept === "systemd")
+    io.stdout(
+      `the credential key is the systemd credential ${location.systemd ?? ""}; ${location.keyFile} only refers to it, ` +
+        "and only the service systemd starts with it can read it. `tavi credentials key --to-file`, against the running service, moves it back.\n",
+    );
   else
     io.stdout(
       `the credential key is kept in ${location.keychain} (service ${CREDENTIAL_KEYCHAIN_SERVICE}, account ${location.item?.account ?? ""}); ` +
@@ -147,8 +194,8 @@ function renderCredentialKeyLocation(location: CredentialKeyLocation, format: Ou
 /** What a move did, and what the key's new home asks of a backup. */
 function renderCredentialKeyMove(result: CredentialKeyMoveResult, format: OutputFormat, io: CliIo): void {
   if (format === "json") emitJson(io, result);
-  else if (!result.moved)
-    io.stdout(`the credential key is in ${result.to === "file" ? result.keyFile : "the OS keychain"} already; nothing changed\n`);
+  else if (!result.moved) io.stdout(`the credential key is in ${KEY_HOMES[result.to](result)} already; nothing changed\n`);
+  else if ("systemd" in result) renderSystemdMove(result, io);
   else if (result.to === "file")
     io.stdout(
       `moved the credential key from ${result.keychain} into ${result.keyFile} (0600); no credential was re-encrypted.\n` +
@@ -159,12 +206,36 @@ function renderCredentialKeyMove(result: CredentialKeyMoveResult, format: Output
       `moved the credential key from ${result.keyFile} into ${result.keychain} (service ${CREDENTIAL_KEYCHAIN_SERVICE}, account ${result.item.account}); ` +
         `${result.keyFile} now refers to it, and no credential was re-encrypted.\n`,
     );
-  if (result.moved && result.deleteError !== undefined) {
+  if (result.moved && result.deleteError !== undefined && result.item !== undefined) {
     io.stderr(
-      `${GLYPHS.warning} the key is in ${result.keyFile} and used from there, but the item in ${result.keychain} ` +
-        `(service ${CREDENTIAL_KEYCHAIN_SERVICE}, account ${result.item.account}) could not be deleted: ${result.deleteError}; delete it there\n`,
+      `${GLYPHS.warning} the key is in ${"systemd" in result ? `the systemd credential ${result.systemd}` : result.keyFile} and used from there, ` +
+        `but the item in ${result.keychain} (service ${CREDENTIAL_KEYCHAIN_SERVICE}, account ${result.item.account}) could not be deleted: ` +
+        `${result.deleteError}; delete it there\n`,
     );
   }
+}
+
+/** Where each home is, said of an unmoved key. */
+const KEY_HOMES: Readonly<Record<CredentialKeyMoveResult["to"], (result: CredentialKeyMoveResult) => string>> = {
+  file: (result) => result.keyFile,
+  keychain: () => "the OS keychain",
+  systemd: () => `the systemd credential ${SYSTEMD_CREDENTIAL_KEY_NAME}`,
+};
+
+/** A move to the systemd credential, or from it into the file. */
+function renderSystemdMove(result: CredentialKeyMoveResult & { readonly moved: true; readonly systemd: string }, io: CliIo): void {
+  if (result.to === "file") {
+    io.stdout(
+      `moved the credential key from the systemd credential ${result.systemd} into ${result.keyFile} (0600); no credential was re-encrypted.\n` +
+        "Drop LoadCredentialEncrypted= from the unit once nothing needs it, and keep the file apart from the data directory's backups.\n",
+    );
+    return;
+  }
+  io.stdout(
+    `${result.keyFile} now refers to the systemd credential ${result.systemd}, which holds the same key; no credential was re-encrypted.\n` +
+      "The encrypted credential file is bound to this machine (and its TPM, if used): keep a copy of the key elsewhere, " +
+      "for a restore on another machine.\n",
+  );
 }
 
 /** `tavi credentials <action>` on a live owner, into the same `0600` store; a value is read here and never echoed. */

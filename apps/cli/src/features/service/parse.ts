@@ -56,6 +56,10 @@ systemd only (a non-root, hardened unit):
   --scope <system|user>      A system unit (default), or a \`systemctl --user\` unit
   --allow-root               Render a root unit anyway (refused otherwise)
   --credential <name=path>   A LoadCredential= line (repeatable)
+  --credential-encrypted <name=path>
+                             A LoadCredentialEncrypted= line, for a file
+                             \`systemd-creds encrypt\` wrote (repeatable): the
+                             credential key's home is tavi-credential-key
   -h, --help                 Show this help
 
 Every --fs-root among the --serve-arg flags becomes a ReadWritePaths= entry.
@@ -83,7 +87,7 @@ export interface ServiceCommandOptions {
   readonly group?: string;
   readonly scope?: SystemdScope;
   readonly allowRoot?: boolean;
-  readonly credentials?: readonly { readonly name: string; readonly path: string }[];
+  readonly credentials?: readonly { readonly name: string; readonly path: string; readonly encrypted?: boolean }[];
 }
 
 export function parseService(argv: readonly string[]): ParsedCommand {
@@ -111,9 +115,10 @@ export function parseService(argv: readonly string[]): ParsedCommand {
       "--group",
       "--scope",
       "--credential",
+      "--credential-encrypted",
     ],
     switches: ["--allow-root"],
-    lists: ["--serve-arg", "--credential"],
+    lists: ["--serve-arg", "--credential", "--credential-encrypted"],
     // The operator's own command line, repeatable with order preserved: every
     // argument an operator needs here *is* flag-shaped, so the value is taken
     // verbatim from the next token, past the guard that is sound for
@@ -128,11 +133,13 @@ export function parseService(argv: readonly string[]): ParsedCommand {
   const serveArgs = args.lists.get("--serve-arg") ?? [];
   for (const raw of serveArgs)
     if (hasUnsafeUnitChar(raw)) throw new UsageError("--serve-arg must be non-empty and contain no control characters", SERVICE_USAGE);
-  const credentials = (args.lists.get("--credential") ?? []).map((raw) => {
-    const match = /^([A-Za-z0-9_.-]{1,64})=(\/\S+)$/.exec(raw);
-    if (match === null) throw new UsageError("--credential takes <name>=<absolute path>, with no spaces", SERVICE_USAGE);
-    return { name: match[1] as string, path: match[2] as string };
-  });
+  const credentialsOf = (flag: "--credential" | "--credential-encrypted") =>
+    (args.lists.get(flag) ?? []).map((raw) => {
+      const match = /^([A-Za-z0-9_.-]{1,64})=(\/\S+)$/.exec(raw);
+      if (match === null) throw new UsageError(`${flag} takes <name>=<absolute path>, with no spaces`, SERVICE_USAGE);
+      return { name: match[1] as string, path: match[2] as string, ...(flag === "--credential-encrypted" ? { encrypted: true } : {}) };
+    });
+  const credentials = [...credentialsOf("--credential"), ...credentialsOf("--credential-encrypted")];
   const scopeFlag = flags.get("--scope");
   if (scopeFlag !== undefined && !(SYSTEMD_SCOPES as readonly string[]).includes(scopeFlag)) {
     throw new UsageError(`--scope must be one of ${SYSTEMD_SCOPES.join(", ")}`, SERVICE_USAGE);

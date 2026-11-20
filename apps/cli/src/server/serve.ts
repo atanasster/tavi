@@ -1808,7 +1808,7 @@ async function dispatchCommand(
       return uiPreferencesCommand(runtime.dataDirectory, value);
     },
     credentials: async (input) => {
-      const answer = await credentialsCommand(configDependencies(runtime, state, state.target), input);
+      const answer = await credentialsCommand(configDependencies(runtime, state, state.target, connection), input);
       if (answer.ok && input.action !== "list") await refreshProvidersAfterWrite();
       return answer;
     },
