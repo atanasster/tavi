@@ -16,6 +16,7 @@ import { plural } from "@tavi/contracts/util";
 import { formatTokens } from "../../lib/format.js";
 import { ask, mapOutcome, read, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { restartNote } from "./common.js";
+import { loadReplacements, type ModelReplacements } from "./lifecycle-api.js";
 
 /** What `models list` answers per connection. */
 export interface ConnectionSummary {
@@ -77,9 +78,9 @@ export function lifecycleNotice(
  * the catalog does not list has no lifecycle here and is not named.
  */
 export function rolesLifecycleNotices(
-  data: Pick<ModelsData, "models" | "roles">,
+  data: Pick<ModelsData, "models" | "roles" | "replacements">,
   today?: string,
-): readonly { readonly target: string; readonly notice: LifecycleNotice }[] {
+): readonly { readonly target: string; readonly notice: LifecycleNotice; readonly replacements?: ModelReplacements }[] {
   const targets = [
     ...(data.roles.workspaceDefault === null ? [] : [data.roles.workspaceDefault.target]),
     // With no default saved, what the owner runs for a turn is its own: as much in use.
@@ -94,7 +95,9 @@ export function rolesLifecycleNotices(
     seen.add(key);
     const model = data.models.find((entry) => entry.connectionId === target.connectionId && entry.modelId === target.model);
     const notice = model === undefined ? undefined : lifecycleNotice(model, today);
-    return notice === undefined || notice.level === "info" ? [] : [{ target: key, notice }];
+    if (notice === undefined || notice.level === "info") return [];
+    const replacements = data.replacements?.get(key);
+    return [{ target: key, notice, ...(replacements === undefined ? {} : { replacements }) }];
   });
 }
 
@@ -123,6 +126,8 @@ export interface ModelsData {
   readonly roles: RolesDocument;
   /** Connections whose catalog could not be read: the others are still shown. */
   readonly failures: readonly { readonly connectionId: string; readonly message: string }[];
+  /** What the last lifecycle sync suggests in place of a model in use, by `connection/model`; absent from an older owner. */
+  readonly replacements?: ReadonlyMap<string, ModelReplacements>;
 }
 
 /**
@@ -131,7 +136,12 @@ export interface ModelsData {
  * (a connection removed meanwhile, say) reported beside the others rather than
  * blanking them.
  */
-export async function loadModels(client: SettingsClient, workspaceId: string): Promise<Outcome<ModelsData>> {
+export async function loadModels(
+  client: SettingsClient,
+  workspaceId: string,
+  /** `replacements`: also read what the last lifecycle sync suggests (the Models page's banner; the picker needs none). */
+  options: { readonly replacements?: boolean } = {},
+): Promise<Outcome<ModelsData>> {
   const listed = await ask<readonly ConnectionSummary[]>(client, "models", { action: "list" });
   if (!listed.ok) return listed;
   // An owner that answers `list` with anything but a list is not one this page can read.
@@ -139,6 +149,7 @@ export async function loadModels(client: SettingsClient, workspaceId: string): P
   const connections = listed.value.filter(
     (connection) => connection.providerBinding === undefined || connection.providerBinding.workspaceId === workspaceId,
   );
+  const replacements = options.replacements === true ? loadReplacements(client) : undefined;
   const [roles, ...shown] = await Promise.all([
     ask<RolesDocument>(client, "models", { action: "roles", workspaceId }),
     ...connections.map((connection) =>
@@ -170,7 +181,16 @@ export async function loadModels(client: SettingsClient, workspaceId: string): P
         stale: entry.stale === true,
       });
   });
-  return { ok: true, value: { connections, models, roles: roles.value as RolesDocument, failures } };
+  return {
+    ok: true,
+    value: {
+      connections,
+      models,
+      roles: roles.value as RolesDocument,
+      failures,
+      ...(replacements === undefined ? {} : { replacements: await replacements }),
+    },
+  };
 }
 
 /** A target as the strip and the picker name it: `connection/model`, or the connection alone. */

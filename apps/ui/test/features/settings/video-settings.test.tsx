@@ -105,6 +105,7 @@ function owner(connections: ConnectionSummary[], video: Record<string, unknown> 
       if (action === "video-status") return { ok: true, result: video };
       if (action === "list") return { ok: true, result: connections };
       if (action === "roles") return { ok: true, result: { workspaceDefault: null, resolved: [], roles: [] } };
+      if (action === "lifecycle") return { ok: true, result: { checkedAt: null, warnings: [], unread: [] } };
       if (action === "show")
         return {
           ok: true,

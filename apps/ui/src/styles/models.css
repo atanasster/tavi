@@ -499,3 +499,10 @@
   gap: var(--space-1);
   margin-bottom: var(--space-3);
 }
+
+/* What may replace a model: indented under it, the provider's choice first. */
+.lifecycle-replacements {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-3);
+  color: hsl(var(--muted-foreground));
+}

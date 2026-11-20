@@ -26,6 +26,15 @@ import {
   rhumbUrlOf,
   type RhumbCall,
 } from "./rhumb-client.js";
+import {
+  askReplacements,
+  isReplacedLevel,
+  knownReplacements,
+  replacementCache,
+  replacementKinds,
+  type ModelReplacements,
+  type ReplacementCache,
+} from "./replacements.js";
 import { modelTargetsInUse, targetSourcesOf, type ModelTargetInUse, type ModelTargetsInUse, type ModelUse } from "./targets-in-use.js";
 
 /**
@@ -61,6 +70,7 @@ export interface LifecycleSyncedConnection {
 
 export interface LifecycleInUseWarning {
   readonly target: ModelTargetInUse;
+  readonly lifecycle: ModelLifecycle;
   readonly warnings: readonly LifecycleWarning[];
 }
 
@@ -101,15 +111,18 @@ function providerOf(connection: ModelConnection): { readonly provider: string } 
 
 /**
  * Reads Rhumb once, stores each cloud connection's lifecycle rows, and says
- * which models in use warn on `now`'s date. A source of models in use that
- * fails is named; any other failure throws, and connections already written
- * keep their new rows. Once `signal` aborts, nothing more is written.
+ * which models in use warn on `now`'s date. For each that retires or is
+ * redirected it asks Rhumb for a replacement per kind of use, into `cache`;
+ * a pick that fails is left out. A source of models in use that fails is
+ * named; any other failure throws, and connections already written keep
+ * their new rows. Once `signal` aborts, nothing more is written.
  */
 export async function syncModelLifecycle(
   sources: LifecycleSyncSources,
   call: RhumbCall,
   now: Date,
   signal?: AbortSignal,
+  cache: ReplacementCache = replacementCache,
 ): Promise<LifecycleSyncResult> {
   const connections = await sources.connections();
   const inUse = await sources.inUse();
@@ -157,11 +170,25 @@ export async function syncModelLifecycle(
     results.push({ connectionId, provider, models: entries.length });
   }
 
+  const warnings = inUseWarnings(inUse.targets, lifecycles, checkedAt.slice(0, 10));
+  const providerOfConnection = providersOf(results);
+  signal?.throwIfAborted();
+  await askReplacements(
+    call,
+    cache,
+    warnings.flatMap(({ target, lifecycle, warnings: each }) => {
+      const provider = providerOfConnection.get(target.connectionId);
+      return provider === undefined || !isReplacedLevel(worstLifecycleLevel(each) ?? "info")
+        ? []
+        : [{ catalogVersion: lifecycle.catalogVersion, provider, model: target.model, kinds: replacementKinds(target.usedBy) }];
+    }),
+  );
+  cache.keepVersions(new Set([...lifecycles.values()].map((lifecycle) => lifecycle.catalogVersion)));
   return {
     ...(listing.catalogVersion === undefined ? {} : { catalogVersion: listing.catalogVersion }),
     complete: listing.complete,
     connections: results,
-    warnings: inUseWarnings(inUse.targets, lifecycles, checkedAt.slice(0, 10)),
+    warnings,
     unread: inUse.unread,
   };
 }
@@ -176,7 +203,7 @@ export function inUseWarnings(
     .flatMap((target) => {
       const lifecycle = lifecycles.get(`${target.connectionId}\u0000${target.model}`);
       const warnings = lifecycle === undefined ? [] : lifecycleWarnings(lifecycle, today);
-      return warnings.length === 0 ? [] : [{ target, warnings }];
+      return lifecycle === undefined || warnings.length === 0 ? [] : [{ target, lifecycle, warnings }];
     })
     .sort(
       (left, right) =>
@@ -205,6 +232,8 @@ export interface LifecycleSyncReport {
     readonly level: LifecycleLevel;
     readonly usedBy: readonly ModelUse[];
     readonly says: readonly string[];
+    /** For a model that retires or is redirected: the provider's target and Rhumb's picks, never applied. */
+    readonly replacements?: ModelReplacements;
   }[];
   readonly unread: readonly string[];
 }
@@ -218,24 +247,45 @@ export interface LifecycleSyncNoKey {
 export const RHUMB_KEY_HINT =
   "To check which models retire, get a free Rhumb key at https://rhumbdata.com/sign-up and store it: tavi credentials set rhumb (or set RHUMB_KEY).";
 
-/** The report of a sync, in words. */
-export function lifecycleSyncReport(result: LifecycleSyncResult): LifecycleSyncReport {
+/** The report of a sync, in words, with the replacements `cache` holds. */
+export function lifecycleSyncReport(result: LifecycleSyncResult, cache: ReplacementCache = replacementCache): LifecycleSyncReport {
+  const providers = providersOf(result.connections);
   return {
     ...(result.catalogVersion === undefined ? {} : { catalogVersion: result.catalogVersion }),
     complete: result.complete,
     connections: result.connections,
-    warnings: result.warnings.map(warningInWords),
+    warnings: result.warnings.map((warning) => warningInWords(warning, providers, cache)),
     unread: result.unread,
   };
 }
 
-function warningInWords({ target, warnings }: LifecycleInUseWarning): LifecycleSyncReport["warnings"][number] {
+/** Each checked connection's provider, by connection. */
+function providersOf(connections: readonly LifecycleSyncedConnection[]): ReadonlyMap<string, string> {
+  return new Map(connections.flatMap((entry) => (entry.provider === undefined ? [] : [[entry.connectionId, entry.provider] as const])));
+}
+
+function warningInWords(
+  { target, lifecycle, warnings }: LifecycleInUseWarning,
+  providers: ReadonlyMap<string, string>,
+  cache: ReplacementCache,
+): LifecycleSyncReport["warnings"][number] {
+  const level = worstLifecycleLevel(warnings) ?? "info";
   return {
     connectionId: target.connectionId,
     model: target.model,
-    level: worstLifecycleLevel(warnings) ?? "info",
+    level,
     usedBy: target.usedBy,
     says: warnings.map(lifecycleWarningText),
+    ...(isReplacedLevel(level)
+      ? {
+          replacements: knownReplacements(cache, {
+            provider: providers.get(target.connectionId),
+            model: target.model,
+            lifecycle,
+            kinds: replacementKinds(target.usedBy),
+          }),
+        }
+      : {}),
   };
 }
 
@@ -263,12 +313,17 @@ export const NO_CLOUD_CONNECTION_HINT = "no cloud connection Rhumb knows: custom
 export async function storedLifecycleReport(
   sources: Pick<LifecycleSyncSources, "stored" | "inUse" | "connections">,
   now: Date,
+  cache: ReplacementCache = replacementCache,
 ): Promise<StoredLifecycleReport> {
   const stored = await sources.stored();
   const inUse = await sources.inUse();
-  const checkable = new Set(
-    (await sources.connections()).filter((connection) => "provider" in providerOf(connection)).map((connection) => connection.connectionId),
+  const providers = new Map(
+    (await sources.connections()).flatMap((connection) => {
+      const checked = providerOf(connection);
+      return "provider" in checked ? [[connection.connectionId, checked.provider] as const] : [];
+    }),
   );
+  const checkable = new Set(providers.keys());
   const lifecycles = new Map(stored.map((entry) => [`${entry.connectionId}\u0000${entry.modelId}`, entry.lifecycle]));
   const checked = inUse.targets.filter((target) => checkable.has(target.connectionId));
   const rows = checked.flatMap((target) => {
@@ -293,7 +348,9 @@ export async function storedLifecycleReport(
     ...(oldest === undefined ? {} : { catalogVersion: oldest.catalogVersion }),
     stale: oldest !== undefined && now.getTime() - Date.parse(oldest.checkedAt) > 2 * LIFECYCLE_SYNC_INTERVAL_MS,
     unchecked,
-    warnings: inUseWarnings(inUse.targets, lifecycles, now.toISOString().slice(0, 10)).map(warningInWords),
+    warnings: inUseWarnings(inUse.targets, lifecycles, now.toISOString().slice(0, 10)).map((warning) =>
+      warningInWords(warning, providers, cache),
+    ),
     unread: inUse.unread,
     ...(hint === undefined ? {} : { hint }),
   };

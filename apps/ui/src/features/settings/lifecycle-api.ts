@@ -5,12 +5,56 @@ import { credentialActions } from "./credentials-api.js";
 
 export const RHUMB_SIGN_UP_URL = "https://rhumbdata.com/sign-up";
 
-/** One model in use that warns, as `models sync` answers it. */
+/** What may replace a model that retires or is redirected: suggestions, never applied. */
+export interface ModelReplacements {
+  /** The provider's redirect target: its choice, which can be a smaller model. */
+  readonly provider?: { readonly model: string; readonly via?: string };
+  /** Rhumb's pick per kind of use. */
+  readonly rhumb: readonly { readonly for: "agent" | "cheap" | "embedding" | "video"; readonly model: string; readonly reason?: string }[];
+}
+
+/** One model in use that warns, as `models sync` and `models lifecycle` answer it. */
 export interface LifecycleWarningRow {
   readonly connectionId: string;
   readonly model: string;
   readonly level: "error" | "warning" | "info";
   readonly says: readonly string[];
+  /** Absent for an info notice, and from an older owner. */
+  readonly replacements?: ModelReplacements;
+}
+
+const USES: Readonly<Record<ModelReplacements["rhumb"][number]["for"], string>> = {
+  agent: "with tools",
+  cheap: "background, cheaper",
+  embedding: "embeddings",
+  video: "with video",
+};
+
+/** The replacements as the banner says them: the provider's choice, then Rhumb's picks; none when there are none. */
+export function replacementLines(replacements: ModelReplacements | undefined): readonly string[] {
+  if (replacements === undefined) return [];
+  return [
+    ...(replacements.provider === undefined ? [] : [`Provider's choice: ${replacements.provider.model}`]),
+    // A kind this page does not know (a newer owner) is said without its use rather than as "undefined".
+    ...replacements.rhumb.map((pick) => `Rhumb suggests ${pick.model}${pick.for in USES ? ` (${USES[pick.for]})` : ""}`),
+  ];
+}
+
+/**
+ * The replacements `models lifecycle` knows, by `connection/model`: what the
+ * last sync picked. Empty when the owner cannot say (an older one) or fails:
+ * the banner still names each model.
+ */
+export async function loadReplacements(client: SettingsClient): Promise<ReadonlyMap<string, ModelReplacements>> {
+  const report = await ask<{ readonly warnings?: unknown }>(client, "models", { action: "lifecycle" });
+  if (!report.ok || !Array.isArray(report.value?.warnings)) return new Map();
+  return new Map(
+    (report.value.warnings as LifecycleWarningRow[]).flatMap((warning) =>
+      warning.replacements === undefined || !Array.isArray(warning.replacements.rhumb)
+        ? []
+        : [[`${warning.connectionId}/${warning.model}`, warning.replacements] as const],
+    ),
+  );
 }
 
 type SyncAnswer =

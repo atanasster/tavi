@@ -472,7 +472,13 @@ describe("the panes", () => {
     const lines = modelsPane([], empty, "w", {
       checkedAt: "2026-11-20T08:00:00.000Z",
       warnings: [
-        { connectionId: "openai", model: "gpt-5", level: "error", says: ["retired on 2026-11-19"] },
+        {
+          connectionId: "openai",
+          model: "gpt-5",
+          level: "error",
+          says: ["retired on 2026-11-19"],
+          replacements: { rhumb: [{ for: "cheap", model: "gpt-6-luna" }] },
+        },
         {
           connectionId: "gemini",
           model: "gemini-2.5-pro",
@@ -481,8 +487,9 @@ describe("the panes", () => {
         },
       ],
     });
-    expect(lines.slice(-2).map((line) => line.replace(/^ {2}\S+ /u, ""))).toEqual([
+    expect(lines.slice(-3).map((line) => line.replace(/^ {2}\S+ /u, ""))).toEqual([
       "openai/gpt-5 retired on 2026-11-19",
+      "      Rhumb suggests gpt-6-luna (background, cheaper)",
       "gemini/gemini-2.5-pro answered and billed as gemini-3.8-flash on 2026-12-01",
     ]);
     expect(modelsPane([], empty, "w").some((line) => line.includes("lifecycle"))).toBe(false);

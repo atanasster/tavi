@@ -1172,8 +1172,9 @@ tabs above the page. It has these views:
   connection** picks a provider, takes its key, discovers its models and, when
   the workspace has no default yet, asks for one. Above the roles, a banner
   names the models the default and the roles (fallbacks too) use that the
-  last lifecycle sync says are retired, redirected or retiring within 30 days;
-  each connection's line counts its models that are. **Model retirements**
+  last lifecycle sync says are retired, redirected or retiring within 30 days,
+  each with what may replace it: the provider's choice, then Rhumb's pick per
+  kind of use. Each connection's line counts its models that are. **Model retirements**
   stores a free [Rhumb](https://rhumbdata.com/sign-up) key (as the
   credential `rhumb`), after which the owner checks daily which models in use
   retire, are redirected or change price; with one stored, **Check now** runs

@@ -26,7 +26,7 @@ import { AddConnectionModal, ManageConnectionModal } from "./ConnectionSetup.js"
 import { VideoAnalyzerStatus, VideoModels } from "./VideoModels.js";
 import { RhumbKeyCard } from "./RhumbKeyCard.js";
 import { credentialActions } from "./credentials-api.js";
-import { storeRhumbKey, syncLifecycle } from "./lifecycle-api.js";
+import { replacementLines, storeRhumbKey, syncLifecycle } from "./lifecycle-api.js";
 import { TargetName, TargetPicker } from "./TargetPicker.js";
 import { useAction } from "../../hooks/use-action.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
@@ -60,7 +60,7 @@ type Picking = { readonly slot: "default"; readonly connectionId?: string } | { 
 export function ModelBrowser() {
   const { workspaceId } = useWorkspace();
   const { client } = useWorkspace();
-  const { data, error, loading, reload } = useLoaded(() => loadModels(client, workspaceId));
+  const { data, error, loading, reload } = useLoaded(() => loadModels(client, workspaceId, { replacements: true }));
   // With `tavi.video` off nothing reads a video: its switches and analysers are not shown.
   const settings = useLoaded(() => workspaceSettingsActions.load(client, workspaceId));
   const videoOff = settings.data?.disabledPlugins?.includes("tavi.video") === true;
@@ -520,11 +520,21 @@ function LifecycleBanner({ data }: { readonly data: ModelsData }) {
           : "A model in use retires or is redirected, now or soon. Tavi never switches it for you: pick another with Set when ready."}
       </Line>
       <ul className="list-reset">
-        {notices.map(({ target, notice }) => (
-          <li key={target}>
-            <strong>{target}</strong> {notice.text}
-          </li>
-        ))}
+        {notices.map(({ target, notice, replacements }) => {
+          const lines = replacementLines(replacements);
+          return (
+            <li key={target}>
+              <strong>{target}</strong> {notice.text}
+              {lines.length === 0 ? null : (
+                <ul className="lifecycle-replacements">
+                  {lines.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

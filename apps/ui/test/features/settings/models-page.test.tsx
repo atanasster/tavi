@@ -10,6 +10,7 @@ import {
   type ConnectionSummary,
   type RolesDocument,
 } from "../../../src/features/settings/models-api.js";
+import type { ModelReplacements } from "../../../src/features/settings/lifecycle-api.js";
 import type { SettingsClient } from "../../../src/lib/ipc.js";
 import { ModelBrowser } from "../../../src/features/settings/ModelBrowser.js";
 import { announced, freshAnnouncer } from "../../announced.js";
@@ -50,6 +51,7 @@ function owner(start: {
   roles: RolesDocument;
   disabledPlugins?: string[];
   lifecycle?: Record<string, BrowsedModel["lifecycle"]>;
+  replacements?: Record<string, ModelReplacements>;
 }) {
   const writes: { command: string; payload: Record<string, unknown> }[] = [];
   const connections = [...start.connections];
@@ -69,6 +71,18 @@ function owner(start: {
       }
       if (action === "list") return { ok: true, result: connections };
       if (action === "roles") return { ok: true, result: start.roles };
+      if (action === "lifecycle")
+        return {
+          ok: true,
+          result: {
+            checkedAt: null,
+            warnings: Object.entries(start.replacements ?? {}).map(([target, replacements]) => {
+              const [connectionId, model] = target.split("/");
+              return { connectionId, model, level: "warning", says: [], replacements };
+            }),
+            unread: [],
+          },
+        };
       if (action === "show")
         return {
           ok: true,
@@ -303,6 +317,7 @@ describe("the Models page", () => {
       connections: [local],
       roles,
       lifecycle: { a: { status: "deprecated", retiresOn: soon, catalogVersion: "v", checkedAt: "2026-11-20T08:00:00.000Z" } },
+      replacements: { "local/a": { provider: { model: "b" }, rhumb: [{ for: "agent", model: "c" }] } },
     });
     const host = await mountSettled(
       <InWorkspace client={fake.client} workspaceId="default">
@@ -311,6 +326,11 @@ describe("the Models page", () => {
     );
     const banner = host.querySelector('[aria-labelledby="lifecycle-banner-title"]');
     expect(banner?.textContent).toContain(`local/a retires on ${soon}`);
+    // The provider's choice, then Rhumb's pick, each named as such.
+    expect([...(banner?.querySelectorAll(".lifecycle-replacements li") ?? [])].map((item) => item.textContent)).toEqual([
+      "Provider's choice: b",
+      "Rhumb suggests c (with tools)",
+    ]);
     expect(host.querySelector(".connection-item")?.textContent).toContain("1 model retired, retiring or redirected");
   });
 

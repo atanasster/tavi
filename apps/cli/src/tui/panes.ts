@@ -14,6 +14,7 @@ import {
 } from "@tavi/contracts";
 import { plural } from "@tavi/contracts/util";
 
+import { replacementsInWords, type ModelReplacements } from "../features/models/replacements.js";
 import { GLYPHS, divider } from "./theme.js";
 
 /**
@@ -262,6 +263,7 @@ export function modelsPane(
           readonly model: string;
           readonly level: string;
           readonly says: readonly string[];
+          readonly replacements?: ModelReplacements;
         }[];
         readonly hint?: string;
       }
@@ -311,10 +313,13 @@ function lifecycleLines(lifecycle: NonNullable<Parameters<typeof modelsPane>[3]>
     return [`  lifecycle: no model in use is retiring or redirected (checked ${lifecycle.checkedAt.slice(0, 10)})`];
   return [
     ...gaps,
-    ...shown.map(
-      (warning) =>
+    ...shown.flatMap((warning) => {
+      const replace = replacementsInWords(warning.replacements);
+      return [
         `  ${warning.level === "error" ? GLYPHS.failed : GLYPHS.flagged} ${warning.connectionId}/${warning.model} ${warning.says.join("; ")}`,
-    ),
+        ...(replace === undefined ? [] : [`      ${replace}`]),
+      ];
+    }),
   ];
 }
 

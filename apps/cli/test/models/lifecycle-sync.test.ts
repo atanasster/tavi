@@ -19,6 +19,7 @@ import {
   type LifecycleSyncSources,
   RHUMB_KEY_HINT,
 } from "../../src/features/models/lifecycle-sync.js";
+import { ReplacementCache } from "../../src/features/models/replacements.js";
 import type { RhumbCall } from "../../src/features/models/rhumb-client.js";
 import type { ModelTargetsInUse } from "../../src/features/models/targets-in-use.js";
 
@@ -44,9 +45,16 @@ const catalogRow = (connectionId: string, modelId: string): ModelCatalogEntry =>
   capabilities: [],
 });
 
-function harness(options: { readonly pages?: unknown[]; readonly stored?: readonly ModelLifecycleEntry[] } = {}) {
+function harness(
+  options: {
+    readonly pages?: unknown[];
+    readonly stored?: readonly ModelLifecycleEntry[];
+    readonly resolve?: (query: Record<string, string>) => unknown;
+  } = {},
+) {
   const replaced = new Map<string, readonly ModelLifecycleEntry[]>();
   const queries: Record<string, string>[] = [];
+  const resolves: Record<string, string>[] = [];
   const inUse: ModelTargetsInUse = {
     targets: [
       { connectionId: "openai", model: "gpt-5", usedBy: [{ kind: "workspace-default", workspaceId: "default" }] },
@@ -88,11 +96,16 @@ function harness(options: { readonly pages?: unknown[]; readonly stored?: readon
       ],
     },
   ];
-  const call: RhumbCall = async (_path, query) => {
+  const call: RhumbCall = async (path, query) => {
+    if (path === "/v1/resolve") {
+      resolves.push(query);
+      if (options.resolve === undefined) throw new Error("the resolver answered 503");
+      return options.resolve(query);
+    }
     queries.push(query);
-    return pages[queries.length - 1];
+    return pages[(queries.length - 1) % pages.length];
   };
-  return { sources, call, replaced, queries };
+  return { sources, call, replaced, queries, resolves };
 }
 
 describe("the model lifecycle sync", () => {
@@ -124,6 +137,70 @@ describe("the model lifecycle sync", () => {
       ["openai", "gpt-5", "warning"],
     ]);
     expect(lifecycleSyncLogLine(report)).toContain("openai/gpt-5 retires on 2026-12-11");
+  });
+
+  it("asks Rhumb for a replacement per kind of use, once per catalog version, beside the provider's redirect", async () => {
+    const picks: Record<string, string> = { "agent-with-tools": "gpt-6.2-sol", "agent-with-tools/cheap": "gemini-3.8-flash" };
+    const { sources, call, resolves } = harness({
+      resolve: (query) => {
+        const provider = query["providers"] as string;
+        const model = picks[`${query["purpose"]}${query["budget"] === undefined ? "" : `/${query["budget"]}`}`];
+        return { catalog_version: "2026-11-20.1", reason: "best for tools", model: { provider, provider_model_id: model } };
+      },
+    });
+    const cache = new ReplacementCache();
+    const result = await syncModelLifecycle(sources, call, NOW, undefined, cache);
+    // Provider names only, never the model in use; the fast role asks on a cheap budget.
+    expect(resolves).toEqual([
+      { providers: "gemini", purpose: "agent-with-tools", budget: "cheap" },
+      { providers: "openai", purpose: "agent-with-tools" },
+    ]);
+    const report = lifecycleSyncReport(result, cache);
+    expect(report.warnings.map((warning) => [warning.model, warning.replacements])).toEqual([
+      [
+        "models/gemini-2.5-pro",
+        { provider: { model: "gemini-3.8-flash" }, rhumb: [{ for: "cheap", model: "gemini-3.8-flash", reason: "best for tools" }] },
+      ],
+      ["gpt-5", { rhumb: [{ for: "agent", model: "gpt-6.2-sol", reason: "best for tools" }] }],
+    ]);
+    // The same catalog version: asked nothing again, and the stored report shows the same picks.
+    await syncModelLifecycle(sources, call, NOW, undefined, cache);
+    expect(resolves).toHaveLength(2);
+    const stored = await storedLifecycleReport(
+      {
+        stored: async () => [...(await sourcesStored(sources, call, cache))],
+        inUse: sources.inUse,
+        connections: sources.connections,
+      },
+      NOW,
+      cache,
+    );
+    expect(stored.warnings.find((warning) => warning.model === "gpt-5")?.replacements?.rhumb[0]?.model).toBe("gpt-6.2-sol");
+  });
+
+  it("skips the old model and going ones for the next alternative, leaves a pick out when none is left, and still stores", async () => {
+    const { sources, call, replaced } = harness({
+      resolve: (query) =>
+        query["providers"] === "openai"
+          ? {
+              reason: "top",
+              model: { provider: "openai", provider_model_id: "gpt-5" },
+              alternatives: [
+                { provider: "openai", provider_model_id: "gpt-4.1", status: "deprecated" },
+                { provider: "openai", provider_model_id: "gpt-6.2-sol", status: "ga" },
+              ],
+            }
+          : { model: { provider: "gemini", provider_model_id: "gemini-2.5-pro" } },
+    });
+    const cache = new ReplacementCache();
+    const report = lifecycleSyncReport(await syncModelLifecycle(sources, call, NOW, undefined, cache), cache);
+    expect(replaced.has("openai")).toBe(true);
+    // An alternative carries no reason: Rhumb's is for its top pick.
+    expect(report.warnings.map((warning) => warning.replacements?.rhumb)).toEqual([[], [{ for: "agent", model: "gpt-6.2-sol" }]]);
+    const failing = harness();
+    const fresh = new ReplacementCache();
+    const none = lifecycleSyncReport(await syncModelLifecycle(failing.sources, failing.call, NOW, undefined, fresh), fresh);
+    expect(none.warnings.find((warning) => warning.model === "gpt-5")?.replacements).toEqual({ rhumb: [] });
   });
 
   it("keeps what was stored for a model past the pages it read", async () => {
@@ -321,3 +398,10 @@ describe("tavi models sync", () => {
     expect(existsSync(directory)).toBe(false);
   });
 });
+
+/** The rows a sync stores, read back: what the stored report reads. */
+async function sourcesStored(sources: LifecycleSyncSources, call: RhumbCall, cache: ReplacementCache): Promise<ModelLifecycleEntry[]> {
+  const rows: ModelLifecycleEntry[] = [];
+  await syncModelLifecycle({ ...sources, replace: async (_id, entries) => void rows.push(...entries) }, call, NOW, undefined, cache);
+  return rows;
+}

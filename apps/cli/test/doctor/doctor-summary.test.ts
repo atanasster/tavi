@@ -19,8 +19,17 @@ describe("doctor's text summary", () => {
     );
     const text = lifecycle({
       checkedAt: "2026-11-20T08:00:00.000Z",
-      warnings: [{ connectionId: "openai", model: "gpt-5", level: "error", says: ["retired on 2026-11-19"] }],
+      warnings: [
+        {
+          connectionId: "openai",
+          model: "gpt-5",
+          level: "error",
+          says: ["retired on 2026-11-19"],
+          replacements: { provider: { model: "gpt-6-luna" }, rhumb: [{ for: "agent", model: "gpt-6.2-sol" }] },
+        },
+      ],
     });
+    expect(text).toContain("      the provider moves it to gpt-6-luna; Rhumb suggests gpt-6.2-sol (with tools)");
     expect(line(text, "Model lifecycle")).toBe(
       "✗ Model lifecycle: 1 model(s) in use retired or retiring, redirected or changing (checked 2026-11-20)",
     );

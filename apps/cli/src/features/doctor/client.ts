@@ -6,6 +6,7 @@ import { resolveDataDirectory } from "../../shared/data-directory.js";
 import type { CliIo } from "../../cli/io.js";
 import { attachToOwner } from "../../cli/owner.js";
 import type { RuntimeFactory } from "../../cli/runtime-options.js";
+import { replacementsInWords, replacementsOf } from "../models/replacements.js";
 import { SANDBOX_OPTION_FLAGS } from "../sandbox/setup.js";
 
 /**
@@ -237,9 +238,12 @@ function lifecycleLines(lifecycle: Record<string, unknown>): string[] {
   return [
     `${retired ? "✗" : warnings.length > 0 || gaps.length > 0 ? "–" : "✓"} Model lifecycle: ${head} (checked ${String(lifecycle["checkedAt"]).slice(0, 10)})`,
     ...gaps.map((gap) => `    ${gap}`),
-    ...warnings.map(
-      (warning) =>
+    ...warnings.flatMap((warning) => {
+      const replace = replacementsInWords(replacementsOf(warning["replacements"]));
+      return [
         `    ${String(warning["connectionId"])}/${String(warning["model"])}: ${Array.isArray(warning["says"]) ? warning["says"].join("; ") : ""}`,
-    ),
+        ...(replace === undefined ? [] : [`      ${replace}`]),
+      ];
+    }),
   ];
 }

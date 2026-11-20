@@ -2,6 +2,8 @@ import { useState } from "react";
 
 import { Button } from "../../ui/Button.js";
 import { Card } from "../../ui/Card.js";
+import { Command } from "../../ui/Command.js";
+import { Field } from "../../ui/Field.js";
 import { RHUMB_SIGN_UP_URL } from "./lifecycle-api.js";
 import { PasswordInput } from "./PasswordInput.js";
 
@@ -40,7 +42,7 @@ export function RhumbKeyCard({
       {stored ? (
         <p className="muted">
           A Rhumb key is stored. Tavi checks daily which models it uses retire, are redirected or change price, and says so here and in{" "}
-          <code>tavi doctor</code>. It never changes a model for you.
+          <Command>tavi doctor</Command>. It never changes a model for you.
         </p>
       ) : (
         <form
@@ -59,8 +61,18 @@ export function RhumbKeyCard({
             </a>
             , Tavi checks daily and says before one you use goes. Only provider names are sent, never which models you use.
           </p>
-          <label htmlFor="rhumb-key">Rhumb key</label>
-          <PasswordInput id="rhumb-key" value={key} placeholder="Paste the key" invalid={false} onChange={setKey} />
+          <Field label="Rhumb key" id="rhumb-key">
+            {(control) => (
+              <PasswordInput
+                id={control.id}
+                value={key}
+                placeholder="Paste the key"
+                invalid={false}
+                {...(control["aria-describedby"] === undefined ? {} : { describedBy: control["aria-describedby"] })}
+                onChange={setKey}
+              />
+            )}
+          </Field>
           <Button type="submit" variant="primary" size="sm" disabled={busy !== undefined || key.trim() === ""}>
             {busy === "rhumb-key" ? "Storing…" : "Store key"}
           </Button>
