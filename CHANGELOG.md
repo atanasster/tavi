@@ -14,6 +14,10 @@ change behaviour or stored data.
   server again with a new `--version`, which probes in the sandbox, and
   approve that version. Nothing is moved for you: the server might not run
   under the stronger sandbox.
+- `pnpm test:coverage` measures test coverage per package (lines,
+  statements, branches, functions) and sums it into a table; a weekly and
+  on-demand CI workflow (`coverage.yml`) posts it to the job summary and
+  uploads each package's HTML report. Report-only: no floor is enforced yet.
 
 ## 0.2.0 — 2026-11-20
 

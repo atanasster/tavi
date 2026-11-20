@@ -1,0 +1,55 @@
+# Test coverage per workspace, report-only (`pnpm test:coverage`): weekly on main and on demand, never on a
+# pull request, since the suites run one file at a time and coverage slows them further. The table goes to
+# the job summary, and each workspace's HTML report is uploaded. No floor is enforced yet; child processes a
+# test starts (plugin workers, confined helpers) are not measured.
+name: coverage
+
+on:
+  schedule:
+    # Mondays 03:00 UTC.
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coverage-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: 12.16.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.22.2
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # As ci.yml's test-cli: PDF processing and plugin workers run only confined, and their tests need it.
+      - name: Sandbox dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bubblewrap socat ripgrep
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - run: pnpm test:coverage
+      - name: Upload the HTML reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: coverage
+          path: |
+            coverage/summary.md
+            apps/*/coverage/
+            packages/*/coverage/
+            packages/builtin/*/coverage/
+            packages/external/*/coverage/
+          if-no-files-found: warn
+          retention-days: 30

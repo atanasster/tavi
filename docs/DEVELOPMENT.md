@@ -76,6 +76,7 @@ pnpm test               # every package's tests, then the repository-wide tests 
 pnpm run check          # lint, typecheck, then test
 pnpm run test:real      # also the *.real, *.live and *.soak suites (TAVI_REAL_TESTS=1)
 pnpm run test:release   # the packed, installed CLI (TAVI_RELEASE_INSTALL=1)
+pnpm run test:coverage  # every package's tests with coverage, summed per package (report-only)
 ```
 
 - `build` builds each package's dependencies first (`^build`). `@tavi/cli`'s
@@ -110,6 +111,16 @@ pnpm run test:release   # the packed, installed CLI (TAVI_RELEASE_INSTALL=1)
 - `tests/no-planning-citations.test.ts` keeps planning-record citations
   (decision ids, plan files and sections, step ids) out of tracked files; its
   allowlist names standards and terms-of-service sections.
+- `test:coverage` (`scripts/coverage.mjs`) runs every package's tests with
+  `--coverage` (V8; `src/` only, as `vitest.config.ts` sets it), then sums
+  each package's `coverage/coverage-summary.json` into a table of lines,
+  statements, branches and functions: printed, written to
+  `coverage/summary.md`, and added to the GitHub job summary in CI. Each
+  package's HTML report is its own `coverage/index.html`. Turbo's filters
+  pass through (`pnpm test:coverage --filter=@tavi/contracts`). It is
+  report-only: no floor fails a run, and the exit status is the tests'. A
+  child process a test starts (plugin workers, confined helpers, the PDF and
+  video children) is not measured, so those packages read low.
 - One package: `pnpm --filter @tavi/runtime test`, or `npx vitest run` in its
   folder; one file: `npx vitest run test/<file>.test.ts`.
 
@@ -491,6 +502,7 @@ flowchart LR
   demand["Run workflow, or a pull request labelled sandbox-matrix"] --> matrix["sandbox.yml: the sandbox matrix"]
   matrix --> linux["Linux jobs on ubuntu-24.04 and ubuntu-24.04-arm"]
   matrix --> mac["macOS jobs on macos-15 and macos-15-intel"]
+  weekly["Mondays, or Run workflow"] --> coverage_yml["coverage.yml: pnpm test:coverage, report-only"]
   tag["a v<version> tag, or Run workflow"] --> release_yml["release.yml: pack, install on Linux and macOS, publish (tags only)"]
 ```
 
@@ -504,6 +516,13 @@ flowchart LR
 | `windows` | Native Windows, in four shards: `pnpm run build`, then on the first shard `pnpm run lint`, `pnpm run typecheck` and `pnpm run knip`, then a quarter of the repository-wide tests (`vitest run --project tavi-monorepo --shard=N/4`) and of every workspace's (`--project "@tavi/*"`, which does not fail the job until its first run has named every test file that needs POSIX). A test that needs POSIX skips there only through `needsPosix(import.meta.url)`, its file named with the reason in `POSIX_ONLY` (`@tavi/test-support`); `tests/posix-only.test.ts` holds the list's length, so after that first run it only shrinks. |
 | `windows-arm` | Windows 11 on Arm: `pnpm run build`, then loads the native modules (koffi, better-sqlite3, the keyring) from their arm64 builds, `pnpm run typecheck`, and the repository-wide tests (`vitest run --project tavi-monorepo`). |
 | `secrets` | gitleaks over the full history. |
+
+`.github/workflows/coverage.yml` runs `pnpm test:coverage` on Mondays and on
+demand (Run workflow), never on a pull request: the suites run one file at a
+time, and coverage slows them further. It installs the Linux sandbox as
+`test-cli` does, puts the per-package table in the job summary, and uploads
+each package's HTML report as the `coverage` artifact. It reports only; no
+floor is enforced yet.
 
 The real suites and browser tests without Chromium skip in CI, except
 `browser-miniweb`'s suite. Checkouts do not keep the job's token

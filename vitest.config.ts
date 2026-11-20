@@ -116,6 +116,14 @@ function sharedConfig(projects: TestProjectInlineConfiguration[], project?: stri
       // Native database handles and timing assertions prefer a single worker.
       pool: "forks",
       fileParallelism: false,
+      // Measured only with --coverage (`pnpm test:coverage`, which runs each workspace's project and sums them).
+      // Report-only for now; a child process a test starts (plugin workers, confined helpers) is not counted.
+      coverage: {
+        provider: "v8",
+        include: ["src/**/*.{ts,tsx}"],
+        exclude: ["src/**/*.d.ts"],
+        reporter: ["text-summary", "json-summary", "html"],
+      },
       projects,
       ...(project === undefined ? {} : { project }),
     },
