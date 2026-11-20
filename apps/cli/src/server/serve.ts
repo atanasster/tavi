@@ -16,6 +16,7 @@ import type {
 } from "@tavi/contracts";
 import { MOD_COMMAND_TEXT_MAX_CHARS, maskPluginText } from "@tavi/contracts";
 import { channelsCommand } from "../features/channels/owner.js";
+import { startLifecycleSync, syncRuntimeModelLifecycle } from "../features/models/lifecycle-sync.js";
 import { uiPreferencesCommand } from "../features/ui/preferences.js";
 import { permissionsCommand } from "../features/permissions/owner.js";
 import { browserLiveCommand } from "../features/browser/live-owner.js";
@@ -235,7 +236,7 @@ const REVOKED_OWNER_ROUTINE_ACTIONS: ReadonlySet<string> = new Set([
 /** The `channels` actions that change who is allowed in a workspace. */
 const PEOPLE_ACTIONS: ReadonlySet<string> = new Set(["allow", "revoke", "confirm-pair", "delete"]);
 /** The `models` actions that change nothing a turn, a routine or a reminder reads; every other one refreshes the providers. */
-const MODELS_READS: ReadonlySet<string> = new Set(["list", "show", "roles", "chat", "video-status"]);
+const MODELS_READS: ReadonlySet<string> = new Set(["list", "show", "roles", "chat", "video-status", "sync"]);
 /** How long cut-off admissions get to publish their ends after being aborted. */
 const ABORT_GRACE_MS = 1_000;
 /** How far back serve start looks for a chat turn its history lost; an older gap is saved by the chat's next turn. */
@@ -665,6 +666,8 @@ export async function serve(
   emitJson(io, { serving: true, sessionId: runtime.ownerSession, endpoint });
   // Its own memory, descriptors and children every 10 minutes, in memory only, until shutdown begins.
   state.health.start(state.shutdown.signal);
+  // What Rhumb says of the models in use, now and daily, with RHUMB_KEY set: one log line, never a model change.
+  startLifecycleSync(runtime.logger, (aborted) => syncRuntimeModelLifecycle(runtime, { signal: aborted }), state.shutdown.signal);
 
   let resolveStopped: (outcome: ShutdownOutcome) => void = () => {};
   const stopped = new Promise<ShutdownOutcome>((resolve) => {
@@ -1108,6 +1111,7 @@ function configDependencies(
     dataDirectory: runtime.dataDirectory,
     videoBinaries: runtime.videoBinaries,
     videoStatus: () => videoStatusDocument(runtime),
+    lifecycleSync: () => syncRuntimeModelLifecycle(runtime),
     target,
     startupProviders: state.startupProviders,
     readSecret: runtime.readSecret,

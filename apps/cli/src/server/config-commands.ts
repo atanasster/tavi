@@ -95,6 +95,7 @@ import {
 } from "../features/models/actions.js";
 import type { OwnerModelTarget } from "../features/run/owner.js";
 import { resolveLiveTarget } from "../features/models/target.js";
+import type { LifecycleSyncNoKey, LifecycleSyncReport } from "../features/models/lifecycle-sync.js";
 import {
   resolveSchedule,
   scheduleAgenda,
@@ -181,6 +182,8 @@ export interface ConfigDependencies {
   readonly videoBinaries?: { readonly ffmpeg?: string; readonly ffprobe?: string };
   /** `models video-status`: doctor's `video` section. */
   readonly videoStatus: () => Promise<Record<string, unknown>>;
+  /** `models sync`: what Rhumb says of the models in use, stored; absent offline, where the CLI composes its own runtime. */
+  readonly lifecycleSync?: () => Promise<LifecycleSyncReport | LifecycleSyncNoKey>;
   /** The target the owner runs now, in the command's workspace. */
   readonly target: OwnerModelTarget;
   /** What `models chat` and `set-chat` read and save a chat's own model through; absent, an owner with no model routing. */
@@ -601,6 +604,9 @@ export function modelsCommand(deps: ConfigDependencies, input: ModelsPayload): P
         }
         case "video-status":
           return await deps.videoStatus();
+        case "sync":
+          if (deps.lifecycleSync === undefined) throw new Error("this owner cannot sync model lifecycles");
+          return await deps.lifecycleSync();
         case "video":
           return await setVideoModelAndReport(service, connectionId(), {
             ...(input.videoEnable === undefined ? {} : { enable: input.videoEnable }),

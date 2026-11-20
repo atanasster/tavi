@@ -56,16 +56,27 @@ export function clearRhumbCache(): void {
   cache.clear();
 }
 
-/** One Rhumb GET with a deadline and a day's cache; throws on any failure, with the status only. */
-export function rhumbCall(key: string, base: string, fetchImpl: typeof globalThis.fetch, timeoutMs: number): RhumbCall {
+/**
+ * One Rhumb GET with a deadline and a day's cache; throws on any failure, with the status only.
+ * `fresh` reads Rhumb every time and never stands an old answer in for a failure: what a
+ * lifecycle sync stores as checked now must be now's. `signal` cancels the request.
+ */
+export function rhumbCall(
+  key: string,
+  base: string,
+  fetchImpl: typeof globalThis.fetch,
+  timeoutMs: number,
+  options: { readonly fresh?: boolean; readonly signal?: AbortSignal } = {},
+): RhumbCall {
   return async (path, query) => {
     const url = `${base.replace(/\/+$/, "")}${path}?${new URLSearchParams(query).toString()}`;
-    const hit = cache.get(url);
+    const hit = options.fresh === true ? undefined : cache.get(url);
     if (hit !== undefined && Date.now() - hit.at < DAY_MS) return hit.body;
     try {
       const response = await fetchImpl(url, {
         headers: { Authorization: `Bearer ${key}`, Accept: "application/json" },
-        signal: AbortSignal.timeout(timeoutMs),
+        signal:
+          options.signal === undefined ? AbortSignal.timeout(timeoutMs) : AbortSignal.any([AbortSignal.timeout(timeoutMs), options.signal]),
       });
       if (!response.ok) {
         const code = await errorCodeOf(response);

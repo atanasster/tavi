@@ -25,6 +25,8 @@ import { connectionLocality } from "@tavi/agent-host/task-summarizer";
 import { join, resolve } from "node:path";
 import { probeVideoDecoder } from "../video/host.js";
 import { modelsSuggestCommand } from "./suggest-command.js";
+import { modelsSyncCommand } from "./sync-command.js";
+import { defaultRuntimeFactory, type RuntimeFactory } from "../../cli/runtime-options.js";
 import type { ModelsCommandOptions } from "./parse.js";
 import { requireFlag } from "../../cli/flags.js";
 import type { CliIo } from "../../cli/io.js";
@@ -39,9 +41,15 @@ import { privacyProblem, privateExpectation } from "@tavi/node-kit";
  * must not open the owner's database behind its back. With none, the
  * command takes the directory's exclusive ownership, as `recover` does.
  */
-export async function modelsCommand(options: ResolvedDataDirectory<ModelsCommandOptions>, io: CliIo): Promise<number> {
+export async function modelsCommand(
+  options: ResolvedDataDirectory<ModelsCommandOptions>,
+  io: CliIo,
+  runtimeFactory: RuntimeFactory = defaultRuntimeFactory,
+): Promise<number> {
   // A read of the connections and a call to the model resolver, never a write: its own path.
   if (options.action === "suggest") return modelsSuggestCommand(options, io);
+  // It reads every model in use, routines and chats too: a whole runtime, its own path.
+  if (options.action === "sync") return modelsSyncCommand(options, io, runtimeFactory);
   // Asked for by its flag, before an owner is looked for, so both paths say it alike.
   // A local connection may leave --credential out: it gets a placeholder of its own.
   if (
@@ -232,8 +240,8 @@ function modelsOnOwner(options: ResolvedDataDirectory<ModelsCommandOptions>, io:
     // The PDF probe's own deadline is 30 s: the request waits past it, so its answer is the probe's.
     ...(options.action === "probe" ? { timeoutMs: 60_000 } : {}),
     build: () => {
-      // `suggest` never reaches here (`modelsSuggestCommand` reads the owner itself); the owner has no such action.
-      if (options.action === "suggest") return EXIT.usage;
+      // `suggest` and `sync` never reach here: each has its own path (`suggest-command.ts`, `sync-command.ts`).
+      if (options.action === "suggest" || options.action === "sync") return EXIT.usage;
       // The owner resolves a connection's credential through its own chain;
       // a file handed to this process would be ignored, so it is refused.
       if (options.credentialFile !== undefined) {

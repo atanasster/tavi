@@ -120,7 +120,7 @@ export async function main(argv: readonly string[], options: MainOptions = {}): 
         io.stderr("models requires an action\n");
         return EXIT.usage;
       }
-      return modelsCommand(resolveCommand(parsed.models), io);
+      return modelsCommand(resolveCommand(parsed.models), io, runtimeFactory);
     }
     case "memory": {
       const { memoryCommand } = await import("./features/memory/client.js");

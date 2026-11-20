@@ -88,6 +88,8 @@ export const MODELS_ACTIONS = [
   // Read-only: what `doctor` says of video (FFmpeg, confinement, the analyser chains) for Settings → Models,
   // since a page may not read `doctor` itself.
   "video-status",
+  // What Rhumb says of the models in use: stores their lifecycle, never changes a model.
+  "sync",
 ] as const;
 
 export const ModelsPayloadSchema = z.object({

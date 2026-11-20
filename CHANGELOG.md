@@ -8,6 +8,13 @@ change behaviour or stored data.
 
 ### Added
 
+- `tavi models sync` asks Rhumb (with `RHUMB_KEY` set) which of the models
+  tavi uses are retired, redirected to another model, retiring, deprecated
+  or changing price, stores it per connection, and prints the warnings with
+  every place each model is used (defaults, roles and their fallbacks,
+  routines, heartbeats, chats). `tavi serve` does the same at start and every
+  24 hours and logs one line. Only provider names are sent, and no model is
+  ever changed for you.
 - `tavi serve` (at start) and `tavi doctor` (`mcp.weakerSandbox`) name each
   approved MCP server that runs unsandboxed or in the nested sandbox while
   this host's sandbox now confines more, with the way to move it: add the

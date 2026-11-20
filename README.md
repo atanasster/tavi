@@ -235,6 +235,7 @@ WSL1 cannot run the sandbox. On WSL2 keep the data directory on the Linux filesy
 | `tavi schedules` / `reminders` / `heartbeat` | Unattended work |
 | `tavi channels` / `apps` / `mcp` / `plugins` | Channels, connected apps, MCP servers and plugins |
 | `tavi memory` / `skills` | What Tavi remembers and the procedures it knows |
+| `tavi models sync` | With a free [Rhumb](https://rhumbdata.com) key (`RHUMB_KEY`), say which models in use retire or change; `serve` checks daily |
 | `tavi doctor` / `logs` / `backup` | Health, logs and backups |
 
 Every command has `--help` and takes `--format text|json`. The full reference

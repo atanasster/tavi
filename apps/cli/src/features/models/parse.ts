@@ -23,6 +23,7 @@ const MODELS_ACTIONS = [
   "clear-role",
   "video",
   "suggest",
+  "sync",
 ] as const;
 type ModelsAction = (typeof MODELS_ACTIONS)[number];
 
@@ -95,6 +96,11 @@ Actions:
                                     for the best local model that fits this
                                     machine and price sheets for the cloud
                                     connections; prints them, changes nothing
+  sync                              With RHUMB_KEY set, ask Rhumb which models
+                                    in use retire, are redirected or change
+                                    price, store it and print the warnings;
+                                    never changes a model (serve does this
+                                    daily)
 
 Options:
   --label <text>           Operator-facing connection name
@@ -167,6 +173,7 @@ export function parseModels(argv: readonly string[]): ParsedCommand {
     "clear-role": ["--data-dir"],
     video: ["--data-dir", "--enable", "--disable", "--yes"],
     suggest: ["--data-dir"],
+    sync: ["--data-dir"],
   };
   const allowed = allowedFlags[action as ModelsAction];
 
