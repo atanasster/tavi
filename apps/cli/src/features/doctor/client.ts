@@ -186,6 +186,7 @@ export function doctorSummary(report: DoctorDocument, fromOwner = false): string
             ...stranded.map((entry) => `    ${String(entry["taskId"])}: ${String(entry["remedy"] ?? "")}`),
           ]),
     `${mark(connections > 0)} Models: ${connections} connection(s)${defaultTarget["model"] === undefined ? ", no default" : `, default ${String(defaultTarget["connectionId"])}/${String(defaultTarget["model"])}`}`,
+    ...lifecycleLines(recordOf(models["lifecycle"])),
     `${mark(onboarding["complete"] === true)} Setup: ${onboarding["complete"] === true ? "the required steps are done" : "the model is not set up (tavi onboard)"}`,
     // A nested sandbox works, with less: degraded, not failed (as `tavi sandbox status` exits 0 for it).
     // The operator's off switch outranks the tier: shell commands are refused whatever the host could do.
@@ -209,4 +210,36 @@ export function doctorSummary(report: DoctorDocument, fromOwner = false): string
     "The whole report: tavi doctor --format json",
   ];
   return `${lines.join("\n")}\n`;
+}
+
+/**
+ * Doctor's model lifecycle lines: ✗ only when a model in use is retired; –
+ * while one warns, one is unchecked, the check is stale or partial, nothing
+ * was synced, or the rows could not be read; ✓ otherwise. Then a line per warning.
+ */
+function lifecycleLines(lifecycle: Record<string, unknown>): string[] {
+  if (typeof lifecycle["problem"] === "string") return [`– Model lifecycle: could not be read (${lifecycle["problem"]})`];
+  if (lifecycle["checkedAt"] === undefined) return [];
+  if (lifecycle["checkedAt"] === null) return [`– Model lifecycle: not checked (${String(lifecycle["hint"] ?? "tavi models sync")})`];
+  const warnings = Array.isArray(lifecycle["warnings"]) ? lifecycle["warnings"].map(recordOf) : [];
+  const unchecked = Array.isArray(lifecycle["unchecked"]) ? lifecycle["unchecked"].map(String) : [];
+  const unread = Array.isArray(lifecycle["unread"]) ? lifecycle["unread"].length : 0;
+  const retired = warnings.some((warning) => warning["level"] === "error");
+  const gaps = [
+    ...(lifecycle["stale"] === true ? ["stale: the daily sync has not run"] : []),
+    ...(unchecked.length === 0 ? [] : [`not yet checked: ${unchecked.join(", ")}`]),
+    ...(unread === 0 ? [] : [`${unread} source(s) of models in use not read`]),
+  ];
+  const head =
+    warnings.length === 0
+      ? "no model in use is retiring or redirected"
+      : `${warnings.length} model(s) in use ${retired ? "retired or " : ""}retiring, redirected or changing`;
+  return [
+    `${retired ? "✗" : warnings.length > 0 || gaps.length > 0 ? "–" : "✓"} Model lifecycle: ${head} (checked ${String(lifecycle["checkedAt"]).slice(0, 10)})`,
+    ...gaps.map((gap) => `    ${gap}`),
+    ...warnings.map(
+      (warning) =>
+        `    ${String(warning["connectionId"])}/${String(warning["model"])}: ${Array.isArray(warning["says"]) ? warning["says"].join("; ") : ""}`,
+    ),
+  ];
 }

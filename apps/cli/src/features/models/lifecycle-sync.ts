@@ -222,14 +222,78 @@ export function lifecycleSyncReport(result: LifecycleSyncResult): LifecycleSyncR
     ...(result.catalogVersion === undefined ? {} : { catalogVersion: result.catalogVersion }),
     complete: result.complete,
     connections: result.connections,
-    warnings: result.warnings.map(({ target, warnings }) => ({
-      connectionId: target.connectionId,
-      model: target.model,
-      level: worstLifecycleLevel(warnings) ?? "info",
-      usedBy: target.usedBy,
-      says: warnings.map(lifecycleWarningText),
-    })),
+    warnings: result.warnings.map(warningInWords),
     unread: result.unread,
+  };
+}
+
+function warningInWords({ target, warnings }: LifecycleInUseWarning): LifecycleSyncReport["warnings"][number] {
+  return {
+    connectionId: target.connectionId,
+    model: target.model,
+    level: worstLifecycleLevel(warnings) ?? "info",
+    usedBy: target.usedBy,
+    says: warnings.map(lifecycleWarningText),
+  };
+}
+
+/** What the last sync stored says of the models in use today: doctor's `modelConfiguration.lifecycle`, with no network. */
+export interface StoredLifecycleReport {
+  /**
+   * When the models in use were checked: the oldest of their rows, so one fresh
+   * connection never hides another's stale ones. `null` when none was.
+   */
+  readonly checkedAt: string | null;
+  readonly catalogVersion?: string;
+  /** Older than two sync intervals: the daily sync has not run, or has failed. */
+  readonly stale: boolean;
+  /** Models in use on a cloud connection with no stored row: chosen since the last sync, or never synced. */
+  readonly unchecked: readonly string[];
+  readonly warnings: LifecycleSyncReport["warnings"];
+  readonly unread: readonly string[];
+  /** What to do when nothing in use was checked; or why nothing can be. */
+  readonly hint?: string;
+}
+
+/** No cloud connection Rhumb knows: a sync stores nothing, and there is nothing to set up. */
+export const NO_CLOUD_CONNECTION_HINT = "no cloud connection Rhumb knows: custom and local endpoints are not checked";
+
+export async function storedLifecycleReport(
+  sources: Pick<LifecycleSyncSources, "stored" | "inUse" | "connections">,
+  now: Date,
+): Promise<StoredLifecycleReport> {
+  const stored = await sources.stored();
+  const inUse = await sources.inUse();
+  const checkable = new Set(
+    (await sources.connections()).filter((connection) => "provider" in providerOf(connection)).map((connection) => connection.connectionId),
+  );
+  const lifecycles = new Map(stored.map((entry) => [`${entry.connectionId}\u0000${entry.modelId}`, entry.lifecycle]));
+  const checked = inUse.targets.filter((target) => checkable.has(target.connectionId));
+  const rows = checked.flatMap((target) => {
+    const lifecycle = lifecycles.get(`${target.connectionId}\u0000${target.model}`);
+    return lifecycle === undefined ? [] : [lifecycle];
+  });
+  const oldest = rows.reduce<ModelLifecycle | undefined>(
+    (first, row) => (first === undefined || row.checkedAt < first.checkedAt ? row : first),
+    undefined,
+  );
+  const unchecked = checked
+    .filter((target) => !lifecycles.has(`${target.connectionId}\u0000${target.model}`))
+    .map((target) => `${target.connectionId}/${target.model}`);
+  const hint =
+    checkable.size === 0
+      ? NO_CLOUD_CONNECTION_HINT
+      : oldest === undefined
+        ? `${RHUMB_KEY_HINT} Then run tavi models sync, or start tavi serve.`
+        : undefined;
+  return {
+    checkedAt: oldest?.checkedAt ?? null,
+    ...(oldest === undefined ? {} : { catalogVersion: oldest.catalogVersion }),
+    stale: oldest !== undefined && now.getTime() - Date.parse(oldest.checkedAt) > 2 * LIFECYCLE_SYNC_INTERVAL_MS,
+    unchecked,
+    warnings: inUseWarnings(inUse.targets, lifecycles, now.toISOString().slice(0, 10)).map(warningInWords),
+    unread: inUse.unread,
+    ...(hint === undefined ? {} : { hint }),
   };
 }
 

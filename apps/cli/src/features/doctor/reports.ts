@@ -1,4 +1,6 @@
 import { PDF_ENGINE_PLUGIN_ID, VIDEO_ENGINE_PLUGIN_ID } from "../plugins/catalog.js";
+import { storedLifecycleReport } from "../models/lifecycle-sync.js";
+import { modelTargetsInUse, targetSourcesOf } from "../models/targets-in-use.js";
 import { onboardingStatus } from "../onboard/owner.js";
 import { ownerOnboardingDependencies } from "../onboard/owner-dependencies.js";
 import { createHash } from "node:crypto";
@@ -1066,6 +1068,15 @@ export async function buildDoctorDocument(
       })),
       workspaceDefault: workspaceDefault ?? null,
       roles: bindings,
+      // What the last `tavi models sync` (or serve's daily one) stored, read for today: never a call to Rhumb.
+      lifecycle: await storedLifecycleReport(
+        {
+          stored: async () => await repository.listLifecycle(),
+          inUse: () => modelTargetsInUse(targetSourcesOf(runtime)),
+          connections: async () => connections,
+        },
+        new Date(runtime.clock.now()),
+      ).catch((error: unknown) => ({ problem: errorMessage(error).slice(0, 300) })),
     },
     strandedAdmissions: await strandedAdmissions(runtime),
     // Local measurement, never uploaded: per-turn input

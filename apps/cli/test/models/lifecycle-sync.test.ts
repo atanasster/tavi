@@ -11,6 +11,8 @@ import {
   lifecycleSyncLogLine,
   lifecycleSyncReport,
   startLifecycleSync,
+  NO_CLOUD_CONNECTION_HINT,
+  storedLifecycleReport,
   syncModelLifecycle,
   type LifecycleSyncReport,
   type LifecycleSyncSources,
@@ -171,6 +173,55 @@ describe("the model lifecycle sync", () => {
     controller.abort();
     await expect(syncModelLifecycle(aborted.sources, aborted.call, NOW, controller.signal)).rejects.toThrow();
     expect(aborted.replaced.size).toBe(0);
+  });
+});
+
+describe("doctor's stored lifecycle", () => {
+  const gpt5 = (checkedAt: string, retiresOn = "2026-11-19"): ModelLifecycleEntry => ({
+    connectionId: "openai",
+    modelId: "gpt-5",
+    lifecycle: { status: "deprecated", retiresOn, catalogVersion: "2026-11-18.1", checkedAt },
+  });
+
+  it("says how to start when nothing in use was checked, and that nothing can be with no cloud connection", async () => {
+    const { sources } = harness();
+    const empty = await storedLifecycleReport({ ...sources, stored: async () => [] }, NOW);
+    expect(empty).toMatchObject({ checkedAt: null, warnings: [], unchecked: ["openai/gpt-5", "gemini/models/gemini-2.5-pro"] });
+    expect(empty.hint).toContain("RHUMB_KEY");
+    const local = await storedLifecycleReport(
+      { ...sources, stored: async () => [], connections: async () => [connection("local", "http://localhost:11434/v1", true)] },
+      NOW,
+    );
+    expect(local).toMatchObject({ checkedAt: null, hint: NO_CLOUD_CONNECTION_HINT, unchecked: [] });
+  });
+
+  it("reads the rows of the models in use for today: the oldest dates the check, and one never synced is named", async () => {
+    const { sources } = harness();
+    const report = await storedLifecycleReport(
+      {
+        ...sources,
+        stored: async () => [
+          gpt5(AT),
+          // Fresher, but not in use: it must not date the check.
+          {
+            connectionId: "openai",
+            modelId: "gpt-4.1",
+            lifecycle: { status: "ga", catalogVersion: "2026-11-20.1", checkedAt: NOW.toISOString() },
+          },
+        ],
+      },
+      NOW,
+    );
+    expect(report).toMatchObject({
+      checkedAt: AT,
+      catalogVersion: "2026-11-18.1",
+      stale: true,
+      unchecked: ["gemini/models/gemini-2.5-pro"],
+    });
+    expect(report.hint).toBeUndefined();
+    expect(report.warnings.map((warning) => [warning.model, warning.level])).toEqual([["gpt-5", "error"]]);
+    const fresh = await storedLifecycleReport({ ...sources, stored: async () => [gpt5("2026-11-19T08:00:00.000Z")] }, NOW);
+    expect(fresh.stale).toBe(false);
   });
 });
 

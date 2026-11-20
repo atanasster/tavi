@@ -9,6 +9,44 @@ const report = (sections: Record<string, unknown>): DoctorDocument => sections a
 const line = (text: string, label: string): string | undefined => text.split("\n").find((entry) => entry.includes(` ${label}:`));
 
 describe("doctor's text summary", () => {
+  it("says what the last model lifecycle sync stored: nothing, all well, or each model in use that warns", () => {
+    const lifecycle = (value: unknown) => doctorSummary(report({ modelConfiguration: { connections: [], lifecycle: value } }));
+    expect(line(lifecycle({ checkedAt: null, hint: "Set RHUMB_KEY", warnings: [] }), "Model lifecycle")).toBe(
+      "– Model lifecycle: not checked (Set RHUMB_KEY)",
+    );
+    expect(line(lifecycle({ checkedAt: "2026-11-20T08:00:00.000Z", warnings: [] }), "Model lifecycle")).toBe(
+      "✓ Model lifecycle: no model in use is retiring or redirected (checked 2026-11-20)",
+    );
+    const text = lifecycle({
+      checkedAt: "2026-11-20T08:00:00.000Z",
+      warnings: [{ connectionId: "openai", model: "gpt-5", level: "error", says: ["retired on 2026-11-19"] }],
+    });
+    expect(line(text, "Model lifecycle")).toBe(
+      "✗ Model lifecycle: 1 model(s) in use retired or retiring, redirected or changing (checked 2026-11-20)",
+    );
+    expect(text).toContain("    openai/gpt-5: retired on 2026-11-19");
+    const warned = lifecycle({
+      checkedAt: "2026-11-01T08:00:00.000Z",
+      stale: true,
+      unchecked: ["gemini/gemini-3.8-flash"],
+      unread: ["default routines of operator: database is locked"],
+      warnings: [{ connectionId: "openai", model: "o3", level: "warning", says: ["retires on 2026-12-11"] }],
+    });
+    expect(line(warned, "Model lifecycle")).toBe(
+      "– Model lifecycle: 1 model(s) in use retiring, redirected or changing (checked 2026-11-01)",
+    );
+    expect(warned).toContain("    stale: the daily sync has not run");
+    expect(warned).toContain("    not yet checked: gemini/gemini-3.8-flash");
+    expect(warned).toContain("    1 source(s) of models in use not read");
+    expect(line(lifecycle({ checkedAt: null, hint: "no cloud connection Rhumb knows" }), "Model lifecycle")).toBe(
+      "– Model lifecycle: not checked (no cloud connection Rhumb knows)",
+    );
+    expect(line(lifecycle({ problem: "database is locked" }), "Model lifecycle")).toBe(
+      "– Model lifecycle: could not be read (database is locked)",
+    );
+    expect(line(doctorSummary(report({ modelConfiguration: { connections: [] } })), "Model lifecycle")).toBeUndefined();
+  });
+
   it("ticks Video when FFmpeg is there, and crosses it when video is on without FFmpeg", () => {
     expect(line(doctorSummary(report({ video: { enabled: true, ffmpeg: "9.0.2" } })), "Video")).toBe("✓ Video: on, ffmpeg 9.0.2");
     expect(line(doctorSummary(report({ video: { enabled: true, ffmpeg: "missing" } })), "Video")).toBe("✗ Video: on, ffmpeg missing");
