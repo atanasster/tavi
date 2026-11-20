@@ -630,6 +630,15 @@ covers:
   alert there quotes the run's final words with every address disarmed, and
   goes to Home instead when the destination refuses it or cannot be reached.
 - **Any call with a stored credential.**
+- **Opening the browser signed in** — a `browser.create_session` on the
+  workspace's profile (the default), whatever the page: it carries your
+  cookies and sign-ins, so an injected instruction could steer the model into
+  your accounts. Once you have approved a signed-in session in a task, tainted
+  or not, later ones in that task do not ask again for this (a new address
+  still does). A signed-out session (`profile: "ephemeral"`) is not asked
+  about for this; where nobody attends, the refusal tells the model to open
+  one. A session opened before the chat read untrusted content stays open,
+  and its navigations and typing are asked about as above.
 - **Anything that outlasts the chat** — creating, changing or cancelling a
   reminder, adding, ticking off, changing or removing a to-do (`todos.*`: the
   seeded `seeded-todos` allow rule does not lift this, as the taint step comes

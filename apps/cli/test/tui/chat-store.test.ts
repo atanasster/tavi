@@ -878,7 +878,8 @@ describe("the chat store", () => {
       "working… ",
       "✓ Round 2 approved by automatic approval (--approval approve)",
       "── resuming after approval ──",
-      "⏺ browser.create_session ✓ 0 ms",
+      // The second session signed out: a signed-in one would be refused under taint where nobody attends.
+      '⏺ browser.create_session({"profile":"ephemeral"}) ✓ 0 ms',
       "done",
     ]);
     expect(view().status).toBe("✓ Done.");

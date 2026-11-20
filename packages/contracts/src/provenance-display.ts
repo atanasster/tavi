@@ -115,6 +115,8 @@ export const GATE_REASON_WORDS: Readonly<Record<GateReason, string>> = {
     "This chat read content Tavi does not trust and also holds private data, and this call sends a search query that could carry it out.",
   "private-group-reply":
     "This chat read content Tavi does not trust and also holds private data, and this reply goes where other people read it.",
+  "signed-in-browser":
+    "This chat read content Tavi does not trust, and this call opens the browser with your profile: the sites you are signed in to, as you. A page can steer the model into acting in your accounts.",
   "outside-skill-ceiling":
     "A skill this chat loaded lists the tools it uses (allowed-tools), and this call is not one of them. Approve it only if you expect the skill to need it.",
 };

@@ -877,6 +877,13 @@ describe("the taint step", () => {
       reason: "credential-under-taint",
     },
     { name: "a durable write", toolId: "routines.update", sink: "persist", assessment: call(), reason: "tainted-persist" },
+    {
+      name: "a browser session on the signed-in profile, even to a known page",
+      toolId: "browser.create_session",
+      sink: "network",
+      assessment: call({ urlOnly: true, signedInProfile: true, browserSteps: [] }),
+      reason: "signed-in-browser",
+    },
     // `alwaysAnyCall` widens the scopes of an ordinary ask; it never lifts the step.
     {
       name: "an alwaysAnyCall call with a sink",
@@ -900,6 +907,33 @@ describe("the taint step", () => {
       }
     });
   }
+
+  it("leaves a signed-out browser session to the known-URL rule, and an untainted chat's signed-in one alone", () => {
+    const known = new Set(["https://docs.example/"]);
+    const signedOut = evaluateGate({
+      ...tainted("browser.create_session", "network", { urlOnly: true, knownUrls: known, rules: [allow("browser.create_session")] }),
+      assessment: call({
+        urlOnly: true,
+        urls: ["https://docs.example/"],
+        browserSteps: [{ kind: "navigate", url: "https://docs.example/" }],
+      }),
+    });
+    expect(signedOut.gateReason).toBeUndefined();
+    expect(signedOut.decision).toBe("allow");
+    const untainted = evaluateGate({
+      ...tainted("browser.create_session", "network", { urlOnly: true, rules: [allow("browser.create_session")] }),
+      tainted: false,
+      assessment: call({ urlOnly: true, signedInProfile: true, browserSteps: [] }),
+    });
+    expect(untainted.gateReason).toBeUndefined();
+    // A person approved the signed-in browser earlier in this task: a later session does not ask again for it.
+    const approved = evaluateGate({
+      ...tainted("browser.create_session", "network", { urlOnly: true, rules: [allow("browser.create_session")] }),
+      signedInBrowserApproved: true,
+      assessment: call({ urlOnly: true, signedInProfile: true, browserSteps: [] }),
+    });
+    expect(approved.gateReason).toBeUndefined();
+  });
 
   it("records a novel URL in its normal form, for an approval to make known", () => {
     const verdict = evaluateGate({

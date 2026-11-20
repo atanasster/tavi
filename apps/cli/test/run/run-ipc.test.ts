@@ -59,7 +59,9 @@ function gatedTurns(ids: readonly string[]): ModelPort & { readonly calls: () =>
         status: "completed",
         attemptId: request.attemptId,
         text: "",
-        toolCalls: [{ id, name: "browser.create_session", input: {} }],
+        // A later session signed out: the first's output taints the task, and a signed-in one would then be the
+        // taint step's (refused where nobody attends), not the round these tests drive.
+        toolCalls: [{ id, name: "browser.create_session", input: index === 0 ? {} : { profile: "ephemeral" } }],
         finishReason: "tool-calls",
         usage: {},
       };

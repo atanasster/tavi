@@ -1554,6 +1554,8 @@ function hostAndPathOf(url: string): string {
 
 export function assessBrowserCreateSession(input: unknown): CallAssessment {
   const url = text(record(input)["url"]);
+  // Every session but a signed-out one opens the workspace's profile: under taint, that alone asks.
+  const signedIn = record(input)["profile"] !== "ephemeral" ? { signedInProfile: true } : {};
   if (url === undefined)
     return {
       display: { title: "Use the browser" },
@@ -1562,6 +1564,7 @@ export function assessBrowserCreateSession(input: unknown): CallAssessment {
       reasons: [],
       scopeGroup: BROWSER_SCOPE_GROUP,
       browserSteps: [],
+      ...signedIn,
     };
   const host = hostOf(url);
   // A navigation, judged by the known-URL rule under taint, fragment included.
@@ -1574,6 +1577,7 @@ export function assessBrowserCreateSession(input: unknown): CallAssessment {
     scopeGroup: BROWSER_SCOPE_GROUP,
     urls: [url],
     browserSteps: [{ kind: "navigate", url }],
+    ...signedIn,
   };
 }
 

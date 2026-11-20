@@ -60,6 +60,8 @@ const GATE_REASON_REFUSALS: Readonly<Record<Exclude<NonNullable<GateVerdict["gat
   "tainted-persist": "This chat read untrusted content, and this call would change something that outlives the chat.",
   "private-search": "This chat read untrusted content and holds private data, and this call would send a search query.",
   "private-group-reply": "This chat read untrusted content and holds private data, and this reply goes to a group.",
+  "signed-in-browser":
+    'This chat read untrusted content, and this call would open the browser signed in as the person; open it with profile: "ephemeral" (signed out) instead.',
 };
 
 /** The reply a message-started turn sends, and every tool that sends into a chat: a call to one is the turn speaking. */
@@ -367,6 +369,7 @@ export function createGateScope(scope: OfferScope) {
       taintMode,
       // Read only when the step can ask: a clean conversation's calls skip it.
       ...(tainted && taintMode !== "off" && known !== undefined ? { knownUrls: known() } : {}),
+      ...(current.signedInBrowserApproved === true ? { signedInBrowserApproved: true } : {}),
       // The person's own words: a page path they wrote is theirs to open, tainted or not.
       ...(tainted && taintMode !== "off" ? { personTexts: personTexts(current.conversation, origin) } : {}),
       // The `allowed-tools` of the skills loaded this turn: a call outside them asks, or is refused unattended.

@@ -11,6 +11,7 @@ import {
   BROWSER_BATCH_MAX_STEPS,
   assessAgentsSpawn,
   assessBrowserAct,
+  assessBrowserCreateSession,
   assessBrowserBatch,
   assessBrowserNavigate,
   assessDesktopAct,
@@ -1145,6 +1146,14 @@ describe("other assessments", () => {
     expect(assessSandboxRun({ command: "curl http://x.example" }).risk).toBe(
       assessSandboxRun({ command: "curl", args: ["http://x.example"] }).risk,
     );
+  });
+
+  it("marks a session on the signed-in profile, and not a signed-out one", () => {
+    expect(assessBrowserCreateSession({ url: "https://docs.example/" }).signedInProfile).toBe(true);
+    expect(assessBrowserCreateSession({}).signedInProfile).toBe(true);
+    expect(assessBrowserCreateSession({ url: "https://docs.example/", profile: "persistent" }).signedInProfile).toBe(true);
+    expect(assessBrowserCreateSession({ url: "https://docs.example/", profile: "ephemeral" }).signedInProfile).toBeUndefined();
+    expect(assessBrowserCreateSession({ profile: "ephemeral" }).signedInProfile).toBeUndefined();
   });
 
   it("rates a browser submit above a click", () => {

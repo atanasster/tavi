@@ -174,6 +174,11 @@ export const GraphState = new StateSchema({
       },
     },
   ),
+  /** A person approved the signed-in browser under taint: monotone, so a later fold or turn never asks again in this task. */
+  signedInBrowserApproved: accumulate<boolean>(z.boolean(), {
+    default: () => false,
+    reducer: (current, next) => current || next,
+  }),
   finalText: AgentStateDataSchema.shape.finalText,
 });
 

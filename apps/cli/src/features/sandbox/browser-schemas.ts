@@ -65,7 +65,7 @@ export const BrowserCreateSessionInputSchema = z.object({
     .enum(["persistent", "ephemeral"])
     .optional()
     .describe(
-      'Session profile: "ephemeral" opens a logged-out context with no stored cookies (prefer for tasks that need no sign-in); "persistent" (default) uses the workspace profile',
+      'Session profile: "ephemeral" opens a logged-out context with no stored cookies (prefer for tasks that need no sign-in; it is never asked about for being signed in); "persistent" (default) uses the workspace profile, signed in as the person, and once the chat has read untrusted content opening it asks the person first',
     ),
 });
 export const NEEDS_ABSOLUTE_URL = "browser.create_session needs an absolute http(s) url, such as https://example.com";

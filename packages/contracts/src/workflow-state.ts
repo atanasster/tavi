@@ -517,6 +517,13 @@ export const AgentStateDataSchema = z.object({
     .array(z.string().max(KNOWN_URL_LIMITS.maxUrlLength + 256))
     .max(TYPED_PAGES_MAX)
     .default(() => []),
+  /**
+   * Whether a person approved a browser session on the signed-in profile
+   * after this task read untrusted content (`signed-in-browser`): later ones
+   * in the task do not ask again. Only an approval sets it, never a tool
+   * result; absent on an older checkpoint, which reads as not approved.
+   */
+  signedInBrowserApproved: z.boolean().default(false),
   finalText: z.string().max(MAX_MESSAGE_TEXT_BYTES).default(""),
 });
 export type AgentStateData = z.infer<typeof AgentStateDataSchema>;

@@ -151,7 +151,9 @@ function scripted(rounds: readonly (readonly string[])[], blockId = "txt-0"): Mo
         status: "completed",
         attemptId: request.attemptId,
         text: "working… ",
-        toolCalls: round.map((id) => ({ id, name: "browser.create_session", input: {} })),
+        // A later turn's sessions signed out: the first round's output taints the task, and a signed-in session
+        // would then be the taint step's, refused under --approval approve, not the round these fixtures record.
+        toolCalls: round.map((id) => ({ id, name: "browser.create_session", input: calls === 1 ? {} : { profile: "ephemeral" } })),
         finishReason: "tool-calls",
         usage: {},
       };

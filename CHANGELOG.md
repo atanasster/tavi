@@ -35,6 +35,11 @@ change behaviour or stored data.
 
 ### Changed
 
+- Once a chat has read content Tavi does not trust, opening a browser session
+  on the workspace's signed-in profile asks first, whatever the page, unless
+  you approved a signed-in session earlier in that task; a signed-out session
+  (`profile: "ephemeral"`) does not. A run nobody attends is refused and told
+  to open a signed-out one.
 - A new data directory is encrypted at rest from its first open even where
   there is no OS keychain (Linux without a Secret Service, or
   `TAVI_CREDENTIAL_KEYCHAIN=off`): the key is written to `credentials.key`

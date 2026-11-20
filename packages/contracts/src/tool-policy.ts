@@ -347,6 +347,14 @@ export interface CallAssessment {
    * (`private-group-reply`). Absent: a one-to-one reply.
    */
   readonly groupDestination?: boolean;
+  /**
+   * A browser session opened on the workspace's profile, with the person's
+   * cookies and sign-ins (`browser.create_session` without
+   * `profile: "ephemeral"`): under taint it asks once (`signed-in-browser`),
+   * whatever the page, since an injected instruction could steer the model
+   * into the person's signed-in accounts. A signed-out session never asks for it.
+   */
+  readonly signedInProfile?: boolean;
 }
 
 export const BROWSER_STEP_KINDS = ["inert", "navigate", "type", "send"] as const;
@@ -382,6 +390,7 @@ export const GATE_REASONS = [
   "tainted-persist",
   "private-search",
   "private-group-reply",
+  "signed-in-browser",
   "outside-skill-ceiling",
 ] as const;
 export const GateReasonSchema = z.enum(GATE_REASONS);
@@ -1039,6 +1048,8 @@ export interface GateEvaluationInput {
    * Absent: none is known.
    */
   readonly knownUrls?: ReadonlySet<string> | undefined;
+  /** A person approved the signed-in browser earlier in this task (`signed-in-browser`): it does not ask again. */
+  readonly signedInBrowserApproved?: boolean | undefined;
   /**
    * The person's own words in this chat (`personTexts`): a browser page
    * whose path they wrote is theirs to open (`personPathOn`). Absent: none.
@@ -1313,6 +1324,8 @@ function personPathOn(url: string, onSite: (url: string) => boolean, texts: read
  */
 function taintStep(input: GateEvaluationInput, assessment: CallAssessment | undefined): TaintAsk | undefined {
   if (!input.tainted) return undefined;
+  // The person's signed-in browser, whatever the page: a signed-out session is the way that never asks.
+  if (assessment?.signedInProfile === true && input.signedInBrowserApproved !== true) return { reason: "signed-in-browser" };
   const confidential = input.label !== undefined && input.label.confidentiality !== "public";
   const sink = assessment?.sink ?? input.sink;
   // A tool that declares no sink keeps today's treatment.

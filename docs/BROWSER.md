@@ -94,7 +94,10 @@ closes the workspace's open browser sessions first.
 A session opened with `profile: "ephemeral"` (`browser.create_session`) uses
 none of it: a signed-out browser context with no stored cookies, which keeps
 nothing when it closes. The model is told to prefer it for a task that needs
-no sign-in.
+no sign-in. Once a chat has read content Tavi does not trust, opening a
+session on the profile asks first, whatever the page ("this call opens the
+browser with your profile"), unless you already approved one in that task;
+a run nobody attends is refused and told to open a signed-out one ([SECURITY-MODEL.md](SECURITY-MODEL.md)).
 
 ### Signed agent identity
 

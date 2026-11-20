@@ -118,6 +118,7 @@ export const GATE_REASONS = [
   "tainted-persist",
   "private-search",
   "private-group-reply",
+  "signed-in-browser",
 ] as const;
 export type GateReason = (typeof GATE_REASONS)[number];
 

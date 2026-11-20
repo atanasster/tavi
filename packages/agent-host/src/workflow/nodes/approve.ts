@@ -14,6 +14,9 @@ import { definedOnly, errorMessage } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
 import { type ApprovalRequestPayload, ApprovalReplySchema, parseApprovalReply, ruleOrigin } from "../approval.js";
 import { CallSchema, validateToolInput } from "../dispatch.js";
+
+/** The tool that opens a browser session, on the signed-in profile unless it asks for `profile: "ephemeral"`. */
+const SIGNED_IN_BROWSER_TOOL = "browser.create_session";
 import { executionLeaseOf, assertLeaseCurrent } from "../run-config.js";
 import type { WorkflowScope } from "../scope.js";
 import type { WorkflowUpdate, WorkflowNode } from "../state.js";
@@ -360,12 +363,24 @@ export function createApproveNode(scope: WorkflowScope): WorkflowNode {
       return verdict?.gateReason === "novel-url" ? (verdict.urls ?? []) : [];
     });
 
+    // A browser session on the signed-in profile a person approved, tainted or not: they let this task use
+    // their signed-in browser, so a later session does not ask again for that (a new address still asks).
+    const signedInApproved = decisions.some((entry) => {
+      if (!entry.approved || isAutomaticDecider(entry.decidedBy ?? "operator")) return false;
+      const call = parsedCalls.find((candidate) => candidate.id === entry.callId);
+      if (call?.name !== SIGNED_IN_BROWSER_TOOL) return false;
+      const profile =
+        typeof call.input === "object" && call.input !== null ? (call.input as Record<string, unknown>)["profile"] : undefined;
+      return profile !== "ephemeral";
+    });
+
     // A denied call becomes an error *result*, not a failed task: the model can
     // still answer without the effect, and the tool never executes.
     return {
       ...(Object.keys(denials).length === 0 ? {} : { denials }),
       ...(Object.keys(approvals).length === 0 ? {} : { approvals }),
       ...(approvedUrls.length === 0 ? {} : { knownUrls: approvedUrls }),
+      ...(signedInApproved ? { signedInBrowserApproved: true } : {}),
     };
   };
   return approveNode;
