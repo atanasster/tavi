@@ -3,7 +3,8 @@
 # dependencies. Minor and patch updates are grouped into one pull request per
 # ecosystem each week; a major update comes as a pull request of its own. Every
 # bump goes through CI and review like any change; pins that need a closer look
-# (the sandbox runtime, a patched package) are tested on their pull request.
+# (the sandbox runtime, a patched package) are tested on their pull request. The
+# sandbox runtime comes in a pull request of its own (see SECURITY.md).
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -25,6 +26,11 @@ updates:
       npm-security:
         applies-to: security-updates
         patterns: ["*"]
+      # The sandbox runtime holds the security boundary and is pre-1.0: every bump, major or not, comes alone,
+      # and its pull request runs the full sandbox matrix (sandbox.yml's `pin` job). Listed before `npm`, which
+      # would otherwise take it.
+      sandbox-runtime:
+        patterns: ["@anthropic-ai/sandbox-runtime"]
       npm:
         patterns: ["*"]
         update-types: [minor, patch]

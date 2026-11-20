@@ -24,6 +24,30 @@ with you once a fix is ready.
 Tavi is pre-1.0 and runs from a clone: fixes land on `main`. Update your
 checkout (`git pull`, `pnpm install`, `pnpm run build`) to pick them up.
 
+## Critical dependencies
+
+`@anthropic-ai/sandbox-runtime` (srt) is the sandbox every tool run, plugin
+worker, MCP server and file parser is confined in, and it is pre-1.0. It is
+pinned exactly in the `pnpm-workspace.yaml` catalog, and a bump is held to
+more than any other dependency:
+
+- Dependabot raises it in a pull request of its own, every version, never
+  grouped with other updates.
+- That pull request runs the full sandbox matrix (`.github/workflows/sandbox.yml`:
+  Linux distributions and containers, macOS, WSL2) without waiting for a
+  label; merge it only once the matrix passes. The matrix also runs
+  weekly, so a change in the runners' images is caught between bumps.
+- A maintainer reads srt's changes between the two versions before merging,
+  for anything that widens what a confined process can read, write or reach.
+  The pin in `minimumReleaseAgeExclude` and the version `docs/SANDBOX.md`
+  names move with it (`tests/sandbox-flags-doc.test.ts` checks the latter).
+
+An advisory `pnpm audit` is told to ignore (`auditConfig.ignoreGhsas`) is
+recorded with the package and versions it was accepted for
+(`tests/audit-ignores.test.ts`); the test fails once the lockfile no longer
+has an affected version, so the exception is removed rather than left to
+cover something else.
+
 ## Scope
 
 In scope: the CLI, the owner process (`tavi serve`), the web canvas, the IPC

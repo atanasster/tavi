@@ -18,6 +18,12 @@ change behaviour or stored data.
   statements, branches, functions) and sums it into a table; a weekly and
   on-demand CI workflow (`coverage.yml`) posts it to the job summary and
   uploads each package's HTML report. Report-only: no floor is enforced yet.
+- The sandbox runtime's bumps get the full sandbox matrix: Dependabot raises
+  `@anthropic-ai/sandbox-runtime` in a pull request of its own, `sandbox.yml`
+  runs the matrix on any pull request that changes its pin (no label needed)
+  and weekly, and `SECURITY.md` has a "Critical dependencies" section on what
+  a bump must pass. A repository test fails once an ignored audit advisory no
+  longer matches an installed package.
 
 ## 0.2.0 — 2026-11-20
 

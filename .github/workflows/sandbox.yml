@@ -1,13 +1,17 @@
 # The sandbox matrix: Docker, Lima VMs, macOS runners and WSL2 on Windows that prove
 # sandbox.run and the confined children on each host shape. Heavy, so it runs on demand (Actions → sandbox → Run
-# workflow) or on a pull request labelled `sandbox-matrix`, not on every push.
+# workflow), weekly (for drift in the runners' images), on a pull request labelled `sandbox-matrix`, and on any
+# pull request that changes the @anthropic-ai/sandbox-runtime pin (a Dependabot bump included) — not on every push.
 # scripts/sandbox-matrix.sh runs the same jobs locally, but for `wsl2`, which needs a Windows runner.
 name: sandbox
 
 on:
   workflow_dispatch:
+  schedule:
+    # Tuesdays 04:00 UTC.
+    - cron: "0 4 * * 2"
   pull_request:
-    types: [labeled, synchronize, reopened]
+    types: [opened, labeled, synchronize, reopened]
 
 # A newer push to the same pull request replaces a matrix still running. A run whose jobs will
 # skip (another label added) takes a group of its own, so it cannot cancel a matrix in progress;
@@ -20,9 +24,36 @@ permissions:
   contents: read
 
 jobs:
+  pin:
+    # Whether a pull request changes the @anthropic-ai/sandbox-runtime pin (the catalog or the lockfile): the
+    # security boundary's own dependency, so its bump runs the whole matrix without waiting for the label.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
+    steps:
+      - if: github.event_name == 'pull_request'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: diff
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if git diff "$BASE...$HEAD" -- pnpm-workspace.yaml pnpm-lock.yaml | grep -E '^[-+].*@anthropic-ai/sandbox-runtime' > /dev/null; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
   linux:
-    # On demand, or on a pull request labelled sandbox-matrix; adding another label does not re-run it.
-    if: github.event_name == 'workflow_dispatch' || (contains(github.event.pull_request.labels.*.name, 'sandbox-matrix') && (github.event.action != 'labeled' || github.event.label.name == 'sandbox-matrix'))
+    # On demand, weekly, on a pull request that changes the sandbox runtime's pin, or on one labelled sandbox-matrix;
+    # adding another label does not re-run it.
+    needs: pin
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (needs.pin.outputs.changed == 'true' && github.event.action != 'labeled') || (contains(github.event.pull_request.labels.*.name, 'sandbox-matrix') && (github.event.action != 'labeled' || github.event.label.name == 'sandbox-matrix'))
     strategy:
       fail-fast: false
       matrix:
@@ -69,7 +100,8 @@ jobs:
 
   macos:
     # On demand, or on a pull request labelled sandbox-matrix; adding another label does not re-run it.
-    if: github.event_name == 'workflow_dispatch' || (contains(github.event.pull_request.labels.*.name, 'sandbox-matrix') && (github.event.action != 'labeled' || github.event.label.name == 'sandbox-matrix'))
+    needs: pin
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (needs.pin.outputs.changed == 'true' && github.event.action != 'labeled') || (contains(github.event.pull_request.labels.*.name, 'sandbox-matrix') && (github.event.action != 'labeled' || github.event.label.name == 'sandbox-matrix'))
     strategy:
       fail-fast: false
       matrix:
@@ -100,7 +132,8 @@ jobs:
   wsl2:
     # Tavi inside WSL2 on a Windows runner: the build, the unit tests and `tavi sandbox check`, whose
     # probe must find the Windows drives under /mnt unreadable. On demand until it proves reliable.
-    if: github.event_name == 'workflow_dispatch' || (contains(github.event.pull_request.labels.*.name, 'sandbox-matrix') && (github.event.action != 'labeled' || github.event.label.name == 'sandbox-matrix'))
+    needs: pin
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (needs.pin.outputs.changed == 'true' && github.event.action != 'labeled') || (contains(github.event.pull_request.labels.*.name, 'sandbox-matrix') && (github.event.action != 'labeled' || github.event.label.name == 'sandbox-matrix'))
     runs-on: windows-2025
     timeout-minutes: 150
     steps:

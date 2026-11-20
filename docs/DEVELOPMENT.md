@@ -478,8 +478,12 @@ TAVI_REAL_TESTS=1 pnpm vitest run tests/integration/sandbox-usability.real.test.
 `.github/workflows/sandbox.yml` runs the same jobs, unchanged, on GitHub
 runners: the Linux jobs on `ubuntu-24.04` (and `ubuntu-24.04-arm`), the macOS
 ones on `macos-15` and `macos-15-intel`, each uploading its report as an
-artifact. It is heavy, so it runs on demand (Actions → sandbox → Run workflow)
-or on a pull request labelled `sandbox-matrix`, not on every push.
+artifact. It is heavy, so it runs on demand (Actions → sandbox → Run workflow),
+weekly (Tuesdays, for drift in the runners' images), on a pull request
+labelled `sandbox-matrix`, and on any pull request that changes the
+`@anthropic-ai/sandbox-runtime` pin: its `pin` job diffs the catalog and the
+lockfile, so a Dependabot bump runs the whole matrix unlabelled. Not on every
+push.
 
 ## CI
 
@@ -499,7 +503,7 @@ flowchart LR
   ci --> windows["windows: four shards on windows-latest"]
   ci --> windowsArm["windows-arm: native modules, build, typecheck on windows-11-arm"]
   ci --> secrets["secrets: gitleaks"]
-  demand["Run workflow, or a pull request labelled sandbox-matrix"] --> matrix["sandbox.yml: the sandbox matrix"]
+  demand["Run workflow, weekly, a pull request labelled sandbox-matrix, or one changing the sandbox runtime pin"] --> matrix["sandbox.yml: the sandbox matrix"]
   matrix --> linux["Linux jobs on ubuntu-24.04 and ubuntu-24.04-arm"]
   matrix --> mac["macOS jobs on macos-15 and macos-15-intel"]
   weekly["Mondays, or Run workflow"] --> coverage_yml["coverage.yml: pnpm test:coverage, report-only"]
