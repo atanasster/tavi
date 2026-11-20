@@ -26,7 +26,16 @@ import { AddConnectionModal, ManageConnectionModal } from "./ConnectionSetup.js"
 import { VideoAnalyzerStatus, VideoModels } from "./VideoModels.js";
 import { RhumbKeyCard } from "./RhumbKeyCard.js";
 import { credentialActions } from "./credentials-api.js";
-import { replacementLines, storeRhumbKey, syncLifecycle } from "./lifecycle-api.js";
+import {
+  previewReplace,
+  replaceModel,
+  replacementChoices,
+  replacementLines,
+  storeRhumbKey,
+  syncLifecycle,
+  type ModelRef,
+  type ModelReplacements,
+} from "./lifecycle-api.js";
 import { TargetName, TargetPicker } from "./TargetPicker.js";
 import { useAction } from "../../hooks/use-action.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
@@ -77,6 +86,28 @@ export function ModelBrowser() {
   const [disclosing, setDisclosing] = useState<
     { readonly connectionId: string; readonly model: string; readonly disclosure: string } | undefined
   >();
+  /** A replacement whose uses are listed, waiting on a yes. */
+  const [replacing, setReplacing] = useState<
+    { readonly from: ModelRef; readonly to: ModelRef; readonly uses: readonly string[]; readonly unread: readonly string[] } | undefined
+  >();
+  /** Lists what moving `from` to `to` changes, then asks; nothing moves before the yes, and a read reloads nothing. */
+  const askReplace = (from: ModelRef, to: ModelRef): void =>
+    void run(
+      `replace:${from.connectionId}/${from.model}`,
+      async () => {
+        const preview = await previewReplace(client, from, to);
+        if (!preview.ok) return preview;
+        const { uses, unread } = preview.value;
+        // Nothing to move: said on the page, with no dialog that could only cancel.
+        if (uses.length === 0)
+          return unread.length === 0
+            ? { ok: true, value: `${from.connectionId}/${from.model} is not used anywhere now: nothing to replace.` }
+            : { ok: false, message: `${from.connectionId}/${from.model}'s uses could not be read: ${unread.join("; ")}` };
+        setReplacing({ from, to, uses, unread });
+        return { ok: true, value: undefined };
+      },
+      { reload: false },
+    );
   const [video, setVideo] = useState<{ readonly status?: VideoStatus; readonly loading: boolean; readonly error?: string }>({
     loading: false,
   });
@@ -145,7 +176,7 @@ export function ModelBrowser() {
 
       {data !== undefined && hasConnections ? (
         <>
-          <LifecycleBanner data={data} />
+          <LifecycleBanner data={data} busy={busy !== undefined} onReplace={askReplace} />
           <RolesTable
             data={data}
             busy={busy}
@@ -190,6 +221,26 @@ export function ModelBrowser() {
             onCheck={() => act("lifecycle-sync", () => syncLifecycle(client))}
           />
         </>
+      ) : null}
+
+      {replacing !== undefined ? (
+        <Confirm
+          title={`Replace ${replacing.from.model} with ${replacing.to.model}?`}
+          message={`Every place below moves to ${replacing.to.connectionId}/${replacing.to.model}, chats and routines included; a routine runs the new model once its quality check passes. Nothing else changes.`}
+          action="Replace"
+          onClose={() => setReplacing(undefined)}
+          onConfirm={async () => {
+            const { from, to } = replacing;
+            await run(`replace:${from.connectionId}/${from.model}`, () => replaceModel(client, from, to));
+          }}
+        >
+          <ul className="replace-uses">
+            {replacing.uses.map((use) => (
+              <li key={use}>{use}</li>
+            ))}
+          </ul>
+          {replacing.unread.length === 0 ? null : <Notice>Not read, so not replaced there: {replacing.unread.join("; ")}</Notice>}
+        </Confirm>
       ) : null}
 
       {disclosing !== undefined ? (
@@ -503,7 +554,15 @@ function ConnectionRow({
  * lifecycle sync: said above the roles, since Tavi never changes a model for
  * you. Nothing shows when none is.
  */
-function LifecycleBanner({ data }: { readonly data: ModelsData }) {
+function LifecycleBanner({
+  data,
+  busy,
+  onReplace,
+}: {
+  readonly data: ModelsData;
+  readonly busy: boolean;
+  readonly onReplace: (from: ModelRef, to: ModelRef) => void;
+}) {
   const notices = rolesLifecycleNotices(data);
   if (notices.length === 0) return null;
   const retired = notices.some(({ notice }) => notice.level === "error");
@@ -516,8 +575,8 @@ function LifecycleBanner({ data }: { readonly data: ModelsData }) {
       </h2>
       <Line {...(retired ? { alert: false } : {})}>
         {retired
-          ? "A model in use is retired: pick another with Set."
-          : "A model in use retires or is redirected, now or soon. Tavi never switches it for you: pick another with Set when ready."}
+          ? "A model in use is retired: replace it everywhere it is used, or pick another with Set."
+          : "A model in use retires or is redirected, now or soon. Tavi never switches it for you: replace it when ready, or pick another with Set."}
       </Line>
       <ul className="list-reset">
         {notices.map(({ target, notice, replacements }) => {
@@ -532,10 +591,46 @@ function LifecycleBanner({ data }: { readonly data: ModelsData }) {
                   ))}
                 </ul>
               )}
+              <ReplaceButtons target={target} replacements={replacements} busy={busy} onReplace={onReplace} />
             </li>
           );
         })}
       </ul>
     </section>
+  );
+}
+
+/** One button per model that may take over, on the same connection, each saying what it was suggested for. */
+function ReplaceButtons({
+  target,
+  replacements,
+  busy,
+  onReplace,
+}: {
+  readonly target: string;
+  readonly replacements: ModelReplacements | undefined;
+  readonly busy: boolean;
+  readonly onReplace: (from: ModelRef, to: ModelRef) => void;
+}) {
+  const slash = target.indexOf("/");
+  const from = { connectionId: target.slice(0, slash), model: target.slice(slash + 1) };
+  const choices = replacementChoices(replacements, from.model);
+  if (choices.length === 0) return null;
+  return (
+    <div className="lifecycle-replace-actions">
+      {choices.map(({ model, why }) => (
+        <Button
+          key={model}
+          variant="ghost"
+          size="sm"
+          disabled={busy}
+          // The visible words first, then which model it replaces: a voice command matches what is shown.
+          aria-label={`Replace with ${model} (${why}), for ${target}`}
+          onClick={() => onReplace(from, { connectionId: from.connectionId, model })}
+        >
+          Replace with {model} ({why})
+        </Button>
+      ))}
+    </div>
   );
 }

@@ -235,6 +235,7 @@ WSL1 cannot run the sandbox. On WSL2 keep the data directory on the Linux filesy
 | `tavi schedules` / `reminders` / `heartbeat` | Unattended work |
 | `tavi channels` / `apps` / `mcp` / `plugins` | Channels, connected apps, MCP servers and plugins |
 | `tavi memory` / `skills` | What Tavi remembers and the procedures it knows |
+| `tavi models replace <connection>/<model> --with <model>` | Move every use of a model (defaults, roles, routines, heartbeats, chats) to another, after listing them and asking; Settings → Models has a Replace button for models that retire |
 | `tavi models sync` | With a free [Rhumb](https://rhumbdata.com) key (`RHUMB_KEY`), say which models in use retire or change, and what could replace them; `serve` checks daily, and `tavi doctor`, Settings → Models, the chat's model picker and `/models` show it |
 | `tavi doctor` / `logs` / `backup` | Health, logs and backups |
 

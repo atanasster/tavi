@@ -71,6 +71,25 @@ function owner(start: {
       }
       if (action === "list") return { ok: true, result: connections };
       if (action === "roles") return { ok: true, result: start.roles };
+      if (action === "replace") {
+        if (payload["confirmed"] === true) writes.push({ command, payload });
+        return {
+          ok: true,
+          result: {
+            usedBy: [
+              { kind: "role", workspaceId: "default", detail: "main" },
+              { kind: "chat", workspaceId: "default", count: 2 },
+            ],
+            ...(payload["confirmed"] === true
+              ? {
+                  changed: [{ kind: "role", workspaceId: "default", detail: "main" }],
+                  skipped: [],
+                  failed: [{ use: { kind: "chat", workspaceId: "default" }, error: "database is locked" }],
+                }
+              : {}),
+          },
+        };
+      }
       if (action === "lifecycle")
         return {
           ok: true,
@@ -331,6 +350,34 @@ describe("the Models page", () => {
       "Provider's choice: b",
       "Rhumb suggests c (with tools)",
     ]);
+
+    // Replace lists every use first, and moves nothing before the yes.
+    await click(byText("Replace with c (with tools)"));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const dialog = document.querySelector(".modal");
+    expect(dialog?.querySelector("h2")?.textContent).toBe("Replace a with c?");
+    expect([...(dialog?.querySelectorAll(".replace-uses li") ?? [])].map((item) => item.textContent)).toEqual([
+      "The main role",
+      "2 chats that chose it",
+    ]);
+    expect(fake.writes.some((write) => write.payload["action"] === "replace")).toBe(false);
+    expect(byText("Replace with b (provider's choice)")).toBeDefined();
+    const confirm = [...(dialog?.querySelectorAll("button") ?? [])].find((button) => button.textContent === "Replace");
+    await click(confirm);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(fake.writes.find((write) => write.payload["action"] === "replace")?.payload).toMatchObject({
+      connectionId: "local",
+      model: "a",
+      replaceWith: { connectionId: "local", model: "c" },
+      confirmed: true,
+    });
+    expect(host.textContent).toContain(
+      "Replaced local/a with local/c in 1 place. Not done: 1 chat that chose it failed: database is locked.",
+    );
     expect(host.querySelector(".connection-item")?.textContent).toContain("1 model retired, retiring or redirected");
   });
 

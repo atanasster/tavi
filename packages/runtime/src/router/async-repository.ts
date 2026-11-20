@@ -65,6 +65,10 @@ export class RouterRepository implements RouterRepositoryPort {
     if (!this.authorized(args[0])) throw new TaviError("NOT_AUTHORIZED", "Router scope is not authorized");
     return this.persistence.services.router.chosenTargets(...args);
   }
+  async retargetChosen(...args: Parameters<RouterRepositoryPort["retargetChosen"]>): ReturnType<RouterRepositoryPort["retargetChosen"]> {
+    if (!this.authorized(args[0])) throw new TaviError("NOT_AUTHORIZED", "Router scope is not authorized");
+    return this.persistence.services.router.retargetChosen(...args);
+  }
   async disclosure(...args: Parameters<RouterRepositoryPort["disclosure"]>): ReturnType<RouterRepositoryPort["disclosure"]> {
     if (!this.authorized(args[0])) throw new TaviError("NOT_AUTHORIZED", "Router scope is not authorized");
     return this.persistence.services.router.disclosure(...args);

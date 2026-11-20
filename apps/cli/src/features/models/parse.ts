@@ -1,4 +1,12 @@
-import { MAX_STREAM_TIMEOUT_SECONDS, MODEL_ROLES, PDF_ENGINES, PDF_INPUTS, type PdfEngine, type PdfInput } from "@tavi/contracts";
+import {
+  MAX_STREAM_TIMEOUT_SECONDS,
+  MODEL_ROLES,
+  PDF_ENGINES,
+  PDF_INPUTS,
+  type ModelTarget,
+  type PdfEngine,
+  type PdfInput,
+} from "@tavi/contracts";
 import { definedOnly } from "@tavi/contracts/util";
 import { DATA_DIR_DEFAULT_HELP } from "../../shared/data-directory.js";
 import { UsageError, dataDirectoryFlag, parseFlags, removalAlias } from "../../cli/argv.js";
@@ -24,6 +32,7 @@ const MODELS_ACTIONS = [
   "video",
   "suggest",
   "sync",
+  "replace",
 ] as const;
 type ModelsAction = (typeof MODELS_ACTIONS)[number];
 
@@ -54,6 +63,9 @@ export interface ModelsCommandOptions {
   readonly videoEnable?: string;
   readonly videoDisable?: string;
   readonly yes?: boolean;
+  /** `replace`: the model moved from (`<connection>/<model>`), and the one that takes over (`--with`, on `--connection` or the same). */
+  readonly replaceFrom?: ModelTarget;
+  readonly replaceWith?: ModelTarget;
   /** Raw `--data-dir`; `main.ts` applies the single resolution order. */
   readonly dataDirectory?: string;
 }
@@ -101,6 +113,11 @@ Actions:
                                     price, store it and print the warnings;
                                     never changes a model (serve does this
                                     daily)
+  replace <connection>/<model> --with <model> [--connection <id>] [--yes]
+                                    Move every use of a model (defaults, roles
+                                    and fallbacks, routines, heartbeats,
+                                    activity summaries, chats) to another,
+                                    after listing them and asking
 
 Options:
   --label <text>           Operator-facing connection name
@@ -174,6 +191,7 @@ export function parseModels(argv: readonly string[]): ParsedCommand {
     video: ["--data-dir", "--enable", "--disable", "--yes"],
     suggest: ["--data-dir"],
     sync: ["--data-dir"],
+    replace: ["--data-dir", "--with", "--connection", "--yes"],
   };
   const allowed = allowedFlags[action as ModelsAction];
 
@@ -192,6 +210,23 @@ export function parseModels(argv: readonly string[]): ParsedCommand {
   const headers = args.lists.get("--header") ?? [];
   const fallback = args.lists.get("--fallback") ?? [];
   const positional = args.positionals[0];
+
+  if (action === "replace") {
+    const from = positional === undefined ? undefined : parseReplaceTarget(positional);
+    if (from === undefined) throw new UsageError("models replace needs <connection>/<model>, e.g. openai/gpt-5", MODELS_USAGE);
+    const model = flags.get("--with");
+    if (model === undefined) throw new UsageError("models replace needs --with <model>", MODELS_USAGE);
+    return {
+      command: "models",
+      models: {
+        action: "replace",
+        replaceFrom: from,
+        replaceWith: { connectionId: flags.get("--connection") ?? from.connectionId, model },
+        ...(flags.get("--yes") === undefined ? {} : { yes: true }),
+        ...dataDirectoryFlag(flags),
+      },
+    };
+  }
 
   // The role actions take the role as their positional argument and the
   // connection from `--connection`; every other action takes the connection id
@@ -275,4 +310,11 @@ function timeoutFlag(value: string | undefined, flag: string): number | "default
       MODELS_USAGE,
     );
   return seconds;
+}
+
+/** `<connection>/<model>`, split at the first slash: an OpenRouter model id keeps its own (`openrouter/anthropic/claude-…`). */
+export function parseReplaceTarget(value: string): ModelTarget | undefined {
+  const slash = value.indexOf("/");
+  if (slash <= 0 || slash === value.length - 1) return undefined;
+  return { connectionId: value.slice(0, slash), model: value.slice(slash + 1) };
 }

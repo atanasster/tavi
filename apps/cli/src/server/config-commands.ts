@@ -96,6 +96,7 @@ import {
 import type { OwnerModelTarget } from "../features/run/owner.js";
 import { resolveLiveTarget } from "../features/models/target.js";
 import type { LifecycleSyncNoKey, LifecycleSyncReport, StoredLifecycleReport } from "../features/models/lifecycle-sync.js";
+import type { ReplacePreview, ReplaceResult } from "../features/models/replace.js";
 import {
   resolveSchedule,
   scheduleAgenda,
@@ -186,6 +187,13 @@ export interface ConfigDependencies {
   readonly lifecycleSync?: () => Promise<LifecycleSyncReport | LifecycleSyncNoKey>;
   /** `models lifecycle`: what the last sync stored of the models in use, for today; absent offline. */
   readonly lifecycleReport?: () => Promise<StoredLifecycleReport>;
+  /** `models replace`: what moving one model to another would change, or the change made; absent offline. */
+  readonly replaceModel?: (
+    from: ModelTarget,
+    to: ModelTarget,
+    workspaceId: string,
+    confirmed: boolean,
+  ) => Promise<ReplacePreview | ReplaceResult>;
   /** The target the owner runs now, in the command's workspace. */
   readonly target: OwnerModelTarget;
   /** What `models chat` and `set-chat` read and save a chat's own model through; absent, an owner with no model routing. */
@@ -612,6 +620,18 @@ export function modelsCommand(deps: ConfigDependencies, input: ModelsPayload): P
         case "lifecycle":
           if (deps.lifecycleReport === undefined) throw new Error("this owner cannot read model lifecycles");
           return await deps.lifecycleReport();
+        case "replace": {
+          if (deps.replaceModel === undefined) throw new Error("this owner cannot replace models");
+          if (input.model === undefined || input.replaceWith === undefined)
+            throw new TaviError("INVALID_INPUT", "replace needs connectionId, model and replaceWith");
+          // The request's workspace only, as every other models write.
+          return await deps.replaceModel(
+            { connectionId: connectionId(), model: input.model },
+            input.replaceWith,
+            workspaceOf(input),
+            input.confirmed === true,
+          );
+        }
         case "video":
           return await setVideoModelAndReport(service, connectionId(), {
             ...(input.videoEnable === undefined ? {} : { enable: input.videoEnable }),

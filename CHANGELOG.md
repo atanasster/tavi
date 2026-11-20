@@ -28,7 +28,11 @@ change behaviour or stored data.
   embeddings, video), asked once per catalog version (kept by the running
   owner) and shown in
   `tavi models sync`, `tavi doctor`, `/models` and the Settings → Models
-  banner. Nothing is switched for you.
+  banner. Nothing is switched for you: `tavi models replace
+  <connection>/<model> --with <model>` (and a **Replace with …** button on
+  that banner) lists every place a model is used in the workspace, asks, then
+  moves the default, roles and fallbacks, routines (once their quality check
+  passes), heartbeats, activity summaries and chats to the new one.
 - `tavi serve` (at start) and `tavi doctor` (`mcp.weakerSandbox`) name each
   approved MCP server that runs unsandboxed or in the nested sandbox while
   this host's sandbox now confines more, with the way to move it: add the

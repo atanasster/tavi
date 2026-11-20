@@ -17,6 +17,7 @@ import type {
 import { MOD_COMMAND_TEXT_MAX_CHARS, maskPluginText } from "@tavi/contracts";
 import { channelsCommand } from "../features/channels/owner.js";
 import { runtimeLifecycleReport, startLifecycleSync, syncRuntimeModelLifecycle } from "../features/models/lifecycle-sync.js";
+import { previewReplace, replaceModel } from "../features/models/replace.js";
 import { uiPreferencesCommand } from "../features/ui/preferences.js";
 import { permissionsCommand } from "../features/permissions/owner.js";
 import { browserLiveCommand } from "../features/browser/live-owner.js";
@@ -1113,6 +1114,8 @@ function configDependencies(
     videoStatus: () => videoStatusDocument(runtime),
     lifecycleSync: () => syncRuntimeModelLifecycle(runtime),
     lifecycleReport: () => runtimeLifecycleReport(runtime),
+    replaceModel: (from, to, workspaceId, confirmed) =>
+      confirmed ? replaceModel(runtime, from, to, workspaceId) : previewReplace(runtime, from, to, workspaceId),
     target,
     startupProviders: state.startupProviders,
     readSecret: runtime.readSecret,

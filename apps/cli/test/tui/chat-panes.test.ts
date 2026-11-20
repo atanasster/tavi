@@ -489,7 +489,7 @@ describe("the panes", () => {
     });
     expect(lines.slice(-3).map((line) => line.replace(/^ {2}\S+ /u, ""))).toEqual([
       "openai/gpt-5 retired on 2026-11-19",
-      "      Rhumb suggests gpt-6-luna (background, cheaper)",
+      "      Rhumb suggests gpt-6-luna (background, cheaper) (tavi models replace moves every use)",
       "gemini/gemini-2.5-pro answered and billed as gemini-3.8-flash on 2026-12-01",
     ]);
     expect(modelsPane([], empty, "w").some((line) => line.includes("lifecycle"))).toBe(false);

@@ -48,7 +48,9 @@ describe("model replacements", () => {
     const lifecycle = { status: "ga" as const, redirect: { to: "gpt-6-luna", via: "alias" }, ...AT };
     const known = knownReplacements(cache, { provider: "openai", model: "gpt-5", lifecycle, kinds: ["agent", "cheap"] });
     expect(known).toEqual({ provider: { model: "gpt-6-luna", via: "alias" }, rhumb: [{ for: "agent", model: "gpt-6.2-sol" }] });
-    expect(replacementsInWords(known)).toBe("the provider moves it to gpt-6-luna; Rhumb suggests gpt-6.2-sol (with tools)");
+    expect(replacementsInWords(known)).toBe(
+      "the provider moves it to gpt-6-luna; Rhumb suggests gpt-6.2-sol (with tools) (tavi models replace moves every use)",
+    );
     expect(replacementsInWords({ rhumb: [] })).toBeUndefined();
     // A custom endpoint: no provider, so no pick, but a redirect still says itself.
     expect(knownReplacements(cache, { provider: undefined, model: "gpt-5", lifecycle, kinds: ["agent"] }).rhumb).toEqual([]);

@@ -1174,7 +1174,11 @@ tabs above the page. It has these views:
   names the models the default and the roles (fallbacks too) use that the
   last lifecycle sync says are retired, redirected or retiring within 30 days,
   each with what may replace it: the provider's choice, then Rhumb's pick per
-  kind of use. Each connection's line counts its models that are. **Model retirements**
+  kind of use, and a **Replace with …** button per model, saying what it was
+  suggested for. Replace lists every place the model is used in the workspace
+  (roles, fallbacks, routines, heartbeats, chats) and moves them only after
+  **Replace** in that dialog, as `tavi models replace` does; a place that
+  failed or could not be read is said as a failure. Each connection's line counts its models that are. **Model retirements**
   stores a free [Rhumb](https://rhumbdata.com/sign-up) key (as the
   credential `rhumb`), after which the owner checks daily which models in use
   retire, are redirected or change price; with one stored, **Check now** runs

@@ -92,6 +92,8 @@ export const MODELS_ACTIONS = [
   "sync",
   // Read-only: what the last sync stored of the models in use, for today (doctor's `modelConfiguration.lifecycle`).
   "lifecycle",
+  // `connectionId`/`model` moved to `replaceWith` everywhere it is used; without `confirmed`, only what would change.
+  "replace",
 ] as const;
 
 export const ModelsPayloadSchema = z.object({
@@ -126,6 +128,10 @@ export const ModelsPayloadSchema = z.object({
   disclosureConfirmed: z.boolean().optional(),
   /** `probe`: what is probed (absent: `pdf`, as before there was a choice). */
   probe: z.enum(["pdf", "video"]).optional(),
+  /** `replace`: the model that takes over from `connectionId`/`model`. */
+  replaceWith: ModelTargetSchema.optional(),
+  /** `replace`: true to make the change; absent, the answer lists the uses and changes nothing. */
+  confirmed: z.boolean().optional(),
 });
 export type ModelsPayload = z.infer<typeof ModelsPayloadSchema>;
 

@@ -506,3 +506,16 @@
   padding-left: var(--space-3);
   color: hsl(var(--muted-foreground));
 }
+
+/* Replace buttons under a model that retires, and the uses the dialog lists. */
+.lifecycle-replace-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.replace-uses {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-4);
+}

@@ -7,6 +7,7 @@ import {
   RouterScopeSchema,
   RouterSettingsSchema,
   TaskRouteSchema,
+  ModelTargetSchema,
   ToolDisclosureSchema,
   ContextProjectionSnapshotSchema,
   type ContextProjectionSnapshot,
@@ -324,6 +325,21 @@ export class RouterRepository implements RouterRepositoryPort {
         ? [{ connectionId: row.connection_id, model: row.model, chats: row.chats }]
         : [],
     );
+  }
+
+  retargetChosen(scope: RouterScope, from: ModelTarget, to: ModelTarget): number {
+    this.assertScope(scope);
+    const target = ModelTargetSchema.parse(to);
+    const result = this.store.handle
+      .prepare(
+        `UPDATE tavi_task_routes
+            SET data = json_set(data, '$.target.connectionId', ?, '$.target.model', ?)
+          WHERE json_extract(data, '$.origin') = 'explicit'
+            AND json_extract(data, '$.target.connectionId') = ? AND json_extract(data, '$.target.model') = ?
+            AND task_id IN (SELECT task_id FROM tavi_tasks WHERE workspace_id = ? AND principal_id = ?)`,
+      )
+      .run(target.connectionId, target.model, from.connectionId, from.model, scope.workspaceId, scope.principalId);
+    return Number(result.changes);
   }
 
   disclosure(scope: RouterScope, taskId: string, attemptId: string): ToolDisclosure | undefined {

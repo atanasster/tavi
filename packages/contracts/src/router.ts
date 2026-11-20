@@ -366,6 +366,13 @@ interface RouterRepositoryPortDefinition {
   chooseRoute(scope: RouterScope, taskId: string, target: ModelTarget, at: string): TaskRoute;
   /** The models people chose for their chats in this scope (routes of origin `explicit`), with how many chats chose each. */
   chosenTargets(scope: RouterScope): readonly ChosenModelTarget[];
+  /**
+   * Moves every chat in this scope that chose `from` (a route of origin
+   * `explicit`) to `to`, as `tavi models replace` does when a model retires;
+   * a turn already running keeps the chain it began with. Returns how many
+   * chats moved.
+   */
+  retargetChosen(scope: RouterScope, from: ModelTarget, to: ModelTarget): number;
   disclosure(scope: RouterScope, taskId: string, attemptId: string): ToolDisclosure | undefined;
   contextProjections(scope: RouterScope, taskId: string): readonly ContextProjectionSnapshot[];
   saveContextProjection(scope: RouterScope, fence: RouterFence, projection: ContextProjectionSnapshot): void;

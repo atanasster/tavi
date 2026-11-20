@@ -59,7 +59,7 @@ export function RhumbKeyCard({
             <a href={RHUMB_SIGN_UP_URL} target="_blank" rel="noreferrer">
               Rhumb
             </a>
-            , Tavi checks daily and says before one you use goes. Only provider names are sent, never which models you use.
+            , Tavi checks daily and says before one you use goes. Only provider names are sent, never a model id you use.
           </p>
           <Field label="Rhumb key" id="rhumb-key">
             {(control) => (

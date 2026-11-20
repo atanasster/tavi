@@ -236,7 +236,7 @@ export function replacementsInWords(replacements: ModelReplacements | undefined)
       ? []
       : [`Rhumb suggests ${replacements.rhumb.map((pick) => `${pick.model} (${REPLACEMENT_USES[pick.for]})`).join(", ")}`]),
   ];
-  return parts.length === 0 ? undefined : parts.join("; ");
+  return parts.length === 0 ? undefined : `${parts.join("; ")} (tavi models replace moves every use)`;
 }
 
 const REPLACEMENT_USES: Readonly<Record<ReplacementKind, string>> = {

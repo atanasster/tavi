@@ -29,7 +29,9 @@ describe("doctor's text summary", () => {
         },
       ],
     });
-    expect(text).toContain("      the provider moves it to gpt-6-luna; Rhumb suggests gpt-6.2-sol (with tools)");
+    expect(text).toContain(
+      "      the provider moves it to gpt-6-luna; Rhumb suggests gpt-6.2-sol (with tools) (tavi models replace moves every use)",
+    );
     expect(line(text, "Model lifecycle")).toBe(
       "✗ Model lifecycle: 1 model(s) in use retired or retiring, redirected or changing (checked 2026-11-20)",
     );

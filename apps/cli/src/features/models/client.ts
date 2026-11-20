@@ -26,6 +26,7 @@ import { join, resolve } from "node:path";
 import { probeVideoDecoder } from "../video/host.js";
 import { modelsSuggestCommand } from "./suggest-command.js";
 import { modelsSyncCommand } from "./sync-command.js";
+import { modelsReplaceCommand } from "./replace-command.js";
 import { defaultRuntimeFactory, type RuntimeFactory } from "../../cli/runtime-options.js";
 import type { ModelsCommandOptions } from "./parse.js";
 import { requireFlag } from "../../cli/flags.js";
@@ -50,6 +51,8 @@ export async function modelsCommand(
   if (options.action === "suggest") return modelsSuggestCommand(options, io);
   // It reads every model in use, routines and chats too: a whole runtime, its own path.
   if (options.action === "sync") return modelsSyncCommand(options, io, runtimeFactory);
+  // It reads every use and may write a routine revision each: a whole runtime offline, its own path.
+  if (options.action === "replace") return modelsReplaceCommand(options, io, runtimeFactory);
   // Asked for by its flag, before an owner is looked for, so both paths say it alike.
   // A local connection may leave --credential out: it gets a placeholder of its own.
   if (
@@ -241,7 +244,7 @@ function modelsOnOwner(options: ResolvedDataDirectory<ModelsCommandOptions>, io:
     ...(options.action === "probe" ? { timeoutMs: 60_000 } : {}),
     build: () => {
       // `suggest` and `sync` never reach here: each has its own path (`suggest-command.ts`, `sync-command.ts`).
-      if (options.action === "suggest" || options.action === "sync") return EXIT.usage;
+      if (options.action === "suggest" || options.action === "sync" || options.action === "replace") return EXIT.usage;
       // The owner resolves a connection's credential through its own chain;
       // a file handed to this process would be ignored, so it is refused.
       if (options.credentialFile !== undefined) {

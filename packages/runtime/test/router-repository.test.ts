@@ -227,6 +227,19 @@ describe("router reservations and recovery", () => {
     expect(() => f.repo.chosenTargets({ workspaceId: "other", principalId: "p" })).toThrow(
       expect.objectContaining({ code: "NOT_AUTHORIZED" }),
     );
+    // A model that retires: its chats move to another, only this person's, never a route the router saved.
+    expect(f.repo.retargetChosen(scope, { connectionId: "main", model: "other" }, { connectionId: "next", model: "new" })).toBe(2);
+    expect(f.repo.chosenTargets(scope)).toEqual([{ connectionId: "next", model: "new", chats: 2 }]);
+    expect(f.repo.route(scope, "task-2")?.target).toEqual({ connectionId: "next", model: "new" });
+    expect(workspace.retargetChosen(bob, { connectionId: "main", model: "other" }, { connectionId: "next", model: "new" })).toBe(0);
+    expect(workspace.chosenTargets(bob)).toEqual([{ connectionId: "main", model: "bobs", chats: 1 }]);
+    expect(() =>
+      f.repo.retargetChosen(
+        { workspaceId: "other", principalId: "p" },
+        { connectionId: "main", model: "m" },
+        { connectionId: "n", model: "m" },
+      ),
+    ).toThrow(expect.objectContaining({ code: "NOT_AUTHORIZED" }));
   });
 
   it("persists routes and reservations across a database restart without repeating decisions", () => {
