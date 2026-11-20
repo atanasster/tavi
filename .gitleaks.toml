@@ -55,6 +55,8 @@ regexes = [
   '''^dGhlIHNhbXBsZSBub25jZQ==$''',
   # A key-chord name that the generic rule reads as a key.
   '''^Shift\+ArrowLeft$''',
+  # The made-up sign-in link token the UI's new-link test watches for.
+  '''^18kCYRWNCKB9-RYpKhxqgLYc7x-LQB2RFesJcFxkXlw$''',
 ]
 
 [[allowlists]]
