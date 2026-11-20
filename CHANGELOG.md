@@ -49,6 +49,9 @@ change behaviour or stored data.
 
 ### Fixed
 
+- `tavi models suggest` asks Rhumb at `https://rhumbdata.com` by default:
+  its old address, `https://models.nannertech.com`, no longer resolves, so
+  every suggestion failed unless `RESOLVER_URL` was set.
 - Setup's suggested models follow today's catalogs: on OpenAI it proposes
   GPT-6's sol tier as the main model and luna as the fast one (it proposed
   GPT-5.6 and GPT-5.4 mini), and on Gemini, Gemini 4 carbon or argon (it

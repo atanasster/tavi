@@ -6,7 +6,7 @@ import { freeBytesAt } from "../../shared/disk.js";
 
 /**
  * `tavi models suggest`: suggestions from the model resolver
- * (https://models.nannertech.com), never a change.
+ * (https://rhumbdata.com), never a change.
  *
  * With `RESOLVER_KEY` set it asks the resolver two things over plain HTTP:
  * the best local model on the operator's local runtimes that fits this
@@ -17,7 +17,7 @@ import { freeBytesAt } from "../../shared/disk.js";
  * it. The key and the request never reach a log; no prompt is ever sent.
  */
 
-const RESOLVER_URL_DEFAULT = "https://models.nannertech.com";
+const RESOLVER_URL_DEFAULT = "https://rhumbdata.com";
 export const RESOLVER_KEY_HINT = "Set RESOLVER_KEY to a model resolver key to get model suggestions; nothing was changed.";
 
 /** Each resolver call's deadline: a suggestion is never worth a long wait. */

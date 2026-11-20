@@ -124,7 +124,7 @@ describe("suggestModels", () => {
     const resolver = fakeResolver();
     await suggestModels([ollama], { memoryGb: 6 }, { env: { RESOLVER_KEY: KEY }, fetch: resolver.fetch });
     const params = resolver.calls[0]?.url.searchParams;
-    expect(resolver.calls[0]?.url.origin).toBe("https://models.nannertech.com");
+    expect(resolver.calls[0]?.url.origin).toBe("https://rhumbdata.com");
     expect(params?.get("max_memory_gb")).toBe("6");
     expect(params?.has("max_vram_gb")).toBe(false);
     expect(params?.has("max_disk_gb")).toBe(false);
