@@ -227,6 +227,7 @@ describe("signing in from the canvas, on the owner", () => {
       "models:add",
       "credentials:set",
       "models:discover",
+      "models:show",
     ]);
     expect(writes.find((entry) => entry.payload["action"] === "set")?.payload).toEqual({
       action: "set",

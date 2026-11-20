@@ -1,3 +1,4 @@
+import { daysBetween, LIFECYCLE_WARNING_DAYS, type ModelLifecycle } from "./model-lifecycle.js";
 import { MODEL_PROVIDER_PRESETS, keyPageOf, type ModelProviderPreset } from "./models-config.js";
 import {
   ONBOARDING_ABI,
@@ -321,16 +322,61 @@ export interface RoleSuggestion {
   readonly candidates: readonly string[];
 }
 
-/** The `main` and `fast` models to propose for a connection of `preset`, from what it discovered. */
-export function suggestRoles(preset: string, discovered: readonly string[]): RoleSuggestion {
+/**
+ * Whether a lifecycle says not to propose a model for a new role: retired,
+ * deprecated, closed to new users, or redirected or retiring within
+ * {@link LIFECYCLE_WARNING_DAYS} (an undated redirect counts as now) — the
+ * same horizon at which the model warns. A model with no lifecycle, or
+ * `unknown`, is proposed as before.
+ */
+export function avoidForNewRole(lifecycle: ModelLifecycle | undefined, today: string): boolean {
+  if (lifecycle === undefined) return false;
+  const soon = (date: string | undefined): boolean => date !== undefined && daysBetween(today, date) <= LIFECYCLE_WARNING_DAYS;
+  return (
+    lifecycle.status === "retired" ||
+    lifecycle.status === "deprecated" ||
+    (lifecycle.redirect !== undefined && (lifecycle.redirect.on === undefined || soon(lifecycle.redirect.on))) ||
+    (lifecycle.closedToNewOn !== undefined && lifecycle.closedToNewOn <= today) ||
+    soon(lifecycle.retiresOn)
+  );
+}
+
+/** A catalog's stored lifecycles by model id, as `models show` carries them; `undefined` when none is stored. */
+export function lifecycleByModel(
+  catalog: readonly { readonly modelId: string; readonly lifecycle?: ModelLifecycle | undefined }[],
+): ReadonlyMap<string, ModelLifecycle> | undefined {
+  const rows = catalog.flatMap((row) => (row.lifecycle === undefined ? [] : [[row.modelId, row.lifecycle] as const]));
+  return rows.length === 0 ? undefined : new Map(rows);
+}
+
+/**
+ * The `main` and `fast` models to propose for a connection of `preset`, from
+ * what it discovered. With `lifecycle` (what a sync stored, by model id), a
+ * model {@link avoidForNewRole} names is left out of each ranked list, unless
+ * that would empty the list: a role's best-ranked choice is never traded for an
+ * unranked model by the catalog alone.
+ */
+export function suggestRoles(
+  preset: string,
+  discovered: readonly string[],
+  options: { readonly lifecycle?: ReadonlyMap<string, ModelLifecycle>; readonly today?: string } = {},
+): RoleSuggestion {
+  const today = options.today ?? new Date().toISOString().slice(0, 10);
+  const lifecycle = options.lifecycle;
   // A `:batch` variant answers later, through a batch job: never a chat's model.
   const chat = [...new Set(discovered)].filter((model) => !isEmbeddingModel(model) && !/:batch$/u.test(model));
+  // Avoided models leave a list only when something is left in it.
+  const keep = (models: readonly string[]): string[] => {
+    if (lifecycle === undefined) return [...models];
+    const current = models.filter((model) => !avoidForNewRole(lifecycle.get(model), today));
+    return current.length === 0 ? [...models] : current;
+  };
   const table = ROLE_TABLES[preset];
   const local = preset === "ollama" || preset === "lmstudio";
   const usable = local ? chat.filter(toolCapableFamily) : chat;
-  const mains = table === undefined ? [] : ranked(table.main, usable);
-  const fasts = table === undefined ? [] : ranked(table.fast, usable);
-  const rest = (local && usable.length > 0 ? usable : chat).filter((model) => !mains.includes(model)).sort();
+  const mains = table === undefined ? [] : keep(ranked(table.main, usable));
+  const fasts = table === undefined ? [] : keep(ranked(table.fast, usable));
+  const rest = keep((local && usable.length > 0 ? usable : chat).filter((model) => !mains.includes(model))).sort();
   const candidates = [...mains, ...rest].slice(0, 5);
   const main = candidates[0];
   const fast = fasts.find((model) => model !== main);

@@ -877,7 +877,15 @@ describe("the census a flow is shown (invariant 15)", () => {
 });
 
 describe("connect-detected", () => {
-  function config(existing: readonly string[] = [], options: { readonly baseUrl?: string; readonly stored?: readonly string[] } = {}) {
+  function config(
+    existing: readonly string[] = [],
+    options: {
+      readonly baseUrl?: string;
+      readonly stored?: readonly string[];
+      readonly discovered?: readonly string[];
+      readonly shown?: readonly Record<string, unknown>[];
+    } = {},
+  ) {
     const calls: { readonly command: string; readonly payload: Record<string, unknown> }[] = [];
     return {
       calls,
@@ -894,13 +902,36 @@ describe("connect-detected", () => {
               result: existing.map((connectionId) => ({ connectionId, baseUrl: options.baseUrl ?? "https://openrouter.ai/api/v1" })),
             };
           if (payload.action === "discover")
-            return { ok: true as const, result: { models: [{ modelId: "qwen3:8b" }, { modelId: "nomic-embed-text" }] } };
+            return {
+              ok: true as const,
+              result: { models: (options.discovered ?? ["qwen3:8b", "nomic-embed-text"]).map((modelId) => ({ modelId })) },
+            };
+          if (payload.action === "show" && options.shown !== undefined) return { ok: true as const, result: { catalog: options.shown } };
           return { ok: true as const, result: {} };
         },
       },
     };
   }
   const running: typeof globalThis.fetch = async () => new Response(JSON.stringify({ data: [] }));
+
+  it("proposes no model a stored lifecycle says is going, when the connection is set up again", async () => {
+    const discovered = ["anthropic/claude-sonnet-5.5", "anthropic/claude-sonnet-4.5"];
+    const retired = { status: "retired", catalogVersion: "v", checkedAt: "2026-11-20T08:00:00.000Z" };
+    const plain = config([], { discovered });
+    const before = await fixture({ config: plain.config, detection: { env: { OPENROUTER_API_KEY: "sk-or-v1-x" }, fetch: running } });
+    const first = (await before.call({ action: "connect-detected", preset: "openrouter", variable: "OPENROUTER_API_KEY" })) as unknown as {
+      suggested: { main?: string };
+    };
+    const best = first.suggested.main;
+    expect(best).toBeDefined();
+    const going = config([], { discovered, shown: [{ modelId: best, lifecycle: retired }] });
+    const after = await fixture({ config: going.config, detection: { env: { OPENROUTER_API_KEY: "sk-or-v1-x" }, fetch: running } });
+    const second = (await after.call({ action: "connect-detected", preset: "openrouter", variable: "OPENROUTER_API_KEY" })) as unknown as {
+      suggested: { main?: string };
+    };
+    expect(second.suggested.main).toBeDefined();
+    expect(second.suggested.main).not.toBe(best);
+  });
 
   it("stores the found key, then adds and discovers the connection, answering no key", async () => {
     const { calls, config: writes } = config();
@@ -918,6 +949,7 @@ describe("connect-detected", () => {
       "models:add",
       "credentials:set",
       "models:discover",
+      "models:show",
     ]);
     expect(calls[3]?.payload).toEqual({ action: "set", reference: "openrouter", value: "sk-or-v1-planted" });
     expect(calls[2]?.payload).toMatchObject({
@@ -1017,7 +1049,7 @@ describe("connect-detected", () => {
     expect(await ours.call({ action: "connect-detected", preset: "openrouter", variable: "OPENROUTER_API_KEY" })).toMatchObject({
       connectionId: "openrouter",
     });
-    expect(second.calls.map((entry) => String(entry.payload["action"]))).toEqual(["list", "list", "rebind", "set", "discover"]);
+    expect(second.calls.map((entry) => String(entry.payload["action"]))).toEqual(["list", "list", "rebind", "set", "discover", "show"]);
   });
 
   it("never rebinds its own connection once it points elsewhere, nor overwrites a key stored under the preset's name", async () => {
@@ -1069,6 +1101,7 @@ describe("connect-detected", () => {
       "models:add",
       "credentials:set",
       "models:discover",
+      "models:show",
     ]);
     expect(calls[3]?.payload).toEqual({ action: "set", reference: "openai", value: "sk-typed-welcome" });
 

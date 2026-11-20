@@ -23,6 +23,8 @@ import {
   SERVICE_SETUP_COMMAND,
   modelUnverified,
   RHUMB_CREDENTIAL_REF,
+  type ModelLifecycle,
+  lifecycleByModel,
 } from "@tavi/contracts";
 import { definedOnly, errorMessage, plural } from "@tavi/contracts/util";
 import { sleep } from "@tavi/node-kit";
@@ -364,13 +366,33 @@ async function keyFor(deps: OnboardDependencies, choice: ModelChoice, headless: 
   });
 }
 
+/**
+ * What a lifecycle sync stored of the connection's models, by id, as `models show`
+ * carries it: a connection set up again keeps its rows, a new one has none. A
+ * failed read proposes models as if none were stored.
+ */
+async function storedLifecycles(
+  deps: Pick<OnboardDependencies, "transport">,
+  connectionId: string,
+): Promise<ReadonlyMap<string, ModelLifecycle> | undefined> {
+  try {
+    const shown = await deps.transport.request<{
+      readonly catalog: readonly { readonly modelId: string; readonly lifecycle?: ModelLifecycle }[];
+    }>("models", { action: "show", connectionId });
+    return lifecycleByModel(shown.catalog);
+  } catch {
+    return undefined;
+  }
+}
+
 async function pickModels(
   deps: OnboardDependencies,
   presetId: string,
   discovered: readonly string[],
   headless: HeadlessModel | undefined,
+  lifecycle?: ReadonlyMap<string, ModelLifecycle>,
 ): Promise<{ readonly main: string; readonly fast?: string }> {
-  const suggestion = suggestRoles(presetId, discovered);
+  const suggestion = suggestRoles(presetId, discovered, lifecycle === undefined ? {} : { lifecycle });
   if (headless !== undefined) {
     const main = headless.model ?? suggestion.main;
     if (main === undefined) throw new StepOpen("No model could be chosen for you: pass --model <id>", "--model");
@@ -599,7 +621,7 @@ async function modelStep(
       await deps.transport.request("credentials", { action: "set", reference: connectionId, value: key });
       continue;
     }
-    const roles = await pickModels(deps, choice.preset.id, discovered, headless);
+    const roles = await pickModels(deps, choice.preset.id, discovered, headless, await storedLifecycles(deps, connectionId));
     const { main } = await proveRoles(deps, run, connectionId, roles, working);
     if (main?.ok === true) {
       // Only a provider Rhumb lists: a custom or local endpoint is never checked.

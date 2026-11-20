@@ -9,6 +9,8 @@ import {
   stepKinds,
   suggestRoles,
   toolCapableFamily,
+  avoidForNewRole,
+  lifecycleByModel,
   VERIFY_ADVICE_CODES,
   verifyAdvice,
 } from "../../src/onboarding/index.js";
@@ -127,6 +129,51 @@ describe("role suggestions", () => {
       main: "anthropic/claude-sonnet-5.5",
       candidates: ["anthropic/claude-sonnet-5.5", "anthropic/claude-sonnet-5.5:free"],
     });
+  });
+
+  it("leaves out models a lifecycle sync says are going, unless nothing would be left", () => {
+    const at = { catalogVersion: "v", checkedAt: "2026-11-20T08:00:00.000Z" };
+    const lifecycle = new Map([
+      ["gpt-5", { status: "deprecated" as const, retiresOn: "2026-12-11", ...at }],
+      ["gpt-5-mini", { status: "ga" as const, redirect: { to: "gpt-6-luna", on: "2026-12-01" }, ...at }],
+      ["gpt-6.2-sol", { status: "ga" as const, ...at }],
+      ["gpt-6-luna", { status: "ga" as const, closedToNewOn: "2026-12-31", ...at }],
+    ]);
+    const discovered = ["gpt-5", "gpt-5-mini", "gpt-6.2-sol", "gpt-6-luna"];
+    const today = "2026-11-20";
+    const suggestion = suggestRoles("openai", discovered, { lifecycle, today });
+    expect(suggestion).toMatchObject({ main: "gpt-6.2-sol", fast: "gpt-6-luna" });
+    expect(suggestion.candidates).not.toContain("gpt-5");
+    expect(suggestion.candidates).not.toContain("gpt-5-mini");
+    // Closed to new users from that day on.
+    const luna = lifecycle.get("gpt-6-luna");
+    expect(avoidForNewRole(luna, "2026-12-30")).toBe(false);
+    expect(avoidForNewRole(luna, "2026-12-31")).toBe(true);
+    // Every model going: proposed as before rather than nothing.
+    expect(suggestRoles("openai", ["gpt-5"], { lifecycle, today }).main).toBe("gpt-5");
+  });
+
+  it("avoids a model retired, retiring or redirected within 30 days, never an unknown or a far-off one", () => {
+    const at = { catalogVersion: "v", checkedAt: "2026-11-20T08:00:00.000Z" };
+    const today = "2026-11-20";
+    expect(avoidForNewRole({ status: "retired", ...at }, today)).toBe(true);
+    expect(avoidForNewRole({ status: "ga", retiresOn: "2026-11-23", ...at }, today)).toBe(true);
+    expect(avoidForNewRole({ status: "ga", retiresOn: "2027-06-01", ...at }, today)).toBe(false);
+    expect(avoidForNewRole({ status: "ga", redirect: { to: "b" }, ...at }, today)).toBe(true);
+    expect(avoidForNewRole({ status: "ga", redirect: { to: "b", on: "2027-06-01" }, ...at }, today)).toBe(false);
+    expect(avoidForNewRole({ status: "unknown", ...at }, today)).toBe(false);
+    expect(avoidForNewRole(undefined, today)).toBe(false);
+  });
+
+  it("keeps a role's ranked choice when every ranked model is going, rather than an unranked one", () => {
+    const lifecycle = new Map([["gpt-5", { status: "deprecated" as const, catalogVersion: "v", checkedAt: "2026-11-20T08:00:00.000Z" }]]);
+    expect(suggestRoles("openai", ["gpt-5", "babbage-002"], { lifecycle, today: "2026-11-20" }).main).toBe("gpt-5");
+    expect(lifecycleByModel([{ modelId: "a" }])).toBeUndefined();
+    expect(
+      lifecycleByModel([{ modelId: "a", lifecycle: { status: "ga", catalogVersion: "v", checkedAt: "2026-11-20T08:00:00.000Z" } }])?.get(
+        "a",
+      )?.status,
+    ).toBe("ga");
   });
 
   it("proposes only tool-capable local models, and no fast model when nothing smaller is there", () => {

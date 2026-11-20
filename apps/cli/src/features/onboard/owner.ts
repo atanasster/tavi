@@ -28,7 +28,9 @@ import {
   type OnboardingSurface,
   classifyVerifyFailure,
   LASTING_VERIFY_CODES,
+  lifecycleByModel,
   suggestRoles,
+  type ModelLifecycle,
   verifyAdvice,
 } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
@@ -602,7 +604,16 @@ async function storeProviderKey(
     const discovered = resultOf<{ readonly models: readonly { readonly modelId: string }[] }>(
       await config.models({ action: "discover", connectionId }),
     ).models.map((entry) => entry.modelId);
-    const suggested = suggestRoles(preset.id, discovered);
+    // What a lifecycle sync stored of this connection's models (one set up again keeps its rows): none for a new one.
+    // A failed read proposes models as if none were stored.
+    const shown = await config.models({ action: "show", connectionId }).catch(() => undefined);
+    const lifecycle = lifecycleByModel(
+      shown?.ok === true
+        ? ((shown.result as { readonly catalog?: readonly { readonly modelId: string; readonly lifecycle?: ModelLifecycle }[] }).catalog ??
+            [])
+        : [],
+    );
+    const suggested = suggestRoles(preset.id, discovered, lifecycle === undefined ? {} : { lifecycle });
     return {
       ok: true,
       result: {

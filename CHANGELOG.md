@@ -20,7 +20,9 @@ change behaviour or stored data.
   works, and Settings → Models has a **Model retirements** card for it.
   Settings → Models shows a banner for the roles' models that retire or are
   redirected, the chat's model picker marks them, and the TUI's `/models`
-  ends with them.
+  ends with them. Setup no longer proposes a model the last sync says is
+  retired, deprecated, closed to new users, or retiring or redirected within
+  30 days.
 - `tavi serve` (at start) and `tavi doctor` (`mcp.weakerSandbox`) name each
   approved MCP server that runs unsandboxed or in the nested sandbox while
   this host's sandbox now confines more, with the way to move it: add the
