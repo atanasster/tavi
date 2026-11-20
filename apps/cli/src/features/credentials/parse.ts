@@ -43,8 +43,8 @@ Actions:
   key --to-systemd           On a headless Linux service: make the systemd
                              credential tavi-credential-key the key's home.
                              Encrypt the key into it first (--export piped to
-                             systemd-creds encrypt), install the unit with
-                             --credential-encrypted, start it, then run this:
+                             systemd-creds encrypt), install a unit that loads
+                             it (tavi service unit), start it, then run this:
                              the running service checks the credential holds
                              the same key before credentials.key refers to it.
                              --to-file moves it back, also through the service

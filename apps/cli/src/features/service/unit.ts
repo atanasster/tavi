@@ -1,5 +1,11 @@
 import { TaviError } from "@tavi/contracts";
-import { SYSTEMD_CREDENTIAL_KEY_NAME } from "@tavi/runtime";
+
+/**
+ * The systemd credential the credential key is kept as (`@tavi/runtime`'s
+ * `SYSTEMD_CREDENTIAL_KEY_NAME`; a test holds the two equal). Spelled here so
+ * `--help`, which loads this module, does not load the owner's runtime.
+ */
+const SYSTEMD_CREDENTIAL_KEY_NAME = "tavi-credential-key";
 
 /**
  * Service units for `tavi serve`: what keeps it running when no one started it.

@@ -150,7 +150,7 @@ async function credentialKeyOnService(options: ResolvedDataDirectory<Credentials
   if (onOwner !== undefined) return onOwner;
   io.stderr(
     `credentials key --to-${to}: only the service systemd starts with LoadCredentialEncrypted=${SYSTEMD_CREDENTIAL_KEY_NAME}:<file> ` +
-      "reads that credential; start it (`tavi service install --credential-encrypted …`) and run this again\n",
+      "reads that credential; install it with `tavi service unit --credential-encrypted …`, start it, and run this again\n",
   );
   return EXIT.unavailable;
 }
