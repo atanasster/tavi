@@ -301,6 +301,18 @@ describe("model lifecycle", () => {
     store.close();
   });
 
+  it("lists one connection's lifecycles when asked for that connection", () => {
+    const { store, service } = fixture();
+    service.putConnection(connection);
+    service.putConnection({ ...connection, connectionId: "second" });
+    service.replaceModelLifecycle("local-ollama", [{ connectionId: "local-ollama", modelId: "kept", lifecycle }]);
+    service.replaceModelLifecycle("second", [{ connectionId: "second", modelId: "other", lifecycle }]);
+    expect(service.listModelLifecycle("second")).toEqual([{ connectionId: "second", modelId: "other", lifecycle }]);
+    expect(service.listModelLifecycle()).toHaveLength(2);
+    expect(service.listModelLifecycle("missing")).toEqual([]);
+    store.close();
+  });
+
   it("refuses an entry of another connection or an invalid one, keeping what was there", () => {
     const { store, service } = fixture();
     service.putConnection(connection);

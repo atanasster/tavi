@@ -154,10 +154,13 @@ export class SqliteModelConfigRepository implements ModelConfigRepositoryPort {
     return entry;
   }
 
-  listLifecycle(): readonly ModelLifecycleEntry[] {
-    const rows = this.#store.handle
-      .prepare("SELECT connection_id, model_id, lifecycle_json FROM tavi_model_lifecycle ORDER BY connection_id, model_id")
-      .all() as LifecycleRow[];
+  listLifecycle(connectionId?: string): readonly ModelLifecycleEntry[] {
+    const select = "SELECT connection_id, model_id, lifecycle_json FROM tavi_model_lifecycle";
+    const rows = (
+      connectionId === undefined
+        ? this.#store.handle.prepare(`${select} ORDER BY connection_id, model_id`).all()
+        : this.#store.handle.prepare(`${select} WHERE connection_id = ? ORDER BY model_id`).all(connectionId)
+    ) as LifecycleRow[];
     // A cache of what Rhumb said, rewritten whole by each sync: a row this build cannot read is left out, not an error.
     return rows.flatMap((row) => {
       let stored: unknown;

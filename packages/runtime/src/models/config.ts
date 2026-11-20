@@ -358,8 +358,8 @@ export class ModelConfigService implements ModelConfigPort {
     this.#repository.replaceCatalog(connectionId, parsed);
   }
 
-  listModelLifecycle(): readonly ModelLifecycleEntry[] {
-    return this.#repository.listLifecycle();
+  listModelLifecycle(connectionId?: string): readonly ModelLifecycleEntry[] {
+    return this.#repository.listLifecycle(connectionId);
   }
 
   /** Every entry is validated, and must be the connection's own, before the connection's lifecycles are replaced. */
