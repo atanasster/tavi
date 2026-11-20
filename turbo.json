@@ -10,6 +10,7 @@
   ],
   "globalPassThroughEnv": [
     "TAVI_REAL_TESTS",
+    "TAVI_COVERAGE",
     "TAVI_LIVE*",
     "TAVI_SOAK*",
     "TAVI_INJECTION_*",

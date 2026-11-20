@@ -643,7 +643,8 @@ describe("vectors", () => {
 });
 
 describe("scoring speed", () => {
-  it("scores 20,000 cached 1,536-dimension vectors in under 100 ms", () => {
+  // A wall-time budget: coverage instrumentation (`pnpm test:coverage` sets TAVI_COVERAGE) slows the loop several-fold.
+  it.skipIf(process.env["TAVI_COVERAGE"] === "1")("scores 20,000 cached 1,536-dimension vectors in under 100 ms", () => {
     const dims = 1_536;
     const count = 20_000;
     let seed = 7;

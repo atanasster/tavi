@@ -6,7 +6,7 @@
 // own `coverage/`, configured in vitest.config.ts), then sums each one's `coverage-summary.json` into
 // a table: printed, written to `coverage/summary.md` at the root, and appended to the GitHub job
 // summary when `GITHUB_STEP_SUMMARY` is set. A failing test still reports what ran; the exit status
-// is the tests'. No floor is enforced yet. A child process a test starts (plugin workers, confined
+// is the tests'. No floor is enforced yet. TAVI_COVERAGE=1 is set for the run, so a wall-time check can skip. A child process a test starts (plugin workers, confined
 // helpers) is not measured, so those packages read low.
 import { spawnSync } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -49,6 +49,8 @@ for (const { dir } of all) rmSync(join(dir, "coverage"), { recursive: true, forc
 const ran = spawnSync(pnpm[0], [...pnpm[1], "exec", "turbo", "run", "test", "--continue", ...process.argv.slice(2), "--", "--coverage"], {
   cwd: root,
   stdio: "inherit",
+  // Tests with a wall-time budget skip under it: instrumentation slows them several-fold.
+  env: { ...process.env, TAVI_COVERAGE: "1" },
 });
 if (ran.error !== undefined) {
   process.stderr.write(`coverage: ${ran.error.message}\n`);

@@ -183,7 +183,16 @@ function wrapped(platform: CompilePlatform, launch: Omit<ConfinedLaunch, "policy
   try {
     const caDirectory = join(directory, "ca");
     const policyFile = join(directory, "policy.json");
-    const command = createSrtConfinement({ platform, fs, home: HOME, caDirectory, bwrapPath: () => undefined, alwaysDenyRead }).wrap({
+    const command = createSrtConfinement({
+      platform,
+      fs,
+      home: HOME,
+      caDirectory,
+      // The host's own bwrap, socat and rg stay out of the config, so a golden reads the same on every machine.
+      bwrapPath: () => undefined,
+      helperPath: () => undefined,
+      alwaysDenyRead,
+    }).wrap({
       ...launch,
       policyFile,
     });
