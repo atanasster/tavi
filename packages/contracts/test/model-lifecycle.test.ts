@@ -72,11 +72,17 @@ describe("model lifecycle warnings", () => {
     expect(retiring(TODAY)).toBe("error");
   });
 
-  it("calls a redirect whose day has passed redirected, and keeps no notice of a past claimed end", () => {
+  it("calls a redirect whose day has passed redirected, and keeps a notice of a past claimed end", () => {
     expect(lifecycleWarnings(lifecycle({ redirect: { on: "2026-11-01", to: "next" } }), TODAY)).toEqual([
       { level: "warning", code: "redirected", to: "next", date: "2026-11-01", days: -19 },
     ]);
-    expect(lifecycleWarnings(lifecycle({ endClaimedOn: "2026-11-01" }), TODAY)).toEqual([]);
+    const past = lifecycleWarnings(lifecycle({ endClaimedOn: "2026-11-01" }), TODAY);
+    expect(past).toEqual([{ level: "info", code: "end_claimed", date: "2026-11-01", days: -19 }]);
+    expect(past.map(lifecycleWarningText)).toEqual(["may have retired on 2026-11-01 (not confirmed by the provider)"]);
+    // A claimed end, passed or coming, stands for "deprecated": the model is said once.
+    expect(lifecycleWarnings(lifecycle({ status: "deprecated", endClaimedOn: "2026-11-01" }), TODAY).map((w) => w.code)).toEqual([
+      "end_claimed",
+    ]);
   });
 
   it("refuses a day that does not exist", () => {

@@ -92,10 +92,10 @@ interface DatedWarning extends LifecycleWarningBase {
 
 export type LifecycleWarning = RedirectWarning | DatedWarning;
 
-/** Within this many days, a coming end or redirect is a warning. */
 /** Where a Rhumb key is kept in the credential store, for the lifecycle sync, when `RHUMB_KEY` is not set. */
 export const RHUMB_CREDENTIAL_REF = "rhumb";
 
+/** Within this many days, a coming end or redirect is a warning. */
 export const LIFECYCLE_WARNING_DAYS = 30;
 /** Within this many days, a coming end, redirect or price change is worth a notice. */
 export const LIFECYCLE_NOTICE_DAYS = 90;
@@ -140,9 +140,13 @@ export function lifecycleWarnings(lifecycle: ModelLifecycle, today: string): Lif
       warnings.push({ level, code: "retires_soon", ...at(retiresOn) });
       ending = true;
     }
-  } else if (endClaimedOn !== undefined && endClaimedOn > today && nearness(daysBetween(today, endClaimedOn)) !== undefined) {
-    warnings.push({ level: "info", code: "end_claimed", ...at(endClaimedOn) });
-    ending = true;
+  } else if (endClaimedOn !== undefined) {
+    // A claimed end that has passed stays a notice: the model may be gone, and only a call would tell.
+    const days = daysBetween(today, endClaimedOn);
+    if (days <= 0 || nearness(days) !== undefined) {
+      warnings.push({ level: "info", code: "end_claimed", ...at(endClaimedOn) });
+      ending = true;
+    }
   }
   if (lifecycle.status === "deprecated" && !ending)
     warnings.push({ level: "info", code: "deprecated", ...(deprecatedOn === undefined ? {} : at(deprecatedOn)) });
@@ -170,7 +174,9 @@ export function lifecycleWarningText(warning: LifecycleWarning): string {
     case "retires_soon":
       return `retires${when}`;
     case "end_claimed":
-      return `may retire${when} (not confirmed by the provider)`;
+      return warning.days !== undefined && warning.days <= 0
+        ? `may have retired${when} (not confirmed by the provider)`
+        : `may retire${when} (not confirmed by the provider)`;
     case "deprecated":
       return `deprecated${when}`;
     case "price_changes":

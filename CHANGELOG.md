@@ -60,6 +60,8 @@ change behaviour or stored data.
 
 ### Changed
 
+- A model whose end a catalog claimed, but its provider never confirmed, is
+  still noticed once that day has passed: "may have retired on …".
 - `tavi models suggest` uses a Rhumb key stored as the credential `rhumb`
   (the setup offer, Settings → Models or `tavi credentials set rhumb`), as
   `tavi models sync` does; `RHUMB_KEY` still wins when both are there.
