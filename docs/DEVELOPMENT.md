@@ -540,7 +540,7 @@ commit cannot. To change one, resolve the tag's commit
 comment together. Dependabot (`.github/dependabot.yml`) opens, each week, one pull request
 for the actions' and one for npm's minor and patch updates, and a pull request
 of its own for each major update (not for `@types/node`, which follows the
-oldest supported Node.js, nor Ink's next major); security updates come as they
+oldest supported Node.js, nor Ink's next major, nor undici, which `overrides` in `pnpm-workspace.yaml` hold and which is bumped by hand with them); security updates come as they
 are published, grouped into one pull request. Each
 runs CI like any change, and a bump of an exactly pinned package (the sandbox
 runtime, a patched one) gets the review that pin asks for.

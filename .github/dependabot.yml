@@ -41,3 +41,7 @@ updates:
       # ink 8 (the terminal UI) is a deliberate later upgrade: its breaking changes need their own pass.
       - dependency-name: ink
         update-types: ["version-update:semver-major"]
+      # undici is held by `overrides` in pnpm-workspace.yaml (security floors for 7 and 8), which Dependabot
+      # cannot change: its update rewrites no file and fails the job. Bumped by hand, the overrides and
+      # apps/cli's pin together; `pnpm audit` in CI still reports an advisory against it.
+      - dependency-name: undici
