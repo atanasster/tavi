@@ -1,5 +1,6 @@
 import {
   LIFECYCLE_LEVELS,
+  RHUMB_CREDENTIAL_REF,
   lifecycleWarnings,
   lifecycleWarningText,
   type LifecycleLevel,
@@ -214,7 +215,8 @@ export interface LifecycleSyncNoKey {
   readonly hint: string;
 }
 
-export const RHUMB_KEY_HINT = "Set RHUMB_KEY to a Rhumb key (free at https://rhumbdata.com) to check which models retire.";
+export const RHUMB_KEY_HINT =
+  "To check which models retire, get a free Rhumb key at https://rhumbdata.com/sign-up and store it: tavi credentials set rhumb (or set RHUMB_KEY).";
 
 /** The report of a sync, in words. */
 export function lifecycleSyncReport(result: LifecycleSyncResult): LifecycleSyncReport {
@@ -297,9 +299,24 @@ export async function storedLifecycleReport(
   };
 }
 
+/**
+ * The Rhumb key: `RHUMB_KEY` (or `RESOLVER_KEY`) when set, else the credential
+ * store's `rhumb`; `undefined` for neither. A stored key that cannot be read
+ * (a locked keychain) throws: it is there, and "no key" would be wrong.
+ */
+export async function rhumbKeyFor(
+  runtime: Pick<TaviRuntime, "resolveSecret">,
+  env: Readonly<Record<string, string | undefined>> = process.env,
+): Promise<string | undefined> {
+  const fromEnv = rhumbKeyOf(env);
+  if (fromEnv !== undefined) return fromEnv;
+  const stored = (await runtime.resolveSecret(RHUMB_CREDENTIAL_REF))?.trim();
+  return stored === undefined || stored === "" ? undefined : stored;
+}
+
 /** Syncs this runtime's models with Rhumb, or says no key is set. */
 export async function syncRuntimeModelLifecycle(
-  runtime: Pick<TaviRuntime, "store" | "access" | "routines" | "routerRepository">,
+  runtime: Pick<TaviRuntime, "store" | "access" | "routines" | "routerRepository" | "resolveSecret">,
   options: {
     readonly env?: Readonly<Record<string, string | undefined>>;
     readonly fetchImpl?: typeof globalThis.fetch;
@@ -308,7 +325,7 @@ export async function syncRuntimeModelLifecycle(
   } = {},
 ): Promise<LifecycleSyncReport | LifecycleSyncNoKey> {
   const env = options.env ?? process.env;
-  const key = rhumbKeyOf(env);
+  const key = await rhumbKeyFor(runtime, env);
   if (key === undefined) return { skipped: "no-key", hint: RHUMB_KEY_HINT };
   const call = rhumbCall(key, rhumbUrlOf(env), options.fetchImpl ?? globalThis.fetch, RHUMB_SYNC_TIMEOUT_MS, {
     fresh: true,
@@ -328,16 +345,16 @@ export function lifecycleSyncLogLine(report: LifecycleSyncReport): string {
 /**
  * Syncs at start and every {@link LIFECYCLE_SYNC_INTERVAL_MS} until `signal`
  * aborts, on a timer that never keeps the process alive. A failed sync is
- * logged and the next one tries again; stored rows stand meanwhile.
+ * logged and the next one tries again; stored rows stand meanwhile. With no
+ * key a tick does nothing, so a key stored later is used by the next one.
  */
 export function startLifecycleSync(
   logger: Pick<TaviRuntime["logger"], "info" | "warn">,
   /** One sync, e.g. {@link syncRuntimeModelLifecycle} on the owner's runtime, cancelled by the signal it is given. */
   sync: (signal: AbortSignal) => Promise<LifecycleSyncReport | LifecycleSyncNoKey>,
   signal: AbortSignal,
-  options: { readonly env?: Readonly<Record<string, string | undefined>>; readonly intervalMs?: number } = {},
+  options: { readonly intervalMs?: number } = {},
 ): void {
-  if (rhumbKeyOf(options.env ?? process.env) === undefined) return;
   let pending: Promise<void> | undefined;
   const tick = (): void => {
     if (pending !== undefined || signal.aborted) return;

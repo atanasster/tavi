@@ -1166,7 +1166,11 @@ tabs above the page. It has these views:
   **Video analysers** checks FFmpeg and which pose, transcription and
   on-screen-text analysers can run here ([VIDEO.md](VIDEO.md)). **Add
   connection** picks a provider, takes its key, discovers its models and, when
-  the workspace has no default yet, asks for one.
+  the workspace has no default yet, asks for one. **Model retirements**
+  stores a free [Rhumb](https://rhumbdata.com/sign-up) key (as the
+  credential `rhumb`), after which the owner checks daily which models in use
+  retire, are redirected or change price; with one stored, **Check now** runs
+  `tavi models sync` and says what it found.
 - **Web search**: add, test, enable, disable and remove providers, each named
   once by its kind (its own id beside it only when that differs).
 - **System prompt**: the built-in base prompt, or a workspace's own, with the

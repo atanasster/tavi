@@ -15,7 +15,7 @@ import { chatInkOptions } from "../../src/tui/index.js";
 import { ChatStore } from "../../src/tui/store.js";
 import { main } from "../../src/main.js";
 import type { CliIo } from "../../src/cli/io.js";
-import { runOnboard } from "../../src/features/onboard/flow.js";
+import { offerRhumbKey, runOnboard } from "../../src/features/onboard/flow.js";
 import { createLinePrompter } from "../../src/features/onboard/prompter.js";
 import {
   channelsStep,
@@ -1041,5 +1041,30 @@ describe("tavi chat --draft", () => {
       instance.unmount();
       await exited;
     }
+  });
+});
+
+describe("the Rhumb key offer after a cloud model works", () => {
+  it("stores a key pasted, and says where to get one", async () => {
+    const owner = scripted({ "credentials:list": { credentials: ["openai"] } });
+    const lines = prompter(["rk_test_123"]);
+    await offerRhumbKey({ transport: owner.transport, prompter: lines.prompter }, {});
+    expect(lines.written()).toContain("https://rhumbdata.com/sign-up");
+    expect(owner.sent.at(-1)).toEqual({ command: "credentials", payload: { action: "set", reference: "rhumb", value: "rk_test_123" } });
+  });
+
+  it("stores nothing on Enter, and never asks with a key stored or RHUMB_KEY set", async () => {
+    const skipped = scripted({ "credentials:list": { credentials: [] } });
+    await offerRhumbKey({ transport: skipped.transport, prompter: prompter([""]).prompter }, {});
+    expect(skipped.actions()).toEqual(["credentials:list"]);
+
+    const stored = scripted({ "credentials:list": { credentials: ["rhumb"] } });
+    const quiet = prompter([]);
+    await offerRhumbKey({ transport: stored.transport, prompter: quiet.prompter }, {});
+    expect(quiet.written()).toBe("");
+
+    const fromEnv = scripted({});
+    await offerRhumbKey({ transport: fromEnv.transport, prompter: prompter([]).prompter }, { RHUMB_KEY: "key" });
+    expect(fromEnv.sent).toEqual([]);
   });
 });

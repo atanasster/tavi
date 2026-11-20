@@ -35,7 +35,7 @@ const providerOf = (connection: SuggestConnection): string | undefined => rhumbP
  */
 
 export const RESOLVER_KEY_HINT =
-  "Set RHUMB_KEY to a Rhumb API key (free at https://rhumbdata.com/sign-up) to get model suggestions; nothing was changed.";
+  "Set RHUMB_KEY to a Rhumb API key (free at https://rhumbdata.com/sign-up) to get model suggestions (a key stored as the credential rhumb is used only by tavi models sync); nothing was changed.";
 
 /** Each resolver call's deadline: a suggestion is never worth a long wait. */
 const RESOLVER_TIMEOUT_MS = 2_000;

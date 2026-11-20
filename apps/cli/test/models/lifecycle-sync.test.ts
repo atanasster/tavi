@@ -1,4 +1,4 @@
-import type { ModelCatalogEntry, ModelConnection, ModelLifecycleEntry } from "@tavi/contracts";
+import { RHUMB_CREDENTIAL_REF, type ModelCatalogEntry, type ModelConnection, type ModelLifecycleEntry } from "@tavi/contracts";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
@@ -12,6 +12,7 @@ import {
   lifecycleSyncReport,
   startLifecycleSync,
   NO_CLOUD_CONNECTION_HINT,
+  rhumbKeyFor,
   storedLifecycleReport,
   syncModelLifecycle,
   type LifecycleSyncReport,
@@ -226,25 +227,39 @@ describe("doctor's stored lifecycle", () => {
 });
 
 describe("serve's lifecycle sync", () => {
-  const KEY = { RHUMB_KEY: "key" };
   const report: LifecycleSyncReport = { complete: true, connections: [], warnings: [], unread: [] };
   const logger = () => {
     const lines: string[] = [];
     return { lines, info: (line: string) => void lines.push(`info ${line}`), warn: (line: string) => void lines.push(`warn ${line}`) };
   };
 
-  it("does nothing without a key", () => {
+  it("logs nothing while no key is set, and keeps ticking so a key stored later is used", async () => {
+    const log = logger();
+    const controller = new AbortController();
     let calls = 0;
     startLifecycleSync(
-      logger(),
+      log,
       async () => {
         calls += 1;
-        return report;
+        return { skipped: "no-key", hint: RHUMB_KEY_HINT };
       },
-      new AbortController().signal,
-      { env: {} },
+      controller.signal,
+      { intervalMs: 5 },
     );
-    expect(calls).toBe(0);
+    await vi.waitFor(() => expect(calls).toBeGreaterThan(1));
+    controller.abort();
+    expect(log.lines).toEqual([]);
+  });
+
+  it("reads the key from RHUMB_KEY first, else the credential store's rhumb", async () => {
+    const store = (value: string | null) => ({
+      resolveSecret: async (reference: string) => (reference === RHUMB_CREDENTIAL_REF ? value : null),
+    });
+    expect(await rhumbKeyFor(store("stored"), { RHUMB_KEY: "env" })).toBe("env");
+    expect(await rhumbKeyFor(store(" stored "), {})).toBe("stored");
+    expect(await rhumbKeyFor(store(null), {})).toBeUndefined();
+    // Stored but unreadable is not "no key": the failure is said, not hidden behind the hint.
+    await expect(rhumbKeyFor({ resolveSecret: async () => Promise.reject(new Error("locked")) }, {})).rejects.toThrow("locked");
   });
 
   it("logs a sync's line or its failure, never runs two at once, and stops on abort", async () => {
@@ -270,7 +285,7 @@ describe("serve's lifecycle sync", () => {
         return (result ?? (async () => report))();
       },
       controller.signal,
-      { env: KEY, intervalMs: 5 },
+      { intervalMs: 5 },
     );
     await new Promise((resolve) => setTimeout(resolve, 30));
     expect(calls).toBe(1);

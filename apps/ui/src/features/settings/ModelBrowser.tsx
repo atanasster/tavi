@@ -1,3 +1,4 @@
+import { RHUMB_CREDENTIAL_REF } from "@tavi/contracts";
 import { plural } from "@tavi/contracts/util";
 import { useState } from "react";
 
@@ -21,6 +22,9 @@ import { Failure, LoadState, PageHead, PageNote } from "../../ui/Parts.js";
 import { Confirm } from "../../ui/Confirm.js";
 import { AddConnectionModal, ManageConnectionModal } from "./ConnectionSetup.js";
 import { VideoAnalyzerStatus, VideoModels } from "./VideoModels.js";
+import { RhumbKeyCard } from "./RhumbKeyCard.js";
+import { credentialActions } from "./credentials-api.js";
+import { storeRhumbKey, syncLifecycle } from "./lifecycle-api.js";
 import { TargetName, TargetPicker } from "./TargetPicker.js";
 import { useAction } from "../../hooks/use-action.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
@@ -58,6 +62,11 @@ export function ModelBrowser() {
   // With `tavi.video` off nothing reads a video: its switches and analysers are not shown.
   const settings = useLoaded(() => workspaceSettingsActions.load(client, workspaceId));
   const videoOff = settings.data?.disabledPlugins?.includes("tavi.video") === true;
+  // Whether a Rhumb key is stored: the references only, never a value.
+  const credentials = useLoaded(() => credentialActions.list(client));
+  // An owner that answers no list (an older one) shows no card.
+  const listed = credentials.data?.credentials;
+  const rhumbStored = Array.isArray(listed) ? listed.includes(RHUMB_CREDENTIAL_REF) : undefined;
   const { busy, note, tone, run, say } = useAction(reload);
   const [adding, setAdding] = useState(false);
   const [managing, setManaging] = useState<ConnectionSummary | undefined>();
@@ -165,6 +174,18 @@ export function ModelBrowser() {
             </ul>
           </Card>
           {videoOff ? null : <VideoAnalyzerStatus status={video.status} loading={video.loading} error={video.error} onCheck={checkVideo} />}
+          <RhumbKeyCard
+            stored={rhumbStored}
+            busy={busy}
+            onStore={(key) =>
+              act("rhumb-key", async () => {
+                const outcome = await storeRhumbKey(client, key);
+                if (outcome.ok) credentials.reload();
+                return outcome;
+              })
+            }
+            onCheck={() => act("lifecycle-sync", () => syncLifecycle(client))}
+          />
         </>
       ) : null}
 

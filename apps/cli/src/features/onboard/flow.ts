@@ -1,3 +1,4 @@
+import { CLOUD_PROVIDERS, rhumbKeyOf, rhumbProviderOf } from "../models/rhumb-client.js";
 import {
   keyPageOf,
   LOCAL_NO_KEY_CREDENTIAL,
@@ -21,6 +22,7 @@ import {
   suggestRoles,
   SERVICE_SETUP_COMMAND,
   modelUnverified,
+  RHUMB_CREDENTIAL_REF,
 } from "@tavi/contracts";
 import { definedOnly, errorMessage, plural } from "@tavi/contracts/util";
 import { sleep } from "@tavi/node-kit";
@@ -599,7 +601,11 @@ async function modelStep(
     }
     const roles = await pickModels(deps, choice.preset.id, discovered, headless);
     const { main } = await proveRoles(deps, run, connectionId, roles, working);
-    if (main?.ok === true) return;
+    if (main?.ok === true) {
+      // Only a provider Rhumb lists: a custom or local endpoint is never checked.
+      if (headless === undefined && CLOUD_PROVIDERS.has(rhumbProviderOf(baseUrl) ?? "")) await offerRhumbKey(deps);
+      return;
+    }
     if (headless !== undefined) throw new StepOpen(`The model step is not done: ${main?.advice ?? "verify failed"}`, "--key-file");
     if (working) say("Your previous model is still the default.");
     const options: ChoiceOption[] = [
@@ -618,6 +624,34 @@ async function modelStep(
       key = await keyFor(deps, choice, headless, true);
       await deps.transport.request("credentials", { action: "set", reference: connectionId, value: key });
     }
+  }
+}
+
+/**
+ * Once a cloud model works: a Rhumb key, so tavi can say before a model it
+ * uses retires (`tavi models sync`, and serve daily). Optional, skipped on
+ * Enter, and never asked again once a key is stored or `RHUMB_KEY` is set.
+ */
+export async function offerRhumbKey(
+  deps: Pick<OnboardDependencies, "transport" | "prompter">,
+  env: Readonly<Record<string, string | undefined>> = process.env,
+): Promise<void> {
+  if (rhumbKeyOf(env) !== undefined) return;
+  const stored = await deps.transport
+    .request<{ readonly credentials: readonly string[] }>("credentials", { action: "list" })
+    .then((answer) => answer.credentials.includes(RHUMB_CREDENTIAL_REF))
+    .catch(() => true);
+  if (stored) return;
+  deps.prompter.say(
+    "Providers retire models, sometimes with weeks' notice. With a free Rhumb key (https://rhumbdata.com/sign-up), Tavi checks daily and says before one you use goes.",
+  );
+  const key = (await deps.prompter.text({ label: "Rhumb key (hidden; Enter to skip)", secret: true })).trim();
+  if (key === "") return;
+  try {
+    await deps.transport.request("credentials", { action: "set", reference: RHUMB_CREDENTIAL_REF, value: key });
+    deps.prompter.say(`${GLYPHS.done} Rhumb key stored: tavi serve checks your models daily; run tavi models sync to check now.`);
+  } catch (error) {
+    deps.prompter.say(`${GLYPHS.failed} The Rhumb key was not stored: ${errorMessage(error)}`);
   }
 }
 

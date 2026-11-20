@@ -15,7 +15,9 @@ change behaviour or stored data.
   routines, heartbeats, chats). `tavi serve` does the same at start and every
   24 hours and logs one line, and `tavi doctor` shows what was stored as a
   "Model lifecycle" line (`modelConfiguration.lifecycle`). Only provider
-  names are sent, and no model is ever changed for you.
+  names are sent, and no model is ever changed for you. The key may also be
+  stored as the credential `rhumb`: `tavi setup` offers it once a cloud model
+  works, and Settings → Models has a **Model retirements** card for it.
 - `tavi serve` (at start) and `tavi doctor` (`mcp.weakerSandbox`) name each
   approved MCP server that runs unsandboxed or in the nested sandbox while
   this host's sandbox now confines more, with the way to move it: add the

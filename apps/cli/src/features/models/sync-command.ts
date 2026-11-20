@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+
 import { EXIT, reportFailure } from "../../cli/exit.js";
 import type { CliIo } from "../../cli/io.js";
 import { configOnOwner, OWNER_WORKSPACE } from "../../cli/owner.js";
@@ -30,8 +32,8 @@ export async function modelsSyncCommand(
     render: (result) => printSync(result as LifecycleSyncReport | LifecycleSyncNoKey, io),
   });
   if (onOwner !== undefined) return onOwner;
-  // Nothing to ask without a key: say so before taking the directory.
-  if (rhumbKeyOf() === undefined) return printSync({ skipped: "no-key", hint: RHUMB_KEY_HINT }, io);
+  // No key in the environment and no directory to have stored one in: say so before creating it.
+  if (rhumbKeyOf() === undefined && !existsSync(options.dataDirectory)) return printSync({ skipped: "no-key", hint: RHUMB_KEY_HINT }, io);
   let runtime: TaviRuntime;
   try {
     runtime = await runtimeFactory(

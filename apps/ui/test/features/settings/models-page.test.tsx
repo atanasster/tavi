@@ -41,6 +41,7 @@ const local: ConnectionSummary = {
 function owner(start: { connections: ConnectionSummary[]; roles: RolesDocument; disabledPlugins?: string[] }) {
   const writes: { command: string; payload: Record<string, unknown> }[] = [];
   const connections = [...start.connections];
+  const stored = new Set<string>();
   const client: SettingsClient = {
     request: async (command, raw) => {
       const payload = raw as Record<string, unknown>;
@@ -49,7 +50,8 @@ function owner(start: { connections: ConnectionSummary[]; roles: RolesDocument; 
       if (command === "workspace-settings")
         return { ok: true, result: start.disabledPlugins === undefined ? {} : { disabledPlugins: start.disabledPlugins } };
       if (command === "credentials") {
-        if (action === "list") return { ok: true, result: { credentials: [], unusable: [] } };
+        if (action === "list") return { ok: true, result: { credentials: [...stored], unusable: [] } };
+        if (action === "set") stored.add(String(payload["reference"]));
         writes.push({ command, payload });
         return { ok: true, result: {} };
       }
@@ -79,6 +81,11 @@ function owner(start: { connections: ConnectionSummary[]; roles: RolesDocument; 
           localOnly: false,
         });
       if (action === "discover") return { ok: true, result: { models: [{}, {}, {}] } };
+      if (action === "sync")
+        return {
+          ok: true,
+          result: { warnings: [{ connectionId: "openai", model: "gpt-5", level: "warning", says: ["retires on 2026-12-11"] }], unread: [] },
+        };
       return { ok: true, result: { restartRequired: false } };
     },
   };
@@ -201,6 +208,31 @@ describe("the Models page", () => {
     expect(reset?.textContent).toBe("Use default");
     await click(reset);
     expect(fake.writes.at(-1)?.payload).toMatchObject({ action: "clear-role", role: "main" });
+  });
+
+  it("stores a Rhumb key from Model retirements, then checks the models in use on demand", async () => {
+    const roles: RolesDocument = { workspaceDefault: null, resolved: [], roles: [] };
+    const fake = owner({ connections: [local], roles });
+    const host = await mountSettled(
+      <InWorkspace client={fake.client} workspaceId="default">
+        <ModelBrowser />
+      </InWorkspace>,
+    );
+    expect(host.textContent).toContain("Model retirements");
+    expect(host.querySelector<HTMLAnchorElement>('a[href="https://rhumbdata.com/sign-up"]')).not.toBeNull();
+    await type(host.querySelector<HTMLInputElement>("#rhumb-key"), "rk_test_1");
+    await click(byText("Store key"));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(fake.writes).toContainEqual({ command: "credentials", payload: { action: "set", reference: "rhumb", value: "rk_test_1" } });
+    expect(host.querySelector("#rhumb-key")).toBeNull();
+    await click(byText("Check now"));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(fake.writes.some((write) => write.command === "models" && write.payload["action"] === "sync")).toBe(true);
+    expect(host.textContent).toContain("openai/gpt-5 retires on 2026-12-11");
   });
 
   it("shows no video controls while tavi.video is off", async () => {

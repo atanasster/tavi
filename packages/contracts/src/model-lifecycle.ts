@@ -93,6 +93,9 @@ interface DatedWarning extends LifecycleWarningBase {
 export type LifecycleWarning = RedirectWarning | DatedWarning;
 
 /** Within this many days, a coming end or redirect is a warning. */
+/** Where a Rhumb key is kept in the credential store, for the lifecycle sync, when `RHUMB_KEY` is not set. */
+export const RHUMB_CREDENTIAL_REF = "rhumb";
+
 export const LIFECYCLE_WARNING_DAYS = 30;
 /** Within this many days, a coming end, redirect or price change is worth a notice. */
 export const LIFECYCLE_NOTICE_DAYS = 90;
