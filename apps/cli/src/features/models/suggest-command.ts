@@ -18,7 +18,7 @@ import {
 
 /**
  * `tavi models suggest`: the model resolver's suggestions for this machine and
- * these connections, printed and never applied. With no `RESOLVER_KEY` it
+ * these connections, printed and never applied. With no `RHUMB_KEY` it
  * prints a hint and touches nothing, not even the data directory.
  */
 export async function modelsSuggestCommand(

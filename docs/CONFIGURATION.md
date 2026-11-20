@@ -622,7 +622,7 @@ Nothing is reachable by default. The most used:
 | `TAVI_API_KEY_FILE` | Model key file for a run (after `--api-key-file`) | unset |
 | `TAVI_BASE_URL` | Base URL of the default OpenAI-compatible endpoint when no connection is configured | `https://api.openai.com/v1` |
 | `TAVI_ORGANIZATION` | `OpenAI-Organization` header | unset |
-| `RESOLVER_KEY` | Model resolver key for `tavi models suggest`: a local model that fits the machine and price sheets for the cloud connections, printed and never applied ([CLI.md](CLI.md#tavi-models)) | unset: off, nothing is sent |
+| `RHUMB_KEY` | [Rhumb](https://rhumbdata.com) API key for `tavi models suggest` (`RESOLVER_KEY`, its old name, is read when it is unset): a local model that fits the machine and price sheets for the cloud connections, printed and never applied ([CLI.md](CLI.md#tavi-models)) | unset: off, nothing is sent |
 | `RESOLVER_URL` | Model resolver base URL | `https://rhumbdata.com` |
 | `TAVI_CREDENTIAL_KEYCHAIN` | `off` keeps a new credential key out of the OS keychain: a new data directory then starts unencrypted, and `tavi credentials encrypt` writes a key file | the OS keychain where available |
 | `TAVI_SANDBOX` | `off` turns `sandbox.run` off, as `serve --sandbox-tier unavailable` does | on where the host supports it |

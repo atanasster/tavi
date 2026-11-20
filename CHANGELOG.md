@@ -51,7 +51,9 @@ change behaviour or stored data.
 
 - `tavi models suggest` asks Rhumb at `https://rhumbdata.com` by default:
   its old address, `https://models.nannertech.com`, no longer resolves, so
-  every suggestion failed unless `RESOLVER_URL` was set.
+  every suggestion failed unless `RESOLVER_URL` was set. Its key is read
+  from `RHUMB_KEY`, the name Rhumb's own docs use; `RESOLVER_KEY` still
+  works when `RHUMB_KEY` is unset, and the hint names where to get a key.
 - Setup's suggested models follow today's catalogs: on OpenAI it proposes
   GPT-6's sol tier as the main model and luna as the fast one (it proposed
   GPT-5.6 and GPT-5.4 mini), and on Gemini, Gemini 4 carbon or argon (it

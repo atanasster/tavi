@@ -8,7 +8,7 @@ import { freeBytesAt } from "../../shared/disk.js";
  * `tavi models suggest`: suggestions from the model resolver
  * (https://rhumbdata.com), never a change.
  *
- * With `RESOLVER_KEY` set it asks the resolver two things over plain HTTP:
+ * With `RHUMB_KEY` set (or `RESOLVER_KEY`, its old name) it asks the resolver two things over plain HTTP:
  * the best local model on the operator's local runtimes that fits this
  * machine (`/v1/resolve`), and price sheets for the models on the operator's
  * cloud connections (`/v1/models`). It only prints them: the owner decides,
@@ -18,7 +18,8 @@ import { freeBytesAt } from "../../shared/disk.js";
  */
 
 const RESOLVER_URL_DEFAULT = "https://rhumbdata.com";
-export const RESOLVER_KEY_HINT = "Set RESOLVER_KEY to a model resolver key to get model suggestions; nothing was changed.";
+export const RESOLVER_KEY_HINT =
+  "Set RHUMB_KEY to a Rhumb API key (free at https://rhumbdata.com/sign-up) to get model suggestions; nothing was changed.";
 
 /** Each resolver call's deadline: a suggestion is never worth a long wait. */
 const RESOLVER_TIMEOUT_MS = 2_000;
@@ -91,10 +92,13 @@ export function machineLimits(dataDirectory: string): MachineLimits {
   };
 }
 
-/** Whether the resolver is configured; with no key nothing is asked. */
+/** Whether the resolver is configured: `RHUMB_KEY`, else `RESOLVER_KEY` (its old name); with no key nothing is asked. */
 export function resolverKeyOf(env: Readonly<Record<string, string | undefined>> = process.env): string | undefined {
-  const key = env["RESOLVER_KEY"]?.trim();
-  return key === undefined || key === "" ? undefined : key;
+  for (const name of ["RHUMB_KEY", "RESOLVER_KEY"]) {
+    const key = env[name]?.trim();
+    if (key !== undefined && key !== "") return key;
+  }
+  return undefined;
 }
 
 /** The resolver's provider name for a connection, by its endpoint's preset; `undefined` for a custom endpoint. */
@@ -105,7 +109,7 @@ function providerOf(connection: SuggestConnection): string | undefined {
 
 /**
  * Suggest a local model and price sheets for these connections, or `undefined`
- * with no `RESOLVER_KEY` (the caller prints the hint). Never throws: a failed
+ * with no `RHUMB_KEY` (the caller prints the hint). Never throws: a failed
  * call is a note, and its suggestion is left out.
  */
 export async function suggestModels(

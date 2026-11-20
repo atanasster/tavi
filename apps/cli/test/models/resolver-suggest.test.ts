@@ -8,6 +8,7 @@ import { EXIT, main } from "../../src/main.js";
 import {
   RESOLVER_KEY_HINT,
   clearResolverCache,
+  resolverKeyOf,
   suggestModels,
   type SuggestConnection,
 } from "../../src/features/models/resolver-suggest.js";
@@ -86,7 +87,14 @@ describe("suggestModels", () => {
     const resolver = fakeResolver();
     expect(await suggestModels([ollama, openai], machine, { env: {}, fetch: resolver.fetch })).toBeUndefined();
     expect(await suggestModels([ollama, openai], machine, { env: { RESOLVER_KEY: "  " }, fetch: resolver.fetch })).toBeUndefined();
+    expect(await suggestModels([ollama, openai], machine, { env: { RHUMB_KEY: "  " }, fetch: resolver.fetch })).toBeUndefined();
     expect(resolver.calls).toHaveLength(0);
+  });
+
+  it("reads RHUMB_KEY, and RESOLVER_KEY, its old name, only when RHUMB_KEY is unset", () => {
+    expect(resolverKeyOf({ RHUMB_KEY: " rhumb ", RESOLVER_KEY: "old" })).toBe("rhumb");
+    expect(resolverKeyOf({ RHUMB_KEY: "", RESOLVER_KEY: " old " })).toBe("old");
+    expect(resolverKeyOf({ RESOLVER_KEY: "old" })).toBe("old");
   });
 
   it("resolves a local model on the local runtimes with the machine's limits", async () => {
@@ -238,7 +246,8 @@ describe("suggestModels", () => {
 });
 
 describe("tavi models suggest", () => {
-  it("prints the RESOLVER_KEY hint and does not open the data directory with no key", async () => {
+  it("prints the RHUMB_KEY hint and does not open the data directory with no key", async () => {
+    vi.stubEnv("RHUMB_KEY", "");
     vi.stubEnv("RESOLVER_KEY", "");
     const fetch = vi.fn();
     vi.stubGlobal("fetch", fetch);
