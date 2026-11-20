@@ -1,8 +1,25 @@
 import { totalmem } from "node:os";
 
-import { ModelPriceSheetSchema, presetOf, type ModelPriceSheet } from "@tavi/contracts";
+import { ModelPriceSheetSchema, type ModelPriceSheet } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 import { freeBytesAt } from "../../shared/disk.js";
+import {
+  CLOUD_PROVIDERS,
+  LOCAL_RUNTIMES,
+  listOfferings,
+  offeringKey,
+  rhumbCall,
+  rhumbKeyOf,
+  rhumbModelId,
+  rhumbProviderOf,
+  rhumbUrlOf,
+  type RhumbCall,
+  type RhumbOffering,
+  type RhumbOfferings,
+} from "./rhumb-client.js";
+
+/** Rhumb's provider name for a connection, by its endpoint's preset; `undefined` for a custom endpoint. */
+const providerOf = (connection: SuggestConnection): string | undefined => rhumbProviderOf(connection.baseUrl);
 
 /**
  * `tavi models suggest`: suggestions from the model resolver
@@ -17,25 +34,15 @@ import { freeBytesAt } from "../../shared/disk.js";
  * it. The key and the request never reach a log; no prompt is ever sent.
  */
 
-const RESOLVER_URL_DEFAULT = "https://rhumbdata.com";
 export const RESOLVER_KEY_HINT =
   "Set RHUMB_KEY to a Rhumb API key (free at https://rhumbdata.com/sign-up) to get model suggestions; nothing was changed.";
 
 /** Each resolver call's deadline: a suggestion is never worth a long wait. */
 const RESOLVER_TIMEOUT_MS = 2_000;
-const DAY_MS = 24 * 60 * 60 * 1000;
-/** `/v1/models` pages read at most: 5 × 500 offerings covers the cloud providers' catalogs. */
-const MODELS_PAGE_SIZE = 500;
-const MODELS_MAX_PAGES = 5;
 /** An agent turn carries tools and a long system prompt: the context a local model must hold. */
 const LOCAL_MIN_CONTEXT = 32_768;
 /** Share of the machine's memory a local model may use, leaving room for the OS and tavi. */
 const LOCAL_MEMORY_SHARE = 0.75;
-
-/** Runtimes on the device, in the resolver's provider vocabulary. */
-const LOCAL_RUNTIMES: ReadonlySet<string> = new Set(["ollama", "lmstudio", "llama.cpp", "mlx", "webllm"]);
-/** Cloud providers tavi has presets for, by the same names in the resolver's vocabulary. */
-const CLOUD_PROVIDERS: ReadonlySet<string> = new Set(["openrouter", "openai", "anthropic", "gemini"]);
 
 /** A connection as the suggestion reads it: where it points and the models it is known to have. */
 export interface SuggestConnection {
@@ -92,21 +99,6 @@ export function machineLimits(dataDirectory: string): MachineLimits {
   };
 }
 
-/** Whether the resolver is configured: `RHUMB_KEY`, else `RESOLVER_KEY` (its old name); with no key nothing is asked. */
-export function resolverKeyOf(env: Readonly<Record<string, string | undefined>> = process.env): string | undefined {
-  for (const name of ["RHUMB_KEY", "RESOLVER_KEY"]) {
-    const key = env[name]?.trim();
-    if (key !== undefined && key !== "") return key;
-  }
-  return undefined;
-}
-
-/** The resolver's provider name for a connection, by its endpoint's preset; `undefined` for a custom endpoint. */
-function providerOf(connection: SuggestConnection): string | undefined {
-  const id = presetOf(connection.baseUrl)?.id;
-  return id !== undefined && (LOCAL_RUNTIMES.has(id) || CLOUD_PROVIDERS.has(id)) ? id : undefined;
-}
-
 /**
  * Suggest a local model and price sheets for these connections, or `undefined`
  * with no `RHUMB_KEY` (the caller prints the hint). Never throws: a failed
@@ -118,9 +110,9 @@ export async function suggestModels(
   deps: SuggestDependencies = {},
 ): Promise<ModelSuggestions | undefined> {
   const env = deps.env ?? process.env;
-  const key = resolverKeyOf(env);
+  const key = rhumbKeyOf(env);
   if (key === undefined) return undefined;
-  const call = resolverCall(key, env["RESOLVER_URL"]?.trim() || RESOLVER_URL_DEFAULT, deps.fetch ?? globalThis.fetch);
+  const call = rhumbCall(key, rhumbUrlOf(env), deps.fetch ?? globalThis.fetch, RESOLVER_TIMEOUT_MS);
   const notes: string[] = [];
   const unmapped = connections.filter((connection) => providerOf(connection) === undefined).map((connection) => connection.connectionId);
   if (unmapped.length > 0) notes.push(`not a known provider's endpoint, so not asked about: ${unmapped.join(", ")}`);
@@ -133,51 +125,6 @@ export async function suggestModels(
     priceSheets: prices.sheets,
     notes,
   };
-}
-
-type ResolverCall = (path: "/v1/resolve" | "/v1/models", query: Record<string, string>) => Promise<unknown>;
-
-/** Answers kept for a day, by request; a stale one stands in when the resolver fails. */
-const cache = new Map<string, { readonly at: number; readonly body: unknown }>();
-
-/** Clears the answers kept in this process (tests). */
-export function clearResolverCache(): void {
-  cache.clear();
-}
-
-/** One resolver GET with a 2 s deadline and a day's cache; throws on any failure, with the status only. */
-function resolverCall(key: string, base: string, fetchImpl: typeof globalThis.fetch): ResolverCall {
-  return async (path, query) => {
-    const url = `${base.replace(/\/+$/, "")}${path}?${new URLSearchParams(query).toString()}`;
-    const hit = cache.get(url);
-    if (hit !== undefined && Date.now() - hit.at < DAY_MS) return hit.body;
-    try {
-      const response = await fetchImpl(url, {
-        headers: { Authorization: `Bearer ${key}`, Accept: "application/json" },
-        signal: AbortSignal.timeout(RESOLVER_TIMEOUT_MS),
-      });
-      if (!response.ok) {
-        const code = await errorCodeOf(response);
-        throw new Error(`the resolver answered ${response.status}${code === undefined ? "" : ` ${code}`}`);
-      }
-      const body: unknown = await response.json();
-      cache.set(url, { at: Date.now(), body });
-      return body;
-    } catch (error) {
-      if (hit !== undefined) return hit.body;
-      throw error;
-    }
-  };
-}
-
-/** The resolver's error code (`no_candidate`, `unauthorized`), never its whole body. */
-async function errorCodeOf(response: Response): Promise<string | undefined> {
-  try {
-    const code = ((await response.json()) as { error?: { code?: unknown } }).error?.code;
-    return typeof code === "string" && /^[a-z_]{1,64}$/.test(code) ? code : undefined;
-  } catch {
-    return undefined;
-  }
 }
 
 interface ResolveAnswer {
@@ -195,7 +142,7 @@ interface ResolveAnswer {
 async function suggestLocal(
   connections: readonly SuggestConnection[],
   machine: MachineLimits,
-  call: ResolverCall,
+  call: RhumbCall,
   notes: string[],
 ): Promise<{ readonly suggestion?: LocalModelSuggestion; readonly catalogVersion?: string }> {
   const local = connections.filter((connection) => LOCAL_RUNTIMES.has(providerOf(connection) ?? ""));
@@ -250,23 +197,9 @@ async function suggestLocal(
   };
 }
 
-interface ModelsPage {
-  readonly catalog_version?: string;
-  readonly total?: number;
-  readonly models?: readonly {
-    readonly offerings?: readonly {
-      readonly provider?: string;
-      readonly provider_model_id?: string;
-      readonly price?: { readonly currency?: string; readonly per_1m?: Readonly<Record<string, string>>; readonly effective_from?: string };
-    }[];
-  }[];
-}
-
-type Offering = NonNullable<NonNullable<ModelsPage["models"]>[number]["offerings"]>[number];
-
 async function suggestPrices(
   connections: readonly SuggestConnection[],
-  call: ResolverCall,
+  call: RhumbCall,
   notes: string[],
 ): Promise<{ readonly sheets: readonly ModelPriceSheet[]; readonly catalogVersion?: string }> {
   const cloud = connections.filter((connection) => CLOUD_PROVIDERS.has(providerOf(connection) ?? ""));
@@ -275,34 +208,26 @@ async function suggestPrices(
     return { sheets: [] };
   }
   const providers = [...new Set(cloud.map((connection) => providerOf(connection) as string))];
-  const offerings = new Map<string, Offering>();
-  let catalogVersion: string | undefined;
+  let catalog: RhumbOfferings;
   try {
-    for (let page = 0; page < MODELS_MAX_PAGES; page += 1) {
-      const answer = (await call("/v1/models", {
-        providers: providers.join(","),
-        limit: String(MODELS_PAGE_SIZE),
-        offset: String(page * MODELS_PAGE_SIZE),
-      })) as ModelsPage;
-      catalogVersion ??= answer.catalog_version;
-      const models = answer.models ?? [];
-      for (const model of models)
-        for (const offering of model.offerings ?? [])
-          if (offering.provider !== undefined && offering.provider_model_id !== undefined)
-            offerings.set(`${offering.provider}\u0000${offering.provider_model_id}`, offering);
-      if (models.length < MODELS_PAGE_SIZE || (page + 1) * MODELS_PAGE_SIZE >= (answer.total ?? 0)) break;
-    }
+    catalog = await listOfferings(call, providers);
   } catch (error) {
     notes.push(`no price sheet suggested: ${errorMessage(error)}`);
     return { sheets: [] };
   }
+  const { catalogVersion, offerings } = catalog;
 
   const sheets: ModelPriceSheet[] = [];
   const unpriced: string[] = [];
   for (const connection of cloud) {
     const provider = providerOf(connection) as string;
     for (const model of new Set(connection.models)) {
-      const sheet = priceSheetOf(connection.connectionId, model, offerings.get(`${provider}\u0000${model}`), catalogVersion);
+      const sheet = priceSheetOf(
+        connection.connectionId,
+        model,
+        offerings.get(offeringKey(provider, rhumbModelId(provider, model))),
+        catalogVersion,
+      );
       if (sheet === undefined) unpriced.push(`${connection.connectionId}/${model}`);
       else sheets.push(sheet);
     }
@@ -319,7 +244,7 @@ async function suggestPrices(
 function priceSheetOf(
   connectionId: string,
   model: string,
-  offering: Offering | undefined,
+  offering: RhumbOffering | undefined,
   catalogVersion: string | undefined,
 ): ModelPriceSheet | undefined {
   const price = offering?.price;

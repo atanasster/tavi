@@ -7,14 +7,8 @@ import { emitJson } from "../../cli/output.js";
 import { CONFIG_TIMEOUT_MS, configOnOwner } from "../../cli/owner.js";
 import { type ResolvedDataDirectory, withStore } from "../../cli/store.js";
 import type { ModelsCommandOptions } from "./parse.js";
-import {
-  RESOLVER_KEY_HINT,
-  machineLimits,
-  resolverKeyOf,
-  suggestModels,
-  type SuggestConnection,
-  type SuggestDependencies,
-} from "./resolver-suggest.js";
+import { RESOLVER_KEY_HINT, machineLimits, suggestModels, type SuggestConnection, type SuggestDependencies } from "./resolver-suggest.js";
+import { rhumbKeyOf } from "./rhumb-client.js";
 
 /**
  * `tavi models suggest`: the model resolver's suggestions for this machine and
@@ -26,7 +20,7 @@ export async function modelsSuggestCommand(
   io: CliIo,
   deps: SuggestDependencies = {},
 ): Promise<number> {
-  if (resolverKeyOf(deps.env ?? process.env) === undefined) {
+  if (rhumbKeyOf(deps.env ?? process.env) === undefined) {
     io.stderr(`${RESOLVER_KEY_HINT}\n`);
     return EXIT.ok;
   }

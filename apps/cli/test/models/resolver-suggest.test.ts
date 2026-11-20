@@ -5,13 +5,8 @@ import { capture, temporaryDirectories } from "@tavi/test-support";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { EXIT, main } from "../../src/main.js";
-import {
-  RESOLVER_KEY_HINT,
-  clearResolverCache,
-  resolverKeyOf,
-  suggestModels,
-  type SuggestConnection,
-} from "../../src/features/models/resolver-suggest.js";
+import { RESOLVER_KEY_HINT, suggestModels, type SuggestConnection } from "../../src/features/models/resolver-suggest.js";
+import { clearRhumbCache, rhumbKeyOf } from "../../src/features/models/rhumb-client.js";
 
 /**
  * `tavi models suggest`: the model resolver's suggestions, printed and never
@@ -23,7 +18,7 @@ const directories = temporaryDirectories({ prefix: "tavi-suggest-" });
 
 afterEach(() => {
   directories.cleanup();
-  clearResolverCache();
+  clearRhumbCache();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
@@ -92,9 +87,9 @@ describe("suggestModels", () => {
   });
 
   it("reads RHUMB_KEY, and RESOLVER_KEY, its old name, only when RHUMB_KEY is unset", () => {
-    expect(resolverKeyOf({ RHUMB_KEY: " rhumb ", RESOLVER_KEY: "old" })).toBe("rhumb");
-    expect(resolverKeyOf({ RHUMB_KEY: "", RESOLVER_KEY: " old " })).toBe("old");
-    expect(resolverKeyOf({ RESOLVER_KEY: "old" })).toBe("old");
+    expect(rhumbKeyOf({ RHUMB_KEY: " rhumb ", RESOLVER_KEY: "old" })).toBe("rhumb");
+    expect(rhumbKeyOf({ RHUMB_KEY: "", RESOLVER_KEY: " old " })).toBe("old");
+    expect(rhumbKeyOf({ RESOLVER_KEY: "old" })).toBe("old");
   });
 
   it("resolves a local model on the local runtimes with the machine's limits", async () => {
@@ -138,6 +133,34 @@ describe("suggestModels", () => {
     expect(params?.has("max_disk_gb")).toBe(false);
   });
 
+  it("finds a Gemini model's price by its id without the models/ prefix", async () => {
+    const gemini: SuggestConnection = {
+      connectionId: "gemini",
+      baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
+      models: ["models/gemini-3.8-flash"],
+    };
+    const priced = {
+      catalog_version: "2026-11-01.1",
+      total: 1,
+      models: [
+        {
+          offerings: [
+            {
+              provider: "gemini",
+              provider_model_id: "gemini-3.8-flash",
+              price: { currency: "USD", per_1m: { input: "0.75", output: "3.75" }, effective_from: "2026-09-02" },
+            },
+          ],
+        },
+      ],
+    };
+    const resolver = fakeResolver({ models: json(priced) });
+    const suggestions = await suggestModels([gemini], machine, { env: { RHUMB_KEY: KEY }, fetch: resolver.fetch });
+    expect(suggestions?.priceSheets).toMatchObject([
+      { connectionId: "gemini", model: "models/gemini-3.8-flash", input: 0.75, output: 3.75 },
+    ]);
+  });
+
   it("suggests price sheets for the cloud connections' known models only", async () => {
     const resolver = fakeResolver();
     const suggestions = await suggestModels([openai, custom], machine, { env: { RESOLVER_KEY: KEY }, fetch: resolver.fetch });
@@ -176,7 +199,7 @@ describe("suggestModels", () => {
     expect(noCandidate?.notes.join("\n")).toMatch(/422 no_candidate/);
     expect(noCandidate?.notes.join("\n")).toMatch(/503/);
 
-    clearResolverCache();
+    clearRhumbCache();
     const offline = await suggestModels([ollama, openai], machine, {
       env: { RESOLVER_KEY: KEY },
       fetch: vi.fn(async () => {
