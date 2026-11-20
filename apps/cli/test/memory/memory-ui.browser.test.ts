@@ -230,7 +230,8 @@ describe("memory through the canvas", () => {
       await page.getByRole("button", { name: "Memory on: turn it off for this chat" }).click();
       const off = page.getByRole("button", { name: "Memory off: turn it on for this chat" });
       await off.waitFor({ timeout: 20_000 });
-      expect((await off.textContent())?.trim()).toBe("Memory off");
+      // An icon only: its name says the state, and it is drawn crossed out.
+      expect(await off.getAttribute("class")).toContain("memory-mode-off");
       expect(await off.locator("svg").count()).toBe(1);
       expect((await the().repositories().tasks.get(chat))?.memoryMode).toBe("off");
       const next = await turn(page, chat, "when does the otter swim?");

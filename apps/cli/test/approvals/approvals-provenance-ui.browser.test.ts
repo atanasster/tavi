@@ -132,10 +132,11 @@ describe("an approval card in the canvas", () => {
         (state) => state === "denied",
       );
 
-      // The header's chip: the page by its host, and the remedy, once the turn has ended.
+      // The header's chip, a shield icon: the page by its host in its name and tooltip, and the remedy, once the turn has ended.
       const chip = page.locator(".taint-chip");
       await chip.waitFor({ timeout: 20_000 });
-      expect(await chip.textContent()).toContain("Read docs.example");
+      expect(await chip.getAttribute("aria-label")).toContain("Read docs.example");
+      expect(await chip.getAttribute("title")).toContain("Read docs.example");
       await chip.click();
       const details = page.getByRole("dialog", { name: "What this chat read" });
       await details.waitFor({ timeout: 20_000 });
