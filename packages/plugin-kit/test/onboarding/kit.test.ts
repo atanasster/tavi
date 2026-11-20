@@ -78,6 +78,57 @@ describe("role suggestions", () => {
     expect(suggestRoles("openai", ["gpt-5-2025-08-07", "gpt-5", "gpt-5-mini"])).toMatchObject({ main: "gpt-5", fast: "gpt-5-mini" });
   });
 
+  it("proposes OpenAI's GPT-6 tiers: sol as the main model, luna as the fast one", () => {
+    const discovered = [
+      "o3",
+      "gpt-5",
+      "gpt-5-nano",
+      "gpt-5.6",
+      "gpt-5.4-mini",
+      "gpt-6-luna",
+      "gpt-6.1-terra",
+      "gpt-6.2-sol",
+      "gpt-6.2-astra",
+    ];
+    expect(suggestRoles("openai", discovered)).toMatchObject({ main: "gpt-6.2-sol", fast: "gpt-6-luna" });
+    expect(suggestRoles("openrouter", ["openai/gpt-5.6", "openai/gpt-6.1-sol", "openai/gpt-6-luna"])).toMatchObject({
+      main: "openai/gpt-6.1-sol",
+      fast: "openai/gpt-6-luna",
+    });
+  });
+
+  it("proposes Gemini 4 before an older Pro, and a newer preview before a deprecated plain model", () => {
+    const discovered = [
+      "gemini-2.5-pro",
+      "gemini-3.1-pro-preview",
+      "gemini-3-flash-preview",
+      "gemini-3.8-flash",
+      "gemini-4-argon",
+      "gemini-4-carbon",
+    ];
+    expect(suggestRoles("gemini", discovered)).toMatchObject({
+      main: "gemini-4-carbon",
+      fast: "gemini-3.8-flash",
+      candidates: ["gemini-4-carbon", "gemini-4-argon", "gemini-3.1-pro-preview", "gemini-2.5-pro", "gemini-3-flash-preview"],
+    });
+    expect(suggestRoles("gemini", ["models/gemini-2.5-pro", "models/gemini-3.1-pro-preview"])).toMatchObject({
+      main: "models/gemini-3.1-pro-preview",
+    });
+  });
+
+  it("proposes an OpenRouter model's plain id, never its :batch variant, and a variant after the plain id", () => {
+    const discovered = [
+      "anthropic/claude-sonnet-5.5:batch",
+      "anthropic/claude-sonnet-5.5:free",
+      "anthropic/claude-sonnet-5.5",
+      "anthropic/claude-haiku-5.5:batch",
+    ];
+    expect(suggestRoles("openrouter", discovered)).toEqual({
+      main: "anthropic/claude-sonnet-5.5",
+      candidates: ["anthropic/claude-sonnet-5.5", "anthropic/claude-sonnet-5.5:free"],
+    });
+  });
+
   it("proposes only tool-capable local models, and no fast model when nothing smaller is there", () => {
     expect(suggestRoles("ollama", ["nomic-embed-text:latest", "gemma2:2b", "qwen3:8b"])).toEqual({
       main: "qwen3:8b",

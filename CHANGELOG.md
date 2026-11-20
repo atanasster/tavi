@@ -49,6 +49,13 @@ change behaviour or stored data.
 
 ### Fixed
 
+- Setup's suggested models follow today's catalogs: on OpenAI it proposes
+  GPT-6's sol tier as the main model and luna as the fast one (it proposed
+  GPT-5.6 and GPT-5.4 mini), and on Gemini, Gemini 4 carbon or argon (it
+  proposed the deprecated Gemini 2.5 Pro over the newer 3.1 Pro preview).
+  The deprecated `o3` and GPT-5 nano are no longer proposed, an OpenRouter
+  model's plain id comes before its `:free` variant, and a `:batch` variant
+  is never proposed.
 - Under a systemd unit, confined children (sandboxed commands, plugin
   workers, MCP servers, the PDF, video and browser children) could read the
   credentials systemd hands the owner (`$CREDENTIALS_DIRECTORY`, from

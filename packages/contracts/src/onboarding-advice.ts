@@ -244,28 +244,33 @@ const ROLE_TABLES: Readonly<Record<string, RoleTable>> = {
   openrouter: {
     main: [
       /^anthropic\/claude-sonnet/u,
+      /^openai\/gpt-\d+(\.\d+)?-sol$/u,
       /^openai\/gpt-5(\.\d+)?$/u,
+      /^google\/gemini-\d+(\.\d+)?-(carbon|argon)$/u,
       /^google\/gemini-[\d.]+-pro/u,
       /^anthropic\/claude-opus/u,
       /^qwen\/qwen3/u,
     ],
     fast: [
       /^anthropic\/claude-haiku/u,
+      /^openai\/gpt-\d+(\.\d+)?-luna$/u,
       /^openai\/gpt-5(\.\d+)?-mini/u,
       /^google\/gemini-[\d.]+-flash(?!-lite)/u,
       /^openai\/gpt-4\.1-mini/u,
     ],
   },
+  // GPT-6 names its tiers: astra (largest), sol, terra, luna (smallest). Sol is the Sonnet-priced tier.
   openai: {
-    main: [/^gpt-5(\.\d+)?$/u, /^gpt-4\.1$/u, /^o\d$/u],
-    fast: [/^gpt-5(\.\d+)?-mini$/u, /^gpt-4\.1-mini$/u, /^gpt-5(\.\d+)?-nano$/u],
+    main: [/^gpt-\d+(\.\d+)?-sol$/u, /^gpt-\d+(\.\d+)?-terra$/u, /^gpt-5(\.\d+)?$/u, /^gpt-4\.1$/u],
+    fast: [/^gpt-\d+(\.\d+)?-luna$/u, /^gpt-5(\.\d+)?-mini$/u, /^gpt-4\.1-mini$/u],
   },
   anthropic: {
     main: [/^claude-sonnet/u, /^claude-opus/u],
     fast: [/^claude-haiku/u],
   },
+  // Gemini 4 names its models, not its tiers: carbon and argon are the Pro-priced ones.
   gemini: {
-    main: [/^(models\/)?gemini-[\d.]+-pro/u],
+    main: [/^(models\/)?gemini-\d+(\.\d+)?-(carbon|argon)$/u, /^(models\/)?gemini-[\d.]+-pro/u],
     fast: [/^(models\/)?gemini-[\d.]+-flash(?!-lite)/u, /^(models\/)?gemini-[\d.]+-flash-lite/u],
   },
   ollama: LOCAL_TABLE,
@@ -275,17 +280,34 @@ const ROLE_TABLES: Readonly<Record<string, RoleTable>> = {
 /** Newest first: the higher version number in the name wins (`claude-sonnet-4.5` before `claude-sonnet-4`), then the name. */
 const newestFirst = (left: string, right: string): number => right.localeCompare(left, "en", { numeric: true });
 
-/** Dated snapshots (`-2025-04-14`) and previews lose to the plain alias of the same family. */
-const plainFirst = (left: string, right: string): number => {
-  const pinned = (model: string) => (/-\d{4}-?\d{2}-?\d{2}|preview|exp/iu.test(model) ? 1 : 0);
-  return pinned(left) - pinned(right);
+/**
+ * A model's name without what pins or varies it: a dated snapshot (`-2025-04-14`), a preview or
+ * experiment (`-preview-customtools`), or an OpenRouter variant (`:batch`, `:free`). A local tag
+ * with a size in it (`qwen3:8b`) is the model itself and stays.
+ */
+const baseOf = (model: string): string =>
+  model
+    .replace(/:[a-z-]+$/iu, "")
+    .replace(/-\d{4}-?\d{2}-?\d{2}.*$/u, "")
+    .replace(/-(preview|exp)\b.*$/iu, "");
+
+/**
+ * Newest version first; of one version, the plain alias before its snapshots, previews and
+ * variants. A preview of a newer version still beats an older plain one: the older one is
+ * the one a provider retires first.
+ */
+const byRank = (left: string, right: string): number => {
+  const version = newestFirst(baseOf(left), baseOf(right));
+  if (version !== 0) return version;
+  const pinned = (model: string) => (baseOf(model) === model ? 0 : 1);
+  return pinned(left) - pinned(right) || newestFirst(left, right);
 };
 
 function ranked(table: readonly RegExp[], models: readonly string[]): string[] {
   const out: string[] = [];
   for (const pattern of table) {
     const matches = models.filter((model) => pattern.test(model) && !out.includes(model));
-    out.push(...[...matches].sort(newestFirst).sort(plainFirst));
+    out.push(...[...matches].sort(byRank));
   }
   return out;
 }
@@ -301,7 +323,8 @@ export interface RoleSuggestion {
 
 /** The `main` and `fast` models to propose for a connection of `preset`, from what it discovered. */
 export function suggestRoles(preset: string, discovered: readonly string[]): RoleSuggestion {
-  const chat = [...new Set(discovered)].filter((model) => !isEmbeddingModel(model));
+  // A `:batch` variant answers later, through a batch job: never a chat's model.
+  const chat = [...new Set(discovered)].filter((model) => !isEmbeddingModel(model) && !/:batch$/u.test(model));
   const table = ROLE_TABLES[preset];
   const local = preset === "ollama" || preset === "lmstudio";
   const usable = local ? chat.filter(toolCapableFamily) : chat;
