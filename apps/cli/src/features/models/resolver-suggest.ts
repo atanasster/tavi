@@ -25,7 +25,7 @@ const providerOf = (connection: SuggestConnection): string | undefined => rhumbP
  * `tavi models suggest`: suggestions from the model resolver
  * (https://rhumbdata.com), never a change.
  *
- * With `RHUMB_KEY` set (or `RESOLVER_KEY`, its old name) it asks the resolver two things over plain HTTP:
+ * With a Rhumb key (`RHUMB_KEY`, `RESOLVER_KEY`, or the credential `rhumb`) it asks the resolver two things over plain HTTP:
  * the best local model on the operator's local runtimes that fits this
  * machine (`/v1/resolve`), and price sheets for the models on the operator's
  * cloud connections (`/v1/models`). It only prints them: the owner decides,
@@ -35,7 +35,7 @@ const providerOf = (connection: SuggestConnection): string | undefined => rhumbP
  */
 
 export const RESOLVER_KEY_HINT =
-  "Set RHUMB_KEY to a Rhumb API key (free at https://rhumbdata.com/sign-up) to get model suggestions (a key stored as the credential rhumb is used only by tavi models sync); nothing was changed.";
+  "To get model suggestions, get a free Rhumb key at https://rhumbdata.com/sign-up and store it: tavi credentials set rhumb (or set RHUMB_KEY); nothing was changed.";
 
 /** Each resolver call's deadline: a suggestion is never worth a long wait. */
 const RESOLVER_TIMEOUT_MS = 2_000;
@@ -82,6 +82,8 @@ export interface ModelSuggestions {
 }
 
 export interface SuggestDependencies {
+  /** The key already read (the stored credential); else `RHUMB_KEY` or `RESOLVER_KEY` from `env`. */
+  readonly key?: string;
   readonly env?: Readonly<Record<string, string | undefined>>;
   readonly fetch?: typeof globalThis.fetch;
   readonly machine?: MachineLimits;
@@ -101,7 +103,7 @@ export function machineLimits(dataDirectory: string): MachineLimits {
 
 /**
  * Suggest a local model and price sheets for these connections, or `undefined`
- * with no `RHUMB_KEY` (the caller prints the hint). Never throws: a failed
+ * with no key (the caller prints the hint). Never throws: a failed
  * call is a note, and its suggestion is left out.
  */
 export async function suggestModels(
@@ -110,7 +112,7 @@ export async function suggestModels(
   deps: SuggestDependencies = {},
 ): Promise<ModelSuggestions | undefined> {
   const env = deps.env ?? process.env;
-  const key = rhumbKeyOf(env);
+  const key = deps.key ?? rhumbKeyOf(env);
   if (key === undefined) return undefined;
   const call = rhumbCall(key, rhumbUrlOf(env), deps.fetch ?? globalThis.fetch, RESOLVER_TIMEOUT_MS);
   const notes: string[] = [];

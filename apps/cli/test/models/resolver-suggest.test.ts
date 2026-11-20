@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { EXIT, main } from "../../src/main.js";
 import { RESOLVER_KEY_HINT, suggestModels, type SuggestConnection } from "../../src/features/models/resolver-suggest.js";
 import { clearRhumbCache, rhumbKeyOf } from "../../src/features/models/rhumb-client.js";
+import { createLocalCredentialStore } from "../../src/features/credentials/store.js";
 
 /**
  * `tavi models suggest`: the model resolver's suggestions, printed and never
@@ -317,6 +318,29 @@ describe("tavi models suggest", () => {
     const listAfter = capture();
     await main(["models", "list", "--data-dir", directory], { io: listAfter.io });
     expect(listAfter.stdout()).toBe(listBefore.stdout());
+  });
+
+  it("uses a key stored as the credential rhumb when RHUMB_KEY is unset", async () => {
+    const directory = directories.create();
+    const added = capture();
+    expect(
+      await main(["models", "add", "local", "--base-url", "http://localhost:11434/v1", "--model", "llama3.2:3b", "--data-dir", directory], {
+        io: added.io,
+      }),
+      added.stderr(),
+    ).toBe(EXIT.ok);
+    await createLocalCredentialStore(directory).setSecret("rhumb", KEY);
+    vi.stubEnv("RHUMB_KEY", "");
+    vi.stubEnv("RESOLVER_KEY", "");
+    vi.stubEnv("RESOLVER_URL", "https://resolver.test");
+    const resolver = fakeResolver();
+    vi.stubGlobal("fetch", resolver.fetch);
+    const captured = capture();
+    const code = await main(["models", "suggest", "--data-dir", directory], { io: captured.io });
+    expect(code, captured.stderr()).toBe(EXIT.ok);
+    expect((JSON.parse(captured.stdout()) as { localModel: { connectionId: string } }).localModel.connectionId).toBe("local");
+    expect(resolver.calls.every((call) => call.authorization === `Bearer ${KEY}`)).toBe(true);
+    expect(captured.stderr()).not.toContain(RESOLVER_KEY_HINT);
   });
 
   it("takes no connection argument", async () => {

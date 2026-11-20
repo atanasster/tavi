@@ -104,11 +104,11 @@ Actions:
   clear-default                     Remove the workspace default
   set-role <role> --connection <id> Set a role override
   clear-role <role>                 Remove a role override
-  suggest                           With RHUMB_KEY set, ask Rhumb (rhumbdata.com)
+  suggest                           With a Rhumb key, ask Rhumb (rhumbdata.com)
                                     for the best local model that fits this
                                     machine and price sheets for the cloud
                                     connections; prints them, changes nothing
-  sync                              With RHUMB_KEY set, ask Rhumb which models
+  sync                              With a Rhumb key, ask Rhumb which models
                                     in use retire, are redirected or change
                                     price, store it and print the warnings;
                                     never changes a model (serve does this

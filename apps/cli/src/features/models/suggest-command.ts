@@ -1,32 +1,45 @@
-import { DEFAULT_WORKSPACE_ID } from "@tavi/contracts";
+import { existsSync } from "node:fs";
+
+import { DEFAULT_WORKSPACE_ID, RHUMB_CREDENTIAL_REF } from "@tavi/contracts";
 import { ModelConfigService } from "@tavi/runtime";
 import { prefixedId } from "@tavi/node-kit";
-import { EXIT, reportRefusal } from "../../cli/exit.js";
+import { EXIT, reportFailure, reportRefusal } from "../../cli/exit.js";
 import type { CliIo } from "../../cli/io.js";
 import { emitJson } from "../../cli/output.js";
 import { CONFIG_TIMEOUT_MS, configOnOwner } from "../../cli/owner.js";
 import { type ResolvedDataDirectory, withStore } from "../../cli/store.js";
+import { createLocalCredentialStore } from "../credentials/store.js";
 import type { ModelsCommandOptions } from "./parse.js";
 import { RESOLVER_KEY_HINT, machineLimits, suggestModels, type SuggestConnection, type SuggestDependencies } from "./resolver-suggest.js";
 import { rhumbKeyOf } from "./rhumb-client.js";
 
 /**
  * `tavi models suggest`: the model resolver's suggestions for this machine and
- * these connections, printed and never applied. With no `RHUMB_KEY` it
- * prints a hint and touches nothing, not even the data directory.
+ * these connections, printed and never applied. The key is `RHUMB_KEY` (or
+ * `RESOLVER_KEY`), else the stored credential `rhumb`, as `tavi models sync`
+ * reads it. With neither it prints a hint and creates nothing, not even the
+ * data directory.
  */
 export async function modelsSuggestCommand(
   options: ResolvedDataDirectory<ModelsCommandOptions>,
   io: CliIo,
   deps: SuggestDependencies = {},
 ): Promise<number> {
-  if (rhumbKeyOf(deps.env ?? process.env) === undefined) {
+  let key: string | undefined;
+  try {
+    key = deps.key ?? (await rhumbKeyAt(options.dataDirectory, deps.env ?? process.env));
+  } catch (error) {
+    // A stored key that cannot be read (a locked keychain) is said: "no key" would be wrong.
+    return reportFailure(error, io, "models suggest could not read the stored Rhumb key");
+  }
+  if (key === undefined) {
     io.stderr(`${RESOLVER_KEY_HINT}\n`);
     return EXIT.ok;
   }
+  const asked: SuggestDependencies = { ...deps, key };
   const machine = deps.machine ?? machineLimits(options.dataDirectory);
   const print = async (connections: readonly SuggestConnection[]): Promise<number> => {
-    emitJson(io, await suggestModels(connections, machine, deps));
+    emitJson(io, await suggestModels(connections, machine, asked));
     return EXIT.ok;
   };
   try {
@@ -90,4 +103,12 @@ function suggestConnectionOf(
     baseUrl: connection.baseUrl,
     models: [...(connection.defaultModel === null ? [] : [connection.defaultModel]), ...catalog.map((entry) => entry.modelId)],
   };
+}
+
+/** `RHUMB_KEY` (or `RESOLVER_KEY`), else the data directory's stored `rhumb`; never creates the directory. */
+async function rhumbKeyAt(dataDirectory: string, env: Readonly<Record<string, string | undefined>>): Promise<string | undefined> {
+  const fromEnv = rhumbKeyOf(env);
+  if (fromEnv !== undefined || !existsSync(dataDirectory)) return fromEnv;
+  const stored = (await createLocalCredentialStore(dataDirectory).getSecret(RHUMB_CREDENTIAL_REF))?.trim();
+  return stored === undefined || stored === "" ? undefined : stored;
 }

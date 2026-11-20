@@ -60,6 +60,9 @@ change behaviour or stored data.
 
 ### Changed
 
+- `tavi models suggest` uses a Rhumb key stored as the credential `rhumb`
+  (the setup offer, Settings → Models or `tavi credentials set rhumb`), as
+  `tavi models sync` does; `RHUMB_KEY` still wins when both are there.
 - Once a chat has read content Tavi does not trust, opening a browser session
   on the workspace's signed-in profile asks first, whatever the page, unless
   you approved a signed-in session earlier in that task; a signed-out session
