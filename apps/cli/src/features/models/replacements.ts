@@ -22,7 +22,7 @@ export type { ModelReplacements };
 const REPLACED_LEVELS: ReadonlySet<LifecycleLevel> = new Set(["warning", "error"]);
 
 /** The kind of replacement a use asks for: the main work needs tools, background work the same on a cheap budget. */
-export function replacementKindOf(use: ModelUse): ReplacementKind {
+function replacementKindOf(use: ModelUse): ReplacementKind {
   switch (use.kind) {
     case "video":
       return "video";
@@ -70,7 +70,7 @@ export function replacementQuery(kind: ReplacementKind, provider: string): Recor
 }
 
 /** The provider's redirect target, when it names one other than the model itself. */
-export function providerReplacement(lifecycle: ModelLifecycle | undefined, model: string): ModelReplacements["provider"] {
+function providerReplacement(lifecycle: ModelLifecycle | undefined, model: string): ModelReplacements["provider"] {
   const redirect = lifecycle?.redirect;
   if (redirect === undefined || redirect.to === model) return undefined;
   return { model: redirect.to, ...(redirect.via === undefined ? {} : { via: redirect.via }) };

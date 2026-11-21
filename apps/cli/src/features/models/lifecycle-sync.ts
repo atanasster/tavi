@@ -46,7 +46,7 @@ import { modelTargetsInUse, targetSourcesOf, type ModelTargetInUse, type ModelTa
  */
 
 /** How often `serve` syncs: Rhumb's catalog changes daily. */
-export const LIFECYCLE_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const LIFECYCLE_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 /** Rhumb's catalog version when a listing gave none: the field is required, and tavi still records when it looked. */
 const CATALOG_VERSION_UNKNOWN = "unknown";
@@ -59,7 +59,7 @@ export interface LifecycleSyncSources {
   readonly replace: (connectionId: string, entries: readonly ModelLifecycleEntry[]) => Promise<void>;
 }
 
-export interface LifecycleSyncedConnection {
+interface LifecycleSyncedConnection {
   readonly connectionId: string;
   /** Rhumb's name for its provider; absent when it was skipped. */
   readonly provider?: string;
@@ -69,7 +69,7 @@ export interface LifecycleSyncedConnection {
   readonly skipped?: string;
 }
 
-export interface LifecycleInUseWarning {
+interface LifecycleInUseWarning {
   readonly target: ModelTargetInUse;
   readonly lifecycle: ModelLifecycle;
   readonly warnings: readonly LifecycleWarning[];
@@ -87,9 +87,7 @@ export interface LifecycleSyncResult {
 }
 
 /** The sources from a runtime: its model configuration and every model it refers to. */
-export function lifecycleSyncSourcesOf(
-  runtime: Pick<TaviRuntime, "store" | "access" | "routines" | "routerRepository">,
-): LifecycleSyncSources {
+function lifecycleSyncSourcesOf(runtime: Pick<TaviRuntime, "store" | "access" | "routines" | "routerRepository">): LifecycleSyncSources {
   const service = runtime.store.services.modelConfig;
   return {
     connections: async () => await service.listConnections(),
@@ -199,7 +197,7 @@ export async function syncModelLifecycle(
 }
 
 /** The models in use whose lifecycle warns on `today`, worst first, then by connection and model. */
-export function inUseWarnings(
+function inUseWarnings(
   targets: readonly ModelTargetInUse[],
   lifecycles: ReadonlyMap<string, ModelLifecycle>,
   today: string,

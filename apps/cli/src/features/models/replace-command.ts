@@ -119,7 +119,7 @@ function printReplaced(result: ReplaceResult, io: CliIo): number {
 }
 
 /** A use as the confirmation lists it. */
-export function useInWords(use: ModelUse): string {
+function useInWords(use: ModelUse): string {
   const where = use.workspaceId === undefined ? "" : ` (${use.workspaceId})`;
   switch (use.kind) {
     case "connection-default":

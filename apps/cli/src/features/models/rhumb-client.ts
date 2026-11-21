@@ -9,7 +9,7 @@ import { ModelLifecycleSchema, presetOf, type ModelLifecycle } from "@tavi/contr
  * uses.
  */
 
-export const RHUMB_URL_DEFAULT = "https://rhumbdata.com";
+const RHUMB_URL_DEFAULT = "https://rhumbdata.com";
 
 /** Runtimes on the device, in Rhumb's provider vocabulary. */
 export const LOCAL_RUNTIMES: ReadonlySet<string> = new Set(["ollama", "lmstudio", "llama.cpp", "mlx", "webllm"]);

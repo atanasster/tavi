@@ -8,7 +8,7 @@ export const RHUMB_SIGN_UP_URL = "https://rhumbdata.com/sign-up";
 export type { ModelReplacements };
 
 /** One model in use that warns, as `models sync` and `models lifecycle` answer it. */
-export interface LifecycleWarningRow {
+interface LifecycleWarningRow {
   readonly connectionId: string;
   readonly model: string;
   readonly level: "error" | "warning" | "info";
@@ -78,7 +78,7 @@ export interface ModelRef {
 }
 
 /** One place a model is used, as `models replace` answers it: a newer owner may name a kind this page does not know. */
-export interface ModelUseRow extends Omit<ModelUse, "kind"> {
+interface ModelUseRow extends Omit<ModelUse, "kind"> {
   readonly kind: ModelUseKind | (string & {});
 }
 
@@ -92,7 +92,7 @@ interface ReplaceAnswer {
 }
 
 /** A place a model is used, in words, as the replace dialog lists it. */
-export function useInWords(use: ModelUseRow): string {
+function useInWords(use: ModelUseRow): string {
   const detail = use.detail ?? "";
   switch (use.kind) {
     case "connection-default":
