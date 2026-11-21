@@ -10,6 +10,17 @@
   padding: var(--space-1) var(--space-5) var(--space-4);
 }
 
+/* The Home chat's offers (setup checklist, Ideas, heartbeat) are one block each: their words sit inside the border, as a card body's do. */
+.onboarding-checklist,
+.onboarding-promise,
+.heartbeat-offer {
+  padding: var(--space-1) var(--space-5) var(--space-4);
+}
+
+.heartbeat-offer > .heartbeat-actions {
+  margin-top: var(--space-3);
+}
+
 .section-card-body > p:first-child {
   margin-top: 0;
 }

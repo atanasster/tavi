@@ -42,6 +42,9 @@ change behaviour or stored data.
   yourself ("after reading example[.]com" after you wrote
   https://example.com). Any other host, including one a page linked, is
   still disarmed.
+- The Home chat's offers (the heartbeat offer, setup's checklist and Ideas)
+  keep their words and buttons inside the card's border, with room between
+  the heartbeat's list and its buttons.
 
 ## 0.3.1 — 2026-11-21
 
