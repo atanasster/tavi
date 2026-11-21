@@ -4,6 +4,7 @@ import {
   ATTACHMENT_UPLOAD_PDF_MAX_BYTES,
   ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES,
   IPC_MAX_PROMPT_CHARS,
+  sniffAudioContainer,
   type ArtifactUploadAnswer,
 } from "@tavi/contracts";
 
@@ -15,13 +16,13 @@ interface TextAttachment {
   readonly text: string;
 }
 /**
- * A PDF, a video, a GIF or a photo:
+ * A PDF, a video, a GIF, a photo or an audio file:
  * uploaded when the message is sent, and named by it, never inlined. The file
  * itself is kept, and read a slice at a time as it is sent, never whole.
  */
 export interface UploadAttachment {
   readonly kind: "upload";
-  readonly media: "pdf" | "video" | "gif" | "image";
+  readonly media: "pdf" | "video" | "gif" | "image" | "audio";
   readonly name: string;
   readonly file: Blob;
 }
@@ -31,7 +32,10 @@ export const MAX_ATTACHMENTS = 5;
 const TEXT_FILE_ACCEPT = ".txt,.md,.csv,.tsv,.json,.yaml,.yml,.xml,.html,.css,.js,.jsx,.ts,.tsx,.py,.sh,.sql,.log,.rs,.go,.java,.c,.h,.cpp";
 const VIDEO_FILE_ACCEPT = ".mp4,.mov,.m4v,.webm,.gif";
 const IMAGE_FILE_ACCEPT = ".png,.jpg,.jpeg";
-export const FILE_ACCEPT = `${TEXT_FILE_ACCEPT},.pdf,${VIDEO_FILE_ACCEPT},${IMAGE_FILE_ACCEPT}`;
+/** The audio `audio.transcribe` reads: Ogg (Opus, a voice note), MP3, M4A, WAV and raw AAC. */
+const AUDIO_FILE_ACCEPT = ".ogg,.opus,.mp3,.m4a,.wav,.aac";
+const AUDIO_TYPES = ["audio/ogg", "audio/opus", "audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/wav", "audio/x-wav", "audio/aac"];
+export const FILE_ACCEPT = `${TEXT_FILE_ACCEPT},.pdf,${VIDEO_FILE_ACCEPT},${IMAGE_FILE_ACCEPT},${AUDIO_FILE_ACCEPT}`;
 /** What a message of files alone says: the owner takes no blank prompt. */
 export const FILES_ONLY_PROMPT = "(see the attached file)";
 
@@ -43,6 +47,9 @@ function headIs(media: UploadAttachment["media"], head: Uint8Array): boolean {
     new TextDecoder("latin1").decode(head.subarray(offset, offset + text.length)) === text;
   if (media === "pdf") return ascii(0, "%PDF-");
   if (media === "gif") return ascii(0, "GIF87a") || ascii(0, "GIF89a");
+  // The owner's own rule, so what the browser takes as audio is what the owner keeps; an `.m4a` some recorders write
+  // under a video brand (`mp42`, `isom`) is still an ISO file the owner takes, as an MP4.
+  if (media === "audio") return sniffAudioContainer(head) !== undefined || ascii(4, "ftyp");
   if (media === "image")
     return (
       [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((byte, index) => head[index] === byte) ||
@@ -61,10 +68,12 @@ export async function readAttachment(file: File): Promise<Attachment> {
         ? "gif"
         : IMAGE_FILE_ACCEPT.split(",").includes(extension) || ["image/png", "image/jpeg"].includes(file.type)
           ? "image"
-          : // Only the containers the owner takes: a Matroska or 3GP file is not attached as a video it would refuse.
-            VIDEO_FILE_ACCEPT.split(",").includes(extension) || ["video/mp4", "video/quicktime", "video/webm"].includes(file.type)
-            ? "video"
-            : undefined;
+          : AUDIO_FILE_ACCEPT.split(",").includes(extension) || AUDIO_TYPES.includes(file.type)
+            ? "audio"
+            : // Only the containers the owner takes: a Matroska or 3GP file is not attached as a video it would refuse.
+              VIDEO_FILE_ACCEPT.split(",").includes(extension) || ["video/mp4", "video/quicktime", "video/webm"].includes(file.type)
+              ? "video"
+              : undefined;
   if (media !== undefined) {
     const cap =
       media === "pdf"
@@ -76,19 +85,19 @@ export async function readAttachment(file: File): Promise<Attachment> {
       throw new Error(
         media === "image"
           ? `${file.name}: a photo is at most ${String(cap / 1_000_000)} MB.`
-          : `${file.name}: ${media === "pdf" ? "a PDF" : "a video or GIF"} is at most ${String(cap / 1024 / 1024)} MiB.`,
+          : `${file.name}: ${{ pdf: "a PDF", audio: "an audio file", video: "a video or GIF", gif: "a video or GIF" }[media]} is at most ${String(cap / 1024 / 1024)} MiB.`,
       );
     // Only its head is read now: the rest is read a slice at a time as it is sent.
     const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
     if (!headIs(media, head))
       throw new Error(
-        `${file.name}: this file is not ${{ pdf: "a PDF", gif: "a GIF", image: "a PNG or JPEG photo", video: "an MP4, MOV or WebM video" }[media]}.`,
+        `${file.name}: this file is not ${{ pdf: "a PDF", gif: "a GIF", image: "a PNG or JPEG photo", video: "an MP4, MOV or WebM video", audio: "an Ogg, MP3, M4A, WAV or AAC audio file" }[media]}.`,
       );
     return { kind: "upload", media, name: file.name, file };
   }
   if (!TEXT_FILE_ACCEPT.split(",").includes(extension) && !file.type.startsWith("text/"))
     throw new Error(
-      `${file.name}: the canvas takes a PDF, a photo (PNG, JPEG), a video (MP4, MOV, WebM), a GIF (read as a short clip), or a text or code file.`,
+      `${file.name}: the canvas takes a PDF, a photo (PNG, JPEG), a video (MP4, MOV, WebM), a GIF (read as a short clip), an audio file (Ogg, MP3, M4A, WAV, AAC), or a text or code file.`,
     );
   if (file.size > MAX_ATTACHMENT_BYTES) throw new Error(`${file.name}: maximum file size is 48 KB.`);
   const text = new TextDecoder("utf-8", { fatal: true }).decode(await file.arrayBuffer());
@@ -104,8 +113,8 @@ function fenceFor(text: string): string {
 
 /**
  * The prompt with the text files inlined, each as its lines in a fence (shown
- * as a block in the message, never one escaped string); PDFs, photos, videos and GIFs
- * go by upload.
+ * as a block in the message, never one escaped string); PDFs, photos, videos, GIFs
+ * and audio go by upload.
  */
 export function composePrompt(prompt: string, attachments: readonly Attachment[]): string {
   const texts = attachments.filter((file): file is TextAttachment => !isUpload(file));

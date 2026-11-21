@@ -23,6 +23,10 @@ change behaviour or stored data.
   148 MB, MIT; kept only when its checksum matches) and name it in
   `analyzers.json`, then reload: no restart. Without Homebrew it gives the
   commands. A dismissed setup checklist comes back once with it.
+- The canvas's message box attaches audio (Ogg, Opus, MP3, M4A, WAV, AAC,
+  up to 50 MiB, as a video): it is uploaded when you send and read with
+  `audio.transcribe`. The box and the owner each check the file's bytes, so
+  a file merely renamed `.mp3` is refused; the video tools must be on.
 - `tavi doctor` has a **Transcription** line for videos and voice messages:
   ready, or what is missing.
 

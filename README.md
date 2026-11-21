@@ -49,7 +49,7 @@ fresh install, with the model's waits sped up.
   needs a sign-in or a CAPTCHA, you take over the page and hand it back.
 - **Read documents, photos, video and voice.** PDFs, scanned pages and forms;
   video frames, transcripts and movement, and voice messages you send from a
-  channel, all processed locally; and the photos you attach or send from a
+  channel or attach in the web chat, all processed locally; and the photos you attach or send from a
   channel, which the chat's model looks at.
 - **Connect your apps.** Google Calendar and Gmail, Todoist, Linear, Notion and
   any [MCP](docs/MCP.md) server, each with tools you review before a chat can

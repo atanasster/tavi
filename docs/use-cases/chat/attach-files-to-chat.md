@@ -7,13 +7,13 @@ Attach a spreadsheet, a document or an animated image to a message on the canvas
 
 ## 1. Attach a file
 
-Run `tavi ui`, and in **Home**'s message box choose the paperclip (**Attach PDF, video, GIF, text and code files**), then pick a file. It shows as a chip under the box. Text and code files (a CSV, Markdown, JSON or source file) of up to 48 KB go into the message itself; a PDF of up to 20 MB is uploaded when you send.
+Run `tavi ui`, and in **Home**'s message box choose the paperclip (**Attach PDF, photo, video, GIF, audio, text and code files**), then pick a file. It shows as a chip under the box. Text and code files (a CSV, Markdown, JSON or source file) of up to 48 KB go into the message itself; a PDF of up to 20 MB is uploaded when you send.
 
 ![The message box with spending.csv attached as a chip above the paperclip](../../assets/use-cases/chat/attach-files-to-chat/01-attach-a-file.webp)
 
 ## 2. Add an image
 
-Choose the paperclip again and pick a GIF: up to five files go with one message. A GIF, like a video (MP4, MOV or WebM, up to 50 MB), is uploaded when you send, and the chat looks at it with its tools. Choose the cross on a chip to take a file off before sending.
+Choose the paperclip again and pick a GIF: up to five files go with one message. A GIF, like a video (MP4, MOV or WebM, up to 50 MB), is uploaded when you send, and the chat looks at it with its tools. An audio file (Ogg, Opus, MP3, M4A, WAV or AAC, up to 50 MB) is uploaded the same way, and the chat reads what is said in it with `audio.transcribe`. Choose the cross on a chip to take a file off before sending.
 
 ![The message box with two chips, spending.csv and swatch.gif, each with a button to remove it](../../assets/use-cases/chat/attach-files-to-chat/02-add-an-image.webp)
 

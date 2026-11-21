@@ -60,6 +60,9 @@ const PDF = Buffer.from("%PDF-1.4\n1 0 obj << >> endobj\ntrailer << >>\n%%EOF\n"
 /** An MP4's head: an `ftyp` box of brand `isom`, and then whatever follows. */
 const MP4_HEAD = Buffer.from("000000186674797069736f6d0000020069736f6d69736f32", "hex");
 const mp4 = (size: number): Buffer => Buffer.concat([MP4_HEAD, Buffer.alloc(Math.max(0, size - MP4_HEAD.length))]);
+/** An Ogg page's head (a Telegram voice note's Opus), and an MP3 with its ID3 tag. */
+const OGG = Buffer.concat([Buffer.from("OggS", "latin1"), Buffer.alloc(60)]);
+const MP3 = Buffer.concat([Buffer.from("ID3", "latin1"), Buffer.from([4, 0, 0, 0, 0, 0, 0]), Buffer.alloc(54)]);
 const GIF = Buffer.concat([Buffer.from("GIF89a", "latin1"), Buffer.alloc(32)]);
 /** A PNG's signature and its `IHDR` chunk, `width` × `height`: as much as says what it is and how large. */
 function png(width: number, height: number, size = 64): Buffer {
@@ -143,6 +146,27 @@ describe("artifacts upload", () => {
       error: { code: "UNSUPPORTED", message: expect.stringContaining("video.enabled on") },
     });
     expect(await upload(videoOff, PDF, "form.pdf")).toMatchObject({ ok: true });
+  });
+
+  it("keeps a voice note as audio for audio.transcribe, with the video tools on; refuses it with them off", async () => {
+    const { deps, store } = setup();
+    const videoOn = { ...deps, pdfEnabled: async () => false, videoEnabled: async () => true };
+    const answer = await upload(videoOn, OGG, "voice.opus");
+    expect(answer).toMatchObject({ ok: true, result: { attachment: { contentType: "audio/ogg", name: "voice.opus" } } });
+    const artifactId = answer?.ok === true ? answer.result.attachment?.artifactId : undefined;
+    expect(store.getArtifact(artifactId ?? "")).toMatchObject({ contentType: "audio/ogg", untrusted: true, reviewState: "approved" });
+    expect(await upload(videoOn, MP3, "memo.mp3")).toMatchObject({ ok: true, result: { attachment: { contentType: "audio/mpeg" } } });
+    const videoOff = { ...deps, videoEnabled: async () => false };
+    expect(await upload(videoOff, OGG, "voice.ogg")).toMatchObject({
+      ok: false,
+      error: { code: "UNSUPPORTED", message: expect.stringContaining("video.enabled on") },
+    });
+    // What the bytes are decides, not the name: a PNG named .mp3 is kept as a photo, and text is refused.
+    expect(await upload(videoOn, png(4, 4), "fake.mp3")).toMatchObject({ ok: true, result: { attachment: { contentType: "image/png" } } });
+    expect(await upload(videoOn, Buffer.from("plain text, not sound"), "fake.ogg")).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_INPUT", message: expect.stringContaining("or an audio file") },
+    });
   });
 
   it("keeps a photo with the PDF and video tools off, and refuses one a model could not be shown", async () => {

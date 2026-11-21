@@ -83,8 +83,10 @@ is said. A long recording is read in five-minute parts, as a video is.
   asked first (see *What leaves the machine*).
 - **Read:** Ogg (Telegram's voice messages, Opus), MP3, WAV, M4A and AAC, by
   the file's bytes, within the channel's attachment cap and Tavi's 100 MiB.
-  Voice messages come in over a channel (Telegram, email); the canvas's
-  composer does not attach audio yet.
+  Voice messages come in over a channel (Telegram, email), or are attached in
+  the canvas's message box (Ogg, Opus, MP3, M4A, WAV or AAC, up to 50 MiB,
+  with the video tools on); the box checks the file's first bytes, and the
+  owner checks them again.
 - **Kept:** as a video is, 30 days (`video.keepDays`), then deleted with its
   body.
 - The words are the sender's file's, not your message: they are untrusted

@@ -54,7 +54,7 @@ export function Composer({
     prompt: string,
     sent?: { readonly attachments?: readonly string[]; readonly attachmentNames?: readonly string[] },
   ) => boolean | void;
-  /** A PDF, video or GIF attached here, uploaded as the message is sent: its artifact id. Absent, they are refused. */
+  /** A PDF, photo, video, GIF or audio file attached here, uploaded as the message is sent: its artifact id. Absent, they are refused. */
   readonly onUpload?: ((file: UploadAttachment) => Promise<string>) | undefined;
   /** A rewound message, put in the box to edit and send again; a new `key` puts it there again. `placeholder`: select its first [part] to type over. */
   readonly seed?: { readonly text: string; readonly key: number; readonly placeholder?: boolean } | undefined;
@@ -136,7 +136,7 @@ export function Composer({
       // Uploaded first, then named by the message; a refusal keeps the prompt and its files in the box.
       if (unconfigured) return;
       if (onUpload === undefined) {
-        setFileError("PDFs, photos, videos and GIFs cannot be attached here.");
+        setFileError("PDFs, photos, videos, GIFs and audio cannot be attached here.");
         return;
       }
       setReading(true);
@@ -287,13 +287,13 @@ export function Composer({
           />
           <IconButton
             icon="paperclip"
-            label={reading ? "Reading files…" : "Attach PDF, photo, video, GIF, text and code files"}
+            label={reading ? "Reading files…" : "Attach PDF, photo, video, GIF, audio, text and code files"}
             aria-busy={reading}
             disabled={disabled || reading}
             tooltip={
               reading
                 ? "Reading files…"
-                : "Attach PDFs (up to 20 MB), photos (up to 5 MB), videos and GIFs (up to 50 MB), or text and code files (up to 48 KB each)"
+                : "Attach PDFs (up to 20 MB), photos (up to 5 MB), videos, GIFs and audio (up to 50 MB), or text and code files (up to 48 KB each)"
             }
             onClick={() => fileInput.current?.click()}
           />

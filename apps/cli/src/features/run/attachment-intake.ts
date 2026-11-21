@@ -12,7 +12,7 @@ import { ATTACHMENT_HEADING } from "../channels/inbound-turn.js";
 
 /**
  * The attachments a web UI message names:
- * uploaded PDFs, videos and GIFs of its workspace, each as the line a channel
+ * uploaded PDFs, photos, videos, GIFs and audio files of its workspace, each as the line a channel
  * attachment leaves in the prompt. Only what `artifacts upload` kept is named:
  * an approved, model-visible, untrusted file of a type it takes, labelled
  * `attachment`. Any other id is the same `NOT_FOUND`.

@@ -7,7 +7,7 @@ Attach a PDF in the canvas, get a short summary, lift a table out of it as a tab
 
 ## 1. Attach the PDF
 
-Run `tavi ui`, and in **Home**'s message box choose the paperclip (**Attach PDF, video, GIF, text and code files**), then pick the PDF. It shows as a chip under the box; a PDF of up to 20 MB is uploaded when you send.
+Run `tavi ui`, and in **Home**'s message box choose the paperclip (**Attach PDF, photo, video, GIF, audio, text and code files**), then pick the PDF. It shows as a chip under the box; a PDF of up to 20 MB is uploaded when you send.
 
 ![The message box with lease.pdf attached as a chip above the paperclip](../../assets/use-cases/documents/read-a-pdf/01-attach-the-pdf.webp)
 

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   ARTIFACT_READ_CHUNK_BYTES,
+  ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES,
+  AUDIO_MEDIA_TYPES,
+  UPLOAD_CONTENT_TYPES,
+  isUploadAudio,
+  uploadMaxBytes,
   ArtifactReadAnswerSchema,
   ArtifactsPayloadSchema,
   ArtifactsResultSchema,
@@ -51,5 +56,17 @@ describe("artifact metadata contract", () => {
     };
     expect(ArtifactReadAnswerSchema.safeParse(chunk).success).toBe(true);
     expect(new TextEncoder().encode(JSON.stringify(chunk)).byteLength).toBeLessThan(IPC_MAX_FRAME_BYTES - 4096);
+  });
+});
+
+describe("upload types", () => {
+  it("takes every audio file audio.transcribe reads, under the video cap", () => {
+    for (const contentType of Object.values(AUDIO_MEDIA_TYPES)) {
+      expect(UPLOAD_CONTENT_TYPES).toContain(contentType);
+      const audio = contentType as (typeof UPLOAD_CONTENT_TYPES)[number];
+      expect(isUploadAudio(audio)).toBe(true);
+      expect(uploadMaxBytes(audio)).toBe(ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES);
+    }
+    expect(isUploadAudio("video/mp4")).toBe(false);
   });
 });

@@ -96,7 +96,10 @@ export const ArtifactsUploadPayloadSchema = z.strictObject({
     .regex(/^[A-Za-z0-9+/]*={0,2}$/),
 });
 export type ArtifactsUploadPayload = z.infer<typeof ArtifactsUploadPayloadSchema>;
-/** What `artifacts upload` takes, by what the bytes are: a PDF, a video in a container the decoder reads, an animated GIF, a photo. */
+/**
+ * What `artifacts upload` takes, by what the bytes are: a PDF, a video in a container the decoder reads, an animated
+ * GIF, a photo, or an audio file `audio.transcribe` reads (the values of `AUDIO_MEDIA_TYPES`).
+ */
 export const UPLOAD_CONTENT_TYPES = [
   "application/pdf",
   "video/mp4",
@@ -105,9 +108,14 @@ export const UPLOAD_CONTENT_TYPES = [
   "image/gif",
   "image/png",
   "image/jpeg",
+  "audio/ogg",
+  "audio/mpeg",
+  "audio/mp4",
+  "audio/wav",
+  "audio/aac",
 ] as const;
 export type UploadContentType = (typeof UPLOAD_CONTENT_TYPES)[number];
-/** Each type's cap. */
+/** Each type's cap: audio shares the video cap, as both are read by the decoder. */
 export function uploadMaxBytes(contentType: UploadContentType): number {
   if (contentType === "application/pdf") return ATTACHMENT_UPLOAD_PDF_MAX_BYTES;
   return isUploadPhoto(contentType) ? ATTACHMENT_UPLOAD_IMAGE_MAX_BYTES : ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES;
@@ -115,6 +123,12 @@ export function uploadMaxBytes(contentType: UploadContentType): number {
 /** A still photo, which `artifacts.view_image` shows: no PDF or video tools are needed to read it. */
 export function isUploadPhoto(contentType: UploadContentType): contentType is "image/png" | "image/jpeg" {
   return contentType === "image/png" || contentType === "image/jpeg";
+}
+/** An audio file, which `audio.transcribe` reads: the video tools' decoder, so the video tools must be on. */
+export function isUploadAudio(
+  contentType: UploadContentType,
+): contentType is "audio/ogg" | "audio/mpeg" | "audio/mp4" | "audio/wav" | "audio/aac" {
+  return contentType.startsWith("audio/");
 }
 export const UploadedAttachmentSchema = z.strictObject({
   artifactId: IdSchema,

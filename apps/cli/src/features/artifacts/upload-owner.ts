@@ -8,6 +8,7 @@ import {
   UPLOAD_CONTENT_TYPES,
   VIDEO_SNIFF_BYTES,
   folderFileName,
+  isUploadAudio,
   isUploadPhoto,
   untrustedLabel,
   uploadMaxBytes,
@@ -23,7 +24,7 @@ import { unviewableImage } from "../tools/assistant.js";
 
 /**
  * `artifacts upload`: a PDF,
- * a video, an animated GIF or a photo the person attaches in the web UI, taken in
+ * a video, an animated GIF, a photo or an audio file the person attaches in the web UI, taken in
  * chunk by chunk, in order, and kept as a channel attachment is: an approved,
  * untrusted artifact labelled `attachment`. What it is is read from its first
  * piece's bytes, never its name: that type's tools must be on and the file
@@ -108,11 +109,17 @@ const EXTENSIONS: Readonly<Record<UploadContentType, string>> = {
   "image/gif": "gif",
   "image/png": "png",
   "image/jpeg": "jpg",
+  "audio/ogg": "ogg",
+  "audio/mpeg": "mp3",
+  "audio/mp4": "m4a",
+  "audio/wav": "wav",
+  "audio/aac": "aac",
 };
 
 /** What an upload of `contentType` is called in a refusal. */
 function kindOf(contentType: UploadContentType): string {
   if (contentType === "application/pdf") return "a PDF";
+  if (isUploadAudio(contentType)) return "an audio file";
   return isUploadPhoto(contentType) ? "a photo" : "a video or GIF";
 }
 
@@ -145,9 +152,12 @@ export async function artifactsUploadCommand(
       // What the bytes are, not what the name says: a renamed file is refused at its first piece.
       const contentType = uploadTypeOf(bytes);
       if (contentType === undefined)
-        throw new TaviError("INVALID_INPUT", `${payload.name} is not a PDF, a video (MP4, MOV, WebM), a GIF or a photo (PNG, JPEG)`);
+        throw new TaviError(
+          "INVALID_INPUT",
+          `${payload.name} is not a PDF, a video (MP4, MOV, WebM), a GIF, a photo (PNG, JPEG) or an audio file (Ogg, MP3, M4A, WAV, AAC)`,
+        );
       // Only the tools that read this type are asked about: a video is taken with the PDF tools off, and so on;
-      // a photo needs neither, since `artifacts.view_image` shows it.
+      // a photo needs neither, since `artifacts.view_image` shows it. Audio is the video tools' (`audio.transcribe`).
       if (contentType === "application/pdf" && deps.pdfEnabled !== undefined && !(await deps.pdfEnabled(payload.workspaceId)))
         throw new TaviError("UNSUPPORTED", "the PDF tools are off in this workspace (`tavi config set pdf.enabled on`)");
       if (

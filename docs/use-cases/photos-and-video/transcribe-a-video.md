@@ -13,7 +13,7 @@ Install whisper.cpp (`brew install whisper-cpp`) and download a ggml model, such
 
 ## 2. Attach the video
 
-In **Home**'s message box choose the paperclip (**Attach PDF, video, GIF, text and code files**) and pick the video. The canvas takes MP4, MOV, M4V, WebM and GIF up to 50 MB; it shows as a chip under the box.
+In **Home**'s message box choose the paperclip (**Attach PDF, photo, video, GIF, audio, text and code files**) and pick the video. The canvas takes MP4, MOV, M4V, WebM and GIF up to 50 MB; it shows as a chip under the box.
 
 ![The message box with allotment-notice.mp4 attached as a chip above the paperclip](../../assets/use-cases/photos-and-video/transcribe-a-video/02-attach-the-video.webp)
 

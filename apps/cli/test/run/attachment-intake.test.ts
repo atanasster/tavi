@@ -171,7 +171,7 @@ describe("attachments named by a message", () => {
     expect(await artifacts.getArtifact(id)).toBeUndefined();
   }, 30_000);
 
-  it("names only an approved, untrusted PDF, video or GIF upload of the workspace, each once", async () => {
+  it("names only an approved, untrusted PDF, video, GIF or audio upload of the workspace, each once", async () => {
     const kept = {
       artifactId: "art-up-1",
       workspaceId: "default",
@@ -192,6 +192,7 @@ describe("attachments named by a message", () => {
       "art-web": { ...kept, artifactId: "art-web", label: { ...kept.label, sources: ["web"] } },
       "art-clip": { ...kept, artifactId: "art-clip", contentType: "video/mp4", fileName: "clip.mp4", byteSize: 4096 },
       "art-mkv": { ...kept, artifactId: "art-mkv", contentType: "video/x-matroska" },
+      "art-voice": { ...kept, artifactId: "art-voice", contentType: "audio/ogg", fileName: "voice.ogg", byteSize: 4096 },
     };
     const store = { getArtifact: async (id: string) => records[id] } as unknown as Parameters<typeof namedAttachments>[0];
     expect((await namedAttachments(store, "default", ["art-up-1"]))[0]?.line).toBe(
@@ -201,6 +202,8 @@ describe("attachments named by a message", () => {
     expect((await namedAttachments(store, "default", ["art-clip"]))[0]?.line).toBe(
       "[Attachment clip.mp4 (video/mp4, 4 KB): artifact art-clip, untrusted content from the sender]",
     );
+    // An audio upload says which tool reads what is said in it.
+    expect((await namedAttachments(store, "default", ["art-voice"]))[0]?.line).toContain("audio.transcribe");
     for (const id of ["art-mkv", "art-other", "art-text", "art-pending", "art-preview", "art-trusted", "art-web", "art-missing"])
       await expect(namedAttachments(store, "default", [id])).rejects.toMatchObject({ code: "NOT_FOUND" });
     await expect(namedAttachments(store, "default", ["art-up-1", "art-up-1"])).rejects.toMatchObject({ code: "INVALID_INPUT" });

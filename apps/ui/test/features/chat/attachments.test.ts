@@ -6,6 +6,7 @@ import {
   ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES,
 } from "@tavi/contracts";
 import {
+  FILE_ACCEPT,
   composePrompt,
   inlinedFilesOf,
   readAttachment,
@@ -211,5 +212,23 @@ describe("video and GIF attachments", () => {
     await expect(
       uploadFile(client, "default", { kind: "upload", media: "video", name: "clip.mp4", file: gone }, "up-12345678"),
     ).rejects.toThrow("clip.mp4: the file changed or moved after it was attached; attach it again.");
+  });
+});
+
+describe("audio attachments", () => {
+  const ogg = new TextEncoder().encode("OggS\u0000\u0002");
+  const mp3 = new Uint8Array([...new TextEncoder().encode("ID3"), 4, 0, 0, 0, 0, 0, 0]);
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d]);
+
+  it("offers the audio audio.transcribe reads, takes it by its first bytes, and refuses one renamed", async () => {
+    for (const extension of [".ogg", ".opus", ".mp3", ".m4a", ".wav", ".aac"]) expect(FILE_ACCEPT.split(",")).toContain(extension);
+    expect(await readAttachment(new File([ogg], "voice.opus"))).toMatchObject({ kind: "upload", media: "audio", name: "voice.opus" });
+    expect(await readAttachment(new File([mp3], "memo.mp3", { type: "audio/mpeg" }))).toMatchObject({ media: "audio" });
+    const m4a = new Uint8Array([0, 0, 0, 0x18, ...new TextEncoder().encode("ftypmp42"), 0, 0, 0, 0]);
+    expect(await readAttachment(new File([m4a], "recorder.m4a"))).toMatchObject({ media: "audio" });
+    await expect(readAttachment(new File([png], "fake.mp3"))).rejects.toThrow("not an Ogg, MP3, M4A, WAV or AAC audio file");
+    const long = new Uint8Array(ATTACHMENT_UPLOAD_VIDEO_MAX_BYTES + 1);
+    long.set(ogg);
+    await expect(readAttachment(new File([long], "long.ogg"))).rejects.toThrow("an audio file is at most 50 MiB");
   });
 });

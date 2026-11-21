@@ -7,7 +7,7 @@ Send Tavi a picture from the canvas and ask what is in it: a model that reads im
 
 ## 1. Attach the picture
 
-Run `tavi ui`, and in **Home**'s message box choose the paperclip (**Attach PDF, video, GIF, text and code files**), then pick the picture. The canvas takes a picture as a GIF, up to 50 MB; it shows as a chip under the box.
+Run `tavi ui`, and in **Home**'s message box choose the paperclip (**Attach PDF, photo, video, GIF, audio, text and code files**), then pick the picture. The canvas takes a picture as a GIF, up to 50 MB; it shows as a chip under the box.
 
 ![The message box with fruit-bowl.gif attached as a chip above the paperclip](../../assets/use-cases/photos-and-video/ask-about-a-photo/01-attach-the-picture.webp)
 
