@@ -473,7 +473,7 @@ describe.each([groupLikeChannel(), discordChannel()])("the group-chat seam over 
     expect(sentTo(roomId).filter((sent) => (sent.buttons ?? []).length > 0)).toEqual([]);
     await press("op", `r:${token}:o`, dmOf("op"));
     await waitFor(async () => (await repositories().tasks.get(taskId))?.status === "completed");
-    await waitFor(() => /approved/.test(card?.text ?? "") && /approved/.test(notice?.text ?? ""));
+    await waitFor(() => /approved/i.test(card?.text ?? "") && /approved/i.test(notice?.text ?? ""));
   });
 
   it("a member's press is refused privately, nothing shows in the room, and the round stays open", async () => {
