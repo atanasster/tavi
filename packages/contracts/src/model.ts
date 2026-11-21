@@ -147,9 +147,9 @@ export const ModelRequestSchema = z.object({
   /**
    * How hard a reasoning model thinks before it answers: `low` for the background sites whose answer is short
    * (a find, an extraction, a summary, a classification, a heartbeat check, a compaction). Sent as the preset
-   * takes it — OpenAI's `reasoning_effort` to a reasoning model, and OpenRouter's `reasoning.effort` to an
-   * OpenAI reasoning model there (to another, a `reasoning` object can switch thinking on) — and to no other
-   * endpoint or wire. Absent: the provider's default. Constant within a chat turn: a change re-writes
+   * takes it — OpenAI's `reasoning_effort` to a reasoning model, OpenRouter's `reasoning.effort` to an
+   * OpenAI reasoning model there, and at `low` thinking turned off (`reasoning.enabled: false`) for Claude
+   * there, which thinks unasked and could spend a short cap on it — and to no other endpoint or wire. Absent: the provider's default. Constant within a chat turn: a change re-writes
    * Anthropic's message cache. No `minimal`: OpenAI's o-series and GPT-5.1 and later refuse it.
    */
   reasoningEffort: z.enum(["low", "medium", "high"]).optional(),

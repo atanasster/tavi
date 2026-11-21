@@ -250,8 +250,8 @@ function withPartBreakpoints(url: string | undefined, body: unknown, policy?: Ca
   return JSON.stringify(request);
 }
 
-/** `body` with OpenRouter's `reasoning.effort`, unless it names a reasoning setting already; `undefined` when it is not a JSON request. */
-export function withReasoningEffort(body: unknown, effort: string): string | undefined {
+/** `body` with OpenRouter's `reasoning` object, unless it names a reasoning setting already; `undefined` when it is not a JSON request. */
+export function withReasoning(body: unknown, reasoning: Readonly<Record<string, string | boolean>>): string | undefined {
   if (typeof body !== "string") return undefined;
   let parsed: unknown;
   try {
@@ -260,7 +260,7 @@ export function withReasoningEffort(body: unknown, effort: string): string | und
     return undefined;
   }
   if (!isRecord(parsed) || parsed["reasoning"] !== undefined) return undefined;
-  return JSON.stringify({ ...parsed, reasoning: { effort } });
+  return JSON.stringify({ ...parsed, reasoning });
 }
 
 /** `body` with a `session_id` (OpenRouter's sticky routing), unless it names one already; `undefined` when it is not a JSON request. */

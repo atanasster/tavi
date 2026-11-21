@@ -477,14 +477,7 @@ export function createAiSdkModelAdapter(options: AiSdkModelAdapterOptions): Mode
       breakpoints: capabilities.breakpoints === true,
       // The chat's calls stay on one provider, so the cache it wrote is the one read.
       ...(capabilities.sessionId === true ? { sessionId: cacheKeyDigest(cacheKey) } : {}),
-      // On OpenRouter only an OpenAI reasoning model's effort is set: for another model a `reasoning` object can
-      // switch thinking on (Claude's extended thinking, at 1,024 tokens or more), which a short-capped call cannot afford.
-      ...(request.reasoningEffort !== undefined &&
-      presetOf(connection.baseUrl)?.id === "openrouter" &&
-      request.model.startsWith("openai/") &&
-      openaiReasoningModel(request.model.slice("openai/".length))
-        ? { reasoningEffort: request.reasoningEffort }
-        : {}),
+      ...openrouterReasoning(connection.baseUrl, request),
     };
     // Sign in with ChatGPT's connection speaks the Responses API, and so does OpenAI's native computer tool.
     const responses =
@@ -1951,4 +1944,23 @@ export function readStatusCode(error: unknown): number | undefined {
     current = candidate.cause;
   }
   return undefined;
+}
+
+/**
+ * OpenRouter's `reasoning` object for a call, or nothing. An OpenAI reasoning
+ * model there takes the effort as it is. Claude thinks there unasked, and on a
+ * short-capped call (`low`: a summary, a title, a classification) its thinking
+ * can spend the whole cap and leave no answer, so `low` turns it off; a deeper
+ * effort leaves Claude to the provider, since an effort object would set its
+ * thinking budget (1,024 tokens or more). Every other model is left as it is.
+ */
+function openrouterReasoning(
+  baseUrl: string,
+  request: Pick<ModelRequest, "model" | "reasoningEffort">,
+): { readonly reasoning?: Readonly<Record<string, string | boolean>> } {
+  const effort = request.reasoningEffort;
+  if (effort === undefined || presetOf(baseUrl)?.id !== "openrouter") return {};
+  if (request.model.startsWith("openai/") && openaiReasoningModel(request.model.slice("openai/".length))) return { reasoning: { effort } };
+  if (request.model.startsWith("anthropic/") && effort === "low") return { reasoning: { enabled: false } };
+  return {};
 }

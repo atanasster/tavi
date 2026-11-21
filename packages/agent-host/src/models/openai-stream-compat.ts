@@ -78,7 +78,7 @@ import {
   usageReportsCache,
   wirePrefixHash,
   withPromptCacheBreakpoints,
-  withReasoningEffort,
+  withReasoning,
   withSessionId,
   type CallCachePolicy,
 } from "./prompt-cache.js";
@@ -97,8 +97,8 @@ export interface WireObservation {
   readonly breakpoints?: boolean;
   /** Sent as `session_id`: set only for a preset that takes one (`promptCache.sessionId`). */
   readonly sessionId?: string;
-  /** Sent as OpenRouter's `reasoning.effort`: set only on OpenRouter. */
-  readonly reasoningEffort?: string;
+  /** Sent as OpenRouter's `reasoning` object (an effort, or thinking off): set only on OpenRouter. */
+  readonly reasoning?: Readonly<Record<string, string | boolean>>;
   prefixHash?: string;
   cacheUsageReported?: boolean;
   /**
@@ -557,9 +557,7 @@ export function createOpenAiCompatibleTransport(
     const cachedBody =
       observation?.sessionId === undefined ? markedBody : (withSessionId(markedBody ?? body, observation.sessionId) ?? markedBody);
     const effortBody =
-      observation?.reasoningEffort === undefined
-        ? cachedBody
-        : (withReasoningEffort(cachedBody ?? body, observation.reasoningEffort) ?? cachedBody);
+      observation?.reasoning === undefined ? cachedBody : (withReasoning(cachedBody ?? body, observation.reasoning) ?? cachedBody);
     const parserBody = withPdfFileParser(effortBody ?? body, options.pdfEngine);
     const finalBody = parserBody ?? effortBody ?? (body === init?.body ? undefined : body);
     if (observation !== undefined) {

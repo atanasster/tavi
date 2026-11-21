@@ -258,7 +258,7 @@ describe("a native Anthropic connection", () => {
 describe("reasoning effort by preset", () => {
   const streamed = () =>
     new Response(sse([textChunk("hi", null), textChunk("", "stop")]), { status: 200, headers: { "content-type": "text/event-stream" } });
-  const bodyOf = async (baseUrl: string, model: string, extra: Record<string, unknown> = {}) => {
+  const bodyOf = async (baseUrl: string, model: string, extra: Record<string, unknown> = {}, effort: "low" | "medium" | "high" = "low") => {
     const bodies: Record<string, unknown>[] = [];
     const adapter = createAiSdkModelAdapter({
       connections: [{ connectionId: "fixture", kind: "openai-compatible", baseUrl, credentialRef: "fixture.apiKey", ...extra }],
@@ -269,17 +269,21 @@ describe("reasoning effort by preset", () => {
       }),
     });
     await adapter
-      .stream(request({ model, reasoningEffort: "low" }), { signal: new AbortController().signal, onEvent: () => {} })
+      .stream(request({ model, reasoningEffort: effort }), { signal: new AbortController().signal, onEvent: () => {} })
       .catch(() => undefined);
     return bodies[0] ?? {};
   };
 
-  it("sends OpenAI's reasoning_effort to a reasoning model only, OpenRouter's reasoning.effort to an OpenAI reasoning model there only, and nothing elsewhere", async () => {
+  it("sends OpenAI's reasoning_effort to a reasoning model only, OpenRouter's reasoning.effort to an OpenAI reasoning model there, Claude's thinking off there at low effort, and nothing elsewhere", async () => {
     expect((await bodyOf("https://api.openai.com/v1", "gpt-5.5"))["reasoning_effort"]).toBe("low");
     expect(await bodyOf("https://api.openai.com/v1", "gpt-4o")).not.toHaveProperty("reasoning_effort");
     expect((await bodyOf("https://openrouter.ai/api/v1", "openai/gpt-5.5"))["reasoning"]).toEqual({ effort: "low" });
-    // Claude through OpenRouter: a reasoning object would turn its extended thinking on.
-    expect(await bodyOf("https://openrouter.ai/api/v1", "anthropic/claude-sonnet-5-5")).not.toHaveProperty("reasoning");
+    // Claude through OpenRouter thinks unasked, and a short-capped call's answer can go on thinking: low turns it off.
+    expect((await bodyOf("https://openrouter.ai/api/v1", "anthropic/claude-haiku-5.5"))["reasoning"]).toEqual({ enabled: false });
+    // A deeper effort leaves Claude to the provider: an effort object would set its thinking budget.
+    expect(await bodyOf("https://openrouter.ai/api/v1", "anthropic/claude-sonnet-5.5", {}, "high")).not.toHaveProperty("reasoning");
+    // Another vendor's model there is left as it is.
+    expect(await bodyOf("https://openrouter.ai/api/v1", "google/gemini-3.6-flash")).not.toHaveProperty("reasoning");
     // Sign in with ChatGPT's Responses wire shares OpenAI's base URL and takes no effort.
     expect(JSON.stringify(await bodyOf("https://api.openai.com/v1", "gpt-5.5", { wireApi: "responses" }))).not.toContain('"effort"');
     const local = await bodyOf("http://127.0.0.1:11434/v1", "llama3");
