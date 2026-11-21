@@ -125,10 +125,15 @@ export interface ChannelApprovalDependencies {
    * it, a task's own principal decides its rounds.
    */
   readonly operatorOf?: (workspaceId: string) => string | undefined;
+  /** The workspace's time zone, which a round's deadline and decision times are shown in; UTC without it. */
+  readonly timeZoneOf?: (workspaceId: string) => Promise<string | undefined>;
   /** The operator's PIN a critical round's link page asks for; `undefined` when none is set. */
   readonly readPin?: () => Promise<string | undefined>;
   readonly onDiagnostic?: (message: string, fields?: Record<string, unknown>) => void;
 }
+
+/** What a press of each scope says it approves, as its acknowledgement: "Approving for this chat…". */
+const SCOPE_PRESS_WORDS: Readonly<Record<ApprovalScope, string>> = { once: " once", session: " for this chat", always: " in every chat" };
 
 /** A round `/new` withdrew: its settle event's `detail.reason`, and what it says where it was asked. */
 const ROUND_RESET_REASON = "conversation-reset";
@@ -255,6 +260,28 @@ export interface ChannelApprovals {
 type ReplyTargetRecord = NonNullable<InvocationContext["messagingReplyTo"]>;
 
 export function createChannelApprovals(deps: ChannelApprovalDependencies): ChannelApprovals {
+  /** The workspace's zone, or undefined (shown as UTC) when it cannot be read. */
+  const zoneOf = async (workspaceId: string): Promise<string | undefined> => {
+    try {
+      return await deps.timeZoneOf?.(workspaceId);
+    } catch (error) {
+      deps.onDiagnostic?.("the workspace's time zone could not be read; a card shows UTC", { workspaceId, error: errorMessage(error) });
+      return undefined;
+    }
+  };
+  /**
+   * Who decided, as a chat names them: the name a bound person was given on the
+   * connection they decided from, else "Tavi's owner" for the workspace's
+   * operator; undefined leaves the principal id.
+   */
+  const deciderName = async (workspaceId: string, principalId: string | undefined, via: string): Promise<string | undefined> => {
+    if (principalId === undefined) return undefined;
+    const bindings = deps.repositories.messagingIdentityBindings;
+    const sender = await bindings.senderOf(via, principalId);
+    const name = sender === undefined ? undefined : (await bindings.get(via, sender))?.displayName;
+    if (name !== undefined && name.trim() !== "") return name;
+    return deps.operatorOf?.(workspaceId) === principalId ? "Tavi's owner" : undefined;
+  };
   const { repositories } = deps;
   const ttlMs = deps.roundTtlMs ?? DEFAULT_CHANNEL_ROUND_TTL_MS;
 
@@ -412,7 +439,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     ).length;
     const effectId = `approval:${round.taskId}:${round.steps}`;
     const suffix = failures === 0 ? "" : `:${failures}`;
-    const recordedText = message.body + (expiresAt === undefined ? "" : `\n${roundExpiryLine(expiresAt)}`);
+    const recordedText = message.body + (expiresAt === undefined ? "" : `\n${roundExpiryLine(expiresAt, await zoneOf(round.workspaceId))}`);
     const cardIds: string[] = [];
     let reached = false;
     let unreachable = false;
@@ -542,7 +569,8 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       // What is recorded (and shown on a link's page, and edited in place) is
       // the announcement without its links: a raw token lives only in the one
       // message it was sent in.
-      const recordedText = message.body + (expiresAt === undefined ? "" : `\n${roundExpiryLine(expiresAt)}`);
+      const recordedText =
+        message.body + (expiresAt === undefined ? "" : `\n${roundExpiryLine(expiresAt, await zoneOf(round.workspaceId))}`);
       const text =
         recordedText +
         (linkLines.length === 0
@@ -691,7 +719,10 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       ).round;
     const email = deps.isEmailConnection?.(replyTarget.connectionId) === true;
     const group = roundGroup(announcement.requests);
-    const maxTextLength = deps.messaging.capabilitiesOf(replyTarget.connectionId)?.maxTextLength;
+    const capabilities = deps.messaging.capabilitiesOf(replyTarget.connectionId);
+    const maxTextLength = capabilities?.maxTextLength;
+    // Buttons under the card: it says to press one rather than spelling out a typed command.
+    const hasButtons = capabilities?.approvals === "buttons" && capabilities.interactions === true;
     const withheld = await linksWithheld(round.taskId, replyTarget);
     const links = !withheld && deps.linkBase?.(replyTarget.connectionId) !== undefined;
     const forms = announcement.requests.flatMap((request) => (request.display?.form === undefined ? [] : [request.display.form]));
@@ -702,6 +733,10 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     // A room's round shown to its decider one-to-one is rendered as their own chat's card.
     const placement = await privatePlacementOf(round, replyTarget);
     const privately = placement?.destination !== undefined;
+    // A bare `approve` decides the task of the chat it is typed in: only a round of the chat's own task
+    // (not a worker's, nor a room's shown privately) may be answered without its token.
+    const ownChat = !privately && (await repositories.messagingConversations.getByTask(round.taskId)) !== undefined;
+    const zone = await zoneOf(round.workspaceId);
     const direct =
       privately ||
       (!email &&
@@ -714,6 +749,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
         ...(withheld || (!privately && operatorDecides(announcement.invocation)) ? { operatorDecides: true } : {}),
         ...(email ? { email: { links } } : {}),
         ...(maxTextLength === undefined ? {} : { maxTextLength }),
+        ...(hasButtons ? { buttons: { ownChat } } : {}),
         ...(forms.length === 0 ? {} : { formView }),
         ...(formApproval === undefined ? {} : { formApproval }),
         onListed: (listed) => {
@@ -731,7 +767,8 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     // Rows that do not fit three messages (the links and expiry line beside them) are not shown, so the chat may only reject.
     const fits = (text: string): boolean =>
       maxTextLength === undefined ||
-      splitMessage(round.expiresAt === undefined ? text : `${text}\n${roundExpiryLine(round.expiresAt)}`, maxTextLength, 3) !== undefined;
+      splitMessage(round.expiresAt === undefined ? text : `${text}\n${roundExpiryLine(round.expiresAt, zone)}`, maxTextLength, 3) !==
+        undefined;
     if (forms.length > 0 && !fits(body)) {
       formApproval = "none";
       body = render("labels", formApproval);
@@ -931,7 +968,19 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     const via = settlement.via ?? (expired ? "policy" : "ipc");
     await repositories.approvalRounds.settle(settlement.taskId, settlement.steps, at);
     const round = await repositories.approvalRounds.get(settlement.taskId, settlement.steps);
-    const notice = round === undefined ? undefined : settlementText(round, settlement, expired, deps.channelName?.(via) ?? via, at);
+    const notice =
+      round === undefined
+        ? undefined
+        : settlementText(
+            settlement,
+            expired,
+            deps.channelName?.(via) ?? via,
+            at,
+            definedOnly({
+              timeZone: await zoneOf(round.workspaceId),
+              decider: await deciderName(round.workspaceId, settlement.decisions[0]?.decidedBy, via),
+            }),
+          );
     await repositories.approvalRounds.appendEvent({
       taskId: settlement.taskId,
       steps: settlement.steps,
@@ -1513,7 +1562,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
         actor,
         event,
         `reason-prompt:${token}:${event.interaction?.callbackId ?? event.providerEventId}`,
-        `Why reject round ${token}? (optional) Your next message here within ${plural(minutes, "minute")} is the reason the model reads — send "-" for none. With no reply, it is rejected without one.`,
+        `Why reject it? (optional) Your next message here within ${plural(minutes, "minute")} is the reason the model reads — send "-" for none. With no reply, it is rejected without one.`,
       );
       return;
     }
@@ -1521,7 +1570,8 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     // Acknowledged before the decision runs: the resumed turn can take far
     // longer than Telegram keeps a press answerable, and the presser's client
     // spins until it is answered.
-    await acknowledge(`Approving round ${token}${scope === "once" ? "" : ` (${scope})`}…`);
+    // The press answers the card it is under: no round token, which a chat's reader has no use for.
+    await acknowledge(`Approving${SCOPE_PRESS_WORDS[scope]}…`);
     // Not awaited: the poll loop that delivered this press must not wait for
     // the turn it resumes. The round key makes the decision safe to finish late.
     void decide({

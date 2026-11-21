@@ -11,6 +11,15 @@ change behaviour or stored data.
 - `/new` in a chat no longer shows the earlier conversation's task id: it
   says the earlier one can still be read in the Tavi app, and mentions a
   cancellation only when something was still going.
+- Approval cards in a chat with buttons say to press one, or to reply
+  "approve" or "reject" with a reason, instead of a round code and a
+  `<reason>` placeholder (the code stays where a typed answer needs it: a
+  worker's round, or a group's shown to you privately), and still says what
+  Session and Always allow. A button press and the reason prompt no longer
+  name the round's code either. A decided card says "Approved for this chat by Ana
+  via Telegram at 05:24 EET": no round code, the person's name rather than
+  `operator`, and the workspace's time zone rather than UTC, as is the
+  deadline a card is rejected by.
 
 ## 0.3.1 — 2026-11-21
 

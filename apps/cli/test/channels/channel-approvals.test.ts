@@ -26,7 +26,9 @@ import {
   renderQuestionText,
   renderRoundText,
   roundButtons,
+  roundExpiryLine,
   roundScopes,
+  settlementText,
 } from "../../src/features/approvals/channel-approval-text.js";
 import { createChannelApprovals } from "../../src/features/approvals/channel-approvals.js";
 import { composeTaviRuntime } from "../../src/runtime/composition.js";
@@ -143,6 +145,7 @@ async function harness(
     workspaceId: "default",
     principalId: "alice",
     approvedBy: "operator",
+    displayName: "Alice Smith",
     createdAt: "2026-01-01T00:00:00.000Z",
   });
   const sent = () => (instances[0]?.sent ?? []).map((message) => (message.parts[0] as { content?: string }).content ?? "");
@@ -381,6 +384,15 @@ describe("a round of many calls", () => {
     );
     expect(text).toContain("approve abcdefgh session (any web_search call in this chat)");
     expect(text).toContain("approve abcdefgh always (any web_search call, in every chat)");
+    // Under buttons, which are one word each, the card still says how wide Session and Always are.
+    expect(
+      renderRoundText(
+        { taskId: "t", steps: 1, invocation: { workspaceId: "w", principalId: "p", runId: "t", caller: "c" }, requests },
+        "abcdefgh",
+        undefined,
+        { buttons: { ownChat: true } },
+      ),
+    ).toContain("Session allows any web_search call in this chat. Always allows any web_search call, in every chat.");
   });
 
   it("asks a browser round as one question: for this task by default, or always", () => {
@@ -416,6 +428,48 @@ describe("a round of many calls", () => {
         { email: { links: true } },
       ),
     ).toContain("this call only: the next one asks again");
+    // Under buttons, the card says to press one: no round token or `<reason>` placeholder.
+    const withButtons = renderRoundText(
+      { taskId: "t", steps: 1, invocation: { workspaceId: "w", principalId: "p", runId: "t", caller: "c" }, requests },
+      "abcdefgh",
+      undefined,
+      { buttons: { ownChat: true } },
+    );
+    expect(withButtons).toContain('Press a button below, or reply "approve", or "reject" with your reason.');
+    expect(withButtons).not.toContain("abcdefgh");
+    expect(withButtons).not.toContain("<reason>");
+    // The group's note stays: the buttons do not say that another site asks again.
+    expect(withButtons).toContain("Opening another site asks again");
+    // A round that is not the chat's own task's (a worker's, a room's shown privately): a bare verb would not reach it.
+    expect(
+      renderRoundText(
+        { taskId: "t", steps: 1, invocation: { workspaceId: "w", principalId: "p", runId: "t", caller: "c" }, requests },
+        "abcdefgh",
+        undefined,
+        { buttons: { ownChat: false } },
+      ),
+    ).toContain('Press a button below, or reply "approve abcdefgh", or "reject abcdefgh" with your reason.');
+  });
+
+  it("says when a round was decided and expires in the workspace's zone, and who decided by name", () => {
+    const at = "2026-11-21T03:24:00.000Z";
+    const decision = { callId: "a", toolName: "reminders.create", approved: true, decidedBy: "operator", scope: "session" as const };
+    const settlement = {
+      taskId: "t",
+      steps: 1,
+      invocation: { workspaceId: "w", principalId: "p", runId: "t", caller: "c" },
+      decisions: [decision],
+    };
+    expect(settlementText(settlement, false, "Telegram", at, { timeZone: "Europe/Sofia", decider: "Ana" })).toBe(
+      "✅ Approved for this chat by Ana via Telegram at 05:24 EET.",
+    );
+    // Without a zone, UTC; without a name, the principal.
+    expect(settlementText(settlement, false, "Telegram", at)).toBe("✅ Approved for this chat by operator via Telegram at 03:24 UTC.");
+    expect(settlementText({ ...settlement, decisions: [{ ...decision, approved: false }] }, false, "Telegram", at)).toBe(
+      "❌ Rejected by operator via Telegram at 03:24 UTC.",
+    );
+    expect(roundExpiryLine("2026-11-22T03:24:00.000Z", "Europe/Sofia")).toBe("⌛ Not decided by Sun 22 Nov, 05:24 EET, it is rejected.");
+    expect(roundExpiryLine("2026-11-22T03:24:00.000Z", "Not/AZone")).toBe("⌛ Not decided by Sun 22 Nov, 03:24 UTC, it is rejected.");
   });
 
   it("names the host a browser round allows, and that another site asks again", () => {
@@ -711,11 +765,9 @@ describe("rounds in the originating conversation", () => {
       kind: "approval",
       resume: { approved: true, decidedBy: "operator", ...expectedStepsOf(decidability.round) },
     });
-    const token = (await repositories.approvalRounds.get(taskId, 1))?.token ?? "";
     await waitFor(() => sent().some((text) => text.startsWith("✅")));
-    expect(sent().find((text) => text.startsWith("✅"))).toMatch(
-      new RegExp(`^✅ Round ${token} approved by operator via a terminal at \\d\\d:\\d\\d UTC\\.$`),
-    );
+    // No round token in the notice: the card above it is what the chat's reader decided.
+    expect(sent().find((text) => text.startsWith("✅"))).toMatch(/^✅ Approved by operator via a terminal at \d\d:\d\d \S+\.$/);
     await runtime.close();
   });
 });
@@ -963,10 +1015,10 @@ describe("buttons", () => {
 
     await runtime.messaging.ingest(press(`r:${token}:s`));
     // Answered before the decision runs, which then finishes in the background.
-    expect(answered.at(-1)?.text).toBe(`Approving round ${token} (session)…`);
+    expect(answered.at(-1)?.text).toBe("Approving for this chat…");
     await waitFor(async () => (await repositories.tasks.get(taskId))?.status === "completed" && edited.length === 1);
     expect(await repositories.toolPolicy.listSessionGrants(taskId)).toHaveLength(1);
-    expect(edited[0]?.text).toMatch(/🔐 Approval needed[\s\S]*✅ Round .* approved \(session\) by alice via conn-a at \d\d:\d\d UTC\./);
+    expect(edited[0]?.text).toMatch(/🔐 Approval needed[\s\S]*✅ Approved for this chat by Alice Smith via conn-a at \d\d:\d\d \S+\./);
     await runtime.close();
   });
 
@@ -982,7 +1034,7 @@ describe("buttons", () => {
     // ❌ twice asks for the reason once.
     await runtime.messaging.ingest(press(`r:${token}:d`));
     await runtime.messaging.ingest(press(`r:${token}:d`));
-    expect(sent().filter((text) => text.startsWith(`Why reject round ${token}?`))).toHaveLength(1);
+    expect(sent().filter((text) => text.startsWith("Why reject it?"))).toHaveLength(1);
     expect(sent().at(-1)).toMatch(/within 1 minute[\s\S]*With no reply, it is rejected without one/);
     await runtime.messaging.ingest(inbound("-"));
     await waitFor(async () => (await repositories.approvals.listForTask(taskId))[0]?.state === "denied");
@@ -1049,7 +1101,7 @@ describe("buttons", () => {
     let taskId = (await repositories.messagingConversations.get("conn-a", "chat-1"))?.taskId ?? "";
     let token = (await repositories.approvalRounds.get(taskId, 1))?.token ?? "";
     await first.runtime.messaging.ingest(press(`r:${token}:d`));
-    expect(first.sent().at(-1)).toMatch(/Why reject round/);
+    expect(first.sent().at(-1)).toMatch(/Why reject it\?/);
     await first.runtime.messaging.ingest(inbound("it is already stored"));
     // Decided in the background: the poll loop does not wait for the resumed turn.
     await waitFor(async () => (await repositories.approvals.listForTask(taskId))[0]?.state === "denied");

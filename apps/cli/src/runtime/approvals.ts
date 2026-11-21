@@ -11,6 +11,7 @@ import { isLocalConnectionId } from "@tavi/contracts";
 import { createChannelApprovals } from "../features/approvals/channel-approvals.js";
 import { createConnectWaits } from "../features/apps/connect-waits.js";
 import { createMemoryChannelCards } from "../features/memory/channel-cards.js";
+import { workspaceZoneOf } from "../features/memory/owner.js";
 import { memoryReachOf } from "./chat-scope.js";
 import type { RunEventsContext } from "./run-events.js";
 
@@ -136,6 +137,8 @@ export function composeApprovals(composed: RunEventsContext) {
     channelName,
     // Links need somewhere public to open: the ingress's public address, for email.
     linkBase: overrides.approvalLinkBase ?? ((connectionId) => (isEmailConnection(connectionId) ? ingress.publicUrl() : undefined)),
+    // A round's deadline and decision are shown in the workspace's zone, as its reminders are.
+    timeZoneOf: workspaceZoneOf(persistencePort.repositories.workspaceSettings),
     readPin: async () => (await secrets.getSecret(APPROVAL_PIN_CREDENTIAL_REF)) ?? undefined,
     // A person's rounds are the workspace operator's to decide (Allowed people).
     operatorOf: (workspaceId) => access.resolveWorkspace(workspaceId)?.principalId,

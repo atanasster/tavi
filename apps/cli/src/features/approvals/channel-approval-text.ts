@@ -9,7 +9,6 @@ import {
   maxRisk,
   newRoundToken,
   type ApprovalCallScopes,
-  type ApprovalRoundRecord,
   type ApprovalScope,
   ApprovalFormSchema,
   type ApprovalForm,
@@ -212,14 +211,40 @@ export function questionSubject(waitId: string, question: string, choices: AskUs
  * day it is sent, the day too otherwise — a question that waits a day would
  * else read as due at a time already past.
  */
-function deadlineText(deadlineAt: string, now: string | undefined): string {
+function deadlineText(deadlineAt: string, now: string | undefined, timeZone?: string): string {
   const at = new Date(deadlineAt);
   if (Number.isNaN(at.getTime())) return "";
-  const time = `${at.toISOString().slice(11, 16)} UTC`;
-  const sameDay = now !== undefined && now.slice(0, 10) === at.toISOString().slice(0, 10);
+  const zone = usableZone(timeZone);
+  const time = wallTime(at, zone);
+  const dayOf = (date: Date): string => date.toLocaleDateString("en-CA", { timeZone: zone });
+  const sameDay = now !== undefined && !Number.isNaN(new Date(now).getTime()) && dayOf(new Date(now)) === dayOf(at);
   if (sameDay) return time;
-  const day = at.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+  const day = at.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: zone });
   return `${day}, ${time}`;
+}
+
+/** `zone` when the runtime knows it, else UTC: a chat's times follow the workspace's zone. */
+function usableZone(zone: string | undefined): string {
+  if (zone === undefined || zone === "") return "UTC";
+  try {
+    new Intl.DateTimeFormat("en-GB", { timeZone: zone });
+    return zone;
+  } catch {
+    return "UTC";
+  }
+}
+
+/** The time of day in `zone` with the zone's short name: `05:24 EET`, `03:24 UTC`. */
+function wallTime(at: Date, zone: string): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: zone,
+    timeZoneName: "short",
+  }).formatToParts(at);
+  const part = (type: Intl.DateTimeFormatPartTypes): string => parts.find((entry) => entry.type === type)?.value ?? "";
+  return `${part("hour")}:${part("minute")} ${zone === "UTC" ? "UTC" : part("timeZoneName")}`;
 }
 
 /** A question's button data: `q:<token>:<n>` picks option n, `t<n>` toggles it, `ok` submits a multi-select. */
@@ -235,14 +260,21 @@ export function questionToken(waitId: string): string {
 export function renderQuestionText(
   question: string,
   choices: AskUserChoices | undefined,
-  extra: { readonly context?: string; readonly deadlineAt?: string; readonly now?: string; readonly origin?: string } = {},
+  extra: {
+    readonly context?: string;
+    readonly deadlineAt?: string;
+    readonly now?: string;
+    readonly origin?: string;
+    /** The workspace's time zone, which the deadline is shown in; UTC when absent. */
+    readonly timeZone?: string;
+  } = {},
 ): string {
   // Who asks, when it is not the chat's own task — a schedule's run.
   const asks = extra.origin === undefined ? [] : [`⏸ ${printableLine(extra.origin)} asks:`];
   // Why it is asked, and when it stops waiting — with what it then goes with.
   const why = extra.context === undefined ? [] : [`Why: ${extra.context}`];
   const fallback = choices?.defaultOption === undefined ? undefined : choices.options[choices.defaultOption - 1]?.label;
-  const by = extra.deadlineAt === undefined ? "" : deadlineText(extra.deadlineAt, extra.now);
+  const by = extra.deadlineAt === undefined ? "" : deadlineText(extra.deadlineAt, extra.now, extra.timeZone);
   const until =
     by === "" && fallback === undefined
       ? []
@@ -290,6 +322,14 @@ export interface RoundTextOptions {
   readonly formApproval?: "none" | "link";
   /** Told how many of the round's calls the text lists, the rest past its budget. */
   readonly onListed?: (listed: number) => void;
+  /**
+   * The round's buttons are shown under it: the text says to press one, or to
+   * reply in words, with no `<reason>` placeholder. `ownChat`: the round is the
+   * task of the chat it is shown in, so a bare `approve` typed there decides it
+   * and no token is shown; else (a worker's round, a room's shown privately)
+   * the typed answer names the round's token.
+   */
+  readonly buttons?: { readonly ownChat: boolean };
 }
 
 /** A tainted call's provenance line for a channel, disarmed and bounded; undefined for a clean one. */
@@ -342,9 +382,16 @@ export function reviewNoticeText(requests: readonly { readonly toolName: string 
   );
 }
 
+/** How a card with buttons is answered: press one, or type the answer — the bare verb where it decides this round. */
+function pressLine(token: string, ownChat: boolean): string {
+  return ownChat
+    ? 'Press a button below, or reply "approve", or "reject" with your reason.'
+    : `Press a button below, or reply "approve ${token}", or "reject ${token}" with your reason.`;
+}
+
 /** The line that says when an announced round is rejected unless decided. */
-export const roundExpiryLine = (expiresAt: string): string => {
-  const by = deadlineText(expiresAt, undefined);
+export const roundExpiryLine = (expiresAt: string, timeZone?: string): string => {
+  const by = deadlineText(expiresAt, undefined, timeZone);
   return by === "" ? "If nobody decides it in time, it is rejected." : `⌛ Not decided by ${by}, it is rejected.`;
 };
 
@@ -415,6 +462,8 @@ export function renderRoundText(
   }
   options.onListed?.(shownCount);
   const email = options.email;
+  // An email's buttons are its links, which it says how to use on its own.
+  const buttons = email === undefined ? options.buttons : undefined;
   if (options.operatorDecides === true) {
     lines.push("Waiting for the operator to approve or reject it; you will hear here once they have.");
   } else if (options.formApproval === "none") {
@@ -449,7 +498,7 @@ export function renderRoundText(
             `approve ${token} (this call only: the next one asks again${email.links ? "; a link below allows it for the chat" : ""})`,
             `reject ${token} <reason>`,
           ];
-    lines.push(`Reply: ${answers.join(" · ")}`);
+    lines.push(buttons === undefined ? `Reply: ${answers.join(" · ")}` : pressLine(token, buttons.ownChat));
   } else {
     // An email reply approves once only; a wider scope needs a link.
     const scopes = email === undefined ? roundScopes(round.requests) : (["once"] as const);
@@ -477,7 +526,19 @@ export function renderRoundText(
       ...scopes.filter((scope) => scope !== "once").map((scope) => `approve ${token} ${scope}${scopeHint(scope)}`),
       `reject ${token} <reason>`,
     ];
-    lines.push(`Reply: ${answers.join(" · ")}`);
+    if (buttons === undefined) lines.push(`Reply: ${answers.join(" · ")}`);
+    else {
+      // The buttons are one word each: what Session and Always cover is said here.
+      if (wholeTools.length > 0) {
+        const any = `any ${clip(named, 200)} call`;
+        const wide = [
+          ...(scopes.includes("session") ? [`Session allows ${any} in this chat.`] : []),
+          ...(scopes.includes("always") ? [`Always allows ${any}, in every chat.`] : []),
+        ];
+        if (wide.length > 0) lines.push(wide.join(" "));
+      }
+      lines.push(pressLine(token, buttons.ownChat));
+    }
   }
   if (expiresAt !== undefined) lines.push(roundExpiryLine(expiresAt));
   return lines.join("\n");
@@ -505,8 +566,8 @@ export interface LinkView {
  * What a settled question's message says under it. `via` names where it
  * was answered when that is not the message's own connection.
  */
-export function questionReceipt(outcome: AgentWaitOutcome, via: string | undefined, at: string): string {
-  const when = clockTime(at);
+export function questionReceipt(outcome: AgentWaitOutcome, via: string | undefined, at: string, timeZone?: string): string {
+  const when = clockTime(at, timeZone);
   if (outcome.kind === "answered") {
     const answer =
       outcome.answers === undefined || outcome.answers.length === 0
@@ -546,28 +607,40 @@ const FRONT_END_NAMES: Readonly<Record<string, string>> = {
   policy: "policy",
 };
 
-/** The time of day a decision was made, as a chat shows it: `14:02 UTC`. */
-const clockTime = (at: string): string => {
+/** The time of day a decision was made, as a chat shows it: ` at 05:24 EET`, ` at 14:02 UTC` without a zone. */
+const clockTime = (at: string, timeZone?: string): string => {
   const date = new Date(at);
-  return Number.isNaN(date.getTime()) ? "" : ` at ${date.toISOString().slice(11, 16)} UTC`;
+  return Number.isNaN(date.getTime()) ? "" : ` at ${wallTime(date, usableZone(timeZone))}`;
 };
 
+/** How a settlement names its decision's place and person; each optional. */
+export interface SettlementView {
+  /** The workspace's time zone; UTC when absent. */
+  readonly timeZone?: string;
+  /** Who decided, as the chat knows them: a bound person's name, "Tavi's owner"; the principal id when absent. */
+  readonly decider?: string;
+}
+
+/** What each scope allowed, as a settlement says it. */
+const SCOPE_WORDS: Readonly<Record<ApprovalScope, string>> = { once: "", session: " for this chat", always: " in every chat" };
+
 export function settlementText(
-  round: ApprovalRoundRecord,
   settlement: ApprovalRoundSettlement,
   expired: boolean,
   channel: string,
   at: string,
+  view: SettlementView = {},
 ): string {
-  const when = clockTime(at);
-  if (expired) return `⌛ Round ${round.token} expired${when} and was rejected; the task goes on without it.`;
+  // No round token: a chat's reader has the card above it, and the token is only for typing.
+  const when = clockTime(at, view.timeZone);
+  if (expired) return `⌛ Not decided in time, so it was rejected${when}; the task goes on without it.`;
   const approved = settlement.decisions.filter((decision) => decision.approved);
-  const who = settlement.decisions[0]?.decidedBy ?? "operator";
+  const who = view.decider ?? settlement.decisions[0]?.decidedBy ?? "Tavi's owner";
   const via = FRONT_END_NAMES[channel] ?? channel;
   if (approved.length === settlement.decisions.length) {
     const scopes = [...new Set(approved.map((decision) => decision.scope))];
-    return `✅ Round ${round.token} approved${scopes.length === 1 && scopes[0] !== "once" ? ` (${scopes[0]})` : ""} by ${who} via ${via}${when}.`;
+    return `✅ Approved${scopes.length === 1 ? SCOPE_WORDS[scopes[0] ?? "once"] : ""} by ${who} via ${via}${when}.`;
   }
-  if (approved.length === 0) return `❌ Round ${round.token} rejected by ${who} via ${via}${when}.`;
-  return `☑️ Round ${round.token} decided by ${who} via ${via}${when}: ${approved.length} of ${settlement.decisions.length} approved.`;
+  if (approved.length === 0) return `❌ Rejected by ${who} via ${via}${when}.`;
+  return `☑️ Decided by ${who} via ${via}${when}: ${approved.length} of ${settlement.decisions.length} approved.`;
 }

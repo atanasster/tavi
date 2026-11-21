@@ -349,8 +349,8 @@ A round nobody decides within 24 hours (`tavi serve --approval-expiry
 reached the chat expires: an announcement that failed is sent again on every
 sweep (each 30 seconds), and its expiry starts when it is delivered. Rounds
 decided in a terminal or the web app never expire. However a round is
-settled, the chat is told who decided it, where and when — `✅ Round k3f9abcd
-approved (session) by alice via Telegram at 14:02 UTC.`
+settled, the chat is told who decided it, where and when, in the workspace's
+time zone — `✅ Approved for this chat by Ana via Telegram at 16:02 EET.`
 
 In Telegram the round also carries buttons — Once, Session, Always when
 offered, Deny — and once decided, anywhere, the message loses its buttons and

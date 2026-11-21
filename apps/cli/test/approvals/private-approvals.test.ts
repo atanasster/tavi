@@ -188,9 +188,9 @@ describe("a room's approval round", () => {
         (await repositories.tasks.get(taskId))?.status === "completed" &&
         edited.some((edit) => (edit.destination as { room?: string }).room === "room-1"),
     );
-    expect(edited.find((edit) => (edit.destination as { dm?: string }).dm === "op-1")?.text).toMatch(/✅ Round .* approved by alice/);
+    expect(edited.find((edit) => (edit.destination as { dm?: string }).dm === "op-1")?.text).toMatch(/✅ Approved by Tavi's owner/);
     expect(edited.find((edit) => (edit.destination as { room?: string }).room === "room-1")?.text).toMatch(
-      /^⏸ Waiting on the operator's approval[\s\S]*✅ Round .* approved/,
+      /^⏸ Waiting on the operator's approval[\s\S]*✅ Approved/,
     );
   });
 
@@ -255,7 +255,7 @@ describe("a room's approval round", () => {
           messages()
             .filter((message) => (message.destination as { room?: string }).room === "room-1")
             .map(text)
-            .some((line) => /✅ Round .* approved/.test(line)),
+            .some((line) => /✅ Approved/.test(line)),
         ).toBe(true);
       } else {
         expect(edited.map((entry) => [entry.destination, entry.text.split("\n")[0]])).toContainEqual([
@@ -289,12 +289,12 @@ describe("a room's approval round", () => {
     expect(edited).toContainEqual({
       destination: { room: "room-1" },
       messageId: round?.messageIds[0],
-      text: expect.stringMatching(/memory\.propose[\s\S]*✅ Round .* approved/),
+      text: expect.stringMatching(/memory\.propose[\s\S]*✅ Approved/),
     });
     expect(
       messages()
         .slice(sentBefore)
-        .filter((message) => /✅ Round .* approved/.test(text(message))),
+        .filter((message) => /✅ Approved/.test(text(message))),
     ).toEqual([]);
   });
 });

@@ -160,7 +160,7 @@ describe("a round across an owner restart", () => {
       if (channel === "typed") await second.runtime.messaging.ingest(message(`approve ${token}`));
       if (channel === "button") {
         await second.runtime.messaging.ingest(press(`r:${token}:o`));
-        expect(second.answered.at(-1)?.text).toBe(`Approving round ${token}…`);
+        expect(second.answered.at(-1)?.text).toBe("Approving once…");
       }
       if (channel === "link") expect(await second.runtime.channelApprovals.useLink(links[0] ?? "", {})).toMatchObject({ ok: true });
       await waitFor(async () => (await repositories.tasks.get(taskId))?.status === "completed");
