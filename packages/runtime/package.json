@@ -53,7 +53,7 @@
     "@tavi/contracts": "workspace:*",
     "@tavi/node-kit": "workspace:*",
     "better-sqlite3": "catalog:",
-    "es-module-lexer": "3.0.4",
+    "es-module-lexer": "3.0.5",
     "zod": "catalog:"
   },
   "devDependencies": {
