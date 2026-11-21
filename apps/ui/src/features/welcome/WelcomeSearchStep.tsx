@@ -12,7 +12,8 @@ import { SEARCH_KIND_LABELS, keyToStore, searchKindNeeds } from "../settings/sea
 import { WebSearchProviderFields } from "../settings/WebSearchProviderFields.js";
 
 export function SearchStep(props: StepProps) {
-  const [kind, setKind] = useState<WebSearchKind>("brave");
+  // Tavily first: it starts without a key, so the step works before you have one.
+  const [kind, setKind] = useState<WebSearchKind>("tavily");
   const [key, setKey] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
   const [working, setWorking] = useState(false);

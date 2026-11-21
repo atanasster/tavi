@@ -196,6 +196,11 @@
   flex-direction: column;
   gap: var(--space-1-5);
 }
+/* Each field after the first, and the button, stand apart from the control above: a label reads with its own control. */
+.welcome-search > label:not(:first-child),
+.welcome-search > .actions {
+  margin-top: var(--space-3);
+}
 .welcome .button-link {
   color: hsl(var(--primary));
   font-weight: var(--weight-medium);
