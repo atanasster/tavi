@@ -157,7 +157,7 @@ curl -fsSL https://github.com/atanasster/tavi/releases/latest/download/install.s
 The installer checks every package against the release's `SHA256SUMS`,
 installs them into `~/.tavi/app` and links `tavi` into `~/.local/bin`, with
 Playwright and Chromium for the browser tools. Run it again to update; your
-data directory is not touched. `TAVI_VERSION=0.3.0` picks a release,
+data directory is not touched. `TAVI_VERSION=0.3.1` picks a release,
 `TAVI_HOME` and `TAVI_BIN_DIR` move the install, and `TAVI_SKIP_CHROMIUM=1`
 leaves the browser tools out.
 
