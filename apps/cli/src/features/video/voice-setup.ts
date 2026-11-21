@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -71,30 +71,36 @@ function defaultBrew(): string | undefined {
 /** Homebrew run with a fixed argument list, as the owner's own user, never through a shell. */
 function defaultRunBrew(brew: string, args: readonly string[]): Promise<{ readonly code: number; readonly output: string }> {
   return new Promise((done) => {
-    const child = execFile(
-      brew,
-      [...args],
-      {
-        timeout: BREW_TIMEOUT_MS,
-        maxBuffer: 16 * 1024 * 1024,
-        // A service's PATH is short: Homebrew finds its own tools from its prefix; no hints, no analytics prompt.
-        env: {
-          ...process.env,
-          PATH: `${dirname(brew)}:/usr/bin:/bin:/usr/sbin:/sbin`,
-          HOMEBREW_NO_ENV_HINTS: "1",
-          HOMEBREW_NO_ANALYTICS: "1",
-        },
-        // Its own session, with no terminal: a password prompt (sudo reads the terminal, not stdin) fails at once
-        // instead of waiting out the timeout on the terminal `tavi serve` runs in.
-        detached: true,
+    const child = spawn(brew, [...args], {
+      // A service's PATH is short: Homebrew finds its own tools from its prefix; no hints, no analytics prompt.
+      env: {
+        ...process.env,
+        PATH: `${dirname(brew)}:/usr/bin:/bin:/usr/sbin:/sbin`,
+        HOMEBREW_NO_ENV_HINTS: "1",
+        HOMEBREW_NO_ANALYTICS: "1",
       },
-      (error, stdout, stderr) => {
-        const code = error === null ? 0 : typeof (error as { code?: unknown }).code === "number" ? (error as { code: number }).code : 1;
-        done({ code, output: `${stdout}${stderr}`.slice(-2_000) });
-      },
-    );
-    // Nothing is ever typed into it: a prompt on stdin reads end-of-input and fails.
-    child.stdin?.end();
+      // Its own session, with no terminal: a password prompt (sudo reads the terminal, not stdin) fails at once
+      // instead of waiting out the timeout on the terminal `tavi serve` runs in. Nothing is typed into stdin either.
+      detached: true,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    // Only the tail is kept: what a failure is said with.
+    let output = "";
+    const keep = (chunk: Buffer): void => {
+      output = `${output}${chunk.toString("utf8")}`.slice(-2_000);
+    };
+    child.stdout.on("data", keep);
+    child.stderr.on("data", keep);
+    const timer = setTimeout(() => child.kill("SIGTERM"), BREW_TIMEOUT_MS);
+    const finish = (code: number): void => {
+      clearTimeout(timer);
+      done({ code, output });
+    };
+    child.on("error", (error) => {
+      keep(Buffer.from(errorMessage(error)));
+      finish(1);
+    });
+    child.on("close", (code) => finish(code ?? 1));
   });
 }
 
