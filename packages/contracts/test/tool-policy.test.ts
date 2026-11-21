@@ -238,6 +238,16 @@ describe("evaluateGate", () => {
     expect(evaluateGate({ ...base, assessment: assessment(["ls"], "low") }).allowedScopes).toEqual(["once", "session", "always"]);
   });
 
+  it("marks a call that taint alone made high, and no other", () => {
+    expect(evaluateGate({ ...base, assessment: assessment(["ls"], "low"), tainted: true }).risk.raisedByTaint).toBe(true);
+    // High for its own sake, or not tainted: no mark.
+    expect(evaluateGate({ ...base, assessment: assessment(["ls"], "high"), tainted: true }).risk.raisedByTaint).toBeUndefined();
+    expect(evaluateGate({ ...base, assessment: assessment(["ls"], "low") }).risk.raisedByTaint).toBeUndefined();
+    // An injection hit raises the call on its own, so taint is no longer the only cause.
+    const raised = evaluateGate({ ...base, assessment: assessment(["ls"], "low"), tainted: true });
+    expect(withInjectionWarning(raised, [injectionWarningReason("web", ["ignore previous"])]).risk.raisedByTaint).toBeUndefined();
+  });
+
   it("offers `always` for an alwaysAnyCall call under taint, at the assessor's own risk, and never past the narrower rules", () => {
     const anyCall = (risk: CallAssessment["risk"], extra: Partial<CallAssessment> = {}): CallAssessment => ({
       ...assessment([], risk),

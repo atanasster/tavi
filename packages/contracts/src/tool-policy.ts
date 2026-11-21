@@ -510,6 +510,11 @@ export const GateVerdictSchema = z.strictObject({
     /** The conversation holds output from a tool that returns untrusted content: `label.integrity === "untrusted"` when the label is present. */
     tainted: z.boolean(),
     /**
+     * Set when taint alone made the call high: its own risk and every other
+     * raise were below high. What a card names as the reason it is high.
+     */
+    raisedByTaint: z.literal(true).optional(),
+    /**
      * The context's label when the call was emitted: its sources,
      * principals, confidentiality and newest refs, bounded
      * to 4 KiB (`labelSummary`). Absent on a verdict decided without a label.
@@ -1162,7 +1167,9 @@ export function withInjectionWarning(verdict: GateVerdict, reasons: readonly str
     const oldest = merged.findIndex((reason) => !isInjectionWarning(reason));
     merged.splice(oldest === -1 ? 16 : oldest, oldest === -1 ? merged.length - 16 : 1);
   }
-  return { ...verdict, risk: { ...verdict.risk, level: maxRisk(verdict.risk.level, "high"), reasons: merged } };
+  // An injection hit raises the call on its own: taint is no longer the only reason it is high.
+  const { raisedByTaint: _raised, ...risk } = verdict.risk;
+  return { ...verdict, risk: { ...risk, level: maxRisk(verdict.risk.level, "high"), reasons: merged } };
 }
 
 /** Whether a verdict reason is the taint reason, which front ends show as their own line. */
@@ -1441,7 +1448,8 @@ export function evaluateGate(given: GateEvaluationInput): GateVerdict {
   // character — is shown with each one marked, says so, and is asked about as high risk.
   const hides = displayHides(assessment?.display, assessment?.reasons ?? []);
   if (hides) reasons.push(HIDDEN_CHARACTERS_REASON);
-  const level = maxRisk(maxRisk(assessment?.risk ?? EFFECT_RISK[input.effect], input.tainted ? "high" : "low"), hides ? "high" : "low");
+  const ownLevel = maxRisk(assessment?.risk ?? EFFECT_RISK[input.effect], hides ? "high" : "low");
+  const level = maxRisk(ownLevel, input.tainted ? "high" : "low");
   // Clipped to the verdict schema's bounds here, whatever the assessor sent: a
   // title or reason carrying a 4,096-character path would otherwise make the
   // checkpointed verdict fail to parse and strand the task.
@@ -1449,6 +1457,7 @@ export function evaluateGate(given: GateEvaluationInput): GateVerdict {
     level,
     reasons: reasons.slice(0, 16).map((reason) => cardText(reason, 300)),
     tainted: input.tainted,
+    ...(input.tainted && RISK_ORDER[ownLevel] < RISK_ORDER.high ? { raisedByTaint: true as const } : {}),
     ...(input.label === undefined ? {} : { label: labelSummary(input.label) }),
   };
   const display = clipDisplay(assessment?.display, input.toolId);
@@ -1570,7 +1579,11 @@ export function evaluateGate(given: GateEvaluationInput): GateVerdict {
   if (taintAsk !== undefined && mode === "enforce") {
     return {
       ...base,
-      risk: { ...risk, level: maxRisk(level, "high") },
+      risk: {
+        ...risk,
+        level: maxRisk(level, "high"),
+        ...(RISK_ORDER[level] < RISK_ORDER.high ? { raisedByTaint: true as const } : {}),
+      },
       allowedScopes: ["once"],
       decision: "ask",
       gateReason: taintAsk.reason,

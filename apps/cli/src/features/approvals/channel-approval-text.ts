@@ -362,7 +362,7 @@ function provenanceLineOf(request: ApprovalRoundAnnouncement["requests"][number]
  * or fragment). ASCII spelled out, with no `i` flag: under `iu`, `[a-z]` also
  * matches look-alikes that fold to a letter (U+212A, the Kelvin sign, is k).
  */
-const DISARMED_HOST = /(?<=^|[\s(\[“"'‘])((?:[A-Za-z0-9-]+\[\.\])+[A-Za-z0-9-]+)(?=$|[\s)\]”"'’,;!]|\.(?:$|\s))/gu;
+const DISARMED_HOST = /(?<=^|[\s([“"'‘])((?:[A-Za-z0-9-]+\[\.\])+[A-Za-z0-9-]+)(?=$|[\s)\]”"'’,;!]|\.(?:$|\s))/gu;
 
 /**
  * `disarmed` with each bare host put back that is exactly one the chat's
@@ -468,10 +468,16 @@ export function renderRoundText(
 ): string {
   const level = maxRisk(...round.requests.map((request) => request.risk?.level ?? "medium"));
   const group = roundGroup(round.requests);
+  // A call asked after the chat read outside content is rated at least high (SECURITY-MODEL.md, taint):
+  // a reminder or a site the person named reads HIGH, so the headline says why — only where taint
+  // alone made each high call so (`risk.raisedByTaint`), never one high for its own sake.
+  const byTaint =
+    level === "high" && round.requests.every((request) => request.risk?.level !== "high" || request.risk.raisedByTaint === true);
+  const risk = `${RISK_MARK[level]} risk${byTaint ? ", as the chat read outside content" : ""}`;
   const headline =
     group === undefined
-      ? `🔐 Approval needed — ${round.requests.length === 1 ? "1 action" : `${round.requests.length} actions`}, ${RISK_MARK[level]} risk`
-      : `🔐 This task wants to use ${groupName(group, round.requests)} — ${RISK_MARK[level]} risk`;
+      ? `🔐 Approval needed — ${round.requests.length === 1 ? "1 action" : `${round.requests.length} actions`}, ${risk}`
+      : `🔐 This task wants to use ${groupName(group, round.requests)} — ${risk}`;
   const lines = [headline];
   // A message is bounded by its channel (`maxTextLength`); a round of up to
   // 64 calls lists what fits and says where the rest can be read.

@@ -20,6 +20,10 @@ change behaviour or stored data.
   via Telegram at 05:24 EET": no round code, the person's name rather than
   `operator`, and the workspace's time zone rather than UTC, as is the
   deadline a card is rejected by.
+- An approval card in a chat says why a call is HIGH risk when reading
+  outside content is the only reason ("HIGH risk, as the chat read outside
+  content"), so a reminder or a site you named no longer looks dangerous for no reason.
+  The rating rule itself is unchanged.
 
 ### Fixed
 

@@ -247,6 +247,10 @@ each call does and how risky it is, and the scopes it offers (`once`,
 - **High**, or **tainted** — made after the task read a web page, a search
   result, an HTTP response or other untrusted tool output, and marked as
   possibly steered by it: no `always`. A tainted call is rated at least high.
+  When taint alone made it high (its own risk was lower, with no hidden
+  characters or injection warning), the verdict says so (`risk.raisedByTaint`)
+  and a chat's card gives that as the reason: "HIGH risk, as the chat read
+  outside content".
 - A call an `ask` rule matched, and a write whose diff is too long to show
   whole (or that replaces a file too large to diff), are decided `once` only:
   what was not shown cannot be approved for later.

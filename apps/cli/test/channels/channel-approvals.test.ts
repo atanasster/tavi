@@ -155,6 +155,7 @@ async function harness(
 
 type ApprovalsDependencies = Parameters<typeof createChannelApprovals>[0];
 type SentMessage = Parameters<ApprovalsDependencies["messaging"]["send"]>[0];
+type ApprovalRequests = Parameters<typeof renderRoundText>[0]["requests"];
 
 const textOf = (message: SentMessage): string => (message.parts[0] as { content: string }).content;
 
@@ -285,6 +286,23 @@ describe("a tainted round's provenance line", () => {
       refs,
       argOrigins: [],
     },
+  });
+
+  it("says why a call asked after the chat read outside content is HIGH, and only then", () => {
+    const head = (...requests: ApprovalRequests) =>
+      renderRoundText({ taskId: "t", steps: 1, invocation, requests }, "abcdefgh", undefined).split("\n")[0];
+    const byTaint = { ...tainted(0), risk: { ...tainted(0).risk, raisedByTaint: true as const } };
+    const untainted = {
+      ...tainted(1),
+      risk: { level: "high" as const, reasons: ["runs a shell command"], tainted: false },
+      provenance: undefined,
+    };
+    expect(head(byTaint)).toBe("🔐 Approval needed — 1 action, HIGH risk, as the chat read outside content");
+    // A tainted call high for its own sake (its assessment, hidden characters, an injection hit) gives no cause.
+    expect(head(tainted(0))).toBe("🔐 Approval needed — 1 action, HIGH risk");
+    // A call HIGH on its own keeps the plain headline, alone or beside one raised by taint.
+    expect(head(untainted)).toBe("🔐 Approval needed — 1 action, HIGH risk");
+    expect(head(byTaint, untainted)).toBe("🔐 Approval needed — 2 actions, HIGH risk");
   });
 
   it("says in one line what the chat read, disarmed, once only — in place of the taint reason", () => {
