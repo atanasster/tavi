@@ -1,4 +1,4 @@
-import { VIDEO_LIMITS, type VideoContainer } from "@tavi/contracts";
+import { VIDEO_LIMITS, type MediaContainer } from "@tavi/contracts";
 
 import { demuxerOf } from "./sniff.js";
 
@@ -8,13 +8,14 @@ import { demuxerOf } from "./sniff.js";
  * never a shell, verified against FFmpeg 9.0.2 on synthetic clips.
  *
  * Every input is read by the sniffed demuxer alone (`-f`), from a file
- * (`-protocol_whitelist file`), among the video demuxers only, with its
+ * (`-protocol_whitelist file`), among the video demuxers and the three audio
+ * ones a voice note needs (Ogg, MP3, WAV; M4A is `mov`'s) only, with its
  * frames capped in pixels: FFmpeg never probes for a format, follows a
  * reference, or opens a network protocol.
  */
 
-/** The video demuxers FFmpeg may open at all, by their own names. */
-export const FORMAT_WHITELIST = "mov,mp4,m4a,3gp,3g2,mj2,matroska,webm,gif";
+/** The demuxers FFmpeg may open at all, by their own names: the video ones, and Ogg, MP3 and WAV for audio alone. */
+export const FORMAT_WHITELIST = "mov,mp4,m4a,3gp,3g2,mj2,matroska,webm,gif,ogg,mp3,wav";
 
 /** A number as an argument: finite, never exponent notation, millisecond precision for times. */
 export function argSeconds(value: number): string {
@@ -29,7 +30,7 @@ function argInteger(value: number, min: number, max: number): string {
 }
 
 /** Options both binaries take, placed before `-i` so `-f` and `-max_pixels` bind to the input. */
-export function commonInputOptions(container: VideoContainer, maxPixels: number): readonly string[] {
+export function commonInputOptions(container: MediaContainer, maxPixels: number): readonly string[] {
   return [
     "-hide_banner",
     "-loglevel",
@@ -50,7 +51,7 @@ export function commonInputOptions(container: VideoContainer, maxPixels: number)
 /** `ffmpeg`-only global options: `ffprobe` 9.0.2 refuses each with "Option not found". */
 export const FFMPEG_ONLY = ["-nostdin", "-filter_threads", "1", "-filter_complex_threads", "1"] as const;
 
-function ffmpegInput(container: VideoContainer, maxPixels: number): readonly string[] {
+function ffmpegInput(container: MediaContainer, maxPixels: number): readonly string[] {
   return [...commonInputOptions(container, maxPixels), ...FFMPEG_ONLY];
 }
 
@@ -68,7 +69,7 @@ export function scaleLongEdge(longEdge: number): string {
 }
 
 /** The facts' JSON: format and streams, packets counted, as `probeFacts` reads them. */
-export function probeArgs(input: string, container: VideoContainer, maxPixels: number): readonly string[] {
+export function probeArgs(input: string, container: MediaContainer, maxPixels: number): readonly string[] {
   return [
     ...commonInputOptions(container, maxPixels),
     "-print_format",
@@ -84,7 +85,7 @@ export function probeArgs(input: string, container: VideoContainer, maxPixels: n
 /** One still at `timeSec` as JPEG. `-ss` before `-i` seeks to the keyframe and decodes forward; the frame's time is `timeSec`, not read back. */
 export function frameAtArgs(
   input: string,
-  container: VideoContainer,
+  container: MediaContainer,
   maxPixels: number,
   timeSec: number,
   longEdge: number,
@@ -121,7 +122,7 @@ export function frameAtArgs(
  */
 export function timelineArgs(
   input: string,
-  container: VideoContainer,
+  container: MediaContainer,
   maxPixels: number,
   from: number,
   to: number,
@@ -155,7 +156,7 @@ export function timelineArgs(
  */
 export function sheetArgs(
   input: string,
-  container: VideoContainer,
+  container: MediaContainer,
   maxPixels: number,
   times: readonly number[],
   columns: number,
@@ -214,7 +215,7 @@ export function sheetArgs(
  */
 export function rateFramesArgs(
   input: string,
-  container: VideoContainer,
+  container: MediaContainer,
   maxPixels: number,
   from: number,
   to: number,
@@ -248,7 +249,7 @@ export function rateFramesArgs(
 /** 16 kHz mono 16-bit WAV of the range (only when the probe found audio: otherwise FFmpeg fails with no stream). */
 export function audioArgs(
   input: string,
-  container: VideoContainer,
+  container: MediaContainer,
   maxPixels: number,
   from: number,
   to: number,
@@ -281,7 +282,7 @@ export function audioArgs(
  * The first subtitle track as SubRip on stdout: text tracks only (a bitmap
  * one fails to convert, and FFmpeg says so), nothing else decoded.
  */
-export function subtitleArgs(input: string, container: VideoContainer, maxPixels: number): readonly string[] {
+export function subtitleArgs(input: string, container: MediaContainer, maxPixels: number): readonly string[] {
   return [...ffmpegInput(container, maxPixels), "-i", input, "-map", "0:s:0", "-vn", "-an", "-dn", "-c:s", "srt", "-f", "srt", "-"];
 }
 

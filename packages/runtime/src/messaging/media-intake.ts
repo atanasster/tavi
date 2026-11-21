@@ -130,7 +130,9 @@ function kilobytes(bytes: number): string {
  */
 export function attachmentLine(filename: string | undefined, contentType: string, byteSize: number, artifactId: string): string {
   const name = filename === undefined ? undefined : shownName(filename);
-  return `[Attachment${name === undefined ? "" : ` ${name}`} (${contentType}, ${kilobytes(byteSize)}): artifact ${artifactId}, untrusted content from the sender]`;
+  // Audio (a voice message) is no text to read back: its line names the tool that hears it.
+  const how = contentType.startsWith("audio/") ? "; what is said in it: audio.transcribe" : "";
+  return `[Attachment${name === undefined ? "" : ` ${name}`} (${contentType}, ${kilobytes(byteSize)}): artifact ${artifactId}, untrusted content from the sender${how}]`;
 }
 
 /** A sender's file name as the host's own line shows it: one line, no brackets that could close it and open another. */

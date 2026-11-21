@@ -589,6 +589,18 @@ export function videoAnalyzerFacts(
   };
 }
 
+/**
+ * Why no transcription analyser can run, in the person's terms: each configured entry that is not ready, with its
+ * reason, or that none is configured. Undefined when one is ready.
+ */
+export function transcribeSetupNote(analyzers: Pick<VideoAnalyzers, "chains" | "configError">): string | undefined {
+  if (analyzers.configError !== undefined) return `analyzers.json could not be used (${analyzers.configError})`;
+  const chain = analyzers.chains.transcribe ?? [];
+  if (chain.some((entry) => entry.status === "ready")) return undefined;
+  if (chain.length === 0) return "no transcription analyser (whisper.cpp with a ggml model) is named in analyzers.json";
+  return chain.map((entry) => `${entry.id}: ${entry.note ?? entry.status}`).join("; ");
+}
+
 /** The owner's pose arithmetic and overlays, the built-in ones: what `video.pose` measures and draws with. */
 export function videoPoseEngine(): VideoPoseEnginePort {
   return createVideoPoseEngine();

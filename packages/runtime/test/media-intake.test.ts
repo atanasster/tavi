@@ -149,6 +149,25 @@ describe("takeInMedia", () => {
     expect(again.attachments).toEqual(taken.attachments);
   });
 
+  it("keeps a voice message as untrusted audio, its line naming the tool that hears it", async () => {
+    const db = await database();
+    const voice = new TextEncoder().encode("OggS\0voice");
+    const taken = await takeInMedia({
+      event: event([{ ref: "f1", filename: "voice.ogg", inline: voice }], ""),
+      allowedIn: "w",
+      policy: { inboundMaxBytes: 64, mimeTypes: ["audio/*"] },
+      instance: undefined,
+      artifacts: db.repositories.artifacts,
+    });
+    const artifactId = taken.attachments?.[0]?.artifactId ?? "";
+    expect(await db.repositories.artifacts.getArtifact(artifactId)).toMatchObject({ contentType: "audio/ogg", untrusted: true });
+    expect(taken.content).toBe(
+      `[Attachment voice.ogg (audio/ogg, 10 B): artifact ${artifactId}, untrusted content from the sender; what is said in it: audio.transcribe]`,
+    );
+    // A voice message alone has no prompt of its own: its line is the host's quoted data.
+    expect(taken.quotedRanges).toEqual([{ start: 0, end: taken.content?.length, kind: "attachment" }]);
+  });
+
   it("labels a kept attachment untrusted, an attachment from its sender, whoever sent it", async () => {
     const db = await database();
     const taken = await takeInMedia({

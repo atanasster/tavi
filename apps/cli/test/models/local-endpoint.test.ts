@@ -279,8 +279,9 @@ describe("real prompt → model → tool → model result over real HTTP", () =>
         "todos_remove",
       ])
         expect(offered.map((entry) => entry.function?.name)).toContain(added);
-      // Twelve of them are the browser's, offered only while Chromium is installed.
-      expect(offered).toHaveLength(86 + (chromium ? 12 : 0) + ("missing" in findFfmpeg() ? 0 : video.length));
+      // Twelve of them are the browser's, offered only while Chromium is installed; audio.transcribe is offered
+      // with or without FFmpeg, so a voice message can be answered with what is missing.
+      expect(offered).toHaveLength(87 + (chromium ? 12 : 0) + ("missing" in findFfmpeg() ? 0 : video.length));
     } finally {
       await endpoint.close();
     }

@@ -7,7 +7,7 @@ import { killLadder } from "@tavi/child-kit";
 import {
   LIMITS_ENTRY_FAILED_EXIT,
   VIDEO_LIMITS,
-  type VideoContainer,
+  type MediaContainer,
   type VideoFailure,
   type VideoInput,
   type VideoRefusal,
@@ -15,7 +15,7 @@ import {
 } from "@tavi/contracts";
 import { sha256Hex, systemChildEnv } from "@tavi/node-kit";
 
-import { SNIFF_BYTES, sniffVideo } from "./sniff.js";
+import { SNIFF_BYTES, sniffMedia } from "./sniff.js";
 import { sizeOf, supervise } from "./supervise.js";
 
 /**
@@ -85,7 +85,7 @@ export interface Runner {
    * read-only. The copy itself is checked, sniffed, sized and hashed: a file
    * that changed since the caller sniffed it is refused (`VideoOpenError`).
    */
-  open(source: { readonly bytes: Uint8Array } | { readonly file: string }, container: VideoContainer, sha256?: string): RunDirectory;
+  open(source: { readonly bytes: Uint8Array } | { readonly file: string }, container: MediaContainer, sha256?: string): RunDirectory;
   /**
    * A run directory for frames the owner made itself (the native-video probe's
    * raw clip): `bytes` written as `name`, no video to sniff; the run's input is
@@ -208,7 +208,7 @@ export function createRunner(options: RunnerOptions): Runner {
         `the video is ${String(Math.ceil(size / 1024 / 1024))} MiB; the most is ${String(VIDEO_LIMITS.maxInputBytes / 1024 / 1024)} MiB`,
       );
     }
-    if (sniffVideo(headOf(input)) !== container) {
+    if (sniffMedia(headOf(input), container) !== container) {
       dispose();
       throw new VideoOpenError("not-video", "the file changed after it was checked, or is not the video it was");
     }

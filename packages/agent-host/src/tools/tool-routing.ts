@@ -255,6 +255,16 @@ export function mentionsVideo(texts: readonly string[]): boolean {
   return texts.some((text) => VIDEO_MENTION.test(text));
 }
 
+/** A voice message or other audio the conversation holds: its speech is read with these. */
+const AUDIO_TOOLS: readonly string[] = ["audio.transcribe"];
+/** A message that carries audio: an attachment line (`media-intake.ts`). */
+const AUDIO_MENTION = /\(audio\/[a-z0-9.+-]+, /i;
+
+/** Whether any of `texts` names an audio attachment. */
+export function mentionsAudio(texts: readonly string[]): boolean {
+  return texts.some((text) => AUDIO_MENTION.test(text));
+}
+
 /**
  * Built-in families an attended chat finds through `tools.search` rather than
  * in its first tool list (`models.promptLayout` `v2`), each with the line
@@ -272,6 +282,7 @@ const ATTENDED_DEFERRED_FAMILIES: readonly { readonly patterns: readonly string[
   },
   { patterns: ["pdf.*"], line: "pdf.*: read, fill, overlay and render PDF files" },
   { patterns: ["video.*"], line: "video.*: inspect, view, transcribe and track poses in videos" },
+  { patterns: ["audio.*"], line: "audio.*: transcribe voice messages and other audio attachments" },
   { patterns: ["projects.*"], line: "projects.*: read a project's details" },
   { patterns: ["reports.*"], line: "reports.*: generate reports and read their history" },
   // Creating and listing reminders stay listed; a reminder turn brings these in (`documentTools`).
@@ -323,8 +334,11 @@ export function namedTools(tools: readonly ToolDefinition[], allowlist: readonly
   );
 }
 
-/** The PDF and video tools a conversation calls for, in the order they are kept: both held, the first three of each go first. */
-export function documentTools(pdf: boolean, video: boolean, reminder = false): readonly string[] {
+/**
+ * The PDF, video and audio tools a conversation calls for, in the order they are kept: PDF and video both held, the
+ * first three of each go first; a voice message's one tool goes ahead of them all, as it is the message itself.
+ */
+export function documentTools(pdf: boolean, video: boolean, reminder = false, audio = false): readonly string[] {
   const documents =
     pdf && video
       ? [...PDF_TOOLS.slice(0, 3), ...VIDEO_TOOLS.slice(0, 3), ...PDF_TOOLS.slice(3), ...VIDEO_TOOLS.slice(3)]
@@ -333,7 +347,8 @@ export function documentTools(pdf: boolean, video: boolean, reminder = false): r
         : video
           ? VIDEO_TOOLS
           : [];
-  return reminder ? [...REMINDER_DEFERRED_TOOLS, ...documents] : documents;
+  const withAudio = audio ? [...AUDIO_TOOLS, ...documents] : documents;
+  return reminder ? [...REMINDER_DEFERRED_TOOLS, ...withAudio] : withAudio;
 }
 
 /** Stable registry ordering; requested discoveries have priority over older optional entries. */
@@ -343,7 +358,11 @@ export function shortlistTools(
   selected: readonly string[],
   discovered: readonly string[],
   protectedTools: ReadonlySet<string> = protectedIds,
-  conversation: { readonly pdfInConversation?: boolean; readonly videoInConversation?: boolean } = {},
+  conversation: {
+    readonly pdfInConversation?: boolean;
+    readonly videoInConversation?: boolean;
+    readonly audioInConversation?: boolean;
+  } = {},
 ): readonly ToolDefinition[] {
   const protectedSet = tools.filter((tool) => protectedTools.has(tool.id));
   if (protectedSet.length > MAX_MODEL_TOOLS)
@@ -355,7 +374,12 @@ export function shortlistTools(
   // fill the room those leave and never displace one.
   const reminders = [
     ...(REMINDER_WORDS.test(query) ? REMINDER_TOOLS : []),
-    ...documentTools(conversation.pdfInConversation === true, conversation.videoInConversation === true),
+    ...documentTools(
+      conversation.pdfInConversation === true,
+      conversation.videoInConversation === true,
+      false,
+      conversation.audioInConversation === true,
+    ),
   ];
   const preferred = [
     ...(SITE_TOKEN.test(query) ? SITE_TOOLS : []),
@@ -363,7 +387,14 @@ export function shortlistTools(
   ];
   // A deferred tool comes in only once `tools.search` found it (an expansion), never by rank — bar the PDF and
   // video tools a document the conversation holds calls for, which may pass the expansions' eight.
-  const documents = new Set(documentTools(conversation.pdfInConversation === true, conversation.videoInConversation === true));
+  const documents = new Set(
+    documentTools(
+      conversation.pdfInConversation === true,
+      conversation.videoInConversation === true,
+      false,
+      conversation.audioInConversation === true,
+    ),
+  );
   const deferred = new Set(tools.filter((tool) => tool.deferred === true && !documents.has(tool.id)).map((tool) => tool.id));
   const optional = [...new Set(preferred)]
     .filter((id) => available.has(id) && !protectedTools.has(id) && !expansions.includes(id) && !deferred.has(id))

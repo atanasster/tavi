@@ -415,6 +415,7 @@ an `agents:message:<agent-id>` grant for the agent they reach.
 | `agents.wait` | read-only | none | per result | listed | Suspend until a matching reply arrives, a worker completes, or the deadline passes. |
 | `artifacts.read` | read-only | none | per result | listed | Page through a large tool result this chat kept whole as an artifact (its note names the artifactId), or another approved JSON or plain-text artifact of this… |
 | `artifacts.view_image` | read-only | none | per result | listed | Look at a picture: an approved image artifact (a browser capture, a rendered chart) by `artifactId`, or one in the chat's folders by `path`. |
+| `audio.transcribe` | read-only | none | per result | search | What is said in an audio attachment — a voice message, a recording — by its `artifactId`, transcribed on this machine: the words (`text`) and when each part… |
 | `browser.act` | external | network | untrusted | listed | Act in a browser session. |
 | `browser.batch` | external | network | untrusted | listed | Run up to 5 browser.act steps in one call, in order — fill a form's fields, pick a date, scroll and wait — each as browser.act would; up to 12 when every ste… |
 | `browser.capture` | external | none | untrusted | listed | Capture a screenshot of a browser session. |

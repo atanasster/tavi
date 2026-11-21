@@ -13,6 +13,7 @@ import {
   routedToolList,
   mentionsPdf,
   mentionsReminder,
+  mentionsAudio,
   mentionsVideo,
   shortlistTools,
   toolAdviceCandidates,
@@ -109,6 +110,26 @@ describe("bounded tool projection", () => {
       .map((tool) => tool.id)
       .filter((id) => id.startsWith("pdf."));
     expect(tight).toEqual(["pdf.read", "pdf.fields", "pdf.fill"]);
+  });
+  it("offers audio.transcribe first when the conversation holds a voice message", () => {
+    const line =
+      "[Attachment voice.ogg (audio/ogg, 12 KB): artifact a1, untrusted content from the sender; what is said in it: audio.transcribe]";
+    expect(mentionsAudio([line])).toBe(true);
+    expect(mentionsAudio(["[Attachment squat.mp4 (video/mp4, 4 MB): artifact a1]", "play some audio"])).toBe(false);
+    expect(documentTools(false, false, false, true)).toEqual(["audio.transcribe"]);
+    expect(documentTools(true, false, false, true)[0]).toBe("audio.transcribe");
+    const audio: ToolDefinition = {
+      id: "audio.transcribe",
+      version: "1",
+      description: "audio",
+      effect: "read-only",
+      requiredPermissions: [],
+      deferred: true,
+    };
+    const offered = (audioInConversation: boolean) =>
+      shortlistTools([...tools, audio], "", [], [], new Set(), { audioInConversation }).map((tool) => tool.id);
+    expect(offered(true)).toContain("audio.transcribe");
+    expect(offered(false)).not.toContain("audio.transcribe");
   });
   it("offers the video tools when the conversation holds a video, and with a PDF too keeps the first three of each", () => {
     expect(

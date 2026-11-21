@@ -47,9 +47,10 @@ fresh install, with the model's waits sped up.
   tests in a sandbox.
 - **Use the web.** Search, fetch pages, or drive a real browser. When a site
   needs a sign-in or a CAPTCHA, you take over the page and hand it back.
-- **Read documents, photos and video.** PDFs, scanned pages and forms; video
-  frames, transcripts and movement, all processed locally; and the photos you
-  attach or send from a channel, which the chat's model looks at.
+- **Read documents, photos, video and voice.** PDFs, scanned pages and forms;
+  video frames, transcripts and movement, and voice messages you send from a
+  channel, all processed locally; and the photos you attach or send from a
+  channel, which the chat's model looks at.
 - **Connect your apps.** Google Calendar and Gmail, Todoist, Linear, Notion and
   any [MCP](docs/MCP.md) server, each with tools you review before a chat can
   use them.
@@ -197,7 +198,7 @@ login, see [OPERATIONS](docs/OPERATIONS.md).
 | From source | pnpm `12.16.1` | building from a clone (`corepack enable`); the installer needs only npm |
 | Linux | bubblewrap, socat and ripgrep | the sandbox (macOS has one built in); `tavi sandbox check` says what is missing |
 | Optional | Chromium | the browser tools and PDF reports; the installer and `pnpm install` install it |
-| Optional | FFmpeg, whisper.cpp | the video tools and transcription |
+| Optional | FFmpeg, whisper.cpp | the video tools, and transcription of videos and voice messages (`brew install whisper-cpp ffmpeg` and a ggml model; see [VIDEO](docs/VIDEO.md#voice-messages-and-other-audio)) |
 | Optional | uv | Python MCP servers |
 
 [DEVELOPMENT](docs/DEVELOPMENT.md) has the install commands for each.

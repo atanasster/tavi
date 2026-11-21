@@ -243,7 +243,7 @@ export function registerAssistantTools(registry: ToolRegistry, options: Assistan
     sink: "none",
     version: "1.0.0",
     description:
-      "Page through a large tool result this chat kept whole as an artifact (its note names the artifactId), or another approved JSON or plain-text artifact of this chat. Pass `nextOffset` back as `offset` for the next page. Images go to artifacts.view_image, PDFs to pdf.read.",
+      "Page through a large tool result this chat kept whole as an artifact (its note names the artifactId), or another approved JSON or plain-text artifact of this chat. Pass `nextOffset` back as `offset` for the next page. Images go to artifacts.view_image, PDFs to pdf.read, audio (a voice message) to audio.transcribe.",
     effect: "read-only",
     requiredPermissions: ["tools.invoke"],
     inputSchema: ReadArtifactInputSchema,
@@ -254,6 +254,20 @@ export function registerAssistantTools(registry: ToolRegistry, options: Assistan
     handler: async ({ input, context }) => {
       const parsed = ReadArtifactInputSchema.parse(input);
       const artifact = await options.artifacts.getArtifact(parsed.artifactId);
+      // A sender's audio or video (a voice message) is no text to page through: it is read by its own tool, so the
+      // model is pointed there rather than told the file is missing — it arrived.
+      if (artifact !== undefined && isModelVisibleArtifact(artifact) && artifact.workspaceId === context.workspaceId) {
+        if (artifact.contentType.startsWith("audio/"))
+          throw new TaviError(
+            "UNSUPPORTED",
+            `artifact ${parsed.artifactId} is ${artifact.contentType} (audio, e.g. a voice message), not text: read what is said in it with audio.transcribe`,
+          );
+        if (artifact.contentType.startsWith("video/"))
+          throw new TaviError(
+            "UNSUPPORTED",
+            `artifact ${parsed.artifactId} is ${artifact.contentType}, not text: read it with video.frames or video.transcribe`,
+          );
+      }
       // Refused alike when missing, another workspace's, internal, or another task's: the id is model-authored,
       // and a chat reads only what its own turns kept — never another chat's archives or a worker's mailbox.
       if (

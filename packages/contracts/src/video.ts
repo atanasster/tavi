@@ -103,6 +103,31 @@ export const VIDEO_MEDIA_TYPES: Readonly<Record<VideoContainer, string>> = {
   gif: "image/gif",
 };
 
+/** Audio files the decoder opens for their speech alone (a voice note): never a video tool's input. */
+export const AUDIO_CONTAINERS = ["ogg", "mp3", "wav", "m4a"] as const;
+export type AudioContainer = (typeof AUDIO_CONTAINERS)[number];
+/** Each audio container's media type, as intake stores it. */
+export const AUDIO_MEDIA_TYPES: Readonly<Record<AudioContainer, string>> = {
+  ogg: "audio/ogg",
+  mp3: "audio/mpeg",
+  wav: "audio/wav",
+  m4a: "audio/mp4",
+};
+/** What a decoder run holds: a video, or an audio file opened for its speech. */
+export type MediaContainer = VideoContainer | AudioContainer;
+/** Whether a run's container is an audio file's. */
+export function isAudioContainer(container: MediaContainer): container is AudioContainer {
+  return (AUDIO_CONTAINERS as readonly string[]).includes(container);
+}
+
+/** An audio file's facts, as the decoder reads them: its length and its sound. */
+export interface AudioFacts {
+  readonly sha256: string;
+  readonly container: AudioContainer;
+  readonly durationSec: number;
+  readonly audio: { readonly codec: string; readonly channels: number; readonly sampleRate: number };
+}
+
 export const VideoSourceSchema = z.union([
   z.strictObject({ artifactId: z.string().min(1).max(128).describe("An approved video or GIF artifact, e.g. a chat attachment") }),
   z.strictObject({ path: z.string().min(1).max(4_096).describe("A video in your working folder or an attached folder") }),
@@ -297,6 +322,17 @@ export const VideoTranscribeInputSchema = z.strictObject({
   ),
 });
 export type VideoTranscribeInput = z.infer<typeof VideoTranscribeInputSchema>;
+
+/** `audio.transcribe`: a voice note or other audio attachment's speech, by its artifact. */
+export const AudioTranscribeInputSchema = z.strictObject({
+  artifactId: z.string().min(1).max(128).describe("An audio artifact, e.g. a voice message's attachment"),
+  from: SecondsSchema.optional(),
+  to: SecondsSchema.optional(),
+  language: LanguageCodeSchema.optional().describe(
+    "The spoken language, as an ISO 639 code (two letters, or three where it has no two-letter one, e.g. yue); detected when absent",
+  ),
+});
+export type AudioTranscribeInput = z.infer<typeof AudioTranscribeInputSchema>;
 export const VideoTranscribeResultSchema = z.strictObject({
   video: VideoFactsSchema,
   segments: z.array(z.strictObject({ startSec: z.number(), endSec: z.number(), text: z.string().max(1_000) })).max(400),

@@ -26,6 +26,9 @@ canvas's composer), or point at one in the chat's folders, and ask about it.
 - **`video.pose`**: measures a person's movement over up to 60 s (see
   *Measuring a movement* below).
 
+The same transcription reads voice messages too, with `audio.transcribe` (see
+*Voice messages and other audio* below).
+
 A video is read only from an approved attachment of the same workspace, or from
 a file the chat may read: its own folder and the folders attached to it. What
 the tools return carries where the video came from. A video someone sent you is
@@ -57,7 +60,7 @@ licences you hold.
 | --- | --- | --- |
 | **FFmpeg** (required) | Every video tool | `brew install ffmpeg`, or `apt install ffmpeg`. Without it the tools are not offered, and `tavi doctor` says how to add it. `tavi serve --video-ffmpeg <path>` and `--video-ffprobe <path>` name one off your `PATH` |
 | **The pose add-on** (`@tavi/video-pose`, with `onnxruntime-node`) and an RTMPose ONNX model | `video.pose` | See *Measuring a movement* |
-| **The transcription add-on** (`@tavi/video-transcribe`), whisper.cpp and a ggml model | `video.transcribe` | `brew install whisper-cpp`, or a build of your own on `PATH`; the model goes in `<data>/video/models`, named in `analyzers.json` (see *Analysers*) |
+| **The transcription add-on** (`@tavi/video-transcribe`), whisper.cpp and a ggml model | `video.transcribe`, `audio.transcribe` | `brew install whisper-cpp`, or a build of your own on `PATH`; the model goes in `<data>/video/models`, named in `analyzers.json` (see *Analysers*) |
 | **The PDF tools' OCR add-on** (`@tavi/pdf-ocr`) | `video.frames { ocr: true }` | As for scanned PDFs ([PDF.md](PDF.md)) |
 | **Your own analysers** | Any of the three | A command or an MCP server (see *Analysers*) |
 | **A remote analyser or a native video model** | Optional | It sends what it is handed off the machine; see *What leaves the machine* |
@@ -65,6 +68,40 @@ licences you hold.
 
 Add-ons are installed where `tavi` is installed. A model file must be in
 `<data>/video/models`; one outside that directory is refused.
+
+## Voice messages and other audio
+
+Send a voice message (or an audio file) in a chat, and the chat's model reads
+what is said in it with **`audio.transcribe`**: the words, and when each part
+is said. A long recording is read in five-minute parts, as a video is.
+
+- It runs on this machine, on the same path as `video.transcribe`: your FFmpeg
+  turns the audio into 16 kHz mono WAV in a sandboxed run of its own, and your
+  transcription analysers (whisper.cpp on your own model) read it. The audio
+  leaves the machine only when you list a remote analyser, and such a call is
+  asked first (see *What leaves the machine*).
+- **Read:** Ogg (Telegram's voice messages, Opus), MP3, WAV and M4A, by the
+  file's bytes, within the channel's attachment cap and Tavi's 100 MiB.
+- The words are the sender's file's, not your message: they are untrusted
+  `attachment` content, labelled as the attachment is, and an instruction in
+  them is asked about before anything acts on it. No speaker is identified.
+- It is turned on and off with the video tools (`video.enabled`).
+
+To set it up on a Mac:
+
+```bash
+brew install whisper-cpp ffmpeg
+```
+
+Then put a ggml model (for example `ggml-base.bin` from the whisper.cpp
+project) in `<data>/video/models`, name it under `transcribe` in
+`<data>/video/analyzers.json` (see *Analysers*), and restart `tavi serve`.
+
+Until then, a voice message is still received and kept: `audio.transcribe`
+answers that it arrived, which of FFmpeg and a transcription analyser is
+missing, and the commands above, and the chat passes that on rather than
+saying the file never came. `tavi doctor` lists the transcription chain and why
+an entry of it cannot run.
 
 ## Analysers
 
@@ -277,6 +314,6 @@ Video decoding, frame extraction, speech transcription, and pose biomechanics ar
 | **Contracts & Ports** | `packages/contracts/src/video.ts`, `video-engine.ts`, `video-sniff.ts`, `movement-templates.ts` | `VideoDecoderPort`, `VideoAnalyzerPort`, `VideoPoseEnginePort`, `video.*` tool schemas, container header sniffing, and movement template schemas. |
 | **Video Engine (`@tavi/plugin-video`)** | `packages/builtin/video/src/decoder.ts`, `ffmpeg.ts`, `supervise.ts`, `run.ts`, `sniff.ts`, `subtitles.ts`, `registry.ts`, `command-analyzer.ts`, `mcp-analyzer.ts`, `angles.ts`, `reps.ts`, `smooth.ts`, `template-engine.ts`, `templates.ts`, `overlay.ts` | Supervises sandboxed `ffmpeg`/`ffprobe` runs (`decoder.ts`, `supervise.ts`), orchestrates analyzer chains (`registry.ts`, `command-analyzer.ts`, `mcp-analyzer.ts`), computes 2D joint angles and rep phases (`angles.ts`, `reps.ts`, `template-engine.ts`), and renders skeleton overlays (`overlay.ts`). Its entry point is what the owner composes: the decoder, analyser and registry factories, FFmpeg discovery, the pose engine (`pose-engine.ts`) and the PDF engine's OCR as an analyser (`pdf-ocr-analyzer.ts`); `@tavi/plugin-video/internals` holds the building blocks the evals drive one at a time. |
 | **Transcription & Pose Add-ons** | `packages/video-transcribe/src/index.ts` (`@tavi/video-transcribe`), `packages/video-pose/src/index.ts` (`@tavi/video-pose`) | Optional local analyzers wrapping `whisper.cpp` and ONNX pose/person-detection models (`RTMPose` with optional `RTMDet-nano` person detector), passed into `@tavi/plugin-video` via ports. |
-| **Single-Owner Wiring & Tools** | `apps/cli/src/features/video/host.ts`, `tools.ts`, `retention.ts` | Single point where `@tavi/plugin-video`, `@tavi/video-pose`, and `@tavi/video-transcribe` are wired with `ConfinementPort`; registers `video.info`, `video.frames`, `video.view`, `video.transcribe`, and `video.pose`, and runs the 30-day media retention sweep. |
+| **Single-Owner Wiring & Tools** | `apps/cli/src/features/video/host.ts`, `tools.ts`, `audio.ts`, `retention.ts` | Single point where `@tavi/plugin-video`, `@tavi/video-pose`, and `@tavi/video-transcribe` are wired with `ConfinementPort`; registers `video.info`, `video.frames`, `video.view`, `video.transcribe`, `video.pose` and `audio.transcribe` (a voice message's speech, through the decoder's `openAudio`), and runs the 30-day media retention sweep. |
 
 See [ARCHITECTURE.md](ARCHITECTURE.md), [evals/video/README.md](../evals/video/README.md), and [evals/video/RECORDING.md](../evals/video/RECORDING.md).

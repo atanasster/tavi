@@ -18,6 +18,7 @@ import {
   LINK_OPENING_TOOLS,
   mentionsPdf,
   mentionsReminder,
+  mentionsAudio,
   mentionsVideo,
   selectToolAdvice,
   toolAdviceCandidates,
@@ -84,7 +85,7 @@ export async function offerTools(step: ModelStep, instructions: Instructions) {
   const personTexts = step.conversationForThisCall.filter(isPersonMessage).map((message) => message.text);
   // A reminder turn's words bring in the reminder tools that wait behind the search, as a PDF's do the PDF tools.
   const documentFound = defersBuiltins
-    ? documentTools(mentionsPdf(personTexts), mentionsVideo(personTexts), mentionsReminder(personTexts))
+    ? documentTools(mentionsPdf(personTexts), mentionsVideo(personTexts), mentionsReminder(personTexts), mentionsAudio(personTexts))
     : [];
   const discoveredNow = documentFound.length === 0 ? discovered : appendDiscovered(discovered, documentFound);
   let offeredTools: readonly ToolDefinition[] = fitToolList(
@@ -241,6 +242,7 @@ export async function offerTools(step: ModelStep, instructions: Instructions) {
           {
             pdfInConversation: mentionsPdf(ranked.map((message) => message.text)),
             videoInConversation: mentionsVideo(ranked.map((message) => message.text)),
+            audioInConversation: mentionsAudio(ranked.map((message) => message.text)),
           },
         );
         if (layout === "v2") {

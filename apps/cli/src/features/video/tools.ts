@@ -316,6 +316,66 @@ function analyzerError(
   );
 }
 
+/** One window of speech as a transcription chain heard it: its segments on the source's clock, and who heard it. */
+export interface HeardWindow {
+  readonly segments: { readonly startSec: number; readonly endSec: number; readonly text: string }[];
+  readonly language: string;
+  readonly analyzer: { readonly id: string; readonly model: string };
+}
+
+/**
+ * The owner's transcription chain on one window of extracted audio (`from` to `windowEnd` of its source), shared by
+ * `video.transcribe` and `audio.transcribe`: the analyser's times shifted to the source's, held within the window, in
+ * time order; or the error that says, by its kind, why nothing was heard.
+ */
+export async function hearWindow(request: {
+  readonly analyzers: VideoAnalyzerRegistry;
+  readonly audio: { readonly path: string; readonly seconds: number };
+  readonly runDirectory: string;
+  readonly language: string | undefined;
+  readonly from: number;
+  readonly windowEnd: number;
+  readonly context: InvocationContext;
+  readonly signal: AbortSignal | undefined;
+  readonly assessedSubjects: readonly string[] | undefined;
+}): Promise<HeardWindow | TaviError> {
+  const { analyzers, from, windowEnd, context } = request;
+  const remote = approvedRemoteAnalyzer(request.assessedSubjects);
+  const outcome = await analyzers.analyze(
+    {
+      capability: "transcribe",
+      audio: request.audio,
+      runDirectory: request.runDirectory,
+      options: { ...(request.language === undefined ? {} : { language: request.language }) },
+      limits: { timeoutMs: VIDEO_LIMITS.transcribeTimeoutMs, maxOutputBytes: 1024 * 1024 },
+      signal: request.signal ?? new AbortController().signal,
+      caller: analyzerCaller(context),
+    },
+    { unattended: unattendedHint(context), ...(remote === undefined ? {} : { remote }) },
+  );
+  if (!outcome.ok) return analyzerError(outcome.error.code, outcome.analyzer, "transcription");
+  const manifest = analyzers
+    .for("transcribe")
+    .find((analyzer) => analyzer.manifest().id === outcome.analyzer)
+    ?.manifest();
+  const declared = manifest?.models.map((entry) => entry.name) ?? [];
+  const segments = outcome.result.segments
+    .map((segment) => ({
+      startSec: Math.min(windowEnd, from + segment.startSec),
+      endSec: Math.min(windowEnd, from + segment.endSec),
+      text: segment.text.slice(0, 1_000),
+    }))
+    .sort((a, b) => a.startSec - b.startSec);
+  return {
+    segments,
+    language: outcome.result.language,
+    analyzer: {
+      id: outcome.analyzer ?? "unknown",
+      model: (declared.includes(outcome.model) ? outcome.model : (declared[0] ?? outcome.analyzer ?? "unknown")).slice(0, 100),
+    },
+  };
+}
+
 /** The fixed limits line every pose result carries. */
 export function poseLimits(view: "side" | "oblique" | "front" | "unknown", unvalidated: boolean, motionChecked = true): string {
   return [
@@ -1117,7 +1177,6 @@ export function registerVideoTools(registry: ToolRegistryPort, options: VideoToo
       await requireEnabled(context);
       const parsed = VideoTranscribeInputSchema.parse(input);
       const video = await load(parsed.source, context);
-      const remote = approvedRemoteAnalyzer(assessedSubjects);
       return await withRun(video, async (decoder, run) => {
         const facts = await factsFor(decoder, run);
         const from = Math.min(parsed.from ?? 0, facts.durationSec);
@@ -1181,35 +1240,23 @@ export function registerVideoTools(registry: ToolRegistryPort, options: VideoToo
         const out = mkdtempSync(join(run.directory, "audio-"));
         try {
           const audio = valueOf(await decoder.audio(run.input, { from, to: windowEnd }, out));
-          const outcome = await analyzers.analyze(
-            {
-              capability: "transcribe",
-              audio,
-              runDirectory: run.directory,
-              options: { ...(parsed.language === undefined ? {} : { language: parsed.language }) },
-              limits: { timeoutMs: VIDEO_LIMITS.transcribeTimeoutMs, maxOutputBytes: 1024 * 1024 },
-              signal: signal ?? new AbortController().signal,
-              caller: analyzerCaller(context),
-            },
-            { unattended: unattendedHint(context), ...(remote === undefined ? {} : { remote }) },
-          );
-          if (!outcome.ok) {
+          const heard = await hearWindow({
+            analyzers,
+            audio,
+            runDirectory: run.directory,
+            language: parsed.language,
+            from,
+            windowEnd,
+            context,
+            signal,
+            assessedSubjects,
+          });
+          if (heard instanceof TaviError) {
             // The speech could not be read: the subtitles in hand still stand, with why; with none, the call fails.
-            const failed = analyzerError(outcome.error.code, outcome.analyzer, "transcription");
-            if (cues.length > 0) return subtitlesAlone(failed.message);
-            throw failed;
+            if (cues.length > 0) return subtitlesAlone(heard.message);
+            throw heard;
           }
-          const manifest = chain.find((analyzer) => analyzer.manifest().id === outcome.analyzer)?.manifest();
-          const declared = manifest?.models.map((entry) => entry.name) ?? [];
-          // The analyser's times are the audio's: shifted to the video's, held within the window, in time order.
-          const all = outcome.result.segments
-            .map((segment) => ({
-              startSec: Math.min(windowEnd, from + segment.startSec),
-              endSec: Math.min(windowEnd, from + segment.endSec),
-              text: segment.text.slice(0, 1_000),
-            }))
-            .sort((a, b) => a.startSec - b.startSec);
-          const fitted = fit(all, 400);
+          const fitted = fit(heard.segments, 400);
           const fittedCues = fit(cues, 400);
           // A cut in either list ends the page there for both: nothing from it on is sent twice.
           const before = <T extends { readonly startSec: number }>(items: readonly T[]): T[] =>
@@ -1221,10 +1268,7 @@ export function registerVideoTools(registry: ToolRegistryPort, options: VideoToo
             video: facts,
             segments,
             ...(subtitles.length === 0 ? {} : { subtitles }),
-            analyzer: {
-              id: outcome.analyzer ?? "unknown",
-              model: (declared.includes(outcome.model) ? outcome.model : (declared[0] ?? outcome.analyzer ?? "unknown")).slice(0, 100),
-            },
+            analyzer: heard.analyzer,
             ...(nextFrom === undefined ? {} : { nextFrom }),
             ...(notes.length === 0 ? {} : { note: notes.join("; ").slice(0, 500) }),
             ...resultLabel(video.label),

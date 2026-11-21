@@ -6,6 +6,17 @@ change behaviour or stored data.
 
 ## Unreleased
 
+### Added
+
+- Voice messages: a voice message sent to Tavi from a chat app (Telegram's
+  Ogg voice notes, or MP3, WAV and M4A audio) is read with the new
+  `audio.transcribe` tool, on this machine — your FFmpeg and whisper.cpp on
+  your own ggml model, the same path `video.transcribe` takes. The words are
+  the attachment's, untrusted, never your own message. Where FFmpeg or a
+  transcription model is missing, the reply says which and how to install it
+  (`brew install whisper-cpp ffmpeg` and a model in `<data>/video/models`;
+  see docs/VIDEO.md).
+
 ### Changed
 
 - `/new` in a chat no longer shows the earlier conversation's task id: it
@@ -38,6 +49,9 @@ change behaviour or stored data.
 
 ### Fixed
 
+- A voice message is no longer answered as if it never arrived: reading an
+  audio (or video) attachment with `artifacts.read` now points to the tool
+  that reads it instead of saying there is no such artifact in the chat.
 - An approval card no longer breaks the link of a site you sent the chat
   yourself ("after reading example[.]com" after you wrote
   https://example.com). Any other host, including one a page linked, is

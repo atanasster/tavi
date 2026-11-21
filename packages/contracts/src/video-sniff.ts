@@ -1,4 +1,4 @@
-import type { VideoContainer } from "./video.js";
+import type { AudioContainer, VideoContainer } from "./video.js";
 
 /**
  * What a video file is, from its bytes alone, before FFmpeg sees them: an
@@ -101,6 +101,28 @@ export function sniffVideoContainer(whole: Uint8Array): VideoContainer | undefin
   }
   const signature = ascii(bytes, 0, 6);
   if (signature === "GIF87a" || signature === "GIF89a") return "gif";
+  return undefined;
+}
+
+/** ISO brands of audio alone: AAC or ALAC in an MP4 (`.m4a`), an audiobook, Flash audio. */
+const AUDIO_BRANDS = new Set(["M4A ", "M4B ", "M4P ", "F4A ", "F4B "]);
+
+/**
+ * The audio container `bytes` hold, by the same leading bytes intake reads (`sniffMediaType`): Ogg (a Telegram voice
+ * note's Opus), MP3 (an ID3 tag or an MPEG frame sync), RIFF WAVE, or an ISO file of an audio brand. Undefined for
+ * anything else, so FFmpeg is only ever handed one of these demuxers.
+ */
+export function sniffAudioContainer(whole: Uint8Array): AudioContainer | undefined {
+  const bytes = whole.subarray(0, VIDEO_SNIFF_BYTES);
+  if (ascii(bytes, 0, 4) === "OggS") return "ogg";
+  if (ascii(bytes, 0, 4) === "RIFF" && ascii(bytes, 8, 12) === "WAVE") return "wav";
+  if (ascii(bytes, 4, 8) === "ftyp") {
+    const brand = ascii(bytes, 8, 12);
+    return brand !== undefined && AUDIO_BRANDS.has(brand) ? "m4a" : undefined;
+  }
+  if (ascii(bytes, 0, 3) === "ID3") return "mp3";
+  // An MPEG audio frame's sync (11 set bits) with a valid layer: JPEG's 0xFFD8 has none.
+  if (bytes[0] === 0xff && ((bytes[1] ?? 0) & 0xe0) === 0xe0 && ((bytes[1] ?? 0) & 0x06) !== 0) return "mp3";
   return undefined;
 }
 

@@ -3,9 +3,13 @@ import { closeSync, copyFileSync, fstatSync, lstatSync, mkdtempSync, openSync, r
 import { join, relative, resolve, sep } from "node:path";
 
 import {
+  isAudioContainer,
   rawFrameBudget,
+  sniffAudioContainer,
   VIDEO_LIMITS,
+  type AudioFacts,
   type DecodedFrame,
+  type MediaContainer,
   type FramePlan,
   type SheetPlan,
   type TimeRange,
@@ -121,7 +125,8 @@ function locationTag(tags: Record<string, unknown> | undefined): boolean {
 /** A probe's JSON as the facts the tools report, bounded and with no tag but whether there is a location. */
 export function probeFacts(json: unknown, input: VideoInput, byteSize: number): VideoFacts | undefined {
   const parsed = ProbeSchema.safeParse(json);
-  if (!parsed.success) return undefined;
+  if (!parsed.success || isAudioContainer(input.container)) return undefined;
+  const container = input.container;
   const streams = parsed.data.streams ?? [];
   // A cover picture is not the video.
   const video = streams.find((stream) => stream.codec_type === "video" && stream.disposition?.attached_pic !== 1);
@@ -136,7 +141,7 @@ export function probeFacts(json: unknown, input: VideoInput, byteSize: number): 
   const hasLocation = locationTag(parsed.data.format?.tags) || streams.some((stream) => locationTag(stream.tags));
   return {
     sha256: input.sha256,
-    container: input.container,
+    container,
     durationSec: Math.round(duration * 1000) / 1000,
     video: {
       codec: (video.codec_name ?? "unknown").slice(0, 32),
@@ -162,6 +167,25 @@ export function probeFacts(json: unknown, input: VideoInput, byteSize: number): 
       frames: duration <= VIDEO_LIMITS.maxDurationSec && pixels <= VIDEO_LIMITS.maxPixels,
       pose: duration <= VIDEO_LIMITS.poseMaxDurationSec && pixels <= VIDEO_LIMITS.maxPixels,
       view: duration <= VIDEO_LIMITS.viewMaxDurationSec && byteSize <= VIDEO_LIMITS.viewMaxBytes,
+    },
+  };
+}
+
+/** An audio file's probe as its facts: its length and its first audio stream, or undefined when it has none. */
+function audioProbeFacts(json: unknown, input: VideoInput): AudioFacts | undefined {
+  const parsed = ProbeSchema.safeParse(json);
+  if (!parsed.success || !isAudioContainer(input.container)) return undefined;
+  const audio = (parsed.data.streams ?? []).find((stream) => stream.codec_type === "audio");
+  if (audio === undefined) return undefined;
+  const duration = Math.max(0, Number(parsed.data.format?.duration ?? audio.duration ?? 0) || 0);
+  return {
+    sha256: input.sha256,
+    container: input.container,
+    durationSec: Math.round(duration * 1000) / 1000,
+    audio: {
+      codec: (audio.codec_name ?? "unknown").slice(0, 32),
+      channels: Math.max(0, audio.channels ?? 0),
+      sampleRate: Math.max(0, Number(audio.sample_rate ?? 0) || 0),
     },
   };
 }
@@ -339,11 +363,20 @@ export async function createFfmpegDecoder(options: FfmpegDecoderOptions): Promis
     return { ok: false, failure: "protocol" };
   };
 
-  const factsOf = async (input: VideoInput): Promise<VideoResult<VideoFacts>> => {
-    const known = probed.get(input.sha256);
+  /**
+   * A run's ffprobe answer read as facts by `read`, kept per file (`cache`): a video's or an audio file's. `none` is
+   * the refusal when `read` finds nothing it reads (no video stream, or no audio one).
+   */
+  const probeOf = async <T>(
+    input: VideoInput,
+    cache: Map<string, T>,
+    read: (json: unknown) => T | undefined,
+    none: Extract<VideoResult<T>, { readonly refused: unknown }>,
+  ): Promise<VideoResult<T>> => {
+    const known = cache.get(input.sha256);
     if (known !== undefined) return { ok: true, value: known, peakKb: 0, wallMs: 0 };
     const run = runOf(input);
-    if (run === undefined) return { ok: false, refused: "unreadable", detail: "no open run for this video" };
+    if (run === undefined) return { ok: false, refused: "unreadable", detail: "no open run for this file" };
     const result = await runner.exec({
       binary: found.ffprobe,
       args: probeArgs(input.path, input.container, VIDEO_LIMITS.maxPixels),
@@ -358,12 +391,59 @@ export async function createFfmpegDecoder(options: FfmpegDecoderOptions): Promis
     } catch {
       return badOutput(input);
     }
-    const value = probeFacts(json, input, statSync(input.path).size);
-    if (value === undefined)
-      return { ok: false, refused: "unreadable", detail: "the probe found no video stream, or answered out of shape" };
-    probed.set(input.sha256, value);
-    if (probed.size > 64) probed.delete(probed.keys().next().value as string);
+    const value = read(json);
+    if (value === undefined) return none;
+    cache.set(input.sha256, value);
+    if (cache.size > 64) cache.delete(cache.keys().next().value as string);
     return { ok: true, value, peakKb: result.peakKb, wallMs: result.wallMs };
+  };
+  const factsOf = (input: VideoInput): Promise<VideoResult<VideoFacts>> =>
+    probeOf(input, probed, (json) => probeFacts(json, input, statSync(input.path).size), {
+      ok: false,
+      refused: "unreadable",
+      detail: "the probe found no video stream, or answered out of shape",
+    });
+  const audioProbed = new Map<string, AudioFacts>();
+  const audioFactsOf = (input: VideoInput): Promise<VideoResult<AudioFacts>> =>
+    isAudioContainer(input.container)
+      ? probeOf(input, audioProbed, (json) => audioProbeFacts(json, input), {
+          ok: false,
+          refused: "no-audio",
+          detail: "the probe found no audio stream",
+        })
+      : Promise.resolve({ ok: false, refused: "unreadable", detail: "not an audio run: open it with openAudio" });
+
+  /** `source` in a run of its own, as the container `sniff` finds in its head; refused when it finds none. */
+  const openAs = (source: VideoSourceData, sniff: (head: Uint8Array) => MediaContainer | undefined): VideoResult<VideoRun> => {
+    // Sized before anything is copied: a folder file past the cap is never read whole.
+    const size = "bytes" in source ? source.bytes.length : statSync(source.file).size;
+    if (size > VIDEO_LIMITS.maxInputBytes)
+      return {
+        ok: false,
+        refused: "too-large",
+        detail: `the file is ${String(Math.ceil(size / 1024 / 1024))} MiB; the most is ${String(VIDEO_LIMITS.maxInputBytes / 1024 / 1024)} MiB`,
+      };
+    const head = "bytes" in source ? source.bytes.subarray(0, SNIFF_BYTES) : readHead(source.file, SNIFF_BYTES);
+    const container = sniff(head);
+    if (container === undefined) return { ok: false, refused: "not-video" };
+    let run: RunDirectory;
+    try {
+      run = runner.open(source, container);
+    } catch (error) {
+      if (error instanceof VideoOpenError) return { ok: false, refused: error.refusal, detail: error.message };
+      throw error;
+    }
+    runs.set(run.input.path, run);
+    const value: VideoRun = {
+      input: run.input,
+      directory: run.path,
+      readOutput: (path, maxBytes) => (inRun(run, path) ? readOutputFile(resolve(path), maxBytes)?.bytes : undefined),
+      dispose: () => {
+        runs.delete(run.input.path);
+        run.dispose();
+      },
+    };
+    return { ok: true, value, peakKb: 0, wallMs: 0 };
   };
 
   /** A time inside the clip: one past its last frame is pulled back to it. */
@@ -375,39 +455,11 @@ export async function createFfmpegDecoder(options: FfmpegDecoderOptions): Promis
   const decoder: VideoDecoderPort = {
     facts: () => facts,
 
-    open(source: VideoSourceData) {
-      // Sized before anything is copied: a folder file past the cap is never read whole.
-      const size = "bytes" in source ? source.bytes.length : statSync(source.file).size;
-      if (size > VIDEO_LIMITS.maxInputBytes)
-        return {
-          ok: false,
-          refused: "too-large",
-          detail: `the video is ${String(Math.ceil(size / 1024 / 1024))} MiB; the most is ${String(VIDEO_LIMITS.maxInputBytes / 1024 / 1024)} MiB`,
-        };
-      const head = "bytes" in source ? source.bytes.subarray(0, SNIFF_BYTES) : readHead(source.file, SNIFF_BYTES);
-      const container = sniffVideo(head);
-      if (container === undefined) return { ok: false, refused: "not-video" };
-      let run: RunDirectory;
-      try {
-        run = runner.open(source, container);
-      } catch (error) {
-        if (error instanceof VideoOpenError) return { ok: false, refused: error.refusal, detail: error.message };
-        throw error;
-      }
-      runs.set(run.input.path, run);
-      const value: VideoRun = {
-        input: run.input,
-        directory: run.path,
-        readOutput: (path, maxBytes) => (inRun(run, path) ? readOutputFile(resolve(path), maxBytes)?.bytes : undefined),
-        dispose: () => {
-          runs.delete(run.input.path);
-          run.dispose();
-        },
-      };
-      return { ok: true, value, peakKb: 0, wallMs: 0 };
-    },
+    open: (source: VideoSourceData) => openAs(source, sniffVideo),
+    openAudio: (source: VideoSourceData) => openAs(source, sniffAudioContainer),
 
     probe: factsOf,
+    probeAudio: audioFactsOf,
 
     async frames(input: VideoInput, plan: FramePlan, out: string) {
       const run = runOf(input);
@@ -560,7 +612,8 @@ export async function createFfmpegDecoder(options: FfmpegDecoderOptions): Promis
       const run = runOf(input);
       if (run === undefined) return { ok: false, refused: "unreadable", detail: "no open run for this video" };
       if (!has("audio-extract")) return { ok: false, refused: "missing-feature", detail: "this FFmpeg cannot write PCM" };
-      const known = await factsOf(input);
+      // An audio run's facts are its own: it has no video stream for the video probe to find.
+      const known = isAudioContainer(input.container) ? await audioFactsOf(input) : await factsOf(input);
       if (!known.ok) return known;
       if (known.value.audio === undefined) return { ok: false, refused: "no-audio" };
       const directory = callDirectory(run, out);
@@ -657,7 +710,9 @@ function missingDecoder(missing: string): VideoDecoderPort {
   return {
     facts: () => ({ missing }),
     open: () => refused,
+    openAudio: () => refused,
     probe: async () => refused,
+    probeAudio: async () => refused,
     frames: async () => refused,
     sheet: async () => refused,
     timeline: async () => refused,

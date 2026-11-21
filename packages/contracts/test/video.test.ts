@@ -9,6 +9,10 @@ import {
   gifFrameCount,
   gifIsAnimated,
   gifShape,
+  AUDIO_CONTAINERS,
+  AUDIO_MEDIA_TYPES,
+  sniffAudioContainer,
+  sniffVideoContainer,
   MOVEMENT_TEMPLATES,
   PoseTrackSchema,
   SKELETONS,
@@ -136,6 +140,22 @@ describe("video contracts", () => {
     // Contract errors stop the chain; only transient ones fall back.
     expect(ANALYZER_FALLBACK_ERRORS).not.toContain("protocol");
     expect(ANALYZER_FALLBACK_ERRORS).toContain("timeout");
+  });
+
+  it("tells a voice note's audio from a video by its bytes, and only the audio sniff takes it", () => {
+    const bytes = (...parts: readonly (string | readonly number[])[]) =>
+      Uint8Array.from(parts.flatMap((part) => (typeof part === "string" ? [...new TextEncoder().encode(part)] : [...part])));
+    expect(sniffAudioContainer(bytes("OggS", [0, 2]))).toBe("ogg");
+    expect(sniffAudioContainer(bytes("ID3", [4, 0]))).toBe("mp3");
+    expect(sniffAudioContainer(bytes([0xff, 0xfb, 0x90, 0x00]))).toBe("mp3");
+    expect(sniffAudioContainer(bytes("RIFF", [0, 0, 0, 0], "WAVE"))).toBe("wav");
+    expect(sniffAudioContainer(bytes([0, 0, 0, 24], "ftypM4A "))).toBe("m4a");
+    // A video, a JPEG and text are no audio; a voice note is no video.
+    expect(sniffAudioContainer(bytes([0, 0, 0, 24], "ftypisom"))).toBeUndefined();
+    expect(sniffAudioContainer(bytes([0xff, 0xd8, 0xff, 0xe0]))).toBeUndefined();
+    expect(sniffAudioContainer(bytes("plain words"))).toBeUndefined();
+    expect(sniffVideoContainer(bytes("OggS", [0, 2]))).toBeUndefined();
+    for (const container of AUDIO_CONTAINERS) expect(AUDIO_MEDIA_TYPES[container]).toMatch(/^audio\//);
   });
 
   it("gives each container its media type and each tool its defaults", () => {

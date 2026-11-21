@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import type { ConfinedCommand } from "./confinement.js";
 import type { MemoryReach } from "./ports/memory-service.js";
-import type { Movement, SetupProblem, VideoContainer, VideoFacts } from "./video.js";
+import type { AudioFacts, MediaContainer, Movement, SetupProblem, VideoFacts } from "./video.js";
 
 /**
  * Video understanding's ports: what the video tools use of a decoder and of
@@ -93,7 +93,8 @@ export interface VideoInput {
   /** The verified copy, inside the run directory. */
   readonly path: string;
   readonly sha256: string;
-  readonly container: VideoContainer;
+  /** A video's, or an audio file's when the run was opened with `openAudio`. */
+  readonly container: MediaContainer;
 }
 
 export interface DecodedFrame {
@@ -168,6 +169,13 @@ export interface VideoDecoderPort {
   open(source: VideoSourceData): VideoResult<VideoRun>;
   probe(input: VideoInput): Promise<VideoResult<VideoFacts>>;
   /**
+   * An audio file (a voice note: Ogg, MP3, WAV, M4A) in a run of its own, for its speech alone: `probeAudio` and
+   * `audio` read it, and no frame tool does. Refused `not-video` when its bytes are none of these.
+   */
+  openAudio(source: VideoSourceData): VideoResult<VideoRun>;
+  /** An audio run's length and sound; refused `no-audio` when the probe found no audio stream. */
+  probeAudio(input: VideoInput): Promise<VideoResult<AudioFacts>>;
+  /**
    * Each of `frames`, `sheet` and `audio` writes into a fresh directory of
    * its own under `out`, a directory inside the video's run directory, so
    * no call ever reads another's output.
@@ -176,7 +184,7 @@ export interface VideoDecoderPort {
   sheet(input: VideoInput, plan: SheetPlan, out: string): Promise<VideoResult<DecodedFrame>>;
   /** Per sampled frame, its time and scene-change score (0-100). */
   timeline(input: VideoInput, range: TimeRange): Promise<VideoResult<readonly (readonly [number, number])[]>>;
-  /** 16 kHz mono WAV of `range`; refused `no-audio` when the probe found no audio stream. */
+  /** 16 kHz mono WAV of `range`, from a video or an audio run; refused `no-audio` when the probe found no audio stream. */
   audio(input: VideoInput, range: TimeRange, out: string): Promise<VideoResult<{ readonly path: string; readonly seconds: number }>>;
   /**
    * The video's first text subtitle track (`mov_text`, SubRip, WebVTT, ASS) as cues, times in seconds; empty

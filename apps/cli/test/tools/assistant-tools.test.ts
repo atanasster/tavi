@@ -323,6 +323,24 @@ describe("agents.read_payload", () => {
 });
 
 describe("artifacts.read", () => {
+  it("points a voice message to audio.transcribe rather than calling it missing: it arrived", async () => {
+    const store = await openStore();
+    try {
+      const call = tools(store);
+      // A channel attachment has no run of its own: it is the workspace's, not this chat's archive.
+      const voice = await store.putArtifact({
+        workspaceId: "default",
+        contentType: "audio/ogg",
+        body: new TextEncoder().encode("OggS"),
+        reviewState: "approved",
+      });
+      await expect(call("artifacts.read", { artifactId: voice.artifactId })).rejects.toThrow(/audio\.transcribe/);
+      await expect(call("artifacts.read", { artifactId: voice.artifactId })).rejects.not.toThrow(/no artifact/);
+    } finally {
+      store.close();
+    }
+  });
+
   it("reads an approved text artifact of this chat a page at a time, labelled as it was stored, and refuses anything else", async () => {
     const store = await openStore();
     try {

@@ -386,7 +386,9 @@ removes what was derived from its videos.
 tools. The six built-in PDF tools lower that limit by six whether or not
 `pdf.enabled` is on, and the video tools (`video.info`, `video.frames`,
 `video.pose`, `video.view`, `video.transcribe`), offered where FFmpeg is
-installed, take five more whether or not `video.enabled` is on. A workspace at
+installed, take five more whether or not `video.enabled` is on, and
+`audio.transcribe`, offered with or without FFmpeg so a voice message can be
+answered with what is missing, one more. A workspace at
 its MCP limit gets a `budget` notice at start, and a server that no longer fits
 waits behind search under `auto` (see [MCP.md](MCP.md)).
 

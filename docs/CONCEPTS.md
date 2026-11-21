@@ -496,7 +496,8 @@ installed on this machine (Tavi ships none: `brew install ffmpeg` or
 - `video.view` watches a video: a contact sheet and two stills for any model,
   or the whole clip for a model that takes video (see
   [CONFIGURATION.md](CONFIGURATION.md#native-video)).
-- `video.transcribe` gives what is said, with its times.
+- `video.transcribe` gives what is said, with its times; `audio.transcribe`
+  does the same for a voice message or other audio attachment.
 - `video.pose` measures a person's movement, once a pose analyser is set up.
 
 Each video is read in a run of its own, sandboxed with no network where the
