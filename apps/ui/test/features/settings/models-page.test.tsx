@@ -15,7 +15,7 @@ import type { SettingsClient } from "../../../src/lib/ipc.js";
 import { ModelBrowser } from "../../../src/features/settings/ModelBrowser.js";
 import { announced, freshAnnouncer } from "../../announced.js";
 import { InWorkspace } from "../../support/workspace.js";
-import { click, mount, mountSettled } from "../../support/dom.js";
+import { click, mount, mountSettled, settle } from "../../support/dom.js";
 
 beforeEach(() => void freshAnnouncer());
 
@@ -326,15 +326,11 @@ describe("the Models page", () => {
     expect(host.querySelector<HTMLAnchorElement>('a[href="https://rhumbdata.com/sign-up"]')).not.toBeNull();
     await type(host.querySelector<HTMLInputElement>("#rhumb-key"), "rk_test_1");
     await click(byText("Store key"));
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
+    await settle();
     expect(fake.writes).toContainEqual({ command: "credentials", payload: { action: "set", reference: "rhumb", value: "rk_test_1" } });
     expect(host.querySelector("#rhumb-key")).toBeNull();
     await click(byText("Check now"));
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
+    await settle();
     expect(fake.writes.some((write) => write.command === "models" && write.payload["action"] === "sync")).toBe(true);
     expect(host.textContent).toContain("openai/gpt-5 retires on 2026-12-11");
   });
@@ -352,9 +348,7 @@ describe("the Models page", () => {
     expect(store()?.disabled).toBe(true);
     await type(host.querySelector<HTMLInputElement>("#rhumb-key"), "rk_test_2");
     await click(store());
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
+    await settle();
     expect(host.textContent).toContain("the keychain is locked");
     // The form stays, with the key in it, for another try.
     expect(host.querySelector<HTMLInputElement>("#rhumb-key")?.value).toBe("rk_test_2");
@@ -373,9 +367,7 @@ describe("the Models page", () => {
     expect(host.querySelector("#rhumb-key")).toBeNull();
     expect(host.textContent).toContain("A Rhumb key is stored");
     await click(byText("Check now"));
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
+    await settle();
     expect(host.textContent).toContain("Store a Rhumb key first.");
   });
 
@@ -403,9 +395,7 @@ describe("the Models page", () => {
 
     // Replace lists every use first, and moves nothing before the yes.
     await click(byText("Replace with c (with tools)"));
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
+    await settle();
     const dialog = document.querySelector(".modal");
     expect(dialog?.querySelector("h2")?.textContent).toBe("Replace a with c?");
     expect([...(dialog?.querySelectorAll(".replace-uses li") ?? [])].map((item) => item.textContent)).toEqual([
@@ -416,9 +406,7 @@ describe("the Models page", () => {
     expect(byText("Replace with b (provider's choice)")).toBeDefined();
     const confirm = [...(dialog?.querySelectorAll("button") ?? [])].find((button) => button.textContent === "Replace");
     await click(confirm);
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
+    await settle();
     expect(fake.writes.find((write) => write.payload["action"] === "replace")?.payload).toMatchObject({
       connectionId: "local",
       model: "a",

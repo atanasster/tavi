@@ -2,7 +2,7 @@ import { RHUMB_CREDENTIAL_REF, type ModelCatalogEntry, type ModelConnection, typ
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
-import { capture, temporaryDirectories } from "@tavi/test-support";
+import { capture, delay, temporaryDirectories } from "@tavi/test-support";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { EXIT, main } from "../../src/main.js";
@@ -364,14 +364,14 @@ describe("serve's lifecycle sync", () => {
       controller.signal,
       { intervalMs: 5 },
     );
-    await new Promise((resolve) => setTimeout(resolve, 30));
+    await delay(30);
     expect(calls).toBe(1);
     release();
     await vi.waitFor(() => expect(log.lines).toContain("warn model lifecycle sync failed"));
     expect(log.lines[0]).toBe("info model lifecycle: no model in use is retiring or redirected");
     controller.abort();
     const after = calls;
-    await new Promise((resolve) => setTimeout(resolve, 30));
+    await delay(30);
     expect(calls).toBe(after);
   });
 });
