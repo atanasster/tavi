@@ -25,6 +25,7 @@ import {
   questionToken,
   renderQuestionText,
   renderRoundText,
+  hostsWrittenIn,
   roundButtons,
   roundExpiryLine,
   roundScopes,
@@ -293,6 +294,47 @@ describe("a tainted round's provenance line", () => {
     // A page's title is not part of a channel's line, and nothing of it is a link.
     expect(text).not.toContain("Click");
     expect(text).not.toMatch(/(?<!\[)\bexample\.com/);
+  });
+
+  /** The card's provenance line for one tainted call that read `host`, with the person's hosts given. */
+  const lineFor = (host: string, personHosts: ReadonlySet<string>) =>
+    renderRoundText(
+      {
+        taskId: "t",
+        steps: 1,
+        invocation,
+        requests: [
+          { ...tainted(0), provenance: { ...tainted(0).provenance, refs: [{ source: "web" as const, ref: "c2", host, at: AT }] } },
+        ],
+      },
+      "abcdefgh",
+      undefined,
+      { personHosts },
+    );
+
+  it("leaves a host the chat's people wrote linked, and disarms the rest", () => {
+    const text = renderRoundText({ taskId: "t", steps: 1, invocation, requests: [tainted(0)] }, "abcdefgh", undefined, {
+      personHosts: new Set(["example.com"]),
+    });
+    expect(text).toContain("   ⚠ after reading example.com and mail you forwarded or quoted (via x[.]example) — once only");
+    // Only that exact host: one that ends in it, or a subdomain of it, stays disarmed.
+    expect(lineFor("evil-example.com", new Set(["example.com"]))).toContain("evil-example[.]com");
+    expect(lineFor("a.example.com", new Set(["example.com"]))).toContain("a[.]example[.]com");
+    // A host with a hyphen is matched as written.
+    expect(lineFor("my-site.example.org", new Set(["my-site.example.org"]))).toContain("after reading my-site.example.org");
+    // A combining mark, a format character or an ideographic full stop beside it: another host, still disarmed.
+    for (const host of ["x\u0301google.com", "evil\u200bgoogle.com", "\u0435vil\u3002google.com"])
+      expect(lineFor(host, new Set(["google.com"]))).not.toMatch(/(?<!\[)google\.com/);
+    // A look-alike letter is not the host as stored: K (Kelvin sign) is not k.
+    expect(lineFor("\u212Aexample.com", new Set(["kexample.com"]))).not.toContain("kexample.com");
+  });
+
+  it("takes only hosts of the addresses a person wrote with their scheme", () => {
+    expect([
+      ...hostsWrittenIn(["Take a screenshot of https://Example.com and send it to me", "and http://a.b.example:8080/x?y=1."]),
+    ]).toEqual(["example.com", "a.b.example"]);
+    // A bare domain, or none at all, is not taken.
+    expect(hostsWrittenIn(["see example.org", "hello"]).size).toBe(0);
   });
 
   it("holds Telegram's limit, whatever the hosts", () => {

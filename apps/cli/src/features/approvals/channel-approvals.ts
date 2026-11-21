@@ -127,6 +127,8 @@ export interface ChannelApprovalDependencies {
   readonly operatorOf?: (workspaceId: string) => string | undefined;
   /** The workspace's time zone, which a round's deadline and decision times are shown in; UTC without it. */
   readonly timeZoneOf?: (workspaceId: string) => Promise<string | undefined>;
+  /** The hosts a task's people wrote in their own messages (lower-case, ASCII): a card leaves them linked. None when absent. */
+  readonly personHostsOf?: (taskId: string) => Promise<ReadonlySet<string>>;
   /** The operator's PIN a critical round's link page asks for; `undefined` when none is set. */
   readonly readPin?: () => Promise<string | undefined>;
   readonly onDiagnostic?: (message: string, fields?: Record<string, unknown>) => void;
@@ -267,6 +269,15 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     } catch (error) {
       deps.onDiagnostic?.("the workspace's time zone could not be read; a card shows UTC", { workspaceId, error: errorMessage(error) });
       return undefined;
+    }
+  };
+  /** The hosts the task's people wrote; none when they cannot be read, so every host is disarmed. */
+  const personHostsOf = async (taskId: string): Promise<ReadonlySet<string>> => {
+    try {
+      return (await deps.personHostsOf?.(taskId)) ?? new Set();
+    } catch (error) {
+      deps.onDiagnostic?.("a chat's own hosts could not be read; its card disarms every one", { taskId, error: errorMessage(error) });
+      return new Set();
     }
   };
   /**
@@ -737,6 +748,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     // (not a worker's, nor a room's shown privately) may be answered without its token.
     const ownChat = !privately && (await repositories.messagingConversations.getByTask(round.taskId)) !== undefined;
     const zone = await zoneOf(round.workspaceId);
+    const personHosts = await personHostsOf(round.taskId);
     const direct =
       privately ||
       (!email &&
@@ -750,6 +762,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
         ...(email ? { email: { links } } : {}),
         ...(maxTextLength === undefined ? {} : { maxTextLength }),
         ...(hasButtons ? { buttons: { ownChat } } : {}),
+        personHosts,
         ...(forms.length === 0 ? {} : { formView }),
         ...(formApproval === undefined ? {} : { formApproval }),
         onListed: (listed) => {

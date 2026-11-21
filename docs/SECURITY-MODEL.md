@@ -429,7 +429,8 @@ display only, and never changes a decision: a paraphrase defeats it.
 `tavi chat` prints the same under the call, and a chat's round says it in one
 line — `⚠ after reading example[.]com and mail you forwarded or quoted (via
 x[.]example) — once only` (its hosts disarmed, as every reply of a tainted
-chat is). The Center's approvals inbox, the email link's page and
+chat is, except a host that is exactly one in an address the chat's people
+wrote themselves, with its scheme — never one only a page linked). The Center's approvals inbox, the email link's page and
 `tavi approvals list` say the same line under each round whose chat read such
 content.
 

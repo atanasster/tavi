@@ -9,6 +9,7 @@ import { createHeartbeatButtons } from "../features/heartbeat/buttons.js";
 import { createReminderButtons } from "../features/reminders/delivery.js";
 import { isLocalConnectionId } from "@tavi/contracts";
 import { createChannelApprovals } from "../features/approvals/channel-approvals.js";
+import { hostsWrittenIn } from "../features/approvals/channel-approval-text.js";
 import { createConnectWaits } from "../features/apps/connect-waits.js";
 import { createMemoryChannelCards } from "../features/memory/channel-cards.js";
 import { workspaceZoneOf } from "../features/memory/owner.js";
@@ -137,6 +138,19 @@ export function composeApprovals(composed: RunEventsContext) {
     channelName,
     // Links need somewhere public to open: the ingress's public address, for email.
     linkBase: overrides.approvalLinkBase ?? ((connectionId) => (isEmailConnection(connectionId) ? ingress.publicUrl() : undefined)),
+    // A host the chat's people wrote stays linked on its cards: what they sent, never what a page linked.
+    // Only a channel conversation's own task, whose starts and replies are its people's messages: a
+    // worker's, a schedule's or a heartbeat's prompt is text a model wrote, so its cards keep every host disarmed.
+    personHostsOf: async (taskId) => {
+      if ((await persistencePort.repositories.messagingConversations.getByTask(taskId)) === undefined) return new Set();
+      return hostsWrittenIn(
+        (await persistencePort.repositories.tasks.listAdmissions(taskId)).flatMap((admission) => {
+          if (admission.kind !== "start" && admission.kind !== "reply") return [];
+          const prompt = (admission.intent as { readonly prompt?: unknown } | null)?.prompt;
+          return typeof prompt === "string" ? [prompt] : [];
+        }),
+      );
+    },
     // A round's deadline and decision are shown in the workspace's zone, as its reminders are.
     timeZoneOf: workspaceZoneOf(persistencePort.repositories.workspaceSettings),
     readPin: async () => (await secrets.getSecret(APPROVAL_PIN_CREDENTIAL_REF)) ?? undefined,

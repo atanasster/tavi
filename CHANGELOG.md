@@ -21,6 +21,13 @@ change behaviour or stored data.
   `operator`, and the workspace's time zone rather than UTC, as is the
   deadline a card is rejected by.
 
+### Fixed
+
+- An approval card no longer breaks the link of a site you sent the chat
+  yourself ("after reading example[.]com" after you wrote
+  https://example.com). Any other host, including one a page linked, is
+  still disarmed.
+
 ## 0.3.1 — 2026-11-21
 
 Fixes from testing 0.3.0 on a fresh install.

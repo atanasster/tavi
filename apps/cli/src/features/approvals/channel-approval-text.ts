@@ -25,6 +25,7 @@ import {
   flaggedReasons,
 } from "@tavi/contracts";
 import { clip } from "@tavi/contracts/util";
+import { hostAndPathOf, trimTrailing } from "@tavi/contracts/url-text";
 import type { ApprovalRoundAnnouncement, ApprovalRoundSettlement } from "@tavi/agent-host/workflow";
 
 import { formLines, type FormView } from "./form.js";
@@ -323,6 +324,13 @@ export interface RoundTextOptions {
   /** Told how many of the round's calls the text lists, the rest past its budget. */
   readonly onListed?: (listed: number) => void;
   /**
+   * The hosts the chat's own people wrote in their messages (lower-case, ASCII):
+   * the provenance line leaves such a host linked where it names it exactly.
+   * Every other host is disarmed (`example[.]com`), as before — never one only a
+   * page linked, which a hostile page could make its own. None when absent.
+   */
+  readonly personHosts?: ReadonlySet<string>;
+  /**
    * The round's buttons are shown under it: the text says to press one, or to
    * reply in words, with no `<reason>` placeholder. `ownChat`: the round is the
    * task of the chat it is shown in, so a bare `approve` typed there decides it
@@ -333,11 +341,60 @@ export interface RoundTextOptions {
 }
 
 /** A tainted call's provenance line for a channel, disarmed and bounded; undefined for a clean one. */
-function provenanceLineOf(request: ApprovalRoundAnnouncement["requests"][number]): string | undefined {
+function provenanceLineOf(request: ApprovalRoundAnnouncement["requests"][number], personHosts: ReadonlySet<string>): string | undefined {
   const from = requestSources(request);
   if (from === undefined && !requestTainted(request)) return undefined;
   const onceOnly = (request.allowedScopes ?? ["once"]).every((scope) => scope === "once");
-  return clip(disarmUrls(approvalProvenanceLine(from ?? { sources: [], refs: [] }, onceOnly), new Set()), 400);
+  // Only a host that is exactly one of this call's sources: text cleaned for the card (a format mark
+  // shown as a space) can leave a person's host standing alone inside another source's name.
+  const sourceHosts = new Set((from?.refs ?? []).flatMap((ref) => (ref.host === undefined ? [] : [ref.host.toLowerCase()])));
+  const rearmable = new Set([...personHosts].filter((host) => sourceHosts.has(host)));
+  // Clipped first, so a cut never falls inside a host put back.
+  return rearmPersonHosts(clip(disarmUrls(approvalProvenanceLine(from ?? { sources: [], refs: [] }, onceOnly), new Set()), 400), rearmable);
+}
+
+/**
+ * A disarmed bare ASCII host as `disarmUrls` writes it (`sub[.]example[.]com`),
+ * standing alone: after the start, a space or an opening bracket or quote, and
+ * before the end, a space, closing punctuation or a sentence's full stop —
+ * never next to another character a client could read as part of the address
+ * (a combining or format mark, an ideographic full stop, a path, port, query
+ * or fragment). ASCII spelled out, with no `i` flag: under `iu`, `[a-z]` also
+ * matches look-alikes that fold to a letter (U+212A, the Kelvin sign, is k).
+ */
+const DISARMED_HOST = /(?<=^|[\s(\[“"'‘])((?:[A-Za-z0-9-]+\[\.\])+[A-Za-z0-9-]+)(?=$|[\s)\]”"'’,;!]|\.(?:$|\s))/gu;
+
+/**
+ * `disarmed` with each bare host put back that is exactly one the chat's
+ * people wrote themselves (`personHosts`), written as stored. A provenance
+ * line names hosts Tavi parsed (`example.com`); one a person sent the chat
+ * carries nothing new.
+ */
+function rearmPersonHosts(disarmed: string, personHosts: ReadonlySet<string>): string {
+  if (personHosts.size === 0) return disarmed;
+  return disarmed.replace(DISARMED_HOST, (written: string) => {
+    const host = written.replaceAll("[.]", ".").toLowerCase();
+    return personHosts.has(host) ? host : written;
+  });
+}
+
+/** Bound on the hosts `hostsWrittenIn` collects: a card needs only the few a person sent. */
+const PERSON_HOSTS_MAX = 200;
+
+/**
+ * The hosts of the http(s) addresses written in `texts` (a chat's own
+ * messages), lower-case and ASCII as a URL parses them; a bare domain is not
+ * taken, only an address with its scheme.
+ */
+export function hostsWrittenIn(texts: Iterable<string>): ReadonlySet<string> {
+  const hosts = new Set<string>();
+  for (const text of texts)
+    for (const match of text.matchAll(/\bhttps?:\/\/[^\s<>"'`]+/giu)) {
+      const host = hostAndPathOf(trimTrailing(match[0]))?.hostname;
+      if (host !== undefined && host !== "") hosts.add(host);
+      if (hosts.size >= PERSON_HOSTS_MAX) return hosts;
+    }
+  return hosts;
 }
 
 /** The tools whose approvals carry a form (`ApprovalDisplay.form`): a round of one is approved on a channel only where its values were shown. */
@@ -425,6 +482,7 @@ export function renderRoundText(
       : Math.max(Math.floor(options.maxTextLength / 2), options.maxTextLength - ROUND_TEXT_RESERVE);
   let used = headline.length;
   let shownCount = 0;
+  const personHosts = options.personHosts ?? new Set<string>();
   for (const [index, request] of round.requests.entries()) {
     const entry = [`${index + 1}. ${clip(approvalTitleOf(request), 220)}`];
     const form = request.display?.form;
@@ -443,8 +501,8 @@ export function renderRoundText(
       );
     // Why it is asked, and from where, in one line: "⚠ after reading example[.]com, mail
     // from x[.]example — once only". Its hosts and any title are content's, so they are disarmed as every
-    // tainted turn's outbound text is: a channel would link a bare domain.
-    const line = provenanceLineOf(request);
+    // tainted turn's outbound text is (a channel would link a bare domain), but a host the chat's people wrote.
+    const line = provenanceLineOf(request, personHosts);
     if (line !== undefined) entry.push(`   ${line}`);
     for (const reason of request.risk?.reasons ?? [])
       if (line === undefined || !isTaintReason(reason)) entry.push(`   ⚠ ${clip(reason, 160)}`);
