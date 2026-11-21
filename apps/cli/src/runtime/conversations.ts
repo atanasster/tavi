@@ -193,7 +193,9 @@ export function composeConversations(composed: SchedulesContext) {
       rootTaskId: string,
       actor: Pick<MemoryActor, "workspaceId" | "principalId">,
       connectionId: string,
-    ): Promise<void> => {
+    ): Promise<boolean> => {
+      // Whether anything was still going: a question, or a task (or worker) not yet finished.
+      let withdrew = false;
       const seen = new Set<string>();
       let level = [rootTaskId];
       for (let depth = 0; depth < 32 && level.length > 0; depth += 1) {
@@ -213,6 +215,7 @@ export function composeConversations(composed: SchedulesContext) {
                 via: connectionId,
               })
             ) {
+              withdrew = true;
               await channelApprovals.onQuestionSettled({ waitId: wait.waitId, outcome, via: connectionId });
             }
           }
@@ -220,6 +223,7 @@ export function composeConversations(composed: SchedulesContext) {
           await persistencePort.repositories.toolPolicy.clearSessionGrants(taskId);
           const task = await persistencePort.repositories.tasks.get(taskId);
           if (task !== undefined && !TERMINAL_TASK_STATUSES.has(task.status)) {
+            withdrew = true;
             await recordCancellation(store, { taskId, reason: "the conversation was reset", operator: actor.principalId }, () =>
               clock.now(),
             );
@@ -231,6 +235,7 @@ export function composeConversations(composed: SchedulesContext) {
         }
         level = next;
       }
+      return withdrew;
     };
     /** `/new`'s withdrawal ran: recorded, so a start does not run it again. A failure here is retried at the next start. */
     const markWithdrawn = async (ended: MessagingConversationTask): Promise<void> => {
@@ -1073,8 +1078,9 @@ export function composeConversations(composed: SchedulesContext) {
         const ended = !owned
           ? undefined
           : await conversations.reset(event.connectionId, current?.externalConversationId ?? event.externalConversationId, clock.now());
+        let withdrew = false;
         if (ended !== undefined) {
-          await withdrawConversationTask(ended.taskId, actor, event.connectionId);
+          withdrew = await withdrawConversationTask(ended.taskId, actor, event.connectionId);
           await markWithdrawn(ended);
         }
         const destination = messaging.buildReplyDestination(event.connectionId, {
@@ -1095,7 +1101,10 @@ export function composeConversations(composed: SchedulesContext) {
                   ? "Only the person this chat's task belongs to can start it over."
                   : ended === undefined
                     ? "Nothing to reset: your next message starts a new conversation."
-                    : `Started a new conversation. The earlier one is kept as task ${ended.taskId}; anything it was still waiting on was withdrawn.`,
+                    : // No task id: a chat app's reader cannot use one. The earlier chat stays in the Tavi app.
+                      withdrew
+                      ? "Started a new conversation. What the earlier one was still doing is cancelled; you can read it in the Tavi app."
+                      : "Started a new conversation. You can still read the earlier one in the Tavi app.",
               },
             ],
           });

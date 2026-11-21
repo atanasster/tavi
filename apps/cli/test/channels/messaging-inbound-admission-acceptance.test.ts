@@ -86,10 +86,14 @@ function inboundEvent(overrides: Partial<InboundEvent> = {}): InboundEvent {
   };
 }
 
-async function openFixtureConnection(runtime: TaviRuntime): Promise<void> {
+/** Opens `conn-a`; each send's first part's text goes into `sent` when one is passed. */
+async function openFixtureConnection(runtime: TaviRuntime, sent?: string[]): Promise<void> {
   runtime.messaging.registerConnector({
     ...createFixtureMessagingConnectorDefinition({
-      sendOutcome: (_message) => ({ status: "accepted", retryable: false, parts: [] }),
+      sendOutcome: (message) => {
+        sent?.push((message.parts[0] as { content?: string } | undefined)?.content ?? "");
+        return { status: "accepted", retryable: false, parts: [] };
+      },
     }),
     destinationFromInbound: (replyTo) => ({ fixtureChat: replyTo.externalConversationId }),
   });
@@ -197,7 +201,8 @@ describe("inbound-message-to-task-admission pipeline", () => {
   it("/new ends the conversation's task: the next message starts another, and the earlier one stays readable", async () => {
     const directory = directories.create();
     const { runtime, model } = await harness(directory, [{ text: "first answer" }]);
-    await openFixtureConnection(runtime);
+    const sent: string[] = [];
+    await openFixtureConnection(runtime, sent);
     const repositories = runtime.store.asPort().repositories;
     await repositories.messagingIdentityBindings.bind({
       connectionId: "conn-a",
@@ -212,6 +217,8 @@ describe("inbound-message-to-task-admission pipeline", () => {
     const first = await repositories.messagingConversations.get("conn-a", "chat-1");
     await runtime.messaging.ingest(inboundEvent({ providerEventId: "evt-2", content: "/new" }));
     expect(await repositories.messagingConversations.get("conn-a", "chat-1")).toBeUndefined();
+    // A finished chat had nothing to cancel, and a chat app's reader is never shown a task id.
+    expect(sent.at(-1)).toBe("Started a new conversation. You can still read the earlier one in the Tavi app.");
     // The command is no turn of either task.
     expect(model.calls).toHaveLength(1);
 
@@ -267,7 +274,8 @@ describe("inbound-message-to-task-admission pipeline", () => {
     const { runtime } = await harness(directory, [
       { toolCall: { id: "ask-1", name: "operator.ask_user", input: { question: "Which one?" } } },
     ]);
-    await openFixtureConnection(runtime);
+    const sent: string[] = [];
+    await openFixtureConnection(runtime, sent);
     const repositories = runtime.store.asPort().repositories;
     await repositories.messagingIdentityBindings.bind({
       connectionId: "conn-a",
@@ -288,6 +296,7 @@ describe("inbound-message-to-task-admission pipeline", () => {
     expect(settled?.state).not.toBe("active");
     expect(settled?.settledOutcome).toMatchObject({ kind: "cancelled", error: { code: "CONVERSATION_RESET" } });
     expect((await repositories.tasks.get(taskId))?.status).toBe("cancelled");
+    expect(sent.at(-1)).toBe("Started a new conversation. What the earlier one was still doing is cancelled; you can read it in the Tavi app.");
     await runtime.close();
   });
 

@@ -4,6 +4,14 @@ All notable changes to Tavi are recorded here. The project follows
 [Semantic Versioning](https://semver.org); before 1.0, a minor version may
 change behaviour or stored data.
 
+## Unreleased
+
+### Changed
+
+- `/new` in a chat no longer shows the earlier conversation's task id: it
+  says the earlier one can still be read in the Tavi app, and mentions a
+  cancellation only when something was still going.
+
 ## 0.3.1 — 2026-11-21
 
 Fixes from testing 0.3.0 on a fresh install.
