@@ -4,7 +4,11 @@ All notable changes to Tavi are recorded here. The project follows
 [Semantic Versioning](https://semver.org); before 1.0, a minor version may
 change behaviour or stored data.
 
-## Unreleased
+## 0.3.0 — 2026-11-21
+
+Tavi now checks the models it uses against Rhumb's catalog: it warns before
+one retires or is redirected, suggests a replacement, and `tavi models
+replace` moves every use of it in one step.
 
 ### Added
 
