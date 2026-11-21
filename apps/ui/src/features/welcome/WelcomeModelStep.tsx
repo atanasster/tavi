@@ -90,7 +90,8 @@ export function ModelStep(props: StepProps) {
   const tiles = more ? MODEL_PROVIDER_PRESETS : featured.length > 0 ? featured : MODEL_PROVIDER_PRESETS;
   return (
     <div className="welcome-model">
-      {detected === undefined ? null : (
+      {/* What was found is a shortcut among the providers: once one is picked, its own form is the whole step. */}
+      {detected === undefined || chosen !== undefined ? null : (
         <DetectedChoices
           detected={detected}
           onUse={(presetId, variable) => {
@@ -267,6 +268,9 @@ function KeyForm(
       {props.preset.note === undefined ? null : <Notice>{props.preset.note}</Notice>}
       {props.preset.id === "openrouter" && !pasting ? (
         <div className="actions">
+          <Button variant="ghost" onClick={props.onBack}>
+            Back
+          </Button>
           <Button variant="primary" disabled={signingIn !== undefined} onClick={() => void signIn()}>
             {signingIn !== undefined ? "Waiting for OpenRouter…" : "Sign in with OpenRouter"}
           </Button>

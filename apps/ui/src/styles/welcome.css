@@ -161,8 +161,15 @@
   background: hsl(var(--positive) / var(--tint-soft));
   color: hsl(var(--positive));
 }
+/* A found key or local server is a shortcut above the providers: on the text's edge, with room before the tiles. */
 .welcome-detected {
   align-items: flex-start;
+}
+.welcome-detected > button {
+  align-self: flex-start;
+}
+.welcome-detected:not(:empty) {
+  margin-bottom: var(--space-4);
 }
 .welcome input:not([type="checkbox"]):not([type="radio"]),
 .welcome .select-trigger {

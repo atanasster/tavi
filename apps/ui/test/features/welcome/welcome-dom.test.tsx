@@ -268,6 +268,11 @@ describe("Welcome", () => {
     });
     const page = await mount(<Welcome client={client} workspaceId="default" onStep={() => {}} onLeave={() => {}} onSettings={() => {}} />);
     expect(page.textContent).toContain("Ollama is running with 3 models");
+    // A provider picked by hand has the step to itself; Back offers the shortcuts again.
+    await click(page.querySelector(".provider-tile"));
+    expect(page.querySelector(".welcome-detected")).toBeNull();
+    await click(button(page, "Back"));
+    expect(page.textContent).toContain("Ollama is running with 3 models");
     await click(button(page, "Use the OPENROUTER_API_KEY found in the owner's environment"));
     expect(sent.find((entry) => entry.payload["action"] === "connect-detected")?.payload).toMatchObject({
       preset: "openrouter",

@@ -45,6 +45,9 @@ change behaviour or stored data.
 - The Home chat's offers (the heartbeat offer, setup's checklist and Ideas)
   keep their words and buttons inside the card's border, with room between
   the heartbeat's list and its buttons.
+- Welcome's model step shows a found key or a running Ollama as a shortcut on
+  the text's edge above the providers, not centred against the buttons, and
+  only while you choose: OpenRouter's sign-in has its own Back.
 
 ## 0.3.1 — 2026-11-21
 
