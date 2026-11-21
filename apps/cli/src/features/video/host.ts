@@ -372,7 +372,7 @@ export interface VideoAnalyzers {
   /** Each capability's chain as configured, for `doctor`. */
   readonly chains: Readonly<Partial<Record<VideoCapability, readonly AnalyzerChainEntry[]>>>;
   /** Why `analyzers.json` was not used, when it was not. */
-  readonly configError?: string;
+  readonly configError?: string | undefined;
   /** Closes every analyser. */
   close(): Promise<void>;
 }
@@ -574,6 +574,8 @@ export function videoAnalyzerFacts(
 ): Record<string, unknown> {
   return {
     config: analyzerConfigPath(dataDirectory),
+    // Video's speech and voice messages share this one chain: "ready", or why none can run.
+    transcription: transcribeSetupNote(analyzers) ?? "ready",
     ...(analyzers.configError === undefined
       ? {}
       : { configError: analyzers.configError, note: "no analyser runs until analyzers.json parses" }),
@@ -601,6 +603,47 @@ export function transcribeSetupNote(analyzers: Pick<VideoAnalyzers, "chains" | "
   return chain.map((entry) => `${entry.id}: ${entry.note ?? entry.status}`).join("; ");
 }
 
+/** The owner's analysers, whose chains can be read again from `analyzers.json` while it runs (voice setup writes it). */
+export interface ReloadableAnalyzers extends VideoAnalyzers {
+  reload(): Promise<void>;
+}
+
+/** How long a replaced set of analysers lives on: a call already running on one finishes before it is closed. */
+const REPLACED_ANALYZERS_CLOSE_MS = 10 * 60_000;
+
+/**
+ * `initial`, behind a registry that always asks the latest: `reload` reads them again with `read` (absent: nothing to
+ * read again, as for a test's own registry) and closes the ones replaced once a running call has had time to end.
+ */
+export function reloadableAnalyzers(initial: VideoAnalyzers, read?: () => Promise<VideoAnalyzers>): ReloadableAnalyzers {
+  let current = initial;
+  return {
+    registry: {
+      for: (capability) => current.registry.for(capability),
+      first: (call, options) => current.registry.first(call, options),
+      analyze: (request, options) => current.registry.analyze(request, options),
+    },
+    get chains() {
+      return current.chains;
+    },
+    get configError() {
+      return current.configError;
+    },
+    close: async () => await current.close(),
+    reload: async () => {
+      if (read === undefined) return;
+      const replaced = current;
+      current = await read();
+      setTimeout(() => void replaced.close().catch(() => undefined), REPLACED_ANALYZERS_CLOSE_MS).unref();
+    },
+  };
+}
+
+/** The person's whisper.cpp CLI, as the transcription add-on finds it; undefined when either is not installed. */
+export async function findWhisperCli(): Promise<string | undefined> {
+  return (await loadVideoTranscribeAddOn())?.findWhisper();
+}
+
 /** The owner's pose arithmetic and overlays, the built-in ones: what `video.pose` measures and draws with. */
 export function videoPoseEngine(): VideoPoseEnginePort {
   return createVideoPoseEngine();
@@ -616,6 +659,7 @@ interface VideoPoseAddOn {
 
 /** The transcription add-on's module, as `video-host` uses it: absent when it is not installed. */
 interface VideoTranscribeAddOn {
+  readonly findWhisper: () => string | undefined;
   readonly transcribeAnalyzerEntry: (
     model: NonNullable<BuiltinEntry["model"]> | undefined,
     options: { readonly dataDirectory: string; readonly libraryRoots?: (binary: string) => readonly string[] },

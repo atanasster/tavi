@@ -1,5 +1,7 @@
 import {
+  AUDIO_MEDIA_TYPES,
   CONTENT_LABEL_LIMITS,
+  sniffAudioContainer,
   VIDEO_MEDIA_TYPES,
   VIDEO_SNIFF_BYTES,
   sniffVideoContainer,
@@ -53,15 +55,15 @@ export function sniffMediaType(bytes: Uint8Array): string | undefined {
   if (ascii(0, "GIF87a") || ascii(0, "GIF89a")) return "image/gif";
   if (ascii(0, "RIFF") && ascii(8, "WEBP")) return "image/webp";
   if (ascii(0, "%PDF-")) return "application/pdf";
-  if (ascii(0, "OggS")) return "audio/ogg";
-  if (ascii(0, "ID3") || (bytes[0] === 0xff && ((bytes[1] ?? 0) & 0xe0) === 0xe0)) return "audio/mpeg";
+  // Audio by the decoder's own rule (`sniffAudioContainer`): what is filed as audio is what `audio.transcribe` reads.
+  const audio = sniffAudioContainer(bytes);
+  if (audio !== undefined) return AUDIO_MEDIA_TYPES[audio];
   if (ascii(4, "ftyp")) return isoMediaType(bytes, ascii);
   // Matroska and WebM, by their EBML header's DocType.
   if (starts(0x1a, 0x45, 0xdf, 0xa3)) {
     const container = sniffVideoContainer(bytes.subarray(0, VIDEO_SNIFF_BYTES));
     return container === undefined ? undefined : VIDEO_MEDIA_TYPES[container];
   }
-  if (ascii(0, "RIFF") && ascii(8, "WAVE")) return "audio/wav";
   // Text: valid UTF-8 with no NUL, which no binary format above avoids for long.
   if (bytes.byteLength > 0 && !bytes.includes(0)) {
     try {
@@ -75,16 +77,15 @@ export function sniffMediaType(bytes: Uint8Array): string | undefined {
 }
 
 /**
- * An ISO media file's type by its major brand: a photo (HEIC, AVIF), audio
- * (`M4A `, an audiobook's `M4B `), or the video the decoder's own rule names
- * (QuickTime, 3GPP, or else MP4: an unlisted brand is still taken as MP4, as
- * it always was). A brand known not to be video, such as a camera's raw
+ * An ISO media file's type by its major brand: a photo (HEIC, AVIF), or the
+ * video the decoder's own rule names (QuickTime, 3GPP, or else MP4: an
+ * unlisted brand is still taken as MP4, as it always was). Audio brands are
+ * `sniffAudioContainer`'s, read before this. A brand known not to be video, such as a camera's raw
  * `crx ` or JPEG 2000's `jp2 `, is none of these.
  */
 function isoMediaType(bytes: Uint8Array, ascii: (offset: number, text: string) => boolean): string | undefined {
   if (["heic", "heix", "heim", "heis", "hevc", "hevx", "mif1", "msf1"].some((brand) => ascii(8, brand))) return "image/heic";
   if (ascii(8, "avif") || ascii(8, "avis")) return "image/avif";
-  if (["M4A ", "M4B ", "M4P ", "F4A ", "F4B "].some((brand) => ascii(8, brand))) return "audio/mp4";
   const container = sniffVideoContainer(bytes.subarray(0, VIDEO_SNIFF_BYTES));
   return container === undefined ? undefined : VIDEO_MEDIA_TYPES[container];
 }
@@ -104,6 +105,7 @@ const EXTENSIONS: Readonly<Record<string, string>> = {
   "audio/ogg": "ogg",
   "audio/mpeg": "mp3",
   "audio/mp4": "m4a",
+  "audio/aac": "aac",
   "video/mp4": "mp4",
   "video/quicktime": "mov",
   "video/3gpp": "3gp",

@@ -64,6 +64,19 @@ describe("doctor's text summary", () => {
     expect(line(doctorSummary(report({ video: { enabled: false } })), "Video")).toBe("– Video: off");
   });
 
+  it("says under Video whether videos and voice messages can be transcribed, and what is missing when not", () => {
+    const transcription = (value: string, enabled = true) =>
+      line(
+        doctorSummary(report({ video: { enabled, ffmpeg: "9.0.2", analyzers: { transcription: value } } })),
+        "Transcription (video and voice messages)",
+      );
+    expect(transcription("ready")).toBe("✓ Transcription (video and voice messages): ready");
+    expect(transcription("whisper-cpp: whisper.cpp is not installed")).toBe(
+      "– Transcription (video and voice messages): whisper-cpp: whisper.cpp is not installed",
+    );
+    expect(transcription("ready", false)).toBeUndefined();
+  });
+
   it("says under the sandbox line why it is unavailable, and each hint (WSL1, WSL2's keep-running settings)", () => {
     const text = doctorSummary(
       report({ sandbox: { tier: "unavailable", cause: "WSL1 has no Linux kernel namespaces", hardening: ["set instanceIdleTimeout=-1"] } }),

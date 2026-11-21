@@ -150,6 +150,9 @@ describe("video contracts", () => {
     expect(sniffAudioContainer(bytes([0xff, 0xfb, 0x90, 0x00]))).toBe("mp3");
     expect(sniffAudioContainer(bytes("RIFF", [0, 0, 0, 0], "WAVE"))).toBe("wav");
     expect(sniffAudioContainer(bytes([0, 0, 0, 24], "ftypM4A "))).toBe("m4a");
+    // ADTS AAC (layer bits 00) is no MP3, which FFmpeg's mp3 demuxer would refuse.
+    expect(sniffAudioContainer(bytes([0xff, 0xf1, 0x50, 0x80]))).toBe("aac");
+    expect(sniffAudioContainer(bytes([0xff, 0xf9, 0x50, 0x80]))).toBe("aac");
     // A video, a JPEG and text are no audio; a voice note is no video.
     expect(sniffAudioContainer(bytes([0, 0, 0, 24], "ftypisom"))).toBeUndefined();
     expect(sniffAudioContainer(bytes([0xff, 0xd8, 0xff, 0xe0]))).toBeUndefined();

@@ -19,7 +19,9 @@ import {
   type OnboardingStatus,
   type OnboardingStepKind,
   type OnboardingVerifyAnswer,
+  type VoiceSetupStatus,
   type WebSearchKind,
+  VoiceSetupStatusSchema,
 } from "@tavi/contracts";
 
 import { ask, mapOutcome, read, type Outcome, type SettingsClient } from "../../lib/ipc.js";
@@ -139,6 +141,16 @@ export async function setRole(
         { refused: "The fast model was not set." },
       );
 }
+
+// ------------------------------------------------------------------ voice messages
+
+/** What voice messages need here and the setup job's progress (`models voice-status`). */
+export const loadVoice = (client: SettingsClient): Promise<Outcome<VoiceSetupStatus>> =>
+  read(client, "models", { action: "voice-status" }, VoiceSetupStatusSchema, { timeoutMs: 30_000 });
+
+/** Starts the owner's one setup job (Homebrew, the pinned model, `analyzers.json`); answers at once. */
+export const startVoiceSetup = (client: SettingsClient): Promise<Outcome<VoiceSetupStatus>> =>
+  read(client, "models", { action: "voice-setup" }, VoiceSetupStatusSchema, { timeoutMs: 30_000 });
 
 // ------------------------------------------------------------------ about you
 

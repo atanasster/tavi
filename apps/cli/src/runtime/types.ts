@@ -102,6 +102,7 @@ import type { McpHost } from "../features/mcp/host.js";
 import type { SandboxOwnerOptions } from "../features/sandbox/setup.js";
 import type { SandboxCredentialBinding } from "../features/sandbox/tools.js";
 import type { ChatGrants } from "../features/permissions/chat-grants.js";
+import type { VoiceSetup } from "../features/video/voice-setup.js";
 
 export interface TaviRuntimeOptions {
   readonly dataDirectory: string;
@@ -442,6 +443,8 @@ export interface TaviRuntime {
   }) => Promise<Record<string, unknown>>;
   /** `serve --pdf-allow-unconfined`: the PDF children run bare where the sandbox is unavailable, for `doctor`. */
   readonly pdfAllowUnconfined?: boolean;
+  /** Voice messages' local transcription: what is missing, and the job that installs it (`models voice-status` / `voice-setup`). */
+  readonly voiceSetup: VoiceSetup;
   /** `serve --video-ffmpeg` / `--video-ffprobe`, as the video tools were given them. */
   readonly videoBinaries: { readonly ffmpeg?: string; readonly ffprobe?: string };
   /** Every messaging connection this owner opens. */

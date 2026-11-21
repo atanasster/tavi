@@ -71,7 +71,7 @@ describe("onboarding verify on a running owner", () => {
     expect(before).toMatchObject({ firstRun: true, complete: false, providerId: "tavi.onboarding" });
     // The built-in flow answers, in the canvas's order and the terminal's.
     expect(before.open).toEqual(
-      ["model", "about", "apps", "tasks", "channels", "search", "service", "ideas"].filter((kind) =>
+      ["model", "about", "apps", "tasks", "channels", "voice", "search", "service", "ideas"].filter((kind) =>
         before.steps.some((step) => step.kind === kind && step.state !== "unavailable"),
       ),
     );
@@ -82,7 +82,7 @@ describe("onboarding verify on a running owner", () => {
       ((await client.request("onboarding", { action: "status", surface: "cli" }, "status-cli")).result as OnboardingStatus).steps.map(
         (step) => step.kind,
       ),
-    ).toEqual(["model", "about", "apps", "tasks", "channels", "search", "service", "ideas"]);
+    ).toEqual(["model", "about", "apps", "tasks", "channels", "voice", "search", "service", "ideas"]);
     expect((await client.request("credentials", { action: "set", reference: "stub", value: "sk-test-not-real" }, "key")).ok).toBe(true);
     expect(
       (await client.request("models", { action: "add", connectionId: "stub", baseUrl, credentialRef: "stub", model: "m1" }, "add")).ok,

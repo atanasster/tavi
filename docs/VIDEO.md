@@ -80,28 +80,47 @@ is said. A long recording is read in five-minute parts, as a video is.
   transcription analysers (whisper.cpp on your own model) read it. The audio
   leaves the machine only when you list a remote analyser, and such a call is
   asked first (see *What leaves the machine*).
-- **Read:** Ogg (Telegram's voice messages, Opus), MP3, WAV and M4A, by the
-  file's bytes, within the channel's attachment cap and Tavi's 100 MiB.
+- **Read:** Ogg (Telegram's voice messages, Opus), MP3, WAV, M4A and AAC, by
+  the file's bytes, within the channel's attachment cap and Tavi's 100 MiB.
+  Voice messages come in over a channel (Telegram, email); the canvas's
+  composer does not attach audio yet.
+- **Kept:** as a video is, 30 days (`video.keepDays`), then deleted with its
+  body.
 - The words are the sender's file's, not your message: they are untrusted
   `attachment` content, labelled as the attachment is, and an instruction in
   them is asked about before anything acts on it. No speaker is identified.
 - It is turned on and off with the video tools (`video.enabled`).
 
-To set it up on a Mac:
+Setup's **Voice messages** step does it for you (Welcome, Home's setup
+checklist, or `tavi setup voice` with `tavi serve` running). It shows which of
+FFmpeg, whisper.cpp and a speech model are here, and on your yes the owner:
+
+- installs what is missing with Homebrew, as your user (never `sudo`; a fixed
+  `brew install whisper-cpp ffmpeg`, nothing through a shell);
+- downloads Whisper's base model (`ggml-base.bin`, about 148 MB, MIT) from the
+  whisper.cpp project on Hugging Face into `<data>/video/models`, keeping it
+  only when its size and SHA-256 match the ones pinned in Tavi;
+- names it first under `transcribe` in `<data>/video/analyzers.json`, keeping
+  everything else in the file (one that is not valid JSON is left alone, and
+  the step says so);
+- reloads its analysers: no restart.
+
+Without Homebrew (or on Linux), the step gives the commands instead:
 
 ```bash
 brew install whisper-cpp ffmpeg
 ```
 
-Then put a ggml model (for example `ggml-base.bin` from the whisper.cpp
-project) in `<data>/video/models`, name it under `transcribe` in
-`<data>/video/analyzers.json` (see *Analysers*), and restart `tavi serve`.
+then the model into `<data>/video/models` (`curl -L -o …`). *Check again* then
+offers the last part, naming the model in `analyzers.json`; by hand, name it
+under `transcribe` (see *Analysers*) and restart `tavi serve`.
 
 Until then, a voice message is still received and kept: `audio.transcribe`
 answers that it arrived, which of FFmpeg and a transcription analyser is
-missing, and the commands above, and the chat passes that on rather than
-saying the file never came. `tavi doctor` lists the transcription chain and why
-an entry of it cannot run.
+missing, and how to finish setup, and the chat passes that on rather than
+saying the file never came. With the video plugin turned off, it says that
+instead. `tavi doctor` has a **Transcription** line (ready, or what is
+missing) and lists the transcription chain with why an entry of it cannot run.
 
 ## Analysers
 

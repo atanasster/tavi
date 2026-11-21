@@ -41,7 +41,7 @@ describe("the argv templates", () => {
         "-protocol_whitelist",
         "file",
         "-format_whitelist",
-        "mov,mp4,m4a,3gp,3g2,mj2,matroska,webm,gif,ogg,mp3,wav",
+        "mov,mp4,m4a,3gp,3g2,mj2,matroska,webm,gif,ogg,mp3,wav,aac",
         "-threads",
         "1",
         "-f",

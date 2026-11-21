@@ -21,6 +21,7 @@ import {
   channelsStep,
   ideasStep,
   serviceStep,
+  voiceStep,
   tasksStep,
   TODOIST_CONNECT_COMMANDS,
   unitPlace,
@@ -650,6 +651,61 @@ describe("the channel step", () => {
     const { context: step, written } = context(offline.transport, [], system());
     await channelsStep(step);
     expect(written()).toContain("pairing needs a running owner");
+    expect(offline.sent).toEqual([]);
+  });
+});
+
+describe("the voice step", () => {
+  const missing = {
+    supported: true,
+    ready: false,
+    ffmpeg: true,
+    whisper: false,
+    model: false,
+    automatic: true,
+    missing: ["whisper.cpp", "a speech model"],
+    commands: ["brew install whisper-cpp ffmpeg", "curl -L -o /data/mine/video/models/ggml-base.bin https://example.test/m"],
+    modelInfo: { file: "ggml-base.bin", megabytes: 148, licence: "MIT" },
+  };
+
+  it("on a yes has the owner set voice messages up, following its job until a voice message is transcribed", async () => {
+    const reads = [
+      { ...missing, job: { state: "running", phase: "download", message: "Downloading Whisper's base model", received: 74, total: 148 } },
+      { ...missing, ready: true, missing: [], commands: [], job: { state: "done", phase: "configure", message: "Ready" } },
+    ];
+    let first = true;
+    const owner = scripted({
+      "models:voice-status": () => (first ? ((first = false), missing) : reads.shift()),
+      "models:voice-setup": { ...missing, job: { state: "running", phase: "install", message: "Installing whisper-cpp with Homebrew" } },
+    });
+    const { context: step, written } = context(owner.transport, ["y"], system());
+    await voiceStep(step);
+    expect(owner.actions()).toEqual(["models:voice-status", "models:voice-setup", "models:voice-status", "models:voice-status"]);
+    expect(written()).toContain("Missing: whisper.cpp, a speech model");
+    expect(written()).toContain("148 MB, MIT");
+    expect(written()).toContain("Installing whisper-cpp with Homebrew");
+    expect(written()).toContain("Downloading Whisper's base model 50%");
+    expect(written()).toContain("Voice messages: transcribed on this computer");
+  });
+
+  it("on a no marks the step skipped and installs nothing", async () => {
+    const owner = scripted({ "models:voice-status": missing });
+    const { context: step } = context(owner.transport, ["n"], system());
+    await voiceStep(step);
+    expect(owner.actions()).toEqual(["models:voice-status", "onboarding:skip"]);
+    expect(owner.sent[1]?.payload).toMatchObject({ step: "voice" });
+  });
+
+  it("gives the commands where the owner cannot install, and the owner's part where none runs", async () => {
+    const owner = scripted({ "models:voice-status": { ...missing, automatic: false } });
+    const { context: step, written } = context(owner.transport, ["y"], system());
+    await voiceStep(step);
+    expect(written()).toContain("brew install whisper-cpp ffmpeg");
+    expect(owner.actions()).toEqual(["models:voice-status"]);
+    const offline = scripted({}, false);
+    const { context: alone, written: said } = context(offline.transport, [], system());
+    await voiceStep(alone);
+    expect(said()).toContain("start tavi serve, then tavi setup voice");
     expect(offline.sent).toEqual([]);
   });
 });

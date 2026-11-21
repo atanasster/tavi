@@ -281,7 +281,7 @@ describe("tavi onboard attached to a running owner", () => {
       if (!stopped) await handle.shutdown("test cleanup");
     });
     // Attached, the channel step asks too: about you, channels, keeping it running, a first idea.
-    const attached = await tavi(["onboard", "--data-dir", directory], [...custom(baseUrl, KEY), "n", "3", "n", "3", ""]);
+    const attached = await tavi(["onboard", "--data-dir", directory], [...custom(baseUrl, KEY), "n", "3", "n", "n", "3", ""]);
     expect(attached.exit, attached.out + attached.err).toBe(0);
     expect(attached.out).toContain("✓ Inference ready: m1");
     await handle.shutdown("test done");

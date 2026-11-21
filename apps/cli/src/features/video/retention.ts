@@ -1,7 +1,7 @@
 import { videoKeepDays, type WorkspaceSettings } from "@tavi/contracts";
 
 /**
- * Raw video's retention sweep: each workspace's videos taken from outside, past its
+ * Raw media's retention sweep: each workspace's videos and voice messages taken from outside, past its
  * `video.keepDays`, pruned with their bodies. It runs with the owner's
  * retention sweep whatever `retentionSweepArtifacts` says: "kept 30 days" must
  * not mean forever. One workspace's failure never skips the rest.

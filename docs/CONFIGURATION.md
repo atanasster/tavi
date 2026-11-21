@@ -473,7 +473,7 @@ tavi config unset <key>         # back to the default
 | `travel.googleFlights` | `on`, `off` | `on` | Flight answers link Google Flights (unofficial, best effort) to confirm a fare or when the search fails. |
 | `pdf.enabled` | `on`, `off` | `on` | The PDF tools. Off, they refuse every call and the canvas takes no PDF upload. |
 | `video.enabled` | `on`, `off` | `on` | The video tools. Off, they refuse. |
-| `video.keepDays` | `1`–`3650` | `30` | How long a video from a channel, mail or the web is kept; its frames stay with its chat. |
+| `video.keepDays` | `1`–`3650` | `30` | How long a video or voice message from a channel, mail or the web is kept; a video's frames stay with its chat. |
 | `tools.redactResults` | `on`, `off` | `on` | Mask credential shapes in tool results as `[redacted:<kind>]`. |
 | `tools.parallelReads` | `1`–`32` | `8` | How many independent read-only calls of one model step run at the same time. `1` runs every call in turn. Results, cards and approvals keep call order whatever it says. See [TOOLS-AND-SKILLS.md](TOOLS-AND-SKILLS.md#parallel-read-only-calls). |
 | `sandbox.domains` | comma-separated hosts or `*.domain`, optionally with `:port`, or `@registries` | none | Domains this workspace's `sandbox.run` may reach, beside `serve --sandbox-domain`. See [SANDBOX.md](SANDBOX.md). |

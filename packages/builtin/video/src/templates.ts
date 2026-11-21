@@ -8,14 +8,14 @@ import { demuxerOf } from "./sniff.js";
  * never a shell, verified against FFmpeg 9.0.2 on synthetic clips.
  *
  * Every input is read by the sniffed demuxer alone (`-f`), from a file
- * (`-protocol_whitelist file`), among the video demuxers and the three audio
- * ones a voice note needs (Ogg, MP3, WAV; M4A is `mov`'s) only, with its
+ * (`-protocol_whitelist file`), among the video demuxers and the audio ones a
+ * voice note needs (Ogg, MP3, WAV, ADTS AAC; M4A is `mov`'s) only, with its
  * frames capped in pixels: FFmpeg never probes for a format, follows a
  * reference, or opens a network protocol.
  */
 
-/** The demuxers FFmpeg may open at all, by their own names: the video ones, and Ogg, MP3 and WAV for audio alone. */
-export const FORMAT_WHITELIST = "mov,mp4,m4a,3gp,3g2,mj2,matroska,webm,gif,ogg,mp3,wav";
+/** The demuxers FFmpeg may open at all, by their own names: the video ones, and Ogg, MP3, WAV and AAC for audio alone. */
+export const FORMAT_WHITELIST = "mov,mp4,m4a,3gp,3g2,mj2,matroska,webm,gif,ogg,mp3,wav,aac";
 
 /** A number as an argument: finite, never exponent notation, millisecond precision for times. */
 export function argSeconds(value: number): string {

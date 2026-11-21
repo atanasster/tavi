@@ -307,7 +307,7 @@ What grows, what keeps it in check, and how to change it:
 | Artifacts (screenshots, downloads, archived output) | until removed; never a `pending` one or a report PDF | `tavi prune --include-artifacts`, `serve --retention-sweep-artifacts` |
 | Routine runs | kept; old runs drop a duplicate revision snapshot | (automatic) |
 | Browser history | 30 days | (automatic) |
-| Videos from channels, mail or the web | 30 days | `tavi config set video.keepDays <days>` |
+| Videos and voice messages from channels, mail or the web | 30 days | `tavi config set video.keepDays <days>` |
 | Chats' folders | 2 GB each, 20 GB together, 1 GB free floor; pruned folders 7 days in the trash | `serve --folder-cap`, `--chats-cap`, `--free-space-floor`; `tavi tasks folders prune` |
 
 The owner runs its sweep every six hours; each row is explained below.
@@ -360,8 +360,9 @@ byte ([AUTOMATION.md](AUTOMATION.md#agent-routines)); the owner's sweep and
 with their thumbnails, on its six-hourly sweep, whatever
 `--retention-sweep-artifacts` says.
 
-**Videos.** A video taken from a channel, mail or the web is deleted after
-`video.keepDays` (30); its frames stay with the chat.
+**Videos and voice messages.** A video or voice message taken from a channel,
+mail or the web is deleted after `video.keepDays` (30); a video's frames stay
+with the chat.
 
 **Chats' folders.** Each chat's folder has a budget (2 GB each, 20 GB
 together; `serve --folder-cap`, `--chats-cap`) and the owner refuses writes

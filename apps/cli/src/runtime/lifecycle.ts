@@ -140,6 +140,7 @@ export async function composeLifecycle(composed: ExternalPluginsContext): Promis
     videoAnalyzers,
     videoDecoderOf,
     videoOptions,
+    voiceSetup,
     wakeRoutines,
     workflow,
   } = composed;
@@ -323,6 +324,7 @@ export async function composeLifecycle(composed: ExternalPluginsContext): Promis
       ...(options.sandboxCache === true ? { cache: true } : {}),
     },
     ...(options.pdf?.allowUnconfined === true ? { pdfAllowUnconfined: true } : {}),
+    voiceSetup,
     videoBinaries: {
       ...(options.video?.ffmpeg === undefined ? {} : { ffmpeg: options.video.ffmpeg }),
       ...(options.video?.ffprobe === undefined ? {} : { ffprobe: options.video.ffprobe }),

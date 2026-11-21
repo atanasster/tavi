@@ -50,6 +50,10 @@ describe("sniffMediaType", () => {
     expect(sniffMediaType(Uint8Array.from([0xff, 0xd8, 0xff, 0xe0]))).toBe("image/jpeg");
     expect(sniffMediaType(new TextEncoder().encode("%PDF-1.7"))).toBe("application/pdf");
     expect(sniffMediaType(new TextEncoder().encode("OggS\0"))).toBe("audio/ogg");
+    // The same audio sniff the decoder opens with: ADTS AAC as AAC, an MPEG frame and ID3 as MP3.
+    expect(sniffMediaType(Uint8Array.from([0xff, 0xf1, 0x50, 0x80]))).toBe("audio/aac");
+    expect(sniffMediaType(Uint8Array.from([0xff, 0xfb, 0x90, 0x00]))).toBe("audio/mpeg");
+    expect(sniffMediaType(new TextEncoder().encode("ID3\u0004\0"))).toBe("audio/mpeg");
     expect(sniffMediaType(new TextEncoder().encode("plain words"))).toBe("text/plain");
     expect(sniffMediaType(EXE)).toBeUndefined();
     const iso = (brand: string) => Uint8Array.from([0, 0, 0, 24, ...new TextEncoder().encode(`ftyp${brand}`)]);

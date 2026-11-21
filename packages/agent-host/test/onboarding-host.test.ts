@@ -116,6 +116,24 @@ describe("onboarding status", () => {
     expect(tasksOf(deriveStatus(facts({ order, tasks: { home: "mcp:things", apps: [] } })))?.detail).toBe("things");
   });
 
+  it("takes the voice step as done only when a voice message is transcribed here, naming what is missing", () => {
+    const voiceOf = (overrides: Partial<OnboardingFacts>) =>
+      deriveStatus(facts({ order: ["model", "voice"], ...overrides })).steps.find((step) => step.kind === "voice");
+    expect(voiceOf({ voice: { supported: true, ready: true, missing: [] } })).toMatchObject({ state: "done" });
+    expect(voiceOf({ voice: { supported: true, ready: false, missing: ["whisper.cpp", "a speech model"] } })).toMatchObject({
+      state: "todo",
+      detail: "Missing: whisper.cpp, a speech model",
+    });
+    // A mark never stands in for a transcriber that is not there.
+    const marked = { marks: [{ workspaceId: "default", kind: "voice" as const, mark: "completed" as const, at: AT }] };
+    expect(voiceOf({ ...marked, voice: { supported: true, ready: false, missing: ["FFmpeg"] } })?.state).toBe("todo");
+    expect(
+      voiceOf({ voice: { supported: false, unsupported: "The video plugin (tavi.video) is turned off", ready: false, missing: [] } }),
+    ).toMatchObject({ state: "unavailable", detail: "The video plugin (tavi.video) is turned off" });
+    // Offline, nothing could be read: the running owner says.
+    expect(voiceOf({})).toMatchObject({ state: "todo", detail: "Checked by the running tavi serve" });
+  });
+
   it("names every step the flow has, on every surface, with its title and where a step this surface does not do is done", () => {
     const flowed = validateFlow(flow([step("model"), step("apps", { surfaces: ["web"] }), step("service")]), context());
     const status = deriveStatus(
@@ -496,7 +514,7 @@ describe("flow resolution", () => {
     const none = await resolveFlow(new OnboardingProviderRegistry(), null, request, context());
     expect(none.providerId).toBe("host");
     expect(none.fallback).toBeUndefined();
-    expect(flowOrder(none.flow, "web")).toEqual(["model", "about", "search", "apps", "tasks", "channels", "ideas"]);
+    expect(flowOrder(none.flow, "web")).toEqual(["model", "about", "search", "apps", "tasks", "channels", "voice", "ideas"]);
     expect(flowOrder(hostFallbackFlow(), "cli")).toContain("service");
   });
 });

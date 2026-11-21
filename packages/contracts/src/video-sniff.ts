@@ -108,9 +108,10 @@ export function sniffVideoContainer(whole: Uint8Array): VideoContainer | undefin
 const AUDIO_BRANDS = new Set(["M4A ", "M4B ", "M4P ", "F4A ", "F4B "]);
 
 /**
- * The audio container `bytes` hold, by the same leading bytes intake reads (`sniffMediaType`): Ogg (a Telegram voice
- * note's Opus), MP3 (an ID3 tag or an MPEG frame sync), RIFF WAVE, or an ISO file of an audio brand. Undefined for
- * anything else, so FFmpeg is only ever handed one of these demuxers.
+ * The audio container `bytes` hold: Ogg (a Telegram voice note's Opus), MP3 (an ID3 tag or an MPEG audio frame),
+ * raw AAC in ADTS frames (some Android recorders' and bots'), RIFF WAVE, or an ISO file of an audio brand. Undefined
+ * for anything else, so FFmpeg is only ever handed one of these demuxers. Intake (`sniffMediaType`) uses this same
+ * rule, so what it files as audio is what the decoder reads.
  */
 export function sniffAudioContainer(whole: Uint8Array): AudioContainer | undefined {
   const bytes = whole.subarray(0, VIDEO_SNIFF_BYTES);
@@ -121,8 +122,13 @@ export function sniffAudioContainer(whole: Uint8Array): AudioContainer | undefin
     return brand !== undefined && AUDIO_BRANDS.has(brand) ? "m4a" : undefined;
   }
   if (ascii(bytes, 0, 3) === "ID3") return "mp3";
-  // An MPEG audio frame's sync (11 set bits) with a valid layer: JPEG's 0xFFD8 has none.
-  if (bytes[0] === 0xff && ((bytes[1] ?? 0) & 0xe0) === 0xe0 && ((bytes[1] ?? 0) & 0x06) !== 0) return "mp3";
+  if (bytes[0] === 0xff && ((bytes[1] ?? 0) & 0xe0) === 0xe0) {
+    // An MPEG audio frame's sync (11 set bits) names its layer; ADTS (12 set bits, layer 00) is AAC's. JPEG's 0xFFD8
+    // matches neither.
+    const second = bytes[1] ?? 0;
+    if ((second & 0xf6) === 0xf0) return "aac";
+    if ((second & 0x06) !== 0) return "mp3";
+  }
   return undefined;
 }
 

@@ -419,8 +419,9 @@ export function derivedPreviewExists(store: StoreContext, workspaceId: string, s
 }
 
 /**
- * A workspace's videos taken from outside (a channel's attachment, an
- * upload: untrusted, `video/*`, not a preview), older than `olderThan`,
+ * A workspace's videos and audio (a voice message) taken from outside (a
+ * channel's attachment, an upload: untrusted, `video/*` or `audio/*`, not a
+ * preview), older than `olderThan`,
  * pruned with their bodies: by the
  * retention sweep whatever `retentionSweepArtifacts` says, since "kept 30
  * days" must not mean forever. Never one still pending review, nor one
@@ -433,7 +434,7 @@ export function pruneVideo(
 ): { readonly artifacts: number; readonly bytes: number } {
   const rows = store.handle
     .prepare(`SELECT a.artifact_id, a.relative_path, a.byte_size FROM tavi_artifacts a
-      WHERE a.workspace_id = @workspaceId AND a.created_at < @olderThan AND a.untrusted = 1 AND a.content_type LIKE 'video/%' AND a.preview IS NULL
+      WHERE a.workspace_id = @workspaceId AND a.created_at < @olderThan AND a.untrusted = 1 AND (a.content_type LIKE 'video/%' OR a.content_type LIKE 'audio/%') AND a.preview IS NULL
         AND a.review_state <> 'pending'
         AND ${UNREFERENCED_BY_REPORTS}
         AND ${UNREFERENCED_ELSEWHERE}`)

@@ -159,11 +159,12 @@ Keys:
   pdf.enabled                on or off: the PDF tools (read, fields, render,
                              fill). Off, they refuse. Default: on
   video.enabled              on or off: the video tools (facts and frames of
-                             a video, with the person's own FFmpeg). Off,
-                             they refuse. Default: on
-  video.keepDays             How many days a video taken from a channel or an
-                             upload is kept (1-3650); its frames stay with its
-                             chat. Default: 30
+                             a video, with the person's own FFmpeg) and voice
+                             message transcription. Off, they refuse.
+                             Default: on
+  video.keepDays             How many days a video or voice message taken
+                             from a channel or an upload is kept (1-3650); a
+                             video's frames stay with its chat. Default: 30
   tools.redactResults        on or off: credential shapes (AWS keys, tokens,
                              private keys, JWTs) in tool results are masked as
                              [redacted:<kind>] before the model, the archive or

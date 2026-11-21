@@ -490,7 +490,7 @@ A **refused** admission (exit `4`, see [Exit Codes](#exit-codes)) ends the strea
 
 ### `tavi onboard`
 
-Walks the setup steps that are still open, in the onboarding flow's terminal order: the model (the only step Tavi needs), then about you, where you keep tasks, channels, keeping Tavi running and a first idea. A step that is done is never asked about; `tavi setup` is the command that changes one. Unrelated to `tavi sandbox setup`.
+Walks the setup steps that are still open, in the onboarding flow's terminal order: the model (the only step Tavi needs), then about you, where you keep tasks, channels, voice messages (the running owner installs whisper.cpp and FFmpeg with Homebrew and downloads a speech model, on your yes), keeping Tavi running and a first idea. A step that is done is never asked about; `tavi setup` is the command that changes one. Unrelated to `tavi sandbox setup`.
 
 ```bash
 tavi onboard [--workspace <id>] [--data-dir <path>] [--plain] [--paste]
@@ -2499,8 +2499,9 @@ Keys:
 - `desktop.grantedApps`: comma-separated bundle ids or app names, or `none` —
   the apps experimental desktop control may see and act in, each at its
   built-in tier; see [DESKTOP.md](DESKTOP.md). Unset: none.
-- `video.keepDays`: `1`–`3650` — how many days a video sent from a channel,
-  mail or the web is kept before it is deleted with its body. Unset: 30.
+- `video.keepDays`: `1`–`3650` — how many days a video or voice message sent
+  from a channel, mail or the web is kept before it is deleted with its body.
+  Unset: 30.
   Videos in your folders are never pruned.
 - `tools.redactResults`: `on` or `off` — whether credential shapes in tool
   results are masked before anything keeps them.

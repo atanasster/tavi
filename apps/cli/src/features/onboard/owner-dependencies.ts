@@ -2,6 +2,7 @@ import type { ConnectableApp } from "@tavi/contracts";
 
 import { appsOwnerCommand, operatorActor } from "../../server/config-commands.js";
 import { channelDescriptors } from "../channels/catalog.js";
+import { VIDEO_ENGINE_PLUGIN_ID } from "../plugins/catalog.js";
 import { EARLIER_CHAT_KINDS } from "../tasks/notices.js";
 import type { TaviRuntime } from "../../runtime/types.js";
 import type { OnboardingCommandDependencies } from "./owner.js";
@@ -56,6 +57,13 @@ export function ownerOnboardingDependencies(
         ownerIsService: process.env["TAVI_SERVICE"] === "1",
         ...(label === undefined ? {} : { label }),
       });
+    },
+    voice: async () => {
+      // Off with the video plugin: its decoder is what turns a voice message into audio a transcriber reads.
+      if ((await runtime.plugins.registry.disabledBuiltins()).has(VIDEO_ENGINE_PLUGIN_ID))
+        return { supported: false, unsupported: `The video plugin (${VIDEO_ENGINE_PLUGIN_ID}) is turned off`, ready: false, missing: [] };
+      const { supported, ready, missing } = await runtime.voiceSetup.status();
+      return supported ? { supported, ready, missing } : { supported, unsupported: "Set up on macOS and Linux only", ready, missing };
     },
     now: () => new Date(runtime.clock.now()),
   });

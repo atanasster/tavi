@@ -27,12 +27,16 @@ import {
   loadVideoPoseAddOn,
   loadVideoTranscribeAddOn,
   resolveVideoMcpTools,
+  findWhisperCli,
+  reloadableAnalyzers,
   transcribeSetupNote,
   videoBuiltins,
   videoFfmpeg,
   videoPoseEngine,
+  type ReloadableAnalyzers,
   type VideoAnalyzers,
 } from "../features/video/host.js";
+import { createVoiceSetup } from "../features/video/voice-setup.js";
 import { attendedVideoOrigin, registerVideoTools } from "../features/video/tools.js";
 import { registerAudioTools } from "../features/video/audio.js";
 import { pdfPasswordRef, registerPdfTools } from "../features/pdf/tools.js";
@@ -272,26 +276,28 @@ export async function composeTools(composed: ChannelsContext) {
   late.videoDecoder = overrides.videoDecoderOverride === undefined ? undefined : Promise.resolve(overrides.videoDecoderOverride);
   const videoDecoderOf = (): Promise<VideoDecoderPort> =>
     (late.videoDecoder ??= createVideoDecoder(options.dataDirectory, confinement, videoOptions));
-  const ffmpegFound = overrides.videoDecoderOverride === undefined ? videoFfmpeg(videoOptions) : undefined;
-  const videoOffered = ffmpegFound === undefined || !("missing" in ffmpegFound);
-  // The owner's analysers: `<data>/video/analyzers.json`'s chains, read at start; `doctor` lists them.
-  const videoAnalyzers: VideoAnalyzers =
+  const videoOffered = overrides.videoDecoderOverride !== undefined || !("missing" in videoFfmpeg(videoOptions));
+  // The owner's analysers: `<data>/video/analyzers.json`'s chains, read at start and again when voice setup writes it;
+  // `doctor` lists them.
+  const readAnalyzers = async (): Promise<VideoAnalyzers> =>
+    createVideoAnalyzers(
+      options.dataDirectory,
+      confinement,
+      videoOptions,
+      videoBuiltins(
+        options.dataDirectory,
+        confinement,
+        videoOptions,
+        await loadVideoPoseAddOn(),
+        await loadVideoTranscribeAddOn(),
+        pdfEngine,
+      ),
+      await resolveVideoMcpTools(options.dataDirectory, mcpHost),
+    );
+  const videoAnalyzers: ReloadableAnalyzers =
     overrides.videoAnalyzersOverride === undefined
-      ? createVideoAnalyzers(
-          options.dataDirectory,
-          confinement,
-          videoOptions,
-          videoBuiltins(
-            options.dataDirectory,
-            confinement,
-            videoOptions,
-            await loadVideoPoseAddOn(),
-            await loadVideoTranscribeAddOn(),
-            pdfEngine,
-          ),
-          await resolveVideoMcpTools(options.dataDirectory, mcpHost),
-        )
-      : { registry: overrides.videoAnalyzersOverride, chains: {}, close: async () => undefined };
+      ? reloadableAnalyzers(await readAnalyzers(), readAnalyzers)
+      : reloadableAnalyzers({ registry: overrides.videoAnalyzersOverride, chains: {}, close: async () => undefined });
   if (videoOffered && !disabledBuiltins.has(VIDEO_ENGINE_PLUGIN_ID)) {
     registerVideoTools(tools, {
       decoder: videoDecoderOf,
@@ -310,18 +316,51 @@ export async function composeTools(composed: ChannelsContext) {
   }
   // A voice message's speech, on the same decoder and analysers. Offered even without FFmpeg or whisper.cpp: then
   // it says what is missing and how to install it, so a voice note is never answered as if it had not arrived.
-  if (!disabledBuiltins.has(VIDEO_ENGINE_PLUGIN_ID)) {
-    registerAudioTools(tools, {
-      ...(videoOffered ? { decoder: videoDecoderOf } : {}),
-      ...(ffmpegFound !== undefined && "missing" in ffmpegFound ? { ffmpegMissing: ffmpegFound.missing } : {}),
-      analyzers: videoAnalyzers.registry,
-      transcribeSetup: () => transcribeSetupNote(videoAnalyzers),
-      modelsDirectory: join(options.dataDirectory, "video", "models"),
-      artifacts: persistencePort.repositories.artifacts,
-      enabled: async (workspaceId) => videoToolsOn((await readMemos.workspaceSettings.get(workspaceId)).settings),
-    });
-  }
-  return { builtinWorkerOf, heartbeatFetchPage, heartbeatReports, taskTree, videoAnalyzers, videoDecoderOf, videoOffered, videoOptions };
+  // FFmpeg is looked for at each call, not only at start: voice setup may install it while the owner runs.
+  const ffmpegMissing = (): string | undefined => {
+    if (overrides.videoDecoderOverride !== undefined) return undefined;
+    const found = videoFfmpeg(videoOptions);
+    return "missing" in found ? found.missing : undefined;
+  };
+  // Registered even with the video plugin off: a voice note's line names this tool, which then says how to turn it on.
+  registerAudioTools(tools, {
+    ...(disabledBuiltins.has(VIDEO_ENGINE_PLUGIN_ID)
+      ? {
+          disabled: `the video plugin (${VIDEO_ENGINE_PLUGIN_ID}) is turned off here (turn it on with \`tavi plugins enable ${VIDEO_ENGINE_PLUGIN_ID}\`, then restart tavi serve)`,
+        }
+      : {}),
+    decoder: async () => {
+      // A decoder made before FFmpeg was installed is the missing one: made again now that it is found.
+      const made = await videoDecoderOf();
+      if (!("missing" in made.facts())) return made;
+      late.videoDecoder = undefined;
+      return await videoDecoderOf();
+    },
+    ffmpegMissing,
+    analyzers: videoAnalyzers.registry,
+    transcribeSetup: () => transcribeSetupNote(videoAnalyzers),
+    modelsDirectory: join(options.dataDirectory, "video", "models"),
+    artifacts: persistencePort.repositories.artifacts,
+    enabled: async (workspaceId) => videoToolsOn((await readMemos.workspaceSettings.get(workspaceId)).settings),
+  });
+  const voiceSetup = createVoiceSetup({
+    dataDirectory: options.dataDirectory,
+    ffmpegFound: () => ffmpegMissing() === undefined,
+    whisperFound: async () => (await findWhisperCli()) !== undefined,
+    transcriberReady: () => videoAnalyzers.registry.for("transcribe").length > 0,
+    reload: () => videoAnalyzers.reload(),
+  });
+  return {
+    builtinWorkerOf,
+    heartbeatFetchPage,
+    heartbeatReports,
+    taskTree,
+    videoAnalyzers,
+    videoDecoderOf,
+    videoOffered,
+    videoOptions,
+    voiceSetup,
+  };
 }
 
 export type ToolsContext = ChannelsContext & Awaited<ReturnType<typeof composeTools>>;

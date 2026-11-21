@@ -161,7 +161,7 @@ export const BUILTIN_PLUGINS: readonly BuiltinPluginInfo[] = [
   {
     id: VIDEO_ENGINE_PLUGIN_ID,
     description:
-      "Understanding videos with the person's own FFmpeg (video.* tools), each read in a confined, capped run. Disabled, the video tools are not offered from the next start.",
+      "Understanding videos and voice messages with the person's own FFmpeg (video.* and audio.transcribe), each read in a confined, capped run. Disabled, the video tools are not offered from the next start, and a voice message is kept but not transcribed.",
     core: false,
   },
   {

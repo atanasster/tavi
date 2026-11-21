@@ -202,6 +202,7 @@ export function doctorSummary(report: DoctorDocument, fromOwner = false): string
     ...(typeof limits["detail"] === "string" ? [`    ${limits["detail"]}`] : []),
     // On without FFmpeg, every video call fails: that needs the person, like a missing bubblewrap.
     `${video["enabled"] !== true ? "–" : mark(typeof video["ffmpeg"] === "string" && video["ffmpeg"] !== "missing")} Video: ${video["enabled"] === true ? `on, ffmpeg ${String(video["ffmpeg"] ?? "missing")}` : "off"}`,
+    ...transcriptionLine(video),
     ...(typeof recordOf(report["taint"])["line"] === "string" ? [`  Taint: ${String(recordOf(report["taint"])["line"])}`] : []),
     ...(typeof recordOf(report["webSearch"])["line"] === "string"
       ? [`  Web search: ${String(recordOf(report["webSearch"])["line"])}`]
@@ -211,6 +212,13 @@ export function doctorSummary(report: DoctorDocument, fromOwner = false): string
     "The whole report: tavi doctor --format json",
   ];
   return `${lines.join("\n")}\n`;
+}
+
+/** Doctor's transcription line, for video speech and voice messages alike: ✓ ready, – with why none can run. */
+function transcriptionLine(video: Record<string, unknown>): string[] {
+  const transcription = recordOf(video["analyzers"])["transcription"];
+  if (video["enabled"] !== true || typeof transcription !== "string") return [];
+  return [`${transcription === "ready" ? "✓" : "–"} Transcription (video and voice messages): ${transcription}`];
 }
 
 /**

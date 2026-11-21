@@ -44,6 +44,7 @@ import {
   searchStep,
   tasksStep,
   serviceStep,
+  voiceStep,
   type StepContext,
   type StepSystem,
 } from "./steps.js";
@@ -171,6 +172,7 @@ const STEP_LABELS: Readonly<Record<OnboardingStepKind, string>> = {
   apps: "Apps",
   tasks: "Tasks",
   channels: "Channels",
+  voice: "Voice messages",
   service: "Keep it running",
   ideas: "First idea",
   info: "Good to know",
@@ -184,6 +186,7 @@ const STEP_COMMANDS: Readonly<Record<OnboardingStepKind, string>> = {
   apps: "tavi apps connect <app>",
   tasks: "tavi config set tasks.home tavi",
   channels: "tavi channels add <kind>",
+  voice: "tavi setup voice",
   service: SERVICE_SETUP_COMMAND,
   ideas: "tavi ideas",
   info: "",
@@ -912,6 +915,9 @@ export async function runOnboard(deps: OnboardDependencies, run: OnboardRun): Pr
             // Asked for by name with no owner to pair on: the run says so in its exit (4).
             if (run.step === "channels" && !deps.transport.attached) extra.ownerNeeded = true;
             await channelsStep(context);
+            break;
+          case "voice":
+            await voiceStep(context);
             break;
           case "service":
             await serviceStep(context);

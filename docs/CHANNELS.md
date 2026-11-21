@@ -451,7 +451,7 @@ Where the provider sends the browser back depends on the channel:
 - Anything else is not stored, and the message carries a note saying how many attachments were skipped and why.
 - A redelivered message's attachment is the same artifact, not a second copy.
 - The lines naming the kept attachments — their file names are whoever made the files' to choose — reach the agent as quoted data, labelled `attachment`, never as the sender's own words: a caption stays the person's message, and a message of attachments alone has no prompt of its own.
-- A voice message or other audio is kept as such, and its line names `audio.transcribe`, which reads what is said in it on this machine (FFmpeg and whisper.cpp on your own model; see [VIDEO.md](VIDEO.md#voice-messages-and-other-audio)). The transcript is the attachment's, untrusted, never the sender's own words. Where FFmpeg or a transcription model is missing, the reply says which and how to install it (`brew install whisper-cpp ffmpeg` and a ggml model), not that the file did not arrive.
+- A voice message or other audio is kept as such, and its line names `audio.transcribe`, which reads what is said in it on this machine (FFmpeg and whisper.cpp on your own model; see [VIDEO.md](VIDEO.md#voice-messages-and-other-audio)). The transcript is the attachment's, untrusted, never the sender's own words. Where FFmpeg or a transcription model is missing, the reply says which and how to set it up (setup's Voice messages step, or `brew install whisper-cpp ffmpeg` and a ggml model), not that the file did not arrive.
 
 **Form fills on channels**
 

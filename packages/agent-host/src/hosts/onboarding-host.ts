@@ -118,6 +118,18 @@ export interface OnboardingLiveFacts {
   readonly channels: { readonly available: boolean; readonly connections: readonly (OnboardingItem & { readonly paired: boolean })[] };
   /** `running`: the owner itself runs as the service (`TAVI_SERVICE=1`); `installed`: a unit for this data directory exists. */
   readonly service: { readonly supported: boolean; readonly running: boolean; readonly installed: boolean };
+  /**
+   * Voice messages' local transcription: `supported` on macOS and Linux with the
+   * video plugin on (else `unsupported` says why); `ready` when FFmpeg, whisper.cpp
+   * and a model are all there; `missing` names what is not. Absent: it could not
+   * be read here (offline), and the step says so.
+   */
+  readonly voice?: {
+    readonly supported: boolean;
+    readonly unsupported?: string;
+    readonly ready: boolean;
+    readonly missing: readonly string[];
+  };
   /** An idea was tried, or the operator started a turn of their own. */
   readonly ideas: { readonly tried: boolean; readonly startedTurn: boolean };
   /**
@@ -295,6 +307,14 @@ function liveStep(
       if (home === "tavi" || mark === "completed") return { state: "done", detail: "Tavi's own list", ...withItems };
       return { state: "todo", detail: "Tavi's own list, or a task app you use", ...withItems };
     }
+    case "voice": {
+      const voice = facts.voice;
+      if (voice === undefined) return { state: "todo", detail: "Checked by the running tavi serve" };
+      if (!voice.supported) return { state: "unavailable", detail: voice.unsupported ?? "Not available on this computer" };
+      if (voice.ready) return { state: "done", detail: "Transcribed on this computer" };
+      // Done only when it works: a voice message is transcribed or it is not; skipping is the way to put it aside.
+      return { state: "todo", detail: voice.missing.length > 0 ? `Missing: ${voice.missing.join(", ")}` : "Not set up" };
+    }
     case "ideas":
       return facts.ideas.tried || facts.ideas.startedTurn
         ? { state: "done", detail: "Done" }
@@ -424,14 +444,15 @@ export function hostFallbackFlow(): OnboardingFlow {
     apps: ["Connect an app", "Mail, calendar and other apps Tavi can read and act in, with your approval."],
     tasks: ["Where do you keep tasks?", "Tavi's own to-do list, or a task app you already use, such as Todoist."],
     channels: ["Message Tavi", "Reach Tavi from a chat app. Only people you pair are answered."],
+    voice: ["Voice messages", "Transcribe voice messages on this computer, so Tavi can read what you say."],
     service: ["Keep it running", "Channels and schedules stop when tavi serve stops. Start it with your computer."],
     ideas: ["Try something", "A first thing to ask, from what Tavi can do here."],
     info: ["Good to know", "Tavi asks before it acts on your behalf."],
   };
   return OnboardingFlowSchema.parse({
     abi: ONBOARDING_ABI,
-    // Bumped when a kind is added (2: tasks), so a checklist dismissed on this flow comes back once with it.
-    version: 2,
+    // Bumped when a kind is added (2: tasks, 3: voice), so a checklist dismissed on this flow comes back once with it.
+    version: 3,
     title: "Set up Tavi",
     steps: ONBOARDING_STEP_KINDS.filter((kind) => kind !== "info").map((kind) => ({
       id: kind,

@@ -10,8 +10,8 @@ describeOnboardingProviderConformance("tavi.onboarding", () => createBuiltinOnbo
 
 describe("the built-in onboarding flow", () => {
   it("walks the canvas and the terminal in their own orders", () => {
-    expect(stepKinds(BUILTIN_ONBOARDING_FLOW, "web")).toEqual(["model", "about", "apps", "tasks", "channels", "search", "ideas"]);
-    expect(stepKinds(BUILTIN_ONBOARDING_FLOW, "cli")).toEqual(["model", "about", "tasks", "channels", "service", "ideas"]);
+    expect(stepKinds(BUILTIN_ONBOARDING_FLOW, "web")).toEqual(["model", "about", "apps", "tasks", "channels", "voice", "search", "ideas"]);
+    expect(stepKinds(BUILTIN_ONBOARDING_FLOW, "cli")).toEqual(["model", "about", "tasks", "channels", "voice", "service", "ideas"]);
   });
 
   it("recommends OpenRouter among the featured providers, and features Telegram and Gmail (its account carries the calendar)", () => {

@@ -111,6 +111,7 @@ import {
 import { setScheduleWebhook } from "../features/schedules/webhook.js";
 import { setScheduleEmailTrigger } from "../features/schedules/email-trigger.js";
 import { createWebSearchAdapter, searchKeyProblem } from "../features/search/web-search.js";
+import type { VoiceSetup } from "../features/video/voice-setup.js";
 
 /**
  * The configuration commands an attached client may run against the owner
@@ -183,6 +184,8 @@ export interface ConfigDependencies {
   readonly videoBinaries?: { readonly ffmpeg?: string; readonly ffprobe?: string };
   /** `models video-status`: doctor's `video` section. */
   readonly videoStatus: () => Promise<Record<string, unknown>>;
+  /** `models voice-status` / `voice-setup`: voice messages' transcription, and the job that installs it; absent offline. */
+  readonly voice?: VoiceSetup;
   /** `models sync`: what Rhumb says of the models in use, stored; absent offline, where the CLI composes its own runtime. */
   readonly lifecycleSync?: () => Promise<LifecycleSyncReport | LifecycleSyncNoKey>;
   /** `models lifecycle`: what the last sync stored of the models in use, for today; absent offline. */
@@ -614,6 +617,10 @@ export function modelsCommand(deps: ConfigDependencies, input: ModelsPayload): P
         }
         case "video-status":
           return await deps.videoStatus();
+        case "voice-status":
+        case "voice-setup":
+          if (deps.voice === undefined) throw new Error("voice messages are set up by the running owner: start `tavi serve`");
+          return input.action === "voice-status" ? await deps.voice.status() : await deps.voice.start();
         case "sync":
           if (deps.lifecycleSync === undefined) throw new Error("this owner cannot sync model lifecycles");
           return await deps.lifecycleSync();

@@ -17,6 +17,7 @@ import { AboutStep } from "./WelcomeAboutStep.js";
 import { ModelStep } from "./WelcomeModelStep.js";
 import { SearchStep } from "./WelcomeSearchStep.js";
 import { TasksStep } from "./WelcomeTasksStep.js";
+import { VoiceStep } from "./WelcomeVoiceStep.js";
 import type { WelcomeProps, StepProps } from "./WelcomeStepParts.js";
 import { Failure, Notice, Pending } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
@@ -300,6 +301,8 @@ function StepBody(props: StepProps) {
       return <TasksStep {...props} />;
     case "channels":
       return <ChannelsStep {...props} />;
+    case "voice":
+      return <VoiceStep {...props} />;
     case "ideas":
       return <IdeasStep {...props} connectedBefore={props.appsBefore} onTry={(prompt, ideaId) => props.onTry?.(prompt, ideaId)} />;
     case "info":

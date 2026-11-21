@@ -502,8 +502,8 @@ installed on this machine (Tavi ships none: `brew install ffmpeg` or
 
 Each video is read in a run of its own, sandboxed with no network where the
 host allows it; on a Linux host whose sandbox is unavailable, video calls are
-refused unless you start `tavi serve --video-allow-unconfined`. Videos from a
-channel, mail or the web are kept 30 days (`video.keepDays`); videos in your
+refused unless you start `tavi serve --video-allow-unconfined`. Videos and voice
+messages from a channel, mail or the web are kept 30 days (`video.keepDays`); videos in your
 folder are never pruned. `tavi config set video.enabled off` turns the tools
 off per workspace.
 

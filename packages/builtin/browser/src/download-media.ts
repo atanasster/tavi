@@ -1,6 +1,6 @@
 import { createReadStream } from "node:fs";
 
-import { type ArtifactRecord, folderFileName } from "@tavi/contracts";
+import { AUDIO_MEDIA_TYPES, type ArtifactRecord, folderFileName, sniffAudioContainer } from "@tavi/contracts";
 
 /**
  * Largest artifact this adapter will hand to a page.
@@ -72,9 +72,9 @@ export function sniffDownloadMediaType(bytes: Uint8Array, fileName: string): str
   if (ascii(0, "GIF87a") || ascii(0, "GIF89a")) return "image/gif";
   if (ascii(0, "RIFF") && ascii(8, "WEBP")) return "image/webp";
   if (ascii(0, "%PDF-")) return "application/pdf";
-  if (ascii(0, "OggS")) return "audio/ogg";
-  if (ascii(0, "ID3") || (bytes[0] === 0xff && ((bytes[1] ?? 0) & 0xe0) === 0xe0)) return "audio/mpeg";
-  if (ascii(0, "RIFF") && ascii(8, "WAVE")) return "audio/wav";
+  // Audio by the decoder's rule, so a downloaded recording is what audio.transcribe reads.
+  const audio = sniffAudioContainer(bytes);
+  if (audio !== undefined && audio !== "m4a") return AUDIO_MEDIA_TYPES[audio];
   if (starts(0x1f, 0x8b)) return "application/gzip";
   if (starts(0x50, 0x4b, 0x03, 0x04) || starts(0x50, 0x4b, 0x05, 0x06) || starts(0x50, 0x4b, 0x07, 0x08)) {
     const byName = mediaTypeOf(fileName);

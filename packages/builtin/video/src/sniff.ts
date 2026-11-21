@@ -18,9 +18,9 @@ export function sniffMedia(head: Uint8Array, as: MediaContainer): MediaContainer
 }
 
 /** The demuxer FFmpeg is told to use for a container (`-f`): it never probes for one. */
-export function demuxerOf(container: MediaContainer): "mov" | "matroska" | "gif" | "ogg" | "mp3" | "wav" {
+export function demuxerOf(container: MediaContainer): "mov" | "matroska" | "gif" | "ogg" | "mp3" | "wav" | "aac" {
   if (container === "webm" || container === "matroska") return "matroska";
   if (container === "gif") return "gif";
-  if (container === "ogg" || container === "mp3" || container === "wav") return container;
+  if (container === "ogg" || container === "mp3" || container === "wav" || container === "aac") return container;
   return "mov";
 }

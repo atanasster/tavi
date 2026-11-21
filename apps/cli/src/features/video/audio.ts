@@ -35,21 +35,24 @@ import { analyzerAssessment, hearWindow } from "./tools.js";
  */
 
 export interface AudioToolOptions {
-  /** The owner's decoder; absent when no FFmpeg is installed (`ffmpegMissing` says why). */
+  /** The owner's decoder; absent when none can be made here. */
   readonly decoder?: () => Promise<VideoDecoderPort>;
-  readonly ffmpegMissing?: string;
+  /** Why FFmpeg cannot be used now, read at each call (voice setup may install it while the owner runs). */
+  readonly ffmpegMissing?: () => string | undefined;
   readonly analyzers?: VideoAnalyzerRegistry;
   /** Why the configured transcription analysers cannot run, when they cannot (`doctor`'s notes for the chain). */
   readonly transcribeSetup?: () => string | undefined;
   /** Where a ggml model goes (`<data>/video/models`), for the install hint. */
   readonly modelsDirectory?: string;
   readonly artifacts: ArtifactRepositoryPort;
+  /** Why transcription is off on this owner (the video plugin disabled): the tool then says so, and how to turn it on. */
+  readonly disabled?: string;
   /** `video.enabled` (absent: on): transcription is the video tools' analysers'. */
   readonly enabled: (workspaceId: string) => Promise<boolean>;
 }
 
 /** The media types an audio artifact is stored under (`media-intake.ts`). */
-const AUDIO_ARTIFACT_TYPES: readonly string[] = ["audio/ogg", "audio/mpeg", "audio/mp4", "audio/wav"];
+const AUDIO_ARTIFACT_TYPES: readonly string[] = ["audio/ogg", "audio/mpeg", "audio/mp4", "audio/wav", "audio/aac"];
 /** The most of a recording one call reads: a longer one pages on by `nextFrom`. */
 const AUDIO_WINDOW_SEC = 300;
 
@@ -63,7 +66,7 @@ function transcriptionInstallHint(modelsDirectory = "<data>/video/models"): stri
  * install it — for the model to pass on plainly.
  */
 export function noTranscriberMessage(artifactId: string, missing: readonly string[], modelsDirectory?: string): string {
-  return `The audio arrived and is kept (artifact ${artifactId}), but it cannot be transcribed on this machine: ${missing.join("; ")}. To read voice messages, ${transcriptionInstallHint(modelsDirectory)}. Tell the person this plainly; do not say the file did not arrive.`;
+  return `The audio arrived and is kept (artifact ${artifactId}), but it cannot be transcribed on this machine: ${missing.join("; ")}. To read voice messages, finish the Voice messages step of setup (Home's setup checklist, or \`tavi setup voice\`), or ${transcriptionInstallHint(modelsDirectory)}. Tell the person this plainly; do not say the file did not arrive.`;
 }
 
 const resultLabel = (artifact: ArtifactRecord): { readonly [TOOL_LABEL_KEY]: ToolResultLabel } => ({
@@ -91,7 +94,7 @@ function audioValue<T>(result: VideoResult<T>, artifactId: string, modelsDirecto
     });
   const sentence =
     refused === "not-video"
-      ? "this is not an audio file Tavi reads (Ogg, MP3, WAV or M4A, by its bytes)"
+      ? "this is not an audio file Tavi reads (Ogg, MP3, WAV, M4A or AAC, by its bytes)"
       : refused === "too-large"
         ? `the audio is larger than ${String(VIDEO_LIMITS.maxInputBytes / 1024 / 1024)} MiB`
         : refused === "no-audio"
@@ -149,22 +152,32 @@ export function registerAudioTools(registry: ToolRegistryPort, options: AudioToo
     assess: (input, context): CallAssessment => {
       const parsed = AudioTranscribeInputSchema.safeParse(input);
       const span = parsed.success
-        ? Math.max(1, Math.min(AUDIO_WINDOW_SEC, (parsed.data.to ?? AUDIO_WINDOW_SEC) - (parsed.data.from ?? 0)))
+        ? Math.max(1, Math.min(AUDIO_WINDOW_SEC, (parsed.data.to ?? (parsed.data.from ?? 0) + AUDIO_WINDOW_SEC) - (parsed.data.from ?? 0)))
         : AUDIO_WINDOW_SEC;
       return analyzerAssessment(options.analyzers, { capability: "transcribe", audioSec: span }, context, "Transcribe the audio's speech");
     },
     handler: async ({ input, context, signal, assessedSubjects }) => {
-      if (!(await options.enabled(context.workspaceId)))
-        throw new TaviError(
-          "UNAVAILABLE",
-          "transcription is part of the video tools, which are turned off in this workspace (`tavi config set video.enabled on`)",
-        );
       const parsed = AudioTranscribeInputSchema.parse(input);
       const { artifact, bytes } = await load(parsed.artifactId, context);
+      // Turned off, it still says the audio arrived, and how to turn it on.
+      const off =
+        options.disabled ??
+        ((await options.enabled(context.workspaceId))
+          ? undefined
+          : "transcription is part of the video tools, which are turned off in this workspace (turn them on with `tavi config set video.enabled on`)");
+      if (off !== undefined)
+        throw new TaviError(
+          "UNAVAILABLE",
+          `The audio arrived and is kept (artifact ${artifact.artifactId}), but ${off}. Tell the person this plainly; do not say the file did not arrive.`,
+          {
+            details: { refused: "turned-off" },
+          },
+        );
       // Everything missing, said at once: one install, not one round per piece.
       const chain = options.analyzers?.for("transcribe") ?? [];
+      const ffmpegMissing = options.decoder === undefined ? "FFmpeg is not installed" : options.ffmpegMissing?.();
       const missing = [
-        ...(options.decoder === undefined ? [options.ffmpegMissing ?? "FFmpeg is not installed"] : []),
+        ...(ffmpegMissing === undefined ? [] : [ffmpegMissing]),
         ...(chain.length === 0
           ? [options.transcribeSetup?.() ?? "no transcription analyser (whisper.cpp with a ggml model) is set up"]
           : []),
@@ -173,7 +186,7 @@ export function registerAudioTools(registry: ToolRegistryPort, options: AudioToo
         throw new TaviError("UNAVAILABLE", noTranscriberMessage(artifact.artifactId, missing, options.modelsDirectory), {
           details: {
             refused: "no-transcriber",
-            missing: [...(options.decoder === undefined ? ["ffmpeg"] : []), ...(chain.length === 0 ? ["transcriber"] : [])],
+            missing: [...(ffmpegMissing === undefined ? [] : ["ffmpeg"]), ...(chain.length === 0 ? ["transcriber"] : [])],
           },
         });
       const analyzers = options.analyzers;

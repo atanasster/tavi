@@ -72,7 +72,7 @@ describe("onboarding command", () => {
     const status = await call({ action: "status" });
     expect(status).toMatchObject({ workspaceId: "default", providerId: null, firstRun: true, complete: false });
     // Every step the flow has, on every surface: the terminal's service step too, said to be done there.
-    expect(status.open).toEqual(["model", "about", "search", "apps", "tasks", "channels", "service", "ideas"]);
+    expect(status.open).toEqual(["model", "about", "search", "apps", "tasks", "channels", "voice", "service", "ideas"]);
     expect(status.steps.find((step) => step.kind === "service")).toMatchObject({ elsewhere: "cli", title: "Keep it running" });
     expect((await repositories.onboarding.install()).firstSeenAt).toBe(NOW.toISOString());
   });

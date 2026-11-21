@@ -181,7 +181,10 @@ tavi chat        # in another terminal, or: tavi ui
 ```
 
 `tavi onboard` finds a key in your environment or a local Ollama, and can sign
-you in to OpenRouter. For servers and scripts, `tavi setup --non-interactive`
+you in to OpenRouter. Its optional steps include voice messages: with
+`tavi serve` running, it installs whisper.cpp and FFmpeg with Homebrew and
+downloads a speech model, so a voice message is transcribed on this computer.
+For servers and scripts, `tavi setup --non-interactive`
 does the same from flags ([ONBOARDING](docs/ONBOARDING.md)). To start Tavi at
 login, see [OPERATIONS](docs/OPERATIONS.md).
 
@@ -198,7 +201,7 @@ login, see [OPERATIONS](docs/OPERATIONS.md).
 | From source | pnpm `12.16.1` | building from a clone (`corepack enable`); the installer needs only npm |
 | Linux | bubblewrap, socat and ripgrep | the sandbox (macOS has one built in); `tavi sandbox check` says what is missing |
 | Optional | Chromium | the browser tools and PDF reports; the installer and `pnpm install` install it |
-| Optional | FFmpeg, whisper.cpp | the video tools, and transcription of videos and voice messages (`brew install whisper-cpp ffmpeg` and a ggml model; see [VIDEO](docs/VIDEO.md#voice-messages-and-other-audio)) |
+| Optional | FFmpeg, whisper.cpp | the video tools, and transcription of videos and voice messages (setup's Voice messages step installs both with Homebrew and downloads a speech model; or `brew install whisper-cpp ffmpeg` and a ggml model; see [VIDEO](docs/VIDEO.md#voice-messages-and-other-audio)) |
 | Optional | uv | Python MCP servers |
 
 [DEVELOPMENT](docs/DEVELOPMENT.md) has the install commands for each.

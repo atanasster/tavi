@@ -55,6 +55,8 @@ describe("pruneVideo", () => {
       });
     const old = put("art-in-old", {});
     put("art-in-mov", { contentType: "video/quicktime" });
+    // A voice message is a recording of someone: kept as long as a video, then gone.
+    put("art-in-voice", { contentType: "audio/ogg" });
     put("art-folder", { untrusted: false });
     put("art-gif", { contentType: "image/gif" });
     put("art-pending", { reviewState: "pending" });
@@ -64,8 +66,8 @@ describe("pruneVideo", () => {
     const body = store.resolveArtifactPath(old.relativePath);
     expect(existsSync(body)).toBe(true);
     expect(store.pruneVideo({ workspaceId: "w1", olderThan: later })).toEqual({
-      artifacts: 2,
-      bytes: "art-in-old".length + "art-in-mov".length,
+      artifacts: 3,
+      bytes: "art-in-old".length + "art-in-mov".length + "art-in-voice".length,
     });
     expect(existsSync(body)).toBe(false);
     for (const kept of ["art-folder", "art-gif", "art-pending", "art-elsewhere", "art-frame"])

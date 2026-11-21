@@ -48,6 +48,8 @@ export interface OnboardingFactSources {
   readonly startedTurn: (workspaceId: string) => Promise<boolean>;
   /** The service state: see `serviceState`. */
   readonly service: () => Promise<OnboardingLiveFacts["service"]>;
+  /** Voice messages' transcription, from the running owner's voice setup; absent offline, where the step says so. */
+  readonly voice?: () => Promise<NonNullable<OnboardingLiveFacts["voice"]>>;
   readonly now: () => Date;
 }
 
@@ -223,7 +225,8 @@ async function taskFacts(sources: OnboardingFactSources, workspaceId: string): P
 
 /** Every family's live facts for one workspace. */
 export async function liveOnboardingFacts(sources: OnboardingFactSources, workspaceId: string): Promise<OnboardingLiveFacts> {
-  const [model, about, search, apps, channels, service, ideas, tasks] = await Promise.all([
+  const voiceSource = sources.voice;
+  const [model, about, search, apps, channels, service, ideas, tasks, voice] = await Promise.all([
     modelFacts(sources, workspaceId),
     aboutFacts(sources, workspaceId),
     searchFacts(sources, workspaceId),
@@ -232,8 +235,9 @@ export async function liveOnboardingFacts(sources: OnboardingFactSources, worksp
     settle(sources.service, { supported: false, running: false, installed: false }),
     ideaFacts(sources, workspaceId),
     taskFacts(sources, workspaceId),
+    voiceSource === undefined ? undefined : settle(voiceSource, undefined),
   ]);
-  return { model, about, search, apps, channels, service, ideas, tasks };
+  return { model, about, search, apps, channels, service, ideas, tasks, ...(voice === undefined ? {} : { voice }) };
 }
 
 /** Where a unit for `label` lives, user scope first: read, never spawned for. */

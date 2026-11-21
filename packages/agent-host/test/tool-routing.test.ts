@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_MODEL_TOOLS, type ToolDefinition } from "@tavi/contracts";
+import { INBOUND_MESSAGE_PREFIX, MAX_MODEL_TOOLS, untrustedLabel, type ToolDefinition } from "@tavi/contracts";
 import {
   appendDiscovered,
   deferAttendedFamilies,
@@ -22,6 +22,7 @@ import {
   toolSearchDefinitionFor,
   toolSearchDescriptorFor,
 } from "../src/tools/tool-routing.js";
+import { isAttachmentLines } from "../src/workflow/nodes/model/offer.js";
 const tools: ToolDefinition[] = Array.from({ length: 90 }, (_, index) => ({
   id: `fixture.t${index}`,
   version: "1",
@@ -130,6 +131,13 @@ describe("bounded tool projection", () => {
       shortlistTools([...tools, audio], "", [], [], new Set(), { audioInConversation }).map((tool) => tool.id);
     expect(offered(true)).toContain("audio.transcribe");
     expect(offered(false)).not.toContain("audio.transcribe");
+    // A channel's voice note reaches the turn as the host's attachment lines (an `inbound-` block labelled
+    // `attachment`), never as the person's own words: those lines are what the router reads for it.
+    const lines = { role: "user" as const, id: `${INBOUND_MESSAGE_PREFIX}m1-attachments`, label: untrustedLabel("attachment") };
+    expect(isAttachmentLines(lines)).toBe(true);
+    expect(isAttachmentLines({ ...lines, label: untrustedLabel("email") })).toBe(false);
+    expect(isAttachmentLines({ ...lines, id: "m1" })).toBe(false);
+    expect(isAttachmentLines({ ...lines, role: "assistant" as const })).toBe(false);
   });
   it("offers the video tools when the conversation holds a video, and with a PDF too keeps the first three of each", () => {
     expect(

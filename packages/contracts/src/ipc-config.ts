@@ -88,6 +88,10 @@ export const MODELS_ACTIONS = [
   // Read-only: what `doctor` says of video (FFmpeg, confinement, the analyser chains) for Settings → Models,
   // since a page may not read `doctor` itself.
   "video-status",
+  // Read-only: voice messages' setup (FFmpeg, whisper.cpp, a speech model), for onboarding's voice step.
+  "voice-status",
+  // Adds what voice messages lack: Homebrew installs, the pinned speech model, analyzers.json's entry; answers at once.
+  "voice-setup",
   // What Rhumb says of the models in use: stores their lifecycle, never changes a model.
   "sync",
   // Read-only: what the last sync stored of the models in use, for today (doctor's `modelConfiguration.lifecycle`).

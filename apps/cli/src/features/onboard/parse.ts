@@ -75,8 +75,8 @@ export interface OnboardCommandOptions {
 export const ONBOARD_USAGE = `tavi onboard [status|provider|reset|import] [options]
 
 Walks the setup steps that are still open, in order: a model first (the only
-one Tavi needs), then about you, where you keep tasks, channels, keeping it
-running and a first idea.
+one Tavi needs), then about you, where you keep tasks, channels, voice
+messages, keeping it running and a first idea.
 Each step can be done or skipped; nothing is asked about a step that is done.
 
   tavi onboard                 walk the open steps
@@ -110,7 +110,7 @@ Exit codes: 0 no required step open, 3 one open, 4 an owner is needed,
 export const SETUP_USAGE = `tavi setup [<step>] [options]
 
 Goes through every setup step (or one: model, about, search, apps, tasks,
-channels, service, ideas), showing what is set now and keeping it on Enter. The only
+channels, voice, service, ideas), showing what is set now and keeping it on Enter. The only
 command that changes a step that is done. See also: tavi onboard.
 
 Headless (no prompt at all):

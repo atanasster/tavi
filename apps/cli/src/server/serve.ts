@@ -237,7 +237,17 @@ const REVOKED_OWNER_ROUTINE_ACTIONS: ReadonlySet<string> = new Set([
 /** The `channels` actions that change who is allowed in a workspace. */
 const PEOPLE_ACTIONS: ReadonlySet<string> = new Set(["allow", "revoke", "confirm-pair", "delete"]);
 /** The `models` actions that change nothing a turn, a routine or a reminder reads; every other one refreshes the providers. */
-const MODELS_READS: ReadonlySet<string> = new Set(["list", "show", "roles", "chat", "video-status", "sync", "lifecycle"]);
+const MODELS_READS: ReadonlySet<string> = new Set([
+  "list",
+  "show",
+  "roles",
+  "chat",
+  "video-status",
+  "voice-status",
+  "voice-setup",
+  "sync",
+  "lifecycle",
+]);
 /** How long cut-off admissions get to publish their ends after being aborted. */
 const ABORT_GRACE_MS = 1_000;
 /** How far back serve start looks for a chat turn its history lost; an older gap is saved by the chat's next turn. */
@@ -1112,6 +1122,7 @@ function configDependencies(
     dataDirectory: runtime.dataDirectory,
     videoBinaries: runtime.videoBinaries,
     videoStatus: () => videoStatusDocument(runtime),
+    voice: runtime.voiceSetup,
     lifecycleSync: () => syncRuntimeModelLifecycle(runtime),
     lifecycleReport: () => runtimeLifecycleReport(runtime),
     replaceModel: (from, to, workspaceId, confirmed) =>

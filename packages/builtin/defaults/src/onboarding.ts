@@ -4,8 +4,8 @@ import { availableFor, defineOnboardingFlow, withAvailableFeatured } from "@tavi
 /**
  * The built-in onboarding flow, `tavi.onboarding`. One list of steps, which
  * the host shows per surface:
- * - the canvas walks model → about → apps → tasks → channels → search → ideas;
- * - the terminal walks model → about → tasks → channels → service → ideas, and
+ * - the canvas walks model → about → apps → tasks → channels → voice → search → ideas;
+ * - the terminal walks model → about → tasks → channels → voice → service → ideas, and
  *   leaves apps and search to the canvas, where a browser sign-in is at home
  *   (its tasks step points at the commands that connect a task app).
  * The copy says what each step reads, changes and costs. The host
@@ -14,7 +14,7 @@ import { availableFor, defineOnboardingFlow, withAvailableFeatured } from "@tavi
  */
 
 /** Bumped when a step is added: a dismissed checklist comes back once, with only the new steps. */
-export const BUILTIN_ONBOARDING_FLOW_VERSION = 2;
+export const BUILTIN_ONBOARDING_FLOW_VERSION = 3;
 
 export const BUILTIN_ONBOARDING_FLOW: OnboardingFlow = defineOnboardingFlow({
   version: BUILTIN_ONBOARDING_FLOW_VERSION,
@@ -60,6 +60,13 @@ export const BUILTIN_ONBOARDING_FLOW: OnboardingFlow = defineOnboardingFlow({
       body: "Reach Tavi from a chat app. You pair yourself with a one-time code; strangers are never answered.",
       optional: true,
       featured: ["telegram"],
+    },
+    {
+      id: "voice",
+      kind: "voice",
+      title: "Understand voice messages",
+      body: "Send Tavi a voice message and it is turned into text on this computer: nothing you say leaves it. That takes FFmpeg and whisper.cpp, which Homebrew installs as your user (never with sudo), and Whisper's base speech model (about 148 MB, MIT licence) from Hugging Face, kept only when its checksum matches.",
+      optional: true,
     },
     {
       id: "search",

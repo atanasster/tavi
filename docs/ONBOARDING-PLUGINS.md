@@ -2,7 +2,7 @@
 
 This guide explains how to replace setup's **flow** with your own: which steps `tavi onboard`, `tavi setup` and the canvas's Welcome walk, in what order, and in whose words. What a person sees is in [ONBOARDING.md](ONBOARDING.md). Plugin basics are in [PLUGINS.md](PLUGINS.md).
 
-One flow runs per install. The built-in one, `tavi.onboarding`, walks the model, about you, apps, channels, search, the service and first ideas. Yours might put a company's channel first, leave a step out, or say things in your own words.
+One flow runs per install. The built-in one, `tavi.onboarding`, walks the model, about you, apps, tasks, channels, voice messages, search, the service and first ideas. Yours might put a company's channel first, leave a step out, or say things in your own words.
 
 You choose steps and words. Tavi does everything else:
 - **Readiness.** Whether each step is done comes from live state, never from your flow.
@@ -90,7 +90,7 @@ Nothing else: no memory, chats, settings values or keys.
 ## What you answer
 
 A flow (`OnboardingFlowSchema`): `abi`, a `version` you bump when you add steps, a `title`, the `steps` in order, and the `done` screen's `title` and `body`. Each step has:
-- `id` (the address `/welcome/<id>` uses), `kind` (`model`, `about`, `search`, `apps`, `tasks`, `channels`, `service`, `ideas`, `info`), `title`, `body`, `optional`;
+- `id` (the address `/welcome/<id>` uses), `kind` (`model`, `about`, `search`, `apps`, `tasks`, `channels`, `voice`, `service`, `ideas`, `info`), `title`, `body`, `optional`; each kind at most once, so at most 10 steps;
 - `featured`: up to 4 ids to offer first (presets for the model, channel kinds, app ids), and `recommended`, one of them;
 - `surfaces`: `["cli"]`, `["web"]` or both (the default);
 - `about.fields` for an about step; `prompts` (up to 3, each a `label` and a `prompt`) for an ideas step.

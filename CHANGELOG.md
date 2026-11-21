@@ -9,13 +9,22 @@ change behaviour or stored data.
 ### Added
 
 - Voice messages: a voice message sent to Tavi from a chat app (Telegram's
-  Ogg voice notes, or MP3, WAV and M4A audio) is read with the new
+  Ogg voice notes, or MP3, WAV, M4A and AAC audio) is read with the new
   `audio.transcribe` tool, on this machine — your FFmpeg and whisper.cpp on
   your own ggml model, the same path `video.transcribe` takes. The words are
   the attachment's, untrusted, never your own message. Where FFmpeg or a
   transcription model is missing, the reply says which and how to install it
   (`brew install whisper-cpp ffmpeg` and a model in `<data>/video/models`;
   see docs/VIDEO.md).
+- Setup has a **Voice messages** step (Welcome, Home's checklist and
+  `tavi setup voice`): it shows which of FFmpeg, whisper.cpp and a speech
+  model are here and, on your yes, has the owner install the tools with
+  Homebrew as your user (never `sudo`), download Whisper's base model (about
+  148 MB, MIT; kept only when its checksum matches) and name it in
+  `analyzers.json`, then reload: no restart. Without Homebrew it gives the
+  commands. A dismissed setup checklist comes back once with it.
+- `tavi doctor` has a **Transcription** line for videos and voice messages:
+  ready, or what is missing.
 
 ### Changed
 
@@ -49,6 +58,14 @@ change behaviour or stored data.
 
 ### Fixed
 
+- A voice message sent over a channel is now offered `audio.transcribe` on
+  its turn: the router reads the host's attachment lines, not only the
+  person's words.
+- Voice messages and other audio are deleted with videos after
+  `video.keepDays` (30 days), instead of kept for ever.
+- With the video plugin or `video.enabled` turned off, a voice message is
+  still said to have arrived, with how to turn transcription on.
+- An MPEG-2/4 AAC (ADTS) file is no longer taken for MP3 and then refused.
 - A voice message is no longer answered as if it never arrived: reading an
   audio (or video) attachment with `artifacts.read` now points to the tool
   that reads it instead of saying there is no such artifact in the chat.

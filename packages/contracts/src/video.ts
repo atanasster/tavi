@@ -104,7 +104,7 @@ export const VIDEO_MEDIA_TYPES: Readonly<Record<VideoContainer, string>> = {
 };
 
 /** Audio files the decoder opens for their speech alone (a voice note): never a video tool's input. */
-export const AUDIO_CONTAINERS = ["ogg", "mp3", "wav", "m4a"] as const;
+export const AUDIO_CONTAINERS = ["ogg", "mp3", "wav", "m4a", "aac"] as const;
 export type AudioContainer = (typeof AUDIO_CONTAINERS)[number];
 /** Each audio container's media type, as intake stores it. */
 export const AUDIO_MEDIA_TYPES: Readonly<Record<AudioContainer, string>> = {
@@ -112,6 +112,7 @@ export const AUDIO_MEDIA_TYPES: Readonly<Record<AudioContainer, string>> = {
   mp3: "audio/mpeg",
   wav: "audio/wav",
   m4a: "audio/mp4",
+  aac: "audio/aac",
 };
 /** What a decoder run holds: a video, or an audio file opened for its speech. */
 export type MediaContainer = VideoContainer | AudioContainer;
@@ -322,6 +323,36 @@ export const VideoTranscribeInputSchema = z.strictObject({
   ),
 });
 export type VideoTranscribeInput = z.infer<typeof VideoTranscribeInputSchema>;
+
+/**
+ * Voice messages' setup, as onboarding's voice step and Settings read it (`models voice-status`): what is here, what
+ * is missing, and the job `models voice-setup` started.
+ */
+export const VoiceSetupStatusSchema = z.strictObject({
+  /** macOS or Linux. */
+  supported: z.boolean(),
+  /** A transcriber is ready and FFmpeg is found: a voice message is read. */
+  ready: z.boolean(),
+  ffmpeg: z.boolean(),
+  whisper: z.boolean(),
+  model: z.boolean(),
+  /** The step can add what is missing itself (Homebrew for the tools; the model and configuration need none). */
+  automatic: z.boolean(),
+  missing: z.array(z.string().max(300)).max(8),
+  /** What to run by hand where the step cannot. */
+  commands: z.array(z.string().max(400)).max(4),
+  modelInfo: z.strictObject({ file: z.string().max(100), megabytes: z.number().int().nonnegative(), licence: z.string().max(64) }),
+  job: z
+    .strictObject({
+      state: z.enum(["running", "done", "failed"]),
+      phase: z.enum(["install", "download", "configure"]),
+      message: z.string().max(300),
+      received: z.number().int().nonnegative().optional(),
+      total: z.number().int().nonnegative().optional(),
+    })
+    .optional(),
+});
+export type VoiceSetupStatus = z.infer<typeof VoiceSetupStatusSchema>;
 
 /** `audio.transcribe`: a voice note or other audio attachment's speech, by its artifact. */
 export const AudioTranscribeInputSchema = z.strictObject({

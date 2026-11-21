@@ -22,6 +22,7 @@ import {
   type MemoryListAnswer,
   type OnboardingFlowStep,
   type OnboardingStatus,
+  type VoiceSetupStatus,
   type WorkspaceSettingsAnswer,
 } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
@@ -139,7 +140,7 @@ export interface StepContext {
 }
 
 const say = (context: StepContext, text: string) => context.prompter.say(text);
-const skip = async (context: StepContext, kind: "about" | "channels" | "service" | "search" | "ideas" | "apps" | "tasks") => {
+const skip = async (context: StepContext, kind: "about" | "channels" | "voice" | "service" | "search" | "ideas" | "apps" | "tasks") => {
   await context.transport.request("onboarding", { action: "skip", workspaceId: context.workspaceId, step: kind });
 };
 
@@ -147,7 +148,11 @@ const skip = async (context: StepContext, kind: "about" | "channels" | "service"
 const doneAlready = (context: StepContext, kind: string) => context.status.steps.find((step) => step.kind === kind)?.state === "done";
 
 /** Asked before a step starts, unless the person just said to change it; a no marks an open step skipped. */
-async function begin(context: StepContext, kind: "about" | "channels" | "service" | "search", question: string): Promise<boolean> {
+async function begin(
+  context: StepContext,
+  kind: "about" | "channels" | "voice" | "service" | "search",
+  question: string,
+): Promise<boolean> {
   if (context.changing === true) return true;
   const go = await context.prompter.confirm({ label: question, default: true });
   if (!go && !doneAlready(context, kind)) await skip(context, kind);
@@ -764,6 +769,67 @@ export async function serviceStep(context: StepContext): Promise<void> {
 }
 
 // ------------------------------------------------------------------ web search
+
+// ------------------------------------------------------------------ voice messages
+
+/** How long the voice step waits on the owner's setup job: Homebrew's installs and the model's download together. */
+const VOICE_SETUP_WAIT_MS = 45 * 60 * 1_000;
+
+/** The voice job's progress as one line: its phase, and the download's share once it is known. */
+function voiceProgress(job: NonNullable<VoiceSetupStatus["job"]>): string {
+  if (job.phase === "download" && job.total !== undefined && job.total > 0)
+    return `${job.message} ${String(Math.floor(((job.received ?? 0) / job.total) * 100))}%`;
+  return job.message;
+}
+
+/**
+ * Voice messages, on the running owner: what is missing, then, on a yes, the
+ * owner's one job that adds it (Homebrew as the person's user, the pinned
+ * model, `analyzers.json`), followed here until it ends. Offline, or where the
+ * job cannot run (no Homebrew, Linux), the commands that do it by hand.
+ */
+export async function voiceStep(context: StepContext): Promise<void> {
+  const step = context.status.steps.find((candidate) => candidate.kind === "voice");
+  if (step?.state === "unavailable") return say(context, `${GLYPHS.unavailable} Voice messages — ${step.detail}`);
+  if (!context.transport.attached)
+    return say(
+      context,
+      `${GLYPHS.todo} Voice messages — set up by the running owner: start tavi serve, then tavi setup voice (or by hand: brew install whisper-cpp ffmpeg)`,
+    );
+  const voice = await context.transport.request<VoiceSetupStatus>("models", { action: "voice-status" });
+  if (voice.ready) return say(context, `${GLYPHS.done} Voice messages: transcribed on this computer`);
+  const missing = `Missing: ${voice.missing.join(", ")}.`;
+  if (!voice.automatic) {
+    // Asked all the same, so a no is a skip here as anywhere: the commands are what a yes gets.
+    if (!(await begin(context, "voice", `Set up voice messages? ${missing} Tavi cannot install them here: you run the commands it gives.`)))
+      return;
+    say(context, "Run these, then tavi setup voice again:");
+    for (const command of voice.commands) say(context, `  ${command}`);
+    return;
+  }
+  const question = `Set up voice messages? ${missing} Homebrew installs what is missing as your user, and Whisper's base model (${String(voice.modelInfo.megabytes)} MB, ${voice.modelInfo.licence}) downloads from Hugging Face.`;
+  if (!(await begin(context, "voice", question))) return;
+  let current = await context.transport.request<VoiceSetupStatus>("models", { action: "voice-setup" });
+  let said = "";
+  const deadline = Date.now() + VOICE_SETUP_WAIT_MS;
+  while (current.job?.state === "running" && Date.now() < deadline) {
+    const line = voiceProgress(current.job);
+    // A line per change of phase, and per tenth of the download: never a screen of repeats.
+    const shown = line.replace(/\d+%$/u, (share) => `${String(Math.floor(Number.parseInt(share, 10) / 10) * 10)}%`);
+    if (shown !== said) say(context, `  ${shown}`);
+    said = shown;
+    await context.system.sleep(1_000);
+    current = await context.transport.request<VoiceSetupStatus>("models", { action: "voice-status" });
+  }
+  if (current.ready) return say(context, `${GLYPHS.done} Voice messages: transcribed on this computer`);
+  if (current.job?.state === "running")
+    return say(context, `${GLYPHS.todo} Voice messages — still setting up on the owner; tavi doctor says when it is ready`);
+  say(context, `${GLYPHS.failed} Voice messages were not set up: ${current.job?.message ?? `still missing ${current.missing.join(", ")}`}`);
+  if (current.commands.length > 0) {
+    say(context, "  To set them up by hand:");
+    for (const command of current.commands) say(context, `  ${command}`);
+  }
+}
 
 export async function searchStep(context: StepContext): Promise<void> {
   if (!(await begin(context, "search", "Set up web search?"))) return;

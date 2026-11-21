@@ -16,7 +16,18 @@ import { ContributionIdSchema } from "./plugin-ui.js";
 
 // ------------------------------------------------------------------ steps and status
 
-export const ONBOARDING_STEP_KINDS = ["model", "about", "search", "apps", "tasks", "channels", "service", "ideas", "info"] as const;
+export const ONBOARDING_STEP_KINDS = [
+  "model",
+  "about",
+  "search",
+  "apps",
+  "tasks",
+  "channels",
+  "voice",
+  "service",
+  "ideas",
+  "info",
+] as const;
 export type OnboardingStepKind = (typeof ONBOARDING_STEP_KINDS)[number];
 export const OnboardingStepKindSchema = z.enum(ONBOARDING_STEP_KINDS);
 
@@ -123,7 +134,8 @@ export type OnboardingStatus = z.infer<typeof OnboardingStatusSchema>;
 /** The onboarding provider contract a plugin is built for; a change that would break one is a new ABI. */
 export const ONBOARDING_ABI = "tavi.onboarding/1";
 
-export const ONBOARDING_FLOW_STEPS_MAX = 8;
+/** Each kind at most once: every kind's step, `info` among them. */
+export const ONBOARDING_FLOW_STEPS_MAX = 10;
 export const ONBOARDING_FEATURED_MAX = 4;
 export const ONBOARDING_PROMPTS_MAX = 3;
 export const ONBOARDING_BODY_MAX = 400;

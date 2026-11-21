@@ -125,7 +125,7 @@ export function analyzerAssessment(
   const where =
     manifest.attribution.url === undefined ? manifest.attribution.name : `${manifest.attribution.name} (${manifest.attribution.url})`;
   return {
-    display: { title: `${title} with ${manifest.id}`, destination: `${where}: the video's frames or audio leave this machine` },
+    display: { title: `${title} with ${manifest.id}`, destination: `${where}: the frames or audio it is handed leave this machine` },
     subjects: [`${REMOTE_ANALYZER_SUBJECT}${manifest.id}`],
     risk: "medium",
     reasons: [`${manifest.id} is a remote analyser: what it is handed is sent off this machine`],

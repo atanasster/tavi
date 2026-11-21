@@ -71,7 +71,7 @@ describe("audio.transcribe with nothing installed", () => {
     const note = await voiceNote(artifacts, new TextEncoder().encode("OggS\0not really opus"));
     const tools = new ToolRegistry();
     registerAudioTools(tools, {
-      ffmpegMissing: "FFmpeg is not installed (brew install ffmpeg)",
+      ffmpegMissing: () => "FFmpeg is not installed (brew install ffmpeg)",
       analyzers: createAnalyzerRegistry({}),
       transcribeSetup: () =>
         transcribeSetupNote({
@@ -96,8 +96,24 @@ describe("audio.transcribe with nothing installed", () => {
     expect(transcribeSetupNote({ chains: {} })).toMatch(/no transcription analyser .* is named in analyzers\.json/);
     expect(transcribeSetupNote({ chains: { transcribe: [{ id: "whisper-cpp", type: "builtin", status: "ready" }] } })).toBeUndefined();
     expect(noTranscriberMessage("art-1", ["no transcription analyser"])).toMatch(
-      /^The audio arrived .* no transcription analyser\. To read voice messages, install it with `brew install whisper-cpp ffmpeg`/,
+      /^The audio arrived .* no transcription analyser\. To read voice messages, finish the Voice messages step of setup \(Home's setup checklist, or `tavi setup voice`\), or install it with `brew install whisper-cpp ffmpeg`/,
     );
+  });
+
+  it("says the audio arrived when the video plugin or the workspace's video tools are off, and how to turn them on", async () => {
+    const artifacts = createInMemoryArtifactRepository();
+    const note = await voiceNote(artifacts, new TextEncoder().encode("OggS\0not really opus"));
+    const off = new ToolRegistry();
+    registerAudioTools(off, { disabled: "the video plugin (tavi.video) is turned off here", artifacts, enabled: async () => true });
+    const unplugged = await call(off, { artifactId: note.artifactId }).catch((error: Error) => error.message);
+    expect(unplugged).toContain(`The audio arrived and is kept (artifact ${note.artifactId})`);
+    expect(unplugged).toContain("the video plugin (tavi.video) is turned off here");
+    expect(unplugged).toContain("do not say the file did not arrive");
+    const workspaceOff = new ToolRegistry();
+    registerAudioTools(workspaceOff, { artifacts, enabled: async () => false });
+    const refused = call(workspaceOff, { artifactId: note.artifactId });
+    await expect(refused).rejects.toMatchObject({ code: "UNAVAILABLE" });
+    expect(await refused.catch((error: Error) => error.message)).toMatch(/^The audio arrived and is kept .*video\.enabled/);
   });
 
   it("refuses what is not audio, pointing a video to video.transcribe", async () => {

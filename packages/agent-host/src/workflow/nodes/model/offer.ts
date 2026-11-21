@@ -2,7 +2,9 @@ import {
   type ToolDefinition,
   isAttendedOrigin,
   BROWSER_REQUEST_HANDOFF_TOOL_ID,
+  INBOUND_MESSAGE_PREFIX,
   isPersonMessage,
+  type WorkflowMessage,
   MAX_MODEL_TOOLS,
   TaviError,
 } from "@tavi/contracts";
@@ -82,10 +84,12 @@ export async function offerTools(step: ModelStep, instructions: Instructions) {
     .filter((definition) => !hiddenTool(definition.id));
   // A PDF or video the person's words hold brings its deferred tools in as found, never by rank: appended
   // where `v2` appends a discovery, so the tool array only grows.
+  // The host's own attachment lines count too for documents: a channel's or an upload's are an `inbound-` block.
   const personTexts = step.conversationForThisCall.filter(isPersonMessage).map((message) => message.text);
+  const attachedTexts = step.conversationForThisCall.filter(isPersonOrAttachmentLines).map((message) => message.text);
   // A reminder turn's words bring in the reminder tools that wait behind the search, as a PDF's do the PDF tools.
   const documentFound = defersBuiltins
-    ? documentTools(mentionsPdf(personTexts), mentionsVideo(personTexts), mentionsReminder(personTexts), mentionsAudio(personTexts))
+    ? documentTools(mentionsPdf(attachedTexts), mentionsVideo(attachedTexts), mentionsReminder(personTexts), mentionsAudio(attachedTexts))
     : [];
   const discoveredNow = documentFound.length === 0 ? discovered : appendDiscovered(discovered, documentFound);
   let offeredTools: readonly ToolDefinition[] = fitToolList(
@@ -233,6 +237,11 @@ export async function offerTools(step: ModelStep, instructions: Instructions) {
         toolConfigRevision = latest.revision;
         // `v2` ranks by the person's words alone, so a tool result that names a PDF does not move the set mid-turn.
         const ranked = layout === "v2" ? step.conversationForThisCall.filter(isPersonMessage) : step.conversationForThisCall;
+        // What documents the conversation holds: the person's words and the host's attachment lines.
+        const attached = [
+          ...ranked.map((message) => message.text),
+          ...step.conversationForThisCall.filter(isAttachmentLines).map((message) => message.text),
+        ];
         const shortlist = shortlistTools(
           authorized,
           contextQueryFrom(ranked) ?? "",
@@ -240,9 +249,9 @@ export async function offerTools(step: ModelStep, instructions: Instructions) {
           discoveredNow,
           undefined,
           {
-            pdfInConversation: mentionsPdf(ranked.map((message) => message.text)),
-            videoInConversation: mentionsVideo(ranked.map((message) => message.text)),
-            audioInConversation: mentionsAudio(ranked.map((message) => message.text)),
+            pdfInConversation: mentionsPdf(attached),
+            videoInConversation: mentionsVideo(attached),
+            audioInConversation: mentionsAudio(attached),
           },
         );
         if (layout === "v2") {
@@ -279,3 +288,16 @@ export async function offerTools(step: ModelStep, instructions: Instructions) {
 
 /** What `offerTools` decided. */
 export type ToolOffer = Awaited<ReturnType<typeof offerTools>>;
+
+/**
+ * Whether `message` is the host's list of a message's attachments (`ATTACHMENT_HEADING`): an `inbound-` block labelled
+ * `attachment`. Quoted data, never the person's words or the prompt; read only to know which document tools a
+ * conversation calls for (a voice note's `audio.transcribe`, a PDF's tools).
+ */
+export function isAttachmentLines(message: Pick<WorkflowMessage, "id" | "role" | "label">): boolean {
+  return message.role === "user" && message.id.startsWith(INBOUND_MESSAGE_PREFIX) && message.label?.sources.includes("attachment") === true;
+}
+
+function isPersonOrAttachmentLines(message: Pick<WorkflowMessage, "id" | "role" | "label">): boolean {
+  return isPersonMessage(message) || isAttachmentLines(message);
+}
