@@ -924,6 +924,9 @@ a.center-need {
   .center-nav .sidebar-body {
     overflow-x: auto;
     padding: var(--space-2) var(--space-3);
+    /* A tab scrolled into view lands whole at the start, not cut in half at the edge. */
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: var(--space-3);
   }
 
   .center-nav-list {
@@ -944,6 +947,7 @@ a.center-need {
     width: auto;
     padding: var(--space-1-5) var(--space-2-5);
     white-space: nowrap;
+    scroll-snap-align: start;
   }
 
   .center-nav-label {

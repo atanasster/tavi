@@ -27,6 +27,10 @@ change behaviour or stored data.
 - A card asking to open a site reads "smart.example.org is not one of your
   allowed sites yet", once, in place of an awkward line that repeated the
   card's own note that another site asks again.
+- Welcome's channel step says once, not three times, that strangers are
+  never answered; a channel form's Back button says where it goes ("Back to
+  channels") beside Welcome's own Back; and on a phone the Settings and
+  Center tab strips snap each tab whole into view.
 
 ### Fixed
 

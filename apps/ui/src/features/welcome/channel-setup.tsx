@@ -98,7 +98,7 @@ export function ChannelForm(props: {
   /** Recorded as setup's own (Welcome's channels step), so setup knows the connection it made; absent elsewhere. */
   readonly onboardingStep?: string;
   readonly onBack: () => void;
-  /** What Back says to a screen reader where another Back shares the screen (Welcome's own step Back). */
+  /** What Back says where another Back shares the screen (Welcome's own step Back): "Back to channels". */
   readonly backLabel?: string;
   readonly onAdded: (added: Added) => void;
 }) {
@@ -185,8 +185,9 @@ export function ChannelForm(props: {
         </p>
       ))}
       <div className="actions">
-        <Button variant="ghost" disabled={busy} onClick={props.onBack} aria-label={props.backLabel}>
-          Back
+        {/* Its words, not only its accessible name, say where it goes: Welcome's own Back is on the same card. */}
+        <Button variant="ghost" disabled={busy} onClick={props.onBack}>
+          {props.backLabel ?? "Back"}
         </Button>
         <Button variant="primary" type="submit" disabled={busy || !ready}>
           {busy ? "Testing…" : "Test and add"}

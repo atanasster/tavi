@@ -251,7 +251,7 @@ describe("the channels step", () => {
     await click(button(page, "Telegram"));
     expect(page.textContent).toContain("Create a bot with @BotFather");
     // Welcome's own Back shares the screen: this one says where it goes.
-    expect(page.querySelector("button[aria-label='Back to channels']")?.textContent).toBe("Back");
+    expect(button(page, "Back to channels")).toBeDefined();
     await type(page.querySelector("input[type='password']"), "123:secret-token");
     await click(button(page, "Test and add"));
     expect(sent.find((entry) => entry.payload["action"] === "save")?.payload).toMatchObject({
@@ -459,7 +459,9 @@ describe("the channels step", () => {
     const page = await mount(
       <ChannelsStep client={oauth.client} workspaceId="default" step={CHANNELS_STEP} onStatus={() => {}} onSettings={onSettings} />,
     );
-    expect(page.textContent).toContain("People you pair can message Tavi here.");
+    expect(page.textContent).toContain("Only people you pair can message Tavi there.");
+    // Said once, by the step: not again under the choices.
+    expect(page.textContent).not.toContain("Strangers are never answered");
     await click(button(page, "Telegram (in Settings)"));
     expect(onSettings).toHaveBeenCalledWith("messaging");
     unmountAll();

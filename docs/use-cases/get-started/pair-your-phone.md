@@ -28,7 +28,7 @@ Choose **Get a code**. Point your phone's camera at the QR code and open the lin
 
 Welcome shows who sent the code and asks **Is this you?** Choose **Yes, it's me** if it was. Your Telegram account is now linked to you, and what you send the bot reaches Tavi.
 
-![Paired on Telegram: your messages there reach Tavi. Strangers are never answered.](../../assets/use-cases/get-started/pair-your-phone/04-confirm-it-was-you.webp)
+![Paired on Telegram: your messages there reach Tavi.](../../assets/use-cases/get-started/pair-your-phone/04-confirm-it-was-you.webp)
 
 ## What Tavi will and won't do
 

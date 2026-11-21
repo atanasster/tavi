@@ -131,8 +131,8 @@ export function AppsStep(props: ConnectStepProps) {
 
 // ------------------------------------------------------------------ channels
 
-/** What a featured channel kind means for the person. */
-const CHANNEL_SCOPE = "People you pair can message Tavi here. Strangers are never answered.";
+/** What choosing a channel does; the step's own text already says strangers are never answered. */
+const CHANNEL_SCOPE = "Pick the chat app you use. Only people you pair can message Tavi there.";
 
 interface ChannelsLoaded {
   readonly catalog: readonly ChannelDescriptor[];
@@ -182,7 +182,7 @@ export function ChannelsStep(props: ConnectStepProps) {
     return (
       <div className="welcome-connect">
         <p className="welcome-state" role="status">
-          <Icon name="check" size="sm" /> Paired on {paired}: your messages there reach Tavi. Strangers are never answered.
+          <Icon name="check" size="sm" /> Paired on {paired}: your messages there reach Tavi.
         </p>
         {seeAll}
       </div>
