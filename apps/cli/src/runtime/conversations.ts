@@ -14,6 +14,7 @@ import {
   type AgentWaitOutcome,
   type InboundBlock,
   type InboundEvent,
+  type MessagingServicePort,
   type InvocationContext,
   type MemoryActor,
   maskPluginText,
@@ -852,12 +853,7 @@ export function composeConversations(composed: SchedulesContext) {
                 ? firstPick
                 : matchChoiceAnswer(answer, waiting.choices);
           if (matched !== undefined && "refusal" in matched) {
-            const destination = messaging.buildReplyDestination(event.connectionId, {
-              externalConversationId: event.externalConversationId,
-              externalSenderId: event.externalSenderId,
-              ...(event.subject === undefined || event.subject.trim() === "" ? {} : { subject: event.subject }),
-              ...(event.externalThreadId === undefined ? {} : { externalThreadId: event.externalThreadId }),
-            });
+            const destination = plainReplyDestination(messaging, event);
             if (destination !== undefined) {
               await messaging.send({
                 effectId: clock.newId("msg"),
@@ -935,12 +931,7 @@ export function composeConversations(composed: SchedulesContext) {
               ? undefined
               : matchChoiceAnswer(answer, recent.choices);
           if (repeat !== undefined && "answers" in repeat && repeat.answers.length > 0 && repeat.other === undefined) {
-            const destination = messaging.buildReplyDestination(event.connectionId, {
-              externalConversationId: event.externalConversationId,
-              externalSenderId: event.externalSenderId,
-              ...(event.subject === undefined || event.subject.trim() === "" ? {} : { subject: event.subject }),
-              ...(event.externalThreadId === undefined ? {} : { externalThreadId: event.externalThreadId }),
-            });
+            const destination = plainReplyDestination(messaging, event);
             const previous = recent?.settledOutcome;
             const taken =
               previous?.answers !== undefined && previous.answers.length > 0
@@ -1022,12 +1013,7 @@ export function composeConversations(composed: SchedulesContext) {
               : "direct";
         memoryCommandPlaces.set(envelope, place);
         const answer = await turnHooks.runCommand(name, { envelope, args: pluginCommand.args });
-        const destination = messaging.buildReplyDestination(event.connectionId, {
-          externalConversationId: event.externalConversationId,
-          externalSenderId: event.externalSenderId,
-          ...(event.subject === undefined || event.subject.trim() === "" ? {} : { subject: event.subject }),
-          ...(event.externalThreadId === undefined ? {} : { externalThreadId: event.externalThreadId }),
-        });
+        const destination = plainReplyDestination(messaging, event);
         // A command withdrawn since it was listed is said to be gone, never met with silence.
         const text = maskPluginText(answer?.text ?? `/${name}: no plugin answers it now.`, MOD_COMMAND_TEXT_MAX_CHARS);
         if (destination !== undefined && text.trim() !== "") {
@@ -1099,12 +1085,7 @@ export function composeConversations(composed: SchedulesContext) {
               logger.warn("a conversation's reset could not be noted in its chat", { taskId: ended.taskId, error: errorMessage(error) }),
             );
         }
-        const destination = messaging.buildReplyDestination(event.connectionId, {
-          externalConversationId: event.externalConversationId,
-          externalSenderId: event.externalSenderId,
-          ...(event.subject === undefined || event.subject.trim() === "" ? {} : { subject: event.subject }),
-          ...(event.externalThreadId === undefined ? {} : { externalThreadId: event.externalThreadId }),
-        });
+        const destination = plainReplyDestination(messaging, event);
         if (destination !== undefined) {
           await messaging.send({
             effectId: `conversation-reset:${event.connectionId}:${event.providerEventId}`,
@@ -1355,3 +1336,16 @@ export function composeConversations(composed: SchedulesContext) {
 }
 
 export type ConversationsContext = SchedulesContext & ReturnType<typeof composeConversations>;
+
+/** Where Tavi's own words answer an inbound message: its chat, sender, subject and thread, never quoting it. */
+function plainReplyDestination(
+  messaging: Pick<MessagingServicePort, "buildReplyDestination">,
+  event: Pick<InboundEvent, "connectionId" | "externalConversationId" | "externalSenderId" | "subject" | "externalThreadId">,
+) {
+  return messaging.buildReplyDestination(event.connectionId, {
+    externalConversationId: event.externalConversationId,
+    externalSenderId: event.externalSenderId,
+    ...(event.subject === undefined || event.subject.trim() === "" ? {} : { subject: event.subject }),
+    ...(event.externalThreadId === undefined ? {} : { externalThreadId: event.externalThreadId }),
+  });
+}
