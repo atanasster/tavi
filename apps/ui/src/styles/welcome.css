@@ -180,6 +180,16 @@
 .welcome label {
   display: block;
 }
+/* A step's field (a key, your name): its label over the control with room between, and the hint under it in a hint's size. */
+.welcome p > label:has(+ :is(input, select, textarea)) {
+  margin-bottom: var(--space-1-5);
+}
+.welcome p > .hint {
+  display: block;
+  margin-top: var(--space-1-5);
+  font-size: var(--text-sm);
+  color: hsl(var(--muted-foreground));
+}
 /* The search step's fields are bare label-and-control pairs (shared with Settings → Search's form). */
 .welcome-search {
   display: flex;

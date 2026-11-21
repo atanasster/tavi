@@ -47,7 +47,9 @@ change behaviour or stored data.
   the heartbeat's list and its buttons.
 - Welcome's model step shows a found key or a running Ollama as a shortcut on
   the text's edge above the providers, not centred against the buttons, and
-  only while you choose: OpenRouter's sign-in has its own Back.
+  only while you choose: OpenRouter's sign-in has its own Back. Its key field
+  and About you's fields leave room under their labels, and a field's hint
+  is in a hint's smaller, quieter type.
 
 ## 0.3.1 — 2026-11-21
 
