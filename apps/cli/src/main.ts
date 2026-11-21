@@ -38,6 +38,27 @@ export interface MainOptions {
   readonly onboard?: OnboardIo;
   /** The Node.js version the start-up check reads: `process.versions.node` unless a test plays an older one. */
   readonly nodeVersion?: string;
+  /** Reads the working folder: `process.cwd` unless a test plays one that is gone or unreadable. */
+  readonly cwd?: () => string;
+}
+
+/** The commands that answer without reading the working folder: help and the version. */
+const CWD_FREE_COMMANDS: ReadonlySet<ParsedCommand["command"]> = new Set(["help", "version"]);
+
+/**
+ * Why the working folder cannot be read, or undefined when it can. A shell left
+ * in a folder that was moved to the Trash or deleted fails here (EPERM or
+ * ENOENT from `uv_cwd`), and every relative path after it would fail with an
+ * error that names something else, such as the model target.
+ */
+function unreadableWorkingFolder(cwd: () => string): string | undefined {
+  try {
+    cwd();
+    return undefined;
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    return code === "ENOENT" ? "it no longer exists" : code === "EPERM" || code === "EACCES" ? "it cannot be read" : errorMessage(error);
+  }
 }
 
 /** The commands that start a runtime: each refuses a Node.js older than `engines.node` before it starts. */
@@ -65,6 +86,17 @@ export async function main(argv: readonly string[], options: MainOptions = {}): 
       return EXIT.usage;
     }
     throw error;
+  }
+
+  if (!CWD_FREE_COMMANDS.has(parsed.command)) {
+    const reason = unreadableWorkingFolder(options.cwd ?? process.cwd);
+    if (reason !== undefined) {
+      io.stderr(
+        `tavi ${parsed.command} cannot start in this folder: ${reason} (it may have been moved to the Trash or deleted). ` +
+          "Change to another folder, for example `cd ~`, and run it again.\n",
+      );
+      return EXIT.unavailable;
+    }
   }
 
   // Under the test runner (and the executables its tests spawn, which inherit

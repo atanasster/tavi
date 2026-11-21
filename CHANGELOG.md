@@ -11,6 +11,9 @@ change behaviour or stored data.
 - A chat run on a Claude model through OpenRouter gets its title and summary
   in the activity list: the short summary call turns Claude's thinking off,
   which could spend the call's whole answer on some chats (a sum, a date).
+- Started from a folder that was moved to the Trash or deleted, `tavi` says
+  so and suggests `cd ~`, instead of failing with "could not resolve the model
+  target: INTERNAL: EPERM … uv_cwd". `--help` and `--version` still answer.
 
 ## 0.3.0 — 2026-11-21
 
