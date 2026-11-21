@@ -71,7 +71,7 @@ function defaultBrew(): string | undefined {
 /** Homebrew run with a fixed argument list, as the owner's own user, never through a shell. */
 function defaultRunBrew(brew: string, args: readonly string[]): Promise<{ readonly code: number; readonly output: string }> {
   return new Promise((done) => {
-    execFile(
+    const child = execFile(
       brew,
       [...args],
       {
@@ -84,13 +84,31 @@ function defaultRunBrew(brew: string, args: readonly string[]): Promise<{ readon
           HOMEBREW_NO_ENV_HINTS: "1",
           HOMEBREW_NO_ANALYTICS: "1",
         },
+        // Its own session, with no terminal: a password prompt (sudo reads the terminal, not stdin) fails at once
+        // instead of waiting out the timeout on the terminal `tavi serve` runs in.
+        detached: true,
       },
       (error, stdout, stderr) => {
         const code = error === null ? 0 : typeof (error as { code?: unknown }).code === "number" ? (error as { code: number }).code : 1;
         done({ code, output: `${stdout}${stderr}`.slice(-2_000) });
       },
     );
+    // Nothing is ever typed into it: a prompt on stdin reads end-of-input and fails.
+    child.stdin?.end();
   });
+}
+
+/**
+ * Why Homebrew failed, in its own last error line (`Error: …`), else its last line: what a person needs to act on,
+ * such as Xcode's command-line tools missing. Empty when it said nothing.
+ */
+export function brewReason(output: string): string {
+  const lines = output
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "");
+  const reason = lines.findLast((line) => line.startsWith("Error:")) ?? lines.at(-1);
+  return reason === undefined ? "" : `: ${reason.slice(0, 200)}`;
 }
 
 /** The commands that set voice messages up by hand, for where the step cannot (no Homebrew, Linux). */
@@ -250,7 +268,10 @@ export function createVoiceSetup(options: VoiceSetupOptions): VoiceSetup {
           throw new Error(`install ${formulae.join(" and ")} yourself: ${voiceSetupCommands(platform, modelsDirectory, model)[0]}`);
         job = { state: "running", phase: "install", message: `Installing ${formulae.join(" and ")} with Homebrew` };
         const installed = await runBrew(brew, ["install", ...formulae]);
-        if (installed.code !== 0) throw new Error(`Homebrew could not install ${formulae.join(" and ")} (exit ${String(installed.code)})`);
+        if (installed.code !== 0)
+          throw new Error(
+            `Homebrew could not install ${formulae.join(" and ")} (exit ${String(installed.code)})${brewReason(installed.output)}`,
+          );
       }
       if (!modelPresent()) {
         job = { state: "running", phase: "download", message: DOWNLOADING, received: 0, total: model.bytes };

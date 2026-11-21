@@ -96,7 +96,9 @@ checklist, or `tavi setup voice` with `tavi serve` running). It shows which of
 FFmpeg, whisper.cpp and a speech model are here, and on your yes the owner:
 
 - installs what is missing with Homebrew, as your user (never `sudo`; a fixed
-  `brew install whisper-cpp ffmpeg`, nothing through a shell);
+  `brew install whisper-cpp ffmpeg`, nothing through a shell, never waiting on
+  a prompt: when Homebrew needs something first, such as Xcode's command-line
+  tools, the step fails with Homebrew's own words);
 - downloads Whisper's base model (`ggml-base.bin`, about 148 MB, MIT) from the
   whisper.cpp project on Hugging Face into `<data>/video/models`, keeping it
   only when its size and SHA-256 match the ones pinned in Tavi;

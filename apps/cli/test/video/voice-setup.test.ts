@@ -6,7 +6,13 @@ import { temporaryDirectories } from "@tavi/test-support";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { analyzerConfigPath } from "../../src/features/video/host.js";
-import { createVoiceSetup, voiceSetupCommands, withVoiceEntry, type VoiceSetupOptions } from "../../src/features/video/voice-setup.js";
+import {
+  brewReason,
+  createVoiceSetup,
+  voiceSetupCommands,
+  withVoiceEntry,
+  type VoiceSetupOptions,
+} from "../../src/features/video/voice-setup.js";
 
 const directories = temporaryDirectories();
 afterEach(() => directories.cleanup());
@@ -51,6 +57,16 @@ describe("withVoiceEntry", () => {
     expect(withVoiceEntry(undefined, "ggml-base.bin", "MIT")).toEqual({
       transcribe: [{ type: "builtin", id: "whisper-cpp", model: { path: "ggml-base.bin", licence: "MIT" } }],
     });
+  });
+});
+
+describe("brewReason", () => {
+  it("says Homebrew's own error line, else its last line, else nothing", () => {
+    expect(brewReason("==> Fetching\nError: Xcode's command line tools are not installed.\n  xcode-select --install\n")).toBe(
+      ": Error: Xcode's command line tools are not installed.",
+    );
+    expect(brewReason("==> Fetching\nNeed sudo access on macOS\n")).toBe(": Need sudo access on macOS");
+    expect(brewReason("")).toBe("");
   });
 });
 
@@ -149,7 +165,7 @@ describe("createVoiceSetup", () => {
     await setup.start();
     const failed = await settled(setup);
     expect(failed.job).toMatchObject({ state: "failed", phase: "install" });
-    expect(failed.job?.message).toMatch(/Homebrew could not install whisper-cpp and ffmpeg/);
+    expect(failed.job?.message).toBe("Homebrew could not install whisper-cpp and ffmpeg (exit 1): Error: no bottle");
     expect(fetch).not.toHaveBeenCalled();
   });
 });
