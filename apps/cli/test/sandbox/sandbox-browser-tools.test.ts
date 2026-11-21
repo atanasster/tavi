@@ -430,7 +430,7 @@ describe("composition — browser.navigate destinations are operator policy", ()
     expect(assessed?.hardDeny).toBeUndefined();
     expect(assessed?.scopeGroup).toBe("browser.*");
     expect(assessed?.subjects).toEqual(["smart.example.org"]);
-    expect(assessed?.reasons.join(" ")).toContain("allowing the browser opens smart.example.org, and asks again for another site");
+    expect(assessed?.reasons.join(" ")).toContain("smart.example.org is not one of your allowed sites yet");
     // A scheme is not a site: nobody can allow it, so nobody is asked.
     expect(navigate.assess?.({ sessionId: "s", url: "file:///etc/passwd" }, assessContext).hardDeny).toContain("file:");
 

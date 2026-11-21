@@ -329,7 +329,8 @@ export function withDestination(ctx: BrowserToolContext, assessment: CallAssessm
         ...named,
         reasons: [
           ...named.reasons,
-          `a site this task asked for: allowing the browser opens ${named.display.host ?? "it"}, and asks again for another site`,
+          // That another site asks again is the card's own note (`toolGroupScopeNote`), not said twice.
+          `${named.display.host ?? "this site"} is not one of your allowed sites yet`,
         ],
       };
 }

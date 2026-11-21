@@ -24,6 +24,9 @@ change behaviour or stored data.
   outside content is the only reason ("HIGH risk, as the chat read outside
   content"), so a reminder or a site you named no longer looks dangerous for no reason.
   The rating rule itself is unchanged.
+- A card asking to open a site reads "smart.example.org is not one of your
+  allowed sites yet", once, in place of an awkward line that repeated the
+  card's own note that another site asks again.
 
 ### Fixed
 
