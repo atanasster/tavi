@@ -199,6 +199,22 @@ export function lifecycleOfOffering(offering: RhumbOffering | undefined, catalog
   return { status: status.success ? status.data : "unknown", catalogVersion, checkedAt, ...fields };
 }
 
+/**
+ * A redirect target as `provider` names it. Rhumb names the target as its
+ * upstream does (`gemini-3.5-flash-lite`, via `gemini`), where a router such
+ * as OpenRouter lists it under a namespace (`google/gemini-3.5-flash-lite`):
+ * the one offering on `provider` that ends with `/<to>` is that model. Kept as
+ * Rhumb gave it when the provider lists it so, or when none or several match.
+ */
+export function redirectOnProvider(listing: RhumbOfferings, provider: string, to: string): string {
+  if (listing.offerings.has(offeringKey(provider, to))) return to;
+  const suffix = `/${to}`;
+  const matches = [...listing.offerings.values()].filter(
+    (offering) => offering.provider === provider && offering.provider_model_id?.endsWith(suffix) === true,
+  );
+  return matches.length === 1 && matches[0]?.provider_model_id !== undefined ? matches[0].provider_model_id : to;
+}
+
 /** `{ [name]: value }` when `value` is present and `schema` accepts it, else nothing. */
 function kept<K extends string, T>(
   schema: { safeParse(value: unknown): { success: true; data: T } | { success: false } },

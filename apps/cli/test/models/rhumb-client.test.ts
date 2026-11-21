@@ -5,6 +5,7 @@ import {
   lifecycleOfOffering,
   listOfferings,
   offeringKey,
+  redirectOnProvider,
   rhumbCall,
   rhumbModelId,
   rhumbProviderOf,
@@ -104,5 +105,27 @@ describe("the Rhumb client", () => {
       checkedAt: CHECKED,
       retiresOn: "2026-12-11",
     });
+  });
+
+  it("names a redirect target as a router lists it, under its namespace, only when one model matches", () => {
+    const listing = (ids: readonly [string, string][]) => ({
+      complete: true,
+      offerings: new Map(ids.map(([provider, id]) => [offeringKey(provider, id), { provider, provider_model_id: id }])),
+    });
+    const openrouter = listing([
+      ["openrouter", "google/gemini-2.5-flash"],
+      ["openrouter", "google/gemini-3.5-flash-lite"],
+      ["gemini", "gemini-3.5-flash-lite"],
+    ]);
+    expect(redirectOnProvider(openrouter, "openrouter", "gemini-3.5-flash-lite")).toBe("google/gemini-3.5-flash-lite");
+    // The provider's own name is kept: on Gemini itself, and for a target the router does not list.
+    expect(redirectOnProvider(openrouter, "gemini", "gemini-3.5-flash-lite")).toBe("gemini-3.5-flash-lite");
+    expect(redirectOnProvider(openrouter, "openrouter", "gemini-9")).toBe("gemini-9");
+    // Two namespaces with the same model: neither is guessed.
+    const both = listing([
+      ["openrouter", "google/m"],
+      ["openrouter", "other/m"],
+    ]);
+    expect(redirectOnProvider(both, "openrouter", "m")).toBe("m");
   });
 });

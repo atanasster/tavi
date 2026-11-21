@@ -82,6 +82,10 @@ change behaviour or stored data.
 
 ### Fixed
 
+- On an OpenRouter connection, a model's redirect target, and the provider's
+  replacement drawn from it, is named as OpenRouter lists it
+  (`google/gemini-3.5-flash-lite`, not `gemini-3.5-flash-lite`), so replacing
+  a model with it finds the model.
 - `tavi models suggest` asks Rhumb at `https://rhumbdata.com` by default:
   its old address, `https://models.nannertech.com`, no longer resolves, so
   every suggestion failed unless `RESOLVER_URL` was set. Its key is read

@@ -19,6 +19,7 @@ import {
   lifecycleOfOffering,
   listOfferings,
   offeringKey,
+  redirectOnProvider,
   rhumbCall,
   rhumbKeyOf,
   rhumbModelId,
@@ -159,8 +160,12 @@ export async function syncModelLifecycle(
       const key = `${connectionId}\u0000${modelId}`;
       const offering = listing.offerings.get(offeringKey(provider, rhumbModelId(provider, modelId)));
       // Not on the pages read is not the same as not listed: keep what was known.
+      const read = offering === undefined && !listing.complete ? stored.get(key) : lifecycleOfOffering(offering, catalogVersion, checkedAt);
+      // The redirect target as this connection names it, so a replace with it finds the model.
       const lifecycle =
-        offering === undefined && !listing.complete ? stored.get(key) : lifecycleOfOffering(offering, catalogVersion, checkedAt);
+        offering !== undefined && read?.redirect !== undefined
+          ? { ...read, redirect: { ...read.redirect, to: redirectOnProvider(listing, provider, read.redirect.to) } }
+          : read;
       if (lifecycle === undefined) continue;
       lifecycles.set(key, lifecycle);
       entries.push({ connectionId, modelId, lifecycle });
