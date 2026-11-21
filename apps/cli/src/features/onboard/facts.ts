@@ -137,7 +137,9 @@ async function searchFacts(sources: OnboardingFactSources, workspaceId: string):
   const ready = [];
   for (const provider of providers) {
     if (!provider.enabled) continue;
-    const keyless = provider.credentialRef === undefined && WEB_SEARCH_CAPABILITIES[provider.kind].supportsKeyless;
+    // Keyless: Tavily without a key, or a self-hosted instance (SearXNG), which takes only its address.
+    const capabilities = WEB_SEARCH_CAPABILITIES[provider.kind];
+    const keyless = provider.credentialRef === undefined && (capabilities.supportsKeyless || capabilities.selfHosted);
     const reference = provider.credentialRef;
     if (keyless || (reference !== undefined && (await settle(async () => await sources.credentialStored(reference), false))))
       ready.push({ id: provider.providerId, label: provider.providerId });

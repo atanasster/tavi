@@ -415,6 +415,15 @@ describe("live onboarding facts", () => {
     });
   });
 
+  it("counts a SearXNG instance as ready with no key, and a keyed kind only with its key stored", async () => {
+    const { sources: live, repositories } = await sources(modelConfig({ connection: CONNECTION, model: "m" }), { value: "x" });
+    const now = NOW.toISOString();
+    await repositories.searchProviders.add({ providerId: "home", kind: "searxng", baseUrl: "http://127.0.0.1:8888", enabled: true, now });
+    await repositories.searchProviders.add({ providerId: "brave", kind: "brave", credentialRef: "search.brave", enabled: true, now });
+    const facts = await liveOnboardingFacts({ ...live, credentialStored: async () => false }, "default");
+    expect(facts.search.ready).toEqual([{ id: "home", label: "home" }]);
+  });
+
   it("counts an enabled search plugin's active instance as ready, in its own workspace only", async () => {
     const { sources: live } = await sources(modelConfig({ connection: CONNECTION, model: "m" }), { value: "x" });
     const withPlugin = { ...live, externalSearch: (workspaceId: string) => (workspaceId === "default" ? ["acme.search/main"] : []) };
