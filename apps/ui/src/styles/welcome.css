@@ -273,6 +273,15 @@
 .welcome-pairing p {
   margin: 0;
 }
+/* A card's button starts on its text's edge, at the card's foot so a row of cards lines its buttons up. */
+.welcome-card > button {
+  align-self: flex-start;
+  margin-top: auto;
+}
+/* What follows a row of cards (a note, a status) stands clear of them. */
+.welcome-cards + * {
+  margin-top: var(--space-3);
+}
 .welcome-choices {
   display: flex;
   flex-wrap: wrap;
