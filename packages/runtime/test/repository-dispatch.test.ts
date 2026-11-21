@@ -29,7 +29,7 @@ const ADAPTED = new Set([
   "approvals.cancelPendingForTask",
   "cancellations.request",
   "receipts.record",
-  "artifacts.claimUploadForRun",
+  "artifacts.claimAttachmentForRun",
   "artifacts.putStagedArtifact",
   "messagingInbox.record",
   "messagingOutbox.begin",

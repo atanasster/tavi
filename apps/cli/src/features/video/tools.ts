@@ -17,6 +17,7 @@ import {
   MOVEMENT_TEMPLATES,
   type ANALYZER_FALLBACK_ERRORS,
   artifactLabel,
+  chatMayReadArtifact,
   isModelVisibleArtifact,
   isUntrusted,
   isAttendedOrigin,
@@ -453,9 +454,8 @@ export function registerVideoTools(registry: ToolRegistryPort, options: VideoToo
           { details: { pruned: true } },
         );
       }
-      // Refused alike when missing, another workspace's or internal: the id is model-authored.
-      if (artifact === undefined || !isModelVisibleArtifact(artifact) || artifact.workspaceId !== context.workspaceId)
-        throw new TaviError("NOT_FOUND", `no artifact ${source.artifactId} in this workspace`);
+      // Refused alike when missing, another workspace's, internal or another chat's attachment: the id is model-authored.
+      if (!chatMayReadArtifact(artifact, context)) throw new TaviError("NOT_FOUND", `no artifact ${source.artifactId} in this chat`);
       if (artifact.reviewState !== "approved")
         throw new TaviError("NOT_AUTHORIZED", `artifact ${source.artifactId} is ${artifact.reviewState}, not approved for release`);
       if (!VIDEO_MEDIA_TYPES_IN.includes(artifact.contentType))

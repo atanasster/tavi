@@ -493,6 +493,19 @@ export function listPendingReview(store: StoreContext, workspaceId: string, limi
 }
 
 /**
+ * An attachment given the chat it arrived in: an upload (`art-up-`) or a
+ * channel message's file (`art-in-`), untrusted and with no run yet. The
+ * first chat to claim it keeps it; anything else is left as it is.
+ */
+export function claimAttachmentForRun(store: StoreContext, input: { readonly artifactId: string; readonly runId: string }): void {
+  store.handle
+    .prepare(
+      "UPDATE tavi_artifacts SET run_id = ? WHERE artifact_id = ? AND run_id IS NULL AND untrusted = 1 AND (artifact_id LIKE 'art-up-%' OR artifact_id LIKE 'art-in-%')",
+    )
+    .run(input.runId, input.artifactId);
+}
+
+/**
  * Transition a `pending` artifact to a terminal review state.
  *
  * A genuine compare-and-set (`transactionImmediate`, not the default
@@ -502,14 +515,6 @@ export function listPendingReview(store: StoreContext, workspaceId: string, limi
  * against an artifact that is no longer `pending`, so a decision is
  * never silently overwritten by a second one.
  */
-export function claimUploadForRun(store: StoreContext, input: { readonly artifactId: string; readonly runId: string }): void {
-  store.handle
-    .prepare(
-      "UPDATE tavi_artifacts SET run_id = ? WHERE artifact_id = ? AND run_id IS NULL AND untrusted = 1 AND artifact_id LIKE 'art-up-%'",
-    )
-    .run(input.runId, input.artifactId);
-}
-
 export function setReviewState(
   store: StoreContext,
   input: {

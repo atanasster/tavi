@@ -819,6 +819,17 @@ describe("the PDF tools", () => {
       extension: "pdf",
     });
     await expect(call("pdf.read", { source: { artifactId: other.artifactId } })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    // Another chat's attachment, in this workspace: that chat's alone.
+    const theirs = await artifacts.putArtifact({
+      workspaceId: "w1",
+      runId: "task-other",
+      contentType: "application/pdf",
+      body: form,
+      extension: "pdf",
+      untrusted: true,
+      label: untrustedLabel("attachment"),
+    });
+    await expect(call("pdf.read", { source: { artifactId: theirs.artifactId } })).rejects.toMatchObject({ code: "NOT_FOUND" });
     const pending = await artifacts.putArtifact({
       workspaceId: "w1",
       runId: "task-1",

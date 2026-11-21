@@ -105,7 +105,7 @@ export const REPOSITORY_METHODS = methodTable<AsyncPersistenceRepositories>()({
     "listPendingReview",
     "derivedPreviewExists",
     "setReviewState",
-    "claimUploadForRun",
+    "claimAttachmentForRun",
     "putStagedArtifact",
   ],
   skills: [

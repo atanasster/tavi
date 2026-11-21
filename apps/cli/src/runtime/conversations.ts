@@ -785,6 +785,15 @@ export function composeConversations(composed: SchedulesContext) {
         }
       };
 
+      /**
+       * The message's attachments given the chat it joins, before its turn can read them: from then on only that
+       * chat's tools read them (`chatOwnsArtifact`). The first chat keeps one; a redelivery changes nothing.
+       */
+      const claimAttachments = async (taskId: string): Promise<void> => {
+        for (const { artifactId } of event.attachments ?? [])
+          await persistencePort.repositories.artifacts.claimAttachmentForRun?.({ artifactId, runId: taskId });
+      };
+
       /** `answerOnly`: the message is a reply to a question in a chat with no task of its own — it answers, or does nothing. */
       const admitReply = async (taskId: string, repliedTo?: AgentWaitIntentRecord, answerOnly = false): Promise<unknown> => {
         // Whose task this is: another bound member's message, on any channel, is a
@@ -794,6 +803,7 @@ export function composeConversations(composed: SchedulesContext) {
         const owner = await persistencePort.repositories.tasks.get(taskId);
         if (owner === undefined || owner.workspaceId !== actor.workspaceId)
           throw new TaviError("NOT_AUTHORIZED", "This chat's task is outside this scope");
+        await claimAttachments(taskId);
         const member = owner.principalId !== actor.principalId;
         const turn = await withRoomContext(
           inboundTurnOf(event, { sendersTask: !member, email: isEmailConnection(event.connectionId), at: clock.now() }),
@@ -1283,6 +1293,8 @@ export function composeConversations(composed: SchedulesContext) {
             ...(parentChatId === undefined ? {} : { chatKind: "side" as const, parentChatId }),
             ...(mention === undefined ? (turn.prompt === undefined ? {} : { prompt: turn.prompt }) : { prompt: mention.content }),
             ...(turn.inbound.length === 0 ? {} : { inbound: turn.inbound }),
+            // Once the task exists and before its first turn runs: the turn reads them as this chat's.
+            onAdmitted: async (admitted) => await claimAttachments(admitted.taskId),
           });
           taskId = admission.taskId;
         } catch (error) {

@@ -122,6 +122,40 @@ export function isModelVisibleArtifact(record: Pick<ArtifactRecord, "purpose">):
 }
 
 /**
+ * Whether a chat's tools may read `record` as far as attachments go: an
+ * attachment (an upload, a channel message's file: untrusted, labelled
+ * `attachment`) once claimed is its chat's alone — this run's, or the chat's
+ * task's (`claimAttachmentForRun`). One not claimed (kept before claims, or
+ * whose message started no turn) and anything that is not an attachment are
+ * left to the tool's own workspace check.
+ */
+export function chatOwnsArtifact(
+  record: Pick<ArtifactRecord, "runId" | "untrusted" | "label">,
+  context: { readonly runId: string; readonly chatTaskId?: string | undefined },
+): boolean {
+  const attachment = record.untrusted === true && record.label?.sources.includes("attachment") === true;
+  if (!attachment || record.runId === null) return true;
+  return record.runId === context.runId || record.runId === context.chatTaskId;
+}
+
+/**
+ * Whether a chat's tool may read the artifact a model named: model-visible,
+ * of the chat's workspace, and — for an attachment — of this chat
+ * (`chatOwnsArtifact`). A tool refuses anything else as not found, alike.
+ */
+export function chatMayReadArtifact(
+  record: ArtifactRecord | undefined,
+  context: { readonly workspaceId: string; readonly runId: string; readonly chatTaskId?: string | undefined },
+): record is ArtifactRecord {
+  return (
+    record !== undefined &&
+    isModelVisibleArtifact(record) &&
+    record.workspaceId === context.workspaceId &&
+    chatOwnsArtifact(record, context)
+  );
+}
+
+/**
  * A file an outbound call — `browser.act`'s upload, `messaging.send_to`'s file
  * — took from a chat's folder by path: named, and
  * not copied into a folder, as a download and a report are. An outbound file
@@ -202,11 +236,13 @@ interface ArtifactRepositoryPortDefinition {
     readonly note?: string;
   }): void;
   /**
-   * A file the person uploaded (`artifacts upload`) given the
-   * chat its message began, so the chat's erasure takes it. Only an upload
-   * with no run yet; anything else is left as it is.
+   * An attachment — a file the person uploaded (`artifacts upload`) or one a
+   * channel's message carried — given the chat its message began or joined:
+   * the chat's erasure takes it, and only that chat's tools read it
+   * (`chatOwnsArtifact`). Only an attachment with no run yet; anything else
+   * is left as it is.
    */
-  claimUploadForRun?(input: { readonly artifactId: string; readonly runId: string }): void;
+  claimAttachmentForRun?(input: { readonly artifactId: string; readonly runId: string }): void;
   /**
    * `putArtifact` for a body already written to a file in the store's staging
    * directory (`<artifacts>/${ARTIFACT_STAGING_DIRECTORY}`):

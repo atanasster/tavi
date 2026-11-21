@@ -141,7 +141,7 @@ export interface RunDependencies {
   readonly workflow: WorkflowPort | undefined;
   readonly repositories: Pick<PersistencePort["repositories"], "tasks" | "approvals" | "cancellations" | "executions">;
   /** Where a message's uploaded files are looked up; without it, a run naming one is refused. */
-  readonly artifacts?: Pick<PersistencePort["repositories"]["artifacts"], "getArtifact" | "claimUploadForRun">;
+  readonly artifacts?: Pick<PersistencePort["repositories"]["artifacts"], "getArtifact" | "claimAttachmentForRun">;
   readonly access: { authorize(context: InvocationContext, permissions: readonly string[]): { readonly details?: unknown } | undefined };
   readonly target: OwnerModelTarget;
   /** What a run's `model` is checked against and saved through as the chat's own; absent, a `model` is refused. */
@@ -734,7 +734,7 @@ export async function startRun(deps: RunDependencies, request: RunPayload): Prom
             }
             // The files go with the chat they began (or joined): its erasure takes them.
             for (const artifactId of request.attachments ?? [])
-              await deps.artifacts?.claimUploadForRun?.({ artifactId, runId: admitted.taskId });
+              await deps.artifacts?.claimAttachmentForRun?.({ artifactId, runId: admitted.taskId });
             // Saved before the turn's first model call reads the chat's route —
             // by a new admission only: a resent `run` must not undo a later choice.
             if (savedModel !== undefined && admitted.created) {

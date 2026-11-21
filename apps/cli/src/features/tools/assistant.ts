@@ -14,6 +14,7 @@ import {
   type ToolResultLabel,
   artifactLabel,
   isUntrusted,
+  chatMayReadArtifact,
   isModelVisibleArtifact,
   type ArtifactRepositoryPort,
   type MemoryReach,
@@ -256,7 +257,8 @@ export function registerAssistantTools(registry: ToolRegistry, options: Assistan
       const artifact = await options.artifacts.getArtifact(parsed.artifactId);
       // A sender's audio or video (a voice message) is no text to page through: it is read by its own tool, so the
       // model is pointed there rather than told the file is missing — it arrived.
-      if (artifact !== undefined && isModelVisibleArtifact(artifact) && artifact.workspaceId === context.workspaceId) {
+      // Only for an attachment this chat may read: another chat's says nothing about what it is.
+      if (chatMayReadArtifact(artifact, context)) {
         if (artifact.contentType.startsWith("audio/"))
           throw new TaviError(
             "UNSUPPORTED",
@@ -366,10 +368,9 @@ export function registerAssistantTools(registry: ToolRegistry, options: Assistan
       }
       const artifactId = parsed.artifactId ?? "";
       const artifact = await options.artifacts.getArtifact(artifactId);
-      // Refused alike when missing, another workspace's or internal (a browser
-      // thumbnail): the id is model-authored.
-      if (artifact === undefined || !isModelVisibleArtifact(artifact) || artifact.workspaceId !== context.workspaceId)
-        throw new TaviError("NOT_FOUND", `no artifact ${artifactId} in this workspace`);
+      // Refused alike when missing, another workspace's, internal (a browser
+      // thumbnail) or another chat's attachment: the id is model-authored.
+      if (!chatMayReadArtifact(artifact, context)) throw new TaviError("NOT_FOUND", `no artifact ${artifactId} in this chat`);
       if (artifact.reviewState !== "approved")
         throw new TaviError("NOT_AUTHORIZED", `artifact ${artifactId} is ${artifact.reviewState}, not approved for release`);
       if (!VIEWABLE_IMAGE_TYPES.test(artifact.contentType))

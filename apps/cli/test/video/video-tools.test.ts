@@ -368,6 +368,17 @@ describe.skipIf("missing" in found)("the video tools on FFmpeg itself", () => {
       purpose: "thumbnail",
     });
     await expect(call("video.info", { source: { artifactId: internal.artifactId } })).rejects.toThrow(/no artifact/);
+    // An attachment another chat of this workspace claimed is that chat's alone.
+    const theirs = await artifacts.putArtifact({
+      workspaceId: "w1",
+      runId: "task-other",
+      contentType: "video/mp4",
+      body: clip,
+      extension: "mp4",
+      untrusted: true,
+      label: untrustedLabel("attachment"),
+    });
+    await expect(call("video.info", { source: { artifactId: theirs.artifactId } })).rejects.toThrow(/no artifact .* in this chat/);
     // A downloaded file, and one a tainted chat touched: their frames carry an untrusted label.
     const local = new ToolRegistry();
     let taint: readonly string[] = [];

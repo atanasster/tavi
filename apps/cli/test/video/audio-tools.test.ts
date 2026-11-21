@@ -116,6 +116,26 @@ describe("audio.transcribe with nothing installed", () => {
     expect(await refused.catch((error: Error) => error.message)).toMatch(/^The audio arrived and is kept .*video\.enabled/);
   });
 
+  it("reads a voice message claimed by this chat, and calls another chat's not found", async () => {
+    const artifacts = createInMemoryArtifactRepository();
+    const claimed = (runId: string) =>
+      artifacts.putArtifact({
+        workspaceId: "w1",
+        runId,
+        contentType: "audio/ogg",
+        body: new TextEncoder().encode("OggS\0not really opus"),
+        extension: "ogg",
+        untrusted: true,
+        label: untrustedLabel("attachment"),
+      });
+    const tools = new ToolRegistry();
+    registerAudioTools(tools, { disabled: "off for this test", artifacts, enabled: async () => true });
+    // This chat's own: found (and then refused only because transcription is off here).
+    const mine = await call(tools, { artifactId: (await claimed(context.runId)).artifactId }).catch((error: Error) => error.message);
+    expect(mine).toMatch(/^The audio arrived/);
+    await expect(call(tools, { artifactId: (await claimed("task-other")).artifactId })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
   it("refuses what is not audio, pointing a video to video.transcribe", async () => {
     const artifacts = createInMemoryArtifactRepository();
     const clip = await artifacts.putArtifact({ workspaceId: "w1", contentType: "video/mp4", body: new Uint8Array(8), extension: "mp4" });

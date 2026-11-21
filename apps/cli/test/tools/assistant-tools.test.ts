@@ -336,6 +336,19 @@ describe("artifacts.read", () => {
       });
       await expect(call("artifacts.read", { artifactId: voice.artifactId })).rejects.toThrow(/audio\.transcribe/);
       await expect(call("artifacts.read", { artifactId: voice.artifactId })).rejects.not.toThrow(/no artifact/);
+      // Another chat's voice message: not found, and nothing said of what it is.
+      const theirs = await store.putArtifact({
+        workspaceId: "default",
+        runId: "task-other",
+        contentType: "audio/ogg",
+        body: new TextEncoder().encode("OggS"),
+        reviewState: "approved",
+        untrusted: true,
+        label: untrustedLabel("attachment"),
+      });
+      const refused = call("artifacts.read", { artifactId: theirs.artifactId });
+      await expect(refused).rejects.toThrow(/no artifact .* in this chat/);
+      await expect(refused).rejects.not.toThrow(/audio/);
     } finally {
       store.close();
     }
@@ -529,6 +542,17 @@ describe("artifacts.view_image", () => {
         purpose: "thumbnail",
       });
       await expect(call("artifacts.view_image", { artifactId: thumbnail.artifactId })).rejects.toThrow(/no artifact/);
+      // A photo another chat's message carried: that chat's alone.
+      const theirs = await store.putArtifact({
+        workspaceId: "default",
+        runId: "task-other",
+        contentType: "image/png",
+        body: pngOf(1, 1),
+        reviewState: "approved",
+        untrusted: true,
+        label: untrustedLabel("attachment"),
+      });
+      await expect(call("artifacts.view_image", { artifactId: theirs.artifactId })).rejects.toThrow(/no artifact .* in this chat/);
     } finally {
       store.close();
     }

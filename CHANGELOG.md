@@ -58,6 +58,14 @@ change behaviour or stored data.
 
 ### Fixed
 
+- An attachment — a file you upload, or a voice message, photo or video a
+  channel's message carries — now belongs to the chat its message started or
+  joined: `audio.transcribe`, the video and PDF tools,
+  `artifacts.view_image` and `artifacts.read` no longer read another chat's
+  attachment in the same workspace, and say nothing of what it is.
+- Homebrew in setup's Voice messages step never waits on a prompt: when it
+  needs something first (Xcode's command-line tools, a password), the step
+  fails at once with Homebrew's own words.
 - A voice message sent over a channel is now offered `audio.transcribe` on
   its turn: the router reads the host's attachment lines, not only the
   person's words.

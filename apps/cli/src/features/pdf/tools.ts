@@ -19,7 +19,7 @@ import {
   TaviError,
   artifactLabel,
   clipForm,
-  isModelVisibleArtifact,
+  chatMayReadArtifact,
   isUntrusted,
   joinLabels,
   maxConfidentiality,
@@ -512,9 +512,8 @@ export function registerPdfTools(registry: ToolRegistryPort, options: PdfToolOpt
   const load = async (source: PdfSource, context: InvocationContext): Promise<LoadedSource> => {
     if ("artifactId" in source) {
       const artifact = await options.artifacts.getArtifact(source.artifactId);
-      // Refused alike when missing, another workspace's or internal: the id is model-authored.
-      if (artifact === undefined || !isModelVisibleArtifact(artifact) || artifact.workspaceId !== context.workspaceId)
-        throw new TaviError("NOT_FOUND", `no artifact ${source.artifactId} in this workspace`);
+      // Refused alike when missing, another workspace's, internal or another chat's attachment: the id is model-authored.
+      if (!chatMayReadArtifact(artifact, context)) throw new TaviError("NOT_FOUND", `no artifact ${source.artifactId} in this chat`);
       if (artifact.reviewState !== "approved")
         throw new TaviError("NOT_AUTHORIZED", `artifact ${source.artifactId} is ${artifact.reviewState}, not approved for release`);
       if (artifact.contentType !== "application/pdf")
@@ -1299,12 +1298,7 @@ export function registerPdfTools(registry: ToolRegistryPort, options: PdfToolOpt
         }
         case "attachment": {
           const artifact = await options.artifacts.getArtifact(source.artifactId);
-          if (
-            artifact === undefined ||
-            !isModelVisibleArtifact(artifact) ||
-            artifact.workspaceId !== context.workspaceId ||
-            artifact.reviewState !== "approved"
-          )
+          if (!chatMayReadArtifact(artifact, context) || artifact.reviewState !== "approved")
             return refuse(row, `no approved attachment ${source.artifactId} in this conversation`);
           // One this conversation was sent, not any of the workspace's: known before the round, from its attachment lines.
           if (check.conversationArtifacts !== undefined && !check.conversationArtifacts.includes(artifact.artifactId))

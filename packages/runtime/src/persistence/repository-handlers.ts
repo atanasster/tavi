@@ -43,7 +43,7 @@ export const dispatchRepository = rpcHandlers<"repository", AsyncPersistenceRepo
     "repository.cancellations.request": (repositories, args) =>
       repositories.cancellations.request({ ...args[0], now: workerClock(args[0].now) }),
     "repository.receipts.record": (repositories, args) => repositories.receipts.record({ ...args[0], now: workerClock(args[0].now) }),
-    "repository.artifacts.claimUploadForRun": (repositories, args) => repositories.artifacts.claimUploadForRun?.(...args),
+    "repository.artifacts.claimAttachmentForRun": (repositories, args) => repositories.artifacts.claimAttachmentForRun?.(...args),
     "repository.artifacts.putStagedArtifact": (repositories, args) => {
       const put = repositories.artifacts.putStagedArtifact;
       if (put === undefined) throw new TaviError("UNSUPPORTED", "This store takes no staged artifacts");

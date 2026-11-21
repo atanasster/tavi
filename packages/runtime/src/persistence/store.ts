@@ -74,7 +74,7 @@ import { SqliteAgentWaitRepository } from "./store/agent-waits.js";
 import { SqliteApprovalRepository } from "./store/approvals.js";
 import {
   artifactStagingDirectory,
-  claimUploadForRun,
+  claimAttachmentForRun,
   derivedPreviewExists,
   eraseArtifacts,
   getArtifact,
@@ -390,8 +390,8 @@ export class SqliteStore {
     return listPendingReview(this, workspaceId, limit);
   }
 
-  claimUploadForRun(input: { readonly artifactId: string; readonly runId: string }): void {
-    return claimUploadForRun(this, input);
+  claimAttachmentForRun(input: { readonly artifactId: string; readonly runId: string }): void {
+    return claimAttachmentForRun(this, input);
   }
 
   setReviewState(input: {

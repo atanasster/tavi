@@ -509,6 +509,15 @@ what is read there is always a page's. A report that quotes news headlines
 from your projects' feeds is treated as web content too, and so is its chat's
 folder once the copy lands there.
 
+An attachment belongs to the chat it arrived in: a file you upload with a
+message, and a file (a voice message, a photo, a video) a channel's message
+carries, is given that chat when its message starts or joins it. From then on
+`audio.transcribe`, the `video.*` and `pdf.*` tools, `artifacts.view_image`
+and `artifacts.read` read it only in that chat (and its workers); another chat in the same workspace is told there
+is no such artifact, and nothing about what it is. An attachment kept before
+this rule, or one whose message started no turn, is still read anywhere in its
+workspace until it is deleted (30 days for audio and video).
+
 ### Questions
 
 Questions a task asks (`operator.ask_user`) are answered in `tavi chat` by

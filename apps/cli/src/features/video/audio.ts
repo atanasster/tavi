@@ -7,7 +7,7 @@ import {
   TaviError,
   VIDEO_LIMITS,
   artifactLabel,
-  isModelVisibleArtifact,
+  chatMayReadArtifact,
   type ArtifactRecord,
   type ArtifactRepositoryPort,
   type CallAssessment,
@@ -116,9 +116,8 @@ export function registerAudioTools(registry: ToolRegistryPort, options: AudioToo
     context: InvocationContext,
   ): Promise<{ readonly artifact: ArtifactRecord; readonly bytes: Uint8Array }> => {
     const artifact = await options.artifacts.getArtifact(artifactId);
-    // Refused alike when missing, another workspace's or internal: the id is model-authored.
-    if (artifact === undefined || !isModelVisibleArtifact(artifact) || artifact.workspaceId !== context.workspaceId)
-      throw new TaviError("NOT_FOUND", `no artifact ${artifactId} in this workspace`);
+    // Refused alike when missing, another workspace's, internal or another chat's attachment: the id is model-authored.
+    if (!chatMayReadArtifact(artifact, context)) throw new TaviError("NOT_FOUND", `no artifact ${artifactId} in this chat`);
     if (artifact.reviewState !== "approved")
       throw new TaviError("NOT_AUTHORIZED", `artifact ${artifactId} is ${artifact.reviewState}, not approved for release`);
     if (!AUDIO_ARTIFACT_TYPES.includes(artifact.contentType))

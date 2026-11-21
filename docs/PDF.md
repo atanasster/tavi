@@ -32,7 +32,7 @@ composer), or point at one in the chat's folders, and ask about it.
 - **`pdf.overlay`**: writes on a printed form with no fields, at the entry
   boxes `pdf.fields` lists, into a new copy (see *Harder forms* below).
 
-A PDF is read only from an approved attachment of the same workspace or from a
+A PDF is read only from an approved attachment of the same chat (an attachment belongs to the chat its message started or joined) or from a
 file the chat may read (its own folder and the folders attached to it); the
 text it returns carries where it came from, so a document someone sent you
 counts as untrusted content (see [Why am I asked, and from where](SECURITY-MODEL.md#why-am-i-asked-and-from-where)).
