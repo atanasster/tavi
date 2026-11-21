@@ -50,6 +50,10 @@ change behaviour or stored data.
   only while you choose: OpenRouter's sign-in has its own Back. Its key field
   and About you's fields leave room under their labels, and a field's hint
   is in a hint's smaller, quieter type.
+- In any form laid out top to bottom, a field's box no longer touches what
+  follows it: the form's buttons (Settings → Models' Store key) and the next
+  field's label stand a step clear. Forms that sit on one line keep their
+  buttons beside the field.
 
 ## 0.3.1 — 2026-11-21
 

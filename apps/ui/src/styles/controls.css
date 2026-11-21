@@ -684,6 +684,23 @@ summary.disclosure {
 
 /* ---------- Utilities ---------- */
 
+/* In a form laid out top to bottom, a field's control never touches what follows it: the form's buttons, or the
+   next field's label, stand a step clear. A form that is itself a row (`.actions`, `.cluster`) keeps its items on
+   one line, with no such step. */
+:is(form:not(.actions, .cluster), .form, fieldset, .stack, .field)
+  > :is(
+    input:not([type="checkbox"], [type="radio"]),
+    textarea,
+    select,
+    .password,
+    .select-trigger,
+    .field,
+    label:has(> :is(input:not([type="checkbox"], [type="radio"]), textarea, select, .password))
+  )
+  + :is(.actions, button[type="submit"], label) {
+  margin-top: var(--space-3);
+}
+
 /* A row of items centred on one line, wrapping when it runs out of room. */
 .cluster,
 .actions,
