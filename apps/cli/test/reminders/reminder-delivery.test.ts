@@ -131,6 +131,7 @@ async function fixture(
   const diagnostics: string[] = [];
   const started: { reminderId: string; replyTo?: ReminderReplyTarget }[] = [];
   const homePosts: { text: string; taskId?: string }[] = [];
+  const chatPosts: { taskId: string; text: string }[] = [];
   let now = T;
   const delivery = createReminderDelivery({
     repositories,
@@ -152,6 +153,9 @@ async function fixture(
     postHome: async ({ text, taskId }) => {
       homePosts.push({ text, ...(taskId === undefined ? {} : { taskId }) });
       return options.home === true;
+    },
+    postInChat: async ({ taskId, text }) => {
+      chatPosts.push({ taskId, text });
     },
     now: () => now,
     ...(options.revoked === undefined
@@ -228,6 +232,7 @@ async function fixture(
     diagnostics,
     started,
     homePosts,
+    chatPosts,
     create,
     fire,
     fires,
@@ -281,7 +286,7 @@ describe("delivering to the conversation", () => {
   });
 
   it("sends to the chat the reminder was asked in, with Done and Snooze buttons", async () => {
-    const { create, fire, sent, fires, store } = await fixture();
+    const { create, fire, sent, fires, store, chatPosts } = await fixture();
     try {
       const reminder = await create();
       expect(await fire(at(5))).toEqual([{ outcome: "delivered" }]);
@@ -301,6 +306,9 @@ describe("delivering to the conversation", () => {
         ],
       ]);
       expect((await fires(reminder.reminderId))[0]).toMatchObject({ outcome: "delivered" });
+      // The canvas shows it too, in the conversation's current chat.
+      const chat = await store.asPort().repositories.messagingConversations.get("conn-a", "chat-1");
+      expect(chatPosts).toEqual([{ taskId: chat?.taskId, text: "⏰ Take your pills" }]);
     } finally {
       await store.close();
     }

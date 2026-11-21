@@ -219,6 +219,11 @@ describe("inbound-message-to-task-admission pipeline", () => {
     expect(await repositories.messagingConversations.get("conn-a", "chat-1")).toBeUndefined();
     // A finished chat had nothing to cancel, and a chat app's reader is never shown a task id.
     expect(sent.at(-1)).toBe("Started a new conversation. You can still read the earlier one in the Tavi app.");
+    // The ended chat says so in the canvas, where it can still be continued.
+    const [reset] = await repositories.transcripts.notices(first?.taskId ?? "", { limit: 10 });
+    expect(reset).toMatchObject({ kind: "conversation", title: "Conversation started over" });
+    expect(reset?.summary).toContain("/new on");
+    expect(reset?.summary).toContain("goes on in the new conversation");
     // The command is no turn of either task.
     expect(model.calls).toHaveLength(1);
 
@@ -296,7 +301,9 @@ describe("inbound-message-to-task-admission pipeline", () => {
     expect(settled?.state).not.toBe("active");
     expect(settled?.settledOutcome).toMatchObject({ kind: "cancelled", error: { code: "CONVERSATION_RESET" } });
     expect((await repositories.tasks.get(taskId))?.status).toBe("cancelled");
-    expect(sent.at(-1)).toBe("Started a new conversation. What the earlier one was still doing is cancelled; you can read it in the Tavi app.");
+    expect(sent.at(-1)).toBe(
+      "Started a new conversation. What the earlier one was still doing is cancelled; you can read it in the Tavi app.",
+    );
     await runtime.close();
   });
 

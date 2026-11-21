@@ -440,6 +440,27 @@ describe("notices posted into a chat", () => {
     expect(transcripts.notices("task-1", { limit: 10 }).find((notice) => notice.kind === "epoch")?.artifactId).toBeUndefined();
   });
 
+  it("shows a notice posted display-only, of any kind, and never claims it into a turn", () => {
+    const store = fixture();
+    const transcripts = store.asPort().repositories.transcripts;
+    transcripts.append({ taskId: "task-1", admissionId: "adm-a", turn: turn("p1"), createdAt: AT });
+    transcripts.postNotice({
+      noticeId: "notice-reminder-1",
+      taskId: "task-1",
+      kind: "reminder",
+      sourceKey: "reminder:r1:2026-10-04T00:00:00.000Z",
+      title: "Reminder",
+      summary: "⏰ Water the plants",
+      createdAt: AT,
+      displayOnly: true,
+    });
+    expect(transcripts.notices("task-1", { limit: 10 }).map((notice) => notice.kind)).toEqual(["reminder"]);
+    expect(transcripts.claimNotices("task-1", "key-1", 10).notices).toEqual([]);
+    // Not handed back at owner start either.
+    expect(transcripts.releaseOrphanedNotices()).toBe(0);
+    expect(transcripts.claimNotices("task-1", "key-2", 10).notices).toEqual([]);
+  });
+
   it("posts a chat's folder notice once, for the person only — never claimed into a turn", () => {
     const store = fixture();
     const transcripts = store.asPort().repositories.transcripts;

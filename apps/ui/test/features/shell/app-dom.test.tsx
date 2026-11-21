@@ -1241,6 +1241,58 @@ it("marks a session that keeps its own instructions or notes", async () => {
   expect(session("Plain")?.querySelector(".session-marks")).toBeNull();
 });
 
+it("marks a chat that came from a chat app with the app's name, and a conversation's Home with its kind", async () => {
+  const base = {
+    workspaceId: "default",
+    status: "completed" as const,
+    origin: "ipc" as const,
+    createdAt: "2026-09-29T00:00:00Z",
+    updatedAt: "2026-09-29T00:00:00Z",
+    needs: [],
+    counts: { admissions: 1, tools: null },
+  };
+  const rows = [
+    {
+      ...base,
+      taskId: "a",
+      title: "Now",
+      channel: { kind: "telegram", label: "telegram-1" },
+      conversationHome: { kind: "direct" as const, epoch: 1 },
+    },
+    { ...base, taskId: "b", title: "Before new", channel: { kind: "telegram", label: "telegram-1" } },
+    { ...base, taskId: "c", title: "Reminder", channel: { kind: "reminder", label: "water" } },
+  ];
+  const shape = { label: "Id", placeholder: "", pattern: ".+", normalize: "none" } as const;
+  const telegram = {
+    providerId: "telegram",
+    label: "Telegram",
+    kind: "chat",
+    icon: { name: "send" },
+    description: "d",
+    settings: [],
+    auth: { kind: "none" },
+    sender: { ...shape, authentication: "provider" },
+    target: shape,
+  };
+  const client: SettingsClient = {
+    request: async (command, payload) => {
+      const action = (payload as { action?: string }).action;
+      if (command === "channels") return { ok: true, result: action === "catalog" ? { channels: [telegram] } : { connections: [] } };
+      return { ok: true, result: [] };
+    },
+  };
+  const fake = fakeStore({ connection: "ready", runs: [], directory: { rows, needs: [], needsTruncated: false, loading: false } });
+  const page = await mount(<App store={fake.store} client={client} workspaceId="default" />);
+  await flush();
+  const mark = (title: string) =>
+    [...page.querySelectorAll(".session")].find((node) => node.textContent?.includes(title))?.querySelector(".session-mark");
+  expect(mark("Now")?.textContent).toBe("Telegram DM");
+  expect(mark("Before new")?.textContent).toBe("Telegram");
+  expect(mark("Before new")?.getAttribute("title")).toBe("From Telegram");
+  // A reminder is not a chat app: no mark.
+  expect(mark("Reminder") ?? null).toBeNull();
+});
+
 it("takes the sessions panel's pins and archive from the owner, and writes changes back to it", async () => {
   const row = {
     taskId: "old",

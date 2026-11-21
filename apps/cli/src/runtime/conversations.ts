@@ -1082,6 +1082,22 @@ export function composeConversations(composed: SchedulesContext) {
         if (ended !== undefined) {
           withdrew = await withdrawConversationTask(ended.taskId, actor, event.connectionId);
           await markWithdrawn(ended);
+          // Said in the ended chat itself, where the canvas still offers to continue it: it no longer reaches the chat app.
+          const channel = channelDescriptorOf(messaging.providerOf(event.connectionId))?.label ?? "the chat app";
+          await persistencePort.repositories.transcripts
+            .postNotice({
+              noticeId: clock.newId("notice"),
+              createdAt: clock.now(),
+              taskId: ended.taskId,
+              kind: "conversation",
+              sourceKey: `conversation-reset:${ended.taskId}`,
+              title: "Conversation started over",
+              summary: `/new on ${channel} started a new conversation${withdrew ? ", and what this one was still doing was cancelled" : ""}. Writing here goes on with this chat in Tavi; ${channel} goes on in the new conversation.`,
+              once: true,
+            })
+            .catch((error: unknown) =>
+              logger.warn("a conversation's reset could not be noted in its chat", { taskId: ended.taskId, error: errorMessage(error) }),
+            );
         }
         const destination = messaging.buildReplyDestination(event.connectionId, {
           externalConversationId: event.externalConversationId,

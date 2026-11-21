@@ -134,7 +134,8 @@ const toSteer = (row: SteerRow): ChatSteer => {
  * only notices read by nobody, and no operation key has this shape.
  */
 const DISPLAY_ONLY = "(display-only)";
-const readByOf = (kind: string): string | null => ((DISPLAY_ONLY_NOTICE_KINDS as readonly string[]).includes(kind) ? DISPLAY_ONLY : null);
+const readByOf = (kind: string, displayOnly?: true): string | null =>
+  displayOnly === true || (DISPLAY_ONLY_NOTICE_KINDS as readonly string[]).includes(kind) ? DISPLAY_ONLY : null;
 /** `DISPLAY_ONLY_NOTICE_KINDS` as a SQL list, for the statements that hand claims back. */
 const DISPLAY_ONLY_SQL = DISPLAY_ONLY_NOTICE_KINDS.map((kind) => `'${kind}'`).join(", ");
 
@@ -768,7 +769,7 @@ export class SqliteTranscriptRepository implements TranscriptRepositoryPort {
         title,
         summary,
         afterSeq,
-        readByOf(input.kind),
+        readByOf(input.kind, input.displayOnly),
         input.createdAt,
         input.sourceTaskId ?? null,
         input.artifactId ?? null,
@@ -789,7 +790,7 @@ export class SqliteTranscriptRepository implements TranscriptRepositoryPort {
       title,
       summary,
       afterSeq,
-      readByOf(input.kind),
+      readByOf(input.kind, input.displayOnly),
       input.createdAt,
       input.artifactId ?? null,
       input.heartbeatItemId ?? null,
@@ -1212,6 +1213,7 @@ export class SqliteTranscriptRepository implements TranscriptRepositoryPort {
       this.#db(),
       `UPDATE tavi_chat_notices SET read_by = NULL
        WHERE read_by IS NOT NULL
+         AND read_by <> '${DISPLAY_ONLY}'
          AND kind NOT IN (${DISPLAY_ONLY_SQL})
          AND NOT EXISTS (SELECT 1 FROM tavi_admissions a
                           WHERE a.task_id = tavi_chat_notices.task_id

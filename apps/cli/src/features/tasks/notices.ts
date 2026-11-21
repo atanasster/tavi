@@ -198,6 +198,13 @@ export interface ChatNotices {
     readonly text: string;
     readonly taskId?: string;
   }): Promise<boolean>;
+  /** A reminder's fire sent to a chat app, shown (never claimed into a turn) in the chat it reached in the canvas. */
+  postReminderInChat(input: {
+    readonly taskId: string;
+    readonly reminder: { readonly reminderId: string };
+    readonly fire: { readonly fireAt: string };
+    readonly text: string;
+  }): Promise<void>;
   /** A new Home's "Earlier chats". */
   postEarlierChats(home: { readonly taskId: string; readonly workspaceId: string; readonly principalId: string }): Promise<void>;
   /** A notice a side chat replies to, posted into `parent`. */
@@ -244,6 +251,7 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
     readonly summary: string;
     readonly bump?: boolean;
     readonly once?: boolean;
+    readonly displayOnly?: true;
   }): Promise<ChatNotice> =>
     (await deps.repositories.transcripts.postNotice({ noticeId: deps.newId(), createdAt: deps.now(), ...input })).notice;
 
@@ -404,6 +412,19 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
         summary: `${text}${taskId === undefined ? "" : " (its task started)"}`,
       });
       return true;
+    },
+
+    async postReminderInChat({ taskId, reminder, fire, text }) {
+      // What reached the chat app, word for word, for the person to see. Never claimed into a turn: an untraced
+      // notice would make the conversation's next turn untrusted (`noticesLabelOf`), and the chat already holds it.
+      await post({
+        taskId,
+        kind: "reminder",
+        sourceKey: `reminder:${reminder.reminderId}:${fire.fireAt}`,
+        title: "Reminder",
+        summary: text,
+        displayOnly: true,
+      });
     },
 
     async postEarlierChats(home) {

@@ -31,6 +31,10 @@ change behaviour or stored data.
   never answered; a channel form's Back button says where it goes ("Back to
   channels") beside Welcome's own Back; and on a phone the Settings and
   Center tab strips snap each tab whole into view.
+- The canvas marks a chat from a chat app with the app's name ("Telegram DM"
+  for a conversation's Home, "Telegram" for any other); a chat ended by `/new`
+  says so in the canvas; and a reminder sent to a chat app shows in that
+  conversation's chat in the canvas too.
 
 ### Fixed
 

@@ -385,6 +385,8 @@ export interface PostNoticeInput {
   readonly bump?: boolean;
   /** Posted only when the chat holds no notice under the key: a repeat, in any words, changes nothing. */
   readonly once?: boolean;
+  /** Shown to the person only, never claimed into a turn, whatever its kind (`DISPLAY_ONLY_NOTICE_KINDS` are always). */
+  readonly displayOnly?: true;
 }
 
 /**

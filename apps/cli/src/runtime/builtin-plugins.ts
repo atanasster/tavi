@@ -813,6 +813,7 @@ export function composeBuiltinPlugins(composed: ConversationsContext) {
                   isEmailConnection,
                   ...(workflow === undefined ? {} : { startTask: startReminderTask, modelReady: liveModelReady }),
                   postHome: (input) => chatNotices.postReminder(input),
+                  postInChat: (input) => chatNotices.postReminderInChat(input),
                   now: () => clock.now(),
                   ownerAllowed: (workspaceId, principalId) => access.actsIn(workspaceId, principalId),
                   onDiagnostic: (message, fields) => log.warn(message, fields),

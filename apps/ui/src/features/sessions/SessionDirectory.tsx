@@ -20,6 +20,7 @@ import type { CanvasState, CanvasStore } from "../chat/store/types.js";
 import { Failure, Pending } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
 import { useTimeZone, useWorkspace } from "../shell/Workspace.js";
+import { useChannelNames } from "../shell/ChannelNames.js";
 
 export function SessionDirectory({
   state,
@@ -274,16 +275,27 @@ export function SessionDirectory({
 
 /** What a chat keeps of its own: its instructions, and how many notes. */
 function ChatMarks({ row }: { readonly row: TaskListRow }) {
-  if (row.chatInstructions !== true && row.chatNotes === undefined && row.conversationHome === undefined) return null;
+  // The chat app a chat came from (Telegram, Slack…), by its descriptor's label: none for the front ends,
+  // a routine or a reminder, whose kinds name no installed channel.
+  const channel = useChannelNames().label(row.channel?.kind ?? "");
+  if (row.chatInstructions !== true && row.chatNotes === undefined && row.conversationHome === undefined && channel === undefined)
+    return null;
+  const home = row.conversationHome === undefined ? undefined : row.conversationHome.kind === "group" ? "group" : "DM";
   return (
     <span className="session-marks">
-      {/* A channel conversation's Home: which kind, by the conversation's ids. */}
-      {row.conversationHome === undefined ? null : (
+      {/* The channel, and for a conversation's Home its kind, by the conversation's ids: "Telegram DM". */}
+      {channel === undefined && home === undefined ? null : (
         <span
           className="session-mark"
-          title={row.conversationHome.kind === "group" ? "Group conversation's Home" : "Direct conversation's Home"}
+          title={
+            home === undefined
+              ? `From ${channel}`
+              : channel === undefined
+                ? `${home === "group" ? "Group" : "Direct"} conversation's Home`
+                : `${channel}: ${home === "group" ? "group" : "direct"} conversation's Home`
+          }
         >
-          {row.conversationHome.kind === "group" ? "group" : "DM"}
+          {[channel, home].filter((part) => part !== undefined).join(" ")}
         </span>
       )}
       {row.chatInstructions === true ? (

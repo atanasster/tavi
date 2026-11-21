@@ -4,6 +4,7 @@ import {
   TaviError,
   isUntrusted,
   conversationOfKey,
+  topicConversationKey,
   formatReminderClock,
   formatReminderTime,
   reminderRetryDecision,
@@ -162,6 +163,17 @@ export interface ReminderDeliveryDependencies extends ReminderTargetDependencies
     readonly text: string;
     readonly taskId?: string;
   }) => Promise<boolean>;
+  /**
+   * Say a fire sent to a chat app in the canvas too: a notice in that
+   * conversation's current chat, so the chat there shows what reached the
+   * chat app. Best effort; absent, the canvas is not told.
+   */
+  readonly postInChat?: (input: {
+    readonly taskId: string;
+    readonly reminder: Reminder;
+    readonly fire: ReminderFire;
+    readonly text: string;
+  }) => Promise<void>;
   readonly now: () => string;
   /**
    * Whether the reminder's owner still acts in its workspace. One revoked from
@@ -267,6 +279,31 @@ export function createReminderDelivery(deps: ReminderDeliveryDependencies): Remi
         }
       };
       const withTask = () => (taskId === undefined ? {} : { taskId });
+      // What a fire says, wherever it is said.
+      const message = said(reminder, `${reminderMessageText(reminder, fire, late)}${noModel ? REMINDER_NO_MODEL_NOTE : ""}`);
+      /**
+       * The fire, said in the canvas too: in the chat it reached — a forum topic's side chat, else the
+       * conversation's current one — when that chat is the reminder's own person's. Best effort, never failing the delivery.
+       */
+      const noteInChat = async (target: ReminderReplyTarget, text: string): Promise<void> => {
+        if (deps.postInChat === undefined) return;
+        try {
+          const conversations = deps.repositories.messagingConversations;
+          const topic =
+            target.externalThreadId === undefined
+              ? undefined
+              : await conversations.get(target.connectionId, topicConversationKey(target.externalConversationId, target.externalThreadId));
+          const chat = topic ?? (await conversations.get(target.connectionId, target.externalConversationId));
+          const task = chat === undefined ? undefined : await deps.repositories.tasks.get(chat.taskId);
+          if (task !== undefined && task.workspaceId === reminder.workspaceId && task.principalId === reminder.principalId)
+            await deps.postInChat({ taskId: task.taskId, reminder, fire, text });
+        } catch (error) {
+          deps.onDiagnostic?.("a reminder sent to its chat could not be noted in the canvas", {
+            reminderId: reminder.reminderId,
+            error: errorMessage(error),
+          });
+        }
+      };
       if (noModel && fire.attempts === undefined) {
         deps.onDiagnostic?.("a reminder's task was not started: no model is configured", {
           reminderId: reminder.reminderId,
@@ -285,7 +322,7 @@ export function createReminderDelivery(deps: ReminderDeliveryDependencies): Remi
                 reminder,
                 fire,
                 late,
-                text: said(reminder, `${reminderMessageText(reminder, fire, late)}${noModel ? REMINDER_NO_MODEL_NOTE : ""}`),
+                text: message,
                 ...withTask(),
               })) === true;
           } catch (error) {
@@ -316,12 +353,15 @@ export function createReminderDelivery(deps: ReminderDeliveryDependencies): Remi
             connectionId: replyTo.connectionId,
             workspaceId: reminder.workspaceId,
             destination,
-            parts: [{ content: said(reminder, `${reminderMessageText(reminder, fire, late)}${noModel ? REMINDER_NO_MODEL_NOTE : ""}`) }],
+            parts: [{ content: message }],
             ...(buttons === undefined ? {} : { buttons }),
             ...(email ? { subject: said(reminder, `Reminder: ${reminder.text.replace(/\s+/g, " ").slice(0, 120)}`) } : {}),
           });
           // An uncertain send may have arrived: it is not sent again.
-          if (outcome.status !== "rejected") return { outcome: "delivered", ...withTask() };
+          if (outcome.status !== "rejected") {
+            await noteInChat(replyTo, message);
+            return { outcome: "delivered", ...withTask() };
+          }
           failure = outcome.parts[0]?.error ?? "the connector refused the message";
         } catch (error) {
           failure = errorMessage(error);
