@@ -119,10 +119,14 @@ UPDATE_I18N_RATCHET=1 pnpm exec vitest run tests/i18n-catalogues.test.ts
 3. Write `apps/ui/src/locales/<code>.ts`, typed with
    `satisfies CatalogFor<typeof en>`, and add a loader for it in
    `apps/ui/src/lib/i18n.ts`.
-4. In `tests/i18n-catalogues.test.ts`, give each `NAMESPACES` entry the new
+4. Check the faces cover its script: Inter for text, Bricolage for titles.
+   Where Bricolage does not (Cyrillic), set `--font-display` for the language
+   under `:root:lang(<code>)` in `apps/ui/src/styles/tokens.css`, as Bulgarian
+   does with Onest.
+5. In `tests/i18n-catalogues.test.ts`, give each `NAMESPACES` entry the new
    language's catalogue and check it in the two language-pack tests, with style
    rules of its own if the language has them.
-5. List it where the languages are written out by hand: the `workspace.locale`
+6. List it where the languages are written out by hand: the `workspace.locale`
    help in `apps/cli/src/features/config/parse.ts`, the onboarding question's
    label ("Language / Език") in `apps/cli/src/features/onboard/steps.ts`, its row in
    [CONFIGURATION.md](CONFIGURATION.md#workspace-settings), and the table at the

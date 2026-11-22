@@ -25,6 +25,7 @@
   "taviBundled": [
     "@fontsource-variable/bricolage-grotesque",
     "@fontsource-variable/inter",
+    "@fontsource-variable/onest",
     "@radix-ui/react-select",
     "katex",
     "react",
@@ -41,6 +42,7 @@
   "devDependencies": {
     "@fontsource-variable/bricolage-grotesque": "5.3.0",
     "@fontsource-variable/inter": "5.3.0",
+    "@fontsource-variable/onest": "5.3.0",
     "@radix-ui/react-select": "2.4.1",
     "@tavi/client": "workspace:*",
     "@tavi/contracts": "workspace:*",

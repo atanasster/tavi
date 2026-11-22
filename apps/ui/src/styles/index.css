@@ -15,6 +15,12 @@
    with its optical size axis, for Welcome's title and the pages' titles. */
 @import "@fontsource-variable/bricolage-grotesque/opsz.css";
 
+/* Onest Variable, self-hosted the same way: the display face on a Bulgarian
+   page (`tokens.css`), since Bricolage has no Cyrillic and Onest is the
+   nearest grotesque in shape. An English page never uses it, so never
+   downloads it. */
+@import "@fontsource-variable/onest/wght.css";
+
 @import "./layout.css";
 @import "./chat-panel.css";
 @import "./held-files.css";

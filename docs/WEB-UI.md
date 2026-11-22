@@ -1366,7 +1366,8 @@ sun, kept for what waits on you (an approval's dot) and the dot on the
 wordmark's i. The header shows Tavi's mark, a speech bubble with a sprout,
 which is also the tab's icon and the face over each answer. Text is Inter;
 the wordmark, Welcome's title, page titles and an empty canvas's greeting are
-Bricolage Grotesque, both self-hosted. Edges are mostly tone, with hairlines
+Bricolage Grotesque, all self-hosted. Bricolage has no Cyrillic, so a page in
+Bulgarian sets those titles in Onest (the wordmark stays Bricolage). Edges are mostly tone, with hairlines
 where a card meets a card, and there are no gradients. Motion is small (a
 waiting approval settles in and its sun dot's halo breathes while it waits,
 and the working dots breathe) and stops under reduced motion. Every colour is
