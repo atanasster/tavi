@@ -15,7 +15,11 @@ import { run } from "./support/process.js";
  *
  * Each budget is about 15% over the size measured when it was set (first load
  * 341 KiB: entry 313 KiB plus its stylesheet 28 KiB; all JavaScript 680 KiB;
- * on 2026-10-29). To re-measure: `pnpm --filter @tavi/ui analyze` prints every
+ * on 2026-10-29), raised on 2026-11-22 for languages: the English catalogue
+ * (every word the canvas says, which views used to carry inline in their own,
+ * often lazy, chunks) is in the first load, about 75 KiB, and the Bulgarian one
+ * is a chunk of its own, about 90 KiB, fetched only when Bulgarian is chosen
+ * (first load then 437 KiB, all JavaScript 901 KiB). To re-measure: `pnpm --filter @tavi/ui analyze` prints every
  * chunk's size; raise a budget only for growth that is meant, and say what it
  * bought in the commit.
  */
@@ -33,8 +37,8 @@ if (!built) {
 }
 
 const KIB = 1024;
-const FIRST_LOAD_GZIP_BUDGET = 390 * KIB;
-const TOTAL_JS_GZIP_BUDGET = 780 * KIB;
+const FIRST_LOAD_GZIP_BUDGET = 500 * KIB;
+const TOTAL_JS_GZIP_BUDGET = 1040 * KIB;
 
 interface BundleReport {
   readonly entry: string;
