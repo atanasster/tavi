@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { temporaryDirectories } from "@tavi/test-support";
+import { delay, temporaryDirectories } from "@tavi/test-support";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { analyzerConfigPath } from "../../src/features/video/host.js";
@@ -34,7 +34,7 @@ async function settled(setup: ReturnType<typeof createVoiceSetup>) {
   for (let tries = 0; tries < 200; tries++) {
     const now = await setup.status();
     if (now.job?.state !== "running") return now;
-    await new Promise((resolve) => setTimeout(resolve, 5));
+    await delay(5);
   }
   throw new Error("the voice setup job did not end");
 }

@@ -57,7 +57,7 @@ const STATUS: OnboardingStatus = {
   open: ["voice"],
 };
 
-const mount = (client: SettingsClient, onDone: () => void = () => {}) =>
+const mountStep = (client: SettingsClient, onDone: () => void = () => {}) =>
   mountFlushed(
     <VoiceStep
       client={client}
@@ -88,7 +88,7 @@ describe("the voice step", () => {
         "models:voice-setup": { ...MISSING, job: { state: "running", phase: "install", message: "Installing whisper-cpp with Homebrew" } },
       });
       const onDone = vi.fn();
-      const page = await mount(client, onDone);
+      const page = await mountStep(client, onDone);
       // What is here is ticked with the check icon, never a glyph.
       const ffmpeg = [...page.querySelectorAll(".welcome-voice-parts li")].find((item) => item.textContent?.includes("FFmpeg"));
       expect(ffmpeg?.querySelector("svg")).not.toBeNull();
@@ -114,7 +114,7 @@ describe("the voice step", () => {
   it("gives the commands where the owner cannot install, and reads again on Check again", async () => {
     const reads: VoiceSetupStatus[] = [{ ...MISSING, automatic: false }, READY];
     const { client, sent } = owner({ "models:voice-status": () => reads.shift() });
-    const page = await mount(client);
+    const page = await mountStep(client);
     expect(page.textContent).toContain("brew install whisper-cpp ffmpeg");
     expect(button(page, "Set up voice messages")).toBeUndefined();
     await click(button(page, "Check again"));
