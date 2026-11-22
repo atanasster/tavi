@@ -24,7 +24,10 @@ export function Tabs<T extends string>({
 }) {
   const nav = useRef<HTMLElement>(null);
   useEffect(() => {
-    nav.current?.querySelector('[aria-current="page"]')?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+    const strip = nav.current;
+    // Only a strip that scrolls: one that fits has nothing to bring into view.
+    if (strip === null || strip.scrollWidth <= strip.clientWidth) return;
+    strip.querySelector('[aria-current="page"]')?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
   }, [current]);
   return (
     <nav ref={nav} className={`${className} segmented`} aria-label={label}>
