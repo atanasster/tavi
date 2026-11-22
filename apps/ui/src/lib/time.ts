@@ -1,28 +1,24 @@
 import { hostTimeZone, instantForLocalTime } from "@tavi/contracts";
 import { plural } from "@tavi/contracts/util";
 
+import { translateCore } from "./i18n.js";
+
 /**
  * The canvas's words for days, times and spans. Days and times are the
  * workspace zone's — the one `center summary` names — never the browser's, so
- * this page and Telegram agree on what today is. Kept free of React so each
- * is asserted on its own.
+ * this page and Telegram agree on what today is. Weekday and month names, and
+ * how a day is written, are the page's language's (the `core` catalogue).
+ * Kept free of React so each is asserted on its own.
  */
 
-const formatters = new Map<
-  string,
-  { readonly date: Intl.DateTimeFormat; readonly time: Intl.DateTimeFormat; readonly day: Intl.DateTimeFormat }
->();
+const formatters = new Map<string, { readonly date: Intl.DateTimeFormat; readonly time: Intl.DateTimeFormat }>();
 
 /**
  * The zone's formatters, made once. A zone this browser's ICU does not know
  * falls back to the browser's own rather than throwing mid-render: the times
  * are then the reader's, not the workspace's, which is the lesser wrong.
  */
-function formattersFor(timeZone: string | undefined): {
-  readonly date: Intl.DateTimeFormat;
-  readonly time: Intl.DateTimeFormat;
-  readonly day: Intl.DateTimeFormat;
-} {
+function formattersFor(timeZone: string | undefined): { readonly date: Intl.DateTimeFormat; readonly time: Intl.DateTimeFormat } {
   const key = timeZone ?? "";
   const cached = formatters.get(key);
   if (cached !== undefined) return cached;
@@ -38,12 +34,6 @@ function formattersFor(timeZone: string | undefined): {
       hour: "2-digit",
       minute: "2-digit",
       hourCycle: "h23",
-    }),
-    day: new Intl.DateTimeFormat("en-GB", {
-      ...(zone === undefined ? {} : { timeZone: zone }),
-      weekday: "short",
-      day: "numeric",
-      month: "short",
     }),
   });
   let made: ReturnType<typeof make>;
@@ -74,24 +64,23 @@ export const DAY_MS = 86_400_000;
 /** "14:20" today, or "Tue 12 Oct 14:20" on another day: a day-long snooze or pause never reads as later today. */
 export function whenLocal(iso: string, timeZone: string | undefined, now: Date | number = Date.now()): string {
   if (localDate(iso, timeZone) === todayIn(timeZone, now)) return localTime(iso, timeZone);
-  return `${localDay(iso, timeZone)} ${localTime(iso, timeZone)}`;
+  return dayAndTime(localDay(iso, timeZone), localTime(iso, timeZone));
 }
 
 /** The day `iso` falls on in `timeZone`, as "Tue 12 Oct". */
 export function localDay(iso: string, timeZone: string | undefined): string {
-  return formattersFor(timeZone).day.format(new Date(iso));
+  return shortDay(localDate(iso, timeZone));
 }
 
 /** The day `iso` falls on in `timeZone`, with the year when that is not this year there: "Tue 12 Oct", "Sun 12 Oct 2025". */
 export function localDayWithYear(iso: string, timeZone: string | undefined, now: Date | number = Date.now()): string {
-  const year = localDate(iso, timeZone).slice(0, 4);
-  return year === todayIn(timeZone, now).slice(0, 4) ? localDay(iso, timeZone) : `${localDay(iso, timeZone)} ${year}`;
+  return shortDay(localDate(iso, timeZone), todayIn(timeZone, now));
 }
 
 /** Like `whenLocal`, with the year on a day that is not this year: for a record that may be old. */
 export function whenLocalWithYear(iso: string, timeZone: string | undefined, now: Date | number = Date.now()): string {
   if (localDate(iso, timeZone) === todayIn(timeZone, now)) return localTime(iso, timeZone);
-  return `${localDayWithYear(iso, timeZone, now)} ${localTime(iso, timeZone)}`;
+  return dayAndTime(localDayWithYear(iso, timeZone, now), localTime(iso, timeZone));
 }
 
 /** The wall-clock time `iso` shows in `timeZone`, `HH:MM` on a 24-hour clock. */
@@ -135,21 +124,60 @@ export function dayEnd(date: string, timeZone: string | undefined): string {
   return new Date(midnight.getTime() - 1).toISOString();
 }
 
-// Spelled here rather than asked of `Intl`: ICU's en-GB month abbreviations
-// differ between versions ("Sep" / "Sept"), and the heading must not.
-export const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
+/** A weekday's name (0 = Sunday): "Monday", "понеделник". */
+export function weekdayName(weekday: number): string {
+  return translateCore(`date.weekday.${weekday % 7}` as `date.weekday.${0 | 1 | 2 | 3 | 4 | 5 | 6}`);
+}
 
-function calendar(date: string): { readonly weekday: string; readonly day: number; readonly month: string; readonly year: number } {
+/** A weekday's short name (0 = Sunday), as a chip shows it: "Mon", "пн". */
+export function weekdayShortName(weekday: number): string {
+  return translateCore(`date.weekdayShort.${weekday % 7}` as `date.weekdayShort.${0 | 1 | 2 | 3 | 4 | 5 | 6}`);
+}
+
+type MonthNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+
+/** A month's name (1 = January): "January", "януари". */
+export function monthName(month: number): string {
+  return translateCore(`date.month.${clampMonth(month)}`);
+}
+
+/** A month and its year, as a heading says it: "November 2026", "ноември 2026 г.". */
+export function monthYear(year: number, month: number): string {
+  return translateCore("date.monthYear", { month: monthName(month), year: String(year) });
+}
+
+const clampMonth = (month: number): MonthNumber => Math.min(12, Math.max(1, Math.trunc(month))) as MonthNumber;
+
+/** A day and a time together: "Tue 29 Sep 14:30". */
+function dayAndTime(date: string, time: string): string {
+  return translateCore("date.dayTime", { date, time });
+}
+
+/** A `YYYY-MM-DD` date's parts, with its weekday's and month's names in the page's language. */
+function calendar(date: string): { readonly params: { readonly [name: string]: string }; readonly year: number } {
   const [year = 1970, month = 1, day = 1] = date.split("-").map(Number);
-  const weekday = WEEKDAYS[new Date(utcMidnight(date)).getUTCDay()] ?? "";
-  return { weekday, day, month: MONTHS[month - 1] ?? "", year };
+  const weekday = new Date(utcMidnight(date)).getUTCDay();
+  // Numbers as text: a year is never written "2,026".
+  return {
+    params: {
+      day: String(day),
+      weekday: weekdayName(weekday),
+      weekdayShort: weekdayShortName(weekday),
+      month: monthName(month),
+      monthShort: translateCore(`date.monthShort.${clampMonth(month)}`),
+    },
+    year,
+  };
+}
+
+/** `text` (a day) with `year` when it is not `today`'s. */
+function withYear(text: string, year: number, today: string | undefined): string {
+  return today === undefined || calendar(today).year === year ? text : translateCore("date.withYear", { date: text, year: String(year) });
 }
 
 /** A `YYYY-MM-DD` date as "31 Dec". */
 export function dayMonth(date: string): string {
-  const { day, month } = calendar(date);
-  return `${day} ${month}`;
+  return translateCore("date.dayMonth", calendar(date).params);
 }
 
 /**
@@ -165,21 +193,19 @@ export function relativeDay(date: string, today: string, toward: "past" | "futur
 
 /** `date` as a short day: "Tue 29 Sep", with the year when it is not `today`'s. */
 export function shortDay(date: string, today?: string): string {
-  const { weekday, day, month, year } = calendar(date);
-  const other = today !== undefined && calendar(today).year !== year;
-  return `${weekday.slice(0, 3)} ${day} ${month}${other ? ` ${year}` : ""}`;
+  const { params, year } = calendar(date);
+  return withYear(translateCore("date.shortDay", params), year, today);
 }
 
 /** `date` as a long day: "Wednesday 30 Sep", with the year when it is not `today`'s. */
 export function longDay(date: string, today?: string): string {
-  const { weekday, day, month, year } = calendar(date);
-  const other = today !== undefined && calendar(today).year !== year;
-  return `${weekday} ${day} ${month}${other ? ` ${year}` : ""}`;
+  const { params, year } = calendar(date);
+  return withYear(translateCore("date.longDay", params), year, today);
 }
 
 /** "Mon 5 Oct 10:00": an instant as a day and time in the workspace zone. */
 export function dayTime(iso: string, timeZone: string | undefined, today?: string): string {
-  return `${shortDay(localDate(iso, timeZone), today)} ${localTime(iso, timeZone)}`;
+  return dayAndTime(shortDay(localDate(iso, timeZone), today), localTime(iso, timeZone));
 }
 
 /**
@@ -197,8 +223,10 @@ export function instantLabel(iso: string, timeZone: string | undefined, today: s
 export function dayHeading(date: string, today: string): { readonly title: string; readonly detail: string } {
   if (date === today) return { title: "Today", detail: shortDay(date, today) };
   if (date === shiftDate(today, -1)) return { title: "Yesterday", detail: shortDay(date, today) };
-  const { weekday, day, month, year } = calendar(date);
-  return { title: weekday, detail: `${day} ${month}${calendar(today).year === year ? "" : ` ${year}`}` };
+  const { params, year } = calendar(date);
+  // A heading starts with a capital in every language: "Sunday", "Неделя".
+  const weekday = params["weekday"] ?? "";
+  return { title: `${weekday.charAt(0).toLocaleUpperCase()}${weekday.slice(1)}`, detail: withYear(dayMonth(date), year, today) };
 }
 
 /**

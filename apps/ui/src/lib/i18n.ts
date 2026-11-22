@@ -10,6 +10,8 @@ import {
   type Translate,
 } from "@tavi/contracts/i18n";
 
+import { CORE_EN, type CoreKey } from "@tavi/contracts/locales/core-en";
+
 import { en, type UiKey } from "../locales/en.js";
 import { readStored, writeStored } from "./storage.js";
 
@@ -24,24 +26,37 @@ import { readStored, writeStored } from "./storage.js";
  * (kept in this browser) stands in, so a Bulgarian page does not flash English.
  */
 
-type UiCatalog = CatalogFor<typeof en>;
+/** A language's catalogues: the canvas's own and the `core` words it shares with every surface. */
+interface Catalogues {
+  readonly ui: CatalogFor<typeof en>;
+  readonly core: CatalogFor<typeof CORE_EN>;
+}
 
 /** The browser's convenience copy of the last language shown. */
 export const LOCALE_STORAGE_KEY = "tavi.locale";
 
-const loaders: { readonly [L in Exclude<Locale, "en">]: () => Promise<UiCatalog> } = {
-  bg: () => import("../locales/bg.js").then((module) => module.bg),
+const loaders: { readonly [L in Exclude<Locale, "en">]: () => Promise<Catalogues> } = {
+  bg: async () => {
+    const [ui, core] = await Promise.all([import("../locales/bg.js"), import("@tavi/contracts/locales/core-bg")]);
+    return { ui: ui.bg, core: core.CORE_BG };
+  },
 };
 
-const loaded: { [L in Exclude<Locale, "en">]?: UiCatalog } = {};
+const loaded: { [L in Exclude<Locale, "en">]?: Catalogues } = {};
 let locale: Locale = DEFAULT_LOCALE;
 let translate: Translate<UiKey> = createTranslator({ en }, DEFAULT_LOCALE);
+let translateCoreWords: Translate<CoreKey> = createTranslator({ en: CORE_EN }, DEFAULT_LOCALE);
 const listeners = new Set<() => void>();
 let requested = 0;
 
 function publish(next: Locale): void {
   locale = next;
-  translate = createTranslator({ en, ...loaded }, next);
+  const languages = Object.entries(loaded) as [Exclude<Locale, "en">, Catalogues][];
+  translate = createTranslator({ en, ...Object.fromEntries(languages.map(([language, catalogues]) => [language, catalogues.ui])) }, next);
+  translateCoreWords = createTranslator(
+    { en: CORE_EN, ...Object.fromEntries(languages.map(([language, catalogues]) => [language, catalogues.core])) },
+    next,
+  );
   if (typeof document !== "undefined") document.documentElement.lang = next;
   for (const listener of listeners) listener();
 }
@@ -86,6 +101,15 @@ export function currentLocale(): Locale {
 /** The page's words now, for code outside a component (a refusal built in `ipc.ts`). A view uses `useT`. */
 export function translateNow(key: UiKey, params?: MessageParams): string {
   return translate(key, params);
+}
+
+/**
+ * The `core` words now (the calendar's, shared with the terminal and the
+ * owner), for the helpers in `time.ts` and `format.ts`. The shell remounts its
+ * views on a change of language, so a view that shows them is drawn again.
+ */
+export function translateCore(key: CoreKey, params?: MessageParams): string {
+  return translateCoreWords(key, params);
 }
 
 /** The language the page speaks, re-rendering the view when it changes. */

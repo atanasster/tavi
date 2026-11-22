@@ -1,4 +1,7 @@
+import { formatNumber } from "@tavi/contracts/i18n";
 import { clip, plural } from "@tavi/contracts/util";
+
+import { currentLocale } from "./i18n.js";
 
 /**
  * The canvas's words for numbers and cut text, said the same way on every
@@ -15,13 +18,11 @@ export function formatBytes(bytes: number): string {
 }
 
 /**
- * A count for display, formatted the same everywhere.
- *
- * An explicit locale, not the runner's: the character count is user-facing text
- * and a test asserts it, so it must not render as "20 000" under one default
- * locale and "20,000" under another.
+ * A count for display, in the page's language: "20,000" in English, "20 000"
+ * in Bulgarian. The page's language, never the browser's: the same page must
+ * not write one count two ways on two machines.
  */
-export const formatCount = (value: number): string => value.toLocaleString("en-US");
+export const formatCount = (value: number): string => formatNumber(value, currentLocale());
 
 /** A token count as a picker shows it: `1M`, `128K`, `4096`. */
 export function formatTokens(count: number): string {

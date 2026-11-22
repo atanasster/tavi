@@ -7,7 +7,7 @@ import {
 } from "@tavi/contracts";
 import { useEffect, useId, useState } from "react";
 
-import { whenLocal } from "../../lib/time.js";
+import { weekdayName, whenLocal } from "../../lib/time.js";
 import { PageHead, PageNote, Pending } from "../../ui/Parts.js";
 import { mapOutcome, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { Confirm } from "../../ui/Confirm.js";
@@ -82,8 +82,6 @@ function briefSaved(settings: IdeaSettings): string {
   if (!settings.sources.brief) return "Brief saved. Ideas do not read it while “Your brief” is off above.";
   return "Brief saved: the next look reads it.";
 }
-
-const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
 
 /**
  * A set-aside source, as the owner names it: a chat by its title when the
@@ -198,7 +196,7 @@ export function IdeasSettings() {
         <p className="meta-sm ideas-digest">
           {settings.digest === undefined
             ? "Weekly digest: off."
-            : `Weekly digest: on, to connection ${settings.digest.channel} every ${WEEKDAYS[settings.digest.weekday] ?? "week"}.`}{" "}
+            : `Weekly digest: on, to connection ${settings.digest.channel} every ${weekdayName(settings.digest.weekday)}.`}{" "}
           Set it with <Command>tavi ideas digest</Command> in a terminal.
         </p>
       </Card>

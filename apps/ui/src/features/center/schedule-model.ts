@@ -19,7 +19,7 @@ import {
   type ScheduledWorkUsage,
 } from "@tavi/contracts";
 
-import { dayTime, durationText } from "../../lib/time.js";
+import { dayTime, durationText, monthYear } from "../../lib/time.js";
 
 /**
  * Schedule's pure reads: what a cadence says in
@@ -338,9 +338,7 @@ export function outcomeSentence(outcome: string | null | undefined, timeZone: st
 export function scheduledWorkLine(usage: ScheduledWorkUsage): { readonly text: string; readonly over: boolean } {
   const [year, month] = usage.month.split("-").map(Number);
   const label =
-    year === undefined || month === undefined || Number.isNaN(year) || Number.isNaN(month)
-      ? usage.month
-      : new Date(Date.UTC(year, month - 1, 15)).toLocaleString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
+    year === undefined || month === undefined || Number.isNaN(year) || Number.isNaN(month) ? usage.month : monthYear(year, month);
   return {
     text: `Scheduled work in ${label}: ${scheduledWorkText(usage)}.`,
     over: usage.percent !== undefined && usage.percent >= SCHEDULED_BUDGET_NOTICE_PERCENT,

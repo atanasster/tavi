@@ -9,7 +9,7 @@ import {
 } from "@tavi/contracts";
 
 import type { SettingsClient } from "../lib/ipc.js";
-import { dayTime, todayIn, WEEKDAYS } from "../lib/time.js";
+import { dayTime, monthName, todayIn, weekdayName } from "../lib/time.js";
 import { Button } from "./Button.js";
 import { Icon } from "./Icon.js";
 import { Select } from "./Select.js";
@@ -40,20 +40,7 @@ import { previewSaid, usePreview } from "./cadence-preview.js";
  * marked; and the next runs, as the owner's scheduler will fire them.
  */
 
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-] as const;
+const MONTH_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 const NTH: readonly (readonly [string, string])[] = [
   ["1", "first"],
   ["2", "second"],
@@ -208,7 +195,7 @@ export function CadenceField({
               >
                 {WEEK_ORDER.map((weekday) => (
                   <option key={weekday} value={String(weekday)}>
-                    {WEEKDAYS[weekday]}
+                    {weekdayName(weekday)}
                   </option>
                 ))}
               </Select>
@@ -225,9 +212,9 @@ export function CadenceField({
               onChange({ ...withoutDays(spec), yearly: { day: spec.yearly?.day ?? 1, month: Number(event.target.value) } })
             }
           >
-            {MONTHS.map((name, index) => (
-              <option key={name} value={String(index + 1)}>
-                {name}
+            {MONTH_NUMBERS.map((month) => (
+              <option key={month} value={String(month)}>
+                {monthName(month)}
               </option>
             ))}
           </Select>

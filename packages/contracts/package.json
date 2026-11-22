@@ -37,6 +37,16 @@
       "types": "./dist/plugin-sdk.d.mts",
       "import": "./dist/plugin-sdk.mjs"
     },
+    "./locales/core-bg": {
+      "development": "./src/locales/core-bg.ts",
+      "types": "./dist/locales/core-bg.d.mts",
+      "import": "./dist/locales/core-bg.mjs"
+    },
+    "./locales/core-en": {
+      "development": "./src/locales/core-en.ts",
+      "types": "./dist/locales/core-en.d.mts",
+      "import": "./dist/locales/core-en.mjs"
+    },
     "./print-theme": {
       "development": "./src/print-theme.ts",
       "types": "./dist/print-theme.d.mts",
@@ -92,6 +102,14 @@
       "./plugin-sdk": {
         "types": "./dist/plugin-sdk.d.mts",
         "import": "./dist/plugin-sdk.mjs"
+      },
+      "./locales/core-bg": {
+        "types": "./dist/locales/core-bg.d.mts",
+        "import": "./dist/locales/core-bg.mjs"
+      },
+      "./locales/core-en": {
+        "types": "./dist/locales/core-en.d.mts",
+        "import": "./dist/locales/core-en.mjs"
       },
       "./print-theme": {
         "types": "./dist/print-theme.d.mts",

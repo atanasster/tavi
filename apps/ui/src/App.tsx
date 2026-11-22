@@ -49,7 +49,7 @@ import { WorkerTranscript } from "./features/workers/WorkerView.js";
 import { isPhone, usePhone } from "./hooks/page.js";
 import { loadWidth } from "./hooks/resizable.js";
 import { usePoll } from "./hooks/use-poll.js";
-import { setLocale } from "./lib/i18n.js";
+import { setLocale, useLocale } from "./lib/i18n.js";
 import type { SettingsClient } from "./lib/ipc.js";
 import { Failure } from "./ui/Parts.js";
 import { ViewBoundary } from "./ui/ViewBoundary.js";
@@ -189,6 +189,9 @@ export function App({
   useEffect(() => {
     if (locale !== undefined) void setLocale(locale);
   }, [locale]);
+  // Every view drawn again in a new language, its dates and counts included: the views are
+  // remounted under a key, while the shell's own state (the store, the route) stays.
+  const shown = useLocale();
   /** What moves the agent tree and a worker's view: the feed's task and decision changes; absent with no feed to follow. */
   const workerWatch =
     centered && feed.error === undefined
@@ -393,6 +396,7 @@ export function App({
   });
   return (
     <AppProviders
+      key={shown}
       client={client}
       workspaceId={workspaceId}
       timeZone={feed.summary?.timezone}

@@ -2,6 +2,7 @@ import { hostTimeZone, localDateTime, type Idea, type IdeasRecurAnswer, type Rou
 import { useId, useRef, useState } from "react";
 
 import { nextPart } from "../../lib/parts.js";
+import { weekdayName } from "../../lib/time.js";
 import { localToInstant } from "../center/reminder-model.js";
 import { operationKey, routineRequest } from "../routines/api.js";
 import { Select } from "../../ui/Select.js";
@@ -20,7 +21,7 @@ import { useTimeZone, useWorkspace } from "../shell/Workspace.js";
  * and runs nothing.
  */
 
-const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
+const WEEKDAY_NUMBERS = [0, 1, 2, 3, 4, 5, 6] as const;
 
 export function RecurIdea({
   idea,
@@ -126,9 +127,9 @@ export function RecurIdea({
             <label>
               Every
               <Select aria-label="Day of the week" value={day} onChange={(event) => setDay(event.target.value)}>
-                {WEEKDAYS.map((label, index) => (
-                  <option key={label} value={String(index)}>
-                    {label}
+                {WEEKDAY_NUMBERS.map((weekday) => (
+                  <option key={weekday} value={String(weekday)}>
+                    {weekdayName(weekday)}
                   </option>
                 ))}
               </Select>

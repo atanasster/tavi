@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { WEEKDAYS } from "../lib/time.js";
+import { weekdayName, weekdayShortName } from "../lib/time.js";
 import { Button } from "./Button.js";
 import { WEEK_ORDER, EVERY_DAY } from "./cadence.js";
 
@@ -57,7 +57,7 @@ export function DayChips({
               }}
             >
               {/* Named by what it shows (WCAG 2.5.3), the full day as the abbreviation's title. */}
-              <abbr title={WEEKDAYS[day]}>{WEEKDAYS[day].slice(0, 3)}</abbr>
+              <abbr title={weekdayName(day)}>{weekdayShortName(day)}</abbr>
             </Button>
           );
         })}

@@ -5,6 +5,8 @@ export default defineConfig({
     "src/index.ts",
     "src/i18n.ts",
     "src/inbound-parts.ts",
+    "src/locales/core-bg.ts",
+    "src/locales/core-en.ts",
     "src/plugin-sdk.ts",
     "src/print-theme.ts",
     "src/url-text.ts",
