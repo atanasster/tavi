@@ -165,7 +165,7 @@ export const chat = {
   "chat.form.page": "Страница {page}",
   "chat.form.sensitive": "чувствително",
   "chat.form.truncated": "Редовете не се побират в картата, затова можеш само да откажеш. Поискай да попълни по-малко полета.",
-  "chat.form.leftBlank": "Тези подписваш или попълваш сам: {fields}",
+  "chat.form.leftBlank": "Тези ги подписваш или попълваш ти: {fields}",
   "chat.form.warning": "Внимание: {warning}",
   "chat.approval.required": "нужно е разрешение",
   "chat.approval.requiredPrefix": "нужно е разрешение: ",
@@ -288,7 +288,7 @@ export const chat = {
   "chat.repeat.filled": "Попълнено от този чат. Нищо не се създава, докато не запазиш.",
   "chat.repeat.shortened.routine": "Съобщението от чата е съкратено, за да се побере в целта.",
   "chat.repeat.shortened.schedule": "Съобщението от чата е съкратено, за да се побере в задачата.",
-  "chat.repeat.toolsUnknown": "Не успях да проверя кои инструменти може да ползва графикът. Добави ги сам.",
+  "chat.repeat.toolsUnknown": "Не успях да проверя кои инструменти може да ползва графикът. Добави ги ръчно.",
   "chat.repeat.leftOut": {
     one: "Не е разрешен, защото графикът не може да го ползва: {tools}.",
     other: "Не са разрешени, защото графикът не може да ги ползва: {tools}.",
