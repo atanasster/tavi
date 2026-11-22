@@ -13,8 +13,14 @@ import {
   type HeartbeatTarget,
   type TellHeartbeatItem,
   disarmUrls,
+  englishOf,
+  noticeWordsOf,
+  storedWords,
+  textRef,
+  type StoredWords,
+  type TextRef,
 } from "@tavi/contracts";
-import { errorMessage, plural } from "@tavi/contracts/util";
+import { errorMessage } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
 
 /**
@@ -47,7 +53,15 @@ export interface HeartbeatDeliveryPort {
   /** Post (or update, under the same key) a notice in the person's Home; false when Home is off. */
   notify(
     state: HeartbeatState,
-    notice: { readonly sourceKey: string; readonly title: string; readonly summary: string; readonly heartbeatItemId?: string },
+    notice: {
+      readonly sourceKey: string;
+      readonly title: string;
+      readonly summary: string;
+      /** `title` and `summary` by key, where they are Tavi's words: Home says them in its reader's language. */
+      readonly titleRef?: TextRef;
+      readonly summaryRef?: TextRef;
+      readonly heartbeatItemId?: string;
+    },
   ): Promise<boolean>;
   /**
    * Send to one target, once per effect id. A target whose connection is
@@ -195,9 +209,13 @@ export async function planHeartbeatDelivery(
 }
 
 /** A notice's summary: the sources and the instruction it answers, never the body (Home turns read it as context). */
-function noticeSummary(row: HeartbeatLedgerRow): string {
+function noticeSummary(row: HeartbeatLedgerRow): StoredWords {
   const sources = row.sources.map((source) => source.label).join(", ");
-  return `${row.heldBack ? "Held back (hourly limit) · " : ""}${sources}${row.instructionLine === undefined ? "" : ` · instruction line ${row.instructionLine}`}`;
+  const said =
+    row.instructionLine === undefined
+      ? sources
+      : textRef("notice.heartbeat.summary.instruction", { sources, line: String(row.instructionLine) });
+  return row.heldBack ? textRef("notice.heartbeat.summary.heldBack", { rest: said }) : said;
 }
 
 /** An item as a channel message: its title, its body, and where it came from. */
@@ -271,7 +289,11 @@ export async function deliverHeartbeatItems(
     await notifyIn(
       port,
       state,
-      { sourceKey: `heartbeat:item:${row.itemId}`, heartbeatItemId: row.itemId, title: row.title, summary: noticeSummary(row) },
+      {
+        sourceKey: `heartbeat:item:${row.itemId}`,
+        heartbeatItemId: row.itemId,
+        ...noticeWordsOf({ title: row.title, summary: noticeSummary(row) }),
+      },
       log,
     );
     if (row.urgency !== "now") continue;
@@ -309,9 +331,15 @@ export async function deliverHeartbeatDigest(
   const since = window.since === undefined ? dayAgo : Math.min(dayAgo, Date.parse(window.since));
   const rows = await deps.repository.digestItems({ ...scope, since: new Date(since).toISOString(), limit: HEARTBEAT_DIGEST_ITEMS });
   if (rows.length === 0) return 0;
-  const title = `${plural(rows.length, "thing")} from your heartbeat`;
+  const titleRef = textRef("notice.heartbeat.digest.title", { count: rows.length, n: String(rows.length) });
+  const title = englishOf(titleRef);
   const lines = rows.map((row) => `• ${row.title}`);
-  await notifyIn(port, state, { sourceKey: `heartbeat:digest:${window.start}`, title, summary: lines.join("\n") }, log);
+  await notifyIn(
+    port,
+    state,
+    { sourceKey: `heartbeat:digest:${window.start}`, ...noticeWordsOf({ title: titleRef, summary: lines.join("\n") }) },
+    log,
+  );
   await sendAll(
     port,
     state,
@@ -349,7 +377,8 @@ export async function retractHeartbeatItems(
   timezone: string,
   log: HeartbeatDeliveryLog,
 ): Promise<void> {
-  const label = `Resolved · ${clock(now, timezone)}`;
+  const time = clock(now, timezone);
+  const label = `Resolved · ${time}`;
   for (const row of resolved) {
     await notifyIn(
       port,
@@ -357,8 +386,7 @@ export async function retractHeartbeatItems(
       {
         sourceKey: `heartbeat:item:${row.itemId}`,
         heartbeatItemId: row.itemId,
-        title: `${label} — ${row.title}`,
-        summary: noticeSummary(row),
+        ...noticeWordsOf({ title: textRef("notice.heartbeat.resolved.title", { time, title: row.title }), summary: noticeSummary(row) }),
       },
       log,
     );
@@ -381,17 +409,23 @@ export async function retractHeartbeatItems(
 export async function deliverHeartbeatAlert(
   port: HeartbeatDeliveryPort,
   state: HeartbeatState,
-  alert: { readonly key: string; readonly title: string; readonly text: string },
+  alert: { readonly key: string; readonly title: StoredWords; readonly text: string },
   log: HeartbeatDeliveryLog,
 ): Promise<void> {
-  await notifyIn(port, state, { sourceKey: `heartbeat:alert:${alert.key}`, title: alert.title, summary: alert.text }, log);
+  await notifyIn(
+    port,
+    state,
+    { sourceKey: `heartbeat:alert:${alert.key}`, ...noticeWordsOf({ title: alert.title, summary: alert.text }) },
+    log,
+  );
+  const title = storedWords(alert.title).text;
   await sendAll(
     port,
     state,
     (target) => ({
       effectId: heartbeatEffectId(state.principalId, target, `alert:${alert.key}`),
-      text: `${alert.title}\n\n${alert.text}`,
-      subject: alert.title,
+      text: `${title}\n\n${alert.text}`,
+      subject: title,
     }),
     log,
   );

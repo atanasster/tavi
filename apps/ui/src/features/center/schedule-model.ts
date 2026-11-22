@@ -17,6 +17,8 @@ import {
   SCHEDULED_BUDGET_NOTICE_PERCENT,
   scheduledWorkText,
   type ScheduledWorkUsage,
+  localizedText,
+  type TextRef,
 } from "@tavi/contracts";
 
 import { translateCore, translateNow } from "../../lib/i18n.js";
@@ -233,6 +235,12 @@ function detail(text: string): string {
   return /[.!?…]$/.test(clipped) ? clipped : `${clipped}.`;
 }
 
+/** What a stored outcome's key says after the words naming what asked for its run (`schedule.outcome.labelled`). */
+function afterLabel(ref: TextRef | undefined): TextRef | undefined {
+  const said = ref?.key === "schedule.outcome.labelled" ? ref.params?.["said"] : undefined;
+  return typeof said === "object" ? said : undefined;
+}
+
 /** A sentence lowercased at its start, to follow the words that say how its run began. */
 function lowerFirst(said: string): string {
   return `${said.charAt(0).toLowerCase()}${said.slice(1)}`;
@@ -257,28 +265,29 @@ function missedBy(minutes: string): string {
  * A stored outcome as a sentence people read, in the workspace zone: what
  * happened, and what happens next where that is not obvious. The scheduler's
  * mark for a fire being handed to its run is said as the run starting; words
- * this build does not know are shown as they came, as a sentence.
+ * this build does not know are shown as they came, as a sentence — by their
+ * key (`ref`, a fire's `outcomeRef`) when the scheduler stored one.
  */
-export function outcomeSentence(outcome: string | null | undefined, timeZone: string | undefined): string {
+export function outcomeSentence(outcome: string | null | undefined, timeZone: string | undefined, ref?: TextRef): string {
   if (outcome === null || outcome === undefined) return translateNow("center.scheduleModel.notRunYet");
   if (outcome.startsWith(MANUAL)) {
-    const said = outcomeSentence(outcome.slice(MANUAL.length), timeZone);
+    const said = outcomeSentence(outcome.slice(MANUAL.length), timeZone, afterLabel(ref));
     return translateNow("center.scheduleModel.runNow", { said: lowerFirst(said) });
   }
   if (outcome.startsWith(WATCH)) {
-    const said = outcomeSentence(outcome.slice(WATCH.length), timeZone);
+    const said = outcomeSentence(outcome.slice(WATCH.length), timeZone, afterLabel(ref));
     return translateNow("center.scheduleModel.fileChanged", { said: lowerFirst(said) });
   }
   const webhook = WEBHOOK.exec(outcome);
   if (webhook !== null) {
-    const said = outcomeSentence(outcome.slice(webhook[0].length), timeZone);
+    const said = outcomeSentence(outcome.slice(webhook[0].length), timeZone, afterLabel(ref));
     return webhook[1] === undefined
       ? translateNow("center.scheduleModel.webhookCall", { said: lowerFirst(said) })
       : translateNow("center.scheduleModel.webhookCallCarrying", { carried: withoutDigest(webhook[1]), said: lowerFirst(said) });
   }
   const email = EMAIL.exec(outcome);
   if (email !== null) {
-    const said = outcomeSentence(outcome.slice(email[0].length), timeZone);
+    const said = outcomeSentence(outcome.slice(email[0].length), timeZone, afterLabel(ref));
     return email[1] === undefined
       ? translateNow("center.scheduleModel.email", { said: lowerFirst(said) })
       : translateNow("center.scheduleModel.emailCarrying", { carried: withoutDigest(email[1]), said: lowerFirst(said) });
@@ -287,7 +296,10 @@ export function outcomeSentence(outcome: string | null | undefined, timeZone: st
   if (marked !== null) return translateNow("center.scheduleModel.starting");
   if (outcome.startsWith(FINISHED)) return translateNow("center.scheduleModel.finished");
   const after = (prefix: string): string => outcome.slice(prefix.length).trim();
-  const asCame = (): string => detail(outcome.charAt(0).toUpperCase() + outcome.slice(1));
+  const asCame = (): string => {
+    const said = localizedText(outcome, ref, translateCore);
+    return detail(said.charAt(0).toUpperCase() + said.slice(1));
+  };
   switch (outcomeReason(outcome)) {
     case "undelivered":
       return translateNow("center.scheduleModel.undelivered");

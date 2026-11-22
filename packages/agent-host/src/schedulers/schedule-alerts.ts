@@ -1,4 +1,4 @@
-import { SCHEDULE_PAUSE_AFTER_FAILURES, type ScheduleRecord } from "@tavi/contracts";
+import { englishOf, SCHEDULE_PAUSE_AFTER_FAILURES, textRef, type ScheduleRecord, type TextRef } from "@tavi/contracts";
 
 import type { ScheduleSchedulerDependencies } from "./schedule-dependencies.js";
 
@@ -53,7 +53,14 @@ export type ScheduleAlertKind =
  */
 export async function sendAlert(
   schedule: ScheduleRecord,
-  alert: { readonly identity: string; readonly kind: ScheduleAlertKind; readonly text: string; readonly homeText?: string },
+  alert: {
+    readonly identity: string;
+    readonly kind: ScheduleAlertKind;
+    readonly text: string;
+    readonly homeText?: string;
+    /** What Home reads, by key, where it is Tavi's words alone: Home says it in its reader's language. */
+    readonly homeRef?: TextRef;
+  },
   deps: ScheduleSchedulerDependencies,
 ): Promise<void> {
   const effectId = `schedule-alert:${schedule.scheduleId}:${alert.identity}:${alert.kind}`;
@@ -103,7 +110,7 @@ export async function sendAlert(
  */
 async function alertInHome(
   schedule: ScheduleRecord,
-  alert: { readonly kind: ScheduleAlertKind; readonly text: string; readonly homeText?: string },
+  alert: { readonly kind: ScheduleAlertKind; readonly text: string; readonly homeText?: string; readonly homeRef?: TextRef },
   effectId: string,
   deps: ScheduleSchedulerDependencies,
   nowhere: string,
@@ -112,7 +119,12 @@ async function alertInHome(
   // the run history and the log.
   if (alert.kind === "round-decided-elsewhere") return;
   try {
-    const posted = (await deps.alertHome?.(schedule, { sourceKey: effectId, text: alert.homeText ?? alert.text })) === true;
+    const posted =
+      (await deps.alertHome?.(schedule, {
+        sourceKey: effectId,
+        text: alert.homeText ?? alert.text,
+        ...(alert.homeRef === undefined ? {} : { ref: alert.homeRef }),
+      })) === true;
     if (!posted) deps.log({ level: "warn", message: nowhere, detail: { scheduleId: schedule.scheduleId, kind: alert.kind } });
   } catch (error) {
     deps.log({
@@ -135,6 +147,7 @@ export async function pauseIfFailing(
   deps: ScheduleSchedulerDependencies,
 ): Promise<void> {
   const failures = SCHEDULE_PAUSE_AFTER_FAILURES;
+  const said = textRef("notice.schedule.paused.text", { name: schedule.name, n: String(failures) });
   const paused = await deps.schedules.pauseForFailures({
     scheduleId: schedule.scheduleId,
     failures,
@@ -149,7 +162,9 @@ export async function pauseIfFailing(
     {
       identity: fire.alertIdentity,
       kind: "paused",
-      text: `Schedule "${schedule.name}" was paused: its last ${failures} runs failed, so it will not run again until it is resumed. Resume it from its page, by asking in chat, or with \`tavi schedules enable ${schedule.name}\`.`,
+      // The alert target reads the English: a chat app's messages follow the language in a later release.
+      text: englishOf(said),
+      homeRef: said,
     },
     deps,
   );

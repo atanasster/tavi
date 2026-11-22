@@ -62,7 +62,11 @@ CREATE TABLE tavi_chat_notices_next (
   read_by           TEXT,
   created_at        TEXT NOT NULL,
   artifact_id       TEXT,
-  heartbeat_item_id TEXT
+  heartbeat_item_id TEXT,
+  title_key         TEXT,
+  title_params_json TEXT,
+  summary_key       TEXT,
+  summary_params_json TEXT
 );
 INSERT INTO tavi_chat_notices_next SELECT * FROM tavi_chat_notices;
 DROP TABLE tavi_chat_notices;

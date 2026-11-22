@@ -9,6 +9,8 @@ import {
   type RoutinesPayload,
   type ScheduleRecord,
   isLocalConnectionId,
+  noticeWordsOf,
+  textRef,
 } from "@tavi/contracts";
 import { type ScheduleSchedulerDependencies, sendAlert } from "@tavi/agent-host/schedule-scheduler";
 import { type createReminderDelivery, operatorTargetsOf } from "../features/reminders/delivery.js";
@@ -377,8 +379,10 @@ export function composeSchedules(composed: RoutinesContext) {
               workspaceId: schedule.workspaceId,
               principalId: schedule.principalId,
               sourceKey: alert.sourceKey,
-              title: `Schedule “${schedule.name}”`,
-              summary: alert.text,
+              ...noticeWordsOf({
+                title: textRef("notice.schedule.alert.title", { name: schedule.name }),
+                summary: alert.ref ?? alert.text,
+              }),
             });
           },
           log: (event) => logger[event.level](event.message, event.detail === undefined ? {} : { detail: event.detail }),

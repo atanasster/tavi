@@ -4,6 +4,7 @@ import {
   type ScheduleFireReason,
   type ScheduleRecord,
   type ScheduleRepositoryPort,
+  textRef,
 } from "@tavi/contracts";
 
 import type { ScheduleFireNow } from "./actions.js";
@@ -123,6 +124,14 @@ export function createRefusalCounter<Cause extends string>(
         scheduleId: schedule.scheduleId,
         taskId: null,
         outcome: `${options.label} refused ${total} ${total === 1 ? options.noun[0] : options.noun[1]} this hour (${causes})`,
+        outcomeRef: textRef(
+          options.reasonCode === "webhook-refused" ? "schedule.outcome.webhookRefused" : "schedule.outcome.emailRefused",
+          {
+            count: total,
+            n: String(total),
+            causes,
+          },
+        ),
         outcomeKind: "skipped",
         fire: { fireTime: new Date(hour).toISOString(), reasonCode: options.reasonCode },
         now: options.now(),

@@ -26,6 +26,7 @@ import {
   type ModEnvelope,
   type RecordHeartbeatTickInput,
   type TurnHooksPort,
+  textRef,
 } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
@@ -419,7 +420,7 @@ export function startHeartbeatHost(
         deliverHeartbeatAlert(
           deps.delivery,
           state,
-          { key: `pause:${reason}:${deps.now().toISOString()}`, title: "Your heartbeat paused", text: message },
+          { key: `pause:${reason}:${deps.now().toISOString()}`, title: textRef("notice.heartbeat.paused.title"), text: message },
           deps.log,
         ),
       );

@@ -1,7 +1,8 @@
-import type { ChatNotice } from "@tavi/contracts";
+import { localizedText, NOTICE_TITLE_MAX, type ChatNotice } from "@tavi/contracts";
+import { clip } from "@tavi/contracts/util";
 import { useState, type ReactNode } from "react";
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
 import { Button } from "../../ui/Button.js";
 import { Markdown } from "../../ui/Markdown.js";
@@ -16,6 +17,17 @@ import { RowAction } from "../../ui/RowAction.js";
  * with **Reply in a side chat**, which opens a side chat of this chat seeded
  * with that run's output. A notice never starts a turn of this chat.
  */
+
+/** A notice's title in the reader's language: by its key, else as stored (a notice from before keys, or one in a run's words). */
+export function noticeTitle(notice: Pick<ChatNotice, "title" | "titleRef">): string {
+  // On one line and within a title's bound, as the owner stores the English one.
+  return clip(localizedText(notice.title, notice.titleRef, translateCore).replace(/\s+/g, " ").trim(), NOTICE_TITLE_MAX);
+}
+
+/** A notice's summary in the reader's language, as `noticeTitle` says its title. */
+export function noticeSummary(notice: Pick<ChatNotice, "summary" | "summaryRef">): string {
+  return localizedText(notice.summary, notice.summaryRef, translateCore);
+}
 
 /** How many of the newest notices show before the toggle. */
 const NOTICES_SHOWN = 3;
@@ -89,20 +101,20 @@ export function NoticeCards({
             // A list, not news: folded to one line, so it does not head every turn of a Home that was rewound to its start.
             <details className="chat-notice-list">
               <summary className="chat-notice-title">
-                {notice.title} <span className="chat-notice-count">({notice.summary.split("\n").length})</span>
+                {noticeTitle(notice)} <span className="chat-notice-count">({notice.summary.split("\n").length})</span>
               </summary>
-              <p className="chat-notice-summary">{notice.summary}</p>
+              <p className="chat-notice-summary">{noticeSummary(notice)}</p>
             </details>
           ) : (
             <>
               <p className="chat-notice-title">
                 <span className="visually-hidden">{t("chat.notice.kindPrefix", { kind: t(KIND_LABELS[notice.kind]) })}</span>
-                {notice.title}
+                {noticeTitle(notice)}
               </p>
               {/* What a run said, drawn as its answer is (a list, bold), not as its Markdown's raw marks; its links ask first, as a worker's do. */}
               {notice.summary === "" ? null : (
                 <div className="chat-notice-summary">
-                  <Markdown text={notice.summary} tainted />
+                  <Markdown text={noticeSummary(notice)} tainted />
                 </div>
               )}
             </>
@@ -242,8 +254,8 @@ export function EpochDivider({
   const fresh = useFreshContext(onFreshContext);
   return (
     // A group, not a separator: it holds buttons, which a separator's children may not be (WCAG 4.1.2).
-    <div className="epoch-divider" role="group" aria-label={notice.title} data-notice-kind="epoch">
-      <p className="epoch-divider-title">{notice.title}</p>
+    <div className="epoch-divider" role="group" aria-label={noticeTitle(notice)} data-notice-kind="epoch">
+      <p className="epoch-divider-title">{noticeTitle(notice)}</p>
       <p className="epoch-divider-summary">
         {t(notice.artifactId === undefined ? "chat.epoch.summaryNoArchive" : "chat.epoch.summaryArchived")}
       </p>

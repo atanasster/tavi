@@ -17,6 +17,7 @@ import { STALE_WEB_PATTERN_MESSAGE, isStaleWebPattern } from "./tool-policy.js";
 import type { SchedulePrecheck, SchedulePrecheckState } from "./schedule-precheck.js";
 import { definedOnly } from "./util.js";
 import { coreEnglish, type CoreT } from "./locales/core.js";
+import { renderTextRef, textRef, type TextRef } from "./text-ref.js";
 
 /**
  * Recurring schedules.
@@ -814,6 +815,8 @@ export interface ScheduleFireRecord {
   readonly outcomeKind: "succeeded" | "failed" | "skipped";
   /** The same short summary `lastOutcome` gives. */
   readonly outcome: string;
+  /** `outcome` by key (`core` catalogue) where it is Tavi's words alone, for the canvas to say in its reader's language. */
+  readonly outcomeRef?: TextRef;
   readonly reasonCode: ScheduleFireReason;
   /** The run's task, when one started. */
   readonly taskId: string | null;
@@ -952,6 +955,8 @@ interface ScheduleRepositoryPortDefinition {
     readonly scheduleId: string;
     readonly taskId: string | null;
     readonly outcome: string;
+    /** `outcome` by key, kept on the fire's ledger row (`ScheduleFireRecord.outcomeRef`). */
+    readonly outcomeRef?: TextRef;
     readonly outcomeKind: "succeeded" | "failed" | "skipped";
     readonly counted?: false;
     readonly fire?: ScheduleFireEntry;
@@ -972,6 +977,8 @@ interface ScheduleRepositoryPortDefinition {
     readonly scheduleId: string;
     readonly taskId: string | null;
     readonly outcome: string;
+    /** `outcome` by key, kept on the fire's ledger row (`ScheduleFireRecord.outcomeRef`). */
+    readonly outcomeRef?: TextRef;
     readonly outcomeKind: "succeeded" | "failed" | "skipped";
     readonly fire: ScheduleFireEntry;
     readonly now: string;
@@ -1166,11 +1173,16 @@ export function scheduledWorkUsage(
 
 /** A month's scheduled work in words: "12,345 tokens (about $0.42) of a 1,000,000-token budget (1%)". */
 export function scheduledWorkText(usage: ScheduledWorkUsage, t: CoreT = coreEnglish): string {
-  const tokens = tokenCountText(usage.tokens, t);
+  return renderTextRef(scheduledWorkRef(usage), t) ?? "";
+}
+
+/** `scheduledWorkText` by key, for words stored to be said later in their reader's language (a Home notice). */
+export function scheduledWorkRef(usage: ScheduledWorkUsage): TextRef {
+  const tokens = textRef("schedule.tokens", { count: Math.round(usage.tokens) });
   const budget = usage.budget === undefined ? undefined : { budget: Math.round(usage.budget), percent: String(usage.percent ?? 0) };
-  if (usage.usd === null) return budget === undefined ? tokens : t("schedule.work.withBudget", { tokens, ...budget });
+  if (usage.usd === null) return budget === undefined ? tokens : textRef("schedule.work.withBudget", { tokens, ...budget });
   const [dollars = "0", cents = "00"] = usage.usd.toFixed(2).split(".");
   return budget === undefined
-    ? t("schedule.work.withCost", { tokens, dollars, cents })
-    : t("schedule.work.withCostAndBudget", { tokens, dollars, cents, ...budget });
+    ? textRef("schedule.work.withCost", { tokens, dollars, cents })
+    : textRef("schedule.work.withCostAndBudget", { tokens, dollars, cents, ...budget });
 }

@@ -10,6 +10,7 @@ import type {
   SchedulePrecheckState,
   ScheduleRecord,
   ScheduleRepositoryPort,
+  TextRef,
   WorkflowPort,
 } from "@tavi/contracts";
 
@@ -112,7 +113,10 @@ export interface ScheduleSchedulerDependencies {
    * on a full disk is refused every sweep — is not posted again. Absent: such
    * an alert is only logged.
    */
-  readonly alertHome?: (schedule: ScheduleRecord, alert: { readonly sourceKey: string; readonly text: string }) => Promise<boolean>;
+  readonly alertHome?: (
+    schedule: ScheduleRecord,
+    alert: { readonly sourceKey: string; readonly text: string; readonly ref?: TextRef },
+  ) => Promise<boolean>;
   /**
    * Stop a run that worked past its schedule's `maxRunMinutes`: cancel its
    * task and the workers it spawned, and settle the wait it is suspended on,

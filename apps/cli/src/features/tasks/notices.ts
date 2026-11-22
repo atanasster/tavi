@@ -9,7 +9,10 @@ import {
   SOURCE_TASK_NOTICE_KINDS,
   TRUSTED_PUBLIC,
   noticeContextNote,
+  noticeWordsOf,
   reminderIdOfTaskKey,
+  storedWords,
+  textRef,
   untrustedLabel,
   type AdmissionResult,
   type ChatNotice,
@@ -18,7 +21,9 @@ import {
   type MessagingConversationTask,
   type PersistencePort,
   type ScheduleRecord,
+  type StoredWords,
   type TaskRecord,
+  type TextRef,
   type WorkflowPort,
 } from "@tavi/contracts";
 import { clip, errorMessage } from "@tavi/contracts/util";
@@ -87,23 +92,28 @@ export interface ChatNoticeDependencies {
 
 /** A task's ending in Tavi's words: never its final text or error message, which may quote what a tool fetched. */
 export function noticeStatusLine(status: string, errorCode?: string): string {
+  return storedWords(noticeStatusRef(status, errorCode)).text;
+}
+
+/** `noticeStatusLine` by key, stored with a notice to be said in its reader's language. */
+export function noticeStatusRef(status: string, errorCode?: string): TextRef {
   switch (status) {
     case "completed":
-      return "Completed";
+      return textRef("notice.status.completed");
     case "failed":
       // A turn a cancel ended is failed in its record; it was cancelled.
-      if (errorCode === "CANCELLED" || errorCode === "TASK_CANCELLED") return "Cancelled";
-      return errorCode === undefined ? "Failed" : `Failed (${errorCode})`;
+      if (errorCode === "CANCELLED" || errorCode === "TASK_CANCELLED") return textRef("notice.status.cancelled");
+      return errorCode === undefined ? textRef("notice.status.failed") : textRef("notice.status.failedWithCode", { code: errorCode });
     case "stopped":
-      return "Stopped";
+      return textRef("notice.status.stopped");
     case "cancelled":
-      return "Cancelled";
+      return textRef("notice.status.cancelled");
     case "waiting":
     case "awaiting_approval":
     case "review_required":
-      return "Waiting on a person";
+      return textRef("notice.status.waiting");
     default:
-      return `Ended (${status})`;
+      return textRef("notice.status.ended", { status });
   }
 }
 
@@ -114,11 +124,17 @@ export function noticeStatusLine(status: string, errorCode?: string): string {
  * (`noticesLabelOf`).
  */
 export function scheduleResultSummary(admission: Pick<AdmissionResult, "outcome">): string {
-  const status = noticeStatusLine(admission.outcome.status, admission.outcome.error?.code);
+  return storedWords(scheduleResultWords(admission)).text;
+}
+
+/** `scheduleResultSummary` with its status line by key; the run's words are a parameter. */
+function scheduleResultWords(admission: Pick<AdmissionResult, "outcome">): StoredWords {
+  const statusRef = noticeStatusRef(admission.outcome.status, admission.outcome.error?.code);
+  const status = storedWords(statusRef).text;
   const text = normaliseUntrustedText(admission.outcome.finalText).trim();
-  if (text === "") return status;
+  if (text === "") return statusRef;
   const room = NOTICE_SUMMARY_MAX - status.length - 1;
-  return `${status}\n${text.length <= room ? text : `${text.slice(0, room - 1)}…`}`;
+  return textRef("notice.schedule.result.summary", { status: statusRef, text: text.length <= room ? text : `${text.slice(0, room - 1)}…` });
 }
 
 /** How many of a conversation Home's newest saved turns its notice counts; past it, "N+". */
@@ -133,29 +149,39 @@ const CONVERSATION_NOTICE_SCAN = 50;
 export function conversationNoticeTitle(
   mapping: Pick<MessagingConversationTask, "providerId" | "conversationKind" | "externalConversationId">,
 ): string {
-  const label = channelLabelOf(mapping.providerId) ?? "Messaging";
+  return storedWords(conversationNoticeTitleRef(mapping)).text;
+}
+
+/** `conversationNoticeTitle` by key: a channel's own name (Telegram) is a parameter. */
+function conversationNoticeTitleRef(
+  mapping: Pick<MessagingConversationTask, "providerId" | "conversationKind" | "externalConversationId">,
+): TextRef {
+  const channel = channelLabelOf(mapping.providerId) ?? textRef("notice.conversation.channel.fallback");
   switch (mapping.conversationKind) {
     case "group":
-      return `${label} group ${mapping.externalConversationId}`;
+      return textRef("notice.conversation.title.group", { channel, id: mapping.externalConversationId });
     case "direct":
-      return `${label} DM`;
+      return textRef("notice.conversation.title.direct", { channel });
     case "thread":
-      return `${label} thread`;
+      return textRef("notice.conversation.title.thread", { channel });
     default:
-      return `${label} conversation`;
+      return textRef("notice.conversation.title.other", { channel });
   }
 }
 
 /** "3 new messages, the last at 14:05 UTC": counts and a time, nothing that was said. */
-function conversationNoticeSummary(count: number, capped: boolean, lastAt: string): string {
-  return `${count}${capped ? "+" : ""} new message${count === 1 && !capped ? "" : "s"}, the last at ${lastAt.slice(11, 16)} UTC`;
+function conversationNoticeSummary(count: number, capped: boolean, lastAt: string): TextRef {
+  const time = lastAt.slice(11, 16);
+  return capped
+    ? textRef("notice.conversation.summaryCapped", { n: String(count), time })
+    : textRef("notice.conversation.summary", { count, n: String(count), time });
 }
 
-/** A side chat's name in a notice: the reader's own rename, else its id. A generated title follows as the summary. */
-function chatLabel(task: TaskRecord): string {
+/** A side chat's settle in a notice: the reader's own rename, else its id. A generated title follows as the summary. */
+function sideChatTitle(task: TaskRecord): TextRef {
   return task.titleRenamed === true && task.title !== undefined && task.title !== null && task.title.trim() !== ""
-    ? `“${task.title.trim()}”`
-    : task.taskId;
+    ? textRef("notice.sideChat.title.named", { name: task.title.trim() })
+    : textRef("notice.sideChat.title.id", { id: task.taskId });
 }
 
 export interface ChatNotices {
@@ -176,6 +202,9 @@ export interface ChatNotices {
     readonly heartbeatItemId?: string;
     readonly title: string;
     readonly summary: string;
+    /** `title` and `summary` by key, where they are Tavi's words. */
+    readonly titleRef?: TextRef;
+    readonly summaryRef?: TextRef;
   }): Promise<boolean>;
   /**
    * Something gone wrong in a person's scheduled work that nobody would
@@ -190,6 +219,9 @@ export interface ChatNotices {
     readonly sourceKey: string;
     readonly title: string;
     readonly summary: string;
+    /** `title` and `summary` by key, where they are Tavi's words. */
+    readonly titleRef?: TextRef;
+    readonly summaryRef?: TextRef;
   }): Promise<boolean>;
   /** A reminder's fire said in its person's Home; false with no Home. */
   postReminder(input: {
@@ -227,15 +259,16 @@ export interface ChatNotices {
 
 /** An epoch divider's words: Tavi's own, naming the archive or saying there is none. */
 function epochNoticeText(rollover: { readonly epoch: number; readonly artifactId?: string; readonly folded: number }): {
-  readonly title: string;
-  readonly summary: string;
+  readonly title: StoredWords;
+  readonly summary: StoredWords;
 } {
+  const counted = { count: rollover.folded, n: String(rollover.folded) };
   return {
-    title: `Epoch ${rollover.epoch} began`,
+    title: textRef("notice.epoch.title", { epoch: String(rollover.epoch) }),
     summary:
       rollover.artifactId === undefined
-        ? `${rollover.folded} earlier message(s) were summarized; no archive could keep them.`
-        : `${rollover.folded} earlier message(s) were summarized and archived as ${rollover.artifactId}.`,
+        ? textRef("notice.epoch.summary.lossy", counted)
+        : textRef("notice.epoch.summary.archived", { ...counted, artifact: rollover.artifactId }),
   };
 }
 
@@ -247,13 +280,26 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
     readonly sourceTaskId?: string;
     readonly artifactId?: string;
     readonly heartbeatItemId?: string;
-    readonly title: string;
-    readonly summary: string;
+    /** Plain text (a run's or a person's words), or a reference to Tavi's, stored as its English and its key. */
+    readonly title: StoredWords;
+    readonly summary: StoredWords;
     readonly bump?: boolean;
     readonly once?: boolean;
     readonly displayOnly?: true;
-  }): Promise<ChatNotice> =>
-    (await deps.repositories.transcripts.postNotice({ noticeId: deps.newId(), createdAt: deps.now(), ...input })).notice;
+  }): Promise<ChatNotice> => {
+    const { title, summary, ...rest } = input;
+    return (
+      await deps.repositories.transcripts.postNotice({
+        noticeId: deps.newId(),
+        createdAt: deps.now(),
+        ...rest,
+        ...noticeWordsOf({ title, summary }),
+      })
+    ).notice;
+  };
+
+  /** Words a caller gave as text and, maybe, their reference: the reference when there is one. */
+  const given = (text: string, ref: TextRef | undefined): StoredWords => ref ?? text;
 
   const homeOn = async (workspaceId: string): Promise<boolean> =>
     homeChatOn((await deps.repositories.workspaceSettings.get(workspaceId)).settings);
@@ -297,7 +343,7 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
       kind: "conversation",
       sourceKey: `conversation:${mapping.connectionId}:${mapping.externalConversationId}`,
       sourceTaskId: task.taskId,
-      title: conversationNoticeTitle(mapping),
+      title: conversationNoticeTitleRef(mapping),
       summary: conversationNoticeSummary(activity.count, activity.capped, activity.lastAt),
     });
   };
@@ -306,7 +352,7 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
     async onTaskEnded(taskId) {
       const task = await deps.repositories.tasks.get(taskId);
       if (task === undefined || task.chatKind === "worker" || task.chatKind === "home") return;
-      const status = noticeStatusLine(task.status);
+      const status = noticeStatusRef(task.status);
       // A side chat's settle, back into the chat it was opened from.
       if (task.chatKind === "side" && task.parentChatId !== undefined) {
         const parent = await deps.repositories.tasks.get(task.parentChatId);
@@ -320,7 +366,7 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
           kind: "side-chat-settled",
           sourceKey: `side-chat:${task.taskId}`,
           sourceTaskId: task.taskId,
-          title: `Side chat ${chatLabel(task)} finished`,
+          title: sideChatTitle(task),
           summary: status,
         });
         return;
@@ -342,7 +388,7 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
           kind: "run-result",
           sourceKey: `run:${task.taskId}`,
           sourceTaskId: task.taskId,
-          title: "A reminder's task finished",
+          title: textRef("notice.reminderTask.title"),
           summary: status,
         });
         return;
@@ -356,7 +402,7 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
           kind: "run-settled",
           sourceKey: `run:${task.taskId}`,
           sourceTaskId: task.taskId,
-          title: `Run ${task.taskId} finished`,
+          title: textRef("notice.run.title", { id: task.taskId }),
           summary: status,
         });
       }
@@ -370,13 +416,13 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
         kind: "run-result",
         sourceKey: `run:${admission.taskId}`,
         sourceTaskId: admission.taskId,
-        title: `Scheduled run “${schedule.name}”`,
-        summary: scheduleResultSummary(admission),
+        title: textRef("notice.schedule.result.title", { name: schedule.name }),
+        summary: scheduleResultWords(admission),
       });
       return true;
     },
 
-    async postHeartbeat({ workspaceId, principalId, sourceKey, heartbeatItemId, title, summary }) {
+    async postHeartbeat({ workspaceId, principalId, sourceKey, heartbeatItemId, title, summary, titleRef, summaryRef }) {
       const home = await homeFor(workspaceId, principalId);
       if (home === undefined) return false;
       // Each heartbeat post is news (an item told again in the same words, after a snooze): it comes back up unread.
@@ -385,17 +431,24 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
         kind: "heartbeat",
         sourceKey,
         ...(heartbeatItemId === undefined ? {} : { heartbeatItemId }),
-        title,
-        summary,
+        title: given(title, titleRef),
+        summary: given(summary, summaryRef),
         bump: true,
       });
       return true;
     },
 
-    async postAlert({ workspaceId, principalId, sourceKey, title, summary }) {
+    async postAlert({ workspaceId, principalId, sourceKey, title, summary, titleRef, summaryRef }) {
       const home = await homeFor(workspaceId, principalId);
       if (home === undefined) return false;
-      await post({ taskId: home, kind: "run-settled", sourceKey, title, summary, once: true });
+      await post({
+        taskId: home,
+        kind: "run-settled",
+        sourceKey,
+        title: given(title, titleRef),
+        summary: given(summary, summaryRef),
+        once: true,
+      });
       return true;
     },
 
@@ -408,8 +461,8 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
         kind: "reminder",
         sourceKey: `reminder:${reminder.reminderId}:${fire.fireAt}`,
         ...(taskId === undefined ? {} : { sourceTaskId: taskId }),
-        title: "Reminder",
-        summary: `${text}${taskId === undefined ? "" : " (its task started)"}`,
+        title: textRef("notice.reminder.title"),
+        summary: taskId === undefined ? text : textRef("notice.reminder.summary.taskStarted", { text }),
       });
       return true;
     },
@@ -421,7 +474,7 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
         taskId,
         kind: "reminder",
         sourceKey: `reminder:${reminder.reminderId}:${fire.fireAt}`,
-        title: "Reminder",
+        title: textRef("notice.reminder.title"),
         summary: text,
         displayOnly: true,
       });
@@ -450,7 +503,7 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
         taskId: home.taskId,
         kind: "earlier-chats",
         sourceKey: "earlier-chats",
-        title: "Earlier chats",
+        title: textRef("notice.earlierChats.title"),
         summary: lines.join("\n"),
       });
     },
@@ -476,7 +529,7 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
           taskId,
           kind: "folder",
           sourceKey: `folder:budget:${deps.now()}`,
-          title: "This chat's folder is nearly full",
+          title: textRef("notice.folder.title"),
           summary: warning,
         });
       } catch (error) {

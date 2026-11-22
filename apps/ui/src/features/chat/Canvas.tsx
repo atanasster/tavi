@@ -16,7 +16,7 @@ import { useTimeZone } from "../shell/Workspace.js";
 import { WorkerNeedCards, workersWait, type WorkerRoundDecide } from "../workers/WorkerNeeds.js";
 import type { UploadAttachment } from "./attachments.js";
 import { Composer } from "./Composer.js";
-import { EpochDivider, NoticeCards, epochDividersByRun, noticesByRun } from "./Notices.js";
+import { EpochDivider, NoticeCards, epochDividersByRun, noticeTitle, noticesByRun } from "./Notices.js";
 import { latestPlan } from "./plan.js";
 import { lastingChatOf, RunView } from "./RunView.js";
 import { abortableRun, chatPluginStatus } from "./store/runs.js";
@@ -364,7 +364,7 @@ export function Canvas({
     next.kind === "answer"
       ? t("chat.composer.placeholder.answer")
       : replying !== undefined
-        ? t("chat.composer.placeholder.reply", { title: clip(replying.title, 40) })
+        ? t("chat.composer.placeholder.reply", { title: clip(noticeTitle(replying), 40) })
         : next.kind === "queue"
           ? t(QUEUE_PLACEHOLDERS[queueBehind])
           : toHome || (target !== undefined && target === state.home)

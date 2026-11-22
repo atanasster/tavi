@@ -7,6 +7,7 @@ import type { MemoryPromptRow, PostMemoryCardInput, PostMemoryListingInput } fro
 import { TurnChannelSchema } from "./task-origins.js";
 import { TurnKnownUrlsSchema } from "./known-url.js";
 import { plural } from "./util.js";
+import { storedWords, TextRefSchema, type StoredWords, type TextRef } from "./text-ref.js";
 
 /**
  * A chat's saved history: one entry per
@@ -325,6 +326,13 @@ export const ChatNoticeSchema = z.strictObject({
   sourceTaskId: IdSchema.optional(),
   title: z.string().min(1).max(NOTICE_TITLE_MAX),
   summary: z.string().max(NOTICE_SUMMARY_MAX),
+  /**
+   * The title and summary by key (`core` catalogue), when they are Tavi's words: the canvas says them in the
+   * reader's language, and `title`/`summary` are their English, shown when a key is unknown. A notice stored
+   * before keys has neither.
+   */
+  titleRef: TextRefSchema.optional(),
+  summaryRef: TextRefSchema.optional(),
   /** The chat's saved turn it follows (`seq`), 0 before the first: where it is shown. */
   afterSeq: z.number().int().nonnegative(),
   /** An `epoch` notice only: the artifact its folded span was archived as; absent for a lossy fold. */
@@ -380,6 +388,9 @@ export interface PostNoticeInput {
   readonly heartbeatItemId?: string;
   readonly title: string;
   readonly summary: string;
+  /** `title` and `summary` by key, when they are Tavi's words (`noticeWordsOf`): stored beside the English. */
+  readonly titleRef?: TextRef;
+  readonly summaryRef?: TextRef;
   readonly createdAt: string;
   /** News again even in the same words (a heartbeat item told again): moved after the newest turn and unread. */
   readonly bump?: boolean;
@@ -387,6 +398,24 @@ export interface PostNoticeInput {
   readonly once?: boolean;
   /** Shown to the person only, never claimed into a turn, whatever its kind (`DISPLAY_ONLY_NOTICE_KINDS` are always). */
   readonly displayOnly?: true;
+}
+
+/**
+ * A notice's words as `PostNoticeInput` takes them: each a plain text (a run's own words, a list of titles) or a
+ * reference to Tavi's words, stored as its English and its key.
+ */
+export function noticeWordsOf(words: {
+  readonly title: StoredWords;
+  readonly summary: StoredWords;
+}): Pick<PostNoticeInput, "title" | "summary" | "titleRef" | "summaryRef"> {
+  const title = storedWords(words.title);
+  const summary = storedWords(words.summary);
+  return {
+    title: title.text,
+    summary: summary.text,
+    ...(title.ref === undefined ? {} : { titleRef: title.ref }),
+    ...(summary.ref === undefined ? {} : { summaryRef: summary.ref }),
+  };
 }
 
 /**

@@ -1,4 +1,12 @@
-import type { McpNoticeKind, McpNoticeRecord, PostNoticeInput } from "@tavi/contracts";
+import {
+  englishOf,
+  noticeWordsOf,
+  textRef,
+  type McpNoticeKind,
+  type McpNoticeRecord,
+  type PostNoticeInput,
+  type TextRef,
+} from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 import { prefixedId } from "@tavi/node-kit";
 
@@ -56,7 +64,17 @@ export function noticeWords(notice: Pick<McpNoticeRecord, "pluginId" | "kind" | 
   readonly title: string;
   readonly summary: string;
 } {
+  const refs = noticeWordRefs(notice);
+  return { title: englishOf(refs.title), summary: englishOf(refs.summary) };
+}
+
+/** `noticeWords` by key, for a Home notice said in its reader's language: the server's id and tool ids are parameters. */
+export function noticeWordRefs(notice: Pick<McpNoticeRecord, "pluginId" | "kind" | "detail">): {
+  readonly title: TextRef;
+  readonly summary: TextRef;
+} {
   const detail = notice.detail;
+  const plugin = notice.pluginId;
   // Tool ids; one stored before ids, a server's name, is cleaned and cut like any of its text.
   const names = (key: string): readonly string[] =>
     Array.isArray(detail[key])
@@ -70,38 +88,46 @@ export function noticeWords(notice: Pick<McpNoticeRecord, "pluginId" | "kind" | 
       const parts = [
         withheld.length === 0
           ? undefined
-          : `${String(withheld.length)} changed and withheld (${withheld.slice(0, 5).join(", ")}${withheld.length > 5 ? ", …" : ""})`,
-        added.length === 0 ? undefined : `${String(added.length)} new, waiting for review`,
-        removed.length === 0 ? undefined : `${String(removed.length)} removed`,
-        detail["instructions"] === true ? "its instructions changed (nothing withheld; read them in the review)" : undefined,
-      ].filter((part): part is string => part !== undefined);
+          : textRef("notice.mcp.drift.withheld", {
+              n: String(withheld.length),
+              names: `${withheld.slice(0, 5).join(", ")}${withheld.length > 5 ? ", …" : ""}`,
+            }),
+        added.length === 0 ? undefined : textRef("notice.mcp.drift.added", { n: String(added.length) }),
+        removed.length === 0 ? undefined : textRef("notice.mcp.drift.removed", { n: String(removed.length) }),
+        detail["instructions"] === true ? textRef("notice.mcp.drift.instructions") : undefined,
+      ].filter((part): part is TextRef => part !== undefined);
+      // "a; b; c", as one parameter: each part joined to the rest.
+      const listed = parts.reduceRight<TextRef | string | undefined>(
+        (rest, first) => (rest === undefined ? first : textRef("notice.mcp.drift.list", { first, rest })),
+        undefined,
+      );
       const rules = names("rules");
       return {
-        title: `${notice.pluginId}: its tools changed`,
-        summary: `${parts.join("; ")}.${rules.length === 0 ? "" : ` Allow rules still cover ${rules.join(", ")}.`} Review with \`tavi mcp review ${notice.pluginId}\`.`,
+        title: textRef("notice.mcp.drift.title", { plugin }),
+        summary:
+          rules.length === 0
+            ? textRef("notice.mcp.drift.summary", { parts: listed ?? "", plugin })
+            : textRef("notice.mcp.drift.summaryRules", { parts: listed ?? "", rules: rules.join(", "), plugin }),
       };
     }
     case "failed":
-      return {
-        title: `${notice.pluginId} stopped after repeated failures`,
-        summary: `Its tools are withdrawn. See \`tavi mcp logs ${notice.pluginId}\`, then probe it again once it is fixed.`,
-      };
+      return { title: textRef("notice.mcp.failed.title", { plugin }), summary: textRef("notice.mcp.failed.summary", { plugin }) };
     case "budget":
-      return {
-        title: `${notice.pluginId}'s tools do not fit`,
-        summary: "A workspace lists more MCP tools than fit beside the others. Set its exposure to search, or disable another server.",
-      };
+      return { title: textRef("notice.mcp.budget.title", { plugin }), summary: textRef("notice.mcp.budget.summary") };
     case "login":
       // The cause is Tavi's words (`loginCause`), never the server's.
       return {
-        title: `${notice.pluginId} needs you to sign in again`,
-        summary: `${typeof detail["cause"] === "string" ? `${detail["cause"].charAt(0).toUpperCase()}${detail["cause"].slice(1)}. ` : ""}Its tools fail until you do: \`tavi mcp login ${notice.pluginId}\`.`,
+        title: textRef("notice.mcp.login.title", { plugin }),
+        summary:
+          typeof detail["cause"] === "string"
+            ? textRef("notice.mcp.login.summaryCause", {
+                cause: `${detail["cause"].charAt(0).toUpperCase()}${detail["cause"].slice(1)}`,
+                plugin,
+              })
+            : textRef("notice.mcp.login.summary", { plugin }),
       };
     case "scope":
-      return {
-        title: `${notice.pluginId} asks for more access`,
-        summary: `A call needed a permission its sign-in was not granted. Nothing was asked for: sign in again with \`tavi mcp login ${notice.pluginId}\` to grant it.`,
-      };
+      return { title: textRef("notice.mcp.scope.title", { plugin }), summary: textRef("notice.mcp.scope.summary", { plugin }) };
   }
 }
 
@@ -140,7 +166,7 @@ export async function raiseMcpNotice(
 }
 
 export async function deliverMcpNotice(deps: McpNoticeDeliveryDeps, notice: McpNoticeRecord): Promise<void> {
-  const words = noticeWords(notice);
+  const refs = noticeWordRefs(notice);
   const lastSent = typeof notice.delivered["sentAt"] === "string" ? Date.parse(notice.delivered["sentAt"]) : Number.NaN;
   const sendNow = Number.isNaN(lastSent) || Date.parse(deps.now()) - lastSent >= NOTICE_SEND_INTERVAL_MS;
   let sent = 0;
@@ -154,8 +180,7 @@ export async function deliverMcpNotice(deps: McpNoticeDeliveryDeps, notice: McpN
         taskId: home,
         kind: "mcp",
         sourceKey: `mcp:${notice.noticeId}`,
-        title: words.title,
-        summary: words.summary,
+        ...noticeWordsOf(refs),
         createdAt: deps.now(),
         bump: true,
       });

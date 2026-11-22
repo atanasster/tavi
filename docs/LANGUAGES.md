@@ -58,6 +58,19 @@ it is translated. Anything not yet translated stays in English.
 
 A plugin's own words come from the plugin, in the languages its author wrote.
 
+Notices Tavi posts into a chat or Home (a scheduled run's result, a routine
+that paused, a server that needs signing in again, the heartbeat's digest) and
+a schedule's run history are stored with the key of each sentence beside its
+English, so the canvas says them in the language set when you read them, not
+the one set when they were posted. What a person or a run wrote (a routine's
+name, a chat's title, a run's answer) is shown as it was written. Notices and
+runs from before this release have no keys and show the English they were
+stored in, and so does anything a newer release stored that this one does not
+know. Some details inside a notice are still in English: why a server needs
+signing in again, and why a schedule's webhook or email trigger refused a
+call. The agent reads notices in English, and messages sent to a chat app stay
+in English for now.
+
 ## How the language packs are laid out
 
 Words are kept in catalogues, one per namespace and language, typed against

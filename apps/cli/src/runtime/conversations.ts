@@ -23,6 +23,8 @@ import {
   type ModEnvelope,
   isLocalConnectionId,
   inboundParts,
+  noticeWordsOf,
+  textRef,
 } from "@tavi/contracts";
 import { channelDescriptorOf } from "../features/channels/catalog.js";
 import { TERMINAL_TASK_STATUSES, createAgentCommunicationService } from "@tavi/agent-host/agent-communication";
@@ -1079,7 +1081,8 @@ export function composeConversations(composed: SchedulesContext) {
           withdrew = await withdrawConversationTask(ended.taskId, actor, event.connectionId);
           await markWithdrawn(ended);
           // Said in the ended chat itself, where the canvas still offers to continue it: it no longer reaches the chat app.
-          const channel = channelDescriptorOf(messaging.providerOf(event.connectionId))?.label ?? "the chat app";
+          const channel =
+            channelDescriptorOf(messaging.providerOf(event.connectionId))?.label ?? textRef("notice.conversationReset.chatApp");
           await persistencePort.repositories.transcripts
             .postNotice({
               noticeId: clock.newId("notice"),
@@ -1087,8 +1090,10 @@ export function composeConversations(composed: SchedulesContext) {
               taskId: ended.taskId,
               kind: "conversation",
               sourceKey: `conversation-reset:${ended.taskId}`,
-              title: "Conversation started over",
-              summary: `/new on ${channel} started a new conversation${withdrew ? ", and what this one was still doing was cancelled" : ""}. Writing here goes on with this chat in Tavi; ${channel} goes on in the new conversation.`,
+              ...noticeWordsOf({
+                title: textRef("notice.conversationReset.title"),
+                summary: textRef(withdrew ? "notice.conversationReset.summaryCancelled" : "notice.conversationReset.summary", { channel }),
+              }),
               once: true,
             })
             .catch((error: unknown) =>

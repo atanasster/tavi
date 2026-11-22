@@ -4,7 +4,10 @@ import {
   type ScheduleFireEntry,
   type ScheduleFireReason,
   type ScheduleRecord,
+  englishOf,
   scheduleFireMaxTokens,
+  textRef,
+  type TextRef,
   untrustedLabel,
 } from "@tavi/contracts";
 import { sha256Hex } from "@tavi/node-kit";
@@ -69,16 +72,37 @@ export function fireEntry(manual: ManualRun, fireTime: string, reasonCode: Sched
  * A run asked for now rather than at a fire time: by a person (`run-now`, the app, a chat), by a call to the
  * schedule's webhook, by a change to a file watcher's file, or by an email from a listed sender, with what its ledger rows say first. `false`: a scheduled fire.
  */
-export type ManualRun = false | { readonly reason: "manual" | "webhook" | "watch" | "email"; readonly label: string };
+export type ManualRun =
+  | false
+  | {
+      readonly reason: "manual" | "webhook" | "watch" | "email";
+      readonly label: string;
+      /** `label` by key, for a ledger row's outcome said in its reader's language (`labelledOutcome`). */
+      readonly labelRef?: TextRef;
+    };
 
-export const MANUAL_RUN: ManualRun = { reason: "manual", label: "manual run: " };
+export const MANUAL_RUN: ManualRun = { reason: "manual", label: "manual run: ", labelRef: textRef("schedule.outcome.label.manual") };
 
-export const WATCH_RUN: ManualRun = { reason: "watch", label: "file-watch run: " };
+export const WATCH_RUN: ManualRun = { reason: "watch", label: "file-watch run: ", labelRef: textRef("schedule.outcome.label.watch") };
 
 /** What a fire's options make it: a scheduled fire, a manual run, a webhook's, labelled with what its call carried, or a file watcher's. */
 export function manualRunOf(options: FireOptions): ManualRun {
-  if (options.webhook !== undefined) return { reason: "webhook", label: `webhook run (${webhookPayloadFacts(options.webhook)}): ` };
-  if (options.email !== undefined) return { reason: "email", label: `email run (${emailFacts(options.email)}): ` };
+  if (options.webhook !== undefined) {
+    const facts = webhookPayloadFacts(options.webhook);
+    return {
+      reason: "webhook",
+      label: `webhook run (${facts}): `,
+      labelRef: textRef("schedule.outcome.label.webhook", { facts: webhookPayloadFactsRef(options.webhook) }),
+    };
+  }
+  if (options.email !== undefined) {
+    const facts = emailFacts(options.email);
+    return {
+      reason: "email",
+      label: `email run (${facts}): `,
+      labelRef: textRef("schedule.outcome.label.email", { facts: emailFactsRef(options.email) }),
+    };
+  }
   if (options.watch === true) return WATCH_RUN;
   return options.manual === true ? MANUAL_RUN : false;
 }
@@ -94,6 +118,12 @@ export function runLabel(manual: ManualRun): string {
   return manual === false ? "" : manual.label;
 }
 
+/** An outcome said by key (`said`), after what asked for the run, as `runLabel` and the outcome's text say it. */
+export function labelledOutcome(manual: ManualRun, said: TextRef): TextRef {
+  if (manual === false) return said;
+  return textRef("schedule.outcome.labelled", { label: manual.labelRef ?? manual.label, said });
+}
+
 /** What a call to a schedule's webhook carried, as its fire asks for it: the request's body as text, when it had one. */
 export interface ScheduleWebhookFire {
   /** Already within the webhook's size cap; absent or empty when the call carried nothing. */
@@ -102,9 +132,17 @@ export interface ScheduleWebhookFire {
 
 /** A webhook payload as the ledger names it: its size and a prefix of its SHA-256, never a word of it. */
 function webhookPayloadFacts(webhook: ScheduleWebhookFire): string {
+  return englishOf(webhookPayloadFactsRef(webhook));
+}
+
+/** `webhookPayloadFacts` by key. */
+function webhookPayloadFactsRef(webhook: ScheduleWebhookFire): TextRef {
   const payload = webhook.payload ?? "";
-  if (payload === "") return "no payload";
-  return `payload ${Buffer.byteLength(payload, "utf8")} bytes, sha256 ${sha256Hex(payload).slice(0, 16)}`;
+  if (payload === "") return textRef("schedule.outcome.facts.noPayload");
+  return textRef("schedule.outcome.facts.payload", {
+    bytes: String(Buffer.byteLength(payload, "utf8")),
+    hash: sha256Hex(payload).slice(0, 16),
+  });
 }
 
 /**
@@ -136,8 +174,17 @@ export interface ScheduleEmailFire {
 
 /** An email as the ledger names it: its sender, its size and a prefix of its SHA-256, never a word of it. */
 function emailFacts(email: ScheduleEmailFire): string {
+  return englishOf(emailFactsRef(email));
+}
+
+/** `emailFacts` by key: the sender is a parameter. */
+function emailFactsRef(email: ScheduleEmailFire): TextRef {
   const words = `${email.subject ?? ""}\n${email.text ?? ""}`;
-  return `from ${email.sender}, ${Buffer.byteLength(words, "utf8")} bytes, sha256 ${sha256Hex(words).slice(0, 16)}`;
+  return textRef("schedule.outcome.facts.email", {
+    sender: email.sender,
+    bytes: String(Buffer.byteLength(words, "utf8")),
+    hash: sha256Hex(words).slice(0, 16),
+  });
 }
 
 /**

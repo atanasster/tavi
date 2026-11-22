@@ -320,7 +320,7 @@ function Fires({
             {fire.retryCount === undefined ? null : (
               <span className="meta-sm">{t("center.schedulePage.retry", { count: fire.retryCount })}</span>
             )}
-            {outcomeSentence(fire.outcome, zone)}
+            {outcomeSentence(fire.outcome, zone, fire.outcomeRef)}
           </span>
           {fire.taskId === null ? null : (
             <AppLink className="meta-sm" href={taskPath(fire.taskId)} onFollow={() => openTask(fire.taskId as string)}>

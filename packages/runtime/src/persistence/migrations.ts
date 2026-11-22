@@ -693,6 +693,20 @@ END`);
 )`);
     },
   },
+  {
+    // A notice's title and summary, and a fire's outcome, by key and parameters beside their English, so each is said
+    // in its reader's language at read time; NULL for a row written before, which shows its English. Added columns,
+    // never a rebuild: `tavi_memory_prompts.notice_id` cascades from `tavi_chat_notices`.
+    id: "0032_stored_text_keys",
+    up: (db) => {
+      db.exec("ALTER TABLE tavi_chat_notices ADD COLUMN title_key TEXT");
+      db.exec("ALTER TABLE tavi_chat_notices ADD COLUMN title_params_json TEXT");
+      db.exec("ALTER TABLE tavi_chat_notices ADD COLUMN summary_key TEXT");
+      db.exec("ALTER TABLE tavi_chat_notices ADD COLUMN summary_params_json TEXT");
+      db.exec("ALTER TABLE tavi_schedule_fires ADD COLUMN outcome_key TEXT");
+      db.exec("ALTER TABLE tavi_schedule_fires ADD COLUMN outcome_params_json TEXT");
+    },
+  },
 ];
 
 /**

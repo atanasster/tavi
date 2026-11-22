@@ -1,9 +1,12 @@
 import {
   hostTimeZone,
+  noticeWordsOf,
   SCHEDULED_BUDGET_NOTICE_PERCENT,
   scheduledMonthWindow,
-  scheduledWorkText,
+  scheduledWorkRef,
+  textRef,
   type PersistencePort,
+  type TextRef,
 } from "@tavi/contracts";
 
 import { scheduledWorkThisMonth } from "./actions.js";
@@ -28,6 +31,8 @@ export function scheduledBudgetNotices(deps: {
     readonly sourceKey: string;
     readonly title: string;
     readonly summary: string;
+    readonly titleRef?: TextRef;
+    readonly summaryRef?: TextRef;
   }) => Promise<boolean>;
   readonly log: (message: string, fields: Record<string, unknown>) => void;
   readonly warn: (message: string, fields: Record<string, unknown>) => void;
@@ -50,10 +55,10 @@ export function scheduledBudgetNotices(deps: {
           workspaceId,
           principalId,
           sourceKey: `scheduled-budget:${workspaceId}:${usage.month}`,
-          title: "Scheduled work",
-          summary:
-            `Your schedules and routines have used ${scheduledWorkText(usage)} for ${usage.month}. Nothing is stopped. ` +
-            "Change the budget with `tavi config set scheduled.monthlyTokenBudget <tokens>`, or give a schedule its own ceiling with `tavi schedules update <name> --max-tokens <n>`.",
+          ...noticeWordsOf({
+            title: textRef("notice.scheduledBudget.title"),
+            summary: textRef("notice.scheduledBudget.summary", { usage: scheduledWorkRef(usage), month: usage.month }),
+          }),
         });
         told.add(key);
         if (!posted)

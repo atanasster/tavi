@@ -1,10 +1,13 @@
-import type {
-  MessagingServicePort,
-  RoutineDeliveryTarget,
-  RoutinePauseCause,
-  RoutineRun,
-  RoutineRunNoticeCause,
-  RoutineScope,
+import {
+  noticeWordsOf,
+  textRef,
+  type MessagingServicePort,
+  type RoutineDeliveryTarget,
+  type RoutinePauseCause,
+  type RoutineRun,
+  type RoutineRunNoticeCause,
+  type RoutineScope,
+  type TextRef,
 } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
@@ -33,6 +36,9 @@ export interface RoutineNoticeDependencies {
     readonly sourceKey: string;
     readonly title: string;
     readonly summary: string;
+    /** `title` and `summary` by key: the routine's and the target's names are parameters. */
+    readonly titleRef?: TextRef;
+    readonly summaryRef?: TextRef;
   }) => Promise<boolean>;
   readonly log: (message: string, fields: Record<string, unknown>) => void;
 }
@@ -45,7 +51,7 @@ export interface RoutineNotices {
 }
 
 /** Where a routine is resumed. */
-const RESUME_HINT = "Resume it in Center → Schedule, or ask Tavi in chat to resume it.";
+const RESUME_HINT = textRef("notice.routine.resumeHint", { path: textRef("notice.nav.centerSchedule") });
 
 /** A run's scope alone: the routine services read a scope strictly. */
 const scopeOf = (run: RoutineRun): RoutineScope => ({ workspaceId: run.workspaceId, principalId: run.principalId });
@@ -130,17 +136,18 @@ export function createRoutineNotices(deps: RoutineNoticeDependencies): RoutineNo
    */
   const tell = async (
     run: RoutineRun,
-    input: { readonly key: string; readonly title: string; readonly text: string; readonly skipTarget?: string },
+    input: { readonly key: string; readonly title: TextRef; readonly text: TextRef; readonly skipTarget?: string },
   ): Promise<boolean> => {
-    const sent = await sendToTarget(run, input.key, input.text, input.skipTarget);
+    // The channel reads the English: a chat app's messages follow the language in a later release.
+    const words = noticeWordsOf({ title: input.title, summary: input.text });
+    const sent = await sendToTarget(run, input.key, words.summary, input.skipTarget);
     if (sent === true) return true;
     try {
       const posted = await deps.postHome({
         workspaceId: run.workspaceId,
         principalId: run.principalId,
         sourceKey: input.key,
-        title: input.title,
-        summary: input.text,
+        ...words,
       });
       return posted || sent === undefined;
     } catch (error) {
@@ -155,13 +162,13 @@ export function createRoutineNotices(deps: RoutineNoticeDependencies): RoutineNo
       const execution = run.snapshot.execution;
       const text =
         cause === "expired"
-          ? `Routine “${name}”: its run due ${run.scheduledFor ?? run.claimedAt} expired before it could finish (the owner was asleep, stopped or busy), so it made no report. The next scheduled run tries again.`
+          ? textRef("notice.routine.expired.text", { name, due: run.scheduledFor ?? run.claimedAt })
           : cause === "credential-grace"
-            ? `Routine “${name}” paused: its model or search credential has been rejected for over ${execution.credentialGraceHours} hours. Fix the key in Settings, then resume it. ${RESUME_HINT}`
-            : `Routine “${name}” paused after ${execution.failureThreshold} failed runs in a row; its run history says why. ${RESUME_HINT}`;
+            ? textRef("notice.routine.credentialGrace.text", { name, hours: String(execution.credentialGraceHours), resume: RESUME_HINT })
+            : textRef("notice.routine.failures.text", { name, n: String(execution.failureThreshold), resume: RESUME_HINT });
       return tell(run, {
         key: `routine-notice:${run.runId}:${cause}`,
-        title: cause === "expired" ? `Routine “${name}” run expired` : `Routine “${name}” paused`,
+        title: textRef(cause === "expired" ? "notice.routine.expired.title" : "notice.routine.paused.title", { name }),
         text,
       });
     },
@@ -171,16 +178,16 @@ export function createRoutineNotices(deps: RoutineNoticeDependencies): RoutineNo
       const label = await labelOf(run, targetId);
       const why =
         cause === "credential-grace"
-          ? `its channel's credentials have been missing for over ${run.snapshot.execution.credentialGraceHours} hours`
-          : `${run.snapshot.execution.failureThreshold} sends failed in a row`;
+          ? textRef("notice.routine.delivery.why.credentials", { hours: String(run.snapshot.execution.credentialGraceHours) })
+          : textRef("notice.routine.delivery.why.failures", { n: String(run.snapshot.execution.failureThreshold) });
       const fix =
         cause === "credential-grace"
-          ? "Reconnect the channel and delivery resumes on its own"
-          : "Fix the channel, then resume delivery on the run's deliveries in Center → Schedule, or resume the routine";
+          ? textRef("notice.routine.delivery.fix.credentials")
+          : textRef("notice.routine.delivery.fix.failures", { path: textRef("notice.nav.centerSchedule") });
       return tell(run, {
         key: `routine-notice:${run.runId}:delivery:${targetId}:${cause}`,
-        title: `Routine “${name}” delivery paused`,
-        text: `Routine “${name}”: delivery to “${label}” paused because ${why}. Research keeps running and reports stay in the app. ${fix}.`,
+        title: textRef("notice.routine.delivery.title", { name }),
+        text: textRef("notice.routine.delivery.text", { name, label, why, fix }),
         // The target that paused is the one channel this notice cannot rely on.
         skipTarget: targetId,
       });

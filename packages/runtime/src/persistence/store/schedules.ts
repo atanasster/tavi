@@ -1,4 +1,4 @@
-import { assertPositiveLimit } from "../values.js";
+import { assertPositiveLimit, storedTextRef, textRefColumns } from "../values.js";
 import type { ScheduleRepositoryPort } from "../internal-contracts.js";
 import { z } from "zod";
 import {
@@ -15,6 +15,7 @@ import {
   ScheduleEmailTriggerSchema,
   type ScheduleFireRecord,
   type ScheduleFireEntry,
+  type TextRef,
   type ScheduleHumanCheckpoints,
   ScheduleMaxRunMinutesSchema,
   ScheduleMaxTokensSchema,
@@ -280,6 +281,7 @@ export class SqliteScheduleRepository implements ScheduleRepositoryPort {
     readonly scheduleId: string;
     readonly taskId: string | null;
     readonly outcome: string;
+    readonly outcomeRef?: TextRef;
     readonly outcomeKind: "succeeded" | "failed" | "skipped";
     readonly counted?: false;
     readonly fire?: ScheduleFireEntry;
@@ -308,7 +310,7 @@ export class SqliteScheduleRepository implements ScheduleRepositoryPort {
                 updated_at = @now
           WHERE schedule_id = @scheduleId`,
     );
-    const { fire, deliveredHash, precheckState, counted, ...rest } = input;
+    const { fire, deliveredHash, precheckState, counted, outcomeRef: _outcomeRef, ...rest } = input;
     const run = {
       ...rest,
       counted: counted === false ? 0 : 1,
@@ -326,15 +328,19 @@ export class SqliteScheduleRepository implements ScheduleRepositoryPort {
     readonly scheduleId: string;
     readonly taskId: string | null;
     readonly outcome: string;
+    readonly outcomeRef?: TextRef;
     readonly outcomeKind: "succeeded" | "failed" | "skipped";
     readonly fire: ScheduleFireEntry;
     readonly now: string;
   }): void {
+    const [outcomeKey, outcomeParams] = textRefColumns(input.outcomeRef);
     const row = {
       scheduleId: input.scheduleId,
       fireTime: input.fire.fireTime,
       outcomeKind: input.outcomeKind,
       outcome: input.outcome,
+      outcomeKey,
+      outcomeParams,
       reasonCode: input.fire.reasonCode,
       retryCount: input.fire.retryCount ?? 0,
       taskId: input.taskId,
@@ -353,7 +359,8 @@ export class SqliteScheduleRepository implements ScheduleRepositoryPort {
         this.#store.handle
           .prepare(
             `UPDATE tavi_schedule_fires
-                SET outcome_kind = @outcomeKind, outcome = @outcome, task_id = COALESCE(@taskId, task_id), at = @now
+                SET outcome_kind = @outcomeKind, outcome = @outcome, outcome_key = @outcomeKey, outcome_params_json = @outcomeParams,
+                    task_id = COALESCE(@taskId, task_id), at = @now
               WHERE rowid = @id`,
           )
           .run({ ...row, id: same.id });
@@ -361,8 +368,8 @@ export class SqliteScheduleRepository implements ScheduleRepositoryPort {
       }
       const inserted = this.#store.handle
         .prepare(
-          `INSERT INTO tavi_schedule_fires (schedule_id, fire_time, outcome_kind, outcome, reason_code, task_id, at, retry_count)
-           SELECT @scheduleId, @fireTime, @outcomeKind, @outcome, @reasonCode, @taskId, @now, @retryCount
+          `INSERT INTO tavi_schedule_fires (schedule_id, fire_time, outcome_kind, outcome, outcome_key, outcome_params_json, reason_code, task_id, at, retry_count)
+           SELECT @scheduleId, @fireTime, @outcomeKind, @outcome, @outcomeKey, @outcomeParams, @reasonCode, @taskId, @now, @retryCount
             WHERE EXISTS (SELECT 1 FROM tavi_schedules WHERE schedule_id = @scheduleId)`,
         )
         .run(row);
@@ -386,7 +393,7 @@ export class SqliteScheduleRepository implements ScheduleRepositoryPort {
     assertPositiveLimit(limit, "listFires");
     const rows = this.#store.handle
       .prepare(
-        `SELECT schedule_id, fire_time, outcome_kind, outcome, reason_code, task_id, at, retry_count FROM tavi_schedule_fires
+        `SELECT schedule_id, fire_time, outcome_kind, outcome, outcome_key, outcome_params_json, reason_code, task_id, at, retry_count FROM tavi_schedule_fires
           WHERE schedule_id = ? ORDER BY at DESC, rowid DESC LIMIT ?`,
       )
       .all(scheduleId, Math.min(limit, SCHEDULE_FIRES_KEPT)) as ScheduleFireRow[];
@@ -399,7 +406,7 @@ export class SqliteScheduleRepository implements ScheduleRepositoryPort {
     // Each schedule's newest fires through `tavi_schedule_fires_recent_idx`, `limit` rows a schedule at most.
     const rows = this.#store.handle
       .prepare(
-        `SELECT f.schedule_id, f.fire_time, f.outcome_kind, f.outcome, f.reason_code, f.task_id, f.at, f.retry_count
+        `SELECT f.schedule_id, f.fire_time, f.outcome_kind, f.outcome, f.outcome_key, f.outcome_params_json, f.reason_code, f.task_id, f.at, f.retry_count
            FROM json_each(?) j JOIN tavi_schedule_fires f
              ON f.rowid IN (SELECT rowid FROM tavi_schedule_fires WHERE schedule_id = j.value ORDER BY at DESC, rowid DESC LIMIT ?)
           ORDER BY f.at DESC, f.rowid DESC`,
@@ -745,11 +752,13 @@ export class SqliteScheduleRepository implements ScheduleRepositoryPort {
 }
 
 function toScheduleFire(row: ScheduleFireRow): ScheduleFireRecord {
+  const outcomeRef = storedTextRef(row.outcome_key, row.outcome_params_json);
   return {
     scheduleId: row.schedule_id,
     fireTime: row.fire_time,
     outcomeKind: row.outcome_kind,
     outcome: row.outcome,
+    ...(outcomeRef === undefined ? {} : { outcomeRef }),
     reasonCode: row.reason_code,
     taskId: row.task_id,
     at: row.at,
@@ -762,6 +771,9 @@ interface ScheduleFireRow {
   readonly fire_time: string;
   readonly outcome_kind: ScheduleFireRecord["outcomeKind"];
   readonly outcome: string;
+  /** The outcome by key (`0032_stored_text_keys`); NULL on a fire from before, or one in a run's own words. */
+  readonly outcome_key: string | null;
+  readonly outcome_params_json: string | null;
   readonly reason_code: ScheduleFireRecord["reasonCode"];
   readonly task_id: string | null;
   readonly at: string;

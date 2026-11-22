@@ -7,6 +7,7 @@ import {
   disarmUrls,
   isNothingToReport,
   normalisedDelivery,
+  textRef,
 } from "@tavi/contracts";
 import { sha256Hex } from "@tavi/node-kit";
 
@@ -15,7 +16,7 @@ import { pauseIfFailing, sendAlert } from "./schedule-alerts.js";
 import type { FireOutcome, ScheduleSchedulerDependencies } from "./schedule-dependencies.js";
 import type { Suspension } from "./schedule-holds.js";
 import { type RoundRefusal, suspensionKind, toolAllowed } from "./schedule-policy.js";
-import { type ManualRun, countedKind, countsTowardPause, fireEntry, runLabel } from "./schedule-run-kind.js";
+import { type ManualRun, countedKind, countsTowardPause, fireEntry, labelledOutcome, runLabel } from "./schedule-run-kind.js";
 
 /** No URL is known to an alert's chat, so every address in a run's words sent there is disarmed. */
 const NO_KNOWN_URLS: ReadonlySet<string> = new Set();
@@ -234,6 +235,12 @@ async function reportRun(
   // A result for Home that reached none is said so, in its fire and to whoever ran it now: not dropped in silence.
   const notPosted =
     homed === "no-home" ? "there is no Home to post it in (Home is off)" : homed === "failed" ? "posting it into Home failed" : undefined;
+  const notPostedRef =
+    homed === "no-home"
+      ? textRef("schedule.outcome.notPosted.noHome")
+      : homed === "failed"
+        ? textRef("schedule.outcome.notPosted.failed")
+        : undefined;
   const undelivered = delivery?.kind === "undelivered";
   const completed = status === "completed" && !undelivered;
   // "Nothing to report" from a run that was refused calls may only mean it was cut short: told, never quiet.
@@ -251,6 +258,14 @@ async function reportRun(
             : status === "waiting"
               ? `${label}waiting: suspended on ${suspensionKind(admission)}, which nothing in an unattended run resolves`
               : `${label}failed: ${finalText}`;
+  // The outcomes the canvas cannot read back from their words, by key: it says the rest from the words themselves.
+  const saidRef =
+    refusedCalls > 0
+      ? textRef("schedule.outcome.cutShort", { count: refusedCalls, n: String(refusedCalls) })
+      : delivery?.kind !== "quiet" && completed
+        ? notPostedRef
+        : undefined;
+  const outcomeRef = saidRef === undefined ? undefined : labelledOutcome(manual, saidRef);
   // What an `if-changed` schedule delivered this time, which the next run's result is compared with.
   const deliveredHash =
     delivery?.kind === "delivered" && delivery.sentHash !== undefined ? delivery.sentHash : posted ? homeHash : undefined;
@@ -259,6 +274,7 @@ async function reportRun(
     scheduleId: schedule.scheduleId,
     taskId,
     outcome,
+    ...(outcomeRef === undefined ? {} : { outcomeRef }),
     ...countedKind(manual, completed ? "succeeded" : "failed"),
     fire: fireEntry(
       manual,

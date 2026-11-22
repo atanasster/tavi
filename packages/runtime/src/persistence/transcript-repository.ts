@@ -13,6 +13,8 @@ import {
   TRANSCRIPT_TEXT_MAX,
   TranscriptEntrySchema,
   TranscriptTurnSchema,
+  textRef,
+  TextRefSchema,
   type ChatNotice,
   type PostNoticeInput,
   MEMORY_CARD_ITEMS_MAX,
@@ -45,6 +47,7 @@ import type { Database } from "./sqlite-loader.js";
 import { stmt } from "./statement-cache.js";
 import { noteErasure } from "./erasure.js";
 import { deleteIdeasCiting } from "./ideas-repository.js";
+import { storedTextRef, textRefColumns } from "./values.js";
 
 interface EntryRow {
   readonly task_id: string;
@@ -74,33 +77,51 @@ interface NoticeRow {
   readonly created_at: string;
   readonly artifact_id: string | null;
   readonly heartbeat_item_id: string | null;
+  /** The title and summary by key and parameters (`0032_stored_text_keys`); NULL on a notice from before, or plain text. */
+  readonly title_key: string | null;
+  readonly title_params_json: string | null;
+  readonly summary_key: string | null;
+  readonly summary_params_json: string | null;
   /** The source task's generated summary, joined at read time: it is written after the notice. */
   readonly source_summary: string | null;
 }
 
-const toNotice = (row: NoticeRow): ChatNotice =>
-  ChatNoticeSchema.parse({
+const toNotice = (row: NoticeRow): ChatNotice => {
+  // Kinds about one task take its generated summary — never a `conversation` notice, whose group's or DM's
+  // summary reads what third parties wrote. The summarizer's reading of the task: a model's words over text that may quote a page, so untrusted —
+  // it reaches the model only inside the fenced notices block, never a system message. A notice that already
+  // quotes its run's result under its status line (a scheduled run's) is not joined: it would say it twice.
+  const joined =
+    (SOURCE_TASK_NOTICE_KINDS as ReadonlySet<string>).has(row.kind) &&
+    !row.summary.includes("\n") &&
+    row.source_summary !== null &&
+    row.source_summary.trim() !== ""
+      ? clip(row.source_summary, TASK_SUMMARY_TEXT_MAX)
+      : undefined;
+  const titleRef = storedTextRef(row.title_key, row.title_params_json);
+  const storedSummaryRef = storedTextRef(row.summary_key, row.summary_params_json);
+  // The joined summary is the model's words: a parameter of Tavi's, never translated. Wrapped, a reference nests one
+  // level deeper: one past the schema's bounds is left out (its English is shown), never a read that throws.
+  const wrapped =
+    storedSummaryRef === undefined || joined === undefined
+      ? storedSummaryRef
+      : textRef("notice.summary.joined", { summary: storedSummaryRef, detail: joined });
+  const summaryRef = wrapped !== undefined && TextRefSchema.safeParse(wrapped).success ? wrapped : undefined;
+  return ChatNoticeSchema.parse({
     noticeId: row.notice_id,
     taskId: row.task_id,
     kind: row.kind,
     ...(row.source_task_id === null ? {} : { sourceTaskId: row.source_task_id }),
     title: row.title,
-    // Kinds about one task take its generated summary — never a `conversation` notice, whose group's or DM's
-    // summary reads what third parties wrote. The summarizer's reading of the task: a model's words over text that may quote a page, so untrusted —
-    // it reaches the model only inside the fenced notices block, never a system message. A notice that already
-    // quotes its run's result under its status line (a scheduled run's) is not joined: it would say it twice.
-    summary:
-      (SOURCE_TASK_NOTICE_KINDS as ReadonlySet<string>).has(row.kind) &&
-      !row.summary.includes("\n") &&
-      row.source_summary !== null &&
-      row.source_summary.trim() !== ""
-        ? `${row.summary} — ${clip(row.source_summary, TASK_SUMMARY_TEXT_MAX)}`.slice(0, NOTICE_SUMMARY_MAX)
-        : row.summary,
+    summary: joined === undefined ? row.summary : `${row.summary} — ${joined}`.slice(0, NOTICE_SUMMARY_MAX),
+    ...(titleRef === undefined ? {} : { titleRef }),
+    ...(summaryRef === undefined ? {} : { summaryRef }),
     afterSeq: row.after_seq,
     ...(row.artifact_id === null ? {} : { artifactId: row.artifact_id }),
     ...(row.heartbeat_item_id === null ? {} : { heartbeatItemId: row.heartbeat_item_id }),
     createdAt: row.created_at,
   });
+};
 
 interface SteerRow {
   readonly steer_id: string;
@@ -747,6 +768,8 @@ export class SqliteTranscriptRepository implements TranscriptRepositoryPort {
   #postNotice(db: Database, input: PostNoticeInput): { readonly notice: ChatNotice; readonly posted: boolean } {
     const title = clip(input.title.replace(/\s+/g, " ").trim() || "Notice", NOTICE_TITLE_MAX);
     const summary = clip(input.summary.trim(), NOTICE_SUMMARY_MAX);
+    const [titleKey, titleParams] = textRefColumns(input.titleRef);
+    const [summaryKey, summaryParams] = textRefColumns(input.summaryRef);
     const existing = stmt(db, "SELECT notice_id, title, summary FROM tavi_chat_notices WHERE task_id = ? AND source_key = ?").get(
       input.taskId,
       input.sourceKey,
@@ -764,10 +787,14 @@ export class SqliteTranscriptRepository implements TranscriptRepositoryPort {
       // The archive is the post's own: a lossy retry of an epoch's rollover names none.
       stmt(
         db,
-        "UPDATE tavi_chat_notices SET title = ?, summary = ?, after_seq = ?, read_by = ?, created_at = ?, source_task_id = coalesce(?, source_task_id), artifact_id = ?, heartbeat_item_id = ? WHERE notice_id = ?",
+        "UPDATE tavi_chat_notices SET title = ?, summary = ?, title_key = ?, title_params_json = ?, summary_key = ?, summary_params_json = ?, after_seq = ?, read_by = ?, created_at = ?, source_task_id = coalesce(?, source_task_id), artifact_id = ?, heartbeat_item_id = ? WHERE notice_id = ?",
       ).run(
         title,
         summary,
+        titleKey,
+        titleParams,
+        summaryKey,
+        summaryParams,
         afterSeq,
         readByOf(input.kind, input.displayOnly),
         input.createdAt,
@@ -780,7 +807,7 @@ export class SqliteTranscriptRepository implements TranscriptRepositoryPort {
     }
     stmt(
       db,
-      "INSERT INTO tavi_chat_notices (notice_id, task_id, source_key, kind, source_task_id, title, summary, after_seq, read_by, created_at, artifact_id, heartbeat_item_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO tavi_chat_notices (notice_id, task_id, source_key, kind, source_task_id, title, summary, title_key, title_params_json, summary_key, summary_params_json, after_seq, read_by, created_at, artifact_id, heartbeat_item_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     ).run(
       input.noticeId,
       input.taskId,
@@ -789,6 +816,10 @@ export class SqliteTranscriptRepository implements TranscriptRepositoryPort {
       input.sourceTaskId ?? null,
       title,
       summary,
+      titleKey,
+      titleParams,
+      summaryKey,
+      summaryParams,
       afterSeq,
       readByOf(input.kind, input.displayOnly),
       input.createdAt,

@@ -94,6 +94,7 @@ export * from "./provenance-display.js";
 export * from "./approval-rounds.js";
 export * from "./need-deliveries.js";
 export * from "./transcript.js";
+export * from "./text-ref.js";
 export * from "./need-kinds.js";
 export * from "./needs.js";
 export * from "./approval-inbox.js";
