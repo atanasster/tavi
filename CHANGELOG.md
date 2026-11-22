@@ -4,7 +4,9 @@ All notable changes to Tavi are recorded here. The project follows
 [Semantic Versioning](https://semver.org); before 1.0, a minor version may
 change behaviour or stored data.
 
-## Unreleased
+## 0.4.1 — 2026-11-22
+
+A layout fix found on a fresh 0.4.0 install.
 
 ### Fixed
 
