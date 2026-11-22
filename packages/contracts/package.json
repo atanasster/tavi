@@ -22,6 +22,11 @@
       "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs"
     },
+    "./i18n": {
+      "development": "./src/i18n.ts",
+      "types": "./dist/i18n.d.mts",
+      "import": "./dist/i18n.mjs"
+    },
     "./inbound-parts": {
       "development": "./src/inbound-parts.ts",
       "types": "./dist/inbound-parts.d.mts",
@@ -76,6 +81,10 @@
         "import": "./dist/index.mjs"
       },
       "./package.json": "./package.json",
+      "./i18n": {
+        "types": "./dist/i18n.d.mts",
+        "import": "./dist/i18n.mjs"
+      },
       "./inbound-parts": {
         "types": "./dist/inbound-parts.d.mts",
         "import": "./dist/inbound-parts.mjs"

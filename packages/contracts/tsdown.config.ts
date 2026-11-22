@@ -3,6 +3,7 @@ import { defineConfig } from "tsdown";
 export default defineConfig({
   entry: [
     "src/index.ts",
+    "src/i18n.ts",
     "src/inbound-parts.ts",
     "src/plugin-sdk.ts",
     "src/print-theme.ts",
