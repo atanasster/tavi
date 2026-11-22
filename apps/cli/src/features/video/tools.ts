@@ -5,6 +5,10 @@ import {
   TOOL_LABEL_KEY,
   TOOL_MEDIA_KEY,
   TaviError,
+  englishOf,
+  keyedError,
+  textRef,
+  type TextRefParams,
   VIDEO_LIMITS,
   rawFrameBudget,
   VideoFramesInputSchema,
@@ -42,6 +46,7 @@ import {
   type VideoRun,
   type VideoSource,
 } from "@tavi/contracts";
+import type { CoreKey } from "@tavi/contracts/locales/core";
 
 import { folderFileLabel, type FolderFile } from "../folders/fs-tools.js";
 
@@ -204,55 +209,61 @@ interface LoadedVideo {
   readonly artifact?: { readonly artifactId: string; readonly contentType: string };
 }
 
-const REFUSALS: Readonly<
-  Record<VideoRefusal, { readonly code: "INVALID_INPUT" | "UNSUPPORTED" | "UNAVAILABLE"; readonly sentence: string }>
-> = {
-  "not-video": { code: "UNSUPPORTED", sentence: "this is not a video Tavi reads (MP4, MOV, 3GP, WebM, Matroska or GIF, by its bytes)" },
-  "too-large": { code: "INVALID_INPUT", sentence: `the video is larger than ${String(VIDEO_LIMITS.maxInputBytes / 1024 / 1024)} MiB` },
+/** A refusal or failure as it is said, by key: its key and parameters, and `sentence`, its English. */
+type Said = { readonly key: CoreKey; readonly params?: TextRefParams; readonly sentence: string };
+const said = (key: CoreKey, params?: TextRefParams): Said => ({
+  key,
+  ...(params === undefined ? {} : { params }),
+  sentence: englishOf(textRef(key, params)),
+});
+
+const REFUSALS: Readonly<Record<VideoRefusal, Said & { readonly code: "INVALID_INPUT" | "UNSUPPORTED" | "UNAVAILABLE" }>> = {
+  "not-video": { code: "UNSUPPORTED", ...said("error.video.notVideo") },
+  "too-large": { code: "INVALID_INPUT", ...said("error.video.tooLarge", { size: String(VIDEO_LIMITS.maxInputBytes / 1024 / 1024) }) },
   "too-long": {
     code: "INVALID_INPUT",
-    sentence: `frames are taken from at most ${String(VIDEO_LIMITS.maxDurationSec / 60)} minutes of a video at a time: give a shorter range (from, to)`,
+    ...said("error.video.tooLong", { minutes: String(VIDEO_LIMITS.maxDurationSec / 60) }),
   },
   "too-many-pixels": {
     code: "INVALID_INPUT",
-    sentence: `the video's frames are larger than ${String(Math.sqrt(VIDEO_LIMITS.maxPixels))}×${String(Math.sqrt(VIDEO_LIMITS.maxPixels))} pixels`,
+    ...said("error.video.tooManyPixels", { side: String(Math.sqrt(VIDEO_LIMITS.maxPixels)) }),
   },
-  "no-ffmpeg": {
-    code: "UNAVAILABLE",
-    sentence: "no FFmpeg is installed on this machine: install it (brew install ffmpeg, or apt install ffmpeg) to read videos",
-  },
-  "missing-feature": { code: "UNAVAILABLE", sentence: "the FFmpeg installed here lacks what this needs" },
-  "no-audio": { code: "UNSUPPORTED", sentence: "the video has no sound" },
-  "refused-recently": {
-    code: "UNAVAILABLE",
-    sentence:
-      "reading this video failed within the last day (it was too slow, too large in memory, or malformed), so it is not read again until then",
-  },
-  unreadable: { code: "UNSUPPORTED", sentence: "FFmpeg could not read this video: it may be damaged, or in a codec this FFmpeg lacks" },
+  "no-ffmpeg": { code: "UNAVAILABLE", ...said("error.video.noFfmpeg") },
+  "missing-feature": { code: "UNAVAILABLE", ...said("error.video.missingFeature") },
+  "no-audio": { code: "UNSUPPORTED", ...said("error.video.noAudio") },
+  "refused-recently": { code: "UNAVAILABLE", ...said("error.video.refusedRecently") },
+  unreadable: { code: "UNSUPPORTED", ...said("error.video.unreadable") },
 };
-const FAILURES: Readonly<Record<VideoFailure, string>> = {
-  timeout: "reading the video took too long and was stopped",
-  memory: "reading the video used too much memory and was stopped",
-  crashed: "FFmpeg stopped while reading the video",
-  protocol: "FFmpeg's answer was not what was expected, so it was not used",
-  unconfined:
-    "the video sandbox is unavailable on this host, so videos are not read: fix it (tavi sandbox setup), or the owner may start serve with --video-allow-unconfined",
+const FAILURES: Readonly<Record<VideoFailure, Said>> = {
+  timeout: said("error.video.failure.timeout"),
+  memory: said("error.video.failure.memory"),
+  crashed: said("error.video.failure.crashed"),
+  protocol: said("error.video.failure.protocol"),
+  unconfined: said("error.video.failure.unconfined"),
 };
+
+/** A video refusal as an error: its code, its sentence and its key. */
+function refusalError(refused: VideoRefusal, details?: Record<string, unknown>): TaviError {
+  const refusal = REFUSALS[refused];
+  return keyedError(refusal.code, refusal.key, refusal.params, details === undefined ? {} : { details });
+}
+
+/** A video failure as an error: its code, its sentence and its key. */
+function failureError(failure: VideoFailure): TaviError {
+  return keyedError(failure === "protocol" ? "INTERNAL" : "UNAVAILABLE", FAILURES[failure].key, FAILURES[failure].params, {
+    details: { failure },
+  });
+}
 
 /** A decoder's result's value, or the error that says why there is none. */
 function valueOf<T>(result: VideoResult<T>): T {
   if (result.ok) return result.value;
   if ("refused" in result) {
-    const refusal = REFUSALS[result.refused];
-    throw new TaviError(
-      refusal.code,
-      result.refused === "missing-feature" && result.detail !== undefined ? result.detail : refusal.sentence,
-      { details: { refused: result.refused } },
-    );
+    if (result.refused === "missing-feature" && result.detail !== undefined)
+      throw new TaviError(REFUSALS[result.refused].code, result.detail, { details: { refused: result.refused } });
+    throw refusalError(result.refused, { refused: result.refused });
   }
-  throw new TaviError(result.failure === "protocol" ? "INTERNAL" : "UNAVAILABLE", FAILURES[result.failure], {
-    details: { failure: result.failure },
-  });
+  throw failureError(result.failure);
 }
 
 /** A label as a result carries it: always given, since an unlabelled `labelledByStore` result would read as trusted. */
@@ -438,8 +449,7 @@ export function registerVideoTools(registry: ToolRegistryPort, options: VideoToo
   const now = options.now ?? Date.now;
 
   const requireEnabled = async (context: InvocationContext): Promise<void> => {
-    if (!(await options.enabled(context.workspaceId)))
-      throw new TaviError("UNAVAILABLE", "the video tools are turned off in this workspace (`tavi config set video.enabled on`)");
+    if (!(await options.enabled(context.workspaceId))) throw keyedError("UNAVAILABLE", "error.video.turnedOff");
   };
 
   /** A source video, read once: an approved, model-visible video artifact of this workspace, or a file of the chat's folders. */
@@ -448,21 +458,18 @@ export function registerVideoTools(registry: ToolRegistryPort, options: VideoToo
       const artifact = await options.artifacts.getArtifact(source.artifactId);
       // A video pruned past its retention whose frames remain says so: its earlier frames are still in the chat.
       if (artifact === undefined && (await options.artifacts.derivedPreviewExists(context.workspaceId, source.artifactId))) {
-        throw new TaviError(
-          "NOT_FOUND",
-          `video ${source.artifactId} is no longer kept: videos from outside are kept for this workspace's video.keepDays, and the frames taken from it earlier are still in the chat`,
-          { details: { pruned: true } },
-        );
+        throw keyedError("NOT_FOUND", "error.video.noLongerKept", { artifactId: source.artifactId }, { details: { pruned: true } });
       }
       // Refused alike when missing, another workspace's, internal or another chat's attachment: the id is model-authored.
-      if (!chatMayReadArtifact(artifact, context)) throw new TaviError("NOT_FOUND", `no artifact ${source.artifactId} in this chat`);
+      if (!chatMayReadArtifact(artifact, context))
+        throw keyedError("NOT_FOUND", "error.video.noArtifact", { artifactId: source.artifactId });
       if (artifact.reviewState !== "approved")
-        throw new TaviError("NOT_AUTHORIZED", `artifact ${source.artifactId} is ${artifact.reviewState}, not approved for release`);
+        throw keyedError("NOT_AUTHORIZED", "error.video.notApproved", { artifactId: source.artifactId, state: artifact.reviewState });
       if (!VIDEO_MEDIA_TYPES_IN.includes(artifact.contentType))
-        throw new TaviError("UNSUPPORTED", `artifact ${source.artifactId} is ${artifact.contentType}, not a video`);
-      if (artifact.byteSize > VIDEO_LIMITS.maxInputBytes) throw new TaviError("INVALID_INPUT", REFUSALS["too-large"].sentence);
+        throw keyedError("UNSUPPORTED", "error.video.notAVideo", { artifactId: source.artifactId, type: artifact.contentType });
+      if (artifact.byteSize > VIDEO_LIMITS.maxInputBytes) throw refusalError("too-large");
       const bytes = await options.artifacts.readArtifactBody(artifact.artifactId);
-      if (bytes === undefined) throw new TaviError("NOT_FOUND", `artifact ${source.artifactId} has no content`);
+      if (bytes === undefined) throw keyedError("NOT_FOUND", "error.video.noContent", { artifactId: source.artifactId });
       return {
         bytes,
         label: artifactLabel(artifact),
@@ -499,7 +506,7 @@ export function registerVideoTools(registry: ToolRegistryPort, options: VideoToo
     preview: "video-frame" | "video-sheet",
   ): Promise<string> => {
     const bytes = run.readOutput(frame.path, VIDEO_LIMITS.frameMaxBytes);
-    if (bytes === undefined) throw new TaviError("INTERNAL", FAILURES.protocol, { details: { failure: "protocol" } });
+    if (bytes === undefined) throw failureError("protocol");
     const record = await options.artifacts.putArtifact({
       workspaceId: context.workspaceId,
       runId: context.runId,
@@ -679,15 +686,14 @@ export function registerVideoTools(registry: ToolRegistryPort, options: VideoToo
       return await withRun(video, async (decoder, run) => {
         const facts = await factsFor(decoder, run);
         if (facts.video.width * facts.video.height > VIDEO_LIMITS.maxPixels)
-          throw new TaviError("INVALID_INPUT", REFUSALS["too-many-pixels"].sentence, { details: { refused: "too-many-pixels" } });
+          throw refusalError("too-many-pixels", { refused: "too-many-pixels" });
         const from = Math.min(parsed.from ?? 0, facts.durationSec);
         const to = Math.min(parsed.to ?? facts.durationSec, facts.durationSec);
         if (to < from) throw new TaviError("INVALID_INPUT", "`to` comes before `from`");
         // A long video is read a range at a time: at most `maxDurationSec` of it in one call.
         const at = parsed.mode === "at" ? (parsed.at ?? []) : [];
         const span = parsed.mode === "at" ? Math.max(...at) - Math.min(...at) : to - from;
-        if (span > VIDEO_LIMITS.maxDurationSec)
-          throw new TaviError("INVALID_INPUT", REFUSALS["too-long"].sentence, { details: { refused: "too-long" } });
+        if (span > VIDEO_LIMITS.maxDurationSec) throw refusalError("too-long", { refused: "too-long" });
         const notes: string[] = [];
         let timeline: readonly (readonly [number, number])[] | undefined;
         let times: number[];
@@ -803,7 +809,7 @@ export function registerVideoTools(registry: ToolRegistryPort, options: VideoToo
       return await withRun(video, async (decoder, run) => {
         const facts = await factsFor(decoder, run);
         if (facts.video.width * facts.video.height > VIDEO_LIMITS.maxPixels)
-          throw new TaviError("INVALID_INPUT", REFUSALS["too-many-pixels"].sentence, { details: { refused: "too-many-pixels" } });
+          throw refusalError("too-many-pixels", { refused: "too-many-pixels" });
         const from = Math.min(parsed.from ?? 0, facts.durationSec);
         const to = Math.min(parsed.to ?? facts.durationSec, facts.durationSec);
         if (to <= from) throw new TaviError("INVALID_INPUT", "`to` must come after `from`");
@@ -1086,12 +1092,11 @@ export function registerVideoTools(registry: ToolRegistryPort, options: VideoToo
       return await withRun(video, async (decoder, run) => {
         const facts = await factsFor(decoder, run);
         if (facts.video.width * facts.video.height > VIDEO_LIMITS.maxPixels)
-          throw new TaviError("INVALID_INPUT", REFUSALS["too-many-pixels"].sentence, { details: { refused: "too-many-pixels" } });
+          throw refusalError("too-many-pixels", { refused: "too-many-pixels" });
         const from = Math.min(parsed.from ?? 0, facts.durationSec);
         const to = Math.min(parsed.to ?? facts.durationSec, facts.durationSec);
         if (to < from) throw new TaviError("INVALID_INPUT", "`to` comes before `from`");
-        if (to - from > VIDEO_LIMITS.maxDurationSec)
-          throw new TaviError("INVALID_INPUT", REFUSALS["too-long"].sentence, { details: { refused: "too-long" } });
+        if (to - from > VIDEO_LIMITS.maxDurationSec) throw refusalError("too-long", { refused: "too-long" });
         // The fallback: a sheet of six moments and two stills, what every model sees, and all one without video sees.
         const times = uniformTimes(from, to, 6);
         const { sheet } = await writeSheet(decoder, run, times, 3, 2);

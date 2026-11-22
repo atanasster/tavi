@@ -27,7 +27,7 @@ import {
   type PersistencePort,
 } from "@tavi/contracts";
 
-import { pendingRoundRefusal, type IpcAnswer } from "../../shared/ipc-decisions.js";
+import { pendingRoundRefusal, refusalFrom, type IpcAnswer } from "../../shared/ipc-decisions.js";
 import { clip } from "@tavi/contracts/util";
 
 /** What `chat-context` needs from the owner. */
@@ -490,10 +490,6 @@ export async function chatContextCommand(
       }
     }
   } catch (error) {
-    const failure = TaviError.from(error);
-    return {
-      ok: false,
-      error: { code: failure.code, message: failure.message, ...(failure.details === undefined ? {} : { details: failure.details }) },
-    };
+    return refusalFrom(error, TaviError.from(error).details);
   }
 }

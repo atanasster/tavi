@@ -40,6 +40,7 @@ import {
   scheduledWorkUsage,
   type ScheduledWorkUsage,
   type WorkspaceSettings,
+  keyedError,
 } from "@tavi/contracts";
 import { csvList, definedOnly } from "@tavi/contracts/util";
 import { prefixedId } from "@tavi/node-kit";
@@ -91,10 +92,7 @@ export async function setScheduleEnabled(
 ): Promise<ScheduleRecord> {
   const next = enabled ? nextOccurrence(schedule.spec, at) : undefined;
   if (enabled && next === undefined)
-    throw new TaviError(
-      "INVALID_INPUT",
-      `${schedule.name} has finished: ${scheduleSpecText(schedule.spec)} has no run left; move its once or until date later, or drop the until, to run it again`,
-    );
+    throw keyedError("INVALID_INPUT", "error.schedule.finished", { name: schedule.name, spec: scheduleSpecText(schedule.spec) });
   await schedules.setEnabled({
     scheduleId: schedule.scheduleId,
     enabled,
@@ -257,9 +255,8 @@ export async function writeSchedule(
     throw new TaviError("INVALID_INPUT", message);
   };
   if (input.action === "update" && !existing)
-    throw new TaviError("NOT_FOUND", `no schedule ${JSON.stringify(input.scheduleId)} exists in workspace ${workspaceId}`);
-  if (existing && input.name !== undefined && input.name !== existing.name)
-    invalid("Schedule names cannot be changed; create a new schedule instead.");
+    throw keyedError("NOT_FOUND", "error.schedule.notFoundIn", { scheduleId: JSON.stringify(input.scheduleId), workspaceId });
+  if (existing && input.name !== undefined && input.name !== existing.name) throw keyedError("INVALID_INPUT", "error.schedule.nameFixed");
   const name = existing?.name ?? input.name;
   const prompt = input.prompt ?? existing?.prompt;
   const composed = composeSpec(input, existing?.spec);
@@ -366,7 +363,7 @@ export async function writeSchedule(
     if (rearm)
       await repositories.schedules.setEnabled({ scheduleId: existing.scheduleId, enabled: true, nextRunAt: firstRun.toISOString(), now });
     const updated = await repositories.schedules.get(existing.scheduleId);
-    if (updated === undefined) throw new TaviError("NOT_FOUND", `schedule ${existing.scheduleId} was removed while it was being updated`);
+    if (updated === undefined) throw keyedError("NOT_FOUND", "error.schedule.removedWhileUpdating", { scheduleId: existing.scheduleId });
     return updated;
   }
   return await repositories.schedules.create({
@@ -489,7 +486,8 @@ export async function schedulePreview(
     input.timezone ??
     (await repositories.workspaceSettings.get(input.workspaceId ?? DEFAULT_WORKSPACE_ID)).settings.timezone ??
     hostTimeZone();
-  if (!isValidTimeZone(timezone)) throw new TaviError("INVALID_INPUT", `${JSON.stringify(timezone)} is not a known IANA time zone`);
+  if (!isValidTimeZone(timezone))
+    throw keyedError("INVALID_INPUT", "error.schedule.unknownTimezone", { timezone: JSON.stringify(timezone) });
   const parsed = ScheduleSpecSchema.safeParse(composeSpec({ ...input, timezone }, undefined));
   if (!parsed.success) {
     throw new TaviError("INVALID_INPUT", parsed.error.issues.map((issue) => issue.message).join("; "));

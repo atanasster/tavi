@@ -28,7 +28,7 @@ import {
 import { sha256Hex } from "@tavi/node-kit";
 import { z } from "zod";
 
-import type { IpcAnswer } from "../../shared/ipc-decisions.js";
+import { refusalFrom, type IpcAnswer } from "../../shared/ipc-decisions.js";
 import { proposeRecipeNote, recipeHost } from "./site-notes.js";
 
 /**
@@ -285,8 +285,7 @@ export async function browserCommand(
       }),
     };
   } catch (error) {
-    const failure = TaviError.from(error);
-    return { ok: false, error: { code: failure.code, message: failure.message } };
+    return refusalFrom(error);
   }
 }
 
@@ -345,7 +344,6 @@ export async function artifactsReadCommand(
       },
     };
   } catch (error) {
-    const failure = TaviError.from(error);
-    return { ok: false, error: { code: failure.code, message: failure.message } };
+    return refusalFrom(error);
   }
 }

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { errorMessage } from "./util.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { coreEnglish, type CoreKey, type CoreT } from "./locales/core.js";
+import { englishOf, textRef, TextRefSchema, type TextRef, type TextRefParams } from "./text-ref.js";
 
 /**
  * Typed errors.
@@ -76,29 +77,42 @@ export const TaviErrorSchema = z.object({
   message: z.string().max(2000),
   /** Safe structured detail. Must never contain credentials or secret values. */
   details: z.record(z.string(), z.unknown()).optional(),
+  /**
+   * The words of `message` by key, when they are Tavi's and a person reads them: a reader (the canvas) says them in
+   * the workspace's language, and one that does not know the key shows `message`. Invalid, it is dropped rather
+   * than failing the error it rides on.
+   */
+  i18n: TextRefSchema.optional().catch(undefined),
 });
 export type TaviErrorData = z.infer<typeof TaviErrorSchema>;
 
 export interface TaviErrorOptions {
   readonly details?: Record<string, unknown>;
   readonly cause?: unknown;
+  /** `message` by key: see `TaviErrorSchema.i18n`. `keyedError` sets it, with `message` as its English. */
+  readonly i18n?: TextRef;
 }
 
 export class TaviError extends Error {
   readonly code: TaviErrorCode;
   readonly details?: Record<string, unknown>;
+  readonly i18n?: TextRef;
 
   constructor(code: TaviErrorCode, message: string, options: TaviErrorOptions = {}) {
     super(message, options.cause === undefined ? undefined : { cause: options.cause });
     this.name = "TaviError";
     this.code = code;
     if (options.details !== undefined) this.details = options.details;
+    if (options.i18n !== undefined) this.i18n = options.i18n;
   }
 
   toData(): TaviErrorData {
-    return this.details === undefined
-      ? { code: this.code, message: this.message }
-      : { code: this.code, message: this.message, details: this.details };
+    return {
+      code: this.code,
+      message: this.message,
+      ...(this.details === undefined ? {} : { details: this.details }),
+      ...(this.i18n === undefined ? {} : { i18n: this.i18n }),
+    };
   }
 
   static from(error: unknown, fallbackCode: TaviErrorCode = "INTERNAL"): TaviError {
@@ -106,6 +120,22 @@ export class TaviError extends Error {
     const message = errorMessage(error);
     return new TaviError(fallbackCode, message, { cause: error });
   }
+}
+
+/**
+ * An error a person reads, by key: its `message` is the key's English (`englishOf`), so the terminal, logs, JSON
+ * output and the model read what they always did, and `i18n` lets the canvas say it in the workspace's language.
+ * Data (a name, a path, a count) goes in `params`; a count inside a sentence is passed as text so English never
+ * groups it.
+ */
+export function keyedError(
+  code: TaviErrorCode,
+  key: CoreKey,
+  params?: TextRefParams,
+  options: Omit<TaviErrorOptions, "i18n"> = {},
+): TaviError {
+  const ref = textRef(key, params);
+  return new TaviError(code, englishOf(ref), { ...options, i18n: ref });
 }
 
 /** The errors `refusedEarly` made: kept here, so no field a caller can set or copy marks an error as Tavi's own words. */

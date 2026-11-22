@@ -2,13 +2,16 @@ import { rmSync } from "node:fs";
 
 import {
   MCP_MAX_TOOLS,
+  keyedError,
   TaviError,
   comparePluginVersions,
+  englishOf,
   mcpBlockLines,
   mcpSlugOf,
   type ConfinementPort,
   type ResourceLimitPort,
   type SandboxHostPort,
+  type TextRef,
   sandboxConfines,
   type McpBlock,
   type McpNoticeKind,
@@ -53,7 +56,7 @@ import {
   OVERLAP,
   schemaProse,
   schemaTokens,
-  shadowingWarnings,
+  shadowingWarningRefs,
 } from "./review.js";
 import { definitionChangeLine, definitionDiff, type McpDefinitionDiff } from "./definition-diff.js";
 import { inputFormOf } from "./schemas.js";
@@ -203,6 +206,8 @@ export interface McpReview {
    * beside a connected mailbox), or a description names another tool (shadowing). Warnings, never refusals.
    */
   readonly warnings: readonly string[];
+  /** `warnings` by key, in the same order, for the canvas to say in the workspace's language. */
+  readonly warningRefs?: readonly TextRef[];
 }
 
 export type McpAnswer =
@@ -302,19 +307,25 @@ export interface McpServerList {
   readonly servers: readonly McpServerRow[];
 }
 
+/** A review's warnings: their English, and their keys for the canvas. */
+const warningsOf = (refs: readonly TextRef[]): Pick<McpReview, "warnings" | "warningRefs"> => ({
+  warnings: refs.map(englishOf),
+  warningRefs: refs,
+});
+
 /** The version an action is about: the one named, else the newest still proposed, else the active one, else the newest. */
 function versionOf(view: PluginView, version: string | undefined): PluginView["versions"][number] {
-  if (view.kind !== "mcp") throw new TaviError("INVALID_INPUT", `${view.id} is not an MCP server`);
+  if (view.kind !== "mcp") throw keyedError("INVALID_INPUT", "error.mcp.notAServer", { pluginId: view.id });
   if (version !== undefined) {
     const found = view.versions.find((candidate) => candidate.version === version);
-    if (found === undefined) throw new TaviError("NOT_FOUND", `${view.id}@${version} is not installed`);
+    if (found === undefined) throw keyedError("NOT_FOUND", "error.mcp.versionNotInstalled", { pluginId: view.id, version });
     return found;
   }
   const chosen =
     [...view.versions].reverse().find((candidate) => candidate.reviewState === "proposed") ??
     view.versions.find((candidate) => candidate.version === view.activeVersion) ??
     view.versions.at(-1);
-  if (chosen === undefined) throw new TaviError("NOT_FOUND", `${view.id} has no installed version`);
+  if (chosen === undefined) throw keyedError("NOT_FOUND", "error.mcp.noVersion", { pluginId: view.id });
   return chosen;
 }
 
@@ -338,18 +349,11 @@ async function resolveValues(
   const secrets: string[] = [];
   const settingValue = async (setting: string): Promise<string> => {
     const value = config[setting];
-    if (value === undefined)
-      throw new TaviError(
-        "NOT_CONFIGURED",
-        `${manifest.id} needs its ${setting} setting first: \`tavi plugins config ${manifest.id} --set ${setting}=…\``,
-      );
+    if (value === undefined) throw keyedError("NOT_CONFIGURED", "error.mcp.settingFirst", { pluginId: manifest.id, setting });
     if (manifest.config[setting]?.type === "credential") {
       const secret = await context.resolveSecret(String(value));
       if (secret === null)
-        throw new TaviError(
-          "NOT_CONFIGURED",
-          `${manifest.id}'s ${setting} names ${String(value)}, which holds no credential: \`tavi credentials set ${String(value)}\``,
-        );
+        throw keyedError("NOT_CONFIGURED", "error.mcp.noCredential", { pluginId: manifest.id, setting, reference: String(value) });
       secrets.push(secret);
       return secret;
     }
@@ -420,9 +424,10 @@ export async function endpointFor(
   }
   const verified = await context.registry.verifyMcp(manifest.id, manifest.version, false);
   if (!verified.ok)
-    throw new TaviError(
+    throw keyedError(
       "CONFLICT",
-      `${manifest.id}@${manifest.version}'s files changed since they were installed (${verified.problem ?? "unknown"}); it will not start`,
+      "error.mcp.filesChanged",
+      { pluginId: manifest.id, version: manifest.version, problem: verified.problem ?? "unknown" },
       { details: { mcpFailure: "integrity" } },
     );
   const spawn = stdioLaunch(
@@ -569,20 +574,22 @@ async function reviewOf(
     schemaTokens: tools
       .filter((tool) => tool.state === "approved" && tool.approvedDef !== undefined)
       .reduce((sum, tool) => sum + schemaTokens(tool.approvedDef as McpToolRecord["observedDef"]), 0),
-    warnings: shadowingWarnings({
-      serverName: manifest.name,
-      slug: mcpSlugOf(view.id) ?? view.id,
-      tools: tools
-        .filter((tool) => tool.state !== "removed" && tool.state !== "disabled" && tool.state !== "rejected")
-        .map((tool) => ({
-          name: tool.name,
-          description: tool.observedDef.description,
-          prose: [...schemaProse(tool.observedDef.inputSchema, ""), ...schemaProse(tool.observedDef.outputSchema, "")].map(
-            (prose) => prose.text,
-          ),
-        })),
-      registered: context.registeredToolIds?.() ?? new Set(),
-    }),
+    ...warningsOf(
+      shadowingWarningRefs({
+        serverName: manifest.name,
+        slug: mcpSlugOf(view.id) ?? view.id,
+        tools: tools
+          .filter((tool) => tool.state !== "removed" && tool.state !== "disabled" && tool.state !== "rejected")
+          .map((tool) => ({
+            name: tool.name,
+            description: tool.observedDef.description,
+            prose: [...schemaProse(tool.observedDef.inputSchema, ""), ...schemaProse(tool.observedDef.outputSchema, "")].map(
+              (prose) => prose.text,
+            ),
+          })),
+        registered: context.registeredToolIds?.() ?? new Set(),
+      }),
+    ),
   };
 }
 
@@ -620,7 +627,8 @@ async function probe(context: McpActionContext, input: Extract<McpPayload, { act
   const manifest = readPluginManifest(context.registry.snapshotDirectory(view.id, version.version));
   const block = manifest.mcp as McpBlock;
   const existing = await context.mcp.getVersion(view.id, version.version);
-  if (version.reviewState === "rejected") throw new TaviError("CONFLICT", `${view.id}@${version.version} was rejected`);
+  if (version.reviewState === "rejected")
+    throw keyedError("CONFLICT", "error.mcp.rejected", { pluginId: view.id, version: version.version });
   // The sandbox state is chosen before any server code runs, and an approved version keeps the one it was approved with.
   if (input.sandbox !== undefined && version.reviewState === "approved" && input.sandbox !== existing?.sandboxState) {
     throw new TaviError(
@@ -629,7 +637,7 @@ async function probe(context: McpActionContext, input: Extract<McpPayload, { act
     );
   }
   if (block.transport === "http" && input.sandbox !== undefined && input.sandbox !== "srt")
-    throw new TaviError("INVALID_INPUT", "a remote server runs no code here; the sandbox state applies to stdio servers");
+    throw keyedError("INVALID_INPUT", "error.mcp.remoteNoSandbox");
   const sandboxState: McpSandboxState = input.sandbox ?? existing?.sandboxState ?? "srt";
   // What an earlier probe found is replaced by this one's: none of it carries over.
   const {
@@ -661,10 +669,11 @@ async function probe(context: McpActionContext, input: Extract<McpPayload, { act
     await connection.close();
   }
   if (found.tools.length > MCP_MAX_TOOLS)
-    throw new TaviError(
-      "UNSUPPORTED",
-      `${view.id} offers ${String(found.tools.length)} tools; a server may offer at most ${String(MCP_MAX_TOOLS)}`,
-    );
+    throw keyedError("UNSUPPORTED", "error.mcp.tooManyTools", {
+      pluginId: view.id,
+      count: String(found.tools.length),
+      max: String(MCP_MAX_TOOLS),
+    });
   const slug = mcpSlugOf(view.id) as string;
   const known = new Map((await context.mcp.listTools(view.id, version.version)).map((tool) => [tool.name, tool.toolId]));
   const observed = observeTools(view.id, version.version, slug, found.tools, context.registeredToolIds?.() ?? new Set(), known);
@@ -699,8 +708,7 @@ async function approve(context: McpActionContext, input: Extract<McpPayload, { a
   const view = await context.registry.show(input.pluginId);
   const version = versionOf(view, input.version);
   const record = await context.mcp.getVersion(view.id, version.version);
-  if (record?.probedAt === undefined)
-    throw new TaviError("CONFLICT", `${view.id}@${version.version} has not been probed: \`tavi mcp probe ${view.id}\``);
+  if (record?.probedAt === undefined) throw keyedError("CONFLICT", "error.mcp.notProbed", { pluginId: view.id, version: version.version });
   if (record.sandboxState !== "srt" && input.sandbox !== record.sandboxState) {
     throw new TaviError(
       "CONFLICT",
@@ -762,7 +770,7 @@ async function approve(context: McpActionContext, input: Extract<McpPayload, { a
   if (block.external === true && block.command?.[0] !== undefined) {
     externalSha256 = fileSha256(block.command[0]);
     if (record.externalSha256 !== undefined && record.externalSha256 !== externalSha256)
-      throw new TaviError("CONFLICT", `${block.command[0]} changed since it was probed; probe it again before approving`);
+      throw keyedError("CONFLICT", "error.mcp.binaryChanged", { path: block.command[0] });
   }
   const expected = Object.fromEntries(tools.map((tool) => [tool.name, tool.observedDefHash]));
   await context.mcp.approveVersion({
@@ -812,14 +820,11 @@ export async function runMcpAction(context: McpActionContext, input: McpPayload,
     }
     case "people": {
       const view = await context.registry.show(input.pluginId);
-      if (view.kind !== "mcp") throw new TaviError("INVALID_INPUT", `${view.id} is not an MCP server`);
+      if (view.kind !== "mcp") throw keyedError("INVALID_INPUT", "error.mcp.notAServer", { pluginId: view.id });
       if (context.workspaceSettings === undefined) throw new TaviError("UNAVAILABLE", "workspace settings are not available here");
       // The household rule: a Personal account is lent to no one.
       if (input.on && (await context.personal?.(view.id)) === true) {
-        throw new TaviError(
-          "NOT_AUTHORIZED",
-          `${view.id} is a Personal account: each person needs their own account. Connect a shared one to let others use it, or mark this one shared (\`tavi apps sharing\`)`,
-        );
+        throw keyedError("NOT_AUTHORIZED", "error.mcp.personalAccount", { pluginId: view.id });
       }
       const current = await context.workspaceSettings.get(input.workspaceId);
       const people = (current.settings.mcpPeople ?? []).filter((id) => id !== view.id);
@@ -872,7 +877,7 @@ export async function runMcpAction(context: McpActionContext, input: McpPayload,
     case "login": {
       const view = await context.registry.show(input.pluginId);
       if (view.kind !== "mcp" || view.mcp?.auth !== "oauth")
-        throw new TaviError("INVALID_INPUT", `${input.pluginId} does not sign in with OAuth`);
+        throw keyedError("INVALID_INPUT", "error.mcp.noOAuth", { pluginId: input.pluginId });
       if (context.logins === undefined)
         throw new TaviError("UNAVAILABLE", "a login comes back to the running owner: start `tavi serve` first");
       const started = await context.logins.start({
@@ -893,7 +898,7 @@ export async function runMcpAction(context: McpActionContext, input: McpPayload,
       return { cancelled: { flowId: input.flowId, cancelled: context.logins?.cancel(input.flowId) === true } };
     case "login-status": {
       const status = context.logins?.status(input.flowId);
-      if (status === undefined) throw new TaviError("NOT_FOUND", "no such login");
+      if (status === undefined) throw keyedError("NOT_FOUND", "error.mcp.noSuchLogin");
       return { loginStatus: status };
     }
     case "logout": {

@@ -1,4 +1,4 @@
-import { TaviError, routineTriggerSpec, type RoutineEditResult, type RoutinesPayload } from "@tavi/contracts";
+import { TaviError, keyedError, routineTriggerSpec, type RoutineEditResult, type RoutinesPayload } from "@tavi/contracts";
 import type { LabelSummary, ScheduleRecord, SchedulesPayload, TaskRecord } from "@tavi/contracts";
 import { type RoutineService, type RoutineControlService, changedSections, routineHash } from "@tavi/runtime";
 import { composeSpec } from "../schedules/actions.js";
@@ -37,9 +37,9 @@ export async function routineFromChat<Task extends Pick<TaskRecord, "workspaceId
   if (payload.copyOf !== undefined) throw new TaviError("INVALID_INPUT", "A routine is copied or repeated from a chat, not both");
   const task = await chat.task(taskId);
   if (task === undefined || task.workspaceId !== payload.workspaceId || task.principalId !== payload.principalId)
-    throw new TaviError("NOT_FOUND", `Task ${taskId} does not exist`);
+    throw keyedError("NOT_FOUND", "error.task.notFound", { taskId });
   const label = await chat.label(task);
-  if (label === null) throw new TaviError("UNAVAILABLE", `Tavi could not read what task ${taskId} read; try again`);
+  if (label === null) throw keyedError("UNAVAILABLE", "error.routine.taskUnreadable", { taskId });
   const { integrity, sources, principals, confidentiality, refs } = label;
   return { ...rest, modelLabel: { integrity, sources, principals, confidentiality, refs } };
 }

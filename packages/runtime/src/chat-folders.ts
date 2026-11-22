@@ -8,6 +8,10 @@ import {
   CHAT_FOLDER_PARENT_LABEL,
   CHAT_FOLDER_RESET_COMMAND,
   TaviError,
+  englishOf,
+  keyedError,
+  textRef,
+  type TextRef,
   fsFold,
   hasLineUnsafeCharacters,
   lineSafe,
@@ -25,6 +29,7 @@ import {
   type TurnChannel,
   type WriteChatFolderInput,
 } from "@tavi/contracts";
+import type { CoreKey } from "@tavi/contracts/locales/core";
 import { errorMessage, nowTimestamp } from "@tavi/contracts/util";
 import { openDirectoryNoFollowSync, sameIdentity, sha256Hex } from "@tavi/node-kit";
 
@@ -230,14 +235,14 @@ const FOLD_CASE = process.platform === "darwin" || process.platform === "win32";
  * nor attached read-write (`attach`): what trusting all of it would mean.
  * Read-only it may be attached (`--fs-root ~`).
  */
-function homePrimaryRefusal(real: string, home: string, attach = false): string {
+function homePrimaryRefusal(real: string, home: string, attach = false): TaviError {
   if (attach)
     return withinFolded(real, home)
-      ? "Your home folder itself cannot be attached read-write; attach it read-only, or a folder inside it"
-      : `${real} holds your home folder, which a chat never writes whole; attach it read-only, or a folder inside your home folder`;
+      ? keyedError("NOT_AUTHORIZED", "error.folders.homeAttachRw")
+      : keyedError("NOT_AUTHORIZED", "error.folders.holdsHomeAttachRw", { path: real });
   return withinFolded(real, home)
-    ? "Your home folder itself cannot be a chat's folder; choose a folder inside it"
-    : `${real} holds your home folder, which a chat's folder never does; choose a folder inside your home folder`;
+    ? keyedError("NOT_AUTHORIZED", "error.folders.homePrimary")
+    : keyedError("NOT_AUTHORIZED", "error.folders.holdsHomePrimary", { path: real });
 }
 
 /** How a host entry is used, which `#checkHost` checks it for: a primary and a read-write attachment are written. */
@@ -362,16 +367,16 @@ function withinFolded(path: string, root: string): boolean {
 /** How `#validate` tells a refused path, by what it was to be: a chat's folder, or a file a schedule's pre-check reads. */
 const VALIDATED_AS = {
   directory: {
-    rename: "; rename the folder to use it",
-    never: "a chat never uses it as its folder",
-    noRoot: "This owner has no --fs-root, so a chat works only in its own folder",
+    lineUnsafe: "error.folders.lineUnsafeFolder",
+    never: textRef("error.folders.never.folder"),
+    noRoot: "error.folders.noRootFolder",
   },
   file: {
-    rename: "",
-    never: "a schedule never reads it",
-    noRoot: "This owner has no --fs-root, so a schedule reads no file of the host's",
+    lineUnsafe: "error.folders.lineUnsafeFile",
+    never: textRef("error.folders.never.file"),
+    noRoot: "error.folders.noRootFile",
   },
-} as const;
+} as const satisfies Record<string, { readonly lineUnsafe: CoreKey; readonly never: TextRef; readonly noRoot: CoreKey }>;
 
 /**
  * The on-disk spelling of a path: its deepest existing ancestor's real path
@@ -399,11 +404,12 @@ function segment(id: string): string {
   return `${readable}-${sha256Hex(id).slice(0, 12)}`;
 }
 
-/** The error a folder that is gone or no longer allowed is refused with. */
-function unavailable(what: string, path: string, why: string): TaviError {
-  return new TaviError(
+/** The error a folder that is gone or no longer allowed is refused with: which folder (`what`) and why, by key. */
+function unavailable(what: TextRef, path: string, why: TextRef): TaviError {
+  return keyedError(
     "UNAVAILABLE",
-    `This chat's ${what} ${path} ${why}. Run ${CHAT_FOLDER_RESET_COMMAND} to go back to the chat's own folder, or choose another.`,
+    "error.folders.unavailable",
+    { what, path, why, command: CHAT_FOLDER_RESET_COMMAND },
     { details: { path } },
   );
 }
@@ -472,18 +478,21 @@ export class ChatFolders {
   }
 
   /** What a chat's folder never is nor lies in, read as the filesystem spells it now. */
-  get #protectedPaths(): readonly { readonly path: string; readonly why: string }[] {
+  get #protectedPaths(): readonly { readonly path: string; readonly why: TextRef }[] {
     return [
-      { path: this.#dataDirectory, why: "is inside the tavi data directory" },
-      ...credentialHomes(this.#options.homeDirectory).map((path) => ({ path: canonical(path), why: "is a credential directory" })),
-      ...credentialFiles(this.#options.homeDirectory).map((path) => ({ path: canonical(path), why: "holds keys or tokens" })),
+      { path: this.#dataDirectory, why: textRef("error.folders.why.dataDirectory") },
+      ...credentialHomes(this.#options.homeDirectory).map((path) => ({
+        path: canonical(path),
+        why: textRef("error.folders.why.credentialDirectory"),
+      })),
+      ...credentialFiles(this.#options.homeDirectory).map((path) => ({ path: canonical(path), why: textRef("error.folders.why.keys") })),
       ...windowsProtectedPlaces(this.#options.homeDirectory).credentials.map((path) => ({
         path: canonical(path),
-        why: "holds keys or tokens",
+        why: textRef("error.folders.why.keys"),
       })),
       ...(this.#options.devPluginFolders ?? []).map((path) => ({
         path: canonical(resolve(path)),
-        why: "is a dev plugin's folder, whose code the owner runs on every save",
+        why: textRef("error.folders.why.devPlugin"),
       })),
     ];
   }
@@ -527,7 +536,7 @@ export class ChatFolders {
    */
   async managedFolderOf(workspaceId: string, taskId: string): Promise<string> {
     const task = await this.#options.tasks.get(taskId);
-    if (task === undefined || task.workspaceId !== workspaceId) throw new TaviError("NOT_FOUND", `Task ${taskId} does not exist`);
+    if (task === undefined || task.workspaceId !== workspaceId) throw keyedError("NOT_FOUND", "error.task.notFound", { taskId });
     const chat = await this.#rootChat(task);
     return this.ensureManaged(chat.workspaceId, chat.taskId);
   }
@@ -538,7 +547,7 @@ export class ChatFolders {
    */
   async managedFolderPath(workspaceId: string, taskId: string): Promise<string> {
     const task = await this.#options.tasks.get(taskId);
-    if (task === undefined || task.workspaceId !== workspaceId) throw new TaviError("NOT_FOUND", `Task ${taskId} does not exist`);
+    if (task === undefined || task.workspaceId !== workspaceId) throw keyedError("NOT_FOUND", "error.task.notFound", { taskId });
     const chat = await this.#rootChat(task);
     return this.managedPath(chat.workspaceId, chat.taskId);
   }
@@ -550,7 +559,7 @@ export class ChatFolders {
    */
   async chatOf(workspaceId: string, taskId: string): Promise<ChatFolderTask> {
     const task = await this.#options.tasks.get(taskId);
-    if (task === undefined || task.workspaceId !== workspaceId) throw new TaviError("NOT_FOUND", `Task ${taskId} does not exist`);
+    if (task === undefined || task.workspaceId !== workspaceId) throw keyedError("NOT_FOUND", "error.task.notFound", { taskId });
     return this.#rootChat(task);
   }
 
@@ -564,7 +573,7 @@ export class ChatFolders {
     const repository = this.#options.repository;
     if (repository.markTainted === undefined) return;
     const task = await this.#options.tasks.get(taskId);
-    if (task === undefined || task.workspaceId !== workspaceId) throw new TaviError("NOT_FOUND", `Task ${taskId} does not exist`);
+    if (task === undefined || task.workspaceId !== workspaceId) throw keyedError("NOT_FOUND", "error.task.notFound", { taskId });
     const chat = await this.#rootChat(task, delegatedFrom);
     await repository.markTainted({ taskId: chat.taskId, workspaceId: chat.workspaceId, now: this.#options.now?.() ?? nowTimestamp() });
   }
@@ -588,7 +597,7 @@ export class ChatFolders {
     const repository = this.#options.repository;
     if (repository.recordTaintedWrite === undefined) return;
     const task = await this.#options.tasks.get(taskId);
-    if (task === undefined || task.workspaceId !== workspaceId) throw new TaviError("NOT_FOUND", `Task ${taskId} does not exist`);
+    if (task === undefined || task.workspaceId !== workspaceId) throw keyedError("NOT_FOUND", "error.task.notFound", { taskId });
     const writer = from === undefined ? (await this.#rootChat(task, delegatedFrom)).taskId : from.taskId;
     await repository.recordTaintedWrite({
       workspaceId,
@@ -656,7 +665,8 @@ export class ChatFolders {
   refusalOf(real: string): string | undefined {
     if (/[*?[\]]/.test(real)) return "has *, ?, [ or ] in its path";
     if (hasLineUnsafeCharacters(real)) return "has a line break or a control character in its path";
-    return this.#protectedPaths.find((entry) => withinFolded(real, entry.path))?.why;
+    const why = this.#protectedPaths.find((entry) => withinFolded(real, entry.path))?.why;
+    return why === undefined ? undefined : englishOf(why);
   }
 
   /**
@@ -668,7 +678,7 @@ export class ChatFolders {
    */
   checkPrimary(path: string): string {
     const real = this.#validate(path, this.#roots());
-    if (withinFolded(this.#home, real)) throw new TaviError("NOT_AUTHORIZED", homePrimaryRefusal(real, this.#home));
+    if (withinFolded(this.#home, real)) throw homePrimaryRefusal(real, this.#home);
     return real;
   }
 
@@ -679,7 +689,7 @@ export class ChatFolders {
    */
   checkAttachment(path: string, mode: ChatFolderMode): string {
     const real = this.#validate(path, this.#roots());
-    if (mode === "rw" && withinFolded(this.#home, real)) throw new TaviError("NOT_AUTHORIZED", homePrimaryRefusal(real, this.#home, true));
+    if (mode === "rw" && withinFolded(this.#home, real)) throw homePrimaryRefusal(real, this.#home, true);
     return real;
   }
 
@@ -794,25 +804,23 @@ export class ChatFolders {
   ): Promise<ChatFolder> {
     const task = await this.#task(scope, taskId);
     // The chat's own principal, acting in a workspace this owner serves for it (`AccessPolicy`).
-    if (task.principalId !== scope.principalId) throw new TaviError("NOT_FOUND", `Task ${taskId} does not exist`);
+    if (task.principalId !== scope.principalId) throw keyedError("NOT_FOUND", "error.task.notFound", { taskId });
     if (this.#options.actsIn !== undefined && !this.#options.actsIn(scope.workspaceId, scope.principalId)) {
-      throw new TaviError("NOT_AUTHORIZED", `${scope.principalId} does not act in workspace ${scope.workspaceId}`);
+      throw keyedError("NOT_AUTHORIZED", "error.folders.doesNotAct", { principalId: scope.principalId, workspaceId: scope.workspaceId });
     }
     if (task.chatKind === "worker" || task.origin === "agent") {
-      throw new TaviError("INVALID_INPUT", `task ${taskId} is a worker, not a chat: set the folder of the chat it works for`);
+      throw keyedError("INVALID_INPUT", "error.folders.workerNotChat", { taskId });
     }
     if (change.kind === "primary" || change.kind === "attach") {
-      if (caller.frontEnd === "web" && caller.picked !== true)
-        throw new TaviError("NOT_AUTHORIZED", "The canvas cannot name a host folder; pick one from the folder list instead");
-      if (task.origin === "messaging")
-        throw new TaviError("NOT_AUTHORIZED", "A chat a messaging conversation started works only in its own folder");
+      if (caller.frontEnd === "web" && caller.picked !== true) throw keyedError("NOT_AUTHORIZED", "error.folders.canvasCannotName");
+      if (task.origin === "messaging") throw keyedError("NOT_AUTHORIZED", "error.folders.messagingOwnOnly");
     }
     // A reset reads only the revision, so a record that can no longer be read is still cleared.
     const row = change.kind === "reset" ? undefined : await this.#options.repository.get(taskId);
     const expectedRevision = change.kind === "reset" ? await this.#options.repository.revision(taskId) : (row?.revision ?? 0);
     // A change starts from what the chat resolves to now: its defaults until it has a record.
     if (beginning && row !== undefined)
-      throw new TaviError("CONFLICT", `Chat ${taskId} already has a folder; change it with ${CHAT_FOLDER_RESET_COMMAND.split(" ")[0]}`);
+      throw keyedError("CONFLICT", "error.folders.alreadyHasFolder", { taskId, command: CHAT_FOLDER_RESET_COMMAND.split(" ")[0] ?? "" });
     // A side chat's defaults leave out what its parent has that is gone, so a reset always recovers it.
     const base: Base = row ?? (await this.#defaults(task, 0, true));
     // Defaults nobody chose (no record yet) give way to a folder inside or around one, as at a chat's beginning:
@@ -858,10 +866,10 @@ export class ChatFolders {
       ? base.attachments.find((attachment) => overlapping(attachment) && !(attachment.mode === "rw" && withinFolded(real, attachment.path)))
       : undefined;
     if (widened !== undefined) {
-      throw new TaviError(
-        "NOT_AUTHORIZED",
-        `${real} overlaps "${widened.label}", a folder this side chat has from its parent chat ${widened.mode === "ro" ? "read-only" : "read-write"}; a side chat cannot write more of it than its parent gave it`,
-      );
+      throw keyedError("NOT_AUTHORIZED", widened.mode === "ro" ? "error.folders.sideChatWidenedRo" : "error.folders.sideChatWidenedRw", {
+        path: real,
+        label: widened.label,
+      });
     }
     return { ...base, attachments: base.attachments.filter((attachment) => !overlapping(attachment)) };
   }
@@ -875,10 +883,9 @@ export class ChatFolders {
         return { primaryKind: "managed", attachments: base.attachments };
       case "primary": {
         const path = this.#validate(change.path, roots);
-        if (withinFolded(this.#home, path)) throw new TaviError("NOT_AUTHORIZED", homePrimaryRefusal(path, this.#home));
+        if (withinFolded(this.#home, path)) throw homePrimaryRefusal(path, this.#home);
         const overlap = base.attachments.find((attachment) => withinFolded(path, attachment.path) || withinFolded(attachment.path, path));
-        if (overlap !== undefined)
-          throw new TaviError("CONFLICT", `${path} overlaps the attached folder "${overlap.label}"; detach it first`);
+        if (overlap !== undefined) throw keyedError("CONFLICT", "error.folders.overlapsAttached", { path, label: overlap.label });
         return { primaryKind: "host", primaryPath: path, attachments: base.attachments };
       }
       case "attach": {
@@ -886,30 +893,28 @@ export class ChatFolders {
         // Only an attach is bounded: what a chat inherits may be more, and a reset or a detach always goes through.
         if (base.attachments.length >= CHAT_FOLDER_ATTACHMENTS_MAX) {
           const over = base.attachments.length - CHAT_FOLDER_ATTACHMENTS_MAX + 1;
-          throw new TaviError(
-            "INVALID_INPUT",
-            `A chat attaches at most ${CHAT_FOLDER_ATTACHMENTS_MAX} folders; this one has ${base.attachments.length}: detach ${over === 1 ? "one" : over} first`,
-          );
+          const counts = { max: String(CHAT_FOLDER_ATTACHMENTS_MAX), count: String(base.attachments.length) };
+          throw over === 1
+            ? keyedError("INVALID_INPUT", "error.folders.attachLimitOne", counts)
+            : keyedError("INVALID_INPUT", "error.folders.attachLimit", { ...counts, over: String(over) });
         }
         const mode = change.mode ?? "ro";
-        if (mode === "rw" && withinFolded(this.#home, path))
-          throw new TaviError("NOT_AUTHORIZED", homePrimaryRefusal(path, this.#home, true));
+        if (mode === "rw" && withinFolded(this.#home, path)) throw homePrimaryRefusal(path, this.#home, true);
         const overlap = base.attachments.find((attachment) => withinFolded(path, attachment.path) || withinFolded(attachment.path, path));
-        if (overlap !== undefined)
-          throw new TaviError("CONFLICT", `${path} overlaps the attached folder "${overlap.label}"; detach it first`);
+        if (overlap !== undefined) throw keyedError("CONFLICT", "error.folders.overlapsAttached", { path, label: overlap.label });
         if (
           base.primaryKind === "host" &&
           base.primaryPath !== undefined &&
           (withinFolded(path, base.primaryPath) || withinFolded(base.primaryPath, path))
         ) {
-          throw new TaviError("CONFLICT", `${path} overlaps the chat's primary folder`);
+          throw keyedError("CONFLICT", "error.folders.overlapsPrimary", { path });
         }
         const attachment = { path, mode, label: uniqueLabel(labelOf(path), base.attachments, true) } as const;
         return { ...base, attachments: [...base.attachments, attachment] };
       }
       case "detach": {
         if (!base.attachments.some((attachment) => attachment.label === change.label))
-          throw new TaviError("NOT_FOUND", `This chat has no attached folder "${change.label}"`);
+          throw keyedError("NOT_FOUND", "error.folders.noAttached", { label: change.label });
         return { ...base, attachments: base.attachments.filter((attachment) => attachment.label !== change.label) };
       }
     }
@@ -923,31 +928,30 @@ export class ChatFolders {
    * for a schedule's pre-check, an existing regular file.
    */
   #validate(path: string, roots: readonly string[], kind: "directory" | "file" = "directory"): string {
-    if (!isAbsolute(path)) throw new TaviError("INVALID_INPUT", `${path} is not an absolute path`);
+    if (!isAbsolute(path)) throw keyedError("INVALID_INPUT", "error.folders.notAbsolute", { path });
     const real = canonical(resolve(path));
     const told = VALIDATED_AS[kind];
     // `sandbox.run`'s policy reads a folder as a pattern, which would match other folders than this one.
-    if (kind === "directory" && /[*?[\]]/.test(real))
-      throw new TaviError(
-        "INVALID_INPUT",
-        `${real} has *, ?, [ or ] in its path, which the sandbox reads as a pattern; rename the folder to use it`,
-      );
+    if (kind === "directory" && /[*?[\]]/.test(real)) throw keyedError("INVALID_INPUT", "error.folders.patternChars", { path: real });
     // Its path is stated to the model on one line: a name that would break the line is never a chat's folder.
-    if (hasLineUnsafeCharacters(real))
-      throw new TaviError("INVALID_INPUT", `${lineSafe(real)} has a line break or a control character in its path${told.rename}`);
+    if (hasLineUnsafeCharacters(real)) throw keyedError("INVALID_INPUT", told.lineUnsafe, { path: lineSafe(real) });
     const refused = this.#protectedPaths.find((entry) => withinFolded(real, entry.path));
-    if (refused !== undefined) throw new TaviError("NOT_AUTHORIZED", `${real} ${refused.why}; ${told.never}`);
+    if (refused !== undefined)
+      throw keyedError("NOT_AUTHORIZED", "error.folders.protected", { path: real, why: refused.why, never: told.never });
     if (!roots.some((root) => pathWithin(real, root))) {
-      throw new TaviError("NOT_AUTHORIZED", roots.length === 0 ? told.noRoot : `${real} is not under an --fs-root`);
+      throw roots.length === 0
+        ? keyedError("NOT_AUTHORIZED", told.noRoot)
+        : keyedError("NOT_AUTHORIZED", "error.folders.notUnderRoot", { path: real });
     }
     let matches = false;
     try {
       const status = statSync(real);
       matches = kind === "directory" ? status.isDirectory() : status.isFile();
     } catch {
-      throw new TaviError("NOT_FOUND", `${real} does not exist`);
+      throw keyedError("NOT_FOUND", "error.folders.doesNotExist", { path: real });
     }
-    if (!matches) throw new TaviError("INVALID_INPUT", `${real} is not a ${kind}`);
+    if (!matches)
+      throw keyedError("INVALID_INPUT", kind === "directory" ? "error.folders.notADirectory" : "error.folders.notAFile", { path: real });
     return real;
   }
 
@@ -956,11 +960,11 @@ export class ChatFolders {
     const roots = this.#roots();
     return {
       ...(base.primaryKind === "host" && base.primaryPath !== undefined
-        ? { primary: this.#checkHost("primary folder", base.primaryPath, roots, "primary") }
+        ? { primary: this.#checkHost(textRef("error.folders.what.primary"), base.primaryPath, roots, "primary") }
         : {}),
       attachments: base.attachments.map((attachment) => ({
         ...attachment,
-        path: this.#checkHost(`attached folder "${attachment.label}"`, attachment.path, roots, attachment.mode),
+        path: this.#checkHost(textRef("error.folders.what.attached", { label: attachment.label }), attachment.path, roots, attachment.mode),
       })),
     };
   }
@@ -968,7 +972,7 @@ export class ChatFolders {
   /** Whether a host entry `#checkHost` would accept now, in `role`. */
   #usable(path: string, role: HostRole): boolean {
     try {
-      this.#checkHost("folder", path, this.#roots(), role);
+      this.#checkHost(textRef("error.folders.what.folder"), path, this.#roots(), role);
       return true;
     } catch {
       return false;
@@ -980,34 +984,32 @@ export class ChatFolders {
    * is a directory, and is still allowed — and a primary, or a read-write
    * attachment, is never the owner's `$HOME` nor a folder holding it.
    */
-  #checkHost(what: string, path: string, roots: readonly string[], role: HostRole): string {
+  #checkHost(what: TextRef, path: string, roots: readonly string[], role: HostRole): string {
     let real: string;
     try {
       real = realpathSync.native(path);
       if (!statSync(real).isDirectory()) throw new Error("not a directory");
     } catch {
-      throw unavailable(what, path, "no longer exists");
+      throw unavailable(what, path, textRef("error.folders.why.gone"));
     }
     // Swapped since for a link to a folder whose name the sandbox's policy or the prompt's line cannot take.
-    if (/[*?[\]]/.test(real) || hasLineUnsafeCharacters(real))
-      throw unavailable(
-        what,
-        path,
-        "now leads to a folder with a character in its path (*, ?, [, ], a line break or a control character) that a chat's folder never has",
-      );
-    if (this.#protectedPaths.some((entry) => withinFolded(real, entry.path))) throw unavailable(what, path, "is no longer allowed");
-    if (!roots.some((root) => pathWithin(real, root))) throw unavailable(what, path, "is no longer under an --fs-root");
+    if (/[*?[\]]/.test(real) || hasLineUnsafeCharacters(real)) throw unavailable(what, path, textRef("error.folders.why.badCharacters"));
+    if (this.#protectedPaths.some((entry) => withinFolded(real, entry.path)))
+      throw unavailable(what, path, textRef("error.folders.why.notAllowed"));
+    if (!roots.some((root) => pathWithin(real, root))) throw unavailable(what, path, textRef("error.folders.why.notUnderRoot"));
     if (role !== "ro" && withinFolded(this.#home, real))
       throw unavailable(
         what,
         path,
-        role === "rw"
-          ? withinFolded(real, this.#home)
-            ? "is your home folder itself, which a chat never writes whole"
-            : "holds your home folder, which a chat never writes whole"
-          : withinFolded(real, this.#home)
-            ? "is your home folder itself, which is never a chat's folder"
-            : "holds your home folder, which a chat's folder never does",
+        textRef(
+          role === "rw"
+            ? withinFolded(real, this.#home)
+              ? "error.folders.why.isHomeRw"
+              : "error.folders.why.holdsHomeRw"
+            : withinFolded(real, this.#home)
+              ? "error.folders.why.isHomePrimary"
+              : "error.folders.why.holdsHomePrimary",
+        ),
       );
     return real;
   }
@@ -1108,7 +1110,7 @@ export class ChatFolders {
 
   async #task(scope: ChatFolderScope, taskId: string, known?: ChatFolderTask): Promise<ChatFolderTask> {
     const task = known?.taskId === taskId ? known : await this.#options.tasks.get(taskId);
-    if (task === undefined || task.workspaceId !== scope.workspaceId) throw new TaviError("NOT_FOUND", `Task ${taskId} does not exist`);
+    if (task === undefined || task.workspaceId !== scope.workspaceId) throw keyedError("NOT_FOUND", "error.task.notFound", { taskId });
     return task;
   }
 

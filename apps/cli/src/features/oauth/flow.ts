@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { TaviError, type ChannelDescriptor, type OAuth2Spec } from "@tavi/contracts";
+import { keyedError, TaviError, type ChannelDescriptor, type OAuth2Spec } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 import { securityHeaders } from "@tavi/node-kit";
 
@@ -179,10 +179,10 @@ export class OAuthFlows {
     const descriptor = this.#deps.descriptorOf(input.providerId);
     const spec = descriptor === undefined ? undefined : oauthSpecOf(descriptor);
     if (descriptor === undefined || spec === undefined)
-      throw new TaviError("INVALID_INPUT", `${descriptor?.label ?? input.providerId} does not connect with OAuth`);
+      throw keyedError("INVALID_INPUT", "error.oauth.notOAuth", { channel: descriptor?.label ?? input.providerId });
     const client = await oauthClientOf(this.#deps.dataDirectory, descriptor, spec);
     this.#sweep();
-    if (this.#byId.size >= MAX_FLOWS) throw new TaviError("UNAVAILABLE", "Too many sign-ins are waiting; finish or close one first");
+    if (this.#byId.size >= MAX_FLOWS) throw keyedError("UNAVAILABLE", "error.oauth.tooManyFlows");
     const flow: Flow = {
       flowId: randomUUID(),
       state: randomToken(32),
@@ -230,12 +230,12 @@ export class OAuthFlows {
     const descriptor = this.#deps.descriptorOf(input.providerId);
     const spec = descriptor === undefined ? undefined : oauthSpecOf(descriptor);
     if (descriptor === undefined || spec === undefined)
-      throw new TaviError("INVALID_INPUT", `${descriptor?.label ?? input.providerId} does not connect with OAuth`);
+      throw keyedError("INVALID_INPUT", "error.oauth.notOAuth", { channel: descriptor?.label ?? input.providerId });
     if (spec.deviceAuthorizationUrl === undefined || !signsInByCode(descriptor))
-      throw new TaviError("UNSUPPORTED", `${descriptor.label} does not sign in with a code`);
+      throw keyedError("UNSUPPORTED", "error.oauth.noCode", { channel: descriptor.label });
     const client = await oauthClientOf(this.#deps.dataDirectory, descriptor, spec);
     this.#sweep();
-    if (this.#byId.size >= MAX_FLOWS) throw new TaviError("UNAVAILABLE", "Too many sign-ins are waiting; finish or close one first");
+    if (this.#byId.size >= MAX_FLOWS) throw keyedError("UNAVAILABLE", "error.oauth.tooManyFlows");
     const scopes = await this.#scopesOf(input.connectionId, spec);
     const body = new URLSearchParams(scopes.length > 0 ? { scope: scopes.join(" ") } : {});
     const headers = clientAuthHeaders(spec, client, body);
@@ -480,7 +480,7 @@ export class OAuthFlows {
   #channelOf(flow: Flow): { readonly descriptor: ChannelDescriptor; readonly spec: OAuth2Spec } {
     const descriptor = this.#deps.descriptorOf(flow.providerId);
     const spec = descriptor === undefined ? undefined : oauthSpecOf(descriptor);
-    if (descriptor === undefined || spec === undefined) throw new TaviError("NOT_FOUND", "The channel is no longer installed.");
+    if (descriptor === undefined || spec === undefined) throw keyedError("NOT_FOUND", "error.oauth.channelGone");
     return { descriptor, spec };
   }
 
@@ -490,22 +490,16 @@ export class OAuthFlows {
     // Every access the channel asks for: one signed in with less cannot do its work, so it is not kept.
     const refused = (await this.#scopesOf(flow.connectionId, spec)).filter((scope) => !token.scopes.includes(scope));
     if (refused.length > 0)
-      throw new TaviError(
-        "NOT_AUTHORIZED",
-        `The sign-in did not allow ${refused.join(", ")}: connect again and allow everything ${descriptor.label} asks for.`,
-      );
+      throw keyedError("NOT_AUTHORIZED", "error.oauth.scopesRefused", { scopes: refused.join(", "), channel: descriptor.label });
     // The account it signed in as, when the channel can name it: one it cannot is not taken on trust.
     const named = await this.#accountOf(spec, token.accessToken);
     if (spec.accountIdentity !== undefined && named === undefined)
-      throw new TaviError("UNAVAILABLE", `${descriptor.label} did not say which account signed in: connect again.`);
+      throw keyedError("UNAVAILABLE", "error.oauth.noAccountNamed", { channel: descriptor.label });
     const accountIdentity = named ?? descriptor.label;
     // Signing in again is the same account: another one's mailbox under this connection's people and threads is refused.
     const previous = await this.#deps.signedInAccount?.(flow.connectionId);
     if (previous !== undefined && named !== undefined && previous.toLowerCase() !== named.toLowerCase()) {
-      throw new TaviError(
-        "CONFLICT",
-        `You signed in as ${named}, but this connection is ${previous}. Add it as another account instead, or disconnect this one first.`,
-      );
+      throw keyedError("CONFLICT", "error.oauth.otherAccount", { named, previous });
     }
     const tokenRef = oauthTokenRef(flow.connectionId);
     await serializeCredentialAction(this.#deps.dataDirectory, async () => {
@@ -516,7 +510,7 @@ export class OAuthFlows {
       await serializeCredentialAction(this.#deps.dataDirectory, async () => {
         await createLocalCredentialStore(this.#deps.dataDirectory).deleteSecret(tokenRef);
       });
-      throw new TaviError("NOT_FOUND", "The connection was removed while it was signing in.");
+      throw keyedError("NOT_FOUND", "error.oauth.connectionRemoved");
     }
     return accountIdentity;
   }

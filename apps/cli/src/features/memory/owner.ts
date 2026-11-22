@@ -60,13 +60,15 @@ import {
   type MemoryConsolidateNowAnswer,
   hostTimeZone,
   type WorkspaceSettingsRepositoryPort,
+  keyedError,
+  textRef,
 } from "@tavi/contracts";
 import { definedOnly } from "@tavi/contracts/util";
 import { operatorActor } from "../../server/config-commands.js";
 import { decideMemoryRecord, discardAll, keepAllPlain } from "./bulk.js";
 import type { MemoryJobsNow } from "./jobs-now.js";
 import { memoryProviderCommand, type MemoryProviderCommandDependencies } from "./provider-owner.js";
-import type { IpcAnswer } from "../../shared/ipc-decisions.js";
+import { refusalFrom, type IpcAnswer } from "../../shared/ipc-decisions.js";
 import { OFFER_READ_REUSE_MS, recentRead } from "../../shared/recent-read.js";
 
 /**
@@ -151,7 +153,7 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
     // answer an empty, plausible-looking list.
     const principalId = deps.principalOf(workspaceId);
     if (principalId === undefined) {
-      throw new TaviError("NOT_FOUND", `workspace ${workspaceId} is not configured on this owner`, { details: { workspaceId } });
+      throw keyedError("NOT_FOUND", "error.workspace.notConfigured", { workspaceId }, { details: { workspaceId } });
     }
     const operator = { principalId, workspaceId };
     const settings = (await deps.memorySettings?.(workspaceId)) ?? effectiveMemorySettings(undefined);
@@ -195,7 +197,7 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
     /** A chat in this workspace, or `NOT_FOUND` alike for one that does not exist and one elsewhere. */
     const chatTask = async (taskId: string): Promise<string> => {
       const task = await deps.repositories.tasks.get(taskId);
-      if (task === undefined || task.workspaceId !== workspaceId) throw new TaviError("NOT_FOUND", `Task ${taskId} does not exist`);
+      if (task === undefined || task.workspaceId !== workspaceId) throw keyedError("NOT_FOUND", "error.task.notFound", { taskId });
       return taskId;
     };
     /** The scope a write targets: a chat's notes only for a chat in this workspace. */
@@ -203,7 +205,7 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
       const scope = memoryScopeForTarget(target, operator);
       // As `editable`: the shared scope is changed by an explicit share only.
       if (scope.kind === "shared_workspace") {
-        throw new TaviError("NOT_AUTHORIZED", "Shared workspace memory is changed by an explicit share, not from here");
+        throw keyedError("NOT_AUTHORIZED", "error.memory.sharedByShare");
       }
       if (scope.kind === "run_local") await chatTask(scope.runId);
       return scope;
@@ -212,7 +214,7 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
     const editable = async (recordId: string): Promise<MemoryRecord> => {
       const record = await visible(recordId);
       if (record.scope.kind === "shared_workspace") {
-        throw new TaviError("NOT_AUTHORIZED", "Shared workspace memory is changed by an explicit share, not from here");
+        throw keyedError("NOT_AUTHORIZED", "error.memory.sharedByShare");
       }
       return record;
     };
@@ -269,11 +271,11 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
     const usedByTurn = async (taskId: string, seq: number | undefined): Promise<Omit<MemoryWhyAnswer, "taskId">> => {
       await chatTask(taskId);
       const transcripts = deps.repositories.transcripts;
-      if (transcripts === undefined) throw new TaviError("NOT_FOUND", `Task ${taskId} has no saved turns here`);
+      if (transcripts === undefined) throw keyedError("NOT_FOUND", "error.memory.noSavedTurns", { taskId });
       const page =
         seq === undefined ? await transcripts.page(taskId, { limit: 1 }) : await transcripts.page(taskId, { after: seq - 1, limit: 1 });
       const entry = page.entries.at(-1);
-      if (seq !== undefined && entry?.seq !== seq) throw new TaviError("NOT_FOUND", `Chat ${taskId} has no turn ${seq}`);
+      if (seq !== undefined && entry?.seq !== seq) throw keyedError("NOT_FOUND", "error.memory.noTurn", { taskId, seq: String(seq) });
       if (entry === undefined) return { records: [] };
       const used = entry.turn.memoryUsed;
       const answered = { seq: entry.seq, answeredAt: entry.createdAt };
@@ -578,7 +580,7 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
           payload.preferenceValue === undefined &&
           payload.until === undefined
         ) {
-          throw new TaviError("INVALID_INPUT", "A correction needs a new title, body, preference value or end date");
+          throw keyedError("INVALID_INPUT", "error.memory.correctionEmpty");
         }
         const record = await editable(payload.recordId);
         let timeZone: string | undefined;
@@ -623,16 +625,19 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
         // that record's revision, then the proposal discarded as applied. Never a MEMORY_CONFLICT.
         const proposal = await editable(payload.recordId);
         if (proposal.status !== "proposed")
-          throw new TaviError("CONFLICT", `Memory record ${proposal.recordId} is ${proposal.status}; only a waiting update is replaced`);
+          throw keyedError("CONFLICT", "error.memory.notWaitingUpdate", {
+            recordId: proposal.recordId,
+            status: textRef(`error.memory.status.${proposal.status}`),
+          });
         const revision = await currentRevision(proposal);
         if (payload.expectedRevisionId !== undefined && payload.expectedRevisionId !== revision?.revisionId) {
-          throw new TaviError("REVISION_CONFLICT", "The proposal changed since it was read", { details: { recordId: proposal.recordId } });
+          throw keyedError("REVISION_CONFLICT", "error.memory.proposalChanged", undefined, { details: { recordId: proposal.recordId } });
         }
         const { updates, mayUpdate } = await relatedOf(proposal);
         const targetRef = updates ?? mayUpdate;
-        if (targetRef === undefined) throw new TaviError("INVALID_INPUT", "This proposal updates nothing kept now; keep it instead");
+        if (targetRef === undefined) throw keyedError("INVALID_INPUT", "error.memory.updatesNothing");
         if (payload.targetRevisionId !== undefined && payload.targetRevisionId !== targetRef.currentRevisionId) {
-          throw new TaviError("REVISION_CONFLICT", "What it replaces changed since it was read", {
+          throw keyedError("REVISION_CONFLICT", "error.memory.targetChanged", undefined, {
             details: { recordId: targetRef.recordId },
           });
         }
@@ -648,7 +653,7 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
           currentTargetRevision.recordedAt > filedAt &&
           targetRevisions.some((entry) => entry.revisionId !== currentTargetRevision.revisionId && entry.recordedAt <= filedAt)
         ) {
-          throw new TaviError("REVISION_CONFLICT", "What it replaces changed after this update was proposed", {
+          throw keyedError("REVISION_CONFLICT", "error.memory.targetChangedAfterProposal", undefined, {
             details: { recordId: target.recordId },
           });
         }
@@ -700,15 +705,14 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
       }
       case "move": {
         const record = await editable(payload.recordId);
-        if (record.status !== "approved")
-          throw new TaviError("INVALID_INPUT", "Only an approved record can be moved; decide the proposal first");
+        if (record.status !== "approved") throw keyedError("INVALID_INPUT", "error.memory.moveNotApproved");
         if (payload.expectedRevisionId !== undefined && payload.expectedRevisionId !== record.currentRevisionId) {
-          throw new TaviError("REVISION_CONFLICT", "The record changed since it was read", { details: { recordId: record.recordId } });
+          throw keyedError("REVISION_CONFLICT", "error.memory.recordChanged", undefined, { details: { recordId: record.recordId } });
         }
         const scope = await writable(payload.to);
-        if (memoryScopeKey(scope) === record.scopeKey) throw new TaviError("INVALID_INPUT", "The record is already there");
+        if (memoryScopeKey(scope) === record.scopeKey) throw keyedError("INVALID_INPUT", "error.memory.alreadyThere");
         const revision = await currentRevision(record);
-        if (revision?.body === undefined) throw new TaviError("INVALID_INPUT", "Only a record with a body can be moved");
+        if (revision?.body === undefined) throw keyedError("INVALID_INPUT", "error.memory.moveNeedsBody");
         const preference = revision.preference;
         const origin = record.originTaskId ?? (record.scope.kind === "run_local" ? record.scope.runId : undefined);
         // Two service calls, not one transaction: the copy is made first, and
@@ -746,7 +750,7 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
         try {
           const now = await visibleOrNone(record.recordId);
           if (now?.status !== "approved" || now.currentRevisionId !== record.currentRevisionId) {
-            throw new TaviError("REVISION_CONFLICT", "The record changed while it was moved; read it again", {
+            throw keyedError("REVISION_CONFLICT", "error.memory.changedWhileMoved", undefined, {
               details: { recordId: record.recordId },
             });
           }
@@ -762,7 +766,7 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
         const transcripts = deps.repositories.transcripts;
         const notice = await transcripts?.getNotice(payload.noticeId);
         if (transcripts === undefined || notice === undefined || notice.kind !== "memory")
-          throw new TaviError("NOT_FOUND", `Memory card ${payload.noticeId} does not exist`);
+          throw keyedError("NOT_FOUND", "error.memory.cardNotFound", { noticeId: payload.noticeId });
         await chatTask(notice.taskId);
         const rows = await transcripts.memoryPrompts(notice.noticeId);
         const items: MemoryCardItem[] = [];
@@ -828,7 +832,7 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
         const transcripts = deps.repositories.transcripts;
         const notice = await transcripts?.getNotice(payload.noticeId);
         if (transcripts === undefined || notice === undefined || notice.kind !== "memory")
-          throw new TaviError("NOT_FOUND", `Memory card ${payload.noticeId} does not exist`);
+          throw keyedError("NOT_FOUND", "error.memory.cardNotFound", { noticeId: payload.noticeId });
         if (transcripts.postMemoryCard === undefined || deps.newId === undefined)
           throw new TaviError("NOT_CONFIGURED", "A card's Keep all needs the owner's chat notices");
         await chatTask(notice.taskId);
@@ -913,8 +917,7 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
       case "set-provider":
       case "egress":
         // The workspace's memory provider and its egress: the owner's registry, each change after its disclosure.
-        if (deps.providers === undefined)
-          throw new TaviError("UNAVAILABLE", "The memory provider is chosen on a running owner: start tavi serve");
+        if (deps.providers === undefined) throw keyedError("UNAVAILABLE", "error.memory.providerNeedsOwner");
         return {
           ok: true,
           result: await memoryProviderCommand(
@@ -938,8 +941,7 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
       }
     }
   } catch (error) {
-    const failure = TaviError.from(error);
-    return { ok: false, error: { code: failure.code, message: failure.message } };
+    return refusalFrom(error);
   }
 }
 
@@ -1059,6 +1061,6 @@ export function keepLongerDates(
 
 function decodeCursor(cursor: string): number {
   const offset = decodeMemoryListCursor(cursor);
-  if (offset === undefined) throw new TaviError("INVALID_INPUT", "Invalid memory cursor; list again from the first page");
+  if (offset === undefined) throw keyedError("INVALID_INPUT", "error.memory.invalidCursor");
   return offset;
 }

@@ -1,5 +1,6 @@
 import {
   TaviError,
+  keyedError,
   triggerInWords,
   type AddressKind,
   type ChannelRoomRecord,
@@ -75,9 +76,9 @@ function checkedContext(
   label: string,
 ): ChannelRoomRecord["context"] {
   if (context === "off") return context;
-  needsOpen(deps, connectionId, "check whether its rooms can read their recent messages");
+  needsOpen(deps, connectionId, "history");
   if (deps.messaging.capabilitiesOf(connectionId)?.groups?.recentHistory === undefined)
-    throw new TaviError("UNSUPPORTED", `${label} cannot read a room's recent messages`);
+    throw keyedError("UNSUPPORTED", "error.channels.noRoomHistory", { channel: label });
   return context;
 }
 
@@ -92,21 +93,32 @@ async function ownerName(deps: ChannelRoomsDependencies, workspaceId: string, co
 }
 
 /** Refuses what needs the open connection's connector when it is not open (no owner runs it, or it failed). */
-function needsOpen(deps: ChannelRoomsDependencies, connectionId: string, what: string): void {
-  if (deps.messaging.capabilitiesOf(connectionId) === undefined)
-    throw new TaviError("UNAVAILABLE", `Connection ${connectionId} is not open: start it to ${what}`);
+function needsOpen(deps: ChannelRoomsDependencies, connectionId: string, what: keyof typeof NOT_OPEN): void {
+  if (deps.messaging.capabilitiesOf(connectionId) === undefined) throw keyedError("UNAVAILABLE", NOT_OPEN[what], { connectionId });
 }
+
+/** What a closed connection's refusal says it must be started for, one whole sentence each. */
+const NOT_OPEN = {
+  history: "error.channels.roomNotOpen.history",
+  trigger: "error.channels.roomNotOpen.trigger",
+  threads: "error.channels.roomNotOpen.threads",
+  add: "error.channels.roomNotOpen.add",
+  leave: "error.channels.roomNotOpen.leave",
+} as const;
 
 /** A trigger the connector reports. */
 function checkedTrigger(deps: ChannelRoomsDependencies, connectionId: string, trigger: readonly AddressKind[], label: string): RoomTrigger {
-  needsOpen(deps, connectionId, "check what its rooms can be triggered by");
+  needsOpen(deps, connectionId, "trigger");
   const reported = deps.messaging.capabilitiesOf(connectionId)?.groups?.addressing ?? [];
   const unreported = trigger.filter((kind) => !reported.includes(kind));
   if (unreported.length > 0)
-    throw new TaviError(
-      "INVALID_INPUT",
-      `${label} does not report ${unreported.join(", ")}; its rooms can be triggered by ${reported.join(", ") || "nothing"}`,
-    );
+    throw reported.length === 0
+      ? keyedError("INVALID_INPUT", "error.channels.triggerNone", { channel: label, unreported: unreported.join(", ") })
+      : keyedError("INVALID_INPUT", "error.channels.triggerUnreported", {
+          channel: label,
+          unreported: unreported.join(", "),
+          reported: reported.join(", "),
+        });
   return [...new Set(trigger)] as RoomTrigger;
 }
 
@@ -123,9 +135,9 @@ function checkedAutoThread(
   trigger: RoomTrigger,
 ): { readonly autoThread?: true; readonly trigger: RoomTrigger } {
   if (!autoThread) return { trigger };
-  needsOpen(deps, connectionId, "check whether its rooms can answer in threads");
+  needsOpen(deps, connectionId, "threads");
   if (deps.messaging.capabilitiesOf(connectionId)?.groups?.autoThread !== true)
-    throw new TaviError("UNSUPPORTED", `${label} cannot open a thread for each message`);
+    throw keyedError("UNSUPPORTED", "error.channels.noAutoThread", { channel: label });
   return {
     autoThread: true,
     trigger: trigger.includes("thread") ? trigger : checkedTrigger(deps, connectionId, [...trigger, "thread"], label),
@@ -138,11 +150,14 @@ export async function channelRooms(deps: ChannelRoomsDependencies, payload: Room
   const connection = configured.find((candidate) => candidate.connectionId === payload.connectionId);
   if (connection === undefined || connection.workspaceId !== payload.workspaceId)
     // Named, with where to look, as the other `channels` actions refuse it.
-    throw new TaviError("NOT_FOUND", `No connection ${payload.connectionId} in workspace ${payload.workspaceId} (\`tavi channels list\`)`);
+    throw keyedError("NOT_FOUND", "error.channels.noConnectionId", {
+      connectionId: payload.connectionId,
+      workspaceId: payload.workspaceId,
+    });
   const descriptor = channelDescriptorOf(connection.providerId);
   const groups = descriptor?.groups;
   if (descriptor === undefined || groups === undefined)
-    throw new TaviError("UNSUPPORTED", `${descriptor?.label ?? connection.providerId} has no rooms`);
+    throw keyedError("UNSUPPORTED", "error.channels.noRooms", { channel: descriptor?.label ?? connection.providerId });
   const listing = async (notApplied?: string): Promise<ChannelsRoomsAnswer> => {
     const open = deps.messaging.capabilitiesOf(payload.connectionId);
     // The platform's list is a picker's help, not the record: one that cannot be read leaves it out.
@@ -185,13 +200,14 @@ export async function channelRooms(deps: ChannelRoomsDependencies, payload: Room
   const existing = await rooms.get(payload.connectionId, conversationId);
   switch (payload.op) {
     case "add": {
-      if (existing !== undefined) throw new TaviError("DUPLICATE", `${existing.label} is already a room of ${payload.connectionId}`);
-      needsOpen(deps, payload.connectionId, "add a room");
+      if (existing !== undefined)
+        throw keyedError("DUPLICATE", "error.channels.roomExists", { room: existing.label, connectionId: payload.connectionId });
+      needsOpen(deps, payload.connectionId, "add");
       // One connection per platform room: two bots of the provider in one room would both answer it.
       for (const other of configured) {
         if (other.connectionId === payload.connectionId || other.providerId !== connection.providerId) continue;
         if ((await rooms.get(other.connectionId, conversationId)) !== undefined)
-          throw new TaviError("CONFLICT", `That room is already a room of connection ${other.connectionId}`);
+          throw keyedError("CONFLICT", "error.channels.roomOfOther", { connectionId: other.connectionId });
       }
       const at = deps.now();
       const room: ChannelRoomRecord = {
@@ -217,7 +233,8 @@ export async function channelRooms(deps: ChannelRoomsDependencies, payload: Room
       return listing(await introduce(deps, room));
     }
     case "set": {
-      if (existing === undefined) throw new TaviError("NOT_FOUND", `${conversationId} is not a room of ${payload.connectionId}`);
+      if (existing === undefined)
+        throw keyedError("NOT_FOUND", "error.channels.notARoomOf", { room: conversationId, connectionId: payload.connectionId });
       // Turned off, it is left out: the record keeps no `autoThread: false`.
       const { autoThread: _wasAutoThread, ...kept } = existing;
       const trigger =
@@ -245,17 +262,18 @@ export async function channelRooms(deps: ChannelRoomsDependencies, payload: Room
     }
     case "remove":
       if (!(await rooms.remove(payload.connectionId, conversationId)))
-        throw new TaviError("NOT_FOUND", `${conversationId} is not a room of ${payload.connectionId}`);
+        throw keyedError("NOT_FOUND", "error.channels.notARoomOf", { room: conversationId, connectionId: payload.connectionId });
       return listing();
     case "leave": {
-      needsOpen(deps, payload.connectionId, "leave a room");
+      needsOpen(deps, payload.connectionId, "leave");
       if (deps.messaging.capabilitiesOf(payload.connectionId)?.groups?.leaveRoom !== true || deps.messaging.leaveRoom === undefined)
-        throw new TaviError("UNSUPPORTED", `${descriptor.label} cannot leave a room from Tavi: remove the bot in the room itself`);
+        throw keyedError("UNSUPPORTED", "error.channels.cannotLeave", { channel: descriptor.label });
       const destination = deps.messaging.buildReplyDestination(payload.connectionId, {
         externalConversationId: conversationId,
         externalSenderId: conversationId,
       });
-      if (destination === undefined) throw new TaviError("UNAVAILABLE", `Connection ${payload.connectionId} is not open`);
+      if (destination === undefined)
+        throw keyedError("UNAVAILABLE", "error.channels.connectionNotOpen", { connectionId: payload.connectionId });
       await deps.messaging.leaveRoom(payload.connectionId, payload.workspaceId, destination);
       await rooms.remove(payload.connectionId, conversationId);
       deps.roomInvitations?.settle(payload.connectionId, conversationId);

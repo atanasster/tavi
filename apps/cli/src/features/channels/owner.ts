@@ -3,6 +3,11 @@ import { randomUUID } from "node:crypto";
 import {
   DEFAULT_CHANNEL_INGRESS,
   TaviError,
+  keyedError,
+  TEXT_REF_DEPTH_MAX,
+  textRef,
+  type TextRef,
+  type TextRefParams,
   channelAccountOf,
   channelIdentity,
   grantInForce,
@@ -38,6 +43,7 @@ import {
   isLocalConnectionId,
   RESERVED_CHANNEL_CONNECTION_IDS,
 } from "@tavi/contracts";
+import type { CoreKey } from "@tavi/contracts/locales/core";
 import { definedOnly, errorMessage } from "@tavi/contracts/util";
 import { prefixedId } from "@tavi/node-kit";
 import { type ChannelHost, type ChannelRecord, isTrustedProxyEntry, type PairingRegistry } from "@tavi/runtime";
@@ -73,6 +79,12 @@ import { clearOAuthClient, oauthClientOf, oauthClientStatus, oauthSpecOf, saveOA
 import type { OAuthFlows } from "../oauth/flow.js";
 import { createLocalCredentialStore, credentialsEncrypted, listCredentialRefs, serializeCredentialAction } from "../credentials/store.js";
 
+/** Field labels joined as "a and b and c", by key, so each language joins them its own way; past the reference depth, as English text. */
+function fieldList(labels: readonly string[]): string | TextRef {
+  const [first, ...rest] = labels;
+  if (first === undefined || labels.length >= TEXT_REF_DEPTH_MAX) return labels.join(" and ");
+  return rest.reduce<string | TextRef>((joined, last) => textRef("error.channels.fieldsJoined", { first: joined, last }), first);
+}
 /**
  * The `channels` IPC command: every
  * channel's connections, configured from its descriptor. Answered only on the
@@ -276,21 +288,21 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
     }
     case "save": {
       const descriptor = channelDescriptorOf(payload.providerId);
-      if (descriptor === undefined) throw new TaviError("NOT_FOUND", `No channel ${payload.providerId} is installed`);
+      if (descriptor === undefined) throw keyedError("NOT_FOUND", "error.channels.notInstalled", { providerId: payload.providerId });
       // Removed connections too: an id is its connection's for good, so a reused one is checked against it.
       const existing =
         payload.connectionId === undefined
           ? undefined
           : (await connections.list(undefined, { includeDeleted: true })).find((record) => record.connectionId === payload.connectionId);
       if (existing !== undefined && existing.workspaceId !== payload.workspaceId)
-        throw new TaviError("NOT_AUTHORIZED", "No such connection in this workspace");
+        throw keyedError("NOT_AUTHORIZED", "error.channels.noConnection");
       if (existing !== undefined && existing.providerId !== descriptor.providerId)
-        throw new TaviError(
-          "CONFLICT",
-          `Connection ${existing.connectionId} is a ${channelDescriptorOf(existing.providerId)?.label ?? existing.providerId} connection`,
-        );
+        throw keyedError("CONFLICT", "error.channels.otherChannel", {
+          connectionId: existing.connectionId,
+          channel: channelDescriptorOf(existing.providerId)?.label ?? existing.providerId,
+        });
       if (existing === undefined && payload.connectionId !== undefined && RESERVED_CHANNEL_CONNECTION_IDS.has(payload.connectionId))
-        throw new TaviError("INVALID_INPUT", `${payload.connectionId} is reserved: the webhook listener's own routes use it`);
+        throw keyedError("INVALID_INPUT", "error.channels.reservedId", { connectionId: payload.connectionId });
       const connectionId = payload.connectionId ?? `${payload.providerId}-${randomUUID().slice(0, 8)}`;
       const settings = checkedSettings(descriptor, payload.settings);
       const fields = descriptor.auth.kind === "none" ? [] : (descriptor.auth.fields ?? []);
@@ -311,10 +323,10 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
           ? fields.filter((field) => payload.secrets?.[field.key] === undefined && !stored.has(credentialRefs[field.key] ?? ""))
           : [];
         if (missing.length > 0)
-          throw new TaviError(
-            "INVALID_INPUT",
-            `Enter ${missing.map((field) => field.label).join(" and ")} before enabling ${descriptor.label}.`,
-          );
+          throw keyedError("INVALID_INPUT", "error.channels.enterBeforeEnabling", {
+            fields: fieldList(missing.map((field) => field.label)),
+            channel: descriptor.label,
+          });
         for (const [key, value] of Object.entries(payload.secrets ?? {})) {
           const reference = credentialRefs[key];
           if (reference === undefined) throw new TaviError("INVALID_INPUT", `${descriptor.label} has no field ${JSON.stringify(key)}`);
@@ -366,7 +378,7 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
     case "delete": {
       const existing = await connections.get(payload.connectionId);
       if (existing === undefined || existing.workspaceId !== payload.workspaceId)
-        throw new TaviError("NOT_FOUND", "No such connection in this workspace");
+        throw keyedError("NOT_FOUND", "error.channels.noConnection");
       // The platform's own id for the account, read while it is still open, else as remembered while it ran: what a
       // later re-add cancels the purge by. Remembered too is whether its channel purges, when the catalog no longer says.
       const accountRef = deps.messaging.statusOf(payload.connectionId)?.accountRef;
@@ -409,12 +421,12 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
     case "forget-sender": {
       const existing = await connections.get(payload.connectionId);
       if (existing === undefined || existing.workspaceId !== payload.workspaceId)
-        throw new TaviError("NOT_FOUND", "No such connection in this workspace");
+        throw keyedError("NOT_FOUND", "error.channels.noConnection");
       const descriptor = channelDescriptorOf(existing.providerId);
       const sender = descriptor === undefined ? payload.sender : (channelIdentity(payload.sender, descriptor.sender) ?? payload.sender);
       // Their notes need the owner's memory: offline it is refused, never done by halves.
       if (deps.forgetNotes === undefined || deps.eraseArtifacts === undefined)
-        throw new TaviError("UNAVAILABLE", "forgetting a sender needs a running owner: start `tavi serve`");
+        throw keyedError("UNAVAILABLE", "error.channels.forgetNeedsOwner");
       // Read first, and the messages and binding that say who they were and where they spoke go last:
       // a step that fails leaves enough for the same request to finish the job.
       const footprint = await deps.repositories.channelPurges.senderFootprint(payload.connectionId, sender);
@@ -435,7 +447,7 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
     case "grants": {
       const existing = await connections.get(payload.connectionId);
       if (existing === undefined || existing.deletedAt !== undefined || existing.workspaceId !== payload.workspaceId)
-        throw new TaviError("NOT_FOUND", "No such connection in this workspace");
+        throw keyedError("NOT_FOUND", "error.channels.noConnection");
       const grants = deps.repositories.messagingGrants;
       const answer = async (): Promise<ChannelsGrantsAnswer> => {
         const at = deps.now();
@@ -447,7 +459,12 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
       if (payload.op === "revoke") {
         const grant = payload.grantId === undefined ? undefined : await grants.get(payload.grantId);
         if (grant === undefined || grant.connectionId !== payload.connectionId)
-          throw new TaviError("NOT_FOUND", `${payload.grantId ?? "That grant"} is not a grant of ${payload.connectionId}`);
+          throw payload.grantId === undefined
+            ? keyedError("NOT_FOUND", "error.channels.grantNotOfConnection", { connectionId: payload.connectionId })
+            : keyedError("NOT_FOUND", "error.channels.grantIdNotOfConnection", {
+                grantId: payload.grantId,
+                connectionId: payload.connectionId,
+              });
         await grants.revoke(grant.grantId, deps.now());
         return await answer();
       }
@@ -458,33 +475,30 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
       const scopeId =
         payload.scopeKind === "contact" && descriptor !== undefined ? channelIdentity(payload.scopeId, descriptor.sender) : payload.scopeId;
       if (scopeId === undefined)
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${payload.scopeId} is not a ${descriptor?.sender.label.toLowerCase() ?? "sender"} on ${descriptor?.label ?? existing.providerId}`,
-        );
+        throw descriptor === undefined
+          ? keyedError("INVALID_INPUT", "error.channels.notASenderAny", { scopeId: payload.scopeId, channel: existing.providerId })
+          : keyedError("INVALID_INPUT", "error.channels.notASender", {
+              scopeId: payload.scopeId,
+              sender: descriptor.sender.label.toLowerCase(),
+              channel: descriptor.label,
+            });
       if (payload.scopeKind === "room" && (await deps.repositories.channelRooms.get(payload.connectionId, scopeId)) === undefined)
-        throw new TaviError(
-          "NOT_FOUND",
-          `${scopeId} is not a room of ${payload.connectionId}: \`tavi channels rooms ${payload.connectionId}\` lists them`,
-        );
+        throw keyedError("NOT_FOUND", "error.channels.notARoom", { scopeId, connectionId: payload.connectionId });
       const toolId = ToolPatternSchema.safeParse(payload.toolId);
       if (!toolId.success) throw new TaviError("INVALID_INPUT", `${payload.toolId} is not a tool id`);
       const refused = grantRefusal({ scopeKind: payload.scopeKind, toolId: toolId.data, mode: payload.mode });
       if (refused !== undefined) throw new TaviError("INVALID_INPUT", refused);
       // An allow lifts the messaging profile only in a chat channel's one-to-one chat: an email thread is none.
       if (payload.mode === "allow" && descriptor?.kind !== "chat")
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${descriptor?.label ?? existing.providerId} is not a chat channel: a contact can be allowed a tool only in a one-to-one chat, so here a grant can only deny`,
-        );
+        throw keyedError("INVALID_INPUT", "error.channels.grantOnlyDenies", { channel: descriptor?.label ?? existing.providerId });
       // An allow lifts what the messaging profile holds back; any other tool is already offered in a chat.
       if (payload.mode === "allow" && !MESSAGING_PROFILE_TOOLS.includes(toolId.data))
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${toolId.data} is not held back from chats; a contact may be allowed only ${MESSAGING_PROFILE_TOOLS.join(", ")}`,
-        );
+        throw keyedError("INVALID_INPUT", "error.channels.toolNotHeldBack", {
+          toolId: toolId.data,
+          tools: MESSAGING_PROFILE_TOOLS.join(", "),
+        });
       if (payload.expiresAt !== undefined && Date.parse(payload.expiresAt) <= Date.parse(deps.now()))
-        throw new TaviError("INVALID_INPUT", "a grant's expiry is in the future");
+        throw keyedError("INVALID_INPUT", "error.channels.grantExpiryFuture");
       await grants.put({
         grantId: prefixedId("grant"),
         workspaceId: payload.workspaceId,
@@ -502,7 +516,7 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
     case "remove-preview": {
       const existing = await connections.get(payload.connectionId);
       if (existing === undefined || existing.deletedAt !== undefined || existing.workspaceId !== payload.workspaceId)
-        throw new TaviError("NOT_FOUND", "No such connection in this workspace");
+        throw keyedError("NOT_FOUND", "error.channels.noConnection");
       return await purgePreview(deps, existing, await rememberedAccount(deps.meta, existing.connectionId));
     }
     case "test": {
@@ -510,8 +524,7 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
       const descriptor = channelDescriptorOf(record.providerId);
       const destination =
         payload.direct === true ? await directTestDestination(deps, payload, record) : testDestination(deps, payload, record);
-      if (destination === undefined)
-        throw new TaviError("UNAVAILABLE", `Connection ${payload.connectionId} is not open, or its channel cannot be sent to this way`);
+      if (destination === undefined) throw keyedError("UNAVAILABLE", "error.channels.notOpen", { connectionId: payload.connectionId });
       const outcome = await deps.messaging.send({
         effectId: prefixedId("channel-test"),
         connectionId: payload.connectionId,
@@ -534,7 +547,7 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
       const probed = await deps.messaging
         .probe?.(payload.connectionId)
         .catch((error: unknown) => ({ ok: false, detail: errorMessage(error), setup: undefined }));
-      if (probed === undefined) throw new TaviError("UNAVAILABLE", `Connection ${payload.connectionId} cannot be checked here`);
+      if (probed === undefined) throw keyedError("UNAVAILABLE", "error.channels.cannotCheck", { connectionId: payload.connectionId });
       return {
         ok: probed.ok,
         ...(probed.detail === undefined ? {} : { detail: probed.detail.slice(0, 500) }),
@@ -544,8 +557,7 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
     case "ingress": {
       if (payload.trustedProxies !== undefined) {
         const refused = payload.trustedProxies.find((entry) => !isTrustedProxyEntry(entry));
-        if (refused !== undefined)
-          throw new TaviError("INVALID_INPUT", `${JSON.stringify(refused)} is not an IP address or a CIDR range (10.0.0.0/8)`);
+        if (refused !== undefined) throw keyedError("INVALID_INPUT", "error.channels.notAnAddress", { value: JSON.stringify(refused) });
         if (deps.meta === undefined) throw new TaviError("UNAVAILABLE", "The owner's settings cannot be written here");
         await deps.meta.set(CHANNELS_INGRESS_TRUSTED_PROXIES_SETTING, JSON.stringify([...new Set(payload.trustedProxies)]));
       }
@@ -619,7 +631,7 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
     case "confirm-pair": {
       const found = pairingIn(deps, payload.workspaceId, payload.pairingId);
       const sender = found?.state === "claimed" ? found.pairing.claimedBy : undefined;
-      if (found === undefined || sender === undefined) throw new TaviError("CONFLICT", "No one has sent this pairing's code yet.");
+      if (found === undefined || sender === undefined) throw keyedError("CONFLICT", "error.channels.codeNotSent");
       const { pairing } = found;
       const name = pairing.name ?? pairing.claimedName;
       await allowSender(deps, {
@@ -635,13 +647,10 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
     }
     case "oauth-client": {
       const descriptor = channelDescriptorOf(payload.providerId);
-      if (descriptor === undefined) throw new TaviError("NOT_FOUND", `No channel ${payload.providerId} is installed`);
+      if (descriptor === undefined) throw keyedError("NOT_FOUND", "error.channels.notInstalled", { providerId: payload.providerId });
       // A client secret is a secret like a sign-in's token: kept only in an encrypted store.
       if (payload.clientSecret !== undefined && !credentialsEncrypted(deps.dataDirectory)) {
-        throw new TaviError(
-          "NOT_CONFIGURED",
-          `${descriptor.app?.name ?? descriptor.label}'s OAuth client secret is kept only in an encrypted credential store: turn on credential encryption first (\`tavi credentials encrypt\`, or Encrypt credentials in Settings → Channels)`,
-        );
+        throw keyedError("NOT_CONFIGURED", "error.channels.clientSecretNeedsEncryption", { app: descriptor.app?.name ?? descriptor.label });
       }
       const leaving = await signOutForClientChange(deps, descriptor, payload.clientId);
       // Those signed out are reloaded whether or not the save then succeeds.
@@ -667,23 +676,14 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
         (descriptor) => descriptor.app?.provider === payload.provider && channelPluginOf(descriptor.providerId) === payload.pluginId,
       );
       if (payload.pluginId !== null && asking.length === 0)
-        throw new TaviError(
-          "NOT_FOUND",
-          `${payload.pluginId} has no installed channel that asks for the ${payload.provider} client (its app.provider)`,
-        );
+        throw keyedError("NOT_FOUND", "error.channels.noChannelAsksClient", { pluginId: payload.pluginId, provider: payload.provider });
       // The shared secret goes to a channel's token address: only to the provider's own.
       const elsewhere = asking.find((descriptor) => !signsInAtProvider(descriptor, payload.provider));
       if (elsewhere !== undefined)
-        throw new TaviError(
-          "CONFLICT",
-          `${elsewhere.label} signs in somewhere other than ${payload.provider}'s own addresses, so it is never handed the client ${payload.provider}'s apps share`,
-        );
+        throw keyedError("CONFLICT", "error.channels.signsInElsewhere", { channel: elsewhere.label, provider: payload.provider });
       const version = asking[0] === undefined ? undefined : channelPluginVersionOf(asking[0].providerId);
       if (payload.pluginId !== null && version === undefined)
-        throw new TaviError(
-          "UNAVAILABLE",
-          `${payload.pluginId}'s approved version is not known here; try again with \`tavi serve\` running`,
-        );
+        throw keyedError("UNAVAILABLE", "error.channels.approvedVersionUnknown", { pluginId: payload.pluginId });
       const next = payload.pluginId === null || version === undefined ? undefined : { pluginId: payload.pluginId, version };
       if (before?.pluginId === next?.pluginId && before?.version === next?.version)
         return { sharedClient: { provider: payload.provider, pluginId: payload.pluginId } };
@@ -711,10 +711,7 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
         (await readSharedOAuthClient((reference) => createLocalCredentialStore(deps.dataDirectory).getSecret(reference), provider)) !==
           undefined
       ) {
-        throw new TaviError(
-          "CONFLICT",
-          `${descriptor?.label ?? payload.providerId} signs in with the ${provider} client every ${provider} app shares: change it here, or in Settings → Connected apps`,
-        );
+        throw keyedError("CONFLICT", "error.channels.sharedClient", { channel: descriptor?.label ?? payload.providerId, provider });
       }
       const leaving = descriptor === undefined ? [] : await signOutForClientChange(deps, descriptor, undefined);
       try {
@@ -729,13 +726,10 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
       const descriptor = channelDescriptorOf(record.providerId);
       const spec = descriptor === undefined ? undefined : oauthSpecOf(descriptor);
       if (descriptor === undefined || spec === undefined)
-        throw new TaviError("INVALID_INPUT", `${descriptor?.label ?? record.providerId} does not connect with OAuth`);
+        throw keyedError("INVALID_INPUT", "error.oauth.notOAuth", { channel: descriptor?.label ?? record.providerId });
       // A sign-in keeps a refresh token: it is kept only in an encrypted store.
       if (!credentialsEncrypted(deps.dataDirectory)) {
-        throw new TaviError(
-          "NOT_CONFIGURED",
-          `Connecting ${descriptor.label} keeps a sign-in token: turn on credential encryption first (\`tavi credentials encrypt\`, or Encrypt credentials in Settings → Channels)`,
-        );
+        throw keyedError("NOT_CONFIGURED", "error.channels.signInNeedsEncryption", { channel: descriptor.label });
       }
       // A sign-in by code needs no redirect back, nor a listener for one (RFC 8628).
       if (payload.device === true)
@@ -748,10 +742,7 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
       const mode = payload.public === true ? "public" : spec.redirect;
       // A Desktop client comes back to this computer only: never through a public address.
       if (mode === "public" && spec.redirect === "loopback-any-port" && sharedProviderOf(descriptor.providerId) !== undefined)
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${descriptor.label} signs in with a Desktop app client, which comes back only to this computer: from another computer, use a tunnel or paste the address you land on`,
-        );
+        throw keyedError("INVALID_INPUT", "error.channels.desktopClient", { channel: descriptor.label });
       const redirectUri = await redirectUriFor(deps, descriptor.label, mode, payload.origin);
       const started = await deps.oauth.start({
         connectionId: payload.connectionId,
@@ -780,7 +771,7 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
     case "oauth-disconnect": {
       const existing = await connections.get(payload.connectionId);
       if (existing === undefined || existing.workspaceId !== payload.workspaceId)
-        throw new TaviError("NOT_FOUND", "No such connection in this workspace");
+        throw keyedError("NOT_FOUND", "error.channels.noConnection");
       // Another app signed in with the same grant keeps it: only this connection's token goes, as on Connected apps.
       const keptBy =
         payload.upstream === false || !sharesGrant(existing)
@@ -802,7 +793,7 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
     case "revoke": {
       const previous = await bindings.get(payload.connectionId, payload.sender);
       if (previous === undefined || previous.workspaceId !== payload.workspaceId || isLocalConnectionId(payload.connectionId))
-        throw new TaviError("NOT_AUTHORIZED", "No matching allowed person in this workspace.");
+        throw keyedError("NOT_AUTHORIZED", "error.channels.noAllowedPerson");
       await bindings.unbind(payload.connectionId, payload.sender);
       return { ok: true };
     }
@@ -881,12 +872,10 @@ async function redirectUriFor(
 ): Promise<string> {
   if (mode === "public") {
     const publicUrl = (await effectiveIngress(deps)).publicUrl;
-    if (publicUrl === undefined)
-      throw new TaviError("NOT_CONFIGURED", `${label} signs in through your public address: set it under Webhooks first`);
+    if (publicUrl === undefined) throw keyedError("NOT_CONFIGURED", "error.channels.needsPublicAddress", { channel: label });
     return `${publicUrl.replace(/\/+$/, "")}/oauth/callback`;
   }
-  if (origin === undefined)
-    throw new TaviError("INVALID_INPUT", `${label} signs in through this page: connect it from Settings → Channels in \`tavi ui\``);
+  if (origin === undefined) throw keyedError("INVALID_INPUT", "error.channels.connectFromPage", { channel: label });
   return `${origin}/oauth/callback`;
 }
 
@@ -899,10 +888,13 @@ function testDestination(
   const descriptor = channelDescriptorOf(record.providerId);
   const to = descriptor === undefined ? payload.to : channelIdentity(payload.to, descriptor.target);
   if (to === undefined)
-    throw new TaviError(
-      "INVALID_INPUT",
-      `${payload.to} is not a ${descriptor?.target.label.toLowerCase() ?? "target"} on ${descriptor?.label ?? record.providerId}`,
-    );
+    throw descriptor === undefined
+      ? keyedError("INVALID_INPUT", "error.channels.notATargetAny", { to: payload.to, channel: record.providerId })
+      : keyedError("INVALID_INPUT", "error.channels.notATarget", {
+          to: payload.to,
+          target: descriptor.target.label.toLowerCase(),
+          channel: descriptor.label,
+        });
   return deps.messaging.buildDestination(payload.connectionId, { to, subject: "A test message from Tavi" });
 }
 
@@ -920,7 +912,7 @@ async function directTestDestination(
   const sender = descriptor === undefined ? payload.to : channelIdentity(payload.to, descriptor.sender);
   const bound = sender === undefined ? undefined : await deps.repositories.messagingIdentityBindings.get(payload.connectionId, sender);
   if (sender === undefined || bound === undefined || bound.workspaceId !== payload.workspaceId)
-    throw new TaviError("NOT_FOUND", `${payload.to} is not allowed on ${record.connectionId}`);
+    throw keyedError("NOT_FOUND", "error.channels.notAllowedOn", { to: payload.to, connectionId: record.connectionId });
   return (
     deps.messaging.buildDirectDestination?.(payload.connectionId, sender, payload.workspaceId) ?? testDestination(deps, payload, record)
   );
@@ -937,13 +929,11 @@ function pairingIn(deps: ChannelsCommandDependencies, workspaceId: string, pairi
 function refuseUnlessListening(deps: ChannelsCommandDependencies, connectionId: string): void {
   const view = deps.channels.list().find((candidate) => candidate.connectionId === connectionId);
   if (view === undefined || (view.status.state !== "failed" && view.status.state !== "stopped")) return;
-  const why = view.status.detail === undefined ? "" : `: ${view.status.detail}`;
-  throw new TaviError(
-    "NOT_CONFIGURED",
-    `${view.label} isn't running${why}. Fix it in Settings → Channels (or \`tavi channels list\`) first: a code sent to it could not arrive.`,
-    // The words above are the terminal's; the canvas says it in its own, with a link (QA 2033).
-    { details: { notListening: true, label: view.label } },
-  );
+  // The canvas says it in its own words, with a link (QA 2033), from the details.
+  const details = { details: { notListening: true, label: view.label } };
+  throw view.status.detail === undefined
+    ? keyedError("NOT_CONFIGURED", "error.channels.notListening", { channel: view.label }, details)
+    : keyedError("NOT_CONFIGURED", "error.channels.notListeningWhy", { channel: view.label, why: view.status.detail }, details);
 }
 
 function descriptorForSenderAction(
@@ -954,9 +944,9 @@ function descriptorForSenderAction(
 ): { readonly record: ChannelRecord; readonly descriptor: ChannelDescriptor } {
   const record = configuredIn(deps, workspaceId, connectionId);
   const descriptor = channelDescriptorOf(record.providerId);
-  if (descriptor === undefined) throw new TaviError("NOT_FOUND", `No channel ${record.providerId} is installed`);
+  if (descriptor === undefined) throw keyedError("NOT_FOUND", "error.channels.notInstalled", { providerId: record.providerId });
   if (trustUnverified !== undefined && descriptor.sender.authentication !== "per-message") {
-    throw new TaviError("INVALID_INPUT", `${descriptor.label} verifies every sender itself: there is no unverified mail to trust.`);
+    throw keyedError("INVALID_INPUT", "error.channels.verifiesEverySender", { channel: descriptor.label });
   }
   return { record, descriptor };
 }
@@ -977,13 +967,13 @@ async function allowSender(
   const { descriptor } = descriptorForSenderAction(deps, input.workspaceId, input.connectionId, input.trustUnverified);
   const sender = channelIdentity(input.sender, descriptor.sender);
   if (sender === undefined)
-    throw new TaviError(
-      "INVALID_INPUT",
-      `Enter a ${descriptor.sender.label.toLowerCase()} for ${descriptor.label}, such as ${descriptor.sender.placeholder}.`,
-    );
+    throw keyedError("INVALID_INPUT", "error.channels.enterSender", {
+      sender: descriptor.sender.label.toLowerCase(),
+      channel: descriptor.label,
+      example: descriptor.sender.placeholder,
+    });
   const previous = await bindings.get(input.connectionId, sender);
-  if (previous !== undefined && previous.workspaceId !== input.workspaceId)
-    throw new TaviError("CONFLICT", "This sender belongs to another workspace.");
+  if (previous !== undefined && previous.workspaceId !== input.workspaceId) throw keyedError("CONFLICT", "error.channels.senderElsewhere");
   await bindings.bind({
     connectionId: input.connectionId,
     externalSenderId: sender,
@@ -1032,7 +1022,7 @@ async function effectiveIngress(deps: ChannelsCommandDependencies): Promise<Chan
 /** A connection this owner is configured with, in the workspace named. */
 function configuredIn(deps: ChannelsCommandDependencies, workspaceId: string, connectionId: string): ChannelRecord {
   const record = deps.channels.configured().find((candidate) => candidate.connectionId === connectionId);
-  if (record === undefined || record.workspaceId !== workspaceId) throw new TaviError("NOT_FOUND", "No such connection in this workspace");
+  if (record === undefined || record.workspaceId !== workspaceId) throw keyedError("NOT_FOUND", "error.channels.noConnection");
   return record;
 }
 
@@ -1043,13 +1033,14 @@ function checkedSettings(
 ): Record<string, string | number | boolean> {
   for (const key of Object.keys(given)) {
     if (!descriptor.settings.some((field) => field.key === key))
-      throw new TaviError("INVALID_INPUT", `${descriptor.label} has no setting ${key}`);
+      throw keyedError("INVALID_INPUT", "error.channels.noSetting", { channel: descriptor.label, key });
   }
   const settings: Record<string, string | number | boolean> = {};
   for (const field of descriptor.settings) {
     const value = given[field.key] ?? field.default;
     if (value === undefined || value === "") {
-      if (field.required === true) throw new TaviError("INVALID_INPUT", `Enter ${field.label} for ${descriptor.label}.`);
+      if (field.required === true)
+        throw keyedError("INVALID_INPUT", "error.channels.enterField", { field: field.label, channel: descriptor.label });
       continue;
     }
     settings[field.key] = checkedValue(descriptor, field, value);
@@ -1058,15 +1049,16 @@ function checkedSettings(
 }
 
 function checkedValue(descriptor: ChannelDescriptor, field: ChannelField, value: string | number | boolean): string | number | boolean {
-  const refuse = (why: string): never => {
-    throw new TaviError("INVALID_INPUT", `${descriptor.label}'s ${field.label} ${why}`);
+  const names = { channel: descriptor.label, field: field.label };
+  const refuse = (key: CoreKey, params: TextRefParams = {}): never => {
+    throw keyedError("INVALID_INPUT", key, { ...names, ...params });
   };
   if (field.type === "choice")
     return typeof value === "string" && (field.choices ?? []).includes(value)
       ? value
-      : refuse(`must be one of ${(field.choices ?? []).join(", ")}`);
-  if (typeof value !== field.type) return refuse(`must be a ${field.type}`);
+      : refuse("error.channels.fieldChoice", { choices: (field.choices ?? []).join(", ") });
+  if (typeof value !== field.type) return refuse("error.channels.fieldType", { type: textRef(`error.channels.type.${field.type}`) });
   if (typeof value === "string" && field.pattern !== undefined && !new RegExp(`^(?:${field.pattern})$`, "u").test(value))
-    return refuse("is not in the form it takes");
+    return refuse("error.channels.fieldForm");
   return value;
 }

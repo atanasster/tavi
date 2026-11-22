@@ -1,4 +1,4 @@
-import { TaviError, type CancellationRecord } from "@tavi/contracts";
+import { englishOf, TaviError, textRef, type CancellationRecord } from "@tavi/contracts";
 import type { DatabaseClient } from "@tavi/runtime";
 
 /**
@@ -34,8 +34,7 @@ function assertCancellationRequest(request: CancellationRequest): void {
 }
 
 /** Why Home is not cancelled: it is the chat that never ends. */
-export const HOME_CANCEL_REFUSAL =
-  "Home is never cancelled: stop its current turn instead, or erase its history with `tavi tasks history <id> forget --before <time>`";
+export const HOME_CANCEL_REFUSAL = englishOf(textRef("error.task.homeNeverCancelled"));
 
 /**
  * Record a cancellation and close its pending approvals atomically.

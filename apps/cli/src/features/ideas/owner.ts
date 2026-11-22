@@ -25,10 +25,12 @@ import {
   type IdeasSettingsAnswer,
   type IdeasTryAnswer,
   type PersistencePort,
+  keyedError,
+  textRef,
 } from "@tavi/contracts";
 import { clip, definedOnly } from "@tavi/contracts/util";
 
-import type { IpcAnswer } from "../../shared/ipc-decisions.js";
+import { refusalFrom, type IpcAnswer } from "../../shared/ipc-decisions.js";
 import { workspaceZone } from "../reminders/owner.js";
 
 /**
@@ -226,7 +228,7 @@ export async function ideasCommand(deps: IdeasCommandDependencies, payload: Idea
     const workspaceId = payload.workspaceId ?? DEFAULT_WORKSPACE_ID;
     const operator = deps.principalOf(workspaceId);
     if (operator === undefined) {
-      throw new TaviError("NOT_FOUND", `workspace ${workspaceId} is not configured on this owner`, { details: { workspaceId } });
+      throw keyedError("NOT_FOUND", "error.workspace.notConfigured", { workspaceId }, { details: { workspaceId } });
     }
     const ideas = deps.repositories.ideas;
     const now = deps.now();
@@ -237,7 +239,7 @@ export async function ideasCommand(deps: IdeasCommandDependencies, payload: Idea
     /** An idea of this workspace, or `NOT_FOUND` — another workspace's is not said to exist. */
     const inWorkspace = async (ideaId: string): Promise<Idea> => {
       const idea = await ideas.get(workspaceId, ideaId);
-      if (idea === undefined) throw new TaviError("NOT_FOUND", `Idea ${ideaId} does not exist`);
+      if (idea === undefined) throw keyedError("NOT_FOUND", "error.idea.notFound", { ideaId });
       return idea;
     };
     const feedback = async (fields: Omit<Parameters<typeof ideas.feedback>[0], "id" | "workspaceId" | "now">) =>
@@ -330,33 +332,31 @@ export async function ideasCommand(deps: IdeasCommandDependencies, payload: Idea
       }
       case "recur": {
         const idea = await inWorkspace(payload.id);
-        if (idea.recurring === undefined)
-          throw new TaviError("INVALID_INPUT", `Idea ${idea.id} is not one that repeats; try it once instead`);
+        if (idea.recurring === undefined) throw keyedError("INVALID_INPUT", "error.idea.notRepeatingTryOnce", { ideaId: idea.id });
         // Routines repeat daily or on chosen weekdays: a monthly idea is not drafted as something it is not.
-        if (idea.recurring.cadence === "monthly")
-          throw new TaviError("UNAVAILABLE", "A routine cannot repeat monthly yet; set a reminder instead");
-        if (idea.status !== "active" && idea.status !== "tried") throw new TaviError("CONFLICT", `Idea ${idea.id} is ${idea.status}`);
+        if (idea.recurring.cadence === "monthly") throw keyedError("UNAVAILABLE", "error.idea.routineNotMonthly");
+        if (idea.status !== "active" && idea.status !== "tried")
+          throw keyedError("CONFLICT", "error.idea.wrongStatus", { ideaId: idea.id, status: textRef(`error.idea.status.${idea.status}`) });
         const checked = await census();
-        if (checked !== undefined && !checked.has("routines"))
-          throw new TaviError("UNAVAILABLE", "Routines are not available on this owner, so an idea cannot repeat here");
+        if (checked !== undefined && !checked.has("routines")) throw keyedError("UNAVAILABLE", "error.idea.routinesUnavailable");
         return { ok: true, result: { draft: { name: idea.label, prompt: idea.prompt, cadence: idea.recurring.cadence } } };
       }
       case "made-recurring": {
         const idea = await inWorkspace(payload.id);
-        if (idea.recurring === undefined) throw new TaviError("INVALID_INPUT", `Idea ${idea.id} is not one that repeats`);
+        if (idea.recurring === undefined) throw keyedError("INVALID_INPUT", "error.idea.notRepeating", { ideaId: idea.id });
         // Done only for a routine that exists: a page cannot close an idea by naming one it did not make.
         if (deps.routineExists === undefined) throw new TaviError("UNAVAILABLE", "Routines are not checked on this owner");
         if (!(await deps.routineExists(workspaceId, operator, payload.routineId)))
-          throw new TaviError("NOT_FOUND", `Routine ${payload.routineId} does not exist`);
+          throw keyedError("NOT_FOUND", "error.routine.notFound", { routineId: payload.routineId });
         const done = await feedback({ ideaId: idea.id, signal: "done" });
         return { ok: true, result: done === undefined ? {} : { idea: done } };
       }
       case "remind": {
         const idea = await inWorkspace(payload.id);
-        if (idea.status !== "active" && idea.status !== "tried") throw new TaviError("CONFLICT", `Idea ${idea.id} is ${idea.status}`);
+        if (idea.status !== "active" && idea.status !== "tried")
+          throw keyedError("CONFLICT", "error.idea.wrongStatus", { ideaId: idea.id, status: textRef(`error.idea.status.${idea.status}`) });
         const checked = await census();
-        if (checked !== undefined && !checked.has("reminders"))
-          throw new TaviError("UNAVAILABLE", "Reminders are not available on this owner");
+        if (checked !== undefined && !checked.has("reminders")) throw keyedError("UNAVAILABLE", "error.idea.remindersUnavailable");
         // Said, never run: the reminder carries the idea's words, and the person starts it from the chat if they want.
         const said = `${idea.label}: ${idea.prompt}`;
         const created = await deps.repositories.reminders.create({
@@ -375,8 +375,7 @@ export async function ideasCommand(deps: IdeasCommandDependencies, payload: Idea
       }
       case "refresh":
         // At most `IDEA_REFRESH_PER_HOUR` an hour: counted by the store in the transaction that starts the run (QUOTA_EXCEEDED).
-        if (deps.refresh === undefined)
-          throw new TaviError("UNAVAILABLE", "Ideas are not generated on this owner yet: no ideas host is running");
+        if (deps.refresh === undefined) throw keyedError("UNAVAILABLE", "error.idea.noHost");
         return { ok: true, result: { status: await deps.refresh(workspaceId) } };
       case "brief":
         return { ok: true, result: { text: (await ideas.settings(workspaceId)).brief } };
@@ -401,10 +400,7 @@ export async function ideasCommand(deps: IdeasCommandDependencies, payload: Idea
             changes.prepareExternal !== undefined ||
             changes.hours !== undefined)
         ) {
-          throw new TaviError(
-            "NOT_AUTHORIZED",
-            "A page cannot switch the ideas provider or the digest, or change the hours, the budget or what a provider may prepare: use tavi ideas in a terminal",
-          );
+          throw keyedError("NOT_AUTHORIZED", "error.idea.pageCannotChange");
         }
         // The digest goes only to the operator's own chat on a connection of this workspace: one with none is refused now, not skipped each week.
         if (
@@ -413,10 +409,7 @@ export async function ideasCommand(deps: IdeasCommandDependencies, payload: Idea
           deps.digestReachable !== undefined &&
           !(await deps.digestReachable(workspaceId, operator, changes.digest.channel))
         ) {
-          throw new TaviError(
-            "NOT_FOUND",
-            `No chat of yours on connection ${changes.digest.channel} can be sent to: tavi channels list shows them`,
-          );
+          throw keyedError("NOT_FOUND", "error.idea.digestUnreachable", { channel: changes.digest.channel });
         }
         if (changes.provider !== undefined && changes.provider !== current.provider) {
           const installed = deps.providers?.();
@@ -470,7 +463,6 @@ export async function ideasCommand(deps: IdeasCommandDependencies, payload: Idea
         return { ok: true, result: { cleared: await ideas.reset({ workspaceId, what: payload.what, now: stamp }) } };
     }
   } catch (error) {
-    const failure = TaviError.from(error);
-    return { ok: false, error: { code: failure.code, message: failure.message } };
+    return refusalFrom(error);
   }
 }

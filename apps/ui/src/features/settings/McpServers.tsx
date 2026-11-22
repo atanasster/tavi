@@ -1,3 +1,4 @@
+import { localizedText, type TextRef } from "@tavi/contracts";
 import { Fragment, useId, useState } from "react";
 
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
@@ -18,7 +19,7 @@ import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { withParts } from "../../ui/with-parts.js";
 
 /**
@@ -37,8 +38,16 @@ const FLOORS = ["low", "medium", "high", "critical"] as const;
  */
 export const mcpReviewPath = (pluginId: string): string => `${appsPath()}?review=${encodeURIComponent(pluginId)}`;
 
-/** How the owner ends a warning that a tool overlaps a built-in one; the remedy is each surface's own. */
+/** How an older owner, which sends no keys, ends a warning that a tool overlaps a built-in one; the remedy is each surface's own. */
 const OVERLAP = "the model may pick either";
+
+/** A review's warning in the page's language, and whether it is an overlap (its key says so; an older owner's English, else). */
+function reviewWarning(warning: string, ref: TextRef | undefined): { readonly text: string; readonly overlap: boolean } {
+  return {
+    text: localizedText(warning, ref, translateCore),
+    overlap: ref === undefined ? warning.endsWith(OVERLAP) : ref.key.startsWith("error.mcp.overlap."),
+  };
+}
 
 /** A changed tool's definition, field by field: what was approved, and what the server lists now. */
 function DefinitionChanges({ changes }: { readonly changes: NonNullable<McpReviewTool["changedFields"]> }) {
@@ -479,10 +488,13 @@ export function McpReviewModal({
             <Notice as="div" role="note" aria-label={t("settings.mcp.review.warnings")}>
               {t("settings.mcp.review.beforeApprove")}
               <ul>
-                {(review.warnings ?? []).map((warning) => (
+                {(review.warnings ?? []).map((warning, index) => {
+                  const said = reviewWarning(warning, review.warningRefs?.[index]);
                   // An overlap's remedy is this page's own control, not the terminal's `--disable`.
-                  <li key={warning}>{warning.endsWith(OVERLAP) ? t("settings.mcp.review.overlapWarning", { warning }) : warning}</li>
-                ))}
+                  return (
+                    <li key={warning}>{said.overlap ? t("settings.mcp.review.overlapWarning", { warning: said.text }) : said.text}</li>
+                  );
+                })}
               </ul>
             </Notice>
           )}

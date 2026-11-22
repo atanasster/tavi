@@ -13,8 +13,13 @@ import {
   type PendingRound,
   type PersistencePort,
   type TaskRecord,
+  type TextRef,
+  type TextRefParams,
   type WorkflowPort,
+  englishOf,
+  textRef,
 } from "@tavi/contracts";
+import type { CoreKey } from "@tavi/contracts/locales/core";
 import type { InFlightFires } from "@tavi/agent-host/schedule-scheduler";
 
 import { scheduleInFlightMessage, undecidableRoundMessage } from "./rounds.js";
@@ -95,13 +100,37 @@ export async function resumeTargetRefusal(
 /** A refused request: the code a client acts on, and facts some refusals add (`settled` on a decision that came too late). */
 export type IpcRefusal = {
   readonly ok: false;
-  readonly error: { readonly code: string; readonly message: string; readonly details?: Readonly<Record<string, unknown>> };
+  readonly error: {
+    readonly code: string;
+    readonly message: string;
+    readonly details?: Readonly<Record<string, unknown>>;
+    /** `message` by key, when a person reads it: the canvas says it in the workspace's language. */
+    readonly i18n?: TextRef;
+  };
 };
 
 /** An IPC command's answer: its result, or an error code a client acts on. */
 export type IpcAnswer<R> = { readonly ok: true; readonly result: R } | IpcRefusal;
 
 export const refuse = (code: string, message: string): IpcRefusal => ({ ok: false, error: { code, message } });
+
+/** A refusal a person reads, by key: its message is the key's English, so the terminal reads what it always did. */
+export function refuseKeyed(code: string, key: CoreKey, params?: TextRefParams): IpcRefusal {
+  const i18n = textRef(key, params);
+  return { ok: false, error: { code, message: englishOf(i18n), i18n } };
+}
+
+/**
+ * A thrown error as a refusal: its code, its words and, when they are Tavi's, their key (`TaviError.toData`).
+ * Its `details` go along only when given here, as each command decides which facts a client reads.
+ */
+export function refusalFrom(error: unknown, details?: Readonly<Record<string, unknown>>): IpcRefusal {
+  const { code, message, i18n } = TaviError.from(error).toData();
+  return {
+    ok: false,
+    error: { code, message, ...(details === undefined ? {} : { details }), ...(i18n === undefined ? {} : { i18n }) },
+  };
+}
 
 export const isRefusal = <T>(value: T | IpcRefusal): value is IpcRefusal =>
   typeof value === "object" && value !== null && (value as { ok?: unknown }).ok === false;
@@ -327,5 +356,5 @@ export function refusalOf(error: unknown, taskId: string, stillPending: string):
         `${recoverCommand(taskId, typeof generation === "number" ? generation : "<n>")} frees it`,
     );
   }
-  return refuse(failure.code, failure.message);
+  return refusalFrom(failure);
 }

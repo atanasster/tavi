@@ -1,8 +1,8 @@
 import type { ClientResponse, TaviClient } from "@tavi/client/browser";
-import type { IpcCommand } from "@tavi/contracts";
+import { localizedText, type IpcCommand, type TextRef } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
-import { translateNow } from "./i18n.js";
+import { translateCore, translateNow } from "./i18n.js";
 
 /**
  * Asking the owner from the page: one request's `Outcome` — its result, or the
@@ -61,7 +61,8 @@ export async function ask<T>(
   const details = response.error?.details;
   return {
     ok: false,
-    message: response.error?.message ?? options.refused ?? translateNow("common.ipc.refused", { command }),
+    message:
+      response.error === undefined ? (options.refused ?? translateNow("common.ipc.refused", { command })) : errorWords(response.error),
     // Conditionally spread: `exactOptionalPropertyTypes` distinguishes an absent
     // field from one explicitly set to `undefined`.
     ...(code === undefined ? {} : { code }),
@@ -122,7 +123,15 @@ export function mapOutcome<T, U>(outcome: Outcome<T>, change: (value: T) => U): 
   return outcome.ok ? { ok: true, value: change(outcome.value) } : outcome;
 }
 
-/** A raw response's refusal in words: the owner's message, else `fallback`. */
-export function refusal(response: { readonly error?: { readonly message: string } | undefined }, fallback: string): string {
-  return response.error?.message ?? fallback;
+/** An owner's refusal in the page's language: its key's words when it has one this page knows, else its English message. */
+export function errorWords(error: { readonly message: string; readonly i18n?: TextRef | undefined }): string {
+  return localizedText(error.message, error.i18n, translateCore);
+}
+
+/** A raw response's refusal in words: the owner's (`errorWords`), else `fallback`. */
+export function refusal(
+  response: { readonly error?: { readonly message: string; readonly i18n?: TextRef | undefined } | undefined },
+  fallback: string,
+): string {
+  return response.error === undefined ? fallback : errorWords(response.error);
 }

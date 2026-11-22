@@ -2,6 +2,7 @@ import { said, type Said } from "./said.js";
 import { CLIENT_TIMEOUT, type ClientResponse } from "@tavi/client/browser";
 import { IPC_MAX_PROMPT_CHARS } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
+import { errorWords } from "../../../lib/ipc.js";
 
 import type { StoreContext } from "./context.js";
 import { questionKey } from "./runs.js";
@@ -18,8 +19,11 @@ export function answerStatus(
   refused: Said,
 ): { readonly status: "recorded" | "uncertain" | "failed"; readonly message: Said | undefined } {
   if (response.ok) return { status: "recorded", message: undefined };
-  if (retriedByTask && response.error?.code === "CONFLICT") return { status: "uncertain", message: response.error.message };
-  return { status: response.error?.code === CLIENT_TIMEOUT ? "uncertain" : "failed", message: response.error?.message ?? refused };
+  if (retriedByTask && response.error?.code === "CONFLICT") return { status: "uncertain", message: errorWords(response.error) };
+  return {
+    status: response.error?.code === CLIENT_TIMEOUT ? "uncertain" : "failed",
+    message: response.error === undefined ? refused : errorWords(response.error),
+  };
 }
 
 /** Answering a chat's question. */

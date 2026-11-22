@@ -1,4 +1,5 @@
 import { translateNow } from "../../../lib/i18n.js";
+import { errorWords } from "../../../lib/ipc.js";
 import { initialRunState } from "@tavi/client/browser";
 import { parsePluginCommandLine, type RunPayload } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
@@ -241,7 +242,7 @@ export function installPrompts(ctx: StoreContext): void {
       ctx.update(id, (run) => ({
         ...without(run, "steering"),
         error: said("chat.store.steerFailed", {
-          why: reply.error?.message ?? reply.error?.code ?? said("chat.store.why.refused"),
+          why: (reply.error === undefined ? undefined : errorWords(reply.error)) ?? said("chat.store.why.refused"),
         }),
       }));
     })().catch((error: unknown) =>

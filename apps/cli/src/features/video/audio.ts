@@ -5,6 +5,7 @@ import {
   AudioTranscribeInputSchema,
   TOOL_LABEL_KEY,
   TaviError,
+  keyedError,
   VIDEO_LIMITS,
   artifactLabel,
   chatMayReadArtifact,
@@ -77,36 +78,38 @@ const resultLabel = (artifact: ArtifactRecord): { readonly [TOOL_LABEL_KEY]: Too
 function audioValue<T>(result: VideoResult<T>, artifactId: string, modelsDirectory: string | undefined): T {
   if (result.ok) return result.value;
   if ("failure" in result) {
-    const sentence = {
-      timeout: "reading the audio took too long and was stopped",
-      memory: "reading the audio used too much memory and was stopped",
-      crashed: "FFmpeg stopped while reading the audio",
-      protocol: "FFmpeg's answer was not what was expected, so it was not used",
-      unconfined:
-        "the media sandbox is unavailable on this host, so audio is not read: fix it (tavi sandbox setup), or the owner may start serve with --video-allow-unconfined",
-    }[result.failure];
-    throw new TaviError(result.failure === "protocol" ? "INTERNAL" : "UNAVAILABLE", sentence, { details: { failure: result.failure } });
+    const key = (
+      {
+        timeout: "error.audio.failure.timeout",
+        memory: "error.audio.failure.memory",
+        crashed: "error.audio.failure.crashed",
+        protocol: "error.video.failure.protocol",
+        unconfined: "error.audio.failure.unconfined",
+      } as const
+    )[result.failure];
+    throw keyedError(result.failure === "protocol" ? "INTERNAL" : "UNAVAILABLE", key, undefined, { details: { failure: result.failure } });
   }
   const refused = result.refused;
   if (refused === "no-ffmpeg")
     throw new TaviError("UNAVAILABLE", noTranscriberMessage(artifactId, ["FFmpeg is not installed"], modelsDirectory), {
       details: { refused, missing: ["ffmpeg"] },
     });
-  const sentence =
+  const code = refused === "too-large" ? "INVALID_INPUT" : refused === "missing-feature" ? "UNAVAILABLE" : "UNSUPPORTED";
+  // An FFmpeg's own account of what it lacks is its words, not Tavi's: it has no key.
+  if (refused === "missing-feature" && result.detail !== undefined) throw new TaviError(code, result.detail, { details: { refused } });
+  const [key, params] =
     refused === "not-video"
-      ? "this is not an audio file Tavi reads (Ogg, MP3, WAV, M4A or AAC, by its bytes)"
+      ? (["error.audio.notAudio"] as const)
       : refused === "too-large"
-        ? `the audio is larger than ${String(VIDEO_LIMITS.maxInputBytes / 1024 / 1024)} MiB`
+        ? (["error.audio.tooLarge", { size: String(VIDEO_LIMITS.maxInputBytes / 1024 / 1024) }] as const)
         : refused === "no-audio"
-          ? "the file has no sound"
+          ? (["error.audio.noSound"] as const)
           : refused === "missing-feature"
-            ? (result.detail ?? "the FFmpeg installed here lacks what this needs")
+            ? (["error.video.missingFeature"] as const)
             : refused === "refused-recently"
-              ? "reading this audio failed within the last day, so it is not read again until then"
-              : "FFmpeg could not read this audio: it may be damaged, or in a codec this FFmpeg lacks";
-  throw new TaviError(refused === "too-large" ? "INVALID_INPUT" : refused === "missing-feature" ? "UNAVAILABLE" : "UNSUPPORTED", sentence, {
-    details: { refused },
-  });
+              ? (["error.audio.refusedRecently"] as const)
+              : (["error.audio.unreadable"] as const);
+  throw keyedError(code, key, params, { details: { refused } });
 }
 
 export function registerAudioTools(registry: ToolRegistryPort, options: AudioToolOptions): void {
@@ -117,20 +120,18 @@ export function registerAudioTools(registry: ToolRegistryPort, options: AudioToo
   ): Promise<{ readonly artifact: ArtifactRecord; readonly bytes: Uint8Array }> => {
     const artifact = await options.artifacts.getArtifact(artifactId);
     // Refused alike when missing, another workspace's, internal or another chat's attachment: the id is model-authored.
-    if (!chatMayReadArtifact(artifact, context)) throw new TaviError("NOT_FOUND", `no artifact ${artifactId} in this chat`);
+    if (!chatMayReadArtifact(artifact, context)) throw keyedError("NOT_FOUND", "error.video.noArtifact", { artifactId });
     if (artifact.reviewState !== "approved")
-      throw new TaviError("NOT_AUTHORIZED", `artifact ${artifactId} is ${artifact.reviewState}, not approved for release`);
+      throw keyedError("NOT_AUTHORIZED", "error.video.notApproved", { artifactId, state: artifact.reviewState });
     if (!AUDIO_ARTIFACT_TYPES.includes(artifact.contentType))
-      throw new TaviError(
-        "UNSUPPORTED",
-        artifact.contentType.startsWith("video/")
-          ? `artifact ${artifactId} is ${artifact.contentType}: read its speech with video.transcribe`
-          : `artifact ${artifactId} is ${artifact.contentType}, not audio`,
-      );
+      throw keyedError("UNSUPPORTED", artifact.contentType.startsWith("video/") ? "error.audio.isVideo" : "error.audio.notAudioArtifact", {
+        artifactId,
+        type: artifact.contentType,
+      });
     if (artifact.byteSize > VIDEO_LIMITS.maxInputBytes)
-      throw new TaviError("INVALID_INPUT", `the audio is larger than ${String(VIDEO_LIMITS.maxInputBytes / 1024 / 1024)} MiB`);
+      throw keyedError("INVALID_INPUT", "error.audio.tooLarge", { size: String(VIDEO_LIMITS.maxInputBytes / 1024 / 1024) });
     const bytes = await options.artifacts.readArtifactBody(artifact.artifactId);
-    if (bytes === undefined) throw new TaviError("NOT_FOUND", `artifact ${artifactId} has no content`);
+    if (bytes === undefined) throw keyedError("NOT_FOUND", "error.video.noContent", { artifactId });
     return { artifact, bytes };
   };
 

@@ -58,6 +58,14 @@ it is translated. Anything not yet translated stays in English.
 
 A plugin's own words come from the plugin, in the languages its author wrote.
 
+Errors Tavi's server sends the canvas for you to act on (a value it
+refuses, something that no longer exists, a change someone else saved first,
+a folder, channel or connected app it cannot use) carry the key of their
+sentence beside the English, so the canvas shows them in your language. An
+error with no key, or one from a newer server whose key this canvas does not
+know, shows in English. The terminal, logs and `--format json` keep the
+English message, and so does what the agent reads.
+
 Notices Tavi posts into a chat or Home (a scheduled run's result, a routine
 that paused, a server that needs signing in again, the heartbeat's digest) and
 a schedule's run history are stored with the key of each sentence beside its
@@ -98,6 +106,13 @@ it.
 3. In a canvas view, read it with `useT()`: `t("settings.language.hint")`.
    Outside React, `translateNow` reads the `ui` words and `translateCore` the
    `core` ones.
+
+An error a person reads in the canvas is thrown with
+`keyedError(code, "error.<area>.<purpose>", params)` from `@tavi/contracts`,
+its words in `packages/contracts/src/locales/{en,bg}/errors.ts`. Its English
+template is the message as the terminal shows it; data (a name, a path, a
+count as text) goes in `params`. Errors only the agent or a developer reads
+stay plain `TaviError`s.
 
 A count is a plural message, one form per plural category the language has:
 

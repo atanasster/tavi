@@ -9,6 +9,7 @@ import { guardedFetch } from "./fetch.js";
 import { runMcpAction, type McpActionContext } from "./actions.js";
 import { MCP_REGISTRY_SETTING } from "./registry.js";
 import { mcpSearchLines } from "./bridge.js";
+import { refusalFrom } from "../../shared/ipc-decisions.js";
 import { TaviError, MCP_ENABLED_SETTING, mcpEnabledOf, DEFAULT_WORKSPACE_ID } from "@tavi/contracts";
 import { nowTimestamp } from "@tavi/contracts/util";
 import { join } from "node:path";
@@ -69,8 +70,7 @@ async function weighSharedGrants(
       try {
         return { ok: true, result: await runMcpAction(mcp, payload, "operator:cli") };
       } catch (error) {
-        const failure = TaviError.from(error);
-        return { ok: false, error: { code: failure.code, message: failure.message } };
+        return refusalFrom(error);
       }
     },
     plugins: readOnly,

@@ -1,4 +1,4 @@
-import { TaviError, refusedEarly, type ChannelDescriptor, type MessagingConnectionAuthState } from "@tavi/contracts";
+import { keyedError, TaviError, refusedEarly, type ChannelDescriptor, type MessagingConnectionAuthState } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
 import { readJsonBody } from "../../shared/json-body.js";
@@ -158,9 +158,12 @@ export class OAuthBroker {
       if (answer["error"] === "invalid_grant" || answer["error"] === "invalid_client" || answer["error"] === "unauthorized_client") {
         // Refused for good: the connection stops, and the operator is asked to reconnect. Never retried in a loop.
         await this.#deps.setAuthState(connectionId, "expired");
-        throw new TaviError("NOT_CONFIGURED", `${descriptor.label}'s sign-in was revoked or expired: reconnect it in Settings → Channels`, {
-          details: { signIn: true, connectionId },
-        });
+        throw keyedError(
+          "NOT_CONFIGURED",
+          "error.oauth.revoked",
+          { channel: descriptor.label },
+          { details: { signIn: true, connectionId } },
+        );
       }
       throw new TaviError(
         "UNAVAILABLE",

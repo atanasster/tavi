@@ -1,6 +1,6 @@
 import {
   CONNECT_WAIT_DEFAULT_MS,
-  TaviError,
+  keyedError,
   connectNeedText,
   refusedEarly,
   type AgentWaitOutcome,
@@ -92,8 +92,8 @@ export function createConnectWaits(deps: ConnectWaitsDependencies): ConnectWaits
       const wait = await repositories.agentWaits.get(waitId);
       const task = wait === undefined ? undefined : await repositories.tasks.get(wait.taskId);
       if (wait === undefined || wait.connect === undefined || task === undefined || task.workspaceId !== workspaceId)
-        throw new TaviError("NOT_FOUND", "no such connect need in this workspace");
-      if (wait.state !== "active") throw new TaviError("CONFLICT", "that connect need is already settled");
+        throw keyedError("NOT_FOUND", "error.apps.connectNeed.notFound");
+      if (wait.state !== "active") throw keyedError("CONFLICT", "error.apps.connectNeed.settled");
       await settle(wait.taskId, waitId, { kind: "answered", connect: { outcome: "declined" } });
     },
   };

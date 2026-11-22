@@ -1155,5 +1155,6 @@ function disconnected(message: string): ClientResponse {
 function responseError(response: ClientResponse): TaviError {
   return new TaviError("UNAVAILABLE", response.error?.message ?? "the owner refused the subscription", {
     details: { code: response.error?.code ?? "UNKNOWN" },
+    ...(response.error?.i18n === undefined ? {} : { i18n: response.error.i18n }),
   });
 }

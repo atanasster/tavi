@@ -4,14 +4,18 @@ import {
   MCP_TOOL_TIMEOUT_MS,
   TaviError,
   comparePluginVersions,
+  englishOf,
+  textRef,
   maxRisk,
   type McpArgFloor,
   type McpToolDecision,
   type McpToolDefinition,
   type McpToolRecord,
   type RiskLevel,
+  type TextRef,
   type ToolEffect,
 } from "@tavi/contracts";
+import type { CoreKey } from "@tavi/contracts/locales/core";
 import { definedOnly, isRecord } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
 import { injectionPatternSignals } from "@tavi/runtime";
@@ -503,13 +507,14 @@ function structuralChanges(node: unknown, pointer: string, depth = 0): readonly 
  * the model two ways to send mail, and the one it picks may not be the one the operator approved for that.
  */
 const BUILT_IN_FAMILIES: readonly {
-  readonly label: string;
+  /** Its name in a warning, by key. */
+  readonly key: CoreKey;
   /** The family's ids among the registered (none of them an MCP server's). */
   readonly members: (toolIds: readonly string[]) => readonly string[];
   readonly words: ReadonlySet<string>;
 }[] = [
   {
-    label: "mail",
+    key: "error.mcp.family.mail",
     // A mailbox account's four tools, `<provider>.<account>.search|read|draft|send_draft`, known by its send_draft.
     members: (ids) => {
       const accounts = new Set(
@@ -520,42 +525,42 @@ const BUILT_IN_FAMILIES: readonly {
     words: new Set(["gmail", "mail", "email", "emails", "inbox", "outlook", "imap", "smtp", "mailbox", "jmap"]),
   },
   {
-    label: "browser",
+    key: "error.mcp.family.browser",
     members: (ids) => ids.filter((id) => id.startsWith("browser.")),
     words: new Set(["browser", "playwright", "puppeteer", "chrome", "chromium", "selenium", "webdriver"]),
   },
   {
-    label: "file",
+    key: "error.mcp.family.file",
     members: (ids) => ids.filter((id) => id.startsWith("fs.")),
     words: new Set(["filesystem", "file", "files", "directory", "directories", "folder", "folders"]),
   },
   {
-    label: "web",
+    key: "error.mcp.family.web",
     members: (ids) => ids.filter((id) => id === "web_search" || id === "web_fetch"),
     words: new Set(["fetch", "scrape", "crawl", "brave", "tavily", "exa", "serp", "websearch"]),
   },
   {
-    label: "sandbox",
+    key: "error.mcp.family.sandbox",
     members: (ids) => ids.filter((id) => id.startsWith("sandbox.")),
     words: new Set(["shell", "bash", "terminal", "exec", "execute", "command", "commands"]),
   },
   {
-    label: "memory",
+    key: "error.mcp.family.memory",
     members: (ids) => ids.filter((id) => id.startsWith("memory.")),
     words: new Set(["memory", "memories", "remember", "knowledge"]),
   },
   {
-    label: "schedule and reminder",
+    key: "error.mcp.family.schedule",
     members: (ids) => ids.filter((id) => id.startsWith("schedules.") || id.startsWith("reminders.")),
     words: new Set(["schedule", "schedules", "cron", "reminder", "reminders", "remind"]),
   },
   {
-    label: "desktop",
+    key: "error.mcp.family.desktop",
     members: (ids) => ids.filter((id) => id.startsWith("desktop.")),
     words: new Set(["desktop", "screenshot", "mouse", "keyboard", "computer"]),
   },
   {
-    label: "messaging",
+    key: "error.mcp.family.messaging",
     members: (ids) => ids.filter((id) => id.startsWith("messaging.")),
     words: new Set(["slack", "telegram", "discord", "whatsapp", "signal", "sms", "imessage"]),
   },
@@ -586,7 +591,12 @@ export const OVERLAP = "the model may pick either";
  * built-in name such as `web_search` or `send_draft` — which can steer the model toward or away from it (shadowing).
  * Warnings only: approval is never refused for them. Every name shown is Tavi's id or cleaned server text.
  */
-export function shadowingWarnings(input: {
+export function shadowingWarnings(input: Parameters<typeof shadowingWarningRefs>[0]): readonly string[] {
+  return shadowingWarningRefs(input).map(englishOf);
+}
+
+/** `shadowingWarnings` by key, in the same order, for a reader that says them in the workspace's language. */
+export function shadowingWarningRefs(input: {
   readonly serverName: string;
   readonly slug: string;
   readonly tools: readonly {
@@ -597,10 +607,10 @@ export function shadowingWarnings(input: {
   }[];
   /** Every registered tool id: built-ins, connected accounts', plugins' and other servers'. */
   readonly registered: ReadonlySet<string>;
-}): readonly string[] {
+}): readonly TextRef[] {
   const own = `mcp.${input.slug}.`;
   const others = [...input.registered].filter((id) => !id.startsWith(own)).sort();
-  const warnings: string[] = [];
+  const warnings: TextRef[] = [];
   const serverWords = new Set([...nameWords(input.serverName), ...nameWords(input.slug)]);
   for (const family of BUILT_IN_FAMILIES) {
     const members = family.members(others.filter((id) => !id.startsWith("mcp.")));
@@ -608,15 +618,15 @@ export function shadowingWarnings(input: {
     const byServer = [...serverWords].some((word) => family.words.has(word));
     const overlapping = input.tools.filter((tool) => nameWords(tool.name).some((word) => family.words.has(word))).map((tool) => tool.name);
     if (!byServer && overlapping.length === 0) continue;
-    const which =
-      overlapping.length === 0
-        ? "its tools"
-        : someOf(
-            overlapping.map((name) => cleanServerText(name).slice(0, 64)),
-            5,
-          );
+    const which = someOf(
+      overlapping.map((name) => cleanServerText(name).slice(0, 64)),
+      5,
+    );
+    const params = { family: textRef(family.key), members: someOf(members, 3) };
     warnings.push(
-      `${which} ${overlapping.length === 1 ? "overlaps" : "overlap"} Tavi's built-in ${family.label} tools (${someOf(members, 3)}): ${OVERLAP}`,
+      overlapping.length === 0
+        ? textRef("error.mcp.overlap.server", params)
+        : textRef(overlapping.length === 1 ? "error.mcp.overlap.one" : "error.mcp.overlap.many", { ...params, which }),
     );
   }
   // Names distinctive enough to mean a tool when a description says them: whole ids, and built-in names with a `_`.
@@ -633,11 +643,14 @@ export function shadowingWarnings(input: {
   for (const tool of input.tools) {
     const inDescription = naming(cleanServerText(tool.description ?? ""));
     const inSchema = naming(cleanServerText((tool.prose ?? []).join("\n"))).filter((name) => !inDescription.includes(name));
-    const where = [...(inDescription.length === 0 ? [] : ["description"]), ...(inSchema.length === 0 ? [] : ["schema"])].join(" and ");
-    if (where === "") continue;
-    warnings.push(
-      `${cleanServerText(tool.name).slice(0, 64)}'s ${where} ${where.includes(" and ") ? "name" : "names"} other tools (${someOf([...inDescription, ...inSchema], 5)}): it may steer the model toward or away from them (shadowing)`,
-    );
+    if (inDescription.length === 0 && inSchema.length === 0) continue;
+    const key =
+      inSchema.length === 0
+        ? "error.mcp.shadowing.description"
+        : inDescription.length === 0
+          ? "error.mcp.shadowing.schema"
+          : "error.mcp.shadowing.both";
+    warnings.push(textRef(key, { tool: cleanServerText(tool.name).slice(0, 64), names: someOf([...inDescription, ...inSchema], 5) }));
   }
   return warnings;
 }

@@ -21,6 +21,7 @@ import {
   type BrowserLiveMessage,
   type ClientEvent,
   type IpcFrame,
+  type TextRef,
 } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 import { assertPipeOwnedHere, sleep } from "@tavi/node-kit";
@@ -684,6 +685,7 @@ export function createIpcServer(options: IpcServerOptions): IpcServer {
                     // Facts beside the code (`settled` on a late decision); a
                     // result too large to frame still answers, as below.
                     ...(response.error.details === undefined ? {} : { details: response.error.details }),
+                    ...(response.error.i18n === undefined ? {} : { i18n: response.error.i18n }),
                   },
                 }),
           });
@@ -822,6 +824,8 @@ interface IpcErrorBody {
   readonly code: string;
   readonly message: string;
   readonly details?: Readonly<Record<string, unknown>> | undefined;
+  /** `message` by key, for a client that says it in the workspace's language (`IpcResponseSchema`). */
+  readonly i18n?: TextRef | undefined;
 }
 
 export interface IpcClientRequestOptions {

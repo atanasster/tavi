@@ -1,4 +1,11 @@
-import { TaviError, pluginClientSecretRef, type ChannelDescriptor, type OAuth2Spec, type OAuthClientStatus } from "@tavi/contracts";
+import {
+  TaviError,
+  keyedError,
+  pluginClientSecretRef,
+  type ChannelDescriptor,
+  type OAuth2Spec,
+  type OAuthClientStatus,
+} from "@tavi/contracts";
 
 import { channelDescriptors, channelGrantsOf, isBuiltinChannel } from "./catalog.js";
 import { oauthClientCredentialRefs } from "../apps/oauth-clients.js";
@@ -114,7 +121,7 @@ export async function oauthClientOf(
     const sharedRefs = oauthClientCredentialRefs(provider);
     const sharedId = await store.getSecret(sharedRefs.id);
     if (sharedId === null || sharedId === "")
-      throw new TaviError("NOT_CONFIGURED", `${descriptor.label} signs in with your ${provider} client: set it up first`);
+      throw keyedError("NOT_CONFIGURED", "error.channels.sharedClientMissing", { channel: descriptor.label, provider });
     const sharedSecret = await store.getSecret(sharedRefs.secret);
     return { clientId: sharedId, ...(sharedSecret === null || sharedSecret === "" ? {} : { clientSecret: sharedSecret }), shared: true };
   }
@@ -125,7 +132,7 @@ export async function oauthClientOf(
     return { clientId: ownId, ...(ownSecret === null ? {} : { clientSecret: ownSecret }) };
   }
   if (spec.client.source === "operator")
-    throw new TaviError("NOT_CONFIGURED", `${descriptor.label} connects through an OAuth app of your own: enter it first`);
+    throw keyedError("NOT_CONFIGURED", "error.channels.ownClientMissing", { channel: descriptor.label });
   // Only the channel's own client secret: the host sends it to the channel's token address.
   if (spec.client.clientSecretRef !== undefined && spec.client.clientSecretRef !== pluginClientSecretRef(descriptor.providerId))
     throw new TaviError(
@@ -158,7 +165,7 @@ export async function saveOAuthClient(
   descriptor: ChannelDescriptor,
   client: { readonly clientId: string; readonly clientSecret?: string },
 ): Promise<void> {
-  if (oauthSpecOf(descriptor) === undefined) throw new TaviError("INVALID_INPUT", `${descriptor.label} does not connect with OAuth`);
+  if (oauthSpecOf(descriptor) === undefined) throw keyedError("INVALID_INPUT", "error.oauth.notOAuth", { channel: descriptor.label });
   const refs = oauthClientRefs(descriptor.providerId);
   await serializeCredentialAction(dataDirectory, async () => {
     const store = createLocalCredentialStore(dataDirectory);

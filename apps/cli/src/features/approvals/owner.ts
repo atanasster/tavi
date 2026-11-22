@@ -14,6 +14,7 @@ import {
   isRefusal,
   pendingRoundOfKind,
   refuse,
+  refuseKeyed,
   resumeTargetRefusal,
   runningHere,
   taskToDecide,
@@ -120,7 +121,7 @@ async function withSettlement(
 async function decide(deps: DecisionDependencies, request: DecideRoundRequest): Promise<DecideRoundAnswer> {
   const workflow = deps.workflow;
   if (workflow === undefined) {
-    return refuse("UNAVAILABLE", "this owner has no model connection, and a decision resumes the task's turn");
+    return refuseKeyed("UNAVAILABLE", "error.approvals.noModelConnection");
   }
   // Refused here, not left to the caller's validation: a request with neither
   // would otherwise read as a rejection of every call.

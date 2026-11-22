@@ -44,13 +44,14 @@ import {
   type MemoryProvenance,
   untrustedLabel,
   type ContentLabel,
+  keyedError,
 } from "@tavi/contracts";
 import { zodIssues } from "@tavi/contracts/zod-util";
 import { z } from "zod";
 
 import type { HeartbeatProviderStates } from "@tavi/agent-host/heartbeat-host";
 
-import type { IpcAnswer } from "../../shared/ipc-decisions.js";
+import { refusalFrom, type IpcAnswer } from "../../shared/ipc-decisions.js";
 
 /** An installed provider as the heartbeat command describes it. */
 interface HeartbeatInstalledProvider {
@@ -253,10 +254,7 @@ export async function saveHeartbeatChange(
   const current = await deps.heartbeats.get(at.workspaceId, at.principalId);
   const currentRevision = current?.config.revision ?? 0;
   if (expected !== undefined && expected !== currentRevision) {
-    throw new TaviError(
-      "CONFLICT",
-      `The heartbeat changed since revision ${expected} (it is at ${currentRevision}); read it again and retry`,
-    );
+    throw keyedError("CONFLICT", "error.heartbeat.revisionConflict", { expected: String(expected), current: String(currentRevision) });
   }
   const base = current?.config ?? { ...defaultHeartbeatConfig(), revision: 1 };
   // A page newly watched is a host it may read: the person approves both in this one change.
@@ -272,10 +270,9 @@ export async function saveHeartbeatChange(
   // A daily token limit below one check's worst case would let no check run, and pause it every day as if spent.
   const tokens = parsed.data.budget.tokensPerDay;
   if (tokens < HEARTBEAT_LIMITS.minTokensPerDay && tokens !== base.budget.tokensPerDay) {
-    throw new TaviError(
-      "INVALID_INPUT",
-      `The daily token limit must be at least ${HEARTBEAT_LIMITS.minTokensPerDay.toLocaleString("en-US")}: each check reserves its worst case before it runs`,
-    );
+    throw keyedError("INVALID_INPUT", "error.heartbeat.tokenLimitTooLow", {
+      min: HEARTBEAT_LIMITS.minTokensPerDay,
+    });
   }
   const problem = heartbeatIntervalProblem(parsed.data, deps.options);
   if (problem !== undefined) throw new TaviError("INVALID_INPUT", problem.charAt(0).toUpperCase() + problem.slice(1));
@@ -305,9 +302,9 @@ export async function heartbeatCommand(deps: HeartbeatCommandDependencies, paylo
     const workspaceId = payload.workspaceId ?? DEFAULT_WORKSPACE_ID;
     const operator = deps.principalOf(workspaceId);
     if (operator === undefined)
-      throw new TaviError("NOT_FOUND", `workspace ${workspaceId} is not configured on this owner`, { details: { workspaceId } });
+      throw keyedError("NOT_FOUND", "error.workspace.notConfigured", { workspaceId }, { details: { workspaceId } });
     const principalId = payload.principalId ?? operator;
-    if (principalId !== operator) throw new TaviError("NOT_AUTHORIZED", "Only the workspace operator has a heartbeat in this version");
+    if (principalId !== operator) throw keyedError("NOT_AUTHORIZED", "error.heartbeat.operatorOnly");
     const heartbeats = deps.repositories.heartbeats;
     const now = deps.now();
     const stamp = now.toISOString();
@@ -353,7 +350,7 @@ export async function heartbeatCommand(deps: HeartbeatCommandDependencies, paylo
     /** The heartbeat, or `NOT_FOUND` for one never saved: there is nothing to pause, check or forget. */
     const existing = async (): Promise<HeartbeatState> => {
       const state = await heartbeats.get(workspaceId, principalId);
-      if (state === undefined) throw new TaviError("NOT_FOUND", "There is no heartbeat yet; turn it on first (tavi heartbeat on)");
+      if (state === undefined) throw keyedError("NOT_FOUND", "error.heartbeat.notYet");
       return state;
     };
     const write = (change: (config: HeartbeatConfig) => HeartbeatConfig, expected: number | undefined): Promise<HeartbeatState> =>
@@ -369,11 +366,10 @@ export async function heartbeatCommand(deps: HeartbeatCommandDependencies, paylo
       if (providerId === undefined || providerId === BUILTIN_HEARTBEAT_PROVIDER_ID || providerId === "off" || fields.length === 0) return;
       const provider = deps.providers().find((candidate) => candidate.id === providerId);
       // Not loaded here: what it declares cannot be read, so nothing is turned on for it.
-      if (provider === undefined)
-        throw new TaviError("INVALID_INPUT", `The provider ${providerId} is not loaded here; turn its switches on where it runs`);
+      if (provider === undefined) throw keyedError("INVALID_INPUT", "error.heartbeat.providerNotLoaded", { providerId });
       const missing = provider.kind !== "plugin" ? [] : fields.filter((field) => !provider.receives.includes(field));
       if (missing.length > 0)
-        throw new TaviError("INVALID_INPUT", `The provider ${providerId} does not ask to receive ${missing.join(", ")}`);
+        throw keyedError("INVALID_INPUT", "error.heartbeat.providerNotAsking", { providerId, missing: missing.join(", ") });
     };
 
     switch (payload.action) {
@@ -428,8 +424,7 @@ export async function heartbeatCommand(deps: HeartbeatCommandDependencies, paylo
       case "run-now": {
         await existing();
         const host = deps.host();
-        if (host === undefined)
-          throw new TaviError("UNAVAILABLE", "Check now needs an owner running the heartbeat (tavi serve, with tavi.heartbeat enabled)");
+        if (host === undefined) throw keyedError("UNAVAILABLE", "error.heartbeat.checkNowNeedsOwner");
         const answer = await host.checkNow(workspaceId, principalId);
         if (answer.status === "refused") throw new TaviError("CONFLICT", answer.reason);
         return { ok: true, result: { status: answer.status } };
@@ -444,7 +439,7 @@ export async function heartbeatCommand(deps: HeartbeatCommandDependencies, paylo
           paused.reason !== "user" &&
           (paused.until === undefined || Date.parse(paused.until) > now.getTime())
         ) {
-          throw new TaviError("CONFLICT", `The heartbeat is paused (${paused.reason}); resume it before pausing it for a while`);
+          throw keyedError("CONFLICT", "error.heartbeat.pausedResumeFirst", { reason: paused.reason });
         }
         await heartbeats.setPaused({
           ...scope,
@@ -500,7 +495,7 @@ export async function heartbeatCommand(deps: HeartbeatCommandDependencies, paylo
                     : {}),
                   now: stamp,
                 });
-        if (item === undefined) throw new TaviError("NOT_FOUND", `Heartbeat item ${payload.itemId} does not exist`);
+        if (item === undefined) throw keyedError("NOT_FOUND", "error.heartbeat.itemNotFound", { itemId: payload.itemId });
         return { ok: true, result: { item: heartbeatItemView(item) } };
       }
       case "item": {
@@ -545,10 +540,10 @@ export async function heartbeatCommand(deps: HeartbeatCommandDependencies, paylo
           providerId !== BUILTIN_HEARTBEAT_PROVIDER_ID &&
           !installed.some((provider) => provider.id === providerId)
         ) {
-          throw new TaviError(
-            "INVALID_INPUT",
-            `No heartbeat provider ${providerId} is installed here (${installed.map((provider) => provider.id).join(", ")}, or off)`,
-          );
+          throw keyedError("INVALID_INPUT", "error.heartbeat.providerNotInstalled", {
+            providerId,
+            installed: installed.map((provider) => provider.id).join(", "),
+          });
         }
         const before = await heartbeats.get(workspaceId, principalId);
         // What the old provider was allowed to receive is not the new one's: its egress starts off again.
@@ -595,8 +590,7 @@ export async function heartbeatCommand(deps: HeartbeatCommandDependencies, paylo
         };
     }
   } catch (error) {
-    const failure = TaviError.from(error);
-    return { ok: false, error: { code: failure.code, message: failure.message } };
+    return refusalFrom(error);
   }
 }
 
@@ -606,7 +600,7 @@ async function heartbeatItemRow(
   input: { readonly workspaceId: string; readonly principalId: string; readonly itemId: string },
 ): Promise<HeartbeatLedgerRow> {
   const item = await heartbeats.ledgerRow(input);
-  if (item === undefined) throw new TaviError("NOT_FOUND", `Heartbeat item ${input.itemId} does not exist`);
+  if (item === undefined) throw keyedError("NOT_FOUND", "error.heartbeat.itemNotFound", { itemId: input.itemId });
   return item;
 }
 

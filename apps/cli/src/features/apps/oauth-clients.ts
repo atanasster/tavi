@@ -1,4 +1,4 @@
-import { TaviError } from "@tavi/contracts";
+import { keyedError } from "@tavi/contracts";
 
 import { createLocalCredentialStore, credentialsEncrypted, serializeCredentialAction } from "../credentials/store.js";
 
@@ -19,24 +19,23 @@ export const CLIENT_FILE_MAX = 8_192;
  * (`installed`) client is taken: a Web client registers one exact redirect, which no free port matches.
  */
 export function parseClientFile(text: string): { readonly clientId: string; readonly clientSecret?: string } {
-  if (text.length > CLIENT_FILE_MAX) throw new TaviError("INVALID_INPUT", "that client file is too large to be one");
+  if (text.length > CLIENT_FILE_MAX) throw keyedError("INVALID_INPUT", "error.apps.clientFile.tooLarge");
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
   } catch {
-    throw new TaviError("INVALID_INPUT", "that client file is not JSON: download it again from the client's dialog");
+    throw keyedError("INVALID_INPUT", "error.apps.clientFile.notJson");
   }
   const record = typeof parsed === "object" && parsed !== null ? (parsed as Record<string, unknown>) : {};
-  if (record["web"] !== undefined)
-    throw new TaviError("INVALID_INPUT", "that is a Web application client: create a Desktop app client instead, and download its JSON");
+  if (record["web"] !== undefined) throw keyedError("INVALID_INPUT", "error.apps.clientFile.webClient");
   const installed = record["installed"];
   const client = typeof installed === "object" && installed !== null ? (installed as Record<string, unknown>) : undefined;
   const clientId = client?.["client_id"];
   if (typeof clientId !== "string" || !/^[A-Za-z0-9._-]{1,256}$/.test(clientId))
-    throw new TaviError("INVALID_INPUT", "that file names no Desktop app client: download the JSON from the client's dialog");
+    throw keyedError("INVALID_INPUT", "error.apps.clientFile.noDesktopClient");
   const clientSecret = client?.["client_secret"];
   if (clientSecret !== undefined && (typeof clientSecret !== "string" || clientSecret.length > 512))
-    throw new TaviError("INVALID_INPUT", "that client file's secret is not one");
+    throw keyedError("INVALID_INPUT", "error.apps.clientFile.badSecret");
   return { clientId, ...(typeof clientSecret === "string" && clientSecret !== "" ? { clientSecret } : {}) };
 }
 
@@ -63,10 +62,7 @@ export async function saveSharedOAuthClient(
   client: { readonly clientId: string; readonly clientSecret?: string },
 ): Promise<void> {
   if (client.clientSecret !== undefined && !credentialsEncrypted(dataDirectory)) {
-    throw new TaviError(
-      "NOT_CONFIGURED",
-      "an OAuth client secret is kept only in an encrypted credential store: turn on credential encryption first (`tavi credentials encrypt`)",
-    );
+    throw keyedError("NOT_CONFIGURED", "error.apps.clientSecretNeedsEncryption");
   }
   const refs = oauthClientCredentialRefs(provider);
   await serializeCredentialAction(dataDirectory, async () => {

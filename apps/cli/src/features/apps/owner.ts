@@ -1,6 +1,7 @@
 import {
   MCP_PRESET_IDS,
   signsIn,
+  keyedError,
   TaviError,
   TaviErrorCodeSchema,
   type AppsConnectAnswer,
@@ -13,7 +14,7 @@ import {
 } from "@tavi/contracts";
 
 import { createLocalCredentialStore, plainCredentialValue, serializeCredentialAction } from "../credentials/store.js";
-import { refuse, type IpcAnswer } from "../../shared/ipc-decisions.js";
+import { refusalFrom, type IpcAnswer } from "../../shared/ipc-decisions.js";
 import { noSuchAccount } from "./accounts.js";
 import { appActivity, type ActivityAccount } from "./activity.js";
 import { approvedVersionOf, channelPresentationOf } from "./builtin.js";
@@ -75,7 +76,7 @@ export function nextSlug(base: string, taken: ReadonlySet<string>): string {
 
 async function appOf(context: AppsContext, appId: string, workspaceId: string): Promise<ConnectableApp> {
   const app = (await projectApps(context, workspaceId)).find((candidate) => candidate.appId === appId);
-  if (app === undefined) throw new TaviError("NOT_FOUND", `no app ${appId}`);
+  if (app === undefined) throw keyedError("NOT_FOUND", "error.apps.notFound", { appId });
   return app;
 }
 
@@ -99,7 +100,7 @@ async function approvedSiteNoteIds(context: AppsContext, pluginId: string): Prom
 function accountOf(app: ConnectableApp, accountId: string | undefined): ConnectableApp["accounts"][number] {
   const account = accountId === undefined ? app.accounts[0] : app.accounts.find((candidate) => candidate.accountId === accountId);
   if (account === undefined)
-    throw accountId === undefined ? new TaviError("NOT_FOUND", `${app.name} has no account`) : noSuchAccount(app, accountId);
+    throw accountId === undefined ? keyedError("NOT_FOUND", "error.apps.noAccount", { app: app.name }) : noSuchAccount(app, accountId);
   return account;
 }
 
@@ -162,7 +163,7 @@ async function run(context: AppsContext, input: AppsPayload): Promise<unknown> {
         const app = (await projectApps(context, input.workspaceId)).find((candidate) =>
           candidate.source.pluginIds.includes(entry.pluginId),
         );
-        if (app === undefined) throw new TaviError("NOT_FOUND", `no installed app ${entry.pluginId}`);
+        if (app === undefined) throw keyedError("NOT_FOUND", "error.apps.notInstalled", { pluginId: entry.pluginId });
         return { added: { appId: app.appId, pluginId: entry.pluginId } };
       }
       if (entry.kind === "channel") return { added: await addChannelAccount(context, entry.providerId, input.workspaceId) };
@@ -214,22 +215,21 @@ async function run(context: AppsContext, input: AppsPayload): Promise<unknown> {
           (input.values?.["clientId"] !== undefined &&
             Object.keys(input.values).every((key) => key === "clientId" || key === "clientSecret")));
       if (app.source.kind === "channel" ? !clientOnly : account.readOnly)
-        throw new TaviError("UNSUPPORTED", `configure ${app.name} in Settings → Channels`);
+        throw keyedError("UNSUPPORTED", "error.apps.configureInChannels", { app: app.name });
       const values = { ...input.values };
       if (input.clientFile !== undefined && provider === undefined)
-        throw new TaviError("INVALID_INPUT", `${app.name} signs in with no client its provider's apps share`);
+        throw keyedError("INVALID_INPUT", "error.apps.noSharedClient", { app: app.name });
       // The client file the provider's console downloads, read for its id and secret.
       const file = input.clientFile === undefined ? undefined : parseClientFile(input.clientFile);
       if (file !== undefined && (values["clientId"] !== undefined || values["clientSecret"] !== undefined))
-        throw new TaviError("INVALID_INPUT", "give the client file, or its id and secret: not both");
+        throw keyedError("INVALID_INPUT", "error.apps.clientFileOrId");
       const sharedId = provider === undefined ? undefined : (file?.clientId ?? values["clientId"]);
       const sharedSecret = provider === undefined ? undefined : (file?.clientSecret ?? values["clientSecret"]);
       if (provider !== undefined) {
         if (sharedId !== undefined && (typeof sharedId !== "string" || sharedId.trim() === ""))
-          throw new TaviError("INVALID_INPUT", "clientId needs a value");
+          throw keyedError("INVALID_INPUT", "error.apps.clientIdEmpty");
         if (sharedSecret !== undefined && typeof sharedSecret !== "string") throw new TaviError("INVALID_INPUT", "clientSecret is text");
-        if (sharedSecret !== undefined && sharedId === undefined)
-          throw new TaviError("INVALID_INPUT", "a client secret is saved with its client id");
+        if (sharedSecret !== undefined && sharedId === undefined) throw keyedError("INVALID_INPUT", "error.apps.secretWithoutId");
         delete values["clientId"];
         delete values["clientSecret"];
       }
@@ -239,7 +239,7 @@ async function run(context: AppsContext, input: AppsPayload): Promise<unknown> {
       const secrets: Record<string, string> = {};
       for (const [key, value] of Object.entries(values)) {
         const field = fields.get(key);
-        if (field === undefined) throw new TaviError("INVALID_INPUT", `${key} is not a setting of ${app.name}`);
+        if (field === undefined) throw keyedError("INVALID_INPUT", "error.apps.notASetting", { key, app: app.name });
         if (field.type === "credential") {
           if (typeof value !== "string") throw new TaviError("INVALID_INPUT", `${key} is text`);
           secrets[key] = plainCredentialValue(key, value);
@@ -280,12 +280,9 @@ async function run(context: AppsContext, input: AppsPayload): Promise<unknown> {
       const app = await appOf(context, input.appId, input.workspaceId);
       const account = accountOf(app, input.accountId);
       if (app.source.kind !== "mcp")
-        throw new TaviError(
-          "UNSUPPORTED",
-          app.source.kind === "channel"
-            ? "test a channel's connection in Settings → Channels (`tavi channels test`)"
-            : `${app.name} has no test`,
-        );
+        throw app.source.kind === "channel"
+          ? keyedError("UNSUPPORTED", "error.apps.testInChannels")
+          : keyedError("UNSUPPORTED", "error.apps.noTest", { app: app.name });
       const probed = await context.mcp({ action: "probe", pluginId: account.accountId, workspaceId: input.workspaceId });
       // A key its server refused is set up again, not reviewed: its version cannot be probed with it. A test that
       // failed otherwise (the server down) says nothing of the key.
@@ -299,11 +296,10 @@ async function run(context: AppsContext, input: AppsPayload): Promise<unknown> {
     case "permission": {
       const app = await appOf(context, input.appId, input.workspaceId);
       const tool = app.tools.find((candidate) => candidate.toolId === input.toolId);
-      if (tool === undefined) throw new TaviError("NOT_FOUND", `${app.name} has no tool ${input.toolId}`);
-      if (tool.state === "disabled")
-        throw new TaviError("INVALID_INPUT", `${tool.title} is left out by its review; change that in the review`);
+      if (tool === undefined) throw keyedError("NOT_FOUND", "error.apps.noTool", { app: app.name, toolId: input.toolId });
+      if (tool.state === "disabled") throw keyedError("INVALID_INPUT", "error.apps.toolLeftOut", { tool: tool.title });
       // A tool new or changed since its review starts from its reviewed default.
-      if (tool.state !== "offered") throw new TaviError("INVALID_INPUT", `${tool.title} waits for its review; review it first`);
+      if (tool.state !== "offered") throw keyedError("INVALID_INPUT", "error.apps.toolUnreviewed", { tool: tool.title });
       // Owner-wide: the change must hold against every workspace's rules.
       const ruleSets = await Promise.all(
         [...new Set([input.workspaceId, ...context.workspaceIds()])].map((workspaceId) => context.rules.inForce(workspaceId)),
@@ -333,7 +329,7 @@ async function run(context: AppsContext, input: AppsPayload): Promise<unknown> {
     case "mailbox": {
       const app = await appOf(context, input.appId, input.workspaceId);
       const account = accountOf(app, input.accountId);
-      if (account.mailbox === undefined) throw new TaviError("UNSUPPORTED", `${app.name}'s account is not a mailbox`);
+      if (account.mailbox === undefined) throw keyedError("UNSUPPORTED", "error.apps.notMailbox", { app: app.name });
       const access = { ...parseMailbox(await context.getMeta(APPS_MAILBOX_SETTING)) };
       if (input.mailbox === "off") delete access[account.accountId];
       else access[account.accountId] = input.mailbox;
@@ -345,10 +341,10 @@ async function run(context: AppsContext, input: AppsPayload): Promise<unknown> {
     case "receive": {
       const app = await appOf(context, input.appId, input.workspaceId);
       const account = accountOf(app, input.accountId);
-      if (account.receives === undefined) throw new TaviError("UNSUPPORTED", `${app.name}'s account always takes messages in`);
+      if (account.receives === undefined) throw keyedError("UNSUPPORTED", "error.apps.alwaysReceives", { app: app.name });
       if (context.channels === undefined) throw new TaviError("UNSUPPORTED", "this owner has no channels to change");
       const record = (await context.connections(input.workspaceId)).find((candidate) => candidate.connectionId === account.accountId);
-      if (record === undefined) throw new TaviError("NOT_FOUND", `${app.name} has no account ${account.accountId}`);
+      if (record === undefined) throw keyedError("NOT_FOUND", "error.apps.noAccountId", { app: app.name, accountId: account.accountId });
       resultOf(
         await context.channels({
           action: "save",
@@ -365,7 +361,7 @@ async function run(context: AppsContext, input: AppsPayload): Promise<unknown> {
     case "calendar": {
       const app = await appOf(context, input.appId, input.workspaceId);
       const account = accountOf(app, input.accountId);
-      if (account.calendar === undefined) throw new TaviError("UNSUPPORTED", `${app.name}'s account has no calendar`);
+      if (account.calendar === undefined) throw keyedError("UNSUPPORTED", "error.apps.noCalendar", { app: app.name });
       const on = new Set(parseCalendar(await context.getMeta(APPS_CALENDAR_SETTING)));
       if (input.on) on.add(account.accountId);
       else on.delete(account.accountId);
@@ -379,7 +375,8 @@ async function run(context: AppsContext, input: AppsPayload): Promise<unknown> {
       const siteId =
         app.sites?.find((candidate) => candidate.siteId === input.siteId)?.siteId ??
         (pluginId !== undefined && (await approvedSiteNoteIds(context, pluginId)).includes(input.siteId) ? input.siteId : undefined);
-      if (siteId === undefined || pluginId === undefined) throw new TaviError("NOT_FOUND", `${app.name} has no site ${input.siteId}`);
+      if (siteId === undefined || pluginId === undefined)
+        throw keyedError("NOT_FOUND", "error.apps.noSite", { app: app.name, siteId: input.siteId });
       const sites = { ...parseSites(await context.getMeta(APPS_SITES_SETTING)) };
       const on = new Set(sites[pluginId] ?? []);
       if (input.on) on.add(siteId);
@@ -391,23 +388,22 @@ async function run(context: AppsContext, input: AppsPayload): Promise<unknown> {
     }
     case "remove": {
       const app = await appOf(context, input.appId, input.workspaceId);
-      if (app.source.kind === "channel") throw new TaviError("UNSUPPORTED", "remove a channel's connections in Settings → Channels");
+      if (app.source.kind === "channel") throw keyedError("UNSUPPORTED", "error.apps.removeInChannels");
       await removeApp(context, app);
       return { removed: { appId: app.appId, pluginIds: app.source.pluginIds } };
     }
     case "connect": {
       const app = await appOf(context, input.appId, input.workspaceId);
       if (app.source.kind === "channel") return { connect: await connectChannel(context, app, input) };
-      if (app.source.kind !== "mcp") throw new TaviError("UNSUPPORTED", `${app.name} signs in with its settings`);
-      if (app.auth.kind !== "oauth") throw new TaviError("INVALID_INPUT", `${app.name} signs in with a key: set it in its settings`);
-      if (input.via !== "public" && input.origin === undefined)
-        throw new TaviError("INVALID_INPUT", "a sign-in here needs the page's own address to come back to");
+      if (app.source.kind !== "mcp") throw keyedError("UNSUPPORTED", "error.apps.signsInWithSettings", { app: app.name });
+      if (app.auth.kind !== "oauth") throw keyedError("INVALID_INPUT", "error.apps.signsInWithKey", { app: app.name });
+      if (input.via !== "public" && input.origin === undefined) throw keyedError("INVALID_INPUT", "error.apps.needsPageAddress");
       let accountId: string;
       let added: string | undefined;
       if (input.addAccount) {
         // Another account of a preset is another instance of it; it is reviewed after it signs in.
         const preset = MCP_PRESET_IDS.find((id) => id === app.source.preset);
-        if (preset === undefined) throw new TaviError("UNSUPPORTED", `${app.name} has one account: add it again from Discover for another`);
+        if (preset === undefined) throw keyedError("UNSUPPORTED", "error.apps.oneAccount", { app: app.name });
         const taken = new Set((await context.views()).map((view) => view.id));
         added = resultOf<{ readonly added: { readonly pluginId: string } }>(
           await context.mcp({ action: "add", slug: nextSlug(PRESET_SLUGS[preset] ?? preset, taken), form: { kind: "preset", preset } }),
@@ -483,11 +479,11 @@ async function run(context: AppsContext, input: AppsPayload): Promise<unknown> {
     case "disconnect": {
       const app = await appOf(context, input.appId, input.workspaceId);
       const account = accountOf(app, input.accountId);
-      if (account.readOnly) throw new TaviError("UNSUPPORTED", `disconnect ${app.name} in Settings → Channels`);
+      if (account.readOnly) throw keyedError("UNSUPPORTED", "error.apps.disconnectInChannels", { app: app.name });
       // Another app signed in with the same project and account keeps the provider's grant: only this one's token goes.
       const upstream = (account.keptBy ?? []).length === 0;
       if (app.source.kind === "channel") {
-        if (context.channels === undefined) throw new TaviError("UNSUPPORTED", `disconnect ${app.name} in Settings → Channels`);
+        if (context.channels === undefined) throw keyedError("UNSUPPORTED", "error.apps.disconnectInChannels", { app: app.name });
         resultOf(
           await context.channels({
             action: "oauth-disconnect",
@@ -501,7 +497,7 @@ async function run(context: AppsContext, input: AppsPayload): Promise<unknown> {
           disconnected: { appId: app.appId, accountId: account.accountId, revoked: false, removed: false, keptBy: account.keptBy ?? [] },
         };
       }
-      if (app.source.kind !== "mcp") throw new TaviError("UNSUPPORTED", `${app.name} has no sign-in to disconnect; remove it instead`);
+      if (app.source.kind !== "mcp") throw keyedError("UNSUPPORTED", "error.apps.nothingToDisconnect", { app: app.name });
       const out =
         app.auth.kind === "oauth"
           ? resultOf<{ readonly loggedOut: { readonly hadGrant: boolean; readonly confirmed: boolean } }>(
@@ -588,19 +584,17 @@ async function connectChannel(
   app: ConnectableApp,
   input: Extract<AppsPayload, { readonly action: "connect" }>,
 ): Promise<AppsConnectAnswer> {
-  if (context.channels === undefined)
-    throw new TaviError("UNSUPPORTED", `connect ${app.name} in Settings → Channels (\`tavi channels connect\`)`);
-  if (!signsIn(app.auth)) throw new TaviError("UNSUPPORTED", `${app.name} connects with its keys: set them in Settings → Channels`);
+  if (context.channels === undefined) throw keyedError("UNSUPPORTED", "error.apps.connectInChannels", { app: app.name });
+  if (!signsIn(app.auth)) throw keyedError("UNSUPPORTED", "error.apps.keysInChannels", { app: app.name });
   // A code is entered on any device, so it needs no address to come back to.
   const device = app.auth.kind === "device";
-  if (!device && input.via !== "public" && input.origin === undefined)
-    throw new TaviError("INVALID_INPUT", "a sign-in here needs the page's own address to come back to");
+  if (!device && input.via !== "public" && input.origin === undefined) throw keyedError("INVALID_INPUT", "error.apps.needsPageAddress");
   let connectionId: string;
   let workspaceId: string;
   let added = false;
   if (input.addAccount) {
     const providerId = context.descriptors().find((descriptor) => descriptor.providerId === app.appId)?.providerId;
-    if (providerId === undefined) throw new TaviError("NOT_FOUND", `${app.name}'s channel is not installed`);
+    if (providerId === undefined) throw keyedError("NOT_FOUND", "error.apps.channelNotInstalled", { app: app.name });
     workspaceId = input.workspaceId;
     connectionId = resultOf<{ readonly connectionId: string }>(
       await context.channels({ action: "save", workspaceId, providerId, enabled: true, settings: {} }),
@@ -693,11 +687,10 @@ export async function appsCommand(context: AppsContext, input: AppsPayload): Pro
     const redirect = failure.details?.["redirect"];
     // A second way into a server already added: the page offers the switch from these facts.
     const offer = failure.details?.["switch"];
-    if (failure.code === "CONFLICT" && offer !== undefined)
-      return { ok: false, error: { code: failure.code, message: failure.message, details: { switch: offer } } };
+    if (failure.code === "CONFLICT" && offer !== undefined) return refusalFrom(failure, { switch: offer });
     return failure.details?.["needsClient"] === true && typeof redirect === "string"
-      ? { ok: false, error: { code: failure.code, message: failure.message, details: { needsClient: true, redirect } } }
-      : refuse(failure.code, failure.message);
+      ? refusalFrom(failure, { needsClient: true, redirect })
+      : refusalFrom(failure);
   }
 }
 
@@ -712,9 +705,9 @@ async function addChannelAccount(
   workspaceId: string,
 ): Promise<{ readonly appId: string; readonly pluginId: string; readonly accountId: string }> {
   const descriptor = context.descriptors().find((candidate) => candidate.providerId === providerId);
-  if (descriptor === undefined) throw new TaviError("NOT_FOUND", `no channel ${providerId} is installed`);
+  if (descriptor === undefined) throw keyedError("NOT_FOUND", "error.apps.noChannel", { providerId });
   if (descriptor.auth.kind !== "oauth2" || context.channels === undefined)
-    throw new TaviError("UNSUPPORTED", `add a ${descriptor.label} connection in Settings → Channels (\`tavi channels add\`)`);
+    throw keyedError("UNSUPPORTED", "error.apps.addInChannels", { channel: descriptor.label });
   const settings = Object.fromEntries(
     descriptor.settings.flatMap((field) => (field.default === undefined ? [] : [[field.key, field.default]])),
   );

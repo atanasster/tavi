@@ -71,7 +71,7 @@ import {
   plainCredentialValue,
   serializeCredentialAction,
 } from "../features/credentials/store.js";
-import { refuse, targetRefusal, type IpcAnswer } from "../shared/ipc-decisions.js";
+import { refusalFrom, refuse, targetRefusal, type IpcAnswer } from "../shared/ipc-decisions.js";
 import { join } from "node:path";
 import { sleep } from "@tavi/node-kit";
 
@@ -295,11 +295,7 @@ export async function answering<R>(
   try {
     return { ok: true, result: await handler() };
   } catch (error) {
-    const failure = TaviError.from(error);
-    const details = detailsOf?.(failure);
-    return details === undefined
-      ? refuse(failure.code, failure.message)
-      : { ok: false, error: { code: failure.code, message: failure.message, details } };
+    return refusalFrom(error, detailsOf?.(TaviError.from(error)));
   }
 }
 

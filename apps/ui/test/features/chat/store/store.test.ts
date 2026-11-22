@@ -24,7 +24,7 @@ import { createCanvasStore } from "../../../../src/features/chat/store/store.js"
 import { BLOCKING_KINDS } from "../../../../src/features/chat/store/stream.js";
 import type { CanvasClient, CanvasRun } from "../../../../src/features/chat/store/types.js";
 import { spoken, type Said } from "../../../../src/features/chat/store/said.js";
-import { translateNow } from "../../../../src/lib/i18n.js";
+import { setLocale, translateNow } from "../../../../src/lib/i18n.js";
 
 /** A message the store kept, in the words the page shows for it. */
 function words(value: Said | readonly Said[] | undefined): string | undefined {
@@ -1621,6 +1621,27 @@ describe("the canvas store", () => {
       expect(words(store.getSnapshot().unsent?.message)).toContain("Not sent: busy.");
       expect(replies(fake)).toEqual([]);
       expect(store.getSnapshot().continuing).toBe("task-1");
+    });
+
+    it("says a keyed refusal to follow the task in the page's language", async () => {
+      const { fake, store } = await finished();
+      fake.subscribeResponse = {
+        ok: false,
+        error: {
+          code: "NOT_FOUND",
+          message: "Task task-1 does not exist",
+          i18n: { key: "error.task.notFound", params: { taskId: "task-1" } },
+        },
+      };
+      await setLocale("bg");
+      try {
+        store.submit("carry on");
+        await settle();
+        await settle();
+        expect(words(store.getSnapshot().unsent?.message)).toContain("Чатът task-1 не съществува");
+      } finally {
+        await setLocale("en");
+      }
     });
 
     it("keeps following when the resent reply is not answered either", async () => {

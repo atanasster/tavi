@@ -1,4 +1,5 @@
 import { translateNow } from "../../../lib/i18n.js";
+import { errorWords } from "../../../lib/ipc.js";
 import { conversationOfRecorded, turnEnded } from "@tavi/client/browser";
 import { TASK_NEEDS, type TaskListFilters, TaskListResultSchema, type TaskListRow } from "@tavi/contracts";
 
@@ -58,12 +59,12 @@ export function installSessions(ctx: StoreContext): void {
           .catch(() => undefined),
       ]);
       if (ctx.disposed || generation !== listGeneration) return;
-      if (!page.ok || !inbox.ok)
+      if (!page.ok || !inbox.ok) {
+        const refused = page.error ?? inbox.error;
         throw new SaidError(
-          said("chat.files.restartHint", {
-            message: page.error?.message ?? inbox.error?.message ?? said("chat.store.listRefused"),
-          }),
+          said("chat.files.restartHint", { message: refused === undefined ? said("chat.store.listRefused") : errorWords(refused) }),
         );
+      }
       const list = TaskListResultSchema.safeParse(page.result);
       const needs = TaskListResultSchema.safeParse(inbox.result);
       if (!list.success || !needs.success) throw new SaidError(said("chat.store.listUnsupported"));

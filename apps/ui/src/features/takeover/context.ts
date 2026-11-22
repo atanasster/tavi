@@ -3,6 +3,7 @@ import { errorMessage } from "@tavi/contracts/util";
 import { createContext, useContext } from "react";
 
 import { translateNow } from "../../lib/i18n.js";
+import { refusal } from "../../lib/ipc.js";
 
 /** A session a person may take over, and the agent's request when it asked. */
 export interface TakeoverTarget {
@@ -41,10 +42,10 @@ export async function declineThrough(
   note?: string,
 ): Promise<string | undefined> {
   const opened = await liveWatch(target.taskId, { workspaceId, sessionId: target.sessionId, onMessage: (_message, ack) => ack() });
-  if (opened.watch === undefined) return opened.response.error?.message ?? translateNow("takeover.decline.unreachable");
+  if (opened.watch === undefined) return refusal(opened.response, translateNow("takeover.decline.unreachable"));
   try {
     const answer = await opened.watch.control({ action: "decline", sessionId: target.sessionId, ...(note === undefined ? {} : { note }) });
-    return answer.ok ? undefined : (answer.error?.message ?? translateNow("takeover.decline.untold"));
+    return answer.ok ? undefined : refusal(answer, translateNow("takeover.decline.untold"));
   } finally {
     await opened.watch.close();
   }

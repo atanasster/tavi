@@ -5,6 +5,7 @@ import {
   type BrowserLiveMessage,
   type ClientEvent,
   type IpcFrame,
+  type TextRef,
 } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
@@ -23,7 +24,13 @@ export interface ClientResponse {
   readonly ok: boolean;
   readonly result?: unknown;
   /** `details` carries facts some refusals add, such as `settled` on a decision that came too late. */
-  readonly error?: { readonly code: string; readonly message: string; readonly details?: Readonly<Record<string, unknown>> | undefined };
+  readonly error?: {
+    readonly code: string;
+    readonly message: string;
+    readonly details?: Readonly<Record<string, unknown>> | undefined;
+    /** `message` by key, for a reader that says it in the workspace's language; absent, `message` is all there is. */
+    readonly i18n?: TextRef | undefined;
+  };
 }
 
 /** An event the owner pushed on one of this connection's subscriptions. */

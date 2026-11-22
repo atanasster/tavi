@@ -1,6 +1,8 @@
 import { CLIENT_TIMEOUT, recordedStateOf, resumeFrom } from "@tavi/client/browser";
+import type { TextRef } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
+import { errorWords } from "../../../lib/ipc.js";
 import { loadTaskRecord } from "../tasks-api.js";
 import type { StoreContext } from "./context.js";
 import { RECORD_READ } from "./record.js";
@@ -96,9 +98,16 @@ export function installContinuation(ctx: StoreContext): void {
     };
     /** Why the owner did not take a message, in words for the reader: a timeout names no protocol command. */
     const why = (
-      failure: { readonly code?: string | undefined; readonly message?: string | undefined } | undefined,
+      failure:
+        | { readonly code?: string | undefined; readonly message?: string | undefined; readonly i18n?: TextRef | undefined }
+        | undefined,
       fallback: Said,
-    ): Said => (failure?.code === CLIENT_TIMEOUT ? said("chat.store.why.timeout") : (failure?.message ?? fallback));
+    ): Said =>
+      failure?.code === CLIENT_TIMEOUT
+        ? said("chat.store.why.timeout")
+        : failure?.message === undefined
+          ? fallback
+          : errorWords({ message: failure.message, i18n: failure.i18n });
     // From where the chat's last followed turn stopped: a plugin's line cleared between the turns, say on its disable, is seen.
     const before = [...ctx.state.runs]
       .reverse()

@@ -15,7 +15,7 @@ import {
 } from "@tavi/contracts";
 import { sleep } from "@tavi/node-kit";
 
-import type { IpcAnswer } from "../shared/ipc-decisions.js";
+import { refusalFrom, type IpcAnswer } from "../shared/ipc-decisions.js";
 
 /**
  * `center`: the Command Center's first paint and
@@ -115,8 +115,7 @@ export async function centerCommand(deps: CenterDependencies, payload: CenterPay
     // Nothing changed: the cursor sent is still current.
     return { ok: true, result: { cursor: payload.cursor, changed: [] } };
   } catch (error) {
-    const failure = TaviError.from(error);
-    return { ok: false, error: { code: failure.code, message: failure.message } };
+    return refusalFrom(error);
   }
 }
 

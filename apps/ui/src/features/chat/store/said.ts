@@ -1,7 +1,9 @@
+import type { TextRef } from "@tavi/contracts";
 import type { MessageParams, Translate } from "@tavi/contracts/i18n";
 import { errorMessage } from "@tavi/contracts/util";
 
 import { translateNow } from "../../../lib/i18n.js";
+import { errorWords } from "../../../lib/ipc.js";
 import type { UiKey } from "../../../locales/en.js";
 
 /** A message the store wrote itself: its key and values, put into words where it is shown. */
@@ -44,7 +46,10 @@ export function saidOf(error: unknown): Said {
   return error instanceof SaidError ? error.said : errorMessage(error);
 }
 
-/** A raw response's refusal: the owner's message as it sent it, else `fallback`. */
-export function refusedAs(response: { readonly error?: { readonly message: string } | undefined }, fallback: SaidKey): Said {
-  return response.error?.message ?? fallback;
+/** A raw response's refusal: the owner's words (`errorWords`), else `fallback`. */
+export function refusedAs(
+  response: { readonly error?: { readonly message: string; readonly i18n?: TextRef | undefined } | undefined },
+  fallback: SaidKey,
+): Said {
+  return response.error === undefined ? fallback : errorWords(response.error);
 }

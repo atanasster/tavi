@@ -19,7 +19,7 @@ import {
 } from "@tavi/contracts";
 import { sniffMediaType } from "@tavi/runtime";
 
-import type { IpcAnswer } from "../../shared/ipc-decisions.js";
+import { refusalFrom, type IpcAnswer } from "../../shared/ipc-decisions.js";
 import { unviewableImage } from "../tools/assistant.js";
 
 /**
@@ -254,8 +254,7 @@ export async function artifactsUploadCommand(
       uploads.drop(payload.uploadId);
     }
   } catch (error) {
-    const failure = TaviError.from(error);
-    return { ok: false, error: { code: failure.code, message: failure.message } };
+    return refusalFrom(error);
   } finally {
     bytes.fill(0);
   }

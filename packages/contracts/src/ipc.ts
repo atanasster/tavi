@@ -23,6 +23,7 @@ import {
 import { z } from "zod";
 
 import { TaviError } from "./errors.js";
+import { TextRefSchema } from "./text-ref.js";
 import { CLIENT_PROTOCOL_VERSION, ClientEventSchema } from "./events.js";
 import type { ArtifactRecord } from "./ports/artifacts.js";
 import { type AdmissionOutcome, CHAT_MEMORY_MODES } from "./ports/tasks.js";
@@ -283,6 +284,12 @@ export const IpcResponseSchema = z.object({
        * loses nothing.
        */
       details: z.record(z.string().max(64), z.unknown()).optional(),
+      /**
+       * `message` by key, when a person reads it (`TaviErrorSchema.i18n`): a
+       * client says it in the workspace's language, one that does not read it
+       * (or an older one) shows `message`. Invalid, it is dropped, never the frame.
+       */
+      i18n: TextRefSchema.optional().catch(undefined),
     })
     .optional(),
   result: z.unknown().optional(),

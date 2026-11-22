@@ -6,7 +6,6 @@ import {
   REMINDERS_IPC_LIST_DEFAULT,
   REMINDERS_IPC_RECENT_FIRES,
   REMINDERS_IPC_UPCOMING,
-  TaviError,
   hostTimeZone,
   upcomingReminderFires,
   type PersistencePort,
@@ -27,10 +26,11 @@ import {
   type TodoRemoveAnswer,
   type TodoWriteAnswer,
   type TodosListAnswer,
+  keyedError,
 } from "@tavi/contracts";
 import { definedOnly } from "@tavi/contracts/util";
 
-import type { IpcAnswer } from "../../shared/ipc-decisions.js";
+import { refusalFrom, type IpcAnswer } from "../../shared/ipc-decisions.js";
 
 /**
  * `reminders`: the operator's view of every
@@ -99,7 +99,7 @@ export async function remindersCommand(deps: RemindersCommandDependencies, paylo
     // answer an empty, plausible-looking list.
     const operator = deps.principalOf(workspaceId);
     if (operator === undefined) {
-      throw new TaviError("NOT_FOUND", `workspace ${workspaceId} is not configured on this owner`, { details: { workspaceId } });
+      throw keyedError("NOT_FOUND", "error.workspace.notConfigured", { workspaceId }, { details: { workspaceId } });
     }
     const reminders = deps.repositories.reminders;
     const now = deps.now();
@@ -109,7 +109,7 @@ export async function remindersCommand(deps: RemindersCommandDependencies, paylo
     const inWorkspace = async (reminderId: string): Promise<Reminder> => {
       const reminder = await reminders.get(reminderId);
       if (reminder === undefined || reminder.workspaceId !== workspaceId)
-        throw new TaviError("NOT_FOUND", `Reminder ${reminderId} does not exist`);
+        throw keyedError("NOT_FOUND", "error.reminder.notFound", { reminderId });
       return reminder;
     };
     /**
@@ -119,14 +119,14 @@ export async function remindersCommand(deps: RemindersCommandDependencies, paylo
      */
     const reminderOnly = async (reminderId: string): Promise<Reminder> => {
       const reminder = await inWorkspace(reminderId);
-      if (reminder.kind === "todo") throw new TaviError("CONFLICT", "That is a to-do; change it as a to-do");
+      if (reminder.kind === "todo") throw keyedError("CONFLICT", "error.reminder.isTodo");
       return reminder;
     };
     const written = (reminder: Reminder): RemindersAnswer => ({ ok: true, result: { reminder: reminderView(reminder, now) } });
     /** A to-do of this workspace, or `NOT_FOUND`. */
     const todoInWorkspace = async (todoId: string): Promise<Todo> => {
       const todo = await reminders.getTodo(todoId);
-      if (todo === undefined || todo.workspaceId !== workspaceId) throw new TaviError("NOT_FOUND", `To-do ${todoId} does not exist`);
+      if (todo === undefined || todo.workspaceId !== workspaceId) throw keyedError("NOT_FOUND", "error.todo.notFound", { todoId });
       return todo;
     };
     /** A conversation is refused unless it is one this person's reminders may go to. */
@@ -138,10 +138,7 @@ export async function remindersCommand(deps: RemindersCommandDependencies, paylo
       const allowed =
         (await deps.conversationAllowed?.({ workspaceId, ...owner }, deliverTo.connectionId, deliverTo.conversationId)) === true;
       if (!allowed) {
-        throw new TaviError(
-          "INVALID_INPUT",
-          "A reminder can go only to a conversation of the person it is for, or a delivery target added for them; this one is neither",
-        );
+        throw keyedError("INVALID_INPUT", "error.reminder.deliveryNotAllowed");
       }
     };
 
@@ -182,14 +179,13 @@ export async function remindersCommand(deps: RemindersCommandDependencies, paylo
         if (payload.originTaskId !== undefined) {
           const task = await deps.repositories.tasks.get(payload.originTaskId);
           if (task === undefined || task.workspaceId !== workspaceId)
-            throw new TaviError("NOT_FOUND", `Task ${payload.originTaskId} does not exist`);
+            throw keyedError("NOT_FOUND", "error.task.notFound", { taskId: payload.originTaskId });
         }
         const originTaskId = payload.originTaskId === undefined ? undefined : await chatOf(payload.originTaskId);
         const principalId = payload.principalId ?? operator;
         // A copy is made under the label its source was made under: the operator cannot clear a reminder's taint by duplicating it.
         const source = payload.copyOf === undefined ? undefined : await reminderOnly(payload.copyOf);
-        if (source !== undefined && source.principalId !== principalId)
-          throw new TaviError("INVALID_INPUT", "A copy of a reminder is for the same person as the reminder it copies");
+        if (source !== undefined && source.principalId !== principalId) throw keyedError("INVALID_INPUT", "error.reminder.copySamePerson");
         await checkDeliverTo(payload.deliverTo, {
           principalId,
           ...(originTaskId === undefined ? {} : { originTaskId }),
@@ -336,8 +332,7 @@ export async function remindersCommand(deps: RemindersCommandDependencies, paylo
       }
     }
   } catch (error) {
-    const failure = TaviError.from(error);
-    return { ok: false, error: { code: failure.code, message: failure.message } };
+    return refusalFrom(error);
   }
 }
 

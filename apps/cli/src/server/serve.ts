@@ -135,7 +135,7 @@ import {
   setGrantKeptBy,
 } from "./config-commands.js";
 import { workspaceSettingsCommand } from "./workspace-settings-commands.js";
-import { HOME_CANCEL_REFUSAL, recordCancellation, terminateExecution } from "../features/tasks/mutations.js";
+import { recordCancellation, terminateExecution } from "../features/tasks/mutations.js";
 import {
   buildDoctorDocument,
   videoStatusDocument,
@@ -148,6 +148,7 @@ import {
 } from "../features/doctor/reports.js";
 import { MIN_FREE_BYTES_FOR_A_FIRE, releaseEndedHolds } from "@tavi/agent-host/schedule-scheduler";
 import { freeBytesAt } from "../shared/disk.js";
+import { refusalFrom, refuseKeyed, type IpcRefusal } from "../shared/ipc-decisions.js";
 import type { CliIo } from "../cli/io.js";
 import { onboardingCommand, type OnboardingCommandDependencies } from "../features/onboard/owner.js";
 import { ownerOnboardingDependencies } from "../features/onboard/owner-dependencies.js";
@@ -1163,8 +1164,7 @@ function configDependencies(
             runtime.fireScheduleManually(schedule).then(
               (result): ScheduleRunAnswer => ({ ok: true, result }),
               (error: unknown): ScheduleRunAnswer => {
-                const failure = TaviError.from(error);
-                return { ok: false, error: { code: failure.code, message: failure.message } };
+                return refusalFrom(error);
               },
             ),
         }),
@@ -1215,7 +1215,7 @@ function decisionDependencies(runtime: TaviRuntime, target: OwnerModelTarget): D
 }
 
 /** An owner's answer to one command. */
-type CommandAnswer = { ok: boolean; result?: unknown; error?: { code: string; message: string } };
+type CommandAnswer = { ok: boolean; result?: unknown; error?: IpcRefusal["error"] };
 
 /**
  * Commands an authenticated client may invoke.
@@ -1239,7 +1239,7 @@ async function dispatchCommand(
   // how an operator ends the run holding shutdown up. Its subscriptions keep
   // receiving the ends of runs that finish inside the drain.
   if (state.stopping && command !== "unsubscribe" && command !== "abort") {
-    return { ok: false, error: { code: "UNAVAILABLE", message: "the owner is shutting down" } };
+    return refuseKeyed("UNAVAILABLE", "error.owner.shuttingDown");
   }
   const repositories = runtime.store.asPort().repositories;
   // The target this owner runs now, in the workspace the command names,
@@ -1283,10 +1283,7 @@ async function dispatchCommand(
       typeof workspaceId === "string" &&
       !runtime.access.actsIn(workspaceId, input["principalId"])
     ) {
-      return {
-        ok: false,
-        error: { code: "NOT_AUTHORIZED", message: `${input["principalId"]} is not allowed in workspace ${workspaceId}` },
-      };
+      return refuseKeyed("NOT_AUTHORIZED", "error.access.notAllowedInWorkspace", { principalId: input["principalId"], workspaceId });
     }
     if (input["principalId"] === undefined && typeof workspaceId === "string") {
       const ref: { routineId?: string; runId?: string; jobId?: string } = {};
@@ -1301,13 +1298,7 @@ async function dispatchCommand(
       // A revoked person's routine is kept, so it can be seen and archived, and nothing more.
       routineOwnerRevoked = owner !== undefined && !runtime.access.actsIn(workspaceId, owner);
       if (routineOwnerRevoked && !REVOKED_OWNER_ROUTINE_ACTIONS.has(String(input["action"]))) {
-        return {
-          ok: false,
-          error: {
-            code: "NOT_AUTHORIZED",
-            message: `${owner} is no longer allowed in this workspace: their routine can be viewed or archived, not ${String(input["action"])}. Allow them again in Settings → Allowed people to use it.`,
-          },
-        };
+        return refuseKeyed("NOT_AUTHORIZED", "error.routine.ownerRevoked", { owner: String(owner), action: String(input["action"]) });
       }
       payload = { ...input, principalId: owner ?? runtime.access.resolveWorkspace(workspaceId)?.principalId };
       routinesOfWorkspace = input["action"] === "list" && Object.keys(ref).length === 0;
@@ -1327,10 +1318,9 @@ async function dispatchCommand(
         // The audit trail of one task's rounds, in the caller's workspace only.
         const task = approvalsInput.taskId === undefined ? undefined : await repositories.tasks.get(approvalsInput.taskId);
         if (task === undefined || task.workspaceId !== (approvalsInput.workspaceId ?? DEFAULT_WORKSPACE_ID)) {
-          return {
-            ok: false,
-            error: { code: "NOT_FOUND", message: `No task ${approvalsInput.taskId ?? "(none named)"} in this workspace` },
-          };
+          return approvalsInput.taskId === undefined
+            ? refuseKeyed("NOT_FOUND", "error.task.notInWorkspaceUnnamed")
+            : refuseKeyed("NOT_FOUND", "error.task.notInWorkspace", { taskId: approvalsInput.taskId });
         }
         const shown: ApprovalsShowResult = {
           taskId: task.taskId,
@@ -1514,7 +1504,7 @@ async function dispatchCommand(
         const { action: _action, ...filters } = taskInput;
         const prompts = await runtime.store.taskPrompts(filters);
         // One answer for a task that does not exist and one in another workspace, so a read never says which.
-        if (prompts === undefined) return { ok: false, error: { code: "NOT_FOUND", message: `Task ${filters.taskId} does not exist` } };
+        if (prompts === undefined) return refuseKeyed("NOT_FOUND", "error.task.notFound", { taskId: filters.taskId });
         return { ok: true, result: prompts };
       }
       if ("action" in taskInput && taskInput.action === "transcript") {
@@ -1544,7 +1534,7 @@ async function dispatchCommand(
         // The chat's context label, as the gate reads it now: the header's taint chip.
         const task = await repositories.tasks.get(taskInput.taskId);
         if (task === undefined || (taskInput.workspaceId !== undefined && task.workspaceId !== taskInput.workspaceId)) {
-          return { ok: false, error: { code: "NOT_FOUND", message: `Task ${taskInput.taskId} does not exist` } };
+          return refuseKeyed("NOT_FOUND", "error.task.notFound", { taskId: taskInput.taskId });
         }
         const answer: TaskLabelAnswer = { taskId: task.taskId, contextLabel: await taskContextLabel(runtime, task) };
         return { ok: true, result: answer };
@@ -1552,7 +1542,7 @@ async function dispatchCommand(
       if ("action" in taskInput && taskInput.action === "stop-handoff") {
         const task = await repositories.tasks.get(taskInput.taskId);
         if (task === undefined || (taskInput.workspaceId !== undefined && task.workspaceId !== taskInput.workspaceId)) {
-          return { ok: false, error: { code: "NOT_FOUND", message: `Task ${taskInput.taskId} does not exist` } };
+          return refuseKeyed("NOT_FOUND", "error.task.notFound", { taskId: taskInput.taskId });
         }
         const withdrawn = await runtime.withdrawHandoffs(task.taskId, operatorActor(connection?.viaBridge() === true));
         if (withdrawn === 0)
@@ -1571,7 +1561,7 @@ async function dispatchCommand(
       const now = runtime.clock.now();
       const shown = await buildTaskShowDocument(runtime.store, runtime.dataDirectory, input.taskId, now, self);
       if (shown["found"] !== true) {
-        return { ok: false, error: { code: "NOT_FOUND", message: `Task ${input.taskId} does not exist` } };
+        return refuseKeyed("NOT_FOUND", "error.task.notFound", { taskId: input.taskId });
       }
       return { ok: true, result: shown };
     },
@@ -1579,7 +1569,7 @@ async function dispatchCommand(
       // Refused for an unknown task, as `abort` is: subscribing used to create
       // an event ring for any id a client named, and nothing evicted it.
       if ((await repositories.tasks.get(input.taskId)) === undefined) {
-        return { ok: false, error: { code: "NOT_FOUND", message: `Task ${input.taskId} does not exist` } };
+        return refuseKeyed("NOT_FOUND", "error.task.notFound", { taskId: input.taskId });
       }
       const subscription = openSubscription(runtime, state, connection, requestId);
       // Read in the same turn as the attach, so no event lands between them.
@@ -1813,10 +1803,9 @@ async function dispatchCommand(
         return await channelsCommand(channelsDependencies(runtime), value);
       } catch (error) {
         // Its refusal's words are the terminal's; the facts the page words it from go along (QA 2033).
-        const failure = TaviError.from(error);
-        const details = channelsPageDetails(failure);
+        const details = channelsPageDetails(TaviError.from(error));
         if (details === undefined) throw error;
-        return { ok: false, error: { code: failure.code, message: failure.message, details } };
+        return refusalFrom(error, details);
       } finally {
         await refreshAccountTools(runtime);
         // Allowing, revoking, pairing or removing a connection changes who acts in the workspace, even part way.
@@ -2157,7 +2146,7 @@ async function dispatchCommand(
       // IPC-started one. Distinct from `cancel`, which also ends the task on the ledger.
       const input = value;
       if ((await repositories.tasks.get(input.taskId)) === undefined) {
-        return { ok: false, error: { code: "NOT_FOUND", message: `Task ${input.taskId} does not exist` } };
+        return refuseKeyed("NOT_FOUND", "error.task.notFound", { taskId: input.taskId });
       }
       const signal = runtime.abortRegistry.signalFor(input.taskId);
       if (signal === undefined) {
@@ -2184,10 +2173,10 @@ async function dispatchCommand(
       const input = value;
       const cancelled = await repositories.tasks.get(input.taskId);
       if (cancelled === undefined) {
-        return { ok: false, error: { code: "NOT_FOUND", message: `Task ${input.taskId} does not exist` } };
+        return refuseKeyed("NOT_FOUND", "error.task.notFound", { taskId: input.taskId });
       }
       // Home never ends: Stop aborts its turn, and nothing cancels the chat.
-      if (cancelled.chatKind === "home") return { ok: false, error: { code: "CONFLICT", message: HOME_CANCEL_REFUSAL } };
+      if (cancelled.chatKind === "home") return refuseKeyed("CONFLICT", "error.task.homeNeverCancelled");
       const { record, cancelledApprovals } = await recordCancellation(
         runtime.store,
         {
@@ -2249,7 +2238,7 @@ async function dispatchCommand(
         attended: true,
       });
       const answer = await runtime.turnHooks.runCommand(payload.name.toLowerCase(), { envelope, args: payload.args });
-      if (answer === undefined) return { ok: false, error: { code: "NOT_FOUND", message: `no plugin adds /${payload.name}` } };
+      if (answer === undefined) return refuseKeyed("NOT_FOUND", "error.plugin.noCommand", { name: payload.name });
       return { ok: true, result: { text: maskPluginText(answer.text, MOD_COMMAND_TEXT_MAX_CHARS) } satisfies PluginCommandsAnswer };
     },
     "reset-instance": async () => {
@@ -2269,8 +2258,7 @@ async function dispatchCommand(
     // The schema parsed the payload for this command: the route takes it as its own.
     return await (routes[command as IpcCommand] as (value: unknown) => Promise<CommandAnswer>)(parsed.value);
   } catch (error) {
-    const taviError = TaviError.from(error);
-    return { ok: false, error: { code: taviError.code, message: taviError.message } };
+    return refusalFrom(error);
   }
 }
 
@@ -2324,7 +2312,7 @@ async function withDeadline<T>(work: Promise<T>, deadlineMs: number): Promise<T 
 function taskNotFound(
   task: { readonly workspaceId: string } | undefined,
   input: { readonly taskId: string; readonly workspaceId?: string | undefined },
-): { ok: false; error: { code: "NOT_FOUND"; message: string } } | undefined {
+): IpcRefusal | undefined {
   if (task !== undefined && (input.workspaceId === undefined || task.workspaceId === input.workspaceId)) return undefined;
-  return { ok: false, error: { code: "NOT_FOUND", message: `Task ${input.taskId} does not exist` } };
+  return refuseKeyed("NOT_FOUND", "error.task.notFound", { taskId: input.taskId });
 }

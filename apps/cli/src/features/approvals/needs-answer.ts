@@ -5,8 +5,12 @@ import {
   type MemoryActor,
   type NeedAnswered,
   type PersistencePort,
+  type TextRef,
+  type TextRefParams,
 } from "@tavi/contracts";
+import type { CoreKey } from "@tavi/contracts/locales/core";
 
+import { refuseKeyed } from "../../shared/ipc-decisions.js";
 import type { ChannelApprovals } from "./channel-approvals.js";
 
 /** What `approvals answer` reports; see `NeedAnsweredSchema`. */
@@ -14,7 +18,15 @@ type NeedAnswerResult = NeedAnswered;
 
 export type NeedAnswerOutcome =
   | { readonly ok: true; readonly result: NeedAnswerResult }
-  | { readonly ok: false; readonly error: { readonly code: "NOT_FOUND" | "CONFLICT" | "INVALID_INPUT"; readonly message: string } };
+  | {
+      readonly ok: false;
+      readonly error: { readonly code: "NOT_FOUND" | "CONFLICT" | "INVALID_INPUT"; readonly message: string; readonly i18n?: TextRef };
+    };
+
+/** A refusal of an answer, by key: its English is the key's. */
+function refused(code: "NOT_FOUND" | "CONFLICT", key: CoreKey, params?: TextRefParams): NeedAnswerOutcome {
+  return refuseKeyed(code, key, params) as NeedAnswerOutcome;
+}
 
 /**
  * Answer a task's open question from any surface its owner controls: the web, a terminal — whatever channel the task
@@ -38,7 +50,7 @@ export async function answerNeed(
   const answers =
     task !== undefined && (task.principalId === input.actor.principalId || deps.operatorOf?.(task.workspaceId) === input.actor.principalId);
   if (task === undefined || task.workspaceId !== input.actor.workspaceId || !answers) {
-    return { ok: false, error: { code: "NOT_FOUND", message: `No task ${input.taskId} of yours in this workspace` } };
+    return refused("NOT_FOUND", "error.approvals.noTaskOfYours", { taskId: input.taskId });
   }
   const wait = await deps.repositories.agentWaits.getActiveByTask(task.taskId);
   // A browser handoff is ended in the live view, never answered; a connect wait by connecting or *Not now*.
@@ -51,7 +63,7 @@ export async function answerNeed(
       ? wait
       : undefined;
   if (question === undefined || (input.waitId !== undefined && question.waitId !== input.waitId)) {
-    return { ok: false, error: { code: "CONFLICT", message: "This question was already answered, or has closed." } };
+    return refused("CONFLICT", "error.approvals.questionClosed");
   }
   const answer = input.answer.trim();
   const matched = question.choices === undefined ? undefined : matchChoiceAnswer(answer, question.choices);
@@ -71,7 +83,7 @@ export async function answerNeed(
       via: input.via,
     }))
   ) {
-    return { ok: false, error: { code: "CONFLICT", message: "This question was already answered, or has closed." } };
+    return refused("CONFLICT", "error.approvals.questionClosed");
   }
   return {
     ok: true,

@@ -10,7 +10,7 @@ import { errorMessage } from "@tavi/contracts/util";
 import { prefixedId } from "@tavi/node-kit";
 
 import type { ChatGrants } from "./chat-grants.js";
-import type { IpcAnswer } from "../../shared/ipc-decisions.js";
+import { refusalFrom, refuseKeyed, type IpcAnswer } from "../../shared/ipc-decisions.js";
 
 /**
  * `permissions`: the tool rules in force and the session grants, over
@@ -53,11 +53,10 @@ export async function permissionsCommand(deps: PermissionsDependencies, payload:
     case "rules":
       return { ok: true, result: { rules: await deps.rulesInForce(payload.workspaceId) } };
     case "add": {
-      if (deps.fromBridge)
-        return refuse("NOT_AUTHORIZED", "a page cannot add a tool rule: approve a call with `always` to save one for exactly that call");
+      if (deps.fromBridge) return refuseKeyed("NOT_AUTHORIZED", "error.permissions.pageCannotAdd");
       // As `serve --allow '*'` is: easy to type without meaning it.
       if (payload.decision === "allow" && payload.toolPattern === "*" && payload.argMatcher === undefined) {
-        return refuse("INVALID_INPUT", "an allow rule for every tool is refused; name the tool, e.g. web_search");
+        return refuseKeyed("INVALID_INPUT", "error.permissions.allowEverything");
       }
       try {
         const rule = await policy.putRule({
@@ -75,7 +74,7 @@ export async function permissionsCommand(deps: PermissionsDependencies, payload:
         });
         return { ok: true, result: { rule } };
       } catch (error) {
-        return refuse(error instanceof TaviError ? error.code : "INVALID_INPUT", errorMessage(error));
+        return error instanceof TaviError ? refusalFrom(error) : refuse("INVALID_INPUT", errorMessage(error));
       }
     }
     case "remove": {
@@ -84,19 +83,20 @@ export async function permissionsCommand(deps: PermissionsDependencies, payload:
       // Removing a deny or ask rule widens what runs unasked, so a page may
       // remove only an allow rule — which narrows it.
       if (deps.fromBridge && known?.decision !== "allow") {
-        return refuse("NOT_AUTHORIZED", "a page can remove only an allow rule; remove a deny or ask rule with `tavi permissions rm`");
+        return refuseKeyed("NOT_AUTHORIZED", "error.permissions.pageRemovesAllowOnly");
       }
       if (known !== undefined && known.source !== "operator") {
-        return refuse(
+        return refuseKeyed(
           "INVALID_INPUT",
-          `rule ${payload.ruleId} is ${known.source === "shipped" ? "shipped with tavi; override it with a deny or ask rule" : "a serve --allow flag; restart without it"}`,
+          known.source === "shipped" ? "error.permissions.ruleShipped" : "error.permissions.ruleFromFlag",
+          { ruleId: payload.ruleId },
         );
       }
       const removed = await policy.deleteRule(payload.workspaceId, payload.ruleId);
       // The rule is named in the answer, as `add` names the one it stored.
       return removed
         ? { ok: true, result: { removed, ...(known === undefined ? {} : { rule: known }) } }
-        : refuse("NOT_FOUND", `no rule ${payload.ruleId} in workspace ${payload.workspaceId}`);
+        : refuseKeyed("NOT_FOUND", "error.permissions.noRule", { ruleId: payload.ruleId, workspaceId: payload.workspaceId });
     }
     case "grants": {
       // A grant past its time is not listed: it no longer allows anything.
@@ -121,7 +121,8 @@ export async function permissionsCommand(deps: PermissionsDependencies, payload:
       // tool, and revoking only `browser.navigate` would leave
       // `browser.create_session` opening any site.
       const grant = (await policy.listSessionGrantsForWorkspace(payload.workspaceId)).find((entry) => entry.grantId === payload.grantId);
-      if (grant === undefined) return refuse("NOT_FOUND", `no session grant ${payload.grantId} in workspace ${payload.workspaceId}`);
+      if (grant === undefined)
+        return refuseKeyed("NOT_FOUND", "error.permissions.noGrant", { grantId: payload.grantId, workspaceId: payload.workspaceId });
       const siblings = (await policy.listSessionGrants(grant.taskId)).filter(
         (entry) => entry.workspaceId === payload.workspaceId && entry.approvalId === grant.approvalId,
       );

@@ -14,6 +14,7 @@ import {
   FOLDER_READ_MAX_BYTES,
   MANAGED_FOLDER_LABEL,
   TaviError,
+  keyedError,
   byteSize,
   type BrowseAnswer,
   type BrowseEntry,
@@ -32,7 +33,7 @@ import { errorMessage } from "@tavi/contracts/util";
 import type { ChatFolders, FolderSpace, FolderUsage } from "@tavi/runtime";
 
 import type { FolderReadScope } from "./fs-tools.js";
-import type { IpcAnswer } from "../../shared/ipc-decisions.js";
+import { refusalFrom, type IpcAnswer } from "../../shared/ipc-decisions.js";
 import { GLYPHS } from "../../tui/theme.js";
 import { type RemoteFolders, remotePathOf } from "../remote/folders.js";
 
@@ -97,11 +98,7 @@ export interface FolderCommandDependencies {
 
 /** A refusal, as the other commands answer one. */
 function refusal(error: unknown): IpcAnswer<never> {
-  const failure = TaviError.from(error);
-  return {
-    ok: false,
-    error: { code: failure.code, message: failure.message, ...(failure.details === undefined ? {} : { details: failure.details }) },
-  };
+  return refusalFrom(error, TaviError.from(error).details);
 }
 
 /** The workspace's operator, and the chat when it is theirs in that workspace; `NOT_FOUND` alike for anything else. */
@@ -113,10 +110,10 @@ async function chatScope(
   const workspace = workspaceId ?? DEFAULT_WORKSPACE_ID;
   const principalId = deps.principalOf(workspace);
   if (principalId === undefined)
-    throw new TaviError("NOT_FOUND", `workspace ${workspace} is not configured on this owner`, { details: { workspaceId: workspace } });
+    throw keyedError("NOT_FOUND", "error.workspace.notConfigured", { workspaceId: workspace }, { details: { workspaceId: workspace } });
   const task = await deps.repositories.tasks.get(taskId);
   if (task === undefined || task.workspaceId !== workspace || task.principalId !== principalId)
-    throw new TaviError("NOT_FOUND", `Task ${taskId} does not exist`);
+    throw keyedError("NOT_FOUND", "error.task.notFound", { taskId });
   return { workspaceId: workspace, principalId };
 }
 
@@ -175,7 +172,7 @@ function sourceOf(
 ): { readonly path: string; readonly caller: ChatFolderCaller } {
   if ("path" in source) return { path: source.path, caller: { frontEnd: deps.frontEnd } };
   const path = deps.picks?.redeem(source.pick);
-  if (path === undefined) throw new TaviError("NOT_FOUND", "That folder is no longer offered here: browse the folders again");
+  if (path === undefined) throw keyedError("NOT_FOUND", "error.folders.noLongerOffered");
   return { path, caller: { frontEnd: deps.frontEnd, picked: true } };
 }
 
@@ -213,17 +210,23 @@ async function inside(
 ): Promise<{ readonly root: FolderRoot; readonly rootReal: string; readonly real: string; readonly managed: boolean }> {
   const roots = rootsOf(folder);
   const root = roots.find((entry) => entry.id === (rootId ?? "primary"));
-  if (root === undefined) throw new TaviError("NOT_FOUND", `This chat has no folder ${rootId ?? "primary"}`);
+  if (root === undefined)
+    throw rootId === undefined
+      ? keyedError("NOT_FOUND", "error.folders.noPrimaryFolder")
+      : keyedError("NOT_FOUND", "error.folders.noFolder", { rootId });
   const rootReal = await realpath(root.path);
   const parts = relativePath.split("/").filter((part) => part !== "" && part !== ".");
-  if (parts.includes("..")) throw new TaviError("INVALID_INPUT", "a path inside the folder, without ..");
+  if (parts.includes("..")) throw keyedError("INVALID_INPUT", "error.folders.pathWithDots");
   const real = scope.resolve(join(rootReal, ...parts));
   try {
     await lstat(real);
   } catch {
-    throw new TaviError("NOT_FOUND", `${relativePath === "" ? root.label : relativePath} does not exist in ${root.label}`);
+    throw keyedError("NOT_FOUND", "error.folders.pathMissing", {
+      path: relativePath === "" ? root.label : relativePath,
+      folder: root.label,
+    });
   }
-  if (!within(real, rootReal)) throw new TaviError("NOT_AUTHORIZED", `${relativePath} leads outside ${root.label}`);
+  if (!within(real, rootReal)) throw keyedError("NOT_AUTHORIZED", "error.folders.leadsOutside", { path: relativePath, folder: root.label });
   return { root, rootReal, real, managed: scope.inManagedFolder(real) };
 }
 
@@ -238,7 +241,7 @@ async function listFiles(
   dir: string,
 ): Promise<FolderFilesAnswer> {
   const { root, rootReal, real, managed } = await inside(folder, scope, rootId, dir);
-  if (!(await stat(real)).isDirectory()) throw new TaviError("INVALID_INPUT", `${dir} is not a folder`);
+  if (!(await stat(real)).isDirectory()) throw keyedError("INVALID_INPUT", "error.folders.notAFolder", { path: dir });
   // A protected entry is left out: it is never read, though `fs.list` still names it.
   const names = (await readdir(real))
     .filter((name) => !(managed && real === rootReal && MANAGED_HIDDEN.has(name)) && !scope.hidden(join(real, name)))
@@ -299,11 +302,11 @@ export async function readChunk(
     throw new TaviError("INVALID_INPUT", "a chunk after the first names the file's sha256 the first chunk answered");
   const { real, managed } = await inside(folder, scope, rootId, path);
   const handle = await openNoFollow(real, "read").catch((error: unknown) => {
-    throw new TaviError("NOT_FOUND", `${path} could not be opened: ${errorMessage(error)}`);
+    throw keyedError("NOT_FOUND", "error.folders.couldNotOpen", { path, reason: errorMessage(error) });
   });
   try {
     const opened = await handle.stat();
-    if (!opened.isFile()) throw new TaviError("INVALID_INPUT", `${path} is not a file`);
+    if (!opened.isFile()) throw keyedError("INVALID_INPUT", "error.folders.notAFile", { path });
     // Resolved again once open, as `fs.read` does: an ancestor swapped for a link meanwhile is followed by the open
     // and by an `lstat` alike, so the path must still resolve to itself, confined, and name the open file.
     const again = await realpath(real).catch(() => undefined);
@@ -316,11 +319,10 @@ export async function readChunk(
       confined = false;
     }
     if (again !== real || !confined || named === undefined || !sameIdentity(named, opened))
-      throw new TaviError("CONFLICT", `${path} changed while it was opened; download it again`);
-    if (managed && opened.nlink > 1)
-      throw new TaviError("NOT_AUTHORIZED", `${path} has another name (a hard link); a chat's own folder never hands out a linked file`);
+      throw keyedError("CONFLICT", "error.folders.changedWhileOpened", { path });
+    if (managed && opened.nlink > 1) throw keyedError("NOT_AUTHORIZED", "error.folders.hardLink", { path });
     if (opened.size > FOLDER_READ_MAX_BYTES)
-      throw new TaviError("UNSUPPORTED", `${path} is over the ${FOLDER_READ_MAX_BYTES / (1024 * 1024)} MiB download limit`);
+      throw keyedError("UNSUPPORTED", "error.folders.overDownloadLimit", { path, size: String(FOLDER_READ_MAX_BYTES / (1024 * 1024)) });
     if (offset > opened.size || (offset > 0 && offset === opened.size))
       throw new TaviError("INVALID_INPUT", `offset ${offset} is past the end of ${path}`);
     const buffer = Buffer.alloc(Math.min(FOLDER_READ_CHUNK_BYTES, opened.size - offset));
@@ -330,7 +332,7 @@ export async function readChunk(
     let hash = expected;
     if (offset === 0) hash = await hashOf(handle, opened.size);
     else if (last && (await hashOf(handle, opened.size)) !== expected)
-      throw new TaviError("CONFLICT", `${path} changed while it was downloaded; download it again`);
+      throw keyedError("CONFLICT", "error.folders.changedWhileDownloaded", { path });
     return {
       taskId,
       name: basename(real),
@@ -449,9 +451,9 @@ export async function browseCommand(
   try {
     const workspace = payload.workspaceId ?? DEFAULT_WORKSPACE_ID;
     if (deps.principalOf(workspace) === undefined)
-      throw new TaviError("NOT_FOUND", `workspace ${workspace} is not configured on this owner`, { details: { workspaceId: workspace } });
+      throw keyedError("NOT_FOUND", "error.workspace.notConfigured", { workspaceId: workspace }, { details: { workspaceId: workspace } });
     const picks = deps.picks;
-    if (picks === undefined) throw new TaviError("UNAVAILABLE", "This connection cannot be offered folders");
+    if (picks === undefined) throw keyedError("UNAVAILABLE", "error.folders.notOffered");
     const roots = deps.folders.attachableRoots();
     const entry = (real: string, root: string): BrowseEntry => ({
       token: picks.issue(real),
@@ -473,9 +475,9 @@ export async function browseCommand(
     const named = picks.redeem(payload.under);
     // Checked again: the roots may have changed, or the folder been swapped for a link, since the token was issued.
     const at = named === undefined ? undefined : await offered(deps, named, roots);
-    if (at === undefined) throw new TaviError("NOT_FOUND", "That folder is no longer offered here: browse the folders again");
+    if (at === undefined) throw keyedError("NOT_FOUND", "error.folders.noLongerOffered");
     if (depthBelow(at.real, at.root) >= FOLDER_BROWSE_MAX_DEPTH)
-      throw new TaviError("INVALID_INPUT", `The picker goes at most ${FOLDER_BROWSE_MAX_DEPTH} folders below a root`);
+      throw keyedError("INVALID_INPUT", "error.folders.pickerDepth", { depth: String(FOLDER_BROWSE_MAX_DEPTH) });
     const names = (await readdir(at.real, { withFileTypes: true }))
       .filter((dirent) => !dirent.name.startsWith(".") && (dirent.isDirectory() || dirent.isSymbolicLink()))
       .map((dirent) => dirent.name)

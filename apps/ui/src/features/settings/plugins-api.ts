@@ -1,4 +1,4 @@
-import type { PermissionsGrantsResult, PermissionsRulesResult, PluginView, ProviderInstanceConfig } from "@tavi/contracts";
+import type { PermissionsGrantsResult, PermissionsRulesResult, PluginView, ProviderInstanceConfig, TextRef } from "@tavi/contracts";
 
 import { translateNow } from "../../lib/i18n.js";
 import { andList } from "../apps/model.js";
@@ -89,6 +89,8 @@ export interface McpReview {
   readonly notices: readonly { readonly kind: string; readonly title: string; readonly summary: string; readonly updatedAt: string }[];
   /** Overlap with a built-in family, or a description naming other tools (shadowing); an older owner sends none. */
   readonly warnings?: readonly string[];
+  /** `warnings` by key, in the same order: said in the page's language; an older owner sends none. */
+  readonly warningRefs?: readonly TextRef[];
 }
 
 interface McpServerRow {
