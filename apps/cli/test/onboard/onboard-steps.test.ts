@@ -20,6 +20,7 @@ import { createLinePrompter } from "../../src/features/onboard/prompter.js";
 import {
   channelsStep,
   ideasStep,
+  languageStep,
   serviceStep,
   voiceStep,
   tasksStep,
@@ -990,6 +991,21 @@ async function tavi(
   });
   return { exit, out, err };
 }
+
+describe("the language question", () => {
+  it("says a save the owner refused, and the run goes on", async () => {
+    const owner = scripted({
+      "workspace-settings:get": { settings: {}, effective: {} },
+      "workspace-settings:set": () => {
+        throw new Error("the store is read-only");
+      },
+    });
+    const { context: step, written } = context(owner.transport, ["2"], system());
+    await languageStep(step);
+    expect(owner.actions()).toEqual(["workspace-settings:get", "workspace-settings:set"]);
+    expect(written()).toContain("✗ the store is read-only");
+  });
+});
 
 describe("about you", () => {
   it("saves the name in settings and as a preference, and a rerun corrects it with no conflict", async () => {

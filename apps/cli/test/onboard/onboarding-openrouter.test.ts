@@ -321,8 +321,8 @@ describe("tavi onboard with OpenRouter", () => {
     let out = "";
     const io: CliIo = { stdout: (text) => void (out += text), stderr: (text) => void (out += text), isTty: false };
     const input = new PassThrough();
-    // OpenRouter (recommended, 1st), sign in (1st); the person declines in the browser, then the input ends at the key.
-    input.end("1\n1\n");
+    // English (Enter), OpenRouter (recommended, 1st), sign in (1st); the person declines in the browser, then the input ends at the key.
+    input.end("\n1\n1\n");
     const decline = (url: string) => {
       const back = new URL(new URL(url).searchParams.get("callback_url") ?? "");
       back.searchParams.set("error", "access_denied");

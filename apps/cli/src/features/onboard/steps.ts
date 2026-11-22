@@ -25,6 +25,7 @@ import {
   type VoiceSetupStatus,
   type WorkspaceSettingsAnswer,
 } from "@tavi/contracts";
+import { DEFAULT_LOCALE, LOCALE_NAMES, SUPPORTED_LOCALES, isLocale } from "@tavi/contracts/i18n";
 import { errorMessage } from "@tavi/contracts/util";
 import { sleep, WSL1_UNSUPPORTED, WSL_KEEP_RUNNING, wslVersion, type WslVersion } from "@tavi/node-kit";
 
@@ -32,7 +33,7 @@ import { FAST_MODEL_FAILED } from "@tavi/agent-host/onboarding-host";
 
 import { serviceUnitPaths, unitNamesDataDirectory } from "./facts.js";
 import { DEFAULT_SERVICE_LABEL, renderServiceUnit } from "../service/unit.js";
-import type { ChoiceOption, Prompter } from "./prompter.js";
+import { OnboardCancelled, type ChoiceOption, type Prompter } from "./prompter.js";
 import { attachedTransport, type OnboardTransport } from "./transport.js";
 import { connectLiveOwner } from "../../cli/owner-connection.js";
 import { GLYPHS } from "../../tui/theme.js";
@@ -157,6 +158,44 @@ async function begin(
   const go = await context.prompter.confirm({ label: question, default: true });
   if (!go && !doneAlready(context, kind)) await skip(context, kind);
   return go;
+}
+
+// ------------------------------------------------------------------ language
+
+/**
+ * The language Tavi speaks, asked first so every later question can be asked
+ * in it. Its label is in every language, since none is chosen yet; English is
+ * the default and a stored choice is pre-selected. `workspace.locale` is
+ * written only when the choice differs from English or one is already stored,
+ * so a workspace left in English keeps no setting. With one language pack
+ * there is nothing to ask.
+ */
+export async function languageStep(context: Pick<StepContext, "transport" | "prompter" | "workspaceId">): Promise<void> {
+  if (SUPPORTED_LOCALES.length < 2) return;
+  try {
+    const settings = await context.transport.request<WorkspaceSettingsAnswer>("workspace-settings", {
+      action: "get",
+      workspaceId: context.workspaceId,
+    });
+    const stored = settings.settings.locale;
+    const chosen = await context.prompter.choose({
+      label: "Language / Език",
+      options: SUPPORTED_LOCALES.map((locale) => ({ value: locale, label: LOCALE_NAMES[locale] })),
+      default: stored ?? DEFAULT_LOCALE,
+    });
+    if (!isLocale(chosen) || chosen === stored || (stored === undefined && chosen === DEFAULT_LOCALE)) return;
+    await context.transport.request("workspace-settings", {
+      action: "set",
+      workspaceId: context.workspaceId,
+      key: "locale",
+      value: chosen,
+    });
+    context.prompter.say(`${GLYPHS.done} Language: ${LOCALE_NAMES[chosen]}`);
+  } catch (error) {
+    // Ctrl-C or the input ending stops the run, as at every other question.
+    if (error instanceof OnboardCancelled) throw error;
+    context.prompter.say(`${GLYPHS.failed} ${errorMessage(error)}`);
+  }
 }
 
 // ------------------------------------------------------------------ about you

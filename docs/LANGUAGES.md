@@ -13,7 +13,8 @@ language](#adding-a-language).
 
 One language for the whole workspace: each part of Tavi follows it once that
 part is translated ([what follows it](#what-follows-the-language)). English is
-the default. Change it with:
+the default. `tavi onboard` asks for the language first on a first run (Enter
+keeps English), and a full `tavi setup` asks again. Change it any time with:
 
 ```bash
 tavi config set workspace.locale bg
@@ -122,6 +123,7 @@ UPDATE_I18N_RATCHET=1 pnpm exec vitest run tests/i18n-catalogues.test.ts
    language's catalogue and check it in the two language-pack tests, with style
    rules of its own if the language has them.
 5. List it where the languages are written out by hand: the `workspace.locale`
-   help in `apps/cli/src/features/config/parse.ts`, its row in
+   help in `apps/cli/src/features/config/parse.ts`, the onboarding question's
+   label ("Language / Език") in `apps/cli/src/features/onboard/steps.ts`, its row in
    [CONFIGURATION.md](CONFIGURATION.md#workspace-settings), and the table at the
    top of this guide.

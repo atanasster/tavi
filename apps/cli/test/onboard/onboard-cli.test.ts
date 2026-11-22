@@ -66,6 +66,8 @@ async function tavi(
 const custom = (baseUrl: string, key: string) => ["5", "7", baseUrl, key, "1"];
 /** "Not now" to the steps after the model in `tavi onboard`: about you (n), where tasks live (3), keeping it running (3), a first idea (Enter). Channels need an owner offline. */
 const REST = ["n", "3", "3", ""];
+/** Enter at the first question, the language: English, the default. */
+const LANGUAGE = "";
 
 describe("end to end", () => {
   it("a fresh data directory, tavi setup --non-interactive against a stub, then a turn answered with no restart", async () => {
@@ -127,7 +129,7 @@ describe("tavi onboard on a fresh store", () => {
     const { baseUrl, requests } = await stub();
     const directory = directories.create("tavi-onboard-");
     expect((await tavi(["onboard", "status", "--data-dir", directory])).exit).toBe(3);
-    const run = await tavi(["onboard", "--data-dir", directory], [...custom(baseUrl, KEY), ...REST]);
+    const run = await tavi(["onboard", "--data-dir", directory], [LANGUAGE, ...custom(baseUrl, KEY), ...REST]);
     expect(run.exit, run.out + run.err).toBe(0);
     expect(run.out).toContain("✓ Inference ready: m1");
     expect(run.out).toContain("✓ Choose the model Tavi thinks with — Custom · m1 · verified");
@@ -149,7 +151,7 @@ describe("tavi onboard on a fresh store", () => {
   it("never asks about the model again once it is done, only what is still open", async () => {
     const { baseUrl } = await stub();
     const directory = directories.create("tavi-onboard-");
-    await tavi(["onboard", "--data-dir", directory], [...custom(baseUrl, KEY), ...REST]);
+    await tavi(["onboard", "--data-dir", directory], [LANGUAGE, ...custom(baseUrl, KEY), ...REST]);
     const again = await tavi(["onboard", "--data-dir", directory], REST);
     expect(again.exit, again.out).toBe(0);
     expect(again.out).not.toContain("Which model provider?");
@@ -164,7 +166,7 @@ describe("tavi onboard on a fresh store", () => {
     const { baseUrl } = await stub();
     const directory = directories.create("tavi-onboard-");
     // A refused key fails discovery; another key is offered, and works.
-    const run = await tavi(["onboard", "--data-dir", directory], ["5", "7", baseUrl, "wrong", "y", KEY, "1", ...REST]);
+    const run = await tavi(["onboard", "--data-dir", directory], [LANGUAGE, "5", "7", baseUrl, "wrong", "y", KEY, "1", ...REST]);
     expect(run.exit, run.out + run.err).toBe(0);
     expect(run.out).toContain("could not list its models");
     const models = await tavi(["models", "list", "--data-dir", directory]);
@@ -172,14 +174,42 @@ describe("tavi onboard on a fresh store", () => {
     expect(models.out).not.toContain("custom-2");
   });
 
+  it("asks the language first: Enter keeps English and stores nothing, a choice is saved and pre-selected after", async () => {
+    const { baseUrl } = await stub();
+    const english = directories.create("tavi-onboard-en-");
+    const kept = await tavi(["onboard", "--data-dir", english], [LANGUAGE, ...custom(baseUrl, KEY), ...REST]);
+    expect(kept.out).toContain("Welcome to Tavi\n  1. English\n  2. Български\nLanguage / Език [1]: ");
+    expect((await tavi(["config", "get", "workspace.locale", "--data-dir", english])).out).toBe("workspace.locale = en (default)\n");
+    const bulgarian = directories.create("tavi-onboard-bg-");
+    const chosen = await tavi(["onboard", "--data-dir", bulgarian], ["2", ...custom(baseUrl, KEY), ...REST]);
+    expect(chosen.out).toContain("✓ Language: Български");
+    expect((await tavi(["config", "get", "workspace.locale", "--data-dir", bulgarian])).out).toBe("workspace.locale = bg (set)\n");
+    // A full `tavi setup` asks again with the stored language pre-selected; Enter keeps it.
+    const again = await tavi(["setup", "--data-dir", bulgarian], [""]);
+    expect(again.out).toContain("Language / Език [2]: ");
+    expect((await tavi(["config", "get", "workspace.locale", "--data-dir", bulgarian])).out).toBe("workspace.locale = bg (set)\n");
+    // English picked over a stored Bulgarian is saved; one step on its own never asks.
+    await tavi(["setup", "--data-dir", bulgarian], ["1"]);
+    expect((await tavi(["config", "get", "workspace.locale", "--data-dir", bulgarian])).out).toBe("workspace.locale = en (set)\n");
+    expect((await tavi(["setup", "about", "--data-dir", bulgarian], ["n"])).out).not.toContain("Language / Език");
+  });
+
+  it("stops at the language question when the input ends, as at every question", async () => {
+    const directory = directories.create("tavi-onboard-stop-");
+    const stopped = await tavi(["onboard", "--data-dir", directory], []);
+    expect(stopped.exit).toBe(130);
+    expect(stopped.out).toContain("Language / Език [1]: ");
+    expect(stopped.out).not.toContain("✗");
+  });
+
   it("resumes on the same connection after a run stopped mid-step (Ctrl-C or the input ending)", async () => {
     const { baseUrl } = await stub();
     const directory = directories.create("tavi-onboard-");
     // Stopped at the model choice: the connection and its key are written, nothing verified.
-    const stopped = await tavi(["onboard", "--data-dir", directory], ["5", "7", baseUrl, KEY]);
+    const stopped = await tavi(["onboard", "--data-dir", directory], [LANGUAGE, "5", "7", baseUrl, KEY]);
     expect(stopped.exit).toBe(130);
     expect(stopped.out).toContain("What was set up is kept");
-    const resumed = await tavi(["onboard", "--data-dir", directory], [...custom(baseUrl, KEY), ...REST]);
+    const resumed = await tavi(["onboard", "--data-dir", directory], [LANGUAGE, ...custom(baseUrl, KEY), ...REST]);
     expect(resumed.exit, resumed.out + resumed.err).toBe(0);
     const models = await tavi(["models", "list", "--data-dir", directory]);
     expect(models.out).toContain("custom");
@@ -212,7 +242,7 @@ describe("tavi setup", () => {
   it("shows the model that is set and keeps it on Enter", async () => {
     const { baseUrl } = await stub();
     const directory = directories.create("tavi-onboard-");
-    await tavi(["onboard", "--data-dir", directory], [...custom(baseUrl, KEY), ...REST]);
+    await tavi(["onboard", "--data-dir", directory], [LANGUAGE, ...custom(baseUrl, KEY), ...REST]);
     const kept = await tavi(["setup", "model", "--data-dir", directory], [""]);
     expect(kept.exit, kept.out).toBe(0);
     expect(kept.out).toContain("Model: Custom · m1 · verified");
@@ -281,7 +311,7 @@ describe("tavi onboard attached to a running owner", () => {
       if (!stopped) await handle.shutdown("test cleanup");
     });
     // Attached, the channel step asks too: about you, channels, keeping it running, a first idea.
-    const attached = await tavi(["onboard", "--data-dir", directory], [...custom(baseUrl, KEY), "n", "3", "n", "n", "3", ""]);
+    const attached = await tavi(["onboard", "--data-dir", directory], [LANGUAGE, ...custom(baseUrl, KEY), "n", "3", "n", "n", "3", ""]);
     expect(attached.exit, attached.out + attached.err).toBe(0);
     expect(attached.out).toContain("✓ Inference ready: m1");
     await handle.shutdown("test done");
@@ -305,7 +335,7 @@ describe("a model that fails verify", () => {
   it("is left configured with the advice on the checklist, and the run exits 3", async () => {
     const { baseUrl } = await stub({ unknown: true });
     const directory = directories.create("tavi-onboard-");
-    const run = await tavi(["onboard", "--data-dir", directory], [...custom(baseUrl, KEY), "3", ...REST]);
+    const run = await tavi(["onboard", "--data-dir", directory], [LANGUAGE, ...custom(baseUrl, KEY), "3", ...REST]);
     expect(run.exit, run.out + run.err).toBe(3);
     expect(run.out).toContain("✗ The model m1 failed: This account can't use m1. Pick another.");
     const status = JSON.parse((await tavi(["onboard", "status", "--json", "--data-dir", directory])).out) as OnboardingStatus;
@@ -319,7 +349,7 @@ describe("a model that fails verify", () => {
     const chat = { unknown: false };
     const { baseUrl } = await stub(chat);
     const directory = directories.create("tavi-onboard-");
-    expect((await tavi(["onboard", "--data-dir", directory], [...custom(baseUrl, KEY), ...REST])).exit).toBe(0);
+    expect((await tavi(["onboard", "--data-dir", directory], [LANGUAGE, ...custom(baseUrl, KEY), ...REST])).exit).toBe(0);
     chat.unknown = true;
     const changed = await tavi(["setup", "model", "--data-dir", directory], ["y", ...custom(baseUrl, KEY), "3"]);
     expect(changed.out).toContain("Your previous model is still the default.");
@@ -374,7 +404,7 @@ describe("the first-run offer", () => {
     expect(service.exit).toBe(2);
     const { baseUrl } = await stub();
     const directory = directories.create("tavi-onboard-");
-    await tavi(["onboard", "--data-dir", directory], [...custom(baseUrl, KEY), ...REST]);
+    await tavi(["onboard", "--data-dir", directory], [LANGUAGE, ...custom(baseUrl, KEY), ...REST]);
     // No input: an offer would end as cancelled (130) before the task ran.
     const ran = await atTerminal(["run", "hello", "--data-dir", directory], []);
     expect(ran.out).not.toContain("No model is set up");

@@ -39,6 +39,7 @@ import {
   searchNeedsKey,
   channelsStep,
   ideasStep,
+  languageStep,
   parseActiveHours,
   saveAbout,
   searchStep,
@@ -682,6 +683,9 @@ export async function offerRhumbKey(
 
 // ------------------------------------------------------------------ the walk
 
+/** A first run: no step is done yet. */
+const firstAsk = (current: OnboardingStatus): boolean => !current.steps.some((step) => step.state === "done");
+
 /** The steps a run walks, in the terminal flow's order. Headless, a step runs only when its flags are given. */
 function walked(run: OnboardRun, current: OnboardingStatus): readonly OnboardingStepKind[] {
   if (run.headless !== undefined) {
@@ -857,13 +861,10 @@ export async function runOnboard(deps: OnboardDependencies, run: OnboardRun): Pr
     }
     // A first run is welcomed; a run that picks up what is left, or one step (`tavi setup service`), says what it is.
     if (run.headless === undefined)
-      say(
-        run.step !== undefined
-          ? "Setup"
-          : run.mode === "onboard" && current.steps.some((step) => step.state === "done")
-            ? "Setup — what is left"
-            : flow.flow.title,
-      );
+      say(run.step !== undefined ? "Setup" : run.mode === "onboard" && !firstAsk(current) ? "Setup — what is left" : flow.flow.title);
+    // The language comes first, so every later question can be asked in it: on a first run, and in a full `tavi setup`.
+    if (run.headless === undefined && run.step === undefined && (run.mode === "setup" || firstAsk(current)))
+      await languageStep({ transport: deps.transport, prompter: deps.prompter, workspaceId: run.workspaceId });
     for (const kind of steps) {
       const step = current.steps.find((candidate) => candidate.kind === kind);
       const flowStep = flow.flow.steps.find((candidate) => candidate.kind === kind);

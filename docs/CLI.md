@@ -490,7 +490,7 @@ A **refused** admission (exit `4`, see [Exit Codes](#exit-codes)) ends the strea
 
 ### `tavi onboard`
 
-Walks the setup steps that are still open, in the onboarding flow's terminal order: the model (the only step Tavi needs), then about you, where you keep tasks, channels, voice messages (the running owner installs whisper.cpp and FFmpeg with Homebrew and downloads a speech model, on your yes), keeping Tavi running and a first idea. A step that is done is never asked about; `tavi setup` is the command that changes one. Unrelated to `tavi sandbox setup`.
+Walks the setup steps that are still open, in the onboarding flow's terminal order: the model (the only step Tavi needs), then about you, where you keep tasks, channels, voice messages (the running owner installs whisper.cpp and FFmpeg with Homebrew and downloads a speech model, on your yes), keeping Tavi running and a first idea. A step that is done is never asked about; `tavi setup` is the command that changes one. A first run asks the language first ("Language / Език", listing every language Tavi speaks, English on Enter), so the questions after it can follow it as they are translated; a choice other than English is saved as `workspace.locale`, and English stores nothing. A full `tavi setup` asks it again with the stored language pre-selected; `tavi setup <step>` does not. Unrelated to `tavi sandbox setup`.
 
 ```bash
 tavi onboard [--workspace <id>] [--data-dir <path>] [--plain] [--paste]
