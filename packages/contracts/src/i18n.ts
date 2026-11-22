@@ -139,14 +139,16 @@ export const PSEUDO_OPEN = "[";
 export const PSEUDO_CLOSE = " ··]";
 
 /**
- * `text` accented, about a third longer and bracketed: "Save" becomes
- * "[Sàvé ··]". Text that never reaches it stays plain, so a string still written
- * inline in code shows on a pseudo-localised screen.
+ * `text` accented, each word stretched by about half (the way a longer
+ * language's words run longer, so a line still breaks between them) and the
+ * whole bracketed: "Save the changes" becomes "[Sàvé·· thé·· çhàñgés···· ··]".
+ * Text that never reaches it stays plain, so a string still written inline in
+ * code shows on a pseudo-localised screen.
  */
 export function pseudoLocalize(text: string): string {
   const accented = Array.from(text, (letter) => PSEUDO_LETTERS[letter] ?? letter).join("");
-  const padding = "·".repeat(Math.max(0, Math.ceil(text.length * 0.35) - PSEUDO_CLOSE.length + 1));
-  return `${PSEUDO_OPEN}${accented}${padding}${PSEUDO_CLOSE}`;
+  const stretched = accented.replace(/\S+/gu, (word) => `${word}${"·".repeat(Math.ceil(Array.from(word).length * 0.45))}`);
+  return `${PSEUDO_OPEN}${stretched}${PSEUDO_CLOSE}`;
 }
 
 export interface TranslatorOptions {

@@ -213,6 +213,10 @@
 
   /* Its buttons beside the role's name, not halfway down a description that wraps to three lines. */
   .role-row > .role-actions {
+    /* Never more than half the row: the role's name and purpose keep the other half. */
+    max-width: 50cqi;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     align-self: start;
     margin-top: calc((var(--text-md) * var(--leading-normal) - var(--control-height-sm)) / 2);
   }

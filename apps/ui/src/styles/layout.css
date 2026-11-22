@@ -212,9 +212,11 @@ table {
 /* The routes: a segmented control, the current segment lifted onto a card. */
 .views {
   display: inline-flex;
+  min-width: 0;
 }
 
 .view {
+  flex: none;
   min-height: var(--control-height-view);
   padding: var(--space-1) var(--space-3);
 }
@@ -788,6 +790,17 @@ body.sidebar-resizing * {
 
 /* On a phone the chip sits mid-header: the panel spans the viewport instead of hanging off the chip. */
 @media (--phone) {
+  /* Where a language's route names do not fit the bar, the control scrolls inside itself, never the
+     page; its focus ring is drawn inside the segment, which the scroll would otherwise clip. */
+  .views {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .views > .view:focus-visible {
+    outline-offset: calc(-1 * var(--focus-offset));
+  }
+
   .folder-panel {
     position: fixed;
     top: auto;

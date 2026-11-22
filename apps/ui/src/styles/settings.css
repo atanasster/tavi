@@ -168,6 +168,11 @@
   border-bottom: var(--border-width) solid var(--line-soft);
 }
 
+/* A row's action is a word or two ("Изключи"): it stays on one line, and the row wraps its actions instead. */
+.row > .actions > button {
+  white-space: nowrap;
+}
+
 .chip {
   display: inline-flex;
   gap: var(--space-1);

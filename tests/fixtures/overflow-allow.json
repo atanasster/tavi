@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "wrapped",
+    "selector": "button.welcome-step",
+    "why": "Welcome's step names are the owner's (English until Tier 2) and the rail wraps them by design: a step's whole name, never cut."
+  },
+  {
+    "kind": "wrapped",
+    "selector": "button.provider-tile",
+    "why": "A provider tile is a card: its description is a paragraph that wraps by design."
+  },
+  {
+    "kind": "wrapped",
+    "selector": "button.select-trigger",
+    "why": "A select shows its whole choice, wrapping a long one rather than cutting it with an ellipsis (controls.css)."
+  },
+  {
+    "kind": "wrapped",
+    "selector": "button.button-sm",
+    "locale": "qps",
+    "why": "A small button wraps its words rather than running out of its row; only the stretched qps words make it two lines, Bulgarian keeps one."
+  },
+  {
+    "kind": "spill",
+    "selector": "span.role-name",
+    "locale": "qps",
+    "why": "One stretched qps word ('подразбиране······') is longer than any Bulgarian word; in Bulgarian the name fits its column."
+  },
+  {
+    "kind": "spill",
+    "selector": "span.item-meta",
+    "locale": "qps",
+    "why": "The heartbeat's cadence line overruns its column by 2px under qps only."
+  },
+  {
+    "kind": "spill",
+    "selector": "span",
+    "within": "div.connection-info",
+    "locale": "qps",
+    "why": "A connection's name and host are one unbreakable word each beside the actions at tablet width under qps; Bulgarian fits."
+  }
+]

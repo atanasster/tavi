@@ -114,6 +114,29 @@ words into a catalogue, lower the ratchet with:
 UPDATE_I18N_RATCHET=1 pnpm exec vitest run tests/i18n-catalogues.test.ts
 ```
 
+### The overflow walk
+
+Bulgarian runs longer than English, so every screen is also checked in a real
+browser: `tests/integration/overflow.bg.real.test.ts` opens each canvas route
+in Bulgarian and in the stretched `qps` pseudo-locale (every word about half
+again as long, bracketed), at 375, 768 and 1440 pixels wide, light and dark,
+and runs `apps/ui/scripts/overflow-probe.js` on it. The probe lists words that
+spill out of their box, labels an ellipsis cuts, buttons whose words break
+across lines, controls that overlap, and a page that scrolls sideways. It
+needs a build and a browser, so it runs only with the real tests:
+
+```bash
+pnpm run build
+TAVI_REAL_TESTS=1 pnpm exec vitest run tests/integration/overflow.bg.real.test.ts
+```
+
+Every finding goes to `plans/qa/overflow-bg.json`, with a picture of its
+screen beside it. The test fails on any finding not in
+`tests/fixtures/overflow-allow.json`, whose entries each say why that wrap or
+cut is meant. To see the pseudo-locale by hand, set `tavi.pseudoLocale` to
+`1` in the page's local storage and reload; a word still written inline in a
+view then shows without brackets.
+
 ## Adding a language
 
 1. Add its code to `SUPPORTED_LOCALES`, its own name to `LOCALE_NAMES` and its

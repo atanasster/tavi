@@ -35,6 +35,13 @@ interface Catalogues {
 /** The browser's convenience copy of the last language shown. */
 export const LOCALE_STORAGE_KEY = "tavi.locale";
 
+/**
+ * Set to "1" in this browser's storage (then reload), the page stretches and
+ * marks every word it says (`qps`): the overflow walk's longer-than-Bulgarian
+ * pass, and a word still written inline shows unmarked.
+ */
+export const PSEUDO_STORAGE_KEY = "tavi.pseudoLocale";
+
 const loaders: { readonly [L in Exclude<Locale, "en">]: () => Promise<Catalogues> } = {
   bg: async () => {
     const [ui, core] = await Promise.all([import("../locales/bg.js"), import("@tavi/contracts/locales/core-bg")]);
@@ -52,10 +59,16 @@ let requested = 0;
 function publish(next: Locale): void {
   locale = next;
   const languages = Object.entries(loaded) as [Exclude<Locale, "en">, Catalogues][];
-  translate = createTranslator({ en, ...Object.fromEntries(languages.map(([language, catalogues]) => [language, catalogues.ui])) }, next);
+  const options = { pseudo: readStored(PSEUDO_STORAGE_KEY) === "1" };
+  translate = createTranslator(
+    { en, ...Object.fromEntries(languages.map(([language, catalogues]) => [language, catalogues.ui])) },
+    next,
+    options,
+  );
   translateCoreWords = createTranslator(
     { en: CORE_EN, ...Object.fromEntries(languages.map(([language, catalogues]) => [language, catalogues.core])) },
     next,
+    options,
   );
   if (typeof document !== "undefined") document.documentElement.lang = next;
   for (const listener of listeners) listener();

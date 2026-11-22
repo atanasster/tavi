@@ -4,7 +4,16 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { en } from "../../src/locales/en.js";
 import { bg } from "../../src/locales/bg.js";
-import { currentLocale, LOCALE_STORAGE_KEY, setLocale, storedLocale, translateNow, useLocale, useT } from "../../src/lib/i18n.js";
+import {
+  currentLocale,
+  LOCALE_STORAGE_KEY,
+  PSEUDO_STORAGE_KEY,
+  setLocale,
+  storedLocale,
+  translateNow,
+  useLocale,
+  useT,
+} from "../../src/lib/i18n.js";
 import { mount } from "../support/dom.js";
 
 /**
@@ -58,5 +67,14 @@ describe("the canvas's language", () => {
 
   it("has a Bulgarian word for every English one", () => {
     expect(Object.keys(bg).sort()).toEqual(Object.keys(en).sort());
+  });
+
+  it("stretches and marks every word when this browser asks for the pseudo-locale, and only then", async () => {
+    window.localStorage.setItem(PSEUDO_STORAGE_KEY, "1");
+    await act(async () => setLocale("en"));
+    expect(translateNow("settings.language.label")).toBe("[Làñgüàgé···· ··]");
+    window.localStorage.removeItem(PSEUDO_STORAGE_KEY);
+    await act(async () => setLocale("en"));
+    expect(translateNow("settings.language.label")).toBe("Language");
   });
 });

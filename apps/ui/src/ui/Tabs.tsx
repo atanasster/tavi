@@ -1,9 +1,11 @@
-import { useRef, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
 import { Button } from "./Button.js";
 
 /**
  * A nav of the shell's views: one button each, the current one marked the
- * same way in every nav (`active`, and `aria-current="page"`).
+ * same way in every nav (`active`, and `aria-current="page"`). Where the nav
+ * scrolls inside itself (a narrow window, a long language), the current one
+ * is brought into view.
  */
 export function Tabs<T extends string>({
   label,
@@ -20,8 +22,12 @@ export function Tabs<T extends string>({
   readonly current: T;
   readonly onPick: (value: T) => void;
 }) {
+  const nav = useRef<HTMLElement>(null);
+  useEffect(() => {
+    nav.current?.querySelector('[aria-current="page"]')?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [current]);
   return (
-    <nav className={`${className} segmented`} aria-label={label}>
+    <nav ref={nav} className={`${className} segmented`} aria-label={label}>
       {items.map((item) => (
         <Button
           key={item.value}

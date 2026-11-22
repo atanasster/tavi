@@ -83,6 +83,8 @@ describe("i18n", () => {
     const text = pseudoLocalize("Save the changes");
     expect(text.startsWith(PSEUDO_OPEN) && text.endsWith(PSEUDO_CLOSE)).toBe(true);
     expect(text.length).toBeGreaterThanOrEqual(Math.ceil("Save the changes".length * 1.35));
+    // Each word stretched on its own, so a line still breaks between them.
+    expect(text).toBe("[Sàvé·· thé·· çhàñgés···· ··]");
     expect(createTranslator({ en, bg }, "bg", { pseudo: true })("save").startsWith(`${PSEUDO_OPEN}Запази`)).toBe(true);
   });
 
