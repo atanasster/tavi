@@ -7,6 +7,7 @@ import { type StepProps, Working } from "./WelcomeStepParts.js";
 import { Failure, Notice, Pending } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
 import { Command } from "../../ui/Command.js";
+import { Icon } from "../../ui/Icon.js";
 
 /** How often the step reads the owner's setup job while it runs. */
 const POLL_MS = 1_000;
@@ -81,7 +82,7 @@ export function VoiceStep(props: StepProps) {
       <ul className="welcome-voice-parts">
         {parts.map(([label, here]) => (
           <li key={label}>
-            {here ? "✓" : "–"} {label}
+            {here ? <Icon name="check" size="sm" /> : "–"} {label}
             {here ? "" : " — not here yet"}
           </li>
         ))}

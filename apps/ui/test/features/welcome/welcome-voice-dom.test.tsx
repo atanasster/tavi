@@ -89,7 +89,9 @@ describe("the voice step", () => {
       });
       const onDone = vi.fn();
       const page = await mount(client, onDone);
-      expect(page.textContent).toContain("✓ FFmpeg");
+      // What is here is ticked with the check icon, never a glyph.
+      const ffmpeg = [...page.querySelectorAll(".welcome-voice-parts li")].find((item) => item.textContent?.includes("FFmpeg"));
+      expect(ffmpeg?.querySelector("svg")).not.toBeNull();
       expect(page.textContent).toContain("– whisper.cpp — not here yet");
       expect(page.textContent).toContain("Whisper's base model (148 MB, MIT)");
       await click(button(page, "Set up voice messages"));
