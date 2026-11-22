@@ -29,6 +29,12 @@ kbd {
   font-size: var(--text-rel-sm);
 }
 
+/* Bulgarian words run long („Конфигурация“, „Разрешения“): a heading or a label
+   breaks one at a syllable rather than spill out of a narrow column. */
+:lang(bg) :is(h1, h2, h3, h4, label) {
+  hyphens: auto;
+}
+
 /* A command shown inline (`Command`) wraps between its words, never at a flag's hyphen. */
 .command-word {
   white-space: nowrap;

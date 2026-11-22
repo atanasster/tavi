@@ -181,7 +181,8 @@ tavi chat        # in another terminal, or: tavi ui
 ```
 
 `tavi onboard` first asks which language Tavi speaks to you in (English or
-Bulgarian; Enter keeps English, see [LANGUAGES](docs/LANGUAGES.md)). It finds a
+Bulgarian; Enter keeps English, see [LANGUAGES](docs/LANGUAGES.md)); the web
+canvas has the same choice in Welcome and Settings → General. It finds a
 key in your environment or a local Ollama, and can sign you in to OpenRouter. Its optional steps include voice messages: with
 `tavi serve` running, it installs whisper.cpp and FFmpeg with Homebrew and
 downloads a speech model, so a voice message is transcribed on this computer.

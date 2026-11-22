@@ -14,6 +14,7 @@ import { PluginFrame } from "../plugin-host/PluginFrame.js";
 import { AppsStep, ChannelsStep } from "./ConnectSteps.js";
 import { connectedApps, IdeasStep } from "./IdeasStep.js";
 import { completeOnboarding, completeStep, dismissOnboarding, loadFlow, loadStatus, reachedStep, skipStep } from "./onboarding-api.js";
+import { LanguageChoice } from "../settings/LanguageChoice.js";
 import { AboutStep } from "./WelcomeAboutStep.js";
 import { ModelStep } from "./WelcomeModelStep.js";
 import { SearchStep } from "./WelcomeSearchStep.js";
@@ -205,6 +206,7 @@ export function Welcome(props: WelcomeProps) {
               </li>
             ))}
           </ol>
+          <LanguageChoice client={client} workspaceId={workspaceId} compact suggest />
         </header>
         <div className="welcome-main">
           {fallback === undefined ? null : (

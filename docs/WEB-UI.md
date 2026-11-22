@@ -1109,7 +1109,10 @@ the page it kept. The section is described in
 
 The **Ideas** tab (when the owner offers it) shows things Tavi offers to do for
 you; see [IDEAS.md](IDEAS.md). `/welcome` (and `/welcome/<stepId>`, `?all=1` for
-every step) is setup's Welcome; see [ONBOARDING.md](ONBOARDING.md).
+every step) is setup's Welcome; see [ONBOARDING.md](ONBOARDING.md). Its rail,
+under the steps, has the language picker on every step; on a workspace with
+no language set yet, Welcome starts in Bulgarian when that is the first of the
+browser's languages Tavi speaks.
 
 ## Settings
 
@@ -1124,6 +1127,9 @@ tabs above the page. It has these views:
 - **General**: **Setup**, whose **Run setup again** goes through every setup
   step again (the model, about you, apps, channels, search and first ideas),
   keeping what is set up unless you change it ([ONBOARDING.md](ONBOARDING.md));
+  **Language**, the language Tavi speaks in the canvas, chats and channels
+  (each named in its own language: English, Български), saved and switched to
+  the moment you pick one ([LANGUAGES.md](LANGUAGES.md));
   the workspace timezone the agent states the local time in (the
   zone in effect, whether it is the host's default, a searchable picker and
   **Use host zone**); **Task summaries** (the switch that turns generated task

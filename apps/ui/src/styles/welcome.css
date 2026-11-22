@@ -32,6 +32,10 @@
 .welcome-progress {
   margin: 0 0 var(--space-3);
 }
+/* The language picker under the steps: the first thing a person can change, on every step. */
+.welcome-rail .language-choice {
+  margin-top: var(--space-3);
+}
 .welcome-stepper {
   display: flex;
   flex-wrap: wrap;

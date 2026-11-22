@@ -14,7 +14,12 @@ language](#adding-a-language).
 One language for the whole workspace: each part of Tavi follows it once that
 part is translated ([what follows it](#what-follows-the-language)). English is
 the default. `tavi onboard` asks for the language first on a first run (Enter
-keeps English), and a full `tavi setup` asks again. Change it any time with:
+keeps English), and a full `tavi setup` asks again. In the canvas, Welcome has
+the picker in its rail on every step, and Settings → General has it as
+**Language**: a pick is saved and the page switches at once. On a workspace
+with no language set yet, Welcome picks Bulgarian when it is the first of the
+browser's languages that Tavi speaks (`bg` ahead of any `en`), and English
+otherwise. An owner from before languages shows no picker. Change it any time with:
 
 ```bash
 tavi config set workspace.locale bg

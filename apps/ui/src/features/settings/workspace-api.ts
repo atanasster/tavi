@@ -11,6 +11,8 @@ import {
   tasksHomeServer,
 } from "@tavi/contracts";
 
+import type { Locale } from "@tavi/contracts/i18n";
+
 import { translateNow } from "../../lib/i18n.js";
 import { ask, mapOutcome, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 
@@ -54,6 +56,20 @@ export const workspaceSettingsActions = {
     });
     return mapOutcome(written, (value) => translateNow("settings.workspace.hostZone", { zone: value.hostTimezone }));
   },
+  /** The language Tavi speaks (`workspace.locale`): the canvas, chats and channels alike. */
+  setLanguage: (
+    client: SettingsClient,
+    workspaceId: string,
+    locale: Locale,
+    expectedRevision: number,
+  ): Promise<Outcome<WorkspaceSettingsAnswer>> =>
+    ask<WorkspaceSettingsAnswer>(client, "workspace-settings", {
+      action: "set",
+      workspaceId,
+      key: "locale",
+      value: locale,
+      expectedRevision,
+    }),
   /** Task summaries on or off. On is the default, so turning them on clears the key. */
   async setSummaries(
     client: SettingsClient,

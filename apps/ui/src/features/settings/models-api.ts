@@ -12,7 +12,7 @@ import {
 } from "@tavi/contracts";
 
 import { formatTokens } from "../../lib/format.js";
-import { translateNow } from "../../lib/i18n.js";
+import { currentLocale, translateNow } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
 import { ask, mapOutcome, read, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { restartNote } from "./common.js";
@@ -450,9 +450,10 @@ export function browse(models: readonly BrowsedModel[], filter: ModelFilter, sor
         model.connectionLabel.toLowerCase().includes(needle),
     )
     .sort((left, right) => {
-      const byName = (left.displayName ?? left.modelId).localeCompare(right.displayName ?? right.modelId);
+      const locale = currentLocale();
+      const byName = (left.displayName ?? left.modelId).localeCompare(right.displayName ?? right.modelId, locale);
       if (sort === "state") return (rank[left.state] ?? 9) - (rank[right.state] ?? 9) || byName;
-      if (sort === "connection") return left.connectionLabel.localeCompare(right.connectionLabel) || byName;
+      if (sort === "connection") return left.connectionLabel.localeCompare(right.connectionLabel, locale) || byName;
       return byName;
     });
 }

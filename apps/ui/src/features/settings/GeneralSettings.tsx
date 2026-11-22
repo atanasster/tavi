@@ -11,6 +11,7 @@ import { Select } from "../../ui/Select.js";
 import { BrowserProfile, NoThumbnailHosts } from "./BrowserSettings.js";
 import { LoadError } from "./FormParts.js";
 import { VideoTools, FlightSearch, SkillSuggestions, TaskSummaries, TasksHomeChoice, ToolDeferralChoice } from "./GeneralToolSettings.js";
+import { LanguageChoice } from "./LanguageChoice.js";
 import { ResetInstance } from "./ResetInstance.js";
 import { timeZoneOptions, workspaceSettingsActions } from "./workspace-api.js";
 import { Button } from "../../ui/Button.js";
@@ -20,7 +21,7 @@ import { workspaceWords } from "./common.js";
 import { withParts } from "../../ui/with-parts.js";
 
 /**
- * Settings → General: the workspace timezone,
+ * Settings → General: the language Tavi speaks, the workspace timezone,
  * task summaries and the hosts whose pages get no browser
  * thumbnail, the agent's browser profile, then resetting the whole instance. The summaries switch is not under Models; it
  * is a workspace setting, and General is where those live. A part an older
@@ -84,6 +85,7 @@ export function GeneralSettings({
           </p>
         </>
       )}
+      <LanguageChoice client={client} workspaceId={workspaceId} settings={{ answer: data, reload }} />
       <h2>{t("settings.general.timezone")}</h2>
       <p className="muted">
         {withParts(t("settings.general.timezoneHint"), { command: <Command>tavi config set workspace.timezone Europe/Berlin</Command> })}
