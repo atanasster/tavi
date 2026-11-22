@@ -54,6 +54,13 @@ async function admit(handle: ServeHandle, taskId: string): Promise<void> {
 }
 
 describe("center on a live owner", () => {
+  it("names the workspace's language, so the canvas speaks it from its first screen", async () => {
+    const { client } = await owner();
+    await client.request("workspace-settings", { action: "set", key: "locale", value: "bg" }, "language");
+    const summary = await client.request("center", { action: "summary" }, "summary");
+    expect((summary.result as CenterSummaryAnswer).locale).toBe("bg");
+  });
+
   it("answers a summary in the workspace zone, and refuses a workspace it does not serve", async () => {
     const { handle, client } = await owner();
     await client.request("workspace-settings", { action: "set", key: "timezone", value: "Asia/Tokyo" }, "zone");
@@ -62,7 +69,13 @@ describe("center on a live owner", () => {
     const summary = await client.request("center", { action: "summary" }, "summary");
     expect(summary.ok).toBe(true);
     const answer = summary.result as CenterSummaryAnswer;
-    expect(answer).toMatchObject({ workspaceId: "default", timezone: "Asia/Tokyo", people: { operator: "operator" }, next: [] });
+    expect(answer).toMatchObject({
+      workspaceId: "default",
+      timezone: "Asia/Tokyo",
+      locale: "en",
+      people: { operator: "operator" },
+      next: [],
+    });
     expect(answer.perDay).toHaveLength(CENTER_SUMMARY_DEFAULT_DAYS);
     expect(answer.perDay.at(-1)).toEqual({ date: answer.today, tasks: 1 });
     expect(answer.counts).toMatchObject({ runningTasks: 1, approvals: 0, schedules: 0 });

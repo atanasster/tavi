@@ -2385,6 +2385,11 @@ Keys:
 - `operator.name`: what you are called (one line, up to 80 characters), as
   onboarding's about step sets it. Unset
   by default.
+- `workspace.locale`: the language Tavi speaks to you in, `en` (English, the
+  default) or `bg` (Bulgarian). Chat replies, channel messages and the screens
+  follow it as each is translated. A language Tavi does not speak is refused
+  with the value named (exit `2`). CLI help, usage errors and `--format json`
+  stay in English.
 - `activity.summaries`: `on` or `off` (also `true`/`false`, `yes`/`no`).
   Default `on`: when a task finishes, the serving owner makes one model call
   (at most 60 output tokens, no tools, recorded against the task) for a title

@@ -47,6 +47,7 @@ import {
   TaintModeSchema,
   InjectionDetectorModeSchema,
   SandboxNetworkModeSchema,
+  LocaleSchema,
   OPERATOR_NAME_MAX,
   OperatorNameSchema,
   taintModeOf,
@@ -593,6 +594,18 @@ function workspaceSettingValue(key: WorkspaceSettingKey, value: string): Workspa
           { details: { key } },
         );
       return name.data;
+    }
+    case "locale": {
+      const locale = LocaleSchema.safeParse(value);
+      if (!locale.success)
+        throw new TaviError(
+          "INVALID_INPUT",
+          `${JSON.stringify(value)} is not a language Tavi speaks; use one of ${LocaleSchema.options.join(", ")}`,
+          {
+            details: { key },
+          },
+        );
+      return locale.data;
     }
     case "activitySummaries":
     case "homeChat":

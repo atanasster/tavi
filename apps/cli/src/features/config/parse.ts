@@ -15,6 +15,7 @@ type ConfigCliAction = (typeof CONFIG_CLI_ACTIONS)[number];
 const CONFIG_KEYS = [
   "workspace.timezone",
   "operator.name",
+  "workspace.locale",
   "activity.summaries",
   "activity.summaryModel",
   "browser.noThumbnailHosts",
@@ -65,6 +66,10 @@ Keys:
                              agent states the current local time in, and that
                              "today" and relative times resolve in. Default:
                              the owner host's zone
+  workspace.locale           The language Tavi speaks to you in: en (English) or
+                             bg (Bulgarian). Chat replies, channel messages and
+                             the screens follow it as each is translated; CLI
+                             help stays in English. Default: en
   operator.name              What you are called, as onboarding's about step
                              sets it (one line, up to 80 characters). Default:
                              unset

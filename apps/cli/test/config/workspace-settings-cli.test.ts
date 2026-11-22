@@ -229,7 +229,7 @@ describe("tavi config offline", () => {
     const shown = capture();
     expect(await main(["config", "get", "--data-dir", directory], { io: shown.io })).toBe(EXIT.ok);
     expect(shown.out()).toBe(
-      `workspace.timezone = ${hostTimeZone()} (default: host zone)\noperator.name = unset (default)\nactivity.summaries = on (default)\nactivity.summaryModel = the fast role when bound, else the task's own model (default)\n` +
+      `workspace.timezone = ${hostTimeZone()} (default: host zone)\noperator.name = unset (default)\nworkspace.locale = en (default)\nactivity.summaries = on (default)\nactivity.summaryModel = the fast role when bound, else the task's own model (default)\n` +
         `browser.noThumbnailHosts = ${DEFAULT_BROWSER_NO_THUMBNAIL_HOSTS.join(",")} (default)\n` +
         "browser.sessionIdleMinutes = 30 minutes (default)\nbrowser.downloadMaxMiB = 256 MiB (default)\nbrowser.visionEngine = generic (default)\n" +
         "desktop.grantedApps = none (default)\n" +
@@ -612,6 +612,7 @@ describe("tavi config offline", () => {
       settings: { timezone: "Europe/Berlin" },
       effective: {
         timezone: "Europe/Berlin",
+        locale: "en",
         toolDeferral: "auto",
         tasksHome: "tavi",
         skillSuggestions: true,
@@ -666,6 +667,19 @@ describe("tavi config offline", () => {
     const unset = capture();
     expect(await main(["config", "unset", "operator.name", "--data-dir", directory], { io: unset.io })).toBe(EXIT.ok);
     expect(unset.out()).toBe("operator.name = unset (default)\n");
+  });
+
+  it("sets, reads and clears the language, refusing one Tavi does not speak", async () => {
+    const directory = directories.create();
+    const set = capture();
+    expect(await main(["config", "set", "workspace.locale", "bg", "--data-dir", directory], { io: set.io })).toBe(EXIT.ok);
+    expect(set.out()).toBe("workspace.locale = bg (set)\n");
+    const refused = capture();
+    expect(await main(["config", "set", "workspace.locale", "de", "--data-dir", directory], { io: refused.io })).toBe(EXIT.usage);
+    expect(refused.err()).toContain('"de" is not a language Tavi speaks; use one of en, bg');
+    const unset = capture();
+    expect(await main(["config", "unset", "workspace.locale", "--data-dir", directory], { io: unset.io })).toBe(EXIT.ok);
+    expect(unset.out()).toBe("workspace.locale = en (default)\n");
   });
 
   it("refuses a zone the platform does not know, naming the value", async () => {

@@ -7,6 +7,7 @@ import {
   DEFAULT_PROMPT_LAYOUT,
   toolDeferralOf,
   tasksHomeOf,
+  localeOf,
   DEFAULT_BROWSER_DOWNLOAD_MAX_MIB,
   DEFAULT_BROWSER_SESSION_IDLE_MINUTES,
   DEFAULT_VIDEO_KEEP_DAYS,
@@ -39,6 +40,7 @@ const idleMinutesText = (minutes: number): string => (minutes === 0 ? "until clo
 const CONFIG_KEY_TO_SETTING: Readonly<Record<ConfigKey, WorkspaceSettingKey>> = {
   "workspace.timezone": "timezone",
   "operator.name": "operatorName",
+  "workspace.locale": "locale",
   "activity.summaries": "activitySummaries",
   "activity.summaryModel": "activitySummaryModel",
   "browser.noThumbnailHosts": "browserNoThumbnailHosts",
@@ -75,6 +77,7 @@ const CONFIG_KEY_TO_SETTING: Readonly<Record<ConfigKey, WorkspaceSettingKey>> = 
 const SETTING_TO_CONFIG_KEY: Readonly<Record<WorkspaceSettingKey, ConfigKey>> = {
   timezone: "workspace.timezone",
   operatorName: "operator.name",
+  locale: "workspace.locale",
   activitySummaries: "activity.summaries",
   activitySummaryModel: "activity.summaryModel",
   browserNoThumbnailHosts: "browser.noThumbnailHosts",
@@ -118,112 +121,116 @@ function configLine(answer: WorkspaceSettingsAnswer, key: WorkspaceSettingKey): 
       ? answer.effective.timezone
       : key === "operatorName"
         ? (answer.settings.operatorName ?? "unset")
-        : key === "activitySummaries"
-          ? answer.effective.activitySummaries
-            ? "on"
-            : "off"
-          : key === "homeChat"
-            ? answer.effective.homeChat === true
+        : key === "locale"
+          ? (answer.effective.locale ?? localeOf(answer.settings))
+          : key === "activitySummaries"
+            ? answer.effective.activitySummaries
               ? "on"
               : "off"
-            : key === "travelFlightSearch"
-              ? answer.effective.travelFlightSearch === false
-                ? "off"
-                : "on"
-              : key === "travelGoogleFlights"
-                ? answer.effective.travelGoogleFlights === false
+            : key === "homeChat"
+              ? answer.effective.homeChat === true
+                ? "on"
+                : "off"
+              : key === "travelFlightSearch"
+                ? answer.effective.travelFlightSearch === false
                   ? "off"
                   : "on"
-                : key === "skillSuggestions"
-                  ? answer.effective.skillSuggestions === false
+                : key === "travelGoogleFlights"
+                  ? answer.effective.travelGoogleFlights === false
                     ? "off"
                     : "on"
-                  : key === "pdfEnabled"
-                    ? answer.effective.pdfEnabled === false
+                  : key === "skillSuggestions"
+                    ? answer.effective.skillSuggestions === false
                       ? "off"
                       : "on"
-                    : key === "videoEnabled"
-                      ? answer.effective.videoEnabled === false
+                    : key === "pdfEnabled"
+                      ? answer.effective.pdfEnabled === false
                         ? "off"
                         : "on"
-                      : key === "videoKeepDays"
-                        ? `${String(answer.effective.videoKeepDays ?? answer.settings.videoKeepDays ?? DEFAULT_VIDEO_KEEP_DAYS)} days`
-                        : key === "browserSessionIdleMinutes"
-                          ? idleMinutesText(
-                              answer.effective.browserSessionIdleMinutes ??
-                                answer.settings.browserSessionIdleMinutes ??
-                                DEFAULT_BROWSER_SESSION_IDLE_MINUTES,
-                            )
-                          : key === "browserVisionEngine"
-                            ? (answer.effective.browserVisionEngine ?? answer.settings.browserVisionEngine ?? "generic")
-                            : key === "browserDownloadMaxMiB"
-                              ? `${String(answer.effective.browserDownloadMaxMiB ?? answer.settings.browserDownloadMaxMiB ?? DEFAULT_BROWSER_DOWNLOAD_MAX_MIB)} MiB`
-                              : key === "redactToolResults"
-                                ? answer.effective.redactToolResults === false
-                                  ? "off"
-                                  : "on"
-                                : key === "parallelReads"
-                                  ? String(answer.effective.parallelReads ?? answer.settings.parallelReads ?? DEFAULT_PARALLEL_READS)
-                                  : key === "homeDmLink"
-                                    ? answer.settings.homeDmLink === undefined || answer.settings.homeDmLink.length === 0
-                                      ? "off"
-                                      : `${answer.settings.homeDmLink.map(formatHomeDmIdentity).join(",")}${answer.effective.homeDmLink === true ? "" : " (off: chat.home is off)"}`
-                                    : key === "desktopGrantedApps"
-                                      ? (answer.settings.desktopGrantedApps ?? []).length === 0
-                                        ? "none"
-                                        : (answer.settings.desktopGrantedApps ?? []).join(",")
-                                      : key === "browserNoThumbnailHosts"
-                                        ? hosts(answer.settings.browserNoThumbnailHosts ?? answer.effective.browserNoThumbnailHosts ?? [])
-                                        : key === "uiRoles"
-                                          ? answer.settings.uiRoles === undefined
-                                            ? "built-in"
-                                            : JSON.stringify(answer.settings.uiRoles)
-                                          : key === "uiPlacements"
-                                            ? answer.settings.uiPlacements === undefined
-                                              ? "each manifest's own"
-                                              : JSON.stringify(answer.settings.uiPlacements)
-                                            : key === "memory"
-                                              ? answer.settings.memory === undefined
-                                                ? "defaults"
-                                                : JSON.stringify(answer.settings.memory)
-                                              : // The mode in force: an owner's `serve --taint-policy` over the workspace's own.
-                                                key === "securityTaint"
-                                                ? `${answer.effective.securityTaint ?? answer.settings.securityTaint ?? DEFAULT_TAINT_MODE}${answer.taintPolicy === undefined ? "" : ` (serve --taint-policy; this workspace's own is ${answer.settings.securityTaint ?? DEFAULT_TAINT_MODE})`}`
-                                                : key === "securityInjectionDetector"
-                                                  ? (answer.effective.securityInjectionDetector ??
-                                                    answer.settings.securityInjectionDetector ??
-                                                    DEFAULT_INJECTION_DETECTOR_MODE)
-                                                  : key === "sandboxDomains"
-                                                    ? hosts(answer.settings.sandboxDomains ?? [])
-                                                    : key === "sandboxNetwork"
-                                                      ? sandboxNetworkModeOf(answer.settings)
-                                                      : key === "mcpServers" || key === "mcpPeople"
-                                                        ? (answer.settings[key] ?? []).length === 0
-                                                          ? "none"
-                                                          : (answer.settings[key] ?? []).join(",")
-                                                        : key === "keptModelRequests"
-                                                          ? String(
-                                                              answer.effective.keptModelRequests ??
-                                                                answer.settings.keptModelRequests ??
-                                                                DEFAULT_KEPT_MODEL_REQUESTS,
-                                                            )
-                                                          : key === "maxOutputTokens"
-                                                            ? String(answer.effective.maxOutputTokens ?? maxOutputTokensOf(answer.settings))
-                                                            : key === "toolDeferral"
-                                                              ? (answer.effective.toolDeferral ?? toolDeferralOf(answer.settings))
-                                                              : key === "tasksHome"
-                                                                ? (answer.effective.tasksHome ?? tasksHomeOf(answer.settings))
-                                                                : key === "promptLayout"
-                                                                  ? (answer.effective.promptLayout ??
-                                                                    answer.settings.promptLayout ??
-                                                                    DEFAULT_PROMPT_LAYOUT)
-                                                                  : key === "scheduledMonthlyTokenBudget"
-                                                                    ? answer.settings.scheduledMonthlyTokenBudget === undefined
-                                                                      ? "none"
-                                                                      : `${String(answer.settings.scheduledMonthlyTokenBudget)} tokens a month`
-                                                                    : answer.settings.activitySummaryModel === undefined
-                                                                      ? "the fast role when bound, else the task's own model"
-                                                                      : `${answer.settings.activitySummaryModel.connectionId}/${answer.settings.activitySummaryModel.model}`;
+                      : key === "videoEnabled"
+                        ? answer.effective.videoEnabled === false
+                          ? "off"
+                          : "on"
+                        : key === "videoKeepDays"
+                          ? `${String(answer.effective.videoKeepDays ?? answer.settings.videoKeepDays ?? DEFAULT_VIDEO_KEEP_DAYS)} days`
+                          : key === "browserSessionIdleMinutes"
+                            ? idleMinutesText(
+                                answer.effective.browserSessionIdleMinutes ??
+                                  answer.settings.browserSessionIdleMinutes ??
+                                  DEFAULT_BROWSER_SESSION_IDLE_MINUTES,
+                              )
+                            : key === "browserVisionEngine"
+                              ? (answer.effective.browserVisionEngine ?? answer.settings.browserVisionEngine ?? "generic")
+                              : key === "browserDownloadMaxMiB"
+                                ? `${String(answer.effective.browserDownloadMaxMiB ?? answer.settings.browserDownloadMaxMiB ?? DEFAULT_BROWSER_DOWNLOAD_MAX_MIB)} MiB`
+                                : key === "redactToolResults"
+                                  ? answer.effective.redactToolResults === false
+                                    ? "off"
+                                    : "on"
+                                  : key === "parallelReads"
+                                    ? String(answer.effective.parallelReads ?? answer.settings.parallelReads ?? DEFAULT_PARALLEL_READS)
+                                    : key === "homeDmLink"
+                                      ? answer.settings.homeDmLink === undefined || answer.settings.homeDmLink.length === 0
+                                        ? "off"
+                                        : `${answer.settings.homeDmLink.map(formatHomeDmIdentity).join(",")}${answer.effective.homeDmLink === true ? "" : " (off: chat.home is off)"}`
+                                      : key === "desktopGrantedApps"
+                                        ? (answer.settings.desktopGrantedApps ?? []).length === 0
+                                          ? "none"
+                                          : (answer.settings.desktopGrantedApps ?? []).join(",")
+                                        : key === "browserNoThumbnailHosts"
+                                          ? hosts(answer.settings.browserNoThumbnailHosts ?? answer.effective.browserNoThumbnailHosts ?? [])
+                                          : key === "uiRoles"
+                                            ? answer.settings.uiRoles === undefined
+                                              ? "built-in"
+                                              : JSON.stringify(answer.settings.uiRoles)
+                                            : key === "uiPlacements"
+                                              ? answer.settings.uiPlacements === undefined
+                                                ? "each manifest's own"
+                                                : JSON.stringify(answer.settings.uiPlacements)
+                                              : key === "memory"
+                                                ? answer.settings.memory === undefined
+                                                  ? "defaults"
+                                                  : JSON.stringify(answer.settings.memory)
+                                                : // The mode in force: an owner's `serve --taint-policy` over the workspace's own.
+                                                  key === "securityTaint"
+                                                  ? `${answer.effective.securityTaint ?? answer.settings.securityTaint ?? DEFAULT_TAINT_MODE}${answer.taintPolicy === undefined ? "" : ` (serve --taint-policy; this workspace's own is ${answer.settings.securityTaint ?? DEFAULT_TAINT_MODE})`}`
+                                                  : key === "securityInjectionDetector"
+                                                    ? (answer.effective.securityInjectionDetector ??
+                                                      answer.settings.securityInjectionDetector ??
+                                                      DEFAULT_INJECTION_DETECTOR_MODE)
+                                                    : key === "sandboxDomains"
+                                                      ? hosts(answer.settings.sandboxDomains ?? [])
+                                                      : key === "sandboxNetwork"
+                                                        ? sandboxNetworkModeOf(answer.settings)
+                                                        : key === "mcpServers" || key === "mcpPeople"
+                                                          ? (answer.settings[key] ?? []).length === 0
+                                                            ? "none"
+                                                            : (answer.settings[key] ?? []).join(",")
+                                                          : key === "keptModelRequests"
+                                                            ? String(
+                                                                answer.effective.keptModelRequests ??
+                                                                  answer.settings.keptModelRequests ??
+                                                                  DEFAULT_KEPT_MODEL_REQUESTS,
+                                                              )
+                                                            : key === "maxOutputTokens"
+                                                              ? String(
+                                                                  answer.effective.maxOutputTokens ?? maxOutputTokensOf(answer.settings),
+                                                                )
+                                                              : key === "toolDeferral"
+                                                                ? (answer.effective.toolDeferral ?? toolDeferralOf(answer.settings))
+                                                                : key === "tasksHome"
+                                                                  ? (answer.effective.tasksHome ?? tasksHomeOf(answer.settings))
+                                                                  : key === "promptLayout"
+                                                                    ? (answer.effective.promptLayout ??
+                                                                      answer.settings.promptLayout ??
+                                                                      DEFAULT_PROMPT_LAYOUT)
+                                                                    : key === "scheduledMonthlyTokenBudget"
+                                                                      ? answer.settings.scheduledMonthlyTokenBudget === undefined
+                                                                        ? "none"
+                                                                        : `${String(answer.settings.scheduledMonthlyTokenBudget)} tokens a month`
+                                                                      : answer.settings.activitySummaryModel === undefined
+                                                                        ? "the fast role when bound, else the task's own model"
+                                                                        : `${answer.settings.activitySummaryModel.connectionId}/${answer.settings.activitySummaryModel.model}`;
   const fallback = key === "timezone" ? "(default: host zone)" : "(default)";
   return `${SETTING_TO_CONFIG_KEY[key]} = ${value} ${set ? "(set)" : fallback}\n`;
 }

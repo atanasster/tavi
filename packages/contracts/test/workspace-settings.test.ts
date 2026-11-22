@@ -102,6 +102,7 @@ describe("the workspace-settings command", () => {
         homeChat: true,
         homeDmLink: false,
         keptModelRequests: 10,
+        locale: "en",
         maxOutputTokens: 16384,
         promptLayout: "v2",
         travelFlightSearch: true,

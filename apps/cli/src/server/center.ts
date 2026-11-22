@@ -6,6 +6,7 @@ import {
   DEFAULT_WORKSPACE_ID,
   TaviError,
   hostTimeZone,
+  localeOf,
   type CenterPayload,
   type CenterSummaryAnswer,
   type CenterWatchAnswer,
@@ -71,7 +72,8 @@ export async function centerCommand(deps: CenterDependencies, payload: CenterPay
     if (payload.action === "summary") {
       // The effective zone, resolved per call as the runtime facts resolve it,
       // so a `tavi config set workspace.timezone` moves "today" at once.
-      const timezone = (await deps.repositories.workspaceSettings.get(workspaceId)).settings.timezone ?? hostTimeZone();
+      const { settings } = await deps.repositories.workspaceSettings.get(workspaceId);
+      const timezone = settings.timezone ?? hostTimeZone();
       const { proposed } = await deps.memory.counts({ actor: { principalId, workspaceId, caller: "center", authority: "operator" } });
       const result = await center.summary({
         workspaceId,
@@ -87,6 +89,7 @@ export async function centerCommand(deps: CenterDependencies, payload: CenterPay
         ok: true,
         result: {
           ...result,
+          locale: localeOf(settings),
           ...(apps === undefined ? {} : { apps: apps.slice(0, CENTER_APPS_LIMIT) }),
           ...(health.length === 0 ? {} : { health: [...health] }),
         },

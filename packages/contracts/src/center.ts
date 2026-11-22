@@ -4,6 +4,7 @@ import { z } from "zod";
 import { AppRepairSchema } from "./connected-apps.js";
 import { IdSchema, TimestampSchema } from "./ids.js";
 import { MCP_NOTICE_KINDS } from "./mcp-store.js";
+import { LocaleSchema } from "./workspace-settings.js";
 import type { AgendaInput, AgendaResult } from "./agenda.js";
 import type { MemoryScope } from "./memory.js";
 
@@ -111,6 +112,12 @@ const count = z.number().int().nonnegative();
 export const CenterSummaryAnswerSchema = z.strictObject({
   workspaceId: IdSchema,
   timezone: z.string().min(1).max(64),
+  /**
+   * The workspace's language (`workspace.locale`), so the canvas speaks it from
+   * its first screen. Set by the owner, not the repository; optional so a page
+   * reads an owner from before languages.
+   */
+  locale: LocaleSchema.optional(),
   today: CenterDateSchema,
   counts: z.strictObject({
     /** Tasks waiting on each kind of decision themselves; a need hoisted from a worker is counted on the worker only. */

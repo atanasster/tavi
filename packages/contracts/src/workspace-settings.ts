@@ -18,6 +18,7 @@ import { normalizeSandboxGrant, SANDBOX_DOMAINS_MAX } from "./sandbox.js";
 import { plainTextSchema } from "./ideas.js";
 import { parseTokenCount } from "./schedules.js";
 import { isValidTimeZone } from "./schedule-time.js";
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from "./i18n.js";
 
 export { isValidTimeZone };
 
@@ -110,6 +111,9 @@ export function mcpServerAllowed(settings: WorkspaceSettings, pluginId: string):
 export function mcpServerForPeople(settings: WorkspaceSettings, pluginId: string): boolean {
   return mcpServerAllowed(settings, pluginId) && settings.mcpPeople?.includes(pluginId) === true;
 }
+
+/** A language Tavi speaks, as `workspace.locale` stores it. */
+export const LocaleSchema = z.enum(SUPPORTED_LOCALES);
 
 /** `operator.name`'s longest value. */
 export const OPERATOR_NAME_MAX = 80;
@@ -204,6 +208,12 @@ export const WorkspaceSettingsSchema = z.strictObject({
    * operator is called, set by onboarding's about step. Absent: unnamed.
    */
   operatorName: OperatorNameSchema.optional(),
+  /**
+   * `workspace.locale`: the language Tavi speaks to the operator in. Chat
+   * replies, channel messages and the screens follow it as each is
+   * translated; CLI help stays English. Absent: English.
+   */
+  locale: LocaleSchema.optional(),
   /**
    * Whether a finished task gets a generated title and one-line summary.
    * Absent: on. Off, a task keeps its
@@ -441,6 +451,7 @@ export function sandboxNetworkModeOf(settings: WorkspaceSettings): SandboxNetwor
 export const WORKSPACE_SETTING_KEYS = [
   "timezone",
   "operatorName",
+  "locale",
   "activitySummaries",
   "activitySummaryModel",
   "browserNoThumbnailHosts",
@@ -475,6 +486,11 @@ export const WORKSPACE_SETTING_KEYS = [
   "sandboxNetwork",
 ] as const;
 export type WorkspaceSettingKey = (typeof WORKSPACE_SETTING_KEYS)[number];
+
+/** The language in force for `settings`: its `workspace.locale`, else English. */
+export function localeOf(settings: WorkspaceSettings): Locale {
+  return settings.locale ?? DEFAULT_LOCALE;
+}
 
 /** Whether task summaries are on for `settings`: on unless turned off. */
 export function activitySummariesOn(settings: WorkspaceSettings): boolean {
@@ -878,6 +894,8 @@ export const WorkspaceSettingsAnswerSchema = z.strictObject({
   settings: WorkspaceSettingsSchema,
   effective: z.strictObject({
     timezone: z.string().min(1).max(64),
+    /** Optional only so a page reads an owner from before languages; this build always sends it. */
+    locale: LocaleSchema.optional(),
     /** Optional only so a page reads an owner from before task summaries; this build always sends it. */
     activitySummaries: z.boolean().optional(),
     /** Optional only so a page reads an owner from before browser history; this build always sends it. */
@@ -945,6 +963,7 @@ export function workspaceSettingsAnswerOf(
     settings: record.settings,
     effective: {
       timezone: record.settings.timezone ?? host,
+      locale: localeOf(record.settings),
       activitySummaries: activitySummariesOn(record.settings),
       browserNoThumbnailHosts: [...effectiveNoThumbnailHosts(record.settings)],
       homeChat: homeChatOn(record.settings),
