@@ -405,6 +405,90 @@ describe("travel.flights_search", () => {
     expect(off.sources).toHaveLength(1);
   });
 
+  it("asks a source of one-way fares each way for a return trip: a reference beside Kiwi's, never the trip's price", async () => {
+    const oneWay = (from: string, to: string, price: number, hours = 17): FlightItinerary => ({
+      source: "google-flights",
+      price,
+      currency: "EUR",
+      airlines: ["Lufthansa"],
+      outbound: { route: `${from} → FRA → ${to}`, departure: "", arrival: "", hours, stops: 1, flights: ["LH1431"] },
+      totalHours: hours,
+      bookingUrl: "https://www.google.com/travel/flights?tfs=x",
+    });
+    const asked: FlightsSearchInput[] = [];
+    let backBroken = false;
+    const registry = fakeRegistry();
+    registerFlightsTools(registry, {
+      search: async () => kiwi,
+      sources: async () => [
+        {
+          id: "google-flights",
+          url: "https://www.google.com/travel/flights",
+          oneWayOnly: "it lists one-way fares only; a key prices round trips",
+          search: async (query) => {
+            asked.push(query);
+            if (query.from === "TPA" && backBroken) throw new Error("the page changed");
+            return query.from === "SOF"
+              ? {
+                  itineraries: [
+                    oneWay("SOF", "TPA", 814),
+                    oneWay("SOF", "TPA", 700, 40),
+                    oneWay("SOF", "TPA", 900),
+                    oneWay("SOF", "TPA", 950),
+                    oneWay("SOF", "TPA", 990),
+                  ],
+                  found: 5,
+                  label: searchResultLabel("www.google.com"),
+                }
+              : { itineraries: [oneWay("TPA", "SOF", 420)], found: 1, label: searchResultLabel("www.google.com") };
+          },
+        },
+      ],
+      now: () => "t",
+    });
+    const call = (input: unknown) =>
+      registry.get("travel.flights_search")!.handler({ input, context, signal: new AbortController().signal });
+    const answer = (await call(trip)) as {
+      itineraries: FlightItinerary[];
+      sources: unknown[];
+      oneWayFares: { source: string; outbound: FlightItinerary[]; back: FlightItinerary[]; note: string }[];
+      note: string;
+    };
+    // Asked each way as one-way trips, the return's range as its own.
+    expect(asked).toEqual([
+      { from: "SOF", to: "TPA", departDate: "2026-11-22", departDateTo: "2026-11-26", maxDurationHours: 21 },
+      { from: "TPA", to: "SOF", departDate: "2027-02-01", departDateTo: "2027-02-14", maxDurationHours: 21 },
+    ]);
+    // The trip's fares are Kiwi's alone; Google's one-ways come apart, the cheapest three that fit each way.
+    expect(answer.itineraries.every((itinerary) => itinerary.source === "kiwi.com")).toBe(true);
+    expect(answer.sources[1]).toEqual({
+      source: "google-flights",
+      state: "skipped",
+      reason: "it lists one-way fares only; a key prices round trips",
+    });
+    expect(answer.oneWayFares).toHaveLength(1);
+    expect(answer.oneWayFares[0]?.outbound.map((itinerary) => itinerary.price)).toEqual([814, 900, 950]);
+    expect(answer.oneWayFares[0]?.back.map((itinerary) => itinerary.price)).toEqual([420]);
+    expect(answer.oneWayFares[0]?.note).toMatch(/not a round-trip price/);
+    // None of the fares is Google's: the answer says to give its link first.
+    expect(answer.note).toMatch(/reseller.*check\.googleFlights first/s);
+    // A direction that cannot be read leaves the reference out; the trip still answers.
+    backBroken = true;
+    const partial = (await call({ ...trip, returnDate: "2027-02-02" })) as { oneWayFares?: unknown; itineraries: unknown[] };
+    expect(partial.oneWayFares).toBeUndefined();
+    expect(partial.itineraries.length).toBeGreaterThan(0);
+    // A one-way trip asks it as any source: its fares are the trip's.
+    const { returnDate: _r, returnDateTo: _rt, ...outboundOnly } = trip;
+    const single = (await call({ ...outboundOnly, departDate: "2026-11-24" })) as {
+      itineraries: FlightItinerary[];
+      oneWayFares?: unknown;
+      note: string;
+    };
+    expect(single.itineraries.some((itinerary) => itinerary.source === "google-flights")).toBe(true);
+    expect(single.oneWayFares).toBeUndefined();
+    expect(single.note).not.toContain("check.googleFlights first");
+  });
+
   it("falls back only when no source could be read, naming each one's reason", async () => {
     const registry = fakeRegistry();
     registerFlightsTools(registry, {

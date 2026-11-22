@@ -63,7 +63,8 @@ describe("Google Flights' page", () => {
   it("answers one-way trips between airport codes, sending the consent answer, and leaves round trips to the others", async () => {
     const { fetch, asked } = fakeFetch(PAGE);
     const source = googlePageSource({ fetch });
-    expect(source.cannot?.(roundTrip)).toMatch(/round-trip fares only to a browser/);
+    expect(source.cannot?.(roundTrip)).toBeUndefined();
+    expect(source.oneWayOnly).toMatch(/one-way fares only.*SerpApi key/);
     expect(source.cannot?.({ ...oneWay, from: "Sofia" })).toMatch(/airport codes/);
     expect(source.cannot?.(oneWay)).toBeUndefined();
     const answer = await source.search({ ...oneWay, departDateTo: "2026-11-27" }, signal);

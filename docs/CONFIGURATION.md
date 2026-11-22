@@ -470,7 +470,7 @@ tavi config unset <key>         # back to the default
 | `desktop.grantedApps` | comma-separated bundle ids or app names, `none` | none | The apps experimental desktop control (`tavi.desktop`) may see and act in, each at its built-in tier. See [DESKTOP.md](DESKTOP.md). |
 | `travel.flightSearch` | `on`, `off` | `on` | `travel.flights_search` asks Kiwi.com's public flight search (and Google Flights, below). Off, it refuses and the agent browses flight sites. |
 | `skills.suggestions` | `on`, `off` | `on` | Whether the agent may offer, unasked, a procedure that worked as a skill for you to review (`skills.propose`). Off, it offers one only when asked. |
-| `travel.googleFlights` | `on`, `off` | `on` | Flight searches ask Google Flights too (unofficial, best effort): through SerpApi with a key stored as the credential `serpapi`, else Google's own page, one-way trips only. Answers link it to confirm a fare. |
+| `travel.googleFlights` | `on`, `off` | `on` | Flight searches ask Google Flights too (unofficial, best effort): through SerpApi with a key stored as the credential `serpapi`, else Google's own page, one-way fares only (a return trip gets them each way, as a reference). Answers link it to confirm a fare. |
 | `pdf.enabled` | `on`, `off` | `on` | The PDF tools. Off, they refuse every call and the canvas takes no PDF upload. |
 | `video.enabled` | `on`, `off` | `on` | The video tools. Off, they refuse. |
 | `video.keepDays` | `1`–`3650` | `30` | How long a video or voice message from a channel, mail or the web is kept; a video's frames stay with its chat. |

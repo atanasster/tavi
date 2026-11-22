@@ -4,6 +4,15 @@ All notable changes to Tavi are recorded here. The project follows
 [Semantic Versioning](https://semver.org); before 1.0, a minor version may
 change behaviour or stored data.
 
+## Unreleased
+
+### Changed
+
+- A return trip without a SerpApi key now gets Google Flights' one-way fares
+  each way beside Kiwi's round trips, marked as one-way fares and never added
+  up as a round-trip price. Where none of the fares is Google Flights', Tavi
+  gives you its link first, as where to see the airlines' own prices.
+
 ## 0.4.2 — 2026-11-22
 
 Flight search asks Google Flights beside Kiwi.com.

@@ -26,7 +26,7 @@ Ask a follow-up in the same chat, such as "Only direct flights, and add a return
 
 ## 4. Turn flight search off or on
 
-Open **Settings → General → Flight search**. Turn off **Search flights with Kiwi.com** and Tavi browses flight sites itself instead; turn off **Search Google Flights too (unofficial, best effort)** to leave Google Flights out. Without a key, Google Flights gives fares for one-way trips only: paste a free key from [SerpApi](https://serpapi.com/users/sign_up) (250 searches a month) under **SerpApi key** and choose **Store key** to search round trips on Google Flights too. `tavi config set travel.flightSearch off` does the same as the first switch.
+Open **Settings → General → Flight search**. Turn off **Search flights with Kiwi.com** and Tavi browses flight sites itself instead; turn off **Search Google Flights too (unofficial, best effort)** to leave Google Flights out. Without a key, Google Flights gives fares for one-way trips only, so for a return trip Tavi lists its one-way fares each way beside Kiwi.com's round trips, and its link first: paste a free key from [SerpApi](https://serpapi.com/users/sign_up) (250 searches a month) under **SerpApi key** and choose **Store key** to search round trips on Google Flights too. `tavi config set travel.flightSearch off` does the same as the first switch.
 
 ![Settings → General → Flight search: what is sent to Kiwi.com, with Search flights with Kiwi.com turned off and Use Google Flights (best effort, unofficial)](../../assets/use-cases/web-and-browser/search-flights/04-turn-flight-search-off-or-on.webp)
 

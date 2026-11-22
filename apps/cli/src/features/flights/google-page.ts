@@ -9,7 +9,8 @@ import type { FlightItinerary, FlightSource, FlightsSearchInput } from "./host.j
  * the approach of fli (github.com/punitarani/fli, MIT), written for Node.
  * Google's search page inlines a one-way search's results in its `ds:1` data
  * blob; a round trip's it loads afterwards through a request only the page's
- * own script can sign, so round trips are left to Kiwi and SerpApi. A page
+ * own script can sign, so a round trip is asked each way, its fares a reference
+ * beside Kiwi's (`oneWayOnly`), and priced whole only through SerpApi. A page
  * that comes back without the blob, or rows that no longer read, mean the
  * page changed: the source is unavailable, never "no flights".
  */
@@ -157,20 +158,17 @@ export function pageItineraries(
 }
 
 /**
- * Google Flights' page as a `FlightSource`: one-way trips between airport
- * codes, one date each way (the first of a range), over the guarded fetch.
+ * Google Flights' page as a `FlightSource`: one-way fares between airport
+ * codes, one date (the first of a range), over the guarded fetch.
  */
 export function googlePageSource(options: { readonly fetch?: FetchLike } = {}): FlightSource {
   const fetch = options.fetch ?? guardedFetch({ lan: false });
   return {
     id: GOOGLE_PAGE_SOURCE,
     url: PAGE_URL,
-    cannot: (query) =>
-      query.returnDate !== undefined
-        ? "Google's page lists round-trip fares only to a browser; with a SerpApi key, round trips are searched on Google Flights too"
-        : !IATA.test(query.from) || !IATA.test(query.to)
-          ? "it takes airport codes (SOF), not place names"
-          : undefined,
+    cannot: (query) => (!IATA.test(query.from) || !IATA.test(query.to) ? "it takes airport codes (SOF), not place names" : undefined),
+    oneWayOnly:
+      "Google's page lists one-way fares only, so its fares each way are in oneWayFares; with a SerpApi key (Settings → General → Flight search), round trips are priced on Google Flights too",
     search: async (query, signal) => {
       const url = pageUrl(query);
       const response = await fetch(url, {

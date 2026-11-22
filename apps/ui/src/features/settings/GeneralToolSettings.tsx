@@ -184,11 +184,12 @@ export function FlightSearch({ answer, busy, run }: SettingSectionProps) {
           }}
         >
           <p className="muted">
-            Without a key, Tavi reads Google Flights&rsquo; own page, which lists fares for one-way trips only. With a free key from{" "}
+            Without a key, Tavi reads Google Flights&rsquo; own page, which lists fares for one-way trips only: for a return trip, its
+            one-way fares each way are shown beside Kiwi&rsquo;s. With a free key from{" "}
             <a href={SERPAPI_SIGN_UP_URL} target="_blank" rel="noreferrer">
               SerpApi
             </a>{" "}
-            (250 searches a month), round trips are searched on Google Flights too.
+            (250 searches a month), round trips are priced on Google Flights too.
           </p>
           <KeyField label="SerpApi key" id="serpapi-key" value={key} onChange={setKey} />
           <div className="actions">

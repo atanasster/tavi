@@ -235,8 +235,13 @@ export interface FlightSource {
   readonly id: string;
   /** Where its fares come from, kept with them as findings. */
   readonly url: string;
-  /** Why it cannot answer this search (a city name where it takes airport codes, a round trip), else `undefined`. */
+  /** Why it cannot answer this search (a city name where it takes airport codes), else `undefined`. */
   readonly cannot?: (query: FlightsSearchInput) => string | undefined;
+  /**
+   * Set where it lists one-way fares only: why it cannot price a round trip, in the host's words (what would). A
+   * round trip then asks it once each way, and its fares come back apart, as `oneWayFares`, never as the trip's.
+   */
+  readonly oneWayOnly?: string;
   /** Throws when the source cannot be read: it is unavailable, which is never "no flights". */
   readonly search: (query: FlightsSearchInput, signal: AbortSignal) => Promise<FlightSourceAnswer>;
 }
@@ -274,6 +279,25 @@ export interface FlightsToolOptions {
    */
   readonly browser?: boolean;
 }
+
+/** A round trip's fares each way from a source of one-way fares: to set the others' against, never the trip's price. */
+export interface OneWayFares {
+  readonly source: string;
+  readonly outbound: readonly FlightItinerary[];
+  readonly back: readonly FlightItinerary[];
+  readonly note: string;
+}
+
+/** How many of each direction's cheapest one-way fares a round trip's answer carries. */
+const ONE_WAY_FARES = 3;
+
+/** Said where a round trip's fares each way came from a source of one-way fares. */
+const ONE_WAY_NOTE =
+  "One-way fares each way, for reference only: not a round-trip price. A round trip on the same airlines usually costs less than the two added up; its price is on check.googleFlights.";
+
+/** Said where none of an answer's fares is Google Flights': where the airlines' own prices are. */
+const NO_GOOGLE_NOTE =
+  "None of these fares is Google Flights': give the person check.googleFlights first, as where to see the airlines' own prices, then these.";
 
 /** How many of each source's cheapest fares an answer keeps before the rest compete on price, so the sources can be compared. */
 const PER_SOURCE = 3;
@@ -426,15 +450,45 @@ export function registerFlightsTools(registry: ToolRegistrar, options: FlightsTo
     };
   };
 
+  /**
+   * A round trip's one-way fares each way from a source of one-way fares, the cheapest few that fit; `undefined`
+   * where either direction could not be read or found none (the trip's own status says why it was not asked).
+   */
+  const oneWayFaresOf = async (
+    source: FlightSource,
+    query: FlightsSearchInput,
+    signal: AbortSignal,
+  ): Promise<{ readonly fares: OneWayFares; readonly labels: readonly ContentLabel[] } | undefined> => {
+    if (query.returnDate === undefined) return undefined;
+    const { returnDate, returnDateTo, departDateTo: _outboundRange, ...trip } = query;
+    const { returnDate: _return, returnDateTo: _returnRange, ...outbound } = query;
+    const back: FlightsSearchInput = {
+      ...trip,
+      from: query.to,
+      to: query.from,
+      departDate: returnDate,
+      ...(returnDateTo === undefined ? {} : { departDateTo: returnDateTo }),
+    };
+    const [out, home] = await Promise.all([fromSource(source, outbound, signal), fromSource(source, back, signal)]);
+    if (out.status.state !== "ok" || home.status.state !== "ok") return undefined;
+    const cheapest = (list: readonly FlightItinerary[]): FlightItinerary[] =>
+      [...list].sort((a, b) => a.price - b.price || a.totalHours - b.totalHours).slice(0, ONE_WAY_FARES);
+    return {
+      fares: { source: source.id, outbound: cheapest(out.itineraries), back: cheapest(home.itineraries), note: ONE_WAY_NOTE },
+      labels: [out.label, home.label].flatMap((label) => (label === undefined ? [] : [label])),
+    };
+  };
+
   registry.register({
     id: FLIGHT_SEARCH_TOOL_ID,
     sink: "search",
     // Ideas about trips are offered while it answers.
     proves: ["travel"],
-    version: "1.1.0",
+    version: "1.2.0",
     description:
       "Search flights — one way or return, over date ranges each way, within a maximum flight time per direction — and answer with itineraries: airlines, flight numbers, times, layovers, durations, price, source and a booking link, cheapest first. " +
       "Fares come from Kiwi.com (a reseller, often dearer on the big airlines) and, where Google Flights is on, from Google Flights; `sources` says how each went. " +
+      "Where Google Flights lists one-way fares only, a return trip's answer has them each way as `oneWayFares`: a reference to set Kiwi's against, never the trip's price. " +
       (browser
         ? "Use it before browsing for any flight question. Each answer has links to the same search on Google Flights and Kayak (`check`): give them to the person with the fares, and open one in the browser to confirm a fare. "
         : "Each answer has links to the same search on Google Flights and Kayak (`check`): give them to the person with the fares. ") +
@@ -442,8 +496,8 @@ export function registerFlightsTools(registry: ToolRegistrar, options: FlightsTo
     effect: "external",
     requiredPermissions: ["tools.invoke"],
     promptGuidance: browser
-      ? "Domain tools first: for flights use `travel.flights_search` before browsing. Always give the person its `check.googleFlights` link with the fares, say which source each fare is from, and that Kiwi's are a reseller's; confirm a fare in the browser when asked or when every source fails."
-      : "For flights use `travel.flights_search`. Always give the person its `check.googleFlights` link with the fares, say which source each fare is from, and that Kiwi's are a reseller's.",
+      ? "Domain tools first: for flights use `travel.flights_search` before browsing. Always give the person its `check.googleFlights` link with the fares, say which source each fare is from, and that Kiwi's are a reseller's; with `oneWayFares`, give them as one-way fares each way, never added up as a round-trip price. Confirm a fare in the browser when asked or when every source fails."
+      : "For flights use `travel.flights_search`. Always give the person its `check.googleFlights` link with the fares, say which source each fare is from, and that Kiwi's are a reseller's; with `oneWayFares`, give them as one-way fares each way, never added up as a round-trip price.",
     inputSchema: FlightsSearchInputSchema,
     assess: (input) => {
       const call = input as Partial<FlightsSearchInput>;
@@ -491,7 +545,31 @@ export function registerFlightsTools(registry: ToolRegistrar, options: FlightsTo
           ? "open check.googleFlights with browser.create_session and read its results with browser.extract"
           : "browse another flight site (check.kayak when there is one) and read its results with browser.extract";
       const others = settings.googleFlights ? ((await options.sources?.(context.workspaceId)) ?? []) : [];
-      const outcomes = await Promise.all([fromKiwi(query, signal), ...others.map((source) => fromSource(source, query, signal))]);
+      // A source of one-way fares is not asked a round trip: it is asked each way, for `oneWayFares`.
+      const roundTrip = query.returnDate !== undefined;
+      const oneWayOnly = (source: FlightSource): string | undefined => (roundTrip ? source.oneWayOnly : undefined);
+      const [outcomes, references] = await Promise.all([
+        Promise.all([
+          fromKiwi(query, signal),
+          ...others.map((source) => {
+            const reason = oneWayOnly(source);
+            return reason === undefined
+              ? fromSource(source, query, signal)
+              : Promise.resolve<Outcome>({
+                  itineraries: [],
+                  status: { source: source.id, state: "skipped", reason },
+                  url: source.url,
+                  key: `${source.id}\u0000${JSON.stringify(query)}`,
+                });
+          }),
+        ]),
+        Promise.all(
+          others.map((source) =>
+            oneWayOnly(source) === undefined || source.cannot?.(query) !== undefined ? undefined : oneWayFaresOf(source, query, signal),
+          ),
+        ),
+      ]);
+      const oneWayFares = references.flatMap((reference) => (reference === undefined ? [] : [reference]));
       if (signal.aborted) throw new TaviError("CANCELLED", "travel.flights_search was cancelled");
       const limit = query.limit ?? DEFAULT_RESULTS;
       const itineraries = mergeItineraries(
@@ -500,9 +578,10 @@ export function registerFlightsTools(registry: ToolRegistrar, options: FlightsTo
         query.sort,
       );
       // Fares, names and links are the sources': `search`, and where each came from (untrusted).
-      const label = outcomes
-        .flatMap((outcome) => (outcome.label === undefined ? [] : [outcome.label]))
-        .reduce((joined, next) => joinLabels(joined, next));
+      const label = [
+        ...outcomes.flatMap((outcome) => (outcome.label === undefined ? [] : [outcome.label])),
+        ...oneWayFares.flatMap((reference) => reference.labels),
+      ].reduce((joined, next) => joinLabels(joined, next));
       let keptFrom: number | undefined;
       let keptTo: number | undefined;
       for (const outcome of outcomes) {
@@ -531,7 +610,15 @@ export function registerFlightsTools(registry: ToolRegistrar, options: FlightsTo
         found: statuses.reduce((total, status) => total + (status.found ?? 0), 0),
         sources: statuses,
         check,
-        ...(itineraries.some((itinerary) => itinerary.source === KIWI_SOURCE) ? { note: KIWI_NOTE } : {}),
+        ...(oneWayFares.length === 0 ? {} : { oneWayFares: oneWayFares.map((reference) => reference.fares) }),
+        ...(itineraries.some((itinerary) => itinerary.source === KIWI_SOURCE)
+          ? {
+              note:
+                settings.googleFlights && itineraries.every((itinerary) => itinerary.source === KIWI_SOURCE)
+                  ? `${KIWI_NOTE} ${NO_GOOGLE_NOTE}`
+                  : KIWI_NOTE,
+            }
+          : {}),
         ...(keptFrom === undefined ? {} : { kept: { kind: "flight", from: keptFrom, to: keptTo } }),
         ...(itineraries.length > 0
           ? {}

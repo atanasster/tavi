@@ -675,8 +675,12 @@ about you.
   trips included: a round trip's fares are the whole trip's price for the
   outbound flights listed, and its return is chosen on Google Flights through
   the fare's link. Without a key it reads Google Flights' own search page
-  (`www.google.com/travel/flights`), which lists fares for one-way trips only;
-  a round trip is then Kiwi's alone. Either takes airport codes, and the first
+  (`www.google.com/travel/flights`), which lists fares for one-way trips only:
+  a round trip's priced fares are then Kiwi's alone, and the page is asked
+  each way, its cheapest three one-way fares each way coming back as
+  `oneWayFares`, a reference never added up as a round-trip price. An answer
+  none of whose fares is Google Flights' tells the model to give its link
+  first. Either takes airport codes, and the first
   date of a range. Google Flights has no official interface, so this is best
   effort.
 
