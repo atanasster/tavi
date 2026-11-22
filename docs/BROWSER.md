@@ -659,16 +659,37 @@ ranges, with a link where each can be checked.
 
 Flight questions go to `travel.flights_search` first; with flight search off
 (`tavi config set travel.flightSearch off`) it answers with the address that
-opens the same search in the browser. The tool (`tavi.flights`) asks Kiwi.com's
-public MCP server (`https://mcp.kiwi.com`, free and keyless) through the
-owner's own MCP client, sending the trip: origin, destination, dates, the
-number of adults, the cabin, the currency, the sort and the limits asked for,
-nothing about you. It holds the maximum flight time per direction in code,
-leaves self-transfer off unless asked, and keeps the itineraries as the task's
-findings of kind `flight`. Its answer carries a Google Flights search for the
-same trip (unless Google Flights is off) and a Kayak search (when both ends are
-airport codes), for you to check or for the browser to use when Kiwi fails.
-Coverage is Kiwi's.
+opens the same search in the browser. The tool (`tavi.flights`) asks two
+sources at once, sending each the trip: origin, destination, dates, the number
+of adults, the cabin, the currency, the sort and the limits asked for, nothing
+about you.
+
+- **Kiwi.com's public MCP server** (`https://mcp.kiwi.com`, free and keyless),
+  through the owner's own MCP client. Kiwi is a reseller: on the big airlines
+  its fares include its own fee and often run well above the airline's, so
+  every answer with its fares says so (`note`).
+- **Google Flights**, unless `travel.googleFlights` is off. With a SerpApi key
+  stored as the credential `serpapi` (Settings → General → Flight search, or
+  `tavi credentials set serpapi`), it asks Google Flights through SerpApi
+  (`serpapi.com`, 250 free searches a month, one per flight search), round
+  trips included: a round trip's fares are the whole trip's price for the
+  outbound flights listed, and its return is chosen on Google Flights through
+  the fare's link. Without a key it reads Google Flights' own search page
+  (`www.google.com/travel/flights`), which lists fares for one-way trips only;
+  a round trip is then Kiwi's alone. Either takes airport codes, and the first
+  date of a range. Google Flights has no official interface, so this is best
+  effort.
+
+Every fare names its `source`, and `sources` says how each one went: `ok`,
+`empty`, `skipped` (with why: a round trip on Google's page, a place name) or
+`unavailable` — a source that could not be read, which says nothing of the
+flights. The answer keeps each source's three cheapest before the rest compete
+on price, so the two can be compared. The tool holds the maximum flight time per
+direction in code, leaves self-transfer off unless asked, and keeps the
+itineraries as the task's findings of kind `flight`, each from its source. Its
+answer carries a Google Flights search for the same trip (unless Google Flights
+is off) and a Kayak search (when both ends are airport codes), which the agent
+gives you with the fares, and which the browser uses when no source answers.
 
 ### Site notes, site profiles and recipes
 

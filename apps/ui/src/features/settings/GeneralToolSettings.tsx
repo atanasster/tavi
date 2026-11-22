@@ -4,6 +4,7 @@ import {
   DEFAULT_VIDEO_KEEP_DAYS,
   MAX_VIDEO_KEEP_DAYS,
   MCP_PLUGIN_PREFIX,
+  SERPAPI_CREDENTIAL_REF,
   TasksHomeSchema,
   ToolDeferralSchema,
   tasksHomeServer,
@@ -21,6 +22,9 @@ import { workspaceSettingsActions } from "./workspace-api.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
+import { mapOutcome } from "../../lib/ipc.js";
+import { credentialActions } from "./credentials-api.js";
+import { KeyField } from "./PasswordInput.js";
 
 /**
  * The video tools: on by default, with the
@@ -87,21 +91,30 @@ export function VideoTools({ answer, busy, run }: SettingSectionProps) {
     </>
   );
 }
+/** Where a free SerpApi key is had: 250 searches a month. */
+const SERPAPI_SIGN_UP_URL = "https://serpapi.com/users/sign_up";
+
 /**
- * Flight search: Kiwi.com's public search, and the
- * Google Flights back end — unofficial, best effort — each of which can be off.
+ * Flight search: Kiwi.com's public search, and Google Flights beside it —
+ * its own page for one-way trips, or SerpApi with the person's key for round
+ * trips too — each of which can be off.
  */
 export function FlightSearch({ answer, busy, run }: SettingSectionProps) {
   const { client, workspaceId } = useWorkspace();
   const search = answer.effective.travelFlightSearch !== false;
   const google = answer.effective.travelGoogleFlights !== false;
+  // Whether a SerpApi key is stored: the references only, never a value. An owner that answers no list shows no key form.
+  const credentials = useLoaded(() => credentialActions.list(client));
+  const listed = credentials.data?.credentials;
+  const keyStored = Array.isArray(listed) ? listed.includes(SERPAPI_CREDENTIAL_REF) : undefined;
+  const [key, setKey] = useState("");
   return (
     <>
       <h2>Flight search</h2>
       <p>
-        Flight questions go first to Kiwi.com&rsquo;s public flight search, which is sent the trip &mdash; places, dates and passengers
-        &mdash; and asked before each search. Google Flights is used to confirm a fare or when that search fails: it has no official
-        interface, so it is <strong>best effort</strong> and runs only when you ask about flights. Or use{" "}
+        Flight questions are searched on Kiwi.com&rsquo;s public flight search and on Google Flights, each sent the trip &mdash; places,
+        dates and passengers. Kiwi is a reseller: on the big airlines its fares often run above the airline&rsquo;s own, so answers say
+        where each fare is from and link the same search on Google Flights. Or use{" "}
         <Command>tavi config set travel.flightSearch off</Command> and <code>travel.googleFlights off</code>.
       </p>
       <p>
@@ -131,9 +144,60 @@ export function FlightSearch({ answer, busy, run }: SettingSectionProps) {
               )
             }
           />{" "}
-          Use Google Flights (best effort, unofficial)
+          Search Google Flights too (unofficial, best effort)
         </label>
       </p>
+      {!google || keyStored === undefined ? null : keyStored ? (
+        <div className="cluster">
+          <p className="muted">
+            A SerpApi key is stored: Google Flights is searched through SerpApi, round trips included, one search of your plan each.
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={busy !== undefined}
+            onClick={() =>
+              void run("serpapi-key", async () => {
+                const removed = await credentialActions.remove(client, SERPAPI_CREDENTIAL_REF);
+                if (removed.ok) credentials.reload();
+                return mapOutcome(removed, () => "SerpApi key removed: Google Flights is read from its own page, one-way trips only.");
+              })
+            }
+          >
+            Remove key
+          </Button>
+        </div>
+      ) : (
+        <form
+          className="form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (key.trim() === "") return;
+            void run("serpapi-key", async () => {
+              const stored = await credentialActions.set(client, { reference: SERPAPI_CREDENTIAL_REF, value: key });
+              if (stored.ok) {
+                setKey("");
+                credentials.reload();
+              }
+              return mapOutcome(stored, () => "SerpApi key stored: round trips are searched on Google Flights too.");
+            });
+          }}
+        >
+          <p className="muted">
+            Without a key, Tavi reads Google Flights&rsquo; own page, which lists fares for one-way trips only. With a free key from{" "}
+            <a href={SERPAPI_SIGN_UP_URL} target="_blank" rel="noreferrer">
+              SerpApi
+            </a>{" "}
+            (250 searches a month), round trips are searched on Google Flights too.
+          </p>
+          <KeyField label="SerpApi key" id="serpapi-key" value={key} onChange={setKey} />
+          <div className="actions">
+            <Button type="submit" variant="primary" size="sm" disabled={busy !== undefined || key.trim() === ""}>
+              {busy === "serpapi-key" ? "Storing…" : "Store key"}
+            </Button>
+          </div>
+        </form>
+      )}
     </>
   );
 }

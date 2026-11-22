@@ -1,6 +1,7 @@
 import {
   labelledResult,
   mcpResultLabel,
+  searchResultLabel,
   toolResultLabel,
   type InvocationContext,
   type TaskFindingRepositoryPort,
@@ -9,7 +10,17 @@ import {
 import { describe, expect, it } from "vitest";
 import { partialFake } from "@tavi/test-support";
 
-import { checkLinks, itinerariesOf, kiwiArguments, registerFlightsTools, withinDuration, type FlightsSearchInput } from "../src/index.js";
+import {
+  checkLinks,
+  itinerariesOf,
+  kiwiArguments,
+  mergeItineraries,
+  registerFlightsTools,
+  withinDuration,
+  type FlightItinerary,
+  type FlightSource,
+  type FlightsSearchInput,
+} from "../src/index.js";
 
 /** A registry that keeps what is registered as the host's does, a built-in's (`builtIn`), for its handler to be called. */
 function fakeRegistry() {
@@ -103,6 +114,7 @@ describe("travel.flights_search", () => {
     const all = itinerariesOf(kiwiContent, "EUR") ?? [];
     expect(all).toHaveLength(2);
     expect(all[0]).toEqual({
+      source: "kiwi.com",
       price: 898,
       currency: "EUR",
       airlines: ["Lufthansa"],
@@ -163,8 +175,14 @@ describe("travel.flights_search", () => {
     });
     const call = (input: unknown) =>
       registry.get("travel.flights_search")?.handler({ input, context, signal: new AbortController().signal });
-    const answer = (await call(trip)) as { itineraries: { price: number }[]; overDuration: number; kept: unknown; check: unknown };
-    expect(answer).toMatchObject({ source: "kiwi.com", found: 2, overDuration: 1, kept: { kind: "flight", from: 1, to: 1 } });
+    const answer = (await call(trip)) as { itineraries: { price: number }[]; kept: unknown; check: unknown; note: string };
+    expect(answer).toMatchObject({
+      found: 2,
+      sources: [{ source: "kiwi.com", state: "ok", found: 2, cheapest: 898, reason: "1 over the maximum flight time" }],
+      kept: { kind: "flight", from: 1, to: 1 },
+    });
+    // Kiwi's fares are said to be a reseller's, and the person is to get the check links with them.
+    expect(answer.note).toMatch(/reseller.*check links/);
     expect(answer.itineraries.map((itinerary) => itinerary.price)).toEqual([898]);
     expect(kept).toHaveLength(1);
     await call(trip);
@@ -266,5 +284,167 @@ describe("travel.flights_search", () => {
     expect(failed.fallback).toContain("give the person the check links");
     expect(failed.fallback).not.toContain("browser");
     expect(failed.check["googleFlights"]).toContain("google.com");
+  });
+
+  it("searches Google Flights beside Kiwi: each fare names its source, each source says how it went", async () => {
+    const google = (price: number, hours = 17): FlightItinerary => ({
+      source: "google-flights",
+      price,
+      currency: "EUR",
+      airlines: ["Lufthansa"],
+      outbound: {
+        route: "SOF → FRA → TPA",
+        departure: "2026-11-25T06:25",
+        arrival: "2026-11-25T16:35",
+        hours,
+        stops: 1,
+        flights: ["LH1431"],
+      },
+      totalHours: hours,
+      bookingUrl: "https://www.google.com/travel/flights?tfs=x",
+    });
+    const asked: string[] = [];
+    let broken = false;
+    const sources: FlightSource[] = [
+      {
+        id: "google-flights",
+        url: "https://www.google.com/travel/flights",
+        search: async () => {
+          asked.push("google");
+          if (broken) throw new Error("the page carried no results");
+          return {
+            itineraries: [google(947), google(986), google(1093), google(1200), google(30, 40)],
+            found: 5,
+            label: searchResultLabel("www.google.com"),
+            note: "round trip prices",
+          };
+        },
+      },
+      {
+        id: "elsewhere",
+        url: "https://example.test",
+        cannot: () => "takes airport codes only",
+        search: async () => ({ itineraries: [], found: 0, label: searchResultLabel("example.test") }),
+      },
+    ];
+    let googleFlights = true;
+    const kept: { sourceUrl?: string | undefined; records: readonly unknown[] }[] = [];
+    const registry = fakeRegistry();
+    registerFlightsTools(registry, {
+      search: async () => kiwi,
+      sources: async () => sources,
+      settings: async () => ({ search: true, googleFlights }),
+      findings: partialFake<TaskFindingRepositoryPort>({
+        add: async (input: { sourceUrl?: string | undefined; records: readonly unknown[] }) => (
+          kept.push(input),
+          input.records.map((record, index) => ({
+            taskId: "task-1",
+            seq: kept.length * 10 + index,
+            kind: "flight",
+            record,
+            createdAt: "t",
+          }))
+        ),
+        list: async () => [],
+      }),
+      now: () => "t",
+    });
+    const definition = registry.get("travel.flights_search")!;
+    const call = (input: unknown) => definition.handler({ input, context, signal: new AbortController().signal });
+    const answer = (await call({ ...trip, limit: 4 })) as {
+      itineraries: FlightItinerary[];
+      sources: unknown[];
+      note: string;
+      found: number;
+    };
+    // The cheapest of each source first, then the rest by price; the 40-hour fare is over the maximum.
+    expect(answer.itineraries.map((itinerary) => `${itinerary.source} ${String(itinerary.price)}`)).toEqual([
+      "kiwi.com 898",
+      "google-flights 947",
+      "google-flights 986",
+      "google-flights 1093",
+    ]);
+    expect(answer.found).toBe(7);
+    expect(answer.sources).toEqual([
+      {
+        source: "kiwi.com",
+        state: "ok",
+        found: 2,
+        cheapest: 898,
+        reason: "1 over the maximum flight time",
+      },
+      {
+        source: "google-flights",
+        state: "ok",
+        found: 5,
+        cheapest: 947,
+        reason: "1 over the maximum flight time",
+        note: "round trip prices",
+      },
+      { source: "elsewhere", state: "skipped", reason: "takes airport codes only" },
+    ]);
+    expect(answer.note).toContain("reseller");
+    // Each source's fares are kept as findings from where they came.
+    expect(kept.map((entry) => [entry.sourceUrl, entry.records.length])).toEqual([
+      ["https://mcp.kiwi.com", 1],
+      ["https://www.google.com/travel/flights", 3],
+    ]);
+    // The label joins every source's: Kiwi through MCP, Google over HTTPS.
+    const label = toolResultLabel(definition, { id: "call-1", input: trip }, labelledResult(answer), "2026-10-13T00:00:00.000Z");
+    expect([...label.principals].sort()).toEqual(["tool:mcp.kiwi.com", "tool:www.google.com"]);
+
+    // A source that cannot be read is unavailable, never "no flights"; Kiwi still answers.
+    broken = true;
+    const unread = (await call({ ...trip, departDate: "2026-11-23" })) as { sources: { state: string; reason?: string }[] };
+    expect(unread.sources[1]).toMatchObject({ state: "unavailable", reason: expect.stringContaining("says nothing of the flights") });
+    // Google Flights off in the settings: no Google source is asked.
+    googleFlights = false;
+    asked.length = 0;
+    const off = (await call({ ...trip, departDate: "2026-11-24" })) as { sources: unknown[] };
+    expect(asked).toEqual([]);
+    expect(off.sources).toHaveLength(1);
+  });
+
+  it("falls back only when no source could be read, naming each one's reason", async () => {
+    const registry = fakeRegistry();
+    registerFlightsTools(registry, {
+      search: async () => {
+        throw new Error("HTTP 503");
+      },
+      sources: async () => [
+        {
+          id: "google-flights",
+          url: "https://www.google.com/travel/flights",
+          search: async () => {
+            throw new Error("the page carried no results");
+          },
+        },
+      ],
+      now: () => "t",
+    });
+    const answer = (await registry
+      .get("travel.flights_search")
+      ?.handler({ input: trip, context, signal: new AbortController().signal })) as {
+      fallback: string;
+      itineraries: unknown[];
+    };
+    expect(answer.itineraries).toEqual([]);
+    expect(answer.fallback).toMatch(
+      /no flight source could be read \(kiwi\.com: the search failed \(HTTP 503\); google-flights: it could not be read/,
+    );
+    expect(answer.fallback).toContain("open check.googleFlights");
+  });
+
+  it("merges by flight time when asked, and keeps at most the limit", () => {
+    const at = (source: string, price: number, totalHours: number): FlightItinerary => ({
+      source,
+      price,
+      currency: "EUR",
+      airlines: [],
+      outbound: { route: "", departure: "", arrival: "", hours: totalHours, stops: 0, flights: [] },
+      totalHours,
+    });
+    const merged = mergeItineraries([[at("a", 100, 30), at("a", 300, 10)], [at("b", 200, 20)]], 2, "duration");
+    expect(merged.map((itinerary) => `${itinerary.source} ${String(itinerary.totalHours)}`)).toEqual(["a 10", "b 20"]);
   });
 });

@@ -212,9 +212,11 @@ export async function composeTools(composed: ChannelsContext) {
       now: () => clock.now(),
     });
   }
-  // Flight search as a domain tool, before browsing: Kiwi.com's public MCP server, no key (`tavi.flights`).
+  // Flight search as a domain tool, before browsing (`tavi.flights`): Kiwi.com's public MCP server, no key, and
+  // Google Flights beside it — through SerpApi with the person's stored key, else Google's own page.
   if (!disabledBuiltins.has(FLIGHTS_PLUGIN_ID))
     registerOwnerFlightsTools(tools, {
+      secret: async (reference) => await secrets.getSecret(reference),
       findings: persistencePort.repositories.findings,
       now: () => clock.now(),
       settings: async (workspaceId) => {

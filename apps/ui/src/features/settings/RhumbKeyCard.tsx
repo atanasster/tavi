@@ -3,9 +3,8 @@ import { useState } from "react";
 import { Button } from "../../ui/Button.js";
 import { Card } from "../../ui/Card.js";
 import { Command } from "../../ui/Command.js";
-import { Field } from "../../ui/Field.js";
 import { RHUMB_SIGN_UP_URL } from "./lifecycle-api.js";
-import { PasswordInput } from "./PasswordInput.js";
+import { KeyField } from "./PasswordInput.js";
 
 /**
  * Model retirements: with a Rhumb key the owner checks daily whether a model
@@ -61,18 +60,7 @@ export function RhumbKeyCard({
             </a>
             , Tavi checks daily and says before one you use goes. Only provider names are sent, never a model id you use.
           </p>
-          <Field label="Rhumb key" id="rhumb-key">
-            {(control) => (
-              <PasswordInput
-                id={control.id}
-                value={key}
-                placeholder="Paste the key"
-                invalid={false}
-                {...(control["aria-describedby"] === undefined ? {} : { describedBy: control["aria-describedby"] })}
-                onChange={setKey}
-              />
-            )}
-          </Field>
+          <KeyField label="Rhumb key" id="rhumb-key" value={key} onChange={setKey} />
           <Button type="submit" variant="primary" size="sm" disabled={busy !== undefined || key.trim() === ""}>
             {busy === "rhumb-key" ? "Storing…" : "Store key"}
           </Button>

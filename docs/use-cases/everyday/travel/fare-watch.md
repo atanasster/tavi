@@ -16,7 +16,7 @@ Choose **New chat** above the chats to open a chat of its own and send the promp
 
 ## 2. Allow the search
 
-Tavi changes nothing and books nothing, but a flight search leaves your machine, so a card asks first: **This chat wants to use the travel search**. Only the trip goes to Kiwi.com: the places, dates and passengers. Choose **Allow for this chat**, so that the further searches this question leads to don't ask again.
+Tavi changes nothing and books nothing, but a flight search leaves your machine, so a card asks first: **This chat wants to use the travel search**. Only the trip goes to Kiwi.com and Google Flights: the places, dates and passengers. Choose **Allow for this chat**, so that the further searches this question leads to don't ask again.
 
 ![The card: This chat wants to use the travel search, Search flights LON → LIS, low risk, sending the trip to Kiwi.com, with Allow for this chat, Allow once, Always allow and Deny](../../../assets/use-cases/everyday/travel/fare-watch/02-allow-the-search.webp)
 
@@ -26,7 +26,7 @@ Tavi lists the cheapest flights it found, with each one's carrier, flight number
 
 ![Tavi's answer: the two cheapest return options from London to Lisbon, with their times, flight numbers, fares and booking links](../../../assets/use-cases/everyday/travel/fare-watch/03-read-the-result.webp)
 
-The fares are Kiwi.com's at that moment, and can change before you book. Booking is yours, on the airline's or the agent's own site.
+The fares are Kiwi.com's and Google Flights' at that moment, and can change before you book. Booking is yours, on the airline's or the agent's own site.
 
 ## 4. Make it recurring
 

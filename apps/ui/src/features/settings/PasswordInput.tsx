@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { Field } from "../../ui/Field.js";
 import { IconButton } from "../../ui/IconButton.js";
 
 /**
@@ -62,5 +63,33 @@ export function PasswordInput({
         onClick={() => setShown(!shown)}
       />
     </span>
+  );
+}
+
+/** A labelled field that takes a key to store (Rhumb's, SerpApi's): masked, empty until typed, never prefilled. */
+export function KeyField({
+  label,
+  id,
+  value,
+  onChange,
+}: {
+  readonly label: string;
+  readonly id: string;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+}) {
+  return (
+    <Field label={label} id={id}>
+      {(control) => (
+        <PasswordInput
+          id={control.id}
+          value={value}
+          placeholder="Paste the key"
+          invalid={false}
+          {...(control["aria-describedby"] === undefined ? {} : { describedBy: control["aria-describedby"] })}
+          onChange={onChange}
+        />
+      )}
+    </Field>
   );
 }

@@ -11,6 +11,11 @@ holds every installed and bundled dependency to a permissive licence.
   `packages/runtime/src/persistence/checkpoints.ts` is adapted from it; the
   licence text is in
   [`packages/runtime/src/persistence/CHECKPOINT-LICENSE.txt`](packages/runtime/src/persistence/CHECKPOINT-LICENSE.txt).
+- **fli** — MIT, © 2025 Punit Arani. How
+  [`apps/cli/src/features/flights/google-page.ts`](apps/cli/src/features/flights/google-page.ts)
+  addresses Google Flights' search page (the `tfs` parameter) and reads its
+  results is adapted from fli; the licence text is in
+  [`apps/cli/src/features/flights/FLI-LICENSE.txt`](apps/cli/src/features/flights/FLI-LICENSE.txt).
 - **pdfme** — MIT. The decompression cap in
   [`patches/@cantoo__pdf-lib@2.11.1.patch`](patches/@cantoo__pdf-lib@2.11.1.patch)
   is ported from pdfme. The patch applies to `@cantoo/pdf-lib` 2.11.1 (MIT)
@@ -55,3 +60,6 @@ them: [`packages/test-support/fixtures/jobs/README.md`](packages/test-support/fi
 [`packages/test-support/fixtures/places/README.md`](packages/test-support/fixtures/places/README.md)
 (OpenStreetMap data © OpenStreetMap contributors, ODbL, open-government
 datasets, and a few samples whose terms are noted there).
+`apps/cli/test/fixtures/flights/google-one-way-sof-tpa.html` is the results
+data of one Google Flights search (Sofia to Tampa, one way, 22 Nov 2026),
+trimmed to two results, to test that the page still reads.

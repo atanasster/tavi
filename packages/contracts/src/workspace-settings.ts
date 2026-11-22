@@ -579,6 +579,9 @@ export function skillSuggestionsOn(settings: WorkspaceSettings): boolean {
   return settings.skillSuggestions !== false;
 }
 
+/** The stored credential holding the person's SerpApi key: flight searches then ask Google Flights through SerpApi. */
+export const SERPAPI_CREDENTIAL_REF = "serpapi";
+
 /** Whether the Google Flights back end is on (default on). */
 export function googleFlightsOn(settings: WorkspaceSettings): boolean {
   return settings.travelGoogleFlights !== false;

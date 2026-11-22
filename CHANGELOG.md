@@ -4,6 +4,23 @@ All notable changes to Tavi are recorded here. The project follows
 [Semantic Versioning](https://semver.org); before 1.0, a minor version may
 change behaviour or stored data.
 
+## Unreleased
+
+### Changed
+
+- Flight search asks Google Flights beside Kiwi.com. Kiwi resells tickets,
+  and on the big airlines its fares often run well above the airline's own
+  (Sofia to Tampa: €1,404 on Kiwi against €947 on Google Flights). Each fare
+  now names its source, each source says whether it answered, and an answer
+  with Kiwi's fares says they are a reseller's. Tavi always gives you the
+  Google Flights link with the fares.
+- Without a key, Google Flights is read from its own search page, which lists
+  fares for one-way trips only. Paste a free SerpApi key in Settings → General
+  → Flight search (or `tavi credentials set serpapi`; 250 searches a month)
+  to search round trips on Google Flights too. A Google Flights source that
+  cannot be read is reported as unavailable, never as "no flights".
+  `travel.googleFlights off` leaves Google Flights out.
+
 ## 0.4.1 — 2026-11-22
 
 A layout fix found on a fresh 0.4.0 install.

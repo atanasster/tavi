@@ -146,7 +146,7 @@ describe("travel.flights_search over Kiwi", () => {
     "searches Kiwi.com for real",
     async () => {
       const registry = new ToolRegistry();
-      registerOwnerFlightsTools(registry, { now: () => "t" });
+      registerOwnerFlightsTools(registry, { now: () => "t", secret: async () => null });
       const answer = (await registry
         .get("travel.flights_search")
         ?.handler({ input: trip, context, signal: new AbortController().signal })) as {

@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { GeneralSettings } from "../../../src/features/settings/GeneralSettings.js";
 import type { SettingsClient } from "../../../src/lib/ipc.js";
 import { InWorkspace } from "../../support/workspace.js";
-import { button, mountSettled as mount, settle, unmountAll } from "../../support/dom.js";
+import { button, clickSettled as click, mountSettled as mount, settle, unmountAll } from "../../support/dom.js";
 
 /**
  * Settings → General's task summaries:
@@ -40,6 +40,8 @@ function owner(initial: WorkspaceSettingsAnswer["settings"], older = false, disa
     ...(disabledPlugins === undefined ? {} : { disabledPlugins }),
   };
   const writes: Record<string, unknown>[] = [];
+  /** The credential references stored, never values. */
+  const stored = new Set<string>();
   const client: SettingsClient = {
     request: (command, payload) => {
       const body = payload as Record<string, unknown>;
@@ -93,6 +95,13 @@ function owner(initial: WorkspaceSettingsAnswer["settings"], older = false, disa
             proposed: { id: "recipe-google-com", name: "google.com", hosts: ["google.com"], file: "recipe-google-com.json", on: false },
           },
         } as never);
+      }
+      if (command === "credentials") {
+        if (body["action"] === "list") return Promise.resolve({ ok: true, result: { credentials: [...stored], unusable: [] } } as never);
+        writes.push({ command, ...body });
+        if (body["action"] === "set") stored.add(String(body["reference"]));
+        if (body["action"] === "delete") stored.delete(String(body["reference"]));
+        return Promise.resolve({ ok: true, result: {} } as never);
       }
       if (command === "reset-instance") {
         writes.push({ command, ...body });
@@ -311,13 +320,37 @@ describe("flight search and site recipes in Settings → General", () => {
       </InWorkspace>,
     );
     expect(page.textContent).toContain("best effort");
-    const google = checkbox(page, "Use Google Flights (best effort, unofficial)") as HTMLInputElement;
+    const google = checkbox(page, "Search Google Flights too (unofficial, best effort)") as HTMLInputElement;
     expect(google.checked).toBe(true);
     await act(async () => google.click());
     await settle();
     expect(writes.at(-1)).toMatchObject({ action: "set", key: "travelGoogleFlights", value: "off" });
-    expect(checkbox(page, "Use Google Flights (best effort, unofficial)")?.checked).toBe(false);
+    expect(checkbox(page, "Search Google Flights too (unofficial, best effort)")?.checked).toBe(false);
     expect(checkbox(page, "Search flights with Kiwi.com")?.checked).toBe(true);
+  });
+
+  it("stores a SerpApi key for round trips on Google Flights, says it is stored, and removes it", async () => {
+    const { client, writes } = owner({});
+    const page = await mount(
+      <InWorkspace client={client} workspaceId="default">
+        <GeneralSettings />
+      </InWorkspace>,
+    );
+    expect(page.textContent).toContain("one-way trips only");
+    const field = page.querySelector<HTMLInputElement>("#serpapi-key");
+    expect(field).not.toBeNull();
+    await type(field!, " sk-test ");
+    await click(button(page, "Store key"));
+    expect(writes.at(-1)).toMatchObject({ command: "credentials", action: "set", reference: "serpapi", value: "sk-test" });
+    expect(page.textContent).toContain("A SerpApi key is stored");
+    expect(page.querySelector("#serpapi-key")).toBeNull();
+    await click(button(page, "Remove key"));
+    expect(writes.at(-1)).toMatchObject({ command: "credentials", action: "delete", reference: "serpapi" });
+    expect(page.querySelector("#serpapi-key")).not.toBeNull();
+    // Google Flights off, no key is asked for.
+    await act(async () => checkbox(page, "Search Google Flights too (unofficial, best effort)")?.click());
+    await settle();
+    expect(page.querySelector("#serpapi-key")).toBeNull();
   });
 
   it("names each switch by the words beside it, so a name holds its visible text", async () => {

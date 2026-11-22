@@ -2474,9 +2474,11 @@ Keys:
 - `travel.flightSearch`: `on` or `off` — whether `travel.flights_search` asks
   Kiwi.com's public flight search. Unset: on. Off,
   the tool refuses and the agent browses flight sites instead.
-- `travel.googleFlights`: `on` or `off` — whether flight answers link Google
-  Flights, an unofficial and best-effort back end, to confirm a fare or when
-  the search fails. Unset: on.
+- `travel.googleFlights`: `on` or `off` — whether flight searches ask Google
+  Flights too, an unofficial and best-effort back end, and answers link it to
+  confirm a fare. With a SerpApi key stored (`tavi credentials set serpapi`)
+  it goes through SerpApi, round trips included; without one it reads Google
+  Flights' own page, one-way trips only. Unset: on.
 - `skills.suggestions`: `on` or `off` — whether the agent may offer, unasked,
   a procedure that worked as a skill for you to review (`skills.propose`).
   Unset: on. Off, it offers one only when you ask.

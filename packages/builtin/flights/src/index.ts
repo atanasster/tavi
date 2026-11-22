@@ -1,7 +1,10 @@
 import {
   TOOL_LABEL_KEY,
   TaviError,
+  joinLabels,
   mcpResultLabel,
+  searchResultLabel,
+  type ContentLabel,
   type McpToolResult,
   type TaskFindingRepositoryPort,
   type ToolRegistrar,
@@ -17,9 +20,14 @@ import { z } from "zod";
  * with itineraries — carriers, flight numbers, times, layovers, durations and
  * a price, each with a link to book it.
  *
- * - **Source.** Kiwi.com's public MCP server (`https://mcp.kiwi.com`): free,
- *   no key (no paid keys), date ranges both ways, a maximum flight
- *   time, sorted by price, each result with a booking link. Coverage is Kiwi's.
+ * - **Sources.** Kiwi.com's public MCP server (`https://mcp.kiwi.com`): free,
+ *   no key, date ranges both ways, a maximum flight time, sorted by price,
+ *   each result with a booking link. Kiwi is a reseller: on the big airlines
+ *   its fares carry its own fee and often run well above the airline's, so
+ *   every answer says so. Beside it, the host's Google Flights sources
+ *   (`FlightsToolOptions.sources`) answer the same search when Google Flights
+ *   is on; each fare names its source, and each source says how it went —
+ *   a source that could not be read is unavailable, never "no flights".
  * - **Checked in code.** The maximum duration is held per direction here too,
  *   whatever the server counts; self-transfer (separate tickets) is off unless
  *   asked for.
@@ -34,6 +42,9 @@ export const FLIGHTS_PLUGIN_ID = "tavi.flights";
 
 /** Kiwi.com's public MCP server: the source the host's MCP client calls for the tool (`FlightsToolOptions.search`). */
 export const KIWI_MCP_URL = "https://mcp.kiwi.com";
+
+/** How Kiwi's fares and status name it. */
+export const KIWI_SOURCE = "kiwi.com";
 
 /** The flight search tool's id: registered everywhere, answering only where a workspace turned flight search on. */
 export const FLIGHT_SEARCH_TOOL_ID = "travel.flights_search";
@@ -113,6 +124,8 @@ interface FlightLeg {
 }
 
 export interface FlightItinerary {
+  /** Where the fare came from: `kiwi.com`, or a Google Flights source's id. */
+  readonly source: string;
   readonly price: number;
   readonly currency: string;
   readonly airlines: readonly string[];
@@ -165,6 +178,7 @@ export function itinerariesOf(answer: unknown, currency: string): FlightItinerar
     );
     return [
       {
+        source: KIWI_SOURCE,
         price: item.price,
         currency,
         airlines: [...new Set(segments.map((segment) => segment.carrierName).filter((name): name is string => typeof name === "string"))],
@@ -204,12 +218,51 @@ export function checkLinks(input: FlightsSearchInput): { readonly googleFlights:
   };
 }
 
+/** What a source besides Kiwi answers a search with. */
+export interface FlightSourceAnswer {
+  readonly itineraries: readonly FlightItinerary[];
+  /** How many it found before any were left out. */
+  readonly found: number;
+  /** The label its fares carry: untrusted, `search`, from where they came. */
+  readonly label: ContentLabel;
+  /** What the person should know of these fares, in a few words: how a round trip's return is chosen, which dates were asked. */
+  readonly note?: string;
+}
+
+/** A source of fares besides Kiwi, answering the same search: Google Flights', through the host. */
+export interface FlightSource {
+  /** How its fares and status name it. */
+  readonly id: string;
+  /** Where its fares come from, kept with them as findings. */
+  readonly url: string;
+  /** Why it cannot answer this search (a city name where it takes airport codes, a round trip), else `undefined`. */
+  readonly cannot?: (query: FlightsSearchInput) => string | undefined;
+  /** Throws when the source cannot be read: it is unavailable, which is never "no flights". */
+  readonly search: (query: FlightsSearchInput, signal: AbortSignal) => Promise<FlightSourceAnswer>;
+}
+
+/** How one source went for a search, as the answer reports it. */
+export interface FlightSourceStatus {
+  readonly source: string;
+  readonly state: "ok" | "empty" | "unavailable" | "skipped";
+  readonly found?: number;
+  /** Its cheapest fare that fits, to compare the sources at a glance. */
+  readonly cheapest?: number;
+  readonly reason?: string;
+  readonly note?: string;
+}
+
 export interface FlightsToolOptions {
   /**
    * Calls Kiwi's MCP tool `search-flight` with `kiwiArguments`, answering its content and label: the host's
    * MCP client over its guarded fetch, which this package never sees. A test's answers at once.
    */
   readonly search: (args: Readonly<Record<string, unknown>>, signal: AbortSignal) => Promise<McpToolResult>;
+  /**
+   * The Google Flights sources a workspace searches beside Kiwi while Google Flights is on in its settings:
+   * the host's choice (with the person's SerpApi key, else Google's own page). Absent: Kiwi alone.
+   */
+  readonly sources?: (workspaceId: string) => Promise<readonly FlightSource[]>;
   readonly findings?: TaskFindingRepositoryPort;
   readonly now: () => string;
   readonly clock?: () => number;
@@ -222,48 +275,191 @@ export interface FlightsToolOptions {
   readonly browser?: boolean;
 }
 
+/** How many of each source's cheapest fares an answer keeps before the rest compete on price, so the sources can be compared. */
+const PER_SOURCE = 3;
+
+/** Said with every answer that has Kiwi's fares: whose prices they are. */
+const KIWI_NOTE =
+  "Fares from kiwi.com are a reseller's: they include Kiwi's own fee, and on the big airlines they often run well above the airline's own price or Google Flights'. Give the person the check links with them.";
+
+/** The answer's itineraries: each source's cheapest first, then the rest by price (or flight time), within `limit`. */
+export function mergeItineraries(
+  bySource: readonly (readonly FlightItinerary[])[],
+  limit: number,
+  sort: FlightsSearchInput["sort"],
+): FlightItinerary[] {
+  const order = (a: FlightItinerary, b: FlightItinerary): number =>
+    sort === "duration" ? a.totalHours - b.totalHours || a.price - b.price : a.price - b.price || a.totalHours - b.totalHours;
+  const sorted = bySource.map((list) => [...list].sort(order));
+  const kept = new Set(sorted.flatMap((list) => list.slice(0, Math.min(PER_SOURCE, Math.floor(limit / Math.max(1, sorted.length))))));
+  const rest = sorted
+    .flat()
+    .filter((itinerary) => !kept.has(itinerary))
+    .sort(order);
+  return [...kept, ...rest].slice(0, limit).sort(order);
+}
+
 export function registerFlightsTools(registry: ToolRegistrar, options: FlightsToolOptions): void {
   const search = options.search;
   const clock = options.clock ?? Date.now;
-  const cache = new Map<string, { readonly at: number; readonly answer: McpToolResult }>();
+  const cache = new Map<string, { readonly at: number; readonly answer: McpToolResult | FlightSourceAnswer }>();
+  const remember = (key: string, answer: McpToolResult | FlightSourceAnswer): void => {
+    cache.set(key, { at: clock(), answer });
+    if (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value ?? "");
+  };
+  const fresh = (key: string): McpToolResult | FlightSourceAnswer | undefined => {
+    const hit = cache.get(key);
+    return hit !== undefined && clock() - hit.at <= CACHE_MS ? hit.answer : undefined;
+  };
   // A failed search's reason can be the server's words: labelled as its results are.
-  const kiwiLabel = { [TOOL_LABEL_KEY]: { stored: mcpResultLabel(new URL(KIWI_MCP_URL).host) } };
+  const kiwiLabel = mcpResultLabel(new URL(KIWI_MCP_URL).host);
   /** The searches each task has kept the findings of: asking again keeps nothing twice. */
   const keptBy = new Set<string>();
   const browser = options.browser !== false;
+
+  /** One source's outcome: its fitting fares (all of them), its status, and the label they carry. */
+  interface Outcome {
+    readonly itineraries: readonly FlightItinerary[];
+    readonly status: FlightSourceStatus;
+    /** Absent for a source that was not asked: nothing of it reached the answer. */
+    readonly label?: ContentLabel;
+    readonly url: string;
+    readonly key: string;
+  }
+
+  const fromKiwi = async (query: FlightsSearchInput, signal: AbortSignal): Promise<Outcome> => {
+    const args = kiwiArguments(query);
+    const key = `${KIWI_SOURCE}\u0000${JSON.stringify(args)}`;
+    const failed = (reason: string, label: ContentLabel): Outcome => ({
+      itineraries: [],
+      status: { source: KIWI_SOURCE, state: "unavailable", reason },
+      label,
+      url: KIWI_MCP_URL,
+      key,
+    });
+    let answer = fresh(key) as McpToolResult | undefined;
+    if (answer === undefined) {
+      try {
+        answer = await search(args, signal);
+      } catch (error) {
+        if (signal.aborted) throw error;
+        return failed(`the search failed (${errorMessage(error)})`, kiwiLabel);
+      }
+    }
+    const content = answer.content;
+    const currency =
+      typeof (content as { currency?: unknown })?.currency === "string"
+        ? (content as { currency: string }).currency
+        : (query.currency ?? "EUR");
+    const all = itinerariesOf(content, currency);
+    if (all === undefined) {
+      // A source that answered with no search at all is broken, not empty: the person's limits stay as they are.
+      const reason = (content as { error?: unknown } | undefined)?.error;
+      return failed(
+        `it gave no results list${typeof reason === "string" && reason !== "" ? ` (${reason.slice(0, 200)})` : ""}`,
+        answer.label,
+      );
+    }
+    remember(key, answer);
+    // Whose prices these are is said once, at the answer's top (`note`).
+    return outcomeOf(KIWI_SOURCE, KIWI_MCP_URL, key, all, all.length, answer.label, query, undefined);
+  };
+
+  const fromSource = async (source: FlightSource, query: FlightsSearchInput, signal: AbortSignal): Promise<Outcome> => {
+    const key = `${source.id}\u0000${JSON.stringify(query)}`;
+    // A failure's reason can be the source's words: labelled as its fares are, `search` from its host.
+    const label = searchResultLabel(new URL(source.url).host);
+    const cannot = source.cannot?.(query);
+    if (cannot !== undefined)
+      return { itineraries: [], status: { source: source.id, state: "skipped", reason: cannot }, url: source.url, key };
+    let answer = fresh(key) as FlightSourceAnswer | undefined;
+    if (answer === undefined) {
+      try {
+        answer = await source.search(query, signal);
+      } catch (error) {
+        if (signal.aborted) throw error;
+        return {
+          itineraries: [],
+          status: {
+            source: source.id,
+            state: "unavailable",
+            reason: `it could not be read (${errorMessage(error)}): this says nothing of the flights`,
+          },
+          label,
+          url: source.url,
+          key,
+        };
+      }
+      remember(key, answer);
+    }
+    return outcomeOf(source.id, source.url, key, answer.itineraries, answer.found, answer.label, query, answer.note);
+  };
+
+  const outcomeOf = (
+    id: string,
+    url: string,
+    key: string,
+    all: readonly FlightItinerary[],
+    found: number,
+    label: ContentLabel,
+    query: FlightsSearchInput,
+    note: string | undefined,
+  ): Outcome => {
+    const fitting = withinDuration(all, query.maxDurationHours);
+    const cheapest = fitting.reduce<number | undefined>(
+      (low, itinerary) => (low === undefined || itinerary.price < low ? itinerary.price : low),
+      undefined,
+    );
+    return {
+      itineraries: fitting,
+      status: {
+        source: id,
+        state: fitting.length > 0 ? "ok" : "empty",
+        found,
+        ...(cheapest === undefined ? {} : { cheapest }),
+        ...(all.length > fitting.length ? { reason: `${String(all.length - fitting.length)} over the maximum flight time` } : {}),
+        ...(note === undefined ? {} : { note }),
+      },
+      label,
+      url,
+      key,
+    };
+  };
+
   registry.register({
     id: FLIGHT_SEARCH_TOOL_ID,
     sink: "search",
     // Ideas about trips are offered while it answers.
     proves: ["travel"],
-    version: "1.0.0",
+    version: "1.1.0",
     description:
-      "Search flights — one way or return, over date ranges each way, within a maximum flight time per direction — and answer with itineraries: airlines, flight numbers, times, layovers, durations, price and a booking link, cheapest first. " +
+      "Search flights — one way or return, over date ranges each way, within a maximum flight time per direction — and answer with itineraries: airlines, flight numbers, times, layovers, durations, price, source and a booking link, cheapest first. " +
+      "Fares come from Kiwi.com (a reseller, often dearer on the big airlines) and, where Google Flights is on, from Google Flights; `sources` says how each went. " +
       (browser
-        ? "Use it before browsing for any flight question. Each answer has links to the same search on Google Flights and Kayak (`check`) to confirm a fare in the browser. "
-        : "Each answer has links to the same search on Google Flights and Kayak (`check`) for the person to confirm a fare. ") +
+        ? "Use it before browsing for any flight question. Each answer has links to the same search on Google Flights and Kayak (`check`): give them to the person with the fares, and open one in the browser to confirm a fare. "
+        : "Each answer has links to the same search on Google Flights and Kayak (`check`): give them to the person with the fares. ") +
       "Its itineraries are kept as the task's findings of kind flight, for findings.check.",
     effect: "external",
     requiredPermissions: ["tools.invoke"],
     promptGuidance: browser
-      ? "Domain tools first: for flights use `travel.flights_search` before browsing, and confirm a fare in the browser only when asked or when it fails; its `check` links are the same search on Google Flights and Kayak."
-      : "For flights use `travel.flights_search`; its `check` links are the same search on Google Flights and Kayak, for the person to open.",
+      ? "Domain tools first: for flights use `travel.flights_search` before browsing. Always give the person its `check.googleFlights` link with the fares, say which source each fare is from, and that Kiwi's are a reseller's; confirm a fare in the browser when asked or when every source fails."
+      : "For flights use `travel.flights_search`. Always give the person its `check.googleFlights` link with the fares, say which source each fare is from, and that Kiwi's are a reseller's.",
     inputSchema: FlightsSearchInputSchema,
     assess: (input) => {
       const call = input as Partial<FlightsSearchInput>;
       return {
         display: {
           title: `Search flights ${String(call.from ?? "?")} → ${String(call.to ?? "?")}`,
-          detail: "Sends the trip (places, dates, passengers) to Kiwi.com's flight search",
+          detail: "Sends the trip (places, dates, passengers) to Kiwi.com's flight search, and to Google Flights where that is on",
         },
         subjects: [],
         risk: "low",
-        reasons: ["sends the trip to Kiwi.com's flight search"],
+        reasons: ["sends the trip to Kiwi.com's flight search and to Google Flights"],
         alwaysAnyCall: true,
         scopeGroup: "travel.*",
       };
     },
-    // Fares, names and links are the source's words.
+    // Fares, names and links are the sources' words.
     untrustedOutput: true,
     outputSource: "search",
     handler: async ({ input, context, signal }) => {
@@ -287,79 +483,64 @@ export function registerFlightsTools(registry: ToolRegistrar, options: FlightsTo
       if (query.returnDateTo !== undefined && query.returnDate === undefined)
         throw new TaviError("INVALID_INPUT", "returnDateTo needs returnDate, the first return date");
       const links = checkLinks(query);
-      // The Google Flights back end off, its link is left out and the fallback names another site.
+      // The Google Flights back end off, its link and sources are left out and the fallback names another site.
       const check = settings.googleFlights ? links : (({ googleFlights: _off, ...rest }) => rest)(links);
       const browseAgain = !browser
         ? "give the person the check links to open themselves"
         : settings.googleFlights
           ? "open check.googleFlights with browser.create_session and read its results with browser.extract"
           : "browse another flight site (check.kayak when there is one) and read its results with browser.extract";
-      const args = kiwiArguments(query);
-      const key = JSON.stringify(args);
-      let answer = cache.get(key);
-      if (answer === undefined || clock() - answer.at > CACHE_MS) {
-        try {
-          answer = { at: clock(), answer: await search(args, signal) };
-        } catch (error) {
-          if (signal.aborted) throw error;
-          return {
-            source: "kiwi.com",
-            itineraries: [],
-            check,
-            fallback: `the flight search failed (${errorMessage(error)}): ${browseAgain}`,
-            ...kiwiLabel,
-          };
-        }
-        cache.set(key, answer);
-        if (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value ?? "");
-      }
-      const content = answer.answer.content;
-      // Fares, names and links are the source's: `search`, and `mcp` from the server they came through (untrusted).
-      const labelled = { [TOOL_LABEL_KEY]: { stored: answer.answer.label } };
-      const currency =
-        typeof (content as { currency?: unknown })?.currency === "string"
-          ? (content as { currency: string }).currency
-          : (query.currency ?? "EUR");
-      const all = itinerariesOf(content, currency);
-      if (all === undefined) {
-        // A source that answered with no search at all is broken, not empty: the person's limits stay as they are.
-        cache.delete(key);
-        const reason = (content as { error?: unknown } | undefined)?.error;
-        return {
-          source: "kiwi.com",
-          itineraries: [],
-          check,
-          fallback: `the flight search gave no results list${typeof reason === "string" && reason !== "" ? ` (${reason.slice(0, 200)})` : ""}: ${browseAgain}`,
-          ...labelled,
-        };
-      }
-      const fitting = withinDuration(all, query.maxDurationHours);
-      const itineraries = fitting.slice(0, query.limit ?? DEFAULT_RESULTS);
-      const keptKey = `${context.runId}\u0000${key}\u0000${query.limit ?? DEFAULT_RESULTS}`;
-      const kept =
-        options.findings === undefined || itineraries.length === 0 || keptBy.has(keptKey)
-          ? []
-          : await options.findings.add({
-              taskId: context.runId,
-              workspaceId: context.workspaceId,
-              kind: "flight",
-              records: itineraries,
-              sourceUrl: KIWI_MCP_URL,
-              createdAt: options.now(),
-            });
-      if (kept.length > 0) {
+      const others = settings.googleFlights ? ((await options.sources?.(context.workspaceId)) ?? []) : [];
+      const outcomes = await Promise.all([fromKiwi(query, signal), ...others.map((source) => fromSource(source, query, signal))]);
+      if (signal.aborted) throw new TaviError("CANCELLED", "travel.flights_search was cancelled");
+      const limit = query.limit ?? DEFAULT_RESULTS;
+      const itineraries = mergeItineraries(
+        outcomes.map((outcome) => outcome.itineraries),
+        limit,
+        query.sort,
+      );
+      // Fares, names and links are the sources': `search`, and where each came from (untrusted).
+      const label = outcomes
+        .flatMap((outcome) => (outcome.label === undefined ? [] : [outcome.label]))
+        .reduce((joined, next) => joinLabels(joined, next));
+      let keptFrom: number | undefined;
+      let keptTo: number | undefined;
+      for (const outcome of outcomes) {
+        const records = itineraries.filter((itinerary) => outcome.itineraries.includes(itinerary));
+        const keptKey = `${context.runId}\u0000${outcome.key}\u0000${String(limit)}`;
+        if (options.findings === undefined || records.length === 0 || keptBy.has(keptKey)) continue;
+        const rows = await options.findings.add({
+          taskId: context.runId,
+          workspaceId: context.workspaceId,
+          kind: "flight",
+          records,
+          sourceUrl: outcome.url,
+          createdAt: options.now(),
+        });
+        if (rows.length === 0) continue;
         keptBy.add(keptKey);
         if (keptBy.size > CACHE_MAX * 20) keptBy.delete(keptBy.values().next().value ?? "");
+        keptFrom ??= rows[0]?.seq;
+        keptTo = rows.at(-1)?.seq;
       }
+      const statuses = outcomes.map((outcome) => outcome.status);
+      const answered = statuses.some((status) => status.state === "ok" || status.state === "empty");
+      const overDuration = statuses.some((status) => status.state === "empty" && (status.found ?? 0) > 0);
       return {
-        source: "kiwi.com",
         itineraries,
-        found: all.length,
-        ...(all.length > fitting.length ? { overDuration: all.length - fitting.length } : {}),
+        found: statuses.reduce((total, status) => total + (status.found ?? 0), 0),
+        sources: statuses,
         check,
-        ...(kept.length === 0 ? {} : { kept: { kind: "flight", from: kept[0]?.seq, to: kept.at(-1)?.seq } }),
-        ...(itineraries.length === 0 ? { fallback: `no itinerary fits: widen the dates or the duration, or ${browseAgain}` } : {}),
-        ...labelled,
+        ...(itineraries.some((itinerary) => itinerary.source === KIWI_SOURCE) ? { note: KIWI_NOTE } : {}),
+        ...(keptFrom === undefined ? {} : { kept: { kind: "flight", from: keptFrom, to: keptTo } }),
+        ...(itineraries.length > 0
+          ? {}
+          : {
+              fallback: answered
+                ? `no itinerary fits${overDuration ? " (some are over the maximum flight time)" : ""}: widen the dates or the duration, or ${browseAgain}`
+                : `no flight source could be read (${statuses.map((status) => `${status.source}: ${status.reason ?? status.state}`).join("; ")}): ${browseAgain}`,
+            }),
+        [TOOL_LABEL_KEY]: { stored: label },
       };
     },
   });
