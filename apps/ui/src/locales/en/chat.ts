@@ -1,3 +1,6 @@
+import { navPathIn } from "@tavi/contracts/locales/core";
+import { CORE_EN } from "@tavi/contracts/locales/core-en";
+
 /** The words of features/chat, in English. */
 export const chat = {
   "chat.composer.name": "Message",
@@ -187,9 +190,9 @@ export const chat = {
   "chat.approval.group.explain": "Allow for this chat lets it use the {group} without asking again, for the rest of this chat.",
   "chat.approval.group.explainLasting":
     "Allow until tomorrow lets it use the {group} without asking again, in this chat for a day, or until it rolls over.",
-  "chat.approval.group.explainAlways": "Always allow never asks again, in any chat — revoke it in Settings → Permissions.",
+  "chat.approval.group.explainAlways": `Always allow never asks again, in any chat — revoke it in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.permissions")}.`,
   "chat.approval.always.title": "Saves a workspace rule allowing exactly: {rules}",
-  "chat.approval.always.notice": "Always allow saves a workspace rule allowing exactly: {rules} — see Settings → Permissions to revoke it.",
+  "chat.approval.always.notice": `Always allow saves a workspace rule allowing exactly: {rules} — see ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.permissions")} to revoke it.`,
   "chat.approval.rule.any": "any {tool} call",
   "chat.approval.confirm.calls": "Confirm these tool actions. Approved calls may change local data.",
   "chat.approval.confirm.criticalSingle": "This call is rated critical risk. Confirm to run it.",

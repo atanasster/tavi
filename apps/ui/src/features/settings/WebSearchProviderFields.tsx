@@ -9,7 +9,7 @@ import { PasswordInput } from "./PasswordInput.js";
  * What a web search provider of `kind` is given, by what the kind needs
  * (`searchKindNeeds`): SearXNG its instance's address, a hosted kind its API
  * key — optional for one that also runs keyless. The fields of both forms
- * that add one (Settings → Search, and the welcome walk's search step); each
+ * that add one (Settings → Web search, and the welcome walk's search step); each
  * form picks the kind, checks the values and submits them its own way.
  */
 export function WebSearchProviderFields({

@@ -5,7 +5,7 @@ import { AppLink } from "../shell/AppLink.js";
 import { copyDraft } from "../../lib/clipboard.js";
 import { Icon } from "../../ui/Icon.js";
 import { formatCount } from "../../lib/format.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { withParts } from "../../ui/with-parts.js";
 import { useUnsavedGuard } from "../../hooks/page.js";
 import { useOpenError } from "../../hooks/use-action.js";
@@ -518,7 +518,7 @@ export function SoulAndMemory({
       <PageHead
         className="center-head"
         id="center-soul-title"
-        title={t("shell.route.centerSection.identity")}
+        title={translateCore("nav.center.identity")}
         description={t("center.soul.description")}
       />
       {agentsError === undefined ? null : (

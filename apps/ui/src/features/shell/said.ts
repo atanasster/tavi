@@ -1,4 +1,6 @@
-import { translateNow } from "../../lib/i18n.js";
+import type { CoreKey } from "@tavi/contracts/locales/core-en";
+
+import { translateCore, translateNow } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
 
 /**
@@ -20,9 +22,18 @@ export function said<Rest extends object>(key: UiKey, rest: Rest): Rest & { read
   };
 }
 
-/** A table entry: `value`, and its `label` in the page's language at the time it is read. */
-export function saidEntry<Value extends string>(value: Value, key: UiKey): { readonly value: Value; readonly label: string } {
-  return said(key, { value });
+/**
+ * A table entry: `value`, and its `label` in the page's language at the time it is read. The label is a `core`
+ * word naming a place in the canvas (a route, a Settings view, a Command Center section) that messages from the
+ * owner name in their menu paths too ("Settings → Models"), so both read one key.
+ */
+export function saidCoreEntry<Value extends string>(value: Value, key: CoreKey): { readonly value: Value; readonly label: string } {
+  return {
+    value,
+    get label() {
+      return translateCore(key);
+    },
+  };
 }
 
 /** A record of words by name, each said in the page's language at the time it is read. */

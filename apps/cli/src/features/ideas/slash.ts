@@ -9,6 +9,8 @@ import {
   type MessagingServicePort,
   type ModHookDeclaration,
   type PersistencePort,
+  englishOf,
+  navPath,
 } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 import { digestPicked, ideaOfDigestReply } from "@tavi/agent-host/ideas-host";
@@ -65,7 +67,10 @@ export function ideasSlashCommand(
     if (!answer.ok) return { text: answer.error.message };
     if (!("ideas" in answer.result)) return { text: USAGE };
     // Off, the tab shows no cards: neither does this, whatever is still stored.
-    if (answer.result.enabled === false) return { text: "Ideas are off. Turn them on in Settings → Ideas, or with tavi ideas on." };
+    if (answer.result.enabled === false)
+      return {
+        text: `Ideas are off. Turn them on in ${englishOf(navPath("nav.route.settings", "nav.settings.ideas"))}, or with tavi ideas on.`,
+      };
     const top = answer.result.ideas.filter((idea) => idea.status === "active").slice(0, IDEA_FOR_YOU_MAX);
     if (top.length === 0) return { text: "No ideas yet. /ideas refresh looks for some." };
     const lines = top.map((idea, index) => `${index + 1}. ${idea.title} (${ideaCategoryLabel(idea.category)})\n   Try: ${idea.prompt}`);

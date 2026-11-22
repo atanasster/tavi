@@ -26,6 +26,8 @@ import {
   type ModelTarget,
   type RunFolderResult,
   type TaskRoutingPort,
+  englishOf,
+  navPath,
 } from "@tavi/contracts";
 import { errorMessage, nowTimestamp } from "@tavi/contracts/util";
 import type { ChatFolders, RunEventBus } from "@tavi/runtime";
@@ -395,7 +397,7 @@ export async function startRun(deps: RunDependencies, request: RunPayload): Prom
   ) {
     return refuse(
       "NOT_CONFIGURED",
-      `no configured connection offers ${chosenModel.connectionId}/${chosenModel.model}: add or test it in Settings → Models (\`tavi models\`), then choose it again`,
+      `no configured connection offers ${chosenModel.connectionId}/${chosenModel.model}: add or test it in ${englishOf(navPath("nav.route.settings", "nav.settings.models"))} (\`tavi models\`), then choose it again`,
     );
   }
   // With `chat.home` off there is no Home to message: a stored

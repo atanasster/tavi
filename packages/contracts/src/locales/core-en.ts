@@ -6,6 +6,7 @@ import { connect } from "./en/connect.js";
 import { errors } from "./en/errors.js";
 import { notices } from "./en/notices.js";
 import { onboarding } from "./en/onboarding.js";
+import { nav } from "./en/nav.js";
 
 /**
  * The `core` namespace in English: words every surface shares (the canvas,
@@ -16,6 +17,6 @@ import { onboarding } from "./en/onboarding.js";
  * abbreviations differ between ICU versions ("Sep" / "Sept"); a heading must
  * read the same on every machine.
  */
-export const CORE_EN = { ...date, ...labels, ...safety, ...schedule, ...connect, ...errors, ...notices, ...onboarding } as const;
+export const CORE_EN = { ...date, ...labels, ...safety, ...schedule, ...connect, ...errors, ...notices, ...onboarding, ...nav } as const;
 
 export type CoreKey = keyof typeof CORE_EN;

@@ -1,4 +1,12 @@
-import { keyedError, TaviError, refusedEarly, type ChannelDescriptor, type MessagingConnectionAuthState } from "@tavi/contracts";
+import {
+  keyedError,
+  TaviError,
+  refusedEarly,
+  type ChannelDescriptor,
+  type MessagingConnectionAuthState,
+  englishOf,
+  navPath,
+} from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
 import { readJsonBody } from "../../shared/json-body.js";
@@ -95,10 +103,14 @@ export class OAuthBroker {
       throw refusedEarly("NOT_CONFIGURED", `Connection ${connection.connectionId} does not sign in with OAuth`);
     const token = await readToken(this.#deps.dataDirectory, connection.connectionId);
     if (token === undefined)
-      throw refusedEarly("NOT_CONFIGURED", `${descriptor.label} is not connected: connect it in Settings → Channels`, {
-        signIn: true,
-        connectionId: connection.connectionId,
-      });
+      throw refusedEarly(
+        "NOT_CONFIGURED",
+        `${descriptor.label} is not connected: connect it in ${englishOf(navPath("nav.route.settings", "nav.settings.channels"))}`,
+        {
+          signIn: true,
+          connectionId: connection.connectionId,
+        },
+      );
     // Asked for more than it was granted: used as it is, and the operator asked to allow the rest.
     // The channel's own access (its mail, while it takes mail in): a calendar its token was not granted is asked for by its own tools.
     const mail = (await this.#deps.optInsOf?.(connection.connectionId))?.mail === true;
@@ -127,10 +139,14 @@ export class OAuthBroker {
     if (token.refreshToken === undefined) {
       await this.#deps.setAuthState(connectionId, "expired");
       // Marked as a sign-in, so a mailbox tool's chat shows the Connect card.
-      throw refusedEarly("NOT_CONFIGURED", `${descriptor.label}'s sign-in expired: reconnect it in Settings → Channels`, {
-        signIn: true,
-        connectionId,
-      });
+      throw refusedEarly(
+        "NOT_CONFIGURED",
+        `${descriptor.label}'s sign-in expired: reconnect it in ${englishOf(navPath("nav.route.settings", "nav.settings.channels"))}`,
+        {
+          signIn: true,
+          connectionId,
+        },
+      );
     }
     const client = await oauthClientOf(this.#deps.dataDirectory, descriptor, spec);
     const body = new URLSearchParams({ grant_type: "refresh_token", refresh_token: token.refreshToken });

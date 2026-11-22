@@ -25,6 +25,8 @@ import {
   inboundParts,
   noticeWordsOf,
   textRef,
+  englishOf,
+  navPath,
 } from "@tavi/contracts";
 import { channelDescriptorOf } from "../features/channels/catalog.js";
 import { TERMINAL_TASK_STATUSES, createAgentCommunicationService } from "@tavi/agent-host/agent-communication";
@@ -367,8 +369,7 @@ export function composeConversations(composed: SchedulesContext) {
           destination,
           parts: [
             {
-              content:
-                "Your message arrived, but Tavi has no model set up yet, so it was not acted on. Once the operator adds one (Settings → Models, or `tavi models add`), send it again.",
+              content: `Your message arrived, but Tavi has no model set up yet, so it was not acted on. Once the operator adds one (${englishOf(navPath("nav.route.settings", "nav.settings.models"))}, or \`tavi models add\`), send it again.`,
             },
           ],
         })

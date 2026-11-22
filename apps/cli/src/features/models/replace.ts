@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { TaviError, hostTimeZone, type ModelTarget, type RoutineDetail } from "@tavi/contracts";
+import { TaviError, hostTimeZone, type ModelTarget, type RoutineDetail, englishOf, navPath } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
 import type { TaviRuntime } from "../../runtime/types.js";
@@ -173,7 +173,7 @@ async function walk(
   if (connection !== undefined && (connection.videoModels ?? []).includes(from.model))
     skipped.push({
       use: { kind: "video" },
-      reason: `video is turned on per model after its disclosure: turn it on for ${to.model} in Settings → Models, or tavi models video`,
+      reason: `video is turned on per model after its disclosure: turn it on for ${to.model} in ${englishOf(navPath("nav.route.settings", "nav.settings.models"))}, or tavi models video`,
     });
 
   const target = await read(`${workspaceId} workspace default`, () => sources.workspaceDefault(workspaceId));

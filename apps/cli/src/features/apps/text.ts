@@ -5,6 +5,8 @@ import {
   type AppsPayload,
   type ConnectableApp,
   type McpPresetId,
+  englishOf,
+  navPath,
 } from "@tavi/contracts";
 import { keptByNote } from "./shared-grants.js";
 import { channelDescriptorOf } from "../channels/catalog.js";
@@ -114,7 +116,7 @@ function addedText(appId: string, pluginId: string): string {
   const credentials = fields.filter(([, field]) => field.type === "credential");
   const sets = fields.map(([key, field]) => `${key}=${field.type === "credential" ? `plugins.${pluginId}.${key}` : "<value>"}`);
   return [
-    `added ${appId} (${pluginId}); give it ${fields.map(([, field]) => (field.label ?? "its setting").replace(/^Your /, "your ")).join(" and ")} in Settings → Connected apps, or:`,
+    `added ${appId} (${pluginId}); give it ${fields.map(([, field]) => (field.label ?? "its setting").replace(/^Your /, "your ")).join(" and ")} in ${englishOf(navPath("nav.route.settings", "nav.settings.apps"))}, or:`,
     ...credentials.map(([key]) => `  tavi credentials set plugins.${pluginId}.${key} --file <file>`),
     `  tavi plugins config ${pluginId} ${sets.map((set) => `--set ${set}`).join(" ")}`,
     "",

@@ -47,6 +47,8 @@ import {
   type TaintMode,
   type ChatInstructionsRevision,
   type ToolDefinition,
+  englishOf,
+  navPath,
 } from "@tavi/contracts";
 import type { ModelConfigPort as ModelConfigService } from "@tavi/contracts";
 import { definedOnly, errorMessage } from "@tavi/contracts/util";
@@ -1125,7 +1127,7 @@ export async function schedulesCommand(deps: ConfigDependencies, input: Schedule
     return Promise.resolve(
       refuse(
         "NOT_AUTHORIZED",
-        `${schedule.principalId} is no longer allowed in this workspace: their schedule can be shown, paused or removed, not ${input.action}. Allow them again in Settings → Allowed people to use it.`,
+        `${schedule.principalId} is no longer allowed in this workspace: their schedule can be shown, paused or removed, not ${input.action}. Allow them again in ${englishOf(navPath("nav.route.settings", "nav.settings.people"))} to use it.`,
       ),
     );
   }

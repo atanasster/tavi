@@ -13,7 +13,7 @@ import { tasksInWindow, tasksToday } from "./model.js";
 import { localDate, localTime, nearDay } from "../../lib/time.js";
 import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
 import { withParts } from "../../ui/with-parts.js";
 
@@ -238,7 +238,7 @@ export function CenterRail({
       <section>
         <h2 className="eyebrow">
           <Icon name="bell" size="sm" />
-          {t("center.rail.waitingOnYou")}
+          {translateCore("nav.center.waitingOnYou")}
         </h2>
         {apps.length === 0 ? null : (
           <ul className="center-needs list-reset" aria-label={t("center.rail.connectedApps")}>
@@ -259,7 +259,7 @@ export function CenterRail({
           </ul>
         )}
         {servers.length === 0 ? null : (
-          <ul className="center-needs list-reset" aria-label={t("center.rail.servers")}>
+          <ul className="center-needs list-reset" aria-label={translateCore("nav.center.servers")}>
             {servers.map((item) => (
               <li key={`${item.pluginId}:${item.kind}`}>
                 <ServerNotice item={item} />

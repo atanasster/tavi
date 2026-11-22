@@ -45,8 +45,6 @@ export const notices = {
     other: "{n} earlier message(s) were summarized and archived as {artifact}.",
   },
   "notice.folder.title": "This chat's folder is nearly full",
-  /** Where a routine is resumed, as a menu path. */
-  "notice.nav.centerSchedule": "Center → Schedule",
   "notice.routine.resumeHint": "Resume it in {path}, or ask Tavi in chat to resume it.",
   "notice.routine.expired.title": "Routine “{name}” run expired",
   "notice.routine.paused.title": "Routine “{name}” paused",

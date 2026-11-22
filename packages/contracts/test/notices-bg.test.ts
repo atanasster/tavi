@@ -4,6 +4,7 @@ import {
   ChatNoticeSchema,
   englishOf,
   localizedText,
+  navPath,
   noticeWordsOf,
   renderTextRef,
   scheduledWorkRef,
@@ -58,7 +59,7 @@ describe("stored notice words", () => {
   });
 
   it("puts a menu path in a routine's notice by key, so it follows the menu's words", () => {
-    const resume = textRef("notice.routine.resumeHint", { path: textRef("notice.nav.centerSchedule") });
+    const resume = textRef("notice.routine.resumeHint", { path: navPath("nav.route.center", "nav.center.schedule") });
     expect(englishOf(resume)).toBe("Resume it in Center → Schedule, or ask Tavi in chat to resume it.");
     expect(renderTextRef(resume, bg)).toBe("Пусни я отново от Център → График или помоли Tavi в чата да я пусне отново.");
     const why = textRef("notice.routine.delivery.why.failures", { n: "3" });

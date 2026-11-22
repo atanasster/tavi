@@ -15,6 +15,8 @@ import {
   type RenderPort,
   DEFAULT_WORKSPACE_ID,
   parallelReadsOf,
+  englishOf,
+  navPath,
 } from "@tavi/contracts";
 import { createOwnerRenderer } from "../features/browser/host.js";
 import { rememberedWorkspaceZone } from "../features/memory/owner.js";
@@ -312,7 +314,7 @@ export function composeRoutines(composed: WorkflowContext) {
         late.liveRoutineModels.connectionIds.size === 0 &&
         externalInstances.ids("model", scope.workspaceId).length === 0)
     ) {
-      problems.push("No model is configured. Set a default model in Settings → Models.");
+      problems.push(`No model is configured. Set a default model in ${englishOf(navPath("nav.route.settings", "nav.settings.models"))}.`);
     } else if (checkLiveModels) {
       for (const [role, policy] of [
         ["research", snapshot.models.research],
@@ -324,7 +326,7 @@ export function composeRoutines(composed: WorkflowContext) {
         );
         if (!reachable)
           problems.push(
-            `The ${role} model (${policy.primary.connectionId}/${policy.primary.model}) is not available on this owner. Configure that connection in Settings → Models, or create the routine again to use the current default model.`,
+            `The ${role} model (${policy.primary.connectionId}/${policy.primary.model}) is not available on this owner. Configure that connection in ${englishOf(navPath("nav.route.settings", "nav.settings.models"))}, or create the routine again to use the current default model.`,
           );
       }
     }
@@ -332,7 +334,7 @@ export function composeRoutines(composed: WorkflowContext) {
       if (tools.get(tool) !== undefined) continue;
       problems.push(
         tool === "web_search"
-          ? "No web search provider is configured. Add one in Settings → Web search."
+          ? `No web search provider is configured. Add one in ${englishOf(navPath("nav.route.settings", "nav.settings.search"))}.`
           : `The ${tool} tool this routine researches with is not available. Restart \`tavi serve\`; if it persists, check the owner's tool configuration.`,
       );
     }

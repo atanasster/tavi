@@ -1,7 +1,7 @@
 import { join } from "node:path";
 
 import Database from "better-sqlite3";
-import { localizedText, noticeWordsOf, textRef } from "@tavi/contracts";
+import { localizedText, navPath, noticeWordsOf, textRef } from "@tavi/contracts";
 import { coreIn } from "@tavi/contracts/locales/core-server";
 import { temporaryDirectories } from "@tavi/test-support";
 import { afterEach, describe, expect, it } from "vitest";
@@ -93,7 +93,7 @@ describe("stored text keys", () => {
       const summary = textRef("notice.routine.failures.text", {
         name: "News",
         n: "3",
-        resume: textRef("notice.routine.resumeHint", { path: textRef("notice.nav.centerSchedule") }),
+        resume: textRef("notice.routine.resumeHint", { path: navPath("nav.route.center", "nav.center.schedule") }),
       });
       const { notice } = transcripts.postNotice({
         noticeId: "notice-1",

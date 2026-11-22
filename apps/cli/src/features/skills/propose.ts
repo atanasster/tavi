@@ -33,6 +33,8 @@ import {
   type SkillServicePort,
   type SkillVersion,
   type TaskRepositoryPort,
+  englishOf,
+  navPath,
 } from "@tavi/contracts";
 import type { ToolRegistry } from "@tavi/runtime";
 
@@ -199,7 +201,7 @@ export function registerSkillProposeTool(registry: ToolRegistry, options: SkillP
         version: stored.version,
         reviewState: stored.reviewState,
         ...(parentVersion === undefined ? {} : { follows: parentVersion }),
-        note: `It waits for the person's review (Command Center → Soul & memory, or \`${skillReviewCommand(stored.skillId, stored.version)}\`). Tell them it is there, with that command; it is not used until they approve and activate it.`,
+        note: `It waits for the person's review (${englishOf(navPath("nav.route.commandCenter", "nav.center.identity"))}, or \`${skillReviewCommand(stored.skillId, stored.version)}\`). Tell them it is there, with that command; it is not used until they approve and activate it.`,
       };
     },
   });

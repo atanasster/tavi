@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { isChatPanelTab, isPluginPanelTab, type PanelTab } from "../chat-panel/tabs.js";
-import { said, saidEntry } from "./said.js";
+import { said, saidCoreEntry } from "./said.js";
 
 /**
  * The page's address: which route the URL names, so a refresh, a
@@ -49,10 +49,10 @@ export type Route = "chat" | "ideas" | "center" | "settings" | "welcome";
  * `ideas`; the shell filters them out otherwise.
  */
 export const ROUTES: readonly { readonly value: Route; readonly label: string }[] = [
-  saidEntry("chat", "shell.route.chat"),
-  saidEntry("ideas", "shell.route.ideas"),
-  saidEntry("center", "shell.route.center"),
-  saidEntry("settings", "shell.route.settings"),
+  saidCoreEntry("chat", "nav.route.chat"),
+  saidCoreEntry("ideas", "nav.route.ideas"),
+  saidCoreEntry("center", "nav.route.center"),
+  saidCoreEntry("settings", "nav.route.settings"),
 ];
 
 /** The views inside Settings; one URL segment each. */
@@ -70,18 +70,18 @@ export type SettingsView =
   | "ideas";
 
 export const SETTINGS_VIEWS: readonly { readonly value: SettingsView; readonly label: string }[] = [
-  saidEntry("general", "shell.route.settingsView.general"),
-  saidEntry("apps", "shell.route.settingsView.apps"),
-  saidEntry("models", "shell.route.settingsView.models"),
-  saidEntry("search", "shell.route.settingsView.search"),
-  saidEntry("system-prompt", "shell.route.settingsView.systemPrompt"),
-  saidEntry("credentials", "shell.route.settingsView.credentials"),
-  saidEntry("messaging", "shell.route.settingsView.messaging"),
-  saidEntry("people", "shell.route.settingsView.people"),
-  saidEntry("plugins", "shell.route.settingsView.plugins"),
-  saidEntry("permissions", "shell.route.settingsView.permissions"),
+  saidCoreEntry("general", "nav.settings.general"),
+  saidCoreEntry("apps", "nav.settings.apps"),
+  saidCoreEntry("models", "nav.settings.models"),
+  saidCoreEntry("search", "nav.settings.search"),
+  saidCoreEntry("system-prompt", "nav.settings.systemPrompt"),
+  saidCoreEntry("credentials", "nav.settings.credentials"),
+  saidCoreEntry("messaging", "nav.settings.channels"),
+  saidCoreEntry("people", "nav.settings.people"),
+  saidCoreEntry("plugins", "nav.settings.plugins"),
+  saidCoreEntry("permissions", "nav.settings.permissions"),
   // Offered only by an owner that advertises `ideas`.
-  saidEntry("ideas", "shell.route.settingsView.ideas"),
+  saidCoreEntry("ideas", "nav.settings.ideas"),
 ];
 
 /** Settings' views in the nav's groups: what the workspace runs, what it reaches, and what it is allowed. */
@@ -95,12 +95,12 @@ export const SETTINGS_GROUPS: readonly { readonly label: string; readonly views:
 export type CenterSection = "activity" | "approvals" | "schedule" | "heartbeat" | "identity" | "browser";
 
 export const CENTER_SECTIONS: readonly { readonly value: CenterSection; readonly label: string }[] = [
-  saidEntry("activity", "shell.route.centerSection.activity"),
-  saidEntry("approvals", "shell.route.centerSection.approvals"),
-  saidEntry("schedule", "shell.route.centerSection.schedule"),
-  saidEntry("heartbeat", "shell.route.centerSection.heartbeat"),
-  saidEntry("identity", "shell.route.centerSection.identity"),
-  saidEntry("browser", "shell.route.centerSection.browser"),
+  saidCoreEntry("activity", "nav.center.activity"),
+  saidCoreEntry("approvals", "nav.center.approvals"),
+  saidCoreEntry("schedule", "nav.center.schedule"),
+  saidCoreEntry("heartbeat", "nav.center.heartbeat"),
+  saidCoreEntry("identity", "nav.center.identity"),
+  saidCoreEntry("browser", "nav.center.browser"),
 ];
 
 /** The section a bare `/center` names: what happened, the landing view. */

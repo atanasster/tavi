@@ -6,6 +6,7 @@ import {
   type McpNoticeRecord,
   type PostNoticeInput,
   type TextRef,
+  navPath,
 } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 import { prefixedId } from "@tavi/node-kit";
@@ -134,7 +135,7 @@ export function noticeWordRefs(notice: Pick<McpNoticeRecord, "pluginId" | "kind"
 /** The plain message a channel gets: no buttons, and where to decide it. */
 export function noticeChannelText(notice: Pick<McpNoticeRecord, "pluginId" | "kind" | "detail">): string {
   const words = noticeWords(notice);
-  return `${words.title}. ${words.summary}\nOpen in Tavi: Center → Waiting on you → Servers`;
+  return `${words.title}. ${words.summary}\nOpen in Tavi: ${englishOf(navPath("nav.route.center", "nav.center.waitingOnYou", "nav.center.servers"))}`;
 }
 
 /**

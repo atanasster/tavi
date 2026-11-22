@@ -1,4 +1,6 @@
 import type { CatalogFor } from "@tavi/contracts/i18n";
+import { CORE_BG } from "@tavi/contracts/locales/core-bg";
+import { navPathIn } from "@tavi/contracts/locales/core";
 
 import type { settings as en } from "../en/settings.js";
 
@@ -22,10 +24,8 @@ export const settings = {
   "settings.models.target.unconfigured": "Няма настроен модел, затова Tavi не изпълнява нищо. Избери модел по-долу.",
   "settings.models.target.unconfiguredUntilRestart":
     "Сървърът на Tavi стартира без настроен модел, затова не изпълнява нищо. Пусни отново `tavi serve`, за да ползва {next}.",
-  "settings.models.target.unresolved":
-    "Сървърът на Tavi ползва {running}; запазеният избор на модел още не може да се разреши. Провери Настройки → Модели, преди да пуснеш отново `tavi serve`.",
-  "settings.models.target.startupUnresolved":
-    "Сървърът на Tavi ползва модела, с който е стартирал; запазеният избор на модел още не може да се разреши. Провери Настройки → Модели, преди да пуснеш отново `tavi serve`.",
+  "settings.models.target.unresolved": `Сървърът на Tavi ползва {running}; запазеният избор на модел още не може да се разреши. Провери ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.models")}, преди да пуснеш отново \`tavi serve\`.`,
+  "settings.models.target.startupUnresolved": `Сървърът на Tavi ползва модела, с който е стартирал; запазеният избор на модел още не може да се разреши. Провери ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.models")}, преди да пуснеш отново \`tavi serve\`.`,
   "settings.models.target.untilRestart":
     "Сървърът на Tavi ползва {running}, докато не пуснеш отново `tavi serve`; след това ще ползва {next}.",
   "settings.models.target.startupUntilRestart":
@@ -65,14 +65,13 @@ export const settings = {
   "settings.setup.refused": "Действието с модела беше отказано.",
   "settings.setup.saved": "Запазено.",
   "settings.setup.nameTaken": "Вече има връзка с това име. Избери друго.",
-  "settings.setup.credentialTaken":
-    "{reference} вече съществува или се ползва. Избери друго име на връзката или го управлявай от Настройки → Данни за достъп.",
-  "settings.setup.notAdded": "{message} — ключът е запазен като {reference}; оправи го в Настройки → Данни за достъп, преди да опиташ пак.",
+  "settings.setup.credentialTaken": `{reference} вече съществува или се ползва. Избери друго име на връзката или го управлявай от ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.credentials")}.`,
+  "settings.setup.notAdded": `{message} — ключът е запазен като {reference}; оправи го в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.credentials")}, преди да опиташ пак.`,
   "settings.setup.added": "Връзката е добавена.",
   "settings.setup.discoveryFailed":
     "Връзката е запазена, но не успях да открия моделите: {message} — натисни „Открий отново“, за да опиташ пак.",
   "settings.setup.badReference": "Въведи валидно име на данни за достъп.",
-  "settings.setup.notRebound": "{message} — стойността вече е запазена като {reference}; оправи я в Настройки → Данни за достъп.",
+  "settings.setup.notRebound": `{message} — стойността вече е запазена като {reference}; оправи я в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.credentials")}.`,
 
   "settings.credentials.badReference": "Име като openai.apiKey: започва с малка буква",
   "settings.credentials.needsValue": "Стойността за запазване",
@@ -91,7 +90,7 @@ export const settings = {
   "settings.video.unknown": "неизвестно",
 
   "settings.channels.notRunning": "{label} не работи, затова код, изпратен там, няма да пристигне. Оправи го в {link} — там пише защо.",
-  "settings.channels.notRunningLink": "Настройки → Канали",
+  "settings.channels.notRunningLink": `${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.channels")}`,
 
   "settings.nav.workspace": "Работно пространство {workspaceId}",
 
@@ -206,13 +205,13 @@ export const settings = {
   "settings.searchApi.needsKey": "{label} иска API ключ",
   "settings.searchApi.nameTaken": "Вече има доставчик за търсене с име {id}: избери друго.",
   "settings.searchApi.badReference": "{reference} не става за име на данни за достъп",
-  "settings.searchApi.referenceTaken": "{reference} вече се ползва: избери друго име или го смени в Настройки → Данни за достъп.",
-  "settings.searchApi.notAdded": "{message} (ключът е запазен като {reference}; изтрива се от Настройки → Данни за достъп)",
+  "settings.searchApi.referenceTaken": `{reference} вече се ползва: избери друго име или го смени в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.credentials")}.`,
+  "settings.searchApi.notAdded": `{message} (ключът е запазен като {reference}; изтрива се от ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.credentials")})`,
   "settings.searchApi.added": "{id} е добавен.",
   "settings.searchApi.enabled": "{id} е включен.",
   "settings.searchApi.disabled": "{id} е изключен.",
   "settings.searchApi.removed": "{id} е премахнат.",
-  "settings.searchApi.removedKeyKept": "{id} е премахнат. Ключът му {reference} остава запазен; изтрива се от Настройки → Данни за достъп.",
+  "settings.searchApi.removedKeyKept": `{id} е премахнат. Ключът му {reference} остава запазен; изтрива се от ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.credentials")}.`,
   "settings.searchApi.tested": { one: "{id} върна {count} резултат.", other: "{id} върна {count} резултата." },
 
   "settings.lifecycle.use.agent": "с инструменти",
@@ -311,8 +310,7 @@ export const settings = {
 
   "settings.mcpApi.added": "{pluginId}@{version} е добавен. Провери го, за да видиш инструментите му.",
   "settings.mcpApi.addedNeeds": "{pluginId}@{version} е добавен. Задай {needs} в настройките му, после го провери.",
-  "settings.mcpApi.addedNeedsCredential":
-    "{pluginId}@{version} е добавен. Задай {needs} в настройките му (данните за достъп първо се запазват в Настройки → Данни за достъп), после го провери.",
+  "settings.mcpApi.addedNeedsCredential": `{pluginId}@{version} е добавен. Задай {needs} в настройките му (данните за достъп първо се запазват в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.credentials")}), после го провери.`,
   "settings.mcpApi.probed": {
     one: "{pluginId} е проверен: {count} инструмент за преглед.",
     other: "{pluginId} е проверен: {count} инструмента за преглед.",
@@ -511,7 +509,7 @@ export const settings = {
   "settings.video.notInstalled": "не е инсталиран",
   "settings.video.notInstalledFix": "не е инсталиран ({fix})",
   "settings.video.runs": "работи: {confinement}",
-  "settings.video.toolsOff": "Видео инструментите са изключени (Настройки → Общи или tavi config set video.enabled on).",
+  "settings.video.toolsOff": `Видео инструментите са изключени (${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.general")} или tavi config set video.enabled on).`,
   "settings.video.offIn": "Видео инструментите са изключени в: {workspaces}.",
   "settings.video.configError": "analyzers.json не се ползва: {error}",
   "settings.video.none": "няма",
@@ -538,7 +536,7 @@ export const settings = {
   "settings.instances.choices": "Възможности: {choices}.",
   "settings.instances.credential": "Име на данни за достъп за {key}",
   "settings.instances.credentialLabel": "Инстанция {number}: име за {key}",
-  "settings.instances.secrets": "Тайните пази в Настройки → Данни за достъп. Тук въведи само имената им.",
+  "settings.instances.secrets": `Тайните пази в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.credentials")}. Тук въведи само имената им.`,
   "settings.instances.remove": "Премахни инстанция {number}",
   "settings.instances.add": "Добави инстанция на доставчика",
 
@@ -664,8 +662,7 @@ export const settings = {
   "settings.connection.requiresKey": "Сървърът иска ключ",
   "settings.connection.localOnly": "Локален сървър под твой контрол",
   "settings.connection.submit": "Свържи и открий моделите",
-  "settings.connection.managed":
-    "Управлява се от инстанцията на плъгин {instance}. Настрой я в Настройки → Плъгини, а ключовете ѝ пази в Настройки → Данни за достъп. След промени пусни отново сървъра на Tavi.",
+  "settings.connection.managed": `Управлява се от инстанцията на плъгин {instance}. Настрой я в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.plugins")}, а ключовете ѝ пази в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.credentials")}. След промени пусни отново сървъра на Tavi.`,
   "settings.connection.replaceKey": "Смени API ключа",
   "settings.connection.newKeyLabel": "Нов ключ за {label}",
   "settings.connection.pasteNewKey": "Постави нов ключ",
@@ -677,8 +674,7 @@ export const settings = {
   "settings.connection.credentialLabel": "Данни за достъп за {label}",
   "settings.connection.rebindHint":
     "Запазен ключ може да се върже към нов адрес само ако е зададен през тази сесия със сървъра. Ако бъде отказано, въведи стойността му тук отново или ползвай {command} в терминал.",
-  "settings.connection.removeQuestion":
-    "Да премахна ли {label} и откритите от нея модели? Роля или моделът по подразбиране, които я ползват, първо трябва да се насочат към друг модел. Ключът ѝ остава в Настройки → Данни за достъп.",
+  "settings.connection.removeQuestion": `Да премахна ли {label} и откритите от нея модели? Роля или моделът по подразбиране, които я ползват, първо трябва да се насочат към друг модел. Ключът ѝ остава в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.credentials")}.`,
   "settings.connection.keep": "Остави я",
   "settings.connection.remove": "Премахни връзката",
   "settings.connection.removeOpen": "Премахни тази връзка…",
@@ -715,8 +711,7 @@ export const settings = {
   "settings.pluginModals.install": "Инсталирай",
   "settings.pluginModals.installing": "Инсталирам…",
   "settings.pluginModals.settingsTitle": "Настройки на {name}",
-  "settings.pluginModals.credentialHint":
-    "Име на данни за достъп, никога самата тайна: запази стойността под това име в Настройки → Данни за достъп.",
+  "settings.pluginModals.credentialHint": `Име на данни за достъп, никога самата тайна: запази стойността под това име в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.credentials")}.`,
 
   "settings.plugins.review.workerNoNetwork": "Одобрен, работи като ограничен процес без достъп до мрежата.",
   "settings.plugins.review.worker": "Одобрен, работи като ограничен процес с достъп само до {domains}.",
@@ -941,7 +936,7 @@ export const settings = {
   "settings.people.untrusted": "Непотвърдените му съобщения отново се задържат.",
   "settings.people.stopTrusting": "Спри да вярваш на непотвърдени",
   "settings.people.revoke": "Отнеми достъпа",
-  "settings.people.noConnections": "Свържи канал в Настройки → Канали, преди да разрешаваш хора в него.",
+  "settings.people.noConnections": `Свържи канал в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.channels")}, преди да разрешаваш хора в него.`,
   "settings.people.allowTitle": "Разреши човек",
   "settings.people.connection": "Връзка",
   "settings.people.connectionLabel": "Връзка на човека",
@@ -1130,7 +1125,7 @@ export const settings = {
   "settings.channelsPage.lastFailed": "последното изпращане не успя: {error}",
   "settings.channelsPage.on": "вкл.",
   "settings.channelsPage.off": "изкл.",
-  "settings.channelsPage.appEmpty": "В това работно пространство още няма връзка с {label}: добави в Настройки → Канали.",
+  "settings.channelsPage.appEmpty": `В това работно пространство още няма връзка с {label}: добави в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.channels")}.`,
   "settings.channelsPage.secretSaved": "запазено",
   "settings.channelsPage.secretNotSet": "не е зададено",
 } as const satisfies CatalogFor<typeof en>;

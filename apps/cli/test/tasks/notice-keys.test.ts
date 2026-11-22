@@ -149,7 +149,7 @@ describe("notices keep their keys", () => {
     });
     expect(posted[0]?.summaryRef?.params?.["resume"]).toEqual({
       key: "notice.routine.resumeHint",
-      params: { path: { key: "notice.nav.centerSchedule" } },
+      params: { path: { key: "nav.path.two", params: { first: { key: "nav.route.center" }, second: { key: "nav.center.schedule" } } } },
     });
   });
 

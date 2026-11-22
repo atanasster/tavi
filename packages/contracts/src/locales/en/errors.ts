@@ -1,3 +1,6 @@
+import { navPathIn } from "../nav-path.js";
+import { nav } from "./nav.js";
+
 /** The `core` words for errors a person reads, from every part of Tavi, in English: each reproduces the message the owner always sent. */
 export const errors = {
   // The owner, chats and access.
@@ -8,8 +11,7 @@ export const errors = {
   "error.task.homeNeverCancelled":
     "Home is never cancelled: stop its current turn instead, or erase its history with `tavi tasks history <id> forget --before <time>`",
   "error.access.notAllowedInWorkspace": "{principalId} is not allowed in workspace {workspaceId}",
-  "error.routine.ownerRevoked":
-    "{owner} is no longer allowed in this workspace: their routine can be viewed or archived, not {action}. Allow them again in Settings → Allowed people to use it.",
+  "error.routine.ownerRevoked": `{owner} is no longer allowed in this workspace: their routine can be viewed or archived, not {action}. Allow them again in ${navPathIn(nav, "nav.route.settings", "nav.settings.people")} to use it.`,
   "error.plugin.noCommand": "no plugin adds /{name}",
   // Channels.
   "error.channels.notInstalled": "No channel {providerId} is installed",
@@ -33,28 +35,23 @@ export const errors = {
   "error.channels.cannotCheck": "Connection {connectionId} cannot be checked here",
   "error.channels.notAnAddress": "{value} is not an IP address or a CIDR range (10.0.0.0/8)",
   "error.channels.codeNotSent": "No one has sent this pairing's code yet.",
-  "error.channels.clientSecretNeedsEncryption":
-    "{app}'s OAuth client secret is kept only in an encrypted credential store: turn on credential encryption first (`tavi credentials encrypt`, or Encrypt credentials in Settings → Channels)",
+  "error.channels.clientSecretNeedsEncryption": `{app}'s OAuth client secret is kept only in an encrypted credential store: turn on credential encryption first (\`tavi credentials encrypt\`, or Encrypt credentials in ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")})`,
   "error.channels.noChannelAsksClient": "{pluginId} has no installed channel that asks for the {provider} client (its app.provider)",
   "error.channels.signsInElsewhere":
     "{channel} signs in somewhere other than {provider}'s own addresses, so it is never handed the client {provider}'s apps share",
   "error.channels.approvedVersionUnknown": "{pluginId}'s approved version is not known here; try again with `tavi serve` running",
-  "error.channels.sharedClient":
-    "{channel} signs in with the {provider} client every {provider} app shares: change it here, or in Settings → Connected apps",
-  "error.channels.signInNeedsEncryption":
-    "Connecting {channel} keeps a sign-in token: turn on credential encryption first (`tavi credentials encrypt`, or Encrypt credentials in Settings → Channels)",
+  "error.channels.sharedClient": `{channel} signs in with the {provider} client every {provider} app shares: change it here, or in ${navPathIn(nav, "nav.route.settings", "nav.settings.apps")}`,
+  "error.channels.signInNeedsEncryption": `Connecting {channel} keeps a sign-in token: turn on credential encryption first (\`tavi credentials encrypt\`, or Encrypt credentials in ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")})`,
   "error.channels.desktopClient":
     "{channel} signs in with a Desktop app client, which comes back only to this computer: from another computer, use a tunnel or paste the address you land on",
   "error.channels.noAllowedPerson": "No matching allowed person in this workspace.",
   "error.channels.needsPublicAddress": "{channel} signs in through your public address: set it under Webhooks first",
-  "error.channels.connectFromPage": "{channel} signs in through this page: connect it from Settings → Channels in `tavi ui`",
+  "error.channels.connectFromPage": `{channel} signs in through this page: connect it from ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")} in \`tavi ui\``,
   "error.channels.notATarget": "{to} is not a {target} on {channel}",
   "error.channels.notATargetAny": "{to} is not a target on {channel}",
   "error.channels.notAllowedOn": "{to} is not allowed on {connectionId}",
-  "error.channels.notListening":
-    "{channel} isn't running. Fix it in Settings → Channels (or `tavi channels list`) first: a code sent to it could not arrive.",
-  "error.channels.notListeningWhy":
-    "{channel} isn't running: {why}. Fix it in Settings → Channels (or `tavi channels list`) first: a code sent to it could not arrive.",
+  "error.channels.notListening": `{channel} isn't running. Fix it in ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")} (or \`tavi channels list\`) first: a code sent to it could not arrive.`,
+  "error.channels.notListeningWhy": `{channel} isn't running: {why}. Fix it in ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")} (or \`tavi channels list\`) first: a code sent to it could not arrive.`,
   "error.channels.verifiesEverySender": "{channel} verifies every sender itself: there is no unverified mail to trust.",
   "error.channels.enterSender": "Enter a {sender} for {channel}, such as {example}.",
   "error.channels.senderElsewhere": "This sender belongs to another workspace.",
@@ -273,13 +270,13 @@ export const errors = {
   "error.apps.noAccountYet": "{app} has no account {accountId}, nor any yet",
   "error.apps.noAccountId": "{app} has no account {accountId}",
   "error.apps.notInstalled": "no installed app {pluginId}",
-  "error.apps.configureInChannels": "configure {app} in Settings → Channels",
+  "error.apps.configureInChannels": `configure {app} in ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")}`,
   "error.apps.noSharedClient": "{app} signs in with no client its provider's apps share",
   "error.apps.clientFileOrId": "give the client file, or its id and secret: not both",
   "error.apps.clientIdEmpty": "clientId needs a value",
   "error.apps.secretWithoutId": "a client secret is saved with its client id",
   "error.apps.notASetting": "{key} is not a setting of {app}",
-  "error.apps.testInChannels": "test a channel's connection in Settings → Channels (`tavi channels test`)",
+  "error.apps.testInChannels": `test a channel's connection in ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")} (\`tavi channels test\`)`,
   "error.apps.noTest": "{app} has no test",
   "error.apps.noTool": "{app} has no tool {toolId}",
   "error.apps.toolLeftOut": "{tool} is left out by its review; change that in the review",
@@ -288,18 +285,18 @@ export const errors = {
   "error.apps.alwaysReceives": "{app}'s account always takes messages in",
   "error.apps.noCalendar": "{app}'s account has no calendar",
   "error.apps.noSite": "{app} has no site {siteId}",
-  "error.apps.removeInChannels": "remove a channel's connections in Settings → Channels",
+  "error.apps.removeInChannels": `remove a channel's connections in ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")}`,
   "error.apps.signsInWithSettings": "{app} signs in with its settings",
   "error.apps.signsInWithKey": "{app} signs in with a key: set it in its settings",
   "error.apps.needsPageAddress": "a sign-in here needs the page's own address to come back to",
   "error.apps.oneAccount": "{app} has one account: add it again from Discover for another",
-  "error.apps.disconnectInChannels": "disconnect {app} in Settings → Channels",
+  "error.apps.disconnectInChannels": `disconnect {app} in ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")}`,
   "error.apps.nothingToDisconnect": "{app} has no sign-in to disconnect; remove it instead",
-  "error.apps.connectInChannels": "connect {app} in Settings → Channels (`tavi channels connect`)",
-  "error.apps.keysInChannels": "{app} connects with its keys: set them in Settings → Channels",
+  "error.apps.connectInChannels": `connect {app} in ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")} (\`tavi channels connect\`)`,
+  "error.apps.keysInChannels": `{app} connects with its keys: set them in ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")}`,
   "error.apps.channelNotInstalled": "{app}'s channel is not installed",
   "error.apps.noChannel": "no channel {providerId} is installed",
-  "error.apps.addInChannels": "add a {channel} connection in Settings → Channels (`tavi channels add`)",
+  "error.apps.addInChannels": `add a {channel} connection in ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")} (\`tavi channels add\`)`,
   "error.apps.clientFile.tooLarge": "that client file is too large to be one",
   "error.apps.clientFile.notJson": "that client file is not JSON: download it again from the client's dialog",
   "error.apps.clientFile.webClient": "that is a Web application client: create a Desktop app client instead, and download its JSON",
@@ -350,5 +347,5 @@ export const errors = {
   "error.oauth.otherAccount":
     "You signed in as {named}, but this connection is {previous}. Add it as another account instead, or disconnect this one first.",
   "error.oauth.connectionRemoved": "The connection was removed while it was signing in.",
-  "error.oauth.revoked": "{channel}'s sign-in was revoked or expired: reconnect it in Settings → Channels",
+  "error.oauth.revoked": `{channel}'s sign-in was revoked or expired: reconnect it in ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")}`,
 } as const;

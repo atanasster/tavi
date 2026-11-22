@@ -1,7 +1,9 @@
+import { nav } from "./nav.js";
+
 /** The `core` words for apps, channels, models, plugins, the browser, the desktop, the heartbeat and onboarding plugins, in English. */
 export const connect = {
-  "app.connect.need.notSetUp": "{app} isn't signed in yet. Open Tavi on your computer → Connected apps.",
-  "app.connect.need.signInAgain": "{app} needs you to sign in again. Open Tavi on your computer → Connected apps.",
+  "app.connect.need.notSetUp": `{app} isn't signed in yet. Open Tavi on your computer → ${nav["nav.settings.apps"]}.`,
+  "app.connect.need.signInAgain": `{app} needs you to sign in again. Open Tavi on your computer → ${nav["nav.settings.apps"]}.`,
   "app.plugin.describe": "App {id} ({category}), in its author's words: {words}",
   "app.plugin.describeData": "App {id} ({category}, {dataClass} data), in its author's words: {words}",
   "app.plugin.word.name": "name {value}",

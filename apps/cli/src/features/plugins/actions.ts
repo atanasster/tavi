@@ -8,6 +8,8 @@ import {
   type PluginView,
   type WorkspaceSettingsRepositoryPort,
   workerRefusal,
+  englishOf,
+  navPath,
 } from "@tavi/contracts";
 import { nowTimestamp } from "@tavi/contracts/util";
 import type { PluginLiveStatus, PluginRegistry } from "@tavi/runtime";
@@ -185,7 +187,7 @@ export async function runPluginAction(
       const handover =
         channel === undefined
           ? undefined
-          : `${channel.descriptor.label}'s saved connections stay, with their credentials and paired people: a channel plugin approved for provider ${channel.descriptor.providerId} now opens them. Remove them in Settings → Channels (\`tavi channels remove\`) first if no other plugin should.`;
+          : `${channel.descriptor.label}'s saved connections stay, with their credentials and paired people: a channel plugin approved for provider ${channel.descriptor.providerId} now opens them. Remove them in ${englishOf(navPath("nav.route.settings", "nav.settings.channels"))} (\`tavi channels remove\`) first if no other plugin should.`;
       const warning = [cleanupWarning, handover].filter((line): line is string => line !== undefined).join(" ");
       return { result, restartRequired: runs, ...(warning === "" ? {} : { cleanupWarning: warning }) };
     }

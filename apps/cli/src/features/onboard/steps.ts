@@ -24,6 +24,8 @@ import {
   type OnboardingStatus,
   type VoiceSetupStatus,
   type WorkspaceSettingsAnswer,
+  englishOf,
+  navPath,
 } from "@tavi/contracts";
 import { DEFAULT_LOCALE, LOCALE_NAMES, SUPPORTED_LOCALES, isLocale } from "@tavi/contracts/i18n";
 import { errorMessage } from "@tavi/contracts/util";
@@ -610,7 +612,7 @@ export async function channelsStep(context: StepContext): Promise<void> {
       context,
       featured === undefined || featured.length === 0
         ? `${GLYPHS.todo} ${title} — none of the channels this setup offers is installed here.`
-        : `${GLYPHS.todo} ${title} — ${featured.map((kind) => `\`tavi channels add ${kind}\``).join(" or ")}, then pair yourself in Settings → Channels.`,
+        : `${GLYPHS.todo} ${title} — ${featured.map((kind) => `\`tavi channels add ${kind}\``).join(" or ")}, then pair yourself in ${englishOf(navPath("nav.route.settings", "nav.settings.channels"))}.`,
     );
     return;
   }
@@ -916,7 +918,7 @@ export async function searchStep(context: StepContext): Promise<void> {
 export function searchAllowedNotice(kind: (typeof WEB_SEARCH_KINDS)[number]): string {
   return [
     `Searches go to ${kind} without asking; a query that looks like a key or token still asks first, and so does a chat that read a web page or an email before a search that could carry private data out.`,
-    `To be asked before every search: tavi permissions rm ${WEB_SEARCH_ALLOW_RULE_ID} (or remove it in Settings → Permissions). To stop searching: tavi search disable ${kind}.`,
+    `To be asked before every search: tavi permissions rm ${WEB_SEARCH_ALLOW_RULE_ID} (or remove it in ${englishOf(navPath("nav.route.settings", "nav.settings.permissions"))}). To stop searching: tavi search disable ${kind}.`,
   ].join("\n");
 }
 

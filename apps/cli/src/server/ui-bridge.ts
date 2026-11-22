@@ -22,6 +22,8 @@ import {
   encodeFrame,
   isUiBridgeCommand,
   type IpcFrame,
+  englishOf,
+  navPath,
 } from "@tavi/contracts";
 import { clip, errorMessage } from "@tavi/contracts/util";
 import {
@@ -584,7 +586,10 @@ export async function startUiBridge(options: UiBridgeOptions): Promise<UiBridge>
           if (result !== undefined && typeof result.ok === "boolean" && typeof result.message === "string")
             outcome = { ok: result.ok, message: result.message };
         } catch {
-          outcome = { ok: false, message: "The owner did not answer; connect again from Settings → Channels." };
+          outcome = {
+            ok: false,
+            message: `The owner did not answer; connect again from ${englishOf(navPath("nav.route.settings", "nav.settings.channels"))}.`,
+          };
         }
       }
     }

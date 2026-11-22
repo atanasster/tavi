@@ -8,6 +8,8 @@ import {
   type RouterScope,
   type TaskRoute,
   type TaskRoutingPort,
+  englishOf,
+  navPath,
 } from "@tavi/contracts";
 import { sha256Hex } from "@tavi/node-kit";
 import type { ProviderConnection } from "@tavi/agent-host/models";
@@ -142,7 +144,7 @@ export async function createTaskRouting(options: TaskRoutingOptions): Promise<Ta
       if (!(await offered(target, scope)))
         throw new TaviError(
           "NOT_CONFIGURED",
-          `No configured connection offers ${target.connectionId}/${target.model}; add or test the connection in Settings → Models, then choose it again`,
+          `No configured connection offers ${target.connectionId}/${target.model}; add or test the connection in ${englishOf(navPath("nav.route.settings", "nav.settings.models"))}, then choose it again`,
         );
       return options.repository.chooseRoute(scope, taskId, target, options.now());
     },

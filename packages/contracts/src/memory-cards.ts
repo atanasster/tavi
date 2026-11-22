@@ -5,6 +5,8 @@ import { MAX_MEMORY_TITLE_CHARS, MEMORY_KINDS, MemoryProvenanceSchema, memoryPro
 import { MemoryRelatedSchema, MemoryScopeTargetSchema } from "./memory-ipc.js";
 import { coreEnglish, type CoreT } from "./locales/core.js";
 import { englishShortDayText } from "./reminders.js";
+import { navPath } from "./nav.js";
+import { englishOf } from "./text-ref.js";
 import type { CoreKey } from "./locales/core-en.js";
 
 /**
@@ -550,7 +552,7 @@ export function memoryCardPressData(token: string, op: MemoryCardPressOp): strin
 }
 
 /** Where a channel card is opened: the owner knows no address for the canvas. */
-export const MEMORY_CARD_OPEN_HINT = "Open Tavi to review: Center → Soul & memory.";
+export const MEMORY_CARD_OPEN_HINT = `Open Tavi to review: ${englishOf(navPath("nav.route.center", "nav.center.identity"))}.`;
 
 /**
  * How a channel shows a card: `buttons` where it has interactions,

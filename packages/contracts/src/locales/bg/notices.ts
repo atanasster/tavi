@@ -41,7 +41,6 @@ export const notices = {
     other: "{n} по-ранни съобщения са обобщени и архивирани като {artifact}.",
   },
   "notice.folder.title": "Папката на този чат е почти пълна",
-  "notice.nav.centerSchedule": "Център → График",
   "notice.routine.resumeHint": "Пусни я отново от {path} или помоли Tavi в чата да я пусне отново.",
   "notice.routine.expired.title": "Пускането на рутината „{name}“ изтече",
   "notice.routine.paused.title": "Рутината „{name}“ е на пауза",

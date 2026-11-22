@@ -1,6 +1,8 @@
 import type { CatalogFor } from "../../i18n.js";
 
 import type { errors as en } from "../en/errors.js";
+import { navPathIn } from "../nav-path.js";
+import { nav } from "./nav.js";
 
 /** The `core` words for errors a person reads, from every part of Tavi, in Bulgarian. */
 export const errors = {
@@ -12,8 +14,7 @@ export const errors = {
   "error.task.homeNeverCancelled":
     "„Начало“ не се отменя: спри текущия ход или изтрий историята му с `tavi tasks history <id> forget --before <time>`",
   "error.access.notAllowedInWorkspace": "{principalId} няма достъп до работното пространство {workspaceId}",
-  "error.routine.ownerRevoked":
-    "{owner} вече няма достъп до това работно пространство: рутината на този човек може да се разгледа или архивира, но не и „{action}“. За да я използваш, разреши отново на този човек от Настройки → Разрешени хора.",
+  "error.routine.ownerRevoked": `{owner} вече няма достъп до това работно пространство: рутината на този човек може да се разгледа или архивира, но не и „{action}“. За да я използваш, разреши отново на този човек от ${navPathIn(nav, "nav.route.settings", "nav.settings.people")}.`,
   "error.plugin.noCommand": "Никой плъгин не добавя /{name}",
   // Channels.
   "error.channels.notInstalled": "Няма инсталиран канал {providerId}",
@@ -37,28 +38,23 @@ export const errors = {
   "error.channels.cannotCheck": "Връзката {connectionId} не може да се провери оттук",
   "error.channels.notAnAddress": "{value} не е IP адрес или CIDR диапазон (10.0.0.0/8)",
   "error.channels.codeNotSent": "Още никой не е изпратил кода за свързване.",
-  "error.channels.clientSecretNeedsEncryption":
-    "Тайният ключ на OAuth клиента на {app} се пази само в шифровано хранилище: първо включи шифроването на данните за достъп (`tavi credentials encrypt` или „Шифровай данните за достъп“ в Настройки → Канали)",
+  "error.channels.clientSecretNeedsEncryption": `Тайният ключ на OAuth клиента на {app} се пази само в шифровано хранилище: първо включи шифроването на данните за достъп (\`tavi credentials encrypt\` или „Шифровай данните за достъп“ в ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")})`,
   "error.channels.noChannelAsksClient": "{pluginId} няма инсталиран канал, който иска клиента на {provider} (неговия app.provider)",
   "error.channels.signsInElsewhere":
     "{channel} влиза другаде, а не на адресите на {provider}, затова никога не получава клиента, общ за приложенията на {provider}",
   "error.channels.approvedVersionUnknown": "Одобрената версия на {pluginId} не е известна тук; опитай пак, докато `tavi serve` работи",
-  "error.channels.sharedClient":
-    "{channel} влиза с клиента на {provider}, общ за всички приложения на {provider}: смени го тук или в Настройки → Свързани приложения",
-  "error.channels.signInNeedsEncryption":
-    "Връзката с {channel} пази токен за вход: първо включи шифроването на данните за достъп (`tavi credentials encrypt` или „Шифровай данните за достъп“ в Настройки → Канали)",
+  "error.channels.sharedClient": `{channel} влиза с клиента на {provider}, общ за всички приложения на {provider}: смени го тук или в ${navPathIn(nav, "nav.route.settings", "nav.settings.apps")}`,
+  "error.channels.signInNeedsEncryption": `Връзката с {channel} пази токен за вход: първо включи шифроването на данните за достъп (\`tavi credentials encrypt\` или „Шифровай данните за достъп“ в ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")})`,
   "error.channels.desktopClient":
     "{channel} влиза с клиент за настолно приложение, който се връща само на този компютър: от друг компютър използвай тунел или постави адреса, на който се озовеш",
   "error.channels.noAllowedPerson": "В това работно пространство няма такъв разрешен човек.",
   "error.channels.needsPublicAddress": "{channel} влиза през публичния ти адрес: първо го задай в „Уебхукове“",
-  "error.channels.connectFromPage": "{channel} влиза през тази страница: свържи го от Настройки → Канали в `tavi ui`",
+  "error.channels.connectFromPage": `{channel} влиза през тази страница: свържи го от ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")} в \`tavi ui\``,
   "error.channels.notATarget": "{to} не е {target} в {channel}",
   "error.channels.notATargetAny": "{to} не е получател в {channel}",
   "error.channels.notAllowedOn": "{to} няма разрешение за връзката {connectionId}",
-  "error.channels.notListening":
-    "{channel} не работи. Първо го оправи в Настройки → Канали (или с `tavi channels list`): код, изпратен до него, няма да стигне.",
-  "error.channels.notListeningWhy":
-    "{channel} не работи: {why}. Първо го оправи в Настройки → Канали (или с `tavi channels list`): код, изпратен до него, няма да стигне.",
+  "error.channels.notListening": `{channel} не работи. Първо го оправи в ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")} (или с \`tavi channels list\`): код, изпратен до него, няма да стигне.`,
+  "error.channels.notListeningWhy": `{channel} не работи: {why}. Първо го оправи в ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")} (или с \`tavi channels list\`): код, изпратен до него, няма да стигне.`,
   "error.channels.verifiesEverySender": "{channel} проверява всеки подател: няма непроверена поща, на която да се довериш.",
   "error.channels.enterSender": "Въведи {sender} за {channel}, например {example}.",
   "error.channels.senderElsewhere": "Този подател е от друго работно пространство.",
@@ -279,13 +275,13 @@ export const errors = {
   "error.apps.noAccountYet": "{app} няма акаунт {accountId}, нито какъвто и да е друг засега",
   "error.apps.noAccountId": "{app} няма акаунт {accountId}",
   "error.apps.notInstalled": "Няма инсталирано приложение {pluginId}",
-  "error.apps.configureInChannels": "Настройките на {app} са в Настройки → Канали",
+  "error.apps.configureInChannels": `Настройките на {app} са в ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")}`,
   "error.apps.noSharedClient": "{app} не влиза с общ клиент на доставчика си",
   "error.apps.clientFileOrId": "Дай или файла на клиента, или неговия идентификатор и тайна, но не и двете",
   "error.apps.clientIdEmpty": "Идентификаторът на клиента е празен",
   "error.apps.secretWithoutId": "Тайната на клиента се запазва заедно с идентификатора му",
   "error.apps.notASetting": "{app} няма настройка {key}",
-  "error.apps.testInChannels": "Връзката на канал се проверява от Настройки → Канали (`tavi channels test`)",
+  "error.apps.testInChannels": `Връзката на канал се проверява от ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")} (\`tavi channels test\`)`,
   "error.apps.noTest": "{app} няма проверка",
   "error.apps.noTool": "{app} няма инструмент {toolId}",
   "error.apps.toolLeftOut": "„{tool}“ е изключен при прегледа: промени го там",
@@ -294,18 +290,18 @@ export const errors = {
   "error.apps.alwaysReceives": "Акаунтът на {app} винаги приема съобщения",
   "error.apps.noCalendar": "Акаунтът на {app} няма календар",
   "error.apps.noSite": "{app} няма сайт {siteId}",
-  "error.apps.removeInChannels": "Връзките на канал се премахват от Настройки → Канали",
+  "error.apps.removeInChannels": `Връзките на канал се премахват от ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")}`,
   "error.apps.signsInWithSettings": "{app} влиза с настройките си",
   "error.apps.signsInWithKey": "{app} влиза с ключ: въведи го в настройките му",
   "error.apps.needsPageAddress": "За вход оттук ми трябва адресът на страницата, към който да се върна",
   "error.apps.oneAccount": "{app} има един акаунт: за друг го добави пак от „Открий“",
-  "error.apps.disconnectInChannels": "Прекъсни {app} от Настройки → Канали",
+  "error.apps.disconnectInChannels": `Прекъсни {app} от ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")}`,
   "error.apps.nothingToDisconnect": "{app} няма вход за прекъсване: премахни го",
-  "error.apps.connectInChannels": "Свържи {app} от Настройки → Канали (`tavi channels connect`)",
-  "error.apps.keysInChannels": "{app} се свързва с ключовете си: въведи ги в Настройки → Канали",
+  "error.apps.connectInChannels": `Свържи {app} от ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")} (\`tavi channels connect\`)`,
+  "error.apps.keysInChannels": `{app} се свързва с ключовете си: въведи ги в ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")}`,
   "error.apps.channelNotInstalled": "Каналът на {app} не е инсталиран",
   "error.apps.noChannel": "Каналът {providerId} не е инсталиран",
-  "error.apps.addInChannels": "Добави връзка с {channel} от Настройки → Канали (`tavi channels add`)",
+  "error.apps.addInChannels": `Добави връзка с {channel} от ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")} (\`tavi channels add\`)`,
   "error.apps.clientFile.tooLarge": "Файлът е твърде голям за файл на клиент",
   "error.apps.clientFile.notJson": "Файлът на клиента не е JSON: изтегли го пак от прозореца на клиента",
   "error.apps.clientFile.webClient":
@@ -362,5 +358,5 @@ export const errors = {
   "error.oauth.otherAccount":
     "Влезе като {named}, а тази връзка е за {previous}. Добави го като друг акаунт или първо прекъсни тази връзка.",
   "error.oauth.connectionRemoved": "Връзката беше премахната по време на входа.",
-  "error.oauth.revoked": "Входът в {channel} е отменен или изтекъл: свържи го пак от Настройки → Канали",
+  "error.oauth.revoked": `Входът в {channel} е отменен или изтекъл: свържи го пак от ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")}`,
 } as const satisfies CatalogFor<typeof en>;

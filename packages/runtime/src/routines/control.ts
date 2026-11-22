@@ -5,6 +5,8 @@ import {
   routineProvenanceLine,
   skillProvenanceForeign,
   type RoutineProvenance,
+  englishOf,
+  navPath,
 } from "@tavi/contracts";
 import {
   AgentWaitOutcomeSchema,
@@ -471,7 +473,7 @@ export class RoutineControlService {
           if (models === undefined)
             throw new TaviError(
               "NOT_CONFIGURED",
-              "No model is configured for routines. Set a default model in Settings → Models (or `tavi models set-default`), then create the routine again.",
+              `No model is configured for routines. Set a default model in ${englishOf(navPath("nav.route.settings", "nav.settings.models"))} (or \`tavi models set-default\`), then create the routine again.`,
             );
           const triggers = routineSetupTriggers(setup);
           create = RoutineCreateSchema.parse({

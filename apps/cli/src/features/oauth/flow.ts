@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { keyedError, TaviError, type ChannelDescriptor, type OAuth2Spec } from "@tavi/contracts";
+import { keyedError, TaviError, type ChannelDescriptor, type OAuth2Spec, englishOf, navPath } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 import { securityHeaders } from "@tavi/node-kit";
 
@@ -408,7 +408,10 @@ export class OAuthFlows {
     // Used once: gone before anything is awaited, so a replay of the redirect finds nothing.
     this.#byState.delete(input.state);
     if (flow === undefined || this.#deps.now() >= flow.expiresAt)
-      return { ok: false, message: "This sign-in link is no longer valid. Start again from Settings → Channels." };
+      return {
+        ok: false,
+        message: `This sign-in link is no longer valid. Start again from ${englishOf(navPath("nav.route.settings", "nav.settings.channels"))}.`,
+      };
     try {
       return await this.#answer(flow, input);
     } finally {

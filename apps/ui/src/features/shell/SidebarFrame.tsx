@@ -3,8 +3,9 @@ import type { CSSProperties, ReactNode } from "react";
 import { IconButton } from "../../ui/IconButton.js";
 import { type PanelBounds, loadWidth, saveWidth, useResizablePanel } from "../../hooks/resizable.js";
 import { DEFAULT_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH, SIDEBAR_RESERVE_WIDTH } from "../../lib/layout.js";
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
+import type { CoreKey } from "@tavi/contracts/locales/core-en";
 
 export const SIDEBAR_WIDTH_KEY = "tavi.sidebar.width";
 
@@ -20,9 +21,15 @@ const SIDEBAR_BOUNDS: PanelBounds = {
 /** Which panel the frame holds: the chats, the Command Center's sections, or Settings' views. */
 export type SidebarPanel = "chats" | "center" | "settings";
 
-/** Each panel's words, whole: its heading, its nav's name, and its hide and show controls. */
+/**
+ * Each panel's words, whole: its heading, its nav's name, and its hide and show controls. A heading that names a
+ * place messages name too (the Command Center) is a `core` word, `{ core }`.
+ */
 const PANEL_WORDS: Readonly<
-  Record<SidebarPanel, { readonly title: UiKey; readonly label: UiKey; readonly hide: UiKey; readonly show: UiKey }>
+  Record<
+    SidebarPanel,
+    { readonly title: UiKey | { readonly core: CoreKey }; readonly label: UiKey; readonly hide: UiKey; readonly show: UiKey }
+  >
 > = {
   chats: {
     title: "shell.sidebar.chats.title",
@@ -31,7 +38,7 @@ const PANEL_WORDS: Readonly<
     show: "shell.sidebar.chats.show",
   },
   center: {
-    title: "shell.sidebar.center.title",
+    title: { core: "nav.route.commandCenter" },
     label: "shell.sidebar.center.label",
     hide: "shell.sidebar.center.hide",
     show: "shell.sidebar.center.show",
@@ -99,7 +106,7 @@ export function SidebarFrame({
       aria-label={t(words.label)}
     >
       <div className="sidebar-head">
-        <h2>{t(words.title)}</h2>
+        <h2>{typeof words.title === "string" ? t(words.title) : translateCore(words.title.core)}</h2>
         <div className="sidebar-head-actions">
           {onNewOwn === undefined ? null : (
             <IconButton

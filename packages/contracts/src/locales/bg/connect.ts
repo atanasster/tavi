@@ -1,11 +1,12 @@
 import type { CatalogFor } from "../../i18n.js";
 
 import type { connect as en } from "../en/connect.js";
+import { nav } from "./nav.js";
 
 /** The `core` words for apps, channels, models, plugins, the browser, the desktop, the heartbeat and onboarding plugins, in Bulgarian. */
 export const connect = {
-  "app.connect.need.notSetUp": "В {app} още няма вход. Отвори Tavi на компютъра си → Свързани приложения.",
-  "app.connect.need.signInAgain": "{app} иска да влезеш отново. Отвори Tavi на компютъра си → Свързани приложения.",
+  "app.connect.need.notSetUp": `В {app} още няма вход. Отвори Tavi на компютъра си → ${nav["nav.settings.apps"]}.`,
+  "app.connect.need.signInAgain": `{app} иска да влезеш отново. Отвори Tavi на компютъра си → ${nav["nav.settings.apps"]}.`,
   "app.plugin.describe": "Приложение {id} ({category}), по думите на автора му: {words}",
   "app.plugin.describeData": "Приложение {id} ({category}, данни: {dataClass}), по думите на автора му: {words}",
   "app.plugin.word.name": "име {value}",

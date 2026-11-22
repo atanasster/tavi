@@ -1,4 +1,6 @@
 import type { CatalogFor } from "@tavi/contracts/i18n";
+import { CORE_BG } from "@tavi/contracts/locales/core-bg";
+import { navPathIn } from "@tavi/contracts/locales/core";
 
 import type { ideas as en } from "../en/ideas.js";
 
@@ -41,16 +43,16 @@ export const ideas = {
   "ideas.menu.moreLikeThis": "Още такива",
   "ideas.menu.moreLikeThisDone": "Следващия път — още такива в „{section}“.",
   "ideas.menu.notNow": "Не сега",
-  "ideas.menu.notNowDone": "Скрита за седмица. Върни я от Настройки → Идеи.",
+  "ideas.menu.notNowDone": `Скрита за седмица. Върни я от ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.ideas")}.`,
   "ideas.menu.notInterested": "Не ме интересува",
-  "ideas.menu.notInterestedDone": "Няма да я предлагам повече. Върни я от Настройки → Идеи.",
+  "ideas.menu.notInterestedDone": `Няма да я предлагам повече. Върни я от ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.ideas")}.`,
   "ideas.menu.mute": "Без идеи от „{section}“",
-  "ideas.menu.muteDone": "Край на идеите от „{section}“. Включи раздела пак от Настройки → Идеи.",
+  "ideas.menu.muteDone": `Край на идеите от „{section}“. Включи раздела пак от ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.ideas")}.`,
   "ideas.menu.excludeBrief": "Не ползвай насоките ми",
   "ideas.menu.excludeChat": "Не ползвай този чат",
   "ideas.menu.excludeThat": "Не ползвай това",
   "ideas.menu.excludeQuote": "Не ползвай „{excerpt}“",
-  "ideas.menu.excludeDone": "Това вече не се ползва за идеи. Върни го от Настройки → Идеи.",
+  "ideas.menu.excludeDone": `Това вече не се ползва за идеи. Върни го от ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.ideas")}.`,
 
   "ideas.recur.title": "Редовно повторение",
   "ideas.recur.created": "Рутината „{name}“ е създадена; тръгва, щом мине проверката.",
@@ -85,10 +87,10 @@ export const ideas = {
     "Неща, които мога да направя за теб според това, което ми каза, и според възможностите ми тук. Нищо не тръгва, докато не го изпратиш.",
   "ideas.page.refresh": "Обнови",
   "ideas.page.tune": "Настрой",
-  "ideas.page.off": "Идеите са изключени — включи ги от Настройки → Идеи.",
-  "ideas.page.openSettings": "Отвори Настройки → Идеи",
+  "ideas.page.off": `Идеите са изключени — включи ги от ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.ideas")}.`,
+  "ideas.page.openSettings": `Отвори ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.ideas")}`,
   "ideas.page.noModel": "Докато не зададеш бърз модел, подбирам идеите само по думите ти и не преработвам текста им.",
-  "ideas.page.setModel": "Задай го от Настройки → Модели",
+  "ideas.page.setModel": `Задай го от ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.models")}`,
   "ideas.page.loading": "Зареждам идеите…",
   "ideas.page.empty": "Още няма идеи.",
   "ideas.page.emptyHint": "Обнови, за да потърся сега, или ми разкажи повече за себе си в чат.",

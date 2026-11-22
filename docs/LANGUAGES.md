@@ -114,6 +114,14 @@ template is the message as the terminal shows it; data (a name, a path, a
 count as text) goes in `params`. Errors only the agent or a developer reads
 stay plain `TaviError`s.
 
+A menu path in a message ("Settings → Models") is never written out: it is
+built from the nav's own labels, the `nav.*` keys the canvas's routes read, with
+`navPath(...)` in a message said at run time (`englishOf` for its English) or
+`navPathIn(words, ...)` inside a catalogue's message, `words` being that
+language's nav words: the part's own `./nav.js` in `@tavi/contracts`,
+`CORE_EN` / `CORE_BG` in the canvas. `strayMenuPaths` checks a catalogue for
+a path the nav does not have.
+
 A count is a plural message, one form per plural category the language has:
 
 ```ts

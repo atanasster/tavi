@@ -31,6 +31,8 @@ import {
   type PersistencePort,
   type TaviErrorCode,
   type WorkspaceSettings,
+  englishOf,
+  navPath,
 } from "@tavi/contracts";
 
 import { decideMemoryRecord, keepAllPlain, MEMORY_TIDY_STALE, type MemoryDecision } from "./bulk.js";
@@ -58,7 +60,7 @@ import { memoryCommand, type MemoryCommandDependencies } from "./owner.js";
 export const MEMORY_PLUGIN_ID = "tavi.memory";
 
 /** Where a memory is undone without a chat to number it in. */
-const MEMORY_CENTER_PLACE = "Center → Soul & memory";
+const MEMORY_CENTER_PLACE = englishOf(navPath("nav.route.center", "nav.center.identity"));
 
 export const MEMORY_COMMANDS: readonly ModCommandDeclaration[] = [
   { name: "remember", description: "Save your own words to memory: /remember <text>, with --chat for this chat only." },

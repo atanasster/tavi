@@ -1,4 +1,6 @@
 import type { CatalogFor } from "@tavi/contracts/i18n";
+import { CORE_BG } from "@tavi/contracts/locales/core-bg";
+import { navPathIn } from "@tavi/contracts/locales/core";
 
 import type { welcome as en } from "../en/welcome.js";
 
@@ -112,9 +114,9 @@ export const welcome = {
   "welcome.search.testing": "Проверявам…",
   "welcome.search.add": "Добави и провери",
   "welcome.search.adding": "Добавям {provider} и пускам едно търсене…",
-  "welcome.search.exists": "Вече има доставчик на търсене {kind}: провери го или го промени в Настройки → Търсене.",
+  "welcome.search.exists": `Вече има доставчик на търсене {kind}: провери го или го промени в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.search")}.`,
   "welcome.search.notChanged": "Не успях да променя доставчика на търсене.",
-  "welcome.search.credentialTaken": "Данните за достъп {credential} вече се ползват: добави доставчика в Настройки → Търсене с друго име.",
+  "welcome.search.credentialTaken": `Данните за достъп {credential} вече се ползват: добави доставчика в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.search")} с друго име.`,
   "welcome.search.notAdded": "Не успях да добавя доставчика на търсене.",
   "welcome.search.keyNotStored": "Не успях да запазя ключа.",
   "welcome.search.notEnabled": "Не успях да включа доставчика на търсене.",
@@ -134,7 +136,7 @@ export const welcome = {
   "welcome.tasks.saving": "Запазвам {app} като място за задачите ти…",
   "welcome.tasks.adding": "Добавям Todoist…",
   "welcome.tasks.notAdded": "Не успях да добавя Todoist: {message}",
-  "welcome.tasks.notListed": "Todoist е добавен, но още не се вижда: отвори Настройки → Свързани приложения.",
+  "welcome.tasks.notListed": `Todoist е добавен, но още не се вижда: отвори ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.apps")}.`,
   "welcome.tasks.ownTitle": "Списъкът на Tavi",
   "welcome.tasks.ownBody": "Работи във всеки чат и канал, без нищо за настройване: помоли Tavi да добави, покаже или отметне задача.",
   "welcome.tasks.useOwn": "Ползвай списъка на Tavi",
@@ -142,7 +144,7 @@ export const welcome = {
   "welcome.tasks.use": "Ползвай {app}",
   "welcome.tasks.todoistBody": "Дръж задачите си в Todoist: Tavi добавя, търси и приключва задачи там и пита, преди да изтрие нещо.",
   "welcome.tasks.connectTodoist": "Свържи Todoist",
-  "welcome.tasks.later": "Нищо не се копира между двата списъка. Можеш да смениш избора по-късно в Настройки → Общи или с {command}.",
+  "welcome.tasks.later": `Нищо не се копира между двата списъка. Можеш да смениш избора по-късно в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.general")} или с {command}.`,
 
   "welcome.channels.scope": "Избери приложението за чат, което ползваш. Там на Tavi могат да пишат само хората, които сдвоиш.",
   "welcome.channels.seeAll": "Всички канали",
@@ -154,7 +156,7 @@ export const welcome = {
   "welcome.channels.back": "Към каналите",
 
   "welcome.channel.refused": "Промяната на канала беше отказана.",
-  "welcome.channel.notRemoved": "{reason} (Не успях да го премахна: {message}. Премахни го в Настройки → Канали.)",
+  "welcome.channel.notRemoved": `{reason} (Не успях да го премахна: {message}. Премахни го в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.channels")}.)`,
   "welcome.channel.notSetUp": "Не успях да настроя {channel}: {message}.",
   "welcome.channel.checkFailed": "{channel} не мина проверката: {detail}. Провери и опитай пак.",
   "welcome.channel.noReason": "без посочена причина",

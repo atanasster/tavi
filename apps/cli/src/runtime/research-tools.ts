@@ -9,6 +9,8 @@ import {
   refusedEarly,
   skillSuggestionsOn,
   videoToolsOn,
+  englishOf,
+  navPath,
 } from "@tavi/contracts";
 import { createOwnerRenderer } from "../features/browser/host.js";
 import { registerAssistantTools } from "../features/tools/assistant.js";
@@ -207,7 +209,7 @@ export async function composeResearchTools(composed: HostsContext) {
           if (id === undefined)
             throw new TaviError(
               "UNAVAILABLE",
-              "Search provider is not active on this owner yet; save it again with `tavi search enable` or Settings → Web search",
+              `Search provider is not active on this owner yet; save it again with \`tavi search enable\` or ${englishOf(navPath("nav.route.settings", "nav.settings.search"))}`,
             );
           // A workspace's search provider serves everyone who acts in it — its principal and each person allowed there —
           // as its built-in model and fetch do: resolved as the workspace's own instance, bound to the caller.

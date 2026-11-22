@@ -7,6 +7,8 @@ import {
   type ModCommandDeclaration,
   type ModCommandInput,
   type ModCommandResult,
+  englishOf,
+  navPath,
 } from "@tavi/contracts";
 
 import { parseHeartbeatDuration } from "./parse.js";
@@ -24,8 +26,7 @@ export const HEARTBEAT_COMMANDS: readonly ModCommandDeclaration[] = [
   { name: "heartbeat", description: "Your heartbeat: its status, pause [2h], resume, or now to check at once." },
 ];
 
-const USAGE =
-  "Usage: /heartbeat [status | pause [30m|2h|1d] | resume | now]. Change its settings in Center → Heartbeat, with tavi heartbeat, or by asking.";
+const USAGE = `Usage: /heartbeat [status | pause [30m|2h|1d] | resume | now]. Change its settings in ${englishOf(navPath("nav.route.center", "nav.center.heartbeat"))}, with tavi heartbeat, or by asking.`;
 
 /** Why it is paused, as Center → Heartbeat says it (HEARTBEAT.md). */
 const PAUSED_WHY: Readonly<Record<HeartbeatPauseReason, string>> = {

@@ -1,3 +1,4 @@
+import { englishOf, navPath } from "@tavi/contracts";
 import type { MessagingConnectionRecord, MessagingOutboxRepositoryPort, MessagingServicePort, OutboundButton } from "@tavi/contracts";
 import type { HeartbeatDeliveryPort } from "@tavi/agent-host/heartbeat-delivery";
 
@@ -19,7 +20,7 @@ export interface HeartbeatDeliveryDependencies {
 }
 
 /** Where an item is opened, for a channel without buttons; the owner knows no address for the canvas. */
-export const HEARTBEAT_OPEN_HINT = "Open it in Tavi: Center → Heartbeat.";
+export const HEARTBEAT_OPEN_HINT = `Open it in Tavi: ${englishOf(navPath("nav.route.center", "nav.center.heartbeat"))}.`;
 
 /**
  * An item's buttons: at most three, labels at most 20 characters, data

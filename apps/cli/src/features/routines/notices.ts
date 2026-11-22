@@ -1,4 +1,5 @@
 import {
+  navPath,
   noticeWordsOf,
   textRef,
   type MessagingServicePort,
@@ -50,8 +51,9 @@ export interface RoutineNotices {
   deliveryPaused(run: RoutineRun, targetId: string, cause: RoutinePauseCause): Promise<boolean>;
 }
 
-/** Where a routine is resumed. */
-const RESUME_HINT = textRef("notice.routine.resumeHint", { path: textRef("notice.nav.centerSchedule") });
+/** Where a routine is resumed, as the nav names it. */
+const SCHEDULE_PATH = navPath("nav.route.center", "nav.center.schedule");
+const RESUME_HINT = textRef("notice.routine.resumeHint", { path: SCHEDULE_PATH });
 
 /** A run's scope alone: the routine services read a scope strictly. */
 const scopeOf = (run: RoutineRun): RoutineScope => ({ workspaceId: run.workspaceId, principalId: run.principalId });
@@ -183,7 +185,7 @@ export function createRoutineNotices(deps: RoutineNoticeDependencies): RoutineNo
       const fix =
         cause === "credential-grace"
           ? textRef("notice.routine.delivery.fix.credentials")
-          : textRef("notice.routine.delivery.fix.failures", { path: textRef("notice.nav.centerSchedule") });
+          : textRef("notice.routine.delivery.fix.failures", { path: SCHEDULE_PATH });
       return tell(run, {
         key: `routine-notice:${run.runId}:delivery:${targetId}:${cause}`,
         title: textRef("notice.routine.delivery.title", { name }),

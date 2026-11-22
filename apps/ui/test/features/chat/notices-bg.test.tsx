@@ -31,7 +31,14 @@ const keyed: ChatNotice = {
   titleRef: { key: "notice.routine.paused.title", params: { name: "News" } },
   summaryRef: {
     key: "notice.routine.failures.text",
-    params: { name: "News", n: "3", resume: { key: "notice.routine.resumeHint", params: { path: { key: "notice.nav.centerSchedule" } } } },
+    params: {
+      name: "News",
+      n: "3",
+      resume: {
+        key: "notice.routine.resumeHint",
+        params: { path: { key: "nav.path.two", params: { first: { key: "nav.route.center" }, second: { key: "nav.center.schedule" } } } },
+      },
+    },
   },
   afterSeq: 0,
   createdAt: AT,
