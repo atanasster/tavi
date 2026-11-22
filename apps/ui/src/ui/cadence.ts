@@ -1,3 +1,5 @@
+import type { UiKey } from "../locales/en.js";
+import { translateNow } from "../lib/i18n.js";
 import { SCHEDULE_TIME_PATTERN, isValidTimeZone, scheduleSpecProblems, type ScheduleSpec, type SchedulesPayload } from "@tavi/contracts";
 
 /** The week as people read it here: Monday first, Sunday last (0 = Sunday). */
@@ -54,14 +56,20 @@ export function nextFreeTime(times: readonly string[]): string {
 }
 
 /** The words for what `scheduleSpecProblems` finds, as the form says them. */
-const PROBLEM_WORDS: Readonly<Record<string, string>> = {
-  at: "Add at least one time.",
-  times: "Each time may be given only once.",
-  between: "The window must end after it starts, within one day.",
-  monthly: "Choose one way of repeating.",
-  until: "A cadence that runs once has no end date.",
-  yearly: "That month has no such day.",
+const PROBLEM_WORDS: Readonly<Record<string, UiKey>> = {
+  at: "ui.cadence.problemAt",
+  times: "ui.cadence.problemTimes",
+  between: "ui.cadence.problemBetween",
+  monthly: "ui.cadence.problemMonthly",
+  until: "ui.cadence.problemUntil",
+  yearly: "ui.cadence.problemYearly",
 };
+
+/** What `scheduleSpecProblems` says of `path`, in the form's words where it has them. */
+function problemWords(path: string, otherwise: string): string {
+  const key = PROBLEM_WORDS[path];
+  return key === undefined ? otherwise : translateNow(key);
+}
 
 /**
  * Why `spec` is not a cadence that can be saved, in the form's words, each
@@ -72,18 +80,19 @@ const PROBLEM_WORDS: Readonly<Record<string, string>> = {
 export function cadenceProblems(spec: ScheduleSpec): readonly { readonly path: string; readonly message: string }[] {
   const problems: { path: string; message: string }[] = [];
   const times = listedTimes(spec);
-  if (spec.everyHours === undefined && times.length === 0) problems.push({ path: "at", message: PROBLEM_WORDS["at"] ?? "" });
+  if (spec.everyHours === undefined && times.length === 0) problems.push({ path: "at", message: translateNow("ui.cadence.problemAt") });
   if (times.some((time) => !SCHEDULE_TIME_PATTERN.test(time)))
-    problems.push({ path: "times", message: "Enter each time as HH:MM on a 24-hour clock." });
+    problems.push({ path: "times", message: translateNow("ui.cadence.problemTimeFormat") });
   if (spec.between !== undefined && !(SCHEDULE_TIME_PATTERN.test(spec.between.from) && SCHEDULE_TIME_PATTERN.test(spec.between.to)))
-    problems.push({ path: "between", message: "Enter the window's start and end as HH:MM." });
+    problems.push({ path: "between", message: translateNow("ui.cadence.problemBetweenFormat") });
   const date = /^\d{4}-\d{2}-\d{2}$/;
-  if (spec.once !== undefined && !date.test(spec.once)) problems.push({ path: "once", message: "Pick the date it runs on." });
-  if (spec.until !== undefined && !date.test(spec.until)) problems.push({ path: "until", message: "Pick the last date, or clear it." });
-  if (!isValidTimeZone(spec.timezone)) problems.push({ path: "timezone", message: "Choose a time zone from the list." });
+  if (spec.once !== undefined && !date.test(spec.once)) problems.push({ path: "once", message: translateNow("ui.cadence.problemOnce") });
+  if (spec.until !== undefined && !date.test(spec.until))
+    problems.push({ path: "until", message: translateNow("ui.cadence.problemUntilFormat") });
+  if (!isValidTimeZone(spec.timezone)) problems.push({ path: "timezone", message: translateNow("ui.cadence.problemTimezone") });
   const said = new Set(problems.map((problem) => problem.path));
   for (const problem of scheduleSpecProblems(spec))
-    if (!said.has(problem.path)) problems.push({ path: problem.path, message: PROBLEM_WORDS[problem.path] ?? problem.message });
+    if (!said.has(problem.path)) problems.push({ path: problem.path, message: problemWords(problem.path, problem.message) });
   return problems;
 }
 

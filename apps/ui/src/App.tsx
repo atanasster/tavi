@@ -49,7 +49,7 @@ import { WorkerTranscript } from "./features/workers/WorkerView.js";
 import { isPhone, usePhone } from "./hooks/page.js";
 import { loadWidth } from "./hooks/resizable.js";
 import { usePoll } from "./hooks/use-poll.js";
-import { setLocale, useLocale } from "./lib/i18n.js";
+import { setLocale, useLocale, useT } from "./lib/i18n.js";
 import type { SettingsClient } from "./lib/ipc.js";
 import { Failure } from "./ui/Parts.js";
 import { ViewBoundary } from "./ui/ViewBoundary.js";
@@ -82,6 +82,7 @@ export function App({
   readonly principal?: string;
   readonly navigation?: PageNavigation;
 }) {
+  const t = useT();
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
   // The route, the settings view and the session named are the address bar's,
   // not the page's own memory: a refresh lands where the reader was.
@@ -109,7 +110,7 @@ export function App({
   // `state` is a fresh object per publish, so the memo is exact: once per repaint.
   const shell = useMemo(() => shellState(state, selected, workspaceId), [state, selected, workspaceId]);
   const homeChat = useHomeChat(client, workspaceId, store);
-  const newLabel = homeChat ? "New side chat" : "New chat";
+  const newLabel = t(homeChat ? "app.shell.newSideChat" : "app.shell.newChat");
   /**
    * A new chat, asked for and not yet started: the entries the page held
    * when the reader asked. The canvas shows nothing until the prompt that
@@ -168,9 +169,9 @@ export function App({
   const downloadFilled = useCallback(
     async (path: string) =>
       currentTaskId === undefined
-        ? "Open the chat this form was filled in to download it."
+        ? t("app.shell.openChatToDownload")
         : await downloadFolderFile(client, workspaceId, currentTaskId, undefined, path),
-    [client, workspaceId, currentTaskId],
+    [client, workspaceId, currentTaskId, t],
   );
   // A chat's connect card: *Continue* is the person's message in the chat on screen.
   const uploadAttachment = useCallback(
@@ -340,7 +341,7 @@ export function App({
   // With the Center offered, what waits is its count — every task's needs, memory proposals and fired reminders — not this page's sessions.
   const waiting = centered ? waitingCount(feed.summary) : shell.needs;
   useTabTitle(waiting, !centered && (state.directory?.needsTruncated ?? false), [
-    route === "welcome" ? "Setup" : ROUTES.find((entry) => entry.value === route)?.label,
+    route === "welcome" ? t("app.tab.setup") : ROUTES.find((entry) => entry.value === route)?.label,
     route === "settings"
       ? SETTINGS_VIEWS.find((entry) => entry.value === view)?.label
       : route === "center"
@@ -419,7 +420,7 @@ export function App({
             document.getElementById("main")?.focus();
           }}
         >
-          Skip to content
+          {t("app.skip.content")}
         </a>
         {/* The toast sits at the page's end: a way straight to it while it is up. */}
         {needsNotice.offer || needsNotice.toast !== undefined ? (
@@ -431,7 +432,7 @@ export function App({
               document.getElementById(NEED_TOAST_ID)?.focus();
             }}
           >
-            Jump to notification
+            {t("app.skip.notification")}
           </a>
         ) : null}
         <Bar

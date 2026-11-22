@@ -1,7 +1,7 @@
 import { formatNumber } from "@tavi/contracts/i18n";
-import { clip, plural } from "@tavi/contracts/util";
+import { clip } from "@tavi/contracts/util";
 
-import { currentLocale } from "./i18n.js";
+import { currentLocale, translateNow } from "./i18n.js";
 
 /**
  * The canvas's words for numbers and cut text, said the same way on every
@@ -10,11 +10,22 @@ import { currentLocale } from "./i18n.js";
  * spans are `time.ts`'s).
  */
 
+/**
+ * `value` with `digits` decimals, as `toFixed` rounds it, written with the
+ * page's language's decimal mark: "1.5" in English, "1,5" in Bulgarian.
+ */
+export function decimal(value: number, digits = 1): string {
+  const fixed = value.toFixed(digits);
+  const mark = formatNumber(1.5, currentLocale()).charAt(1);
+  return mark === "." ? fixed : fixed.replace(".", mark);
+}
+
 /** Bytes as bytes under 1 KiB, else KiB (or MiB from 1 MiB) with one decimal. */
 export function formatBytes(bytes: number): string {
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`;
-  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KiB`;
-  return plural(bytes, "byte");
+  if (bytes >= 1024 * 1024) return translateNow("common.bytes.mib", { size: decimal(bytes / (1024 * 1024)) });
+  if (bytes >= 1024) return translateNow("common.bytes.kib", { size: decimal(bytes / 1024) });
+  // The count as written: a plain "1000", never grouped.
+  return translateNow("common.bytes.bytes", { count: bytes, size: String(bytes) });
 }
 
 /**
@@ -46,4 +57,9 @@ export function hostOf(url: string | undefined, fallback = url ?? ""): string {
 
 /** An archived artifact's metadata in one line: "text/plain, 120 bytes, pending". */
 export const artifactMeta = (row: { readonly contentType: string; readonly byteSize: number; readonly reviewState: string }): string =>
-  `${row.contentType}, ${row.byteSize} bytes, ${row.reviewState}`;
+  translateNow("common.artifact.meta", {
+    count: row.byteSize,
+    contentType: row.contentType,
+    size: String(row.byteSize),
+    state: row.reviewState,
+  });

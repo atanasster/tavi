@@ -1,3 +1,5 @@
+import { translateNow } from "./i18n.js";
+
 /**
  * Copying text to the clipboard.
  *
@@ -19,5 +21,5 @@ export async function copyText(text: string): Promise<boolean> {
 
 /** A draft copied for safe keeping (its save was refused), and what the page says about it. */
 export async function copyDraft(text: string): Promise<string> {
-  return (await copyText(text)) ? "The draft is on your clipboard." : "Could not copy the draft; select the text and copy it manually.";
+  return translateNow((await copyText(text)) ? "common.clipboard.draftCopied" : "common.clipboard.draftNotCopied");
 }

@@ -11,6 +11,7 @@ import remarkMath from "remark-math";
 import "katex/dist/katex.min.css";
 
 import { useCopied } from "../hooks/page.js";
+import { useT } from "../lib/i18n.js";
 import { Confirm } from "./Confirm.js";
 import { IconButton } from "./IconButton.js";
 import { prefersReducedMotion } from "../lib/motion.js";
@@ -143,6 +144,7 @@ function clipLabel(value: string, max: number): string {
 
 /** A link of an answer: a `#heading` scrolls within it, any other opens in a new tab — a novel one in a tainted turn after asking. */
 function MarkdownLink({ href, children }: { readonly href?: string | undefined; readonly children?: ReactNode }) {
+  const t = useT();
   const links = useContext(LinkPolicyContext);
   const [asking, setAsking] = useState(false);
   if (typeof href === "string" && href.startsWith("#")) {
@@ -186,13 +188,13 @@ function MarkdownLink({ href, children }: { readonly href?: string | undefined; 
       {asking
         ? createPortal(
             <Confirm
-              title={novel.web ? `Open ${novel.label}?` : `Open this ${scheme} link?`}
+              title={novel.web ? t("ui.markdown.openWebTitle", { label: novel.label }) : t("ui.markdown.openAppTitle", { scheme })}
               message={
                 novel.web
-                  ? `Open ${novel.label} from a turn that read untrusted content? A page the turn read may have written this link to send what the chat holds to that site. It opens ${clipLabel(novel.url, 500)}`
-                  : `Open ${clipLabel(novel.url, 500)} from a turn that read untrusted content? A page the turn read may have written this link to send what the chat holds through the app that opens it.`
+                  ? t("ui.markdown.openWebMessage", { label: novel.label, url: clipLabel(novel.url, 500) })
+                  : t("ui.markdown.openAppMessage", { url: clipLabel(novel.url, 500) })
               }
-              action={novel.web ? `Open ${novel.label}` : `Open ${scheme} link`}
+              action={novel.web ? t("ui.markdown.openWebAction", { label: novel.label }) : t("ui.markdown.openAppAction", { scheme })}
               onConfirm={async () => {
                 openedUrls.add(novel.url);
                 window.open(href, "_blank", "noopener,noreferrer");
@@ -540,13 +542,14 @@ const components: Components = {
 /** A fenced block, scrolling sideways, with a copy button in its corner. */
 function CodeBlock({ children }: { readonly children?: ReactNode }) {
   const pre = useRef<HTMLPreElement>(null);
+  const t = useT();
   const { copied, copy } = useCopied();
   return (
     <div className="markdown-code">
       <IconButton
         icon={copied ? "check" : "copy"}
-        label="Copy code"
-        tooltip={copied ? "Copied" : "Copy code"}
+        label={t("ui.markdown.copyCode")}
+        tooltip={copied ? t("ui.markdown.copied") : t("ui.markdown.copyCode")}
         size="sm"
         className="markdown-code-copy"
         onClick={() => copy(pre.current?.textContent ?? "")}

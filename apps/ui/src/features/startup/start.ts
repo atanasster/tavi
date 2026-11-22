@@ -2,6 +2,7 @@ import type { TaviClient } from "@tavi/client/browser";
 import { errorMessage } from "@tavi/contracts/util";
 
 import { openSession, type PageHistory, type PageLocation, type SessionFetch } from "./session.js";
+import { translateNow } from "../../lib/i18n.js";
 import { readStored, removeStored, writeStored } from "../../lib/storage.js";
 
 /**
@@ -46,7 +47,7 @@ export async function startPage(host: PageHost): Promise<void> {
   const kept = opened.kind === "no-link" && storage !== undefined ? readStored(SESSION_SECRET_KEY, storage) : undefined;
   const session = kept !== undefined && kept !== "" ? { kind: "session" as const, secret: kept, reused: true } : opened;
   if (session.kind === "no-link") {
-    host.message("Open this page from the link `tavi ui` gives you: press Enter where it runs for a new one.");
+    host.message(translateNow("app.start.noLink"));
     return;
   }
   if (session.kind === "refused") {
@@ -55,7 +56,7 @@ export async function startPage(host: PageHost): Promise<void> {
   }
   const reused = "reused" in session && session.reused;
   if (!reused && storage !== undefined) writeStored(SESSION_SECRET_KEY, session.secret, storage);
-  host.message("Connecting to the owner…");
+  host.message(translateNow("app.start.connecting"));
   let client: TaviClient;
   try {
     client = await host.connect(session.secret);
@@ -63,10 +64,10 @@ export async function startPage(host: PageHost): Promise<void> {
     if (reused) {
       // The kept session is over (expired, or `tavi ui` restarted): forgotten, and a new link asked for.
       if (storage !== undefined) removeStored(SESSION_SECRET_KEY, storage);
-      host.message("This tab's sign-in has ended: press Enter where `tavi ui` runs for a new link.");
+      host.message(translateNow("app.start.signInEnded"));
       return;
     }
-    host.message(`Could not reach the owner: ${errorMessage(error)}`);
+    host.message(translateNow("app.start.unreachable", { error: errorMessage(error) }));
     return;
   }
   host.render(client);

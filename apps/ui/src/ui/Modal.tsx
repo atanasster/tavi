@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
 
+import { useT } from "../lib/i18n.js";
 import { IconButton } from "./IconButton.js";
 
 /**
@@ -30,6 +31,7 @@ export function Modal({
   readonly onClose: () => void;
   readonly children: ReactNode;
 }) {
+  const t = useT();
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   // The latest `onClose` and `busy`, without re-running the effect for each render's new arrow.
@@ -70,7 +72,7 @@ export function Modal({
       <div className="modal-body">
         <header className="modal-head">
           <h2 id={titleId}>{title}</h2>
-          <IconButton icon="close" label="Close dialog" disabled={busy} onClick={() => latest.current.onClose()} />
+          <IconButton icon="close" label={t("ui.modal.close")} disabled={busy} onClick={() => latest.current.onClose()} />
         </header>
         <div className="modal-content">{children}</div>
       </div>

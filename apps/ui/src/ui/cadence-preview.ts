@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { SCHEDULE_PREVIEW_RUNS, type SchedulePreviewResult, type ScheduleSpec } from "@tavi/contracts";
 
+import { translateNow } from "../lib/i18n.js";
 import { ask, type SettingsClient } from "../lib/ipc.js";
 import { dayTime, todayIn } from "../lib/time.js";
 import { cadencePayload } from "./cadence.js";
@@ -16,9 +17,11 @@ export type Preview =
 /** What the preview says aloud once it is known: the next run alone, or that there is none; nothing while it is worked out. */
 export function previewSaid(preview: Preview, zone: string): string {
   if (preview.state === "waiting") return "";
-  if (preview.state === "failed") return `Next runs not available: ${preview.message}`;
+  if (preview.state === "failed") return translateNow("ui.cadence.previewFailedSaid", { reason: preview.message });
   const next = preview.runs[0];
-  return next === undefined ? "It does not run again." : `Next run ${dayTime(next, zone, todayIn(zone))}.`;
+  return next === undefined
+    ? translateNow("ui.cadence.noMoreRuns")
+    : translateNow("ui.cadence.nextRunSaid", { when: dayTime(next, zone, todayIn(zone)) });
 }
 
 /** The owner's next runs of `spec`, asked once typing settles; nothing is asked while it has problems. */
@@ -38,7 +41,7 @@ export function usePreview(
         client,
         "schedules",
         { action: "preview", ...(workspaceId === undefined ? {} : { workspaceId }), ...JSON.parse(key), limit: SCHEDULE_PREVIEW_RUNS },
-        { refused: "The owner could not work them out." },
+        { refused: translateNow("ui.cadence.previewRefused") },
       ).then((answer) => {
         if (!live) return;
         const runs = answer.ok ? answer.value?.runs : undefined;
@@ -47,7 +50,7 @@ export function usePreview(
           value: answer.ok
             ? Array.isArray(runs) && runs.every((run) => typeof run === "string")
               ? { state: "ready", runs }
-              : { state: "failed", message: "The owner did not answer with them." }
+              : { state: "failed", message: translateNow("ui.cadence.previewUnreadable") }
             : { state: "failed", message: answer.message },
         });
       });

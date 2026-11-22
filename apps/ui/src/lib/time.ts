@@ -1,7 +1,6 @@
 import { hostTimeZone, instantForLocalTime } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
-
-import { translateCore } from "./i18n.js";
+import { decimal } from "./format.js";
+import { translateCore, translateNow } from "./i18n.js";
 
 /**
  * The canvas's words for days, times and spans. Days and times are the
@@ -91,9 +90,9 @@ export function localTime(iso: string, timeZone: string | undefined): string {
 /** How a new chat greets the reader at `now` in `timeZone`: morning from 05:00, afternoon from 12:00, evening from 18:00. */
 export function greeting(timeZone: string | undefined, now: Date | number = Date.now()): string {
   const hour = Number(formattersFor(timeZone).time.format(now).slice(0, 2));
-  if (hour >= 5 && hour < 12) return "Good morning";
-  if (hour >= 12 && hour < 18) return "Good afternoon";
-  return "Good evening";
+  if (hour >= 5 && hour < 12) return translateNow("common.greeting.morning");
+  if (hour >= 12 && hour < 18) return translateNow("common.greeting.afternoon");
+  return translateNow("common.greeting.evening");
 }
 
 /** `date` (`YYYY-MM-DD`) at UTC midnight, moved by `days`: calendar arithmetic, so no zone or DST is involved. */
@@ -182,12 +181,13 @@ export function dayMonth(date: string): string {
 
 /**
  * `date` said relative to `today`, when it is today or the day next to it
- * `toward` the past ("yesterday") or the future ("tomorrow"); otherwise
- * `undefined`, for the caller's own words.
+ * `toward` the past ("yesterday") or the future ("tomorrow"), in the page's
+ * language; otherwise `undefined`, for the caller's own words.
  */
-export function relativeDay(date: string, today: string, toward: "past" | "future"): "today" | "yesterday" | "tomorrow" | undefined {
-  if (date === today) return "today";
-  if (date === shiftDate(today, toward === "past" ? -1 : 1)) return toward === "past" ? "yesterday" : "tomorrow";
+export function relativeDay(date: string, today: string, toward: "past" | "future"): string | undefined {
+  if (date === today) return translateNow("common.day.today");
+  if (date === shiftDate(today, toward === "past" ? -1 : 1))
+    return translateNow(toward === "past" ? "common.day.yesterday" : "common.day.tomorrow");
   return undefined;
 }
 
@@ -221,8 +221,8 @@ export function instantLabel(iso: string, timeZone: string | undefined, today: s
  * "Tue 29 Sep", "Yesterday" and "Mon 28 Sep", else "Sunday" and "27 Sep".
  */
 export function dayHeading(date: string, today: string): { readonly title: string; readonly detail: string } {
-  if (date === today) return { title: "Today", detail: shortDay(date, today) };
-  if (date === shiftDate(today, -1)) return { title: "Yesterday", detail: shortDay(date, today) };
+  if (date === today) return { title: translateNow("common.dayHeading.today"), detail: shortDay(date, today) };
+  if (date === shiftDate(today, -1)) return { title: translateNow("common.dayHeading.yesterday"), detail: shortDay(date, today) };
   const { params, year } = calendar(date);
   // A heading starts with a capital in every language: "Sunday", "Неделя".
   const weekday = params["weekday"] ?? "";
@@ -270,14 +270,14 @@ export function when(value: string | null | undefined, timeZone: string | undefi
 export function relativeTime(at: string, now: number, timeZone?: string): string {
   const ms = Date.parse(at) - now;
   if (Number.isNaN(ms)) return "";
-  if (ms < 60_000) return ms < 0 ? "due now" : "in under a minute";
+  if (ms < 60_000) return translateNow(ms < 0 ? "common.relative.dueNow" : "common.relative.underMinute");
   const minutes = Math.round(ms / 60_000);
-  if (minutes < 60) return `in ${minutes} min`;
+  if (minutes < 60) return translateNow("common.relative.minutes", { minutes: String(minutes) });
   const hours = Math.round(ms / 3_600_000);
-  if (hours < 24) return `in ${hours} h`;
+  if (hours < 24) return translateNow("common.relative.hours", { hours: String(hours) });
   // Days on the calendar, as the list's day headings count them: tomorrow's 07:00 and 19:30 are both "in 1 day".
   const days = Math.max(1, calendarDaysBetween(todayIn(timeZone, now), localDate(at, timeZone)));
-  return `in ${plural(days, "day")}`;
+  return translateNow("common.relative.days", { count: days, days: String(days) });
 }
 
 /** Whole calendar days from one `YYYY-MM-DD` to another. */
@@ -293,26 +293,37 @@ export function durationText(
   ms: number,
   { seconds = false, days = false }: { readonly seconds?: boolean; readonly days?: boolean } = {},
 ): string {
-  if (seconds && ms < 120_000) return `${Math.max(1, Math.ceil(ms / 1000))} s`;
+  if (seconds && ms < 120_000) return translateNow("common.duration.seconds", { seconds: String(Math.max(1, Math.ceil(ms / 1000))) });
   const minutes = Math.ceil(ms / 60_000);
-  if (minutes < 60) return `${minutes} min`;
+  if (minutes < 60) return translateNow("common.duration.minutes", { minutes: String(minutes) });
   const hours = Math.floor(minutes / 60);
-  if (!days || hours < 24) return minutes % 60 === 0 ? `${hours} h` : `${hours} h ${minutes % 60} min`;
+  if (!days || hours < 24)
+    return minutes % 60 === 0
+      ? translateNow("common.duration.hours", { hours: String(hours) })
+      : translateNow("common.duration.hoursMinutes", { hours: String(hours), minutes: String(minutes % 60) });
   const whole = Math.floor(hours / 24);
-  return hours % 24 === 0 ? `${whole} d` : `${whole} d ${hours % 24} h`;
+  return hours % 24 === 0
+    ? translateNow("common.duration.days", { days: String(whole) })
+    : translateNow("common.duration.daysHours", { days: String(whole), hours: String(hours % 24) });
 }
 
 /** `1.4s`, `2m 05s`, `1h 02m` — short enough for a strip, exact enough to act on. */
 export function formatElapsed(elapsedMs: number): string {
   const seconds = elapsedMs / 1000;
-  if (seconds < 10) return `${seconds.toFixed(1)}s`;
-  if (seconds < 60) return `${Math.round(seconds)}s`;
+  if (seconds < 10) return translateNow("common.elapsed.seconds", { seconds: decimal(seconds) });
+  if (seconds < 60) return translateNow("common.elapsed.seconds", { seconds: String(Math.round(seconds)) });
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ${String(Math.floor(seconds % 60)).padStart(2, "0")}s`;
-  return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, "0")}m`;
+  if (minutes < 60)
+    return translateNow("common.elapsed.minutesSeconds", { minutes, seconds: String(Math.floor(seconds % 60)).padStart(2, "0") });
+  return translateNow("common.elapsed.hoursMinutes", {
+    hours: String(Math.floor(minutes / 60)),
+    minutes: String(minutes % 60).padStart(2, "0"),
+  });
 }
 
 /** `1.2s`, `340ms` — a tool call's own duration, as the owner measured it. */
 export function formatDuration(durationMs: number): string {
-  return durationMs < 1000 ? `${Math.round(durationMs)}ms` : `${(durationMs / 1000).toFixed(1)}s`;
+  return durationMs < 1000
+    ? translateNow("common.toolDuration.milliseconds", { milliseconds: Math.round(durationMs) })
+    : translateNow("common.toolDuration.seconds", { seconds: decimal(durationMs / 1000) });
 }

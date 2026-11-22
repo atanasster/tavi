@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { encode } from "uqr";
 
 import { copyText } from "../lib/clipboard.js";
+import { useT } from "../lib/i18n.js";
 import { Button } from "./Button.js";
 
 /** Formats an 8-character pairing code as `XXXX-XXXX`. */
@@ -78,12 +79,13 @@ export function QrCode({
 export function CopyCommand({
   text,
   target,
-  label = "Copy /link command",
+  label,
 }: {
   readonly text: string;
   readonly target: RefObject<HTMLElement | null>;
   readonly label?: string;
 }) {
+  const t = useT();
   const [outcome, setOutcome] = useState<"copied" | "selected" | null>(null);
   const timer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
@@ -93,7 +95,7 @@ export function CopyCommand({
     }
     setOutcome("selected");
   };
-  const refusedMessage = "Clipboard access was refused; the command is selected so you can copy it.";
+  const refusedMessage = t("ui.pairing.copyRefused");
   return (
     <>
       <Button
@@ -111,10 +113,10 @@ export function CopyCommand({
           });
         }}
       >
-        {outcome === "copied" ? "Copied" : label}
+        {outcome === "copied" ? t("ui.pairing.copied") : (label ?? t("ui.pairing.copyCommand"))}
       </Button>
       <span role="status" className="visually-hidden">
-        {outcome === "copied" ? "Copied to clipboard" : outcome === "selected" ? refusedMessage : ""}
+        {outcome === "copied" ? t("ui.pairing.copiedSaid") : outcome === "selected" ? refusedMessage : ""}
       </span>
       {outcome === "selected" ? <p className="settings-description">{refusedMessage}</p> : null}
     </>
@@ -132,13 +134,14 @@ export function PairingLinkBox({
   readonly pairing: { readonly code: string; readonly linkUrl?: string; readonly openLabel?: string };
   readonly channelLabel: string;
 }) {
+  const t = useT();
   const commandRef = useRef<HTMLElement>(null);
   const code = shownPairingCode(pairing.code);
   const command = `/link ${code}`;
   const deepLink = pairingDeepLink(pairing);
   return (
     <div className="pairing-layout">
-      {deepLink === undefined ? null : <QrCode value={deepLink} label={`QR code to link on ${channelLabel}`} />}
+      {deepLink === undefined ? null : <QrCode value={deepLink} label={t("ui.pairing.qrLabel", { channel: channelLabel })} />}
       <div className="pairing-details">
         <div className="pairing-command">
           <code ref={commandRef}>{command}</code>
@@ -147,7 +150,7 @@ export function PairingLinkBox({
         {deepLink === undefined ? null : (
           <div className="pairing-links">
             <a href={deepLink} target="_blank" rel="noopener noreferrer">
-              {pairing.openLabel ?? `Open in ${channelLabel}`}
+              {pairing.openLabel ?? t("ui.pairing.openIn", { channel: channelLabel })}
             </a>
           </div>
         )}

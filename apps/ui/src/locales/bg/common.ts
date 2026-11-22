@@ -1,0 +1,40 @@
+import type { CatalogFor } from "@tavi/contracts/i18n";
+
+import type { common as en } from "../en/common.js";
+
+/** The words of lib/*: days, times, counts and the words shared by every view, in Bulgarian. */
+export const common = {
+  "common.clipboard.draftCopied": "Черновата е в клипборда ти.",
+  "common.clipboard.draftNotCopied": "Не успях да копирам черновата. Маркирай текста и го копирай ръчно.",
+  "common.bytes.bytes": { one: "{size} байт", other: "{size} байта" },
+  "common.bytes.kib": "{size} КБ",
+  "common.bytes.mib": "{size} МБ",
+  "common.artifact.meta": { one: "{contentType}, {size} байт, {state}", other: "{contentType}, {size} байта, {state}" },
+  "common.ipc.refused": "Заявката {command} беше отказана",
+  "common.ipc.unreadable": "Не успях да прочета отговора на {command}. Рестартирай Tavi с тази версия.",
+  "common.ipc.listUnreadable": "Не успях да прочета списъка ({what}) от Tavi. Рестартирай `tavi serve` с тази версия и опитай пак.",
+  "common.greeting.morning": "Добро утро",
+  "common.greeting.afternoon": "Добър ден",
+  "common.greeting.evening": "Добър вечер",
+  "common.day.today": "днес",
+  "common.day.yesterday": "вчера",
+  "common.day.tomorrow": "утре",
+  "common.dayHeading.today": "Днес",
+  "common.dayHeading.yesterday": "Вчера",
+  "common.relative.dueNow": "сега",
+  "common.relative.underMinute": "след по-малко от минута",
+  "common.relative.minutes": "след {minutes} мин",
+  "common.relative.hours": "след {hours} ч",
+  "common.relative.days": { one: "след {days} ден", other: "след {days} дни" },
+  "common.duration.seconds": "{seconds} сек",
+  "common.duration.minutes": "{minutes} мин",
+  "common.duration.hours": "{hours} ч",
+  "common.duration.hoursMinutes": "{hours} ч {minutes} мин",
+  "common.duration.days": "{days} д",
+  "common.duration.daysHours": "{days} д {hours} ч",
+  "common.elapsed.seconds": "{seconds} с",
+  "common.elapsed.minutesSeconds": "{minutes} мин {seconds} с",
+  "common.elapsed.hoursMinutes": "{hours} ч {minutes} мин",
+  "common.toolDuration.milliseconds": "{milliseconds} мс",
+  "common.toolDuration.seconds": "{seconds} сек",
+} as const satisfies CatalogFor<typeof en>;

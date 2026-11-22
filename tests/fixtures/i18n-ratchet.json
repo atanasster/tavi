@@ -1,5 +1,4 @@
 {
-  "app": 2,
   "features/apps": 159,
   "features/center": 609,
   "features/chat": 166,
@@ -15,5 +14,5 @@
   "features/transcript": 23,
   "features/welcome": 112,
   "features/workers": 31,
-  "ui": 51
+  "ui": 2
 }

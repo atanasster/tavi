@@ -8,6 +8,7 @@ import {
   type ScheduleSpec,
 } from "@tavi/contracts";
 
+import { useT } from "../lib/i18n.js";
 import type { SettingsClient } from "../lib/ipc.js";
 import { dayTime, monthName, todayIn, weekdayName } from "../lib/time.js";
 import { Button } from "./Button.js";
@@ -41,14 +42,14 @@ import { previewSaid, usePreview } from "./cadence-preview.js";
  */
 
 const MONTH_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
-const NTH: readonly (readonly [string, string])[] = [
-  ["1", "first"],
-  ["2", "second"],
-  ["3", "third"],
-  ["4", "fourth"],
-  ["5", "fifth"],
-  ["-1", "last"],
-];
+const NTH = [
+  ["1", "ui.cadence.nthFirst"],
+  ["2", "ui.cadence.nthSecond"],
+  ["3", "ui.cadence.nthThird"],
+  ["4", "ui.cadence.nthFourth"],
+  ["5", "ui.cadence.nthFifth"],
+  ["-1", "ui.cadence.nthLast"],
+] as const;
 /** What a form lets its cadence be. */
 export interface CadenceAllows {
   /** Every few hours in a window (default: allowed). */
@@ -65,7 +66,7 @@ export interface CadenceAllows {
  * the next runs are asked of; without one, none are shown.
  */
 export function CadenceField({
-  legend = "When",
+  legend,
   value,
   onChange,
   workspaceZone,
@@ -84,6 +85,7 @@ export function CadenceField({
   readonly allows?: CadenceAllows | undefined;
   readonly maxTimes?: number | undefined;
 }) {
+  const t = useT();
   const ids = useId();
   const spec = value;
   const problems = cadenceProblems(spec);
@@ -127,17 +129,17 @@ export function CadenceField({
   const monthlyKind = "nth" in monthly ? "weekday" : monthly.dayOfMonth === 31 ? "last" : "day";
   const setMonthly = (next: ReminderMonthly) => onChange({ ...withoutDays(spec), monthly: next });
   const daysChoices: readonly (readonly [DaysMode, string])[] = [
-    ["weekly", "On days of the week"],
-    ["monthly", "Monthly"],
-    ["yearly", "Yearly"],
-    ...(allows.once === false ? [] : ([["once", "Once"]] as const)),
+    ["weekly", t("ui.cadence.weekly")],
+    ["monthly", t("ui.cadence.monthly")],
+    ["yearly", t("ui.cadence.yearly")],
+    ...(allows.once === false ? [] : ([["once", t("ui.cadence.once")]] as const)),
   ];
   const maxShown = onceSingle ? 1 : maxTimes;
 
   return (
     <fieldset className="cadence" aria-describedby={problems.length > 0 ? problemsId : undefined}>
-      <legend>{legend}</legend>
-      <div className="cadence-row" role="radiogroup" aria-label="Repeats">
+      <legend>{legend ?? t("ui.cadence.legend")}</legend>
+      <div className="cadence-row" role="radiogroup" aria-label={t("ui.cadence.repeats")}>
         {daysChoices.map(([choice, label]) => (
           <label key={choice} className="cadence-option">
             <input type="radio" name={`${ids}-days`} value={choice} checked={mode === choice} onChange={() => setDays(choice)} />
@@ -151,20 +153,20 @@ export function CadenceField({
       {mode === "monthly" ? (
         <div className="cadence-row">
           <Select
-            aria-label="Monthly on"
+            aria-label={t("ui.cadence.monthlyOn")}
             value={monthlyKind}
             onChange={(event) => {
               const kind = event.target.value;
               setMonthly(kind === "last" ? { dayOfMonth: 31 } : kind === "weekday" ? { nth: 1, weekday: 1 } : { dayOfMonth: 1 });
             }}
           >
-            <option value="day">On day</option>
-            <option value="weekday">On the</option>
-            <option value="last">On the last day</option>
+            <option value="day">{t("ui.cadence.onDay")}</option>
+            <option value="weekday">{t("ui.cadence.onThe")}</option>
+            <option value="last">{t("ui.cadence.onLastDay")}</option>
           </Select>
           {"dayOfMonth" in monthly && monthlyKind === "day" ? (
             <Select
-              aria-label="Day of the month"
+              aria-label={t("ui.cadence.dayOfMonth")}
               value={String(monthly.dayOfMonth)}
               onChange={(event) => setMonthly({ dayOfMonth: Number(event.target.value) })}
             >
@@ -178,18 +180,18 @@ export function CadenceField({
           {"nth" in monthly ? (
             <>
               <Select
-                aria-label="Which week"
+                aria-label={t("ui.cadence.whichWeek")}
                 value={String(monthly.nth)}
                 onChange={(event) => setMonthly({ ...monthly, nth: Number(event.target.value) as typeof monthly.nth })}
               >
-                {NTH.map(([nth, label]) => (
+                {NTH.map(([nth, labelKey]) => (
                   <option key={nth} value={nth}>
-                    {label}
+                    {t(labelKey)}
                   </option>
                 ))}
               </Select>
               <Select
-                aria-label="Weekday"
+                aria-label={t("ui.cadence.weekday")}
                 value={String(monthly.weekday)}
                 onChange={(event) => setMonthly({ ...monthly, weekday: Number(event.target.value) })}
               >
@@ -206,7 +208,7 @@ export function CadenceField({
       {mode === "yearly" && spec.yearly !== undefined ? (
         <div className="cadence-row">
           <Select
-            aria-label="Month"
+            aria-label={t("ui.cadence.month")}
             value={String(spec.yearly.month)}
             onChange={(event) =>
               onChange({ ...withoutDays(spec), yearly: { day: spec.yearly?.day ?? 1, month: Number(event.target.value) } })
@@ -219,7 +221,7 @@ export function CadenceField({
             ))}
           </Select>
           <Select
-            aria-label="Day"
+            aria-label={t("ui.cadence.day")}
             value={String(spec.yearly.day)}
             onChange={(event) =>
               onChange({ ...withoutDays(spec), yearly: { month: spec.yearly?.month ?? 1, day: Number(event.target.value) } })
@@ -235,7 +237,7 @@ export function CadenceField({
       ) : null}
       {mode === "once" ? (
         <label className="cadence-inline">
-          On
+          {t("ui.cadence.onDate")}
           <input
             type="date"
             required
@@ -247,24 +249,26 @@ export function CadenceField({
         </label>
       ) : null}
       {canHours ? (
-        <div className="cadence-row" role="radiogroup" aria-label="Times of day">
+        <div className="cadence-row" role="radiogroup" aria-label={t("ui.cadence.timesOfDay")}>
           <label className="cadence-option">
             <input type="radio" name={`${ids}-times`} checked={timing === "times"} onChange={() => setTiming("times")} />
-            At set times
+            {t("ui.cadence.atSetTimes")}
           </label>
           <label className="cadence-option">
             <input type="radio" name={`${ids}-times`} checked={timing === "hours"} onChange={() => setTiming("hours")} />
-            Every few hours
+            {t("ui.cadence.everyFewHours")}
           </label>
         </div>
       ) : null}
       {timing === "times" ? (
         <div className="cadence-row">
-          <span aria-hidden="true">At</span>
+          <span aria-hidden="true">{t("ui.cadence.at")}</span>
           {times.map((time, index) => (
             <span key={index} className="cadence-time">
               <label>
-                <span className="visually-hidden">{times.length === 1 ? "Time" : `Time ${index + 1}`}</span>
+                <span className="visually-hidden">
+                  {times.length === 1 ? t("ui.cadence.time") : t("ui.cadence.timeNumbered", { number: index + 1 })}
+                </span>
                 <input
                   type="time"
                   required
@@ -284,7 +288,7 @@ export function CadenceField({
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label={`Remove time ${time}`}
+                  aria-label={t("ui.cadence.removeTime", { time })}
                   onClick={() =>
                     onChange(
                       withTimes(
@@ -301,43 +305,43 @@ export function CadenceField({
           ))}
           {times.length < maxShown ? (
             <Button size="sm" onClick={() => onChange(withTimes(spec, [...times, nextFreeTime(times)]))}>
-              Add a time
+              {t("ui.cadence.addTime")}
             </Button>
           ) : null}
         </div>
       ) : (
         <div className="cadence-row">
           <span className="cadence-inline">
-            Every
+            {t("ui.cadence.every")}
             <Select
-              aria-label="Every how many hours"
+              aria-label={t("ui.cadence.everyHowMany")}
               value={String(spec.everyHours ?? 1)}
               onChange={(event) => onChange({ ...spec, everyHours: Number(event.target.value) })}
             >
               {Array.from({ length: SCHEDULE_MAX_EVERY_HOURS }, (_, index) => (
                 <option key={index + 1} value={String(index + 1)}>
-                  {index === 0 ? "hour" : `${index + 1} hours`}
+                  {t("ui.cadence.hours", { count: index + 1 })}
                 </option>
               ))}
             </Select>
           </span>
           <label className="cadence-inline">
-            from
+            {t("ui.cadence.from")}
             <input
               type="time"
               required
-              aria-label="Window start"
+              aria-label={t("ui.cadence.windowStart")}
               value={spec.between?.from ?? "00:00"}
               onChange={(event) => onChange({ ...spec, between: { from: event.target.value, to: spec.between?.to ?? "23:59" } })}
               {...invalid("between")}
             />
           </label>
           <label className="cadence-inline">
-            to
+            {t("ui.cadence.to")}
             <input
               type="time"
               required
-              aria-label="Window end"
+              aria-label={t("ui.cadence.windowEnd")}
               value={spec.between?.to ?? "23:59"}
               onChange={(event) => onChange({ ...spec, between: { from: spec.between?.from ?? "00:00", to: event.target.value } })}
               {...invalid("between")}
@@ -347,10 +351,10 @@ export function CadenceField({
       )}
       {allows.until !== false && mode !== "once" ? (
         <label className="cadence-inline">
-          Until (optional)
+          {t("ui.cadence.untilOptional")}
           <input
             type="date"
-            aria-label="Until"
+            aria-label={t("ui.cadence.until")}
             min={earliest(stored.until, spec.until)}
             value={spec.until ?? ""}
             onChange={(event) => {
@@ -363,9 +367,9 @@ export function CadenceField({
       ) : null}
       <div className="cadence-row">
         <label className="cadence-inline">
-          Time zone
+          {t("ui.cadence.timeZone")}
           <input
-            aria-label="Time zone"
+            aria-label={t("ui.cadence.timeZone")}
             list={`${ids}-zones`}
             autoComplete="off"
             spellCheck={false}
@@ -377,7 +381,9 @@ export function CadenceField({
           />
         </label>
         <datalist id={`${ids}-zones`}>
-          {workspaceZone === undefined ? null : <option value={workspaceZone} label={`${workspaceZone} (workspace zone)`} />}
+          {workspaceZone === undefined ? null : (
+            <option value={workspaceZone} label={t("ui.cadence.workspaceZoneOption", { zone: workspaceZone })} />
+          )}
           {zones
             .filter((zone) => zone !== workspaceZone)
             .map((zone) => (
@@ -385,10 +391,10 @@ export function CadenceField({
             ))}
         </datalist>
         {workspaceZone === undefined ? null : spec.timezone === workspaceZone ? (
-          <span className="meta-sm muted">(workspace zone)</span>
+          <span className="meta-sm muted">{t("ui.cadence.workspaceZone")}</span>
         ) : (
           <Button variant="ghost" size="sm" onClick={() => onChange({ ...spec, timezone: workspaceZone })}>
-            Use the workspace zone ({workspaceZone})
+            {t("ui.cadence.useWorkspaceZone", { zone: workspaceZone })}
           </Button>
         )}
       </div>
@@ -404,15 +410,15 @@ export function CadenceField({
           <span className="visually-hidden" aria-live="polite">
             {problems.length > 0 ? "" : previewSaid(preview, spec.timezone)}
           </span>
-          <span className="cadence-label">Next {SCHEDULE_PREVIEW_RUNS} runs</span>
+          <span className="cadence-label">{t("ui.cadence.nextRuns", { count: SCHEDULE_PREVIEW_RUNS })}</span>
           {problems.length > 0 ? (
-            <p className="meta-sm muted">Shown once the schedule above is complete.</p>
+            <p className="meta-sm muted">{t("ui.cadence.previewLater")}</p>
           ) : preview.state === "waiting" ? (
-            <p className="meta-sm muted">Working them out…</p>
+            <p className="meta-sm muted">{t("ui.cadence.previewWaiting")}</p>
           ) : preview.state === "failed" ? (
-            <p className="meta-sm muted">Not available: {preview.message}</p>
+            <p className="meta-sm muted">{t("ui.cadence.previewFailed", { reason: preview.message })}</p>
           ) : preview.runs.length === 0 ? (
-            <p className="meta-sm muted">It does not run again.</p>
+            <p className="meta-sm muted">{t("ui.cadence.noMoreRuns")}</p>
           ) : (
             <ol className="list-reset">
               {preview.runs.map((run) => (

@@ -12,6 +12,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { styleNonce } from "../lib/csp-nonce.js";
+import { useT } from "../lib/i18n.js";
 import { Icon } from "./Icon.js";
 import { Button } from "./Button.js";
 
@@ -34,7 +35,7 @@ export function Select({
   className,
   contentClassName,
   searchable,
-  searchPlaceholder = "Search…",
+  searchPlaceholder: searchPlaceholderGiven,
   side = "bottom",
   ...props
 }: {
@@ -53,6 +54,8 @@ export function Select({
   /** Where the list opens, when there is room: `top` for a control at the foot of the page, so a search does not move it. */
   side?: "top" | "bottom";
 }) {
+  const t = useT();
+  const searchPlaceholder = searchPlaceholderGiven ?? t("ui.select.search");
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -242,7 +245,7 @@ export function Select({
               {search ? (
                 <Button
                   className="select-search-clear"
-                  aria-label="Clear search"
+                  aria-label={t("ui.select.clearSearch")}
                   tabIndex={-1}
                   onClick={() => {
                     setSearch("");
@@ -258,14 +261,14 @@ export function Select({
               {query === ""
                 ? ""
                 : filteredOptions.length === 0
-                  ? "No results found"
-                  : `${filteredOptions.length} ${filteredOptions.length === 1 ? "result" : "results"}`}
+                  ? t("ui.select.noResults")
+                  : t("ui.select.results", { count: filteredOptions.length })}
             </p>
           </div>
         ) : null}
         {filteredOptions.length === 0 ? (
           <div className="select-empty" aria-hidden={isSearchable ? true : undefined}>
-            No results found
+            {t("ui.select.noResults")}
           </div>
         ) : null}
         <Primitive.ScrollUpButton className="select-scroll">

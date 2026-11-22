@@ -1,5 +1,6 @@
 import { errorMessage } from "@tavi/contracts/util";
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { useT } from "../lib/i18n.js";
 import { Failure } from "./Parts.js";
 import { Button } from "./Button.js";
 
@@ -46,6 +47,8 @@ export class ErrorBoundary extends Component<
   }
 }
 
+const BOUNDARY_WORDS = { page: "ui.boundary.page", panel: "ui.boundary.panel", canvas: "ui.boundary.canvas" } as const;
+
 /**
  * A page's or a panel's own error boundary (`what` names it): the rest of the
  * shell stays usable, and moving elsewhere (`resetKey`) clears the failure.
@@ -62,6 +65,7 @@ export function ViewBoundary({
   readonly what?: "page" | "panel" | "canvas";
   readonly onRetry?: (() => void) | undefined;
 }) {
+  const t = useT();
   return (
     <ErrorBoundary
       resetOn={resetKey}
@@ -69,7 +73,7 @@ export function ViewBoundary({
       logAs={`a ${what}`}
       fallback={(failed, retry) => (
         <Failure>
-          This {what} could not be shown ({failed}). <Button onClick={retry}>Try again</Button>
+          {t(BOUNDARY_WORDS[what], { failed })} <Button onClick={retry}>{t("ui.boundary.tryAgain")}</Button>
         </Failure>
       )}
     >

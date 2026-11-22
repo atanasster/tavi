@@ -1,5 +1,6 @@
 import { useId, useState, type ReactNode } from "react";
 
+import { useT } from "../lib/i18n.js";
 import { Modal } from "./Modal.js";
 import { Button } from "./Button.js";
 
@@ -20,6 +21,7 @@ export function Confirm({
   readonly onConfirm: () => Promise<void>;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   const [working, setWorking] = useState(false);
   const messageId = useId();
   return (
@@ -28,7 +30,7 @@ export function Confirm({
       {children}
       <div className="actions">
         <Button variant="ghost" disabled={working} onClick={onClose}>
-          Cancel
+          {t("ui.confirm.cancel")}
         </Button>
         <Button
           variant="destructive"

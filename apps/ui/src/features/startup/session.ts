@@ -1,6 +1,8 @@
 import type { FetchFunction } from "@tavi/client/browser";
 import { UI_SESSION_PATH, UiSessionAnswerSchema } from "@tavi/contracts";
 
+import { translateNow } from "../../lib/i18n.js";
+
 /** What the page reads its link from, and scrubs it out of. */
 export interface PageLocation {
   readonly origin: string;
@@ -43,14 +45,14 @@ export async function openSession(location: PageLocation, history: PageHistory, 
       body: JSON.stringify({ token }),
     });
   } catch {
-    return { kind: "refused", message: "tavi ui is not answering: is it still running?" };
+    return { kind: "refused", message: translateNow("app.session.notAnswering") };
   }
   if (response.status === 401) {
-    return { kind: "refused", message: "This link was used or has expired. Press Enter where `tavi ui` runs for a new one." };
+    return { kind: "refused", message: translateNow("app.session.linkExpired") };
   }
-  if (!response.ok) return { kind: "refused", message: `tavi ui refused the link (${response.status}).` };
+  if (!response.ok) return { kind: "refused", message: translateNow("app.session.linkRefused", { status: String(response.status) }) };
   // A body that is not JSON fails the schema below, said as such.
   const answer = UiSessionAnswerSchema.safeParse(await response.json().catch(() => undefined));
-  if (!answer.success) return { kind: "refused", message: "tavi ui answered in a form this page cannot read: reload it from a new link." };
+  if (!answer.success) return { kind: "refused", message: translateNow("app.session.unreadable") };
   return { kind: "session", secret: answer.data.secret };
 }

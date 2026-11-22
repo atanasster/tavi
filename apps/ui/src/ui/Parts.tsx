@@ -1,8 +1,19 @@
-import { useEffect, useLayoutEffect, useRef, useState, type HTMLAttributes, type KeyboardEvent, type ReactNode, type Ref } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type HTMLAttributes,
+  type KeyboardEvent,
+  type ReactNode,
+  type Ref,
+} from "react";
 import { Icon } from "./Icon.js";
 import { Card } from "./Card.js";
 import { useAnnounce } from "../hooks/use-announce.js";
 import type { ActionTone } from "../hooks/use-action.js";
+import { useT } from "../lib/i18n.js";
 import { Button } from "./Button.js";
 
 /**
@@ -51,17 +62,24 @@ export function StatusBadge({ status }: { readonly status: string }) {
 
 export function Section({
   title,
+  anchor,
   actions,
   className = "",
   children,
 }: {
   readonly title: string;
+  /** The heading's id is `section-<anchor>`, the same in every language, for a link or a scroll to it. */
+  readonly anchor?: string;
   readonly actions?: ReactNode;
   readonly className?: string;
   readonly children: ReactNode;
 }) {
+  const own = useId();
+  // A title in another script slugs to nothing, so it falls back to an id of its own.
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const id = `section-${anchor ?? (/[a-z0-9]/.test(slug) ? slug : own)}`;
   return (
-    <Card title={title} titleId={`section-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} actions={actions} className={className}>
+    <Card title={title} titleId={id} actions={actions} className={className}>
       {children}
     </Card>
   );
@@ -94,9 +112,10 @@ export function BackLink({ label, onBack }: { readonly label: string; readonly o
 
 /** The chat panel's way to the same thing across every chat, in the Command Center; nothing without one. */
 export function CenterLink({ what, onCenter }: { readonly what: string; readonly onCenter: (() => void) | undefined }) {
+  const t = useT();
   return onCenter === undefined ? null : (
     <Button variant="ghost" size="sm" className="chat-panel-center" onClick={onCenter}>
-      {what} in the Command Center →
+      {t("ui.parts.centerLink", { what })}
     </Button>
   );
 }
@@ -109,8 +128,8 @@ export function CenterLink({ what, onCenter }: { readonly what: string; readonly
 export function LoadMore({
   busy,
   onLoad,
-  label = "Load older",
-  busyLabel = "Loading…",
+  label,
+  busyLabel,
   className = "center-more",
   buttonClassName = "button-sm",
   children,
@@ -123,9 +142,10 @@ export function LoadMore({
   readonly buttonClassName?: string;
   readonly children?: ReactNode;
 }) {
+  const t = useT();
   const button = (
     <Button className={buttonClassName} disabled={busy} onClick={onLoad}>
-      {busy ? busyLabel : label}
+      {busy ? (busyLabel ?? t("ui.parts.loading")) : (label ?? t("ui.parts.loadOlder"))}
     </Button>
   );
   return className === null ? (
@@ -311,9 +331,10 @@ export function Failure({
 
 /** A page's failed load, with a way to ask again. */
 export function LoadError({ error, reload }: { readonly error: string; readonly reload: () => void }) {
+  const t = useT();
   return (
     <Failure>
-      {error} <Button onClick={reload}>Retry</Button>
+      {error} <Button onClick={reload}>{t("ui.parts.retry")}</Button>
     </Failure>
   );
 }
@@ -326,7 +347,7 @@ export function LoadError({ error, reload }: { readonly error: string; readonly 
 export function Pending({
   error,
   reload,
-  label = "Loading…",
+  label: labelGiven,
   className = "empty",
   status = false,
 }: {
@@ -336,6 +357,8 @@ export function Pending({
   readonly className?: string;
   readonly status?: boolean;
 }) {
+  const t = useT();
+  const label = labelGiven ?? t("ui.parts.loading");
   useAnnounce(status && error === undefined ? label : undefined);
   if (error !== undefined)
     return reload === undefined ? <Failure message={error} alert={false} /> : <LoadError error={error} reload={reload} />;
@@ -351,7 +374,7 @@ export function LoadState({
   error,
   reload,
   loading,
-  label = "Loading…",
+  label,
   className = "notice",
   status = false,
   children,
@@ -368,7 +391,7 @@ export function LoadState({
     <>
       {error === undefined ? null : <LoadError error={error} reload={reload} />}
       {children}
-      {loading ? <Pending label={label} className={className} status={status} /> : null}
+      {loading ? <Pending {...(label === undefined ? {} : { label })} className={className} status={status} /> : null}
     </>
   );
 }
@@ -524,10 +547,11 @@ export function PersonChips({
   readonly person: string;
   readonly onPick: (person: string) => void;
 }) {
+  const t = useT();
   return (
-    <div className="center-chips" role="group" aria-label="Filter by person">
+    <div className="center-chips" role="group" aria-label={t("ui.parts.filterByPerson")}>
       <FilterChip pressed={person === "all"} onPick={() => onPick("all")}>
-        Everyone
+        {t("ui.parts.everyone")}
       </FilterChip>
       {Object.entries(people).map(([principalId, name]) => (
         <FilterChip key={principalId} pressed={person === principalId} onPick={() => onPick(principalId)}>
@@ -565,7 +589,7 @@ export function FilterChip({
 export function BusyFieldset({
   busy,
   className,
-  label = "Saving…",
+  label,
   children,
 }: {
   readonly busy: boolean;
@@ -573,6 +597,7 @@ export function BusyFieldset({
   readonly label?: string;
   readonly children: ReactNode;
 }) {
+  const t = useT();
   const fields = useRef<HTMLFieldSetElement>(null);
   const waiting = useRef<HTMLSpanElement>(null);
   const had = useRef<HTMLElement | null>(null);
@@ -594,7 +619,7 @@ export function BusyFieldset({
   return (
     <>
       <span ref={waiting} className="visually-hidden" tabIndex={-1}>
-        {busy ? label : ""}
+        {busy ? (label ?? t("ui.parts.saving")) : ""}
       </span>
       <fieldset ref={fields} className={className} disabled={busy} aria-busy={busy || undefined}>
         {children}

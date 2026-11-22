@@ -2,6 +2,8 @@ import type { ClientResponse, TaviClient } from "@tavi/client/browser";
 import type { IpcCommand } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
+import { translateNow } from "./i18n.js";
+
 /**
  * Asking the owner from the page: one request's `Outcome` — its result, or the
  * refusal in words — and the few ways an answer is read, checked or reworded.
@@ -59,7 +61,7 @@ export async function ask<T>(
   const details = response.error?.details;
   return {
     ok: false,
-    message: response.error?.message ?? options.refused ?? `${command} was refused`,
+    message: response.error?.message ?? options.refused ?? translateNow("common.ipc.refused", { command }),
     // Conditionally spread: `exactOptionalPropertyTypes` distinguishes an absent
     // field from one explicitly set to `undefined`.
     ...(code === undefined ? {} : { code }),
@@ -88,8 +90,7 @@ export interface Readable<T> {
  * What `read` says of an answer that came back but did not parse; it already
  * says to restart. No code: a write's answer may be unreadable after the write.
  */
-export const unreadable = (command: IpcCommand): string =>
-  `The owner's ${command} answer could not be read. Restart the owner with this build.`;
+export const unreadable = (command: IpcCommand): string => translateNow("common.ipc.unreadable", { command });
 
 /** `ask`, its answer parsed by `schema`: one the page cannot read is a failed outcome, never a value a view trips over. */
 export async function read<T>(
@@ -113,7 +114,7 @@ export async function read<T>(
 export function withList<T>(answer: Outcome<T>, field: string, what: string): Outcome<T> {
   return !answer.ok || Array.isArray((answer.value as Record<string, unknown> | null | undefined)?.[field])
     ? answer
-    : { ok: false, message: `The owner's ${what} could not be read. Restart \`tavi serve\` on this build, then retry.` };
+    : { ok: false, message: translateNow("common.ipc.listUnreadable", { what }) };
 }
 
 /** An outcome's value as `change` makes it, its refusal as it is: a write's own words for what it did. */
