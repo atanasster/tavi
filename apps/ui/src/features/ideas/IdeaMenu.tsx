@@ -2,6 +2,7 @@ import { IDEA_CATEGORY_LABELS, type Idea, type IdeasRecurAnswer } from "@tavi/co
 import { useId, useRef, useState } from "react";
 
 import { useDismiss } from "../../hooks/use-dismiss.js";
+import { useT } from "../../lib/i18n.js";
 import { Icon } from "../../ui/Icon.js";
 import { ideaFeedback, pinIdea, recurIdea } from "./ideas-api.js";
 import { Button } from "../../ui/Button.js";
@@ -42,6 +43,7 @@ export function IdeaMenu({
   /** Open *Remind me*. */
   readonly onRemind: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -79,7 +81,7 @@ export function IdeaMenu({
         variant="ghost"
         size="sm"
         ref={toggle}
-        aria-label={`More for ${idea.title}`}
+        aria-label={t("ideas.menu.more", { title: idea.title })}
         data-idea-toggle={idea.id}
         aria-expanded={open}
         aria-controls={open ? `${ids}-menu` : undefined}
@@ -96,11 +98,11 @@ export function IdeaMenu({
             onClick={() =>
               void act(
                 () => pinIdea(client, workspaceId, idea.id, !idea.pinned),
-                idea.pinned ? "Unpinned." : "Pinned: it stays until you unpin it.",
+                idea.pinned ? t("ideas.menu.unpinned") : t("ideas.menu.pinned"),
               )
             }
           >
-            {idea.pinned ? "Unpin" : "Pin"}
+            {idea.pinned ? t("ideas.menu.unpin") : t("ideas.menu.pin")}
           </Button>
           {/* Routines repeat daily or weekly: a monthly idea is not offered as one. */}
           {idea.recurring === undefined || idea.recurring.cadence === "monthly" ? null : (
@@ -119,7 +121,7 @@ export function IdeaMenu({
                 })()
               }
             >
-              Make it recurring…
+              {t("ideas.menu.recur")}
             </Button>
           )}
           <Button
@@ -131,39 +133,39 @@ export function IdeaMenu({
               onRemind();
             }}
           >
-            Remind me…
+            {t("ideas.menu.remind")}
           </Button>
           <Button
             variant="bare"
             className="row-menu-item"
             disabled={busy}
-            onClick={signal({ signal: "more-like-this", id: idea.id }, `More like this next time, in ${section}.`)}
+            onClick={signal({ signal: "more-like-this", id: idea.id }, t("ideas.menu.moreLikeThisDone", { section }))}
           >
-            More like this
+            {t("ideas.menu.moreLikeThis")}
           </Button>
           <Button
             variant="bare"
             className="row-menu-item"
             disabled={busy}
-            onClick={signal({ signal: "not-now", id: idea.id }, "Hidden for a week. Bring it back in Settings → Ideas.")}
+            onClick={signal({ signal: "not-now", id: idea.id }, t("ideas.menu.notNowDone"))}
           >
-            Not now
+            {t("ideas.menu.notNow")}
           </Button>
           <Button
             variant="bare"
             className="row-menu-item"
             disabled={busy}
-            onClick={signal({ signal: "not-interested", id: idea.id }, "Not offered again. Bring it back in Settings → Ideas.")}
+            onClick={signal({ signal: "not-interested", id: idea.id }, t("ideas.menu.notInterestedDone"))}
           >
-            Not interested
+            {t("ideas.menu.notInterested")}
           </Button>
           <Button
             variant="bare"
             className="row-menu-item"
             disabled={busy}
-            onClick={signal({ signal: "mute-category", id: idea.id }, `No more ${section} ideas. Unmute it in Settings → Ideas.`)}
+            onClick={signal({ signal: "mute-category", id: idea.id }, t("ideas.menu.muteDone", { section }))}
           >
-            Not interested in {section}
+            {t("ideas.menu.mute", { section })}
           </Button>
           {sources.map((basis) => (
             <Button
@@ -171,19 +173,15 @@ export function IdeaMenu({
               className="row-menu-item"
               key={`${basis.kind}:${basis.ref}`}
               disabled={busy}
-              onClick={signal(
-                { signal: "exclude-basis", id: idea.id, basisRef: basis.ref },
-                "That is no longer used for ideas. Use it again in Settings → Ideas.",
-              )}
+              onClick={signal({ signal: "exclude-basis", id: idea.id, basisRef: basis.ref }, t("ideas.menu.excludeDone"))}
             >
-              Don’t use{" "}
               {basis.kind === "brief"
-                ? "my brief"
+                ? t("ideas.menu.excludeBrief")
                 : basis.excerpt === undefined || basis.excerpt.trim() === ""
                   ? basis.kind === "task"
-                    ? "that chat"
-                    : "that"
-                  : `“${basis.excerpt}”`}
+                    ? t("ideas.menu.excludeChat")
+                    : t("ideas.menu.excludeThat")
+                  : t("ideas.menu.excludeQuote", { excerpt: basis.excerpt })}
             </Button>
           ))}
         </div>

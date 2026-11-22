@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 
 import { isPhone } from "../../hooks/page.js";
+import { translateNow } from "../../lib/i18n.js";
 import type { CanvasRun } from "../chat/store/types.js";
 import { notifyHidden } from "../needs/NeedNotify.js";
 import type { LivePluginFrameClient } from "../plugin-host/PluginFrame.js";
@@ -92,8 +93,8 @@ export function useTakeoverState({
     // card's Take control, so there it stays as the person left it.
     if (!isPhone()) setPanel((now) => (now.open ? now : { ...now, open: true }));
     notifyHidden(
-      "Tavi needs you in the browser",
-      asking.handoff.instructions ?? "Take control to act in the page.",
+      translateNow("takeover.handoff.asked"),
+      asking.handoff.instructions ?? translateNow("takeover.notify.take"),
       `handoff:${handoffKey}`,
     );
   }, [handoffKey]);
@@ -105,11 +106,7 @@ export function useTakeoverState({
     seenHandoffs.current = handoffs;
     // The first count is the baseline; the open chat's own handoff is said above, with its instructions.
     if (before === undefined || handoffs <= before || asking?.handoff !== undefined) return;
-    notifyHidden(
-      "Tavi needs you in the browser",
-      "A chat asks you to act in its browser. Open it to take control.",
-      `handoffs:${handoffs}`,
-    );
+    notifyHidden(translateNow("takeover.handoff.asked"), translateNow("takeover.notify.elsewhere"), `handoffs:${handoffs}`);
   }, [handoffs]);
   return { takeover, setTakeover, rereadTimer, takeoverActions, takeOverHere };
 }

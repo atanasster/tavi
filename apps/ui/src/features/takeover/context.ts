@@ -2,6 +2,8 @@ import type { TaviClient } from "@tavi/client/browser";
 import { errorMessage } from "@tavi/contracts/util";
 import { createContext, useContext } from "react";
 
+import { translateNow } from "../../lib/i18n.js";
+
 /** A session a person may take over, and the agent's request when it asked. */
 export interface TakeoverTarget {
   readonly taskId: string;
@@ -39,10 +41,10 @@ export async function declineThrough(
   note?: string,
 ): Promise<string | undefined> {
   const opened = await liveWatch(target.taskId, { workspaceId, sessionId: target.sessionId, onMessage: (_message, ack) => ack() });
-  if (opened.watch === undefined) return opened.response.error?.message ?? "The browser could not be reached.";
+  if (opened.watch === undefined) return opened.response.error?.message ?? translateNow("takeover.decline.unreachable");
   try {
     const answer = await opened.watch.control({ action: "decline", sessionId: target.sessionId, ...(note === undefined ? {} : { note }) });
-    return answer.ok ? undefined : (answer.error?.message ?? "Tavi could not be told.");
+    return answer.ok ? undefined : (answer.error?.message ?? translateNow("takeover.decline.untold"));
   } finally {
     await opened.watch.close();
   }
@@ -55,8 +57,8 @@ export async function declineThrough(
  * listed — say "Stop the agent".
  */
 export function stopLabel(chatKind: "home" | "side" | "worker" | "run" | "chat" | undefined, known: boolean): string {
-  if (!known || chatKind === "home" || chatKind === "worker") return "Stop the agent";
-  return chatKind === "run" ? "Stop the run" : "Stop the chat";
+  if (!known || chatKind === "home" || chatKind === "worker") return translateNow("takeover.stop.agent");
+  return translateNow(chatKind === "run" ? "takeover.stop.run" : "takeover.stop.chat");
 }
 
 /** An owner request's answer, as far as Stop reads it. */

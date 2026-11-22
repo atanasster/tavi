@@ -109,4 +109,5 @@ export const ui = {
   "ui.cadence.problemMonthly": "Избери един начин на повторение.",
   "ui.cadence.problemUntil": "Еднократното пускане няма крайна дата.",
   "ui.cadence.problemYearly": "Този месец няма такъв ден.",
+  "ui.hooks.openFailed": "{what} не се отвори: {reason}",
 } as const satisfies CatalogFor<typeof en>;

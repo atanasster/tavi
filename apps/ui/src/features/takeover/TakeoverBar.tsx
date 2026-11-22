@@ -1,4 +1,5 @@
 import { hostOf } from "../../lib/format.js";
+import { useT } from "../../lib/i18n.js";
 import { Button } from "../../ui/Button.js";
 import { formatLeft } from "./input.js";
 import type { Phase } from "./use-takeover-watch.js";
@@ -38,43 +39,46 @@ export function TakeoverBar({
   readonly stopLabel: string;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   return (
     <div className="takeover-bar">
       <div className="takeover-where">
         <strong id={`${id}-title`}>
           {phase === "control"
-            ? "You're in control — Tavi is paused"
+            ? t("takeover.bar.control")
             : phase === "pending" || phase === "taking"
-              ? "Taking control after the current step…"
+              ? t("takeover.bar.taking")
               : phase === "elsewhere"
-                ? "Controlled in another tab"
+                ? t("takeover.bar.elsewhere")
                 : phase === "unattended"
-                  ? "You still have control"
+                  ? t("takeover.bar.unattended")
                   : phase === "released"
-                    ? "Tavi has the browser"
-                    : "The browser could not be taken over"}
+                    ? t("takeover.bar.released")
+                    : t("takeover.bar.failed")}
         </strong>
-        <span className="muted"> · Tavi doesn't see what you type</span>
+        <span className="muted"> · {t("takeover.bar.unseen")}</span>
         <span className="takeover-address truncate">
           {hostOf(location.url, "")}
           {location.title === undefined ? "" : ` — ${location.title}`}
         </span>
         {left === undefined ? null : (
-          <span className={left <= TAKEOVER_DEADLINE_WARNING_MS ? "takeover-left warning" : "takeover-left"}>{formatLeft(left)} left</span>
+          <span className={left <= TAKEOVER_DEADLINE_WARNING_MS ? "takeover-left warning" : "takeover-left"}>
+            {t("takeover.left", { time: formatLeft(left) })}
+          </span>
         )}
       </div>
       <div className="takeover-actions">
         {phase === "elsewhere" || phase === "unattended" || (phase === "failed" && watching) ? (
           <Button variant="primary" onClick={onTake}>
-            {phase === "unattended" ? "Resume control" : "Take control here"}
+            {phase === "unattended" ? t("takeover.handoff.resume") : t("takeover.bar.takeHere")}
           </Button>
         ) : null}
         {phase === "control" ? (
           <>
             <Button variant="primary" onClick={() => onHand("done")}>
-              Done — hand back
+              {t("takeover.bar.done")}
             </Button>
-            <Button onClick={() => onHand("failed")}>Couldn't do it</Button>
+            <Button onClick={() => onHand("failed")}>{t("takeover.bar.couldNot")}</Button>
           </>
         ) : null}
         {onStop === undefined ? null : (
@@ -82,7 +86,7 @@ export function TakeoverBar({
             {stopLabel}
           </Button>
         )}
-        <Button aria-label={phase === "control" ? "Close (you keep control)" : "Close"} onClick={onClose}>
+        <Button aria-label={phase === "control" ? t("takeover.bar.closeKeep") : t("takeover.bar.close")} onClick={onClose}>
           ×
         </Button>
       </div>

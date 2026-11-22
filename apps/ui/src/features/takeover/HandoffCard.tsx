@@ -2,6 +2,7 @@ import type { BrowserHandoff } from "@tavi/contracts";
 import { useId, useState } from "react";
 
 import { useNow } from "../../hooks/use-poll.js";
+import { useT } from "../../lib/i18n.js";
 import { Failure, Notice } from "../../ui/Parts.js";
 import { useTakeover } from "./context.js";
 import { formatLeft } from "./input.js";
@@ -25,6 +26,7 @@ export function HandoffCard({
   readonly deadlineAt: string;
   readonly now?: () => number;
 }) {
+  const t = useT();
   const takeover = useTakeover();
   const id = useId();
   const clock = useNow(1000, true, now);
@@ -41,23 +43,24 @@ export function HandoffCard({
   const asked = handoff.reason !== "operator";
   return (
     <section className="handoff-card" aria-labelledby={`${id}-title`}>
-      <h3 id={`${id}-title`}>{asked ? "Tavi needs you in the browser" : "Tavi is waiting for you to hand the browser back"}</h3>
+      <h3 id={`${id}-title`}>{asked ? t("takeover.handoff.asked") : t("takeover.handoff.operator")}</h3>
       {handoff.instructions === undefined ? null : <p>{handoff.instructions}</p>}
       <p className="muted">
-        {Number.isFinite(left) ? `${formatLeft(left)} left` : null}
-        {" · "}Taking over shows the page as pictures: a screen reader cannot read it. If you cannot act in it, say so instead.
+        {Number.isFinite(left) ? t("takeover.left", { time: formatLeft(left) }) : null}
+        {" · "}
+        {t("takeover.handoff.pictures")}
       </p>
       {takeover === undefined ? (
-        <Notice>Open Tavi where the live browser view is offered to take over.</Notice>
+        <Notice>{t("takeover.handoff.noLiveView")}</Notice>
       ) : declined ? (
-        <Notice role="status">Told Tavi you could not do this.</Notice>
+        <Notice role="status">{t("takeover.handoff.declined")}</Notice>
       ) : declining ? (
         <NoteForm
           id={`${id}-note`}
-          label="Why not? (optional)"
+          label={t("takeover.handoff.whyNot")}
           note={note}
           onNote={setNote}
-          submit="Tell Tavi"
+          submit={t("takeover.note.tellTavi")}
           onSubmit={() => {
             void takeover.decline(target, note.trim() === "" ? undefined : note.trim()).then((why) => {
               if (why === undefined) setDeclined(true);
@@ -69,9 +72,9 @@ export function HandoffCard({
       ) : (
         <div className="handoff-actions">
           <Button variant="primary" onClick={() => takeover.open(target)}>
-            {asked ? "Take control" : "Resume control"}
+            {asked ? t("takeover.handoff.take") : t("takeover.handoff.resume")}
           </Button>
-          {asked ? <Button onClick={() => setDeclining(true)}>I can't do this</Button> : null}
+          {asked ? <Button onClick={() => setDeclining(true)}>{t("takeover.handoff.decline")}</Button> : null}
         </div>
       )}
       <Failure message={failure} />

@@ -105,4 +105,6 @@ export const ui = {
   "ui.cadence.problemMonthly": "Choose one way of repeating.",
   "ui.cadence.problemUntil": "A cadence that runs once has no end date.",
   "ui.cadence.problemYearly": "That month has no such day.",
+  /** `{what}` is a translated "Task t1", "Worker w1" or "Chat t1". */
+  "ui.hooks.openFailed": "{what} could not be opened: {reason}",
 } as const;

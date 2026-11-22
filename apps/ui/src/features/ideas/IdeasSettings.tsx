@@ -7,6 +7,7 @@ import {
 } from "@tavi/contracts";
 import { useEffect, useId, useState } from "react";
 
+import { translateNow, useT } from "../../lib/i18n.js";
 import { weekdayName, whenLocal } from "../../lib/time.js";
 import { PageHead, PageNote, Pending } from "../../ui/Parts.js";
 import { mapOutcome, type Outcome, type SettingsClient } from "../../lib/ipc.js";
@@ -31,6 +32,7 @@ import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
 import { useTimeZone, useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * Settings → Ideas: the switches — ideas on, the
@@ -67,9 +69,9 @@ const said =
   };
 
 const SOURCES = [
-  { key: "memory", label: "What you have told me (approved, non-sensitive memory)" },
-  { key: "tasks", label: "Your recent chats (titles and summaries)" },
-  { key: "brief", label: "Your brief" },
+  { key: "memory", labelKey: "ideas.settings.source.memory" },
+  { key: "tasks", labelKey: "ideas.settings.source.tasks" },
+  { key: "brief", labelKey: "ideas.settings.source.brief" },
 ] as const;
 
 /**
@@ -78,9 +80,9 @@ const SOURCES = [
  * not promise a look that will not come.
  */
 function briefSaved(settings: IdeaSettings): string {
-  if (!settings.enabled) return "Brief saved. Ideas are off: no look reads it until they are on.";
-  if (!settings.sources.brief) return "Brief saved. Ideas do not read it while “Your brief” is off above.";
-  return "Brief saved: the next look reads it.";
+  if (!settings.enabled) return translateNow("ideas.brief.savedOff");
+  if (!settings.sources.brief) return translateNow("ideas.brief.savedUnread");
+  return translateNow("ideas.brief.savedNext");
 }
 
 /**
@@ -93,20 +95,22 @@ function sourceLabel(source: {
   readonly title?: string | undefined;
 }): string {
   const title = source.title?.trim();
-  if (title !== undefined && title !== "" && (source.kind === undefined || source.kind === "task")) return `Chat “${title}”`;
+  if (title !== undefined && title !== "" && (source.kind === undefined || source.kind === "task"))
+    return translateNow("ideas.settings.sourceChat", { title });
   switch (source.kind ?? (source.ref === "brief" ? "brief" : undefined)) {
     case "brief":
-      return "Your brief";
+      return translateNow("ideas.settings.sourceBrief");
     case "task":
-      return `A chat (${source.ref})`;
+      return translateNow("ideas.settings.sourceTask", { ref: source.ref });
     case "memory":
-      return `Something you told me (${source.ref})`;
+      return translateNow("ideas.settings.sourceMemory", { ref: source.ref });
     default:
-      return `A source (${source.ref})`;
+      return translateNow("ideas.settings.sourceOther", { ref: source.ref });
   }
 }
 
 export function IdeasSettings() {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const timeZone = useTimeZone();
   const { data, error, loading, reload } = useLoaded(() => loadAll(client, workspaceId));
@@ -116,20 +120,19 @@ export function IdeasSettings() {
   const ids = useId();
   // A saved brief that changed resets the draft; a reload after another action keeps what is being typed.
   useEffect(() => setBriefDraft(data?.brief), [data?.brief]);
-  const heading = (
-    <PageHead
-      className="settings-head"
-      title="Ideas"
-      description="What Ideas may read and show, and everything you hid with an idea's ⋯ menu, to bring back."
-    />
-  );
+  const heading = <PageHead className="settings-head" title={t("ideas.settings.title")} description={t("ideas.settings.description")} />;
   // A reload that failed after a good read keeps the page, and says the page may be out of date.
   const loadError = error === undefined ? null : <LoadError error={error} reload={reload} />;
   if (data === undefined) {
     return (
-      <section className="settings ideas-settings" aria-label="ideas">
+      <section className="settings ideas-settings" aria-label={t("ideas.settings.region")}>
         {heading}
-        <Pending error={loading ? undefined : (error ?? "Ideas could not be read.")} reload={reload} className="notice meta-sm" status />
+        <Pending
+          error={loading ? undefined : (error ?? t("ideas.settings.unreadable"))}
+          reload={reload}
+          className="notice meta-sm"
+          status
+        />
       </section>
     );
   }
@@ -140,11 +143,11 @@ export function IdeasSettings() {
   const change = (key: string, changes: Parameters<typeof changeIdeasSettings>[2], words: string) =>
     void run(key, () => said(words)(changeIdeasSettings(client, workspaceId, changes)));
   return (
-    <section className="settings ideas-settings" aria-label="ideas">
+    <section className="settings ideas-settings" aria-label={t("ideas.settings.region")}>
       {heading}
       {loadError}
       <PageNote tone={tone} note={note} />
-      <Card as="div" level={2} title="Switches">
+      <Card as="div" level={2} title={t("ideas.settings.switches")}>
         <p>
           <label>
             <input
@@ -155,11 +158,11 @@ export function IdeasSettings() {
                 change(
                   "enabled",
                   { enabled: event.target.checked },
-                  event.target.checked ? "Ideas are on." : "Ideas are off: none are looked for or shown.",
+                  event.target.checked ? t("ideas.settings.enabledOn") : t("ideas.settings.enabledOff"),
                 )
               }
             />
-            Look for ideas
+            {t("ideas.settings.enabled")}
           </label>
         </p>
         <p>
@@ -169,39 +172,39 @@ export function IdeasSettings() {
               checked={settings.chips}
               disabled={busy !== undefined}
               onChange={(event) =>
-                change("chips", { chips: event.target.checked }, event.target.checked ? "Suggestions are on." : "Suggestions are off.")
+                change(
+                  "chips",
+                  { chips: event.target.checked },
+                  event.target.checked ? t("ideas.settings.chipsOn") : t("ideas.settings.chipsOff"),
+                )
               }
             />
-            Suggest prompts in an empty chat
+            {t("ideas.settings.chips")}
           </label>
         </p>
         <p className="meta-sm">
           {/* Tavi's own writer is said in words; another provider by its id, which is what the command takes. */}
-          {list.provider === BUILTIN_IDEAS_PROVIDER_ID ? (
-            "Written by Tavi itself."
-          ) : (
-            <>
-              Written by <code>{list.provider}</code>.
-            </>
-          )}{" "}
-          Switch it with <Command>tavi ideas provider</Command> in a terminal.
+          {list.provider === BUILTIN_IDEAS_PROVIDER_ID
+            ? t("ideas.settings.writtenByTavi")
+            : withParts(t("ideas.settings.writtenBy"), { provider: <code>{list.provider}</code> })}{" "}
+          {withParts(t("ideas.settings.switchProvider"), { command: <Command>tavi ideas provider</Command> })}
         </p>
         <p className="meta-sm">
           {lastLooked(list.lastRun, timeZone)}
           {list.nextAt === undefined
             ? ""
-            : ` Next ${whenLocal(list.nextAt, timeZone)}, between ${settings.hours.start} and ${settings.hours.end}.`}
+            : ` ${t("ideas.settings.next", { when: whenLocal(list.nextAt, timeZone), start: settings.hours.start, end: settings.hours.end })}`}
         </p>
         {/* The digest sends to a chat outside this page, so it is only set where the operator is: shown here, read-only. */}
         <p className="meta-sm ideas-digest">
           {settings.digest === undefined
-            ? "Weekly digest: off."
-            : `Weekly digest: on, to connection ${settings.digest.channel} every ${weekdayName(settings.digest.weekday)}.`}{" "}
-          Set it with <Command>tavi ideas digest</Command> in a terminal.
+            ? t("ideas.settings.digestOff")
+            : t("ideas.settings.digestOn", { channel: settings.digest.channel, weekday: weekdayName(settings.digest.weekday) })}{" "}
+          {withParts(t("ideas.settings.digestSet"), { command: <Command>tavi ideas digest</Command> })}
         </p>
       </Card>
       {/* What a look reads, apart from when it looks: each one a switch, named as the reader knows it. */}
-      <Card as="div" level={2} title="What Ideas may read">
+      <Card as="div" level={2} title={t("ideas.settings.sources")}>
         {SOURCES.map((source) => (
           <p key={source.key}>
             <label>
@@ -213,16 +216,16 @@ export function IdeasSettings() {
                   change(
                     `source-${source.key}`,
                     { sources: { [source.key]: event.target.checked } },
-                    event.target.checked ? "Ideas may read it again." : "Ideas no longer read it, and stop quoting it.",
+                    event.target.checked ? t("ideas.settings.sourceOn") : t("ideas.settings.sourceOff"),
                   )
                 }
               />
-              {source.label}
+              {t(source.labelKey)}
             </label>
           </p>
         ))}
       </Card>
-      <Card as="div" level={2} title="Your brief">
+      <Card as="div" level={2} title={t("ideas.settings.brief")}>
         <BriefField id={`${ids}-brief`} value={brief} onChange={setBriefDraft} />
         <p>
           <Button
@@ -231,35 +234,40 @@ export function IdeasSettings() {
             disabled={busy !== undefined || brief === data.brief}
             onClick={() => void run("brief", () => said(briefSaved(settings))(setBrief(client, workspaceId, brief ?? "")))}
           >
-            Save brief
+            {t("ideas.settings.saveBrief")}
           </Button>
         </p>
       </Card>
-      <Card as="div" level={2} title="Hidden ideas">
+      <Card as="div" level={2} title={t("ideas.settings.hidden")}>
         {hidden.length === 0 ? (
-          <p className="meta-sm">None: nothing was set aside with Not now or Not interested.</p>
+          <p className="meta-sm">{t("ideas.settings.hiddenNone")}</p>
         ) : (
           hidden.map((idea) => (
             <div key={idea.id} className="item-row">
               <span>
-                {idea.title} <span className="meta-sm">({idea.status === "snoozed" ? "not now" : "not interested"})</span>
+                {idea.title}{" "}
+                <span className="meta-sm">
+                  {idea.status === "snoozed" ? t("ideas.settings.hiddenNotNow") : t("ideas.settings.hiddenNotInterested")}
+                </span>
               </span>
               <RowAction
                 disabled={busy !== undefined}
                 onClick={() =>
-                  void run(`restore-${idea.id}`, () => said(`${idea.title}: back.`)(restoreIdea(client, workspaceId, idea.id)))
+                  void run(`restore-${idea.id}`, () =>
+                    said(t("ideas.settings.restored", { title: idea.title }))(restoreIdea(client, workspaceId, idea.id)),
+                  )
                 }
-                aria-label={`Bring back ${idea.title}`}
+                aria-label={t("ideas.settings.bringBackLabel", { title: idea.title })}
               >
-                Bring back
+                {t("ideas.settings.bringBack")}
               </RowAction>
             </div>
           ))
         )}
       </Card>
-      <Card as="div" level={2} title="Muted sections">
+      <Card as="div" level={2} title={t("ideas.settings.muted")}>
         {list.mutedCategories.length === 0 ? (
-          <p className="meta-sm">None.</p>
+          <p className="meta-sm">{t("ideas.settings.none")}</p>
         ) : (
           list.mutedCategories.map((category) => (
             <div key={category} className="item-row">
@@ -268,22 +276,22 @@ export function IdeasSettings() {
                 disabled={busy !== undefined}
                 onClick={() =>
                   void run(`unmute-${category}`, () =>
-                    said(`${IDEA_CATEGORY_LABELS[category]} is back.`)(
+                    said(t("ideas.settings.unmuted", { section: IDEA_CATEGORY_LABELS[category] }))(
                       ideaFeedback(client, workspaceId, { signal: "unmute-category", category }),
                     ),
                   )
                 }
-                aria-label={`Unmute ${IDEA_CATEGORY_LABELS[category]}`}
+                aria-label={t("ideas.settings.unmuteLabel", { section: IDEA_CATEGORY_LABELS[category] })}
               >
-                Unmute
+                {t("ideas.settings.unmute")}
               </RowAction>
             </div>
           ))
         )}
       </Card>
-      <Card as="div" level={2} title="Sources not used">
+      <Card as="div" level={2} title={t("ideas.settings.excluded")}>
         {excluded.length === 0 ? (
-          <p className="meta-sm">None: every source Ideas may read is used.</p>
+          <p className="meta-sm">{t("ideas.settings.excludedNone")}</p>
         ) : (
           excluded.map((source) => (
             <div key={source.ref} className="item-row">
@@ -292,33 +300,33 @@ export function IdeasSettings() {
                 disabled={busy !== undefined}
                 onClick={() =>
                   void run(`include-${source.ref}`, () =>
-                    said("It is used for ideas again.")(
+                    said(t("ideas.settings.included"))(
                       ideaFeedback(client, workspaceId, { signal: "include-basis", basisRef: source.ref }),
                     ),
                   )
                 }
-                aria-label={`Use ${sourceLabel(source)} again`}
+                aria-label={t("ideas.settings.useAgainLabel", { source: sourceLabel(source) })}
               >
-                Use again
+                {t("ideas.settings.useAgain")}
               </RowAction>
             </div>
           ))
         )}
       </Card>
-      <Card as="div" level={2} title="Start over">
+      <Card as="div" level={2} title={t("ideas.settings.startOver")}>
         <p className="meta-sm">
-          Forget everything hidden and set aside{list.mutedCategories.length === 0 ? "" : ", or unmute every section at once"}.
+          {list.mutedCategories.length === 0 ? t("ideas.settings.startOverHint") : t("ideas.settings.startOverHintMuted")}
         </p>
         <p>
           <Button variant="secondary" size="sm" disabled={busy !== undefined} onClick={() => setConfirming("ledger")}>
-            Forget what I hid
+            {t("ideas.settings.forget")}
           </Button>
           {/* Offered only while a section is muted: with none, it would do nothing. */}
           {list.mutedCategories.length === 0 ? null : (
             <>
               {" "}
               <Button variant="secondary" size="sm" disabled={busy !== undefined} onClick={() => setConfirming("categories")}>
-                Unmute every section
+                {t("ideas.settings.unmuteAll")}
               </Button>
             </>
           )}
@@ -326,19 +334,15 @@ export function IdeasSettings() {
       </Card>
       {confirming === undefined ? null : (
         <Confirm
-          title={confirming === "ledger" ? "Forget what you hid?" : "Unmute every section?"}
-          message={
-            confirming === "ledger"
-              ? "Every idea you said Not interested or Not now to may be offered again, every source you set aside is used again, and the prompts you rewrote are no longer kept as examples."
-              : "Ideas from every section may be offered again."
-          }
-          action={confirming === "ledger" ? "Forget" : "Unmute all"}
+          title={confirming === "ledger" ? t("ideas.settings.confirmForgetTitle") : t("ideas.settings.confirmUnmuteTitle")}
+          message={confirming === "ledger" ? t("ideas.settings.confirmForget") : t("ideas.settings.confirmUnmute")}
+          action={confirming === "ledger" ? t("ideas.settings.forgetAction") : t("ideas.settings.unmuteAllAction")}
           onClose={() => setConfirming(undefined)}
           onConfirm={async () => {
             const what = confirming;
             setConfirming(undefined);
             await run(`reset-${what}`, () =>
-              said(what === "ledger" ? "Forgotten: hidden ideas and set-aside sources may come back." : "Every section is unmuted.")(
+              said(what === "ledger" ? t("ideas.settings.forgotten") : t("ideas.settings.allUnmuted"))(
                 resetIdeas(client, workspaceId, what),
               ),
             );

@@ -10,6 +10,7 @@ import {
 import type { LiveWatch, TaviClient } from "@tavi/client/browser";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 
+import { useT } from "../../lib/i18n.js";
 import { refusal } from "../../lib/ipc.js";
 import { useModalFocus } from "../../hooks/use-modal-focus.js";
 import { useNow } from "../../hooks/use-poll.js";
@@ -71,16 +72,8 @@ export const TAKEOVER_IDLE_MS = 10 * 60_000;
 /** Unanswered this long, it hands back as `timeout`. */
 export const TAKEOVER_STILL_WORKING_MS = 2 * 60_000;
 
-export function Takeover({
-  client,
-  taskId,
-  sessionId,
-  handoff,
-  onClose,
-  onStopTask,
-  stopLabel = "Stop the agent",
-  now = Date.now,
-}: TakeoverProps) {
+export function Takeover({ client, taskId, sessionId, handoff, onClose, onStopTask, stopLabel, now = Date.now }: TakeoverProps) {
+  const t = useT();
   const { workspaceId } = useWorkspace();
   const id = useId();
   /** The overlay: modal over the page, so the page behind it is inert and focus returns to it on close. */
@@ -137,7 +130,7 @@ export function Takeover({
     const open = watch.current;
     if (open === undefined) return false;
     const answer = await open.control(request);
-    if (!answer.ok) setFailure(refusal(answer, "The browser did not take that."));
+    if (!answer.ok) setFailure(refusal(answer, t("takeover.page.refused")));
     return answer.ok;
   };
 
@@ -216,7 +209,7 @@ export function Takeover({
     if (phase !== "control" || asked) return;
     if (!stillWorking && idleFor >= TAKEOVER_IDLE_MS) {
       setStillWorking(true);
-      announce("Still working? Tavi will take the browser back in two minutes.");
+      announce(t("takeover.page.stillWorkingSaid"));
     } else if (stillWorking && !timedOut.current && idleFor >= TAKEOVER_IDLE_MS + TAKEOVER_STILL_WORKING_MS) {
       timedOut.current = true;
       void handBack("timeout");
@@ -260,11 +253,7 @@ export function Takeover({
     if (await control({ action: "release", sessionId, outcome, ...(trimmed === undefined || trimmed === "" ? {} : { note: trimmed }) })) {
       setPhase("released");
       announce(
-        outcome === "done"
-          ? "Handed back to Tavi."
-          : outcome === "failed"
-            ? "Told Tavi it could not be done."
-            : "Tavi has the browser back.",
+        outcome === "done" ? t("takeover.page.handedBack") : outcome === "failed" ? t("takeover.page.toldFailed") : t("takeover.page.back"),
       );
       onClose();
     } else handingBack.current = false;
@@ -281,7 +270,7 @@ export function Takeover({
     }
     setFailure(undefined);
     for (const [index, file] of files.entries()) {
-      setUploading(`Sending ${file.name} (${index + 1} of ${files.length})…`);
+      setUploading(t("takeover.page.sending", { name: file.name, index: index + 1, total: files.length }));
       const chunks = uploadChunks(new Uint8Array(await file.arrayBuffer()));
       for (const [position, chunk] of chunks.entries()) {
         const sent = await control({
@@ -305,8 +294,13 @@ export function Takeover({
     }
     setUploading(undefined);
     setChooser(undefined);
+    const name = files.length === 1 ? files[0]?.name : undefined;
     announce(
-      files.length === 1 ? `${files[0]?.name ?? "The file"} was handed to the page.` : `${files.length} files were handed to the page.`,
+      files.length !== 1
+        ? t("takeover.page.filesHanded", { count: files.length })
+        : name === undefined
+          ? t("takeover.page.fileHandedUnnamed")
+          : t("takeover.page.fileHanded", { name }),
     );
   };
 
@@ -344,18 +338,18 @@ export function Takeover({
         onTake={() => void control({ action: "take", sessionId, ...takeOptions() }).then((ok) => ok && setPhase("control"))}
         onHand={setHanding}
         onStop={onStopTask === undefined ? undefined : () => void onStopTask().then((why) => why !== undefined && setFailure(why))}
-        stopLabel={stopLabel}
+        stopLabel={stopLabel ?? t("takeover.stop.agent")}
         onClose={onClose}
       />
       {handoff?.instructions === undefined ? null : <p className="takeover-instructions">{handoff.instructions}</p>}
       {left !== undefined && left <= TAKEOVER_DEADLINE_WARNING_MS && left > 0 ? (
-        <Notice role="status">Two minutes left: hand back, or Tavi takes the browser back when time runs out.</Notice>
+        <Notice role="status">{t("takeover.page.twoMinutes")}</Notice>
       ) : null}
       {stillWorking ? (
         <Notice as="div" role="alertdialog" aria-labelledby={`${id}-still`} aria-describedby={`${id}-still-why`}>
-          <span id={`${id}-still`}>Still working?</span>{" "}
+          <span id={`${id}-still`}>{t("takeover.page.stillWorking")}</span>{" "}
           <span id={`${id}-still-why`} className="visually-hidden">
-            Tavi takes the browser back in two minutes.
+            {t("takeover.page.stillWorkingWhy")}
           </span>
           <Button
             ref={keepControl}
@@ -365,7 +359,7 @@ export function Takeover({
               surface.current?.focus();
             }}
           >
-            Keep control
+            {t("takeover.page.keepControl")}
           </Button>
         </Notice>
       ) : null}
@@ -374,10 +368,10 @@ export function Takeover({
         <NoteForm
           id={`${id}-note`}
           className="takeover-note"
-          label={handing === "done" ? "Anything Tavi should know?" : "What went wrong? (optional)"}
+          label={handing === "done" ? t("takeover.page.anything") : t("takeover.page.whatWentWrong")}
           note={note}
           onNote={setNote}
-          submit={handing === "done" ? "Hand back" : "Tell Tavi"}
+          submit={handing === "done" ? t("takeover.page.handBack") : t("takeover.note.tellTavi")}
           submitClassName="button-primary"
           onSubmit={() => void handBack(handing, note)}
           onCancel={() => setHanding(undefined)}
@@ -389,7 +383,7 @@ export function Takeover({
         // biome-ignore lint/a11y/noNoninteractiveTabindex: role=application is the interactive surface that takes the person's keys and pointer
         tabIndex={0}
         role="application"
-        aria-label="The page, under your control. Tavi doesn't see what you type. A screen reader cannot read the page here."
+        aria-label={t("takeover.page.surface")}
         onKeyDown={onKey("down")}
         onKeyUp={onKey("up")}
         onPaste={(event) => {
@@ -400,12 +394,12 @@ export function Takeover({
         }}
       >
         {picture === undefined ? (
-          <p className="muted">Waiting for the page…</p>
+          <p className="muted">{t("takeover.page.waiting")}</p>
         ) : (
           <img
             ref={image}
             src={picture.src}
-            alt={location.title ?? "The page"}
+            alt={location.title ?? t("takeover.page.image")}
             draggable={false}
             onPointerDown={onPointer("down")}
             onPointerMove={onPointer("move")}
@@ -419,7 +413,7 @@ export function Takeover({
         <textarea
           ref={typing}
           className="takeover-typing"
-          aria-label="Type into the page"
+          aria-label={t("takeover.page.typing")}
           autoCapitalize="off"
           autoCorrect="off"
           spellCheck={false}

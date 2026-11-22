@@ -1,6 +1,7 @@
 import { hostTimeZone, localDateTime, type Idea, type IdeasRecurAnswer, type RoutineDetail } from "@tavi/contracts";
 import { useId, useRef, useState } from "react";
 
+import { useT } from "../../lib/i18n.js";
 import { nextPart } from "../../lib/parts.js";
 import { weekdayName } from "../../lib/time.js";
 import { localToInstant } from "../center/reminder-model.js";
@@ -35,6 +36,7 @@ export function RecurIdea({
   /** Said once the routine exists. */
   readonly onDone: (note: string) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const timeZone = useTimeZone();
   const [name, setName] = useState(draft.name);
@@ -71,9 +73,7 @@ export function RecurIdea({
       if (!created.ok) return created.message;
       // The routine exists: the idea is done. Should that note fail, the routine still stands, and the page says so.
       const done = await madeRecurring(client, workspaceId, idea.id, created.value.routine.routineId);
-      said.current = done.ok
-        ? `Routine “${name}” created; it starts once its check passes.`
-        : `Routine “${name}” created; the idea could not be marked done: ${done.message}`;
+      said.current = done.ok ? t("ideas.recur.created", { name }) : t("ideas.recur.createdNotMarked", { name, message: done.message });
       return undefined;
     },
     () => onDone(said.current),
@@ -89,7 +89,7 @@ export function RecurIdea({
     return true;
   };
   return (
-    <Modal title="Make it recurring" busy={saving} onClose={onClose}>
+    <Modal title={t("ideas.recur.title")} busy={saving} onClose={onClose}>
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -98,13 +98,13 @@ export function RecurIdea({
           submit();
         }}
       >
-        <BusyFieldset busy={saving} label="Creating the routine…" className="settings-fields">
+        <BusyFieldset busy={saving} label={t("ideas.recur.creating")} className="settings-fields">
           <label>
-            Name
+            {t("ideas.recur.name")}
             <input required value={name} maxLength={200} onChange={(event) => setName(event.target.value)} />
           </label>
           <label>
-            What to do each time
+            {t("ideas.recur.objective")}
             <textarea
               ref={box}
               required
@@ -119,14 +119,13 @@ export function RecurIdea({
           </label>
           {unfilled === undefined ? null : (
             <Failure alert={false} id={unfilledId}>
-              {unfilled} is not filled in, and nobody is there to ask when the routine runs. Fill it in, or create the routine again to keep
-              it as it is.
+              {t("ideas.recur.unfilled", { part: unfilled })}
             </Failure>
           )}
           {draft.cadence === "weekly" ? (
             <label>
-              Every
-              <Select aria-label="Day of the week" value={day} onChange={(event) => setDay(event.target.value)}>
+              {t("ideas.recur.every")}
+              <Select aria-label={t("ideas.recur.weekday")} value={day} onChange={(event) => setDay(event.target.value)}>
                 {WEEKDAY_NUMBERS.map((weekday) => (
                   <option key={weekday} value={String(weekday)}>
                     {weekdayName(weekday)}
@@ -135,17 +134,15 @@ export function RecurIdea({
               </Select>
             </label>
           ) : (
-            <p className="meta-sm">Every day.</p>
+            <p className="meta-sm">{t("ideas.recur.everyDay")}</p>
           )}
           <label>
-            At
+            {t("ideas.recur.at")}
             <input type="time" required value={at} onChange={(event) => setAt(event.target.value)} />
           </label>
-          <p className="meta-sm">
-            Times are in {zone}. Tavi checks a new routine before it starts, and nothing is sent anywhere unless you add a destination.
-          </p>
+          <p className="meta-sm">{t("ideas.recur.zone", { zone })}</p>
           {failure === undefined ? null : <Failure>{failure}</Failure>}
-          <FormActions saving={saving} label="Create routine" onCancel={onClose} />
+          <FormActions saving={saving} label={t("ideas.recur.create")} onCancel={onClose} />
         </BusyFieldset>
       </form>
     </Modal>
@@ -170,6 +167,7 @@ export function RemindIdea({
   readonly onDone: (note: string) => void;
   readonly now?: () => Date;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const timeZone = useTimeZone();
   const zone = timeZone ?? hostTimeZone();
@@ -179,29 +177,29 @@ export function RemindIdea({
     async () => {
       const [date = "", time = ""] = when.split("T");
       const at = localToInstant(date, time.slice(0, 5), zone);
-      if (at === undefined || Date.parse(at) <= now().getTime()) return "Pick a time still ahead.";
+      if (at === undefined || Date.parse(at) <= now().getTime()) return t("ideas.remind.ahead");
       const outcome = await remindIdea(client, workspaceId, idea.id, at);
       return outcome.ok ? undefined : outcome.message;
     },
-    () => onDone(`I'll remind you about “${idea.title}”.`),
+    () => onDone(t("ideas.remind.done", { title: idea.title })),
   );
   return (
-    <Modal title="Remind me" busy={saving} onClose={onClose}>
+    <Modal title={t("ideas.remind.title")} busy={saving} onClose={onClose}>
       <form
         onSubmit={(event) => {
           event.preventDefault();
           submit();
         }}
       >
-        <BusyFieldset busy={saving} label="Setting the reminder…" className="settings-fields">
+        <BusyFieldset busy={saving} label={t("ideas.remind.setting")} className="settings-fields">
           <p>{idea.title}</p>
           <label>
-            When ({zone} time)
+            {t("ideas.remind.when", { zone })}
             <input type="datetime-local" required value={when} onChange={(event) => setWhen(event.target.value)} />
           </label>
-          <p className="meta-sm">The reminder says the idea; nothing runs until you start it.</p>
+          <p className="meta-sm">{t("ideas.remind.hint")}</p>
           {failure === undefined ? null : <Failure>{failure}</Failure>}
-          <FormActions saving={saving} label="Set reminder" onCancel={onClose} />
+          <FormActions saving={saving} label={t("ideas.remind.set")} onCancel={onClose} />
         </BusyFieldset>
       </form>
     </Modal>

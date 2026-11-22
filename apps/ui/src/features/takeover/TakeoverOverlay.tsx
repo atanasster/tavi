@@ -1,5 +1,6 @@
 import { Suspense, type MutableRefObject } from "react";
 
+import { translateNow } from "../../lib/i18n.js";
 import { refusal } from "../../lib/ipc.js";
 import type { CanvasRun, CanvasState, CanvasStore } from "../chat/store/types.js";
 import type { LivePluginFrameClient } from "../plugin-host/PluginFrame.js";
@@ -92,7 +93,7 @@ export function TakeoverOverlay({
                     return undefined;
                   }
                   const stopped = await stopTakenOverTask(request, { taskId, workspaceId, isHome: store.getSnapshot().home === taskId });
-                  if (!stopped.ok) return refusal(stopped, "The agent could not be stopped.");
+                  if (!stopped.ok) return refusal(stopped, translateNow("takeover.stop.failed"));
                   setTakeover(undefined);
                   return undefined;
                 }

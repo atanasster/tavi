@@ -1,6 +1,7 @@
 import type { BrowserLiveMessage } from "@tavi/contracts";
 import type { KeyboardEvent, RefObject } from "react";
 
+import { useT } from "../../lib/i18n.js";
 import { Button } from "../../ui/Button.js";
 import { StatusNote } from "../../ui/Parts.js";
 
@@ -24,12 +25,13 @@ export function TakeoverPicker({
   readonly onPick: (value: string) => void;
   readonly onCancel: () => void;
 }) {
+  const t = useT();
   return (
     <div
       ref={boxRef}
       className="takeover-picker surface-popover"
       role="group"
-      aria-label="Choose an option"
+      aria-label={t("takeover.picker.label")}
       onKeyDown={onKeyDown}
       style={picker.box === undefined ? undefined : { left: `${picker.box.x}px`, top: `${picker.box.y + picker.box.height}px` }}
     >
@@ -43,7 +45,7 @@ export function TakeoverPicker({
           {option.label}
         </Button>
       ))}
-      <Button onClick={onCancel}>Cancel</Button>
+      <Button onClick={onCancel}>{t("ui.confirm.cancel")}</Button>
     </div>
   );
 }
@@ -64,14 +66,13 @@ export function TakeoverChooser({
   readonly onFiles: (files: readonly File[]) => void;
   readonly onCancel: () => void;
 }) {
+  const t = useT();
   return (
     <div className="takeover-dialog surface-popover" role="alertdialog" aria-labelledby={`${id}-chooser`}>
-      <p id={`${id}-chooser`}>
-        {chooser.multiple ? "The page asks for files." : "The page asks for a file."} They go to the page from here, and Tavi keeps no copy.
-      </p>
+      <p id={`${id}-chooser`}>{chooser.multiple ? t("takeover.chooser.files") : t("takeover.chooser.file")}</p>
       <input
         type="file"
-        aria-label="Choose files for the page"
+        aria-label={t("takeover.chooser.label")}
         multiple={chooser.multiple}
         {...(chooser.accept === undefined ? {} : { accept: chooser.accept })}
         disabled={uploading !== undefined}
@@ -84,7 +85,7 @@ export function TakeoverChooser({
       />
       <StatusNote note={uploading} className="muted" />
       <Button disabled={uploading !== undefined} onClick={onCancel}>
-        Cancel
+        {t("ui.confirm.cancel")}
       </Button>
     </div>
   );
@@ -108,14 +109,17 @@ export function TakeoverDialog({
   readonly onOk: () => void;
   readonly onCancel: () => void;
 }) {
+  const t = useT();
   return (
     <div className="takeover-dialog surface-popover" role="alertdialog" aria-labelledby={`${id}-dialog`}>
       <p id={`${id}-dialog`}>{dialog.message}</p>
-      {dialog.type === "prompt" ? <input aria-label="Answer" value={text} onChange={(event) => onText(event.target.value)} /> : null}
+      {dialog.type === "prompt" ? (
+        <input aria-label={t("takeover.dialog.answer")} value={text} onChange={(event) => onText(event.target.value)} />
+      ) : null}
       <Button variant="primary" onClick={onOk}>
-        OK
+        {t("takeover.dialog.ok")}
       </Button>{" "}
-      {dialog.type === "alert" ? null : <Button onClick={onCancel}>Cancel</Button>}
+      {dialog.type === "alert" ? null : <Button onClick={onCancel}>{t("ui.confirm.cancel")}</Button>}
     </div>
   );
 }

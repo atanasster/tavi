@@ -3,6 +3,7 @@ import type { PluginUiContext, PluginUiNavigation, PluginUiPlacement, PluginUiSh
 import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import { useModalFocus } from "../../hooks/use-modal-focus.js";
+import { useT } from "../../lib/i18n.js";
 import { IconButton } from "../../ui/IconButton.js";
 import { PluginFrame, type PluginFrameClient } from "./PluginFrame.js";
 import { contributionKey, type ResolvedContribution } from "./slots.js";
@@ -45,6 +46,7 @@ export function PluginPanelTab({
   /** What the plugin's own code published for the chat in view. */
   readonly modState?: Readonly<Record<string, unknown>> | undefined;
 }) {
+  const t = useT();
   const browser = item.contribution.role === "browser-view";
   const large = expanded && browser;
   const view = useRef<HTMLDivElement>(null);
@@ -115,8 +117,8 @@ export function PluginPanelTab({
               <IconButton
                 icon={large ? "minimize" : "maximize"}
                 size="sm"
-                label={large ? "Shrink the browser view" : "Expand the browser view"}
-                tooltip={large ? "Shrink (Esc)" : "Expand"}
+                label={large ? t("pluginHost.tab.shrink") : t("pluginHost.tab.expand")}
+                tooltip={large ? t("pluginHost.tab.shrinkTip") : t("pluginHost.tab.expandTip")}
                 aria-pressed={large}
                 onClick={() => onExpanded(!large)}
               />

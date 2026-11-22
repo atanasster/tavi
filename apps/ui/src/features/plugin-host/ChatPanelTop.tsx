@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } fr
 
 import { usePhone } from "../../hooks/page.js";
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
+import { useT } from "../../lib/i18n.js";
 import { IconButton } from "../../ui/IconButton.js";
 import type { SheetSnap } from "../chat-panel/ChatPanel.js";
 import { ask, type SettingsClient } from "../../lib/ipc.js";
@@ -147,6 +148,7 @@ function TopItem({
   onTakeOver,
   attention,
 }: Omit<ChatPanelTopProps, "items" | "active"> & { readonly item: ChatPanelTopProps["items"][number]; readonly phone: boolean }) {
+  const t = useT();
   const key = contributionKey(item);
   const bounds = item.placement.height ?? DEFAULT_HEIGHT;
   // Asked for a person: shown, whatever the reader collapsed earlier — as it opens, and each time it asks again.
@@ -186,7 +188,11 @@ function TopItem({
         <IconButton
           icon={state.collapsed ? "chevron-down" : "chevron-up"}
           size="sm"
-          label={state.collapsed ? `Show ${item.contribution.title}` : `Hide ${item.contribution.title}`}
+          label={
+            state.collapsed
+              ? t("pluginHost.top.show", { title: item.contribution.title })
+              : t("pluginHost.top.hide", { title: item.contribution.title })
+          }
           aria-expanded={!state.collapsed}
           onClick={() => update({ ...state, collapsed: !state.collapsed })}
         />
@@ -211,7 +217,7 @@ function TopItem({
           className="chat-panel-top-resizer"
           role="separator"
           aria-orientation="horizontal"
-          aria-label={`Resize ${item.contribution.title}`}
+          aria-label={t("pluginHost.top.resize", { title: item.contribution.title })}
           aria-valuenow={height}
           aria-valuemin={bounds.min}
           aria-valuemax={bounds.max}

@@ -1,6 +1,7 @@
 import { IDEA_CATEGORY_LABELS, type Idea, type IdeaRun, type IdeasListAnswer, type IdeasRecurAnswer } from "@tavi/contracts";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
+import { useT } from "../../lib/i18n.js";
 import { whenLocal } from "../../lib/time.js";
 import { Icon } from "../../ui/Icon.js";
 import { Failure, Notice, Pending, StatusNote } from "../../ui/Parts.js";
@@ -67,6 +68,7 @@ export interface IdeasPageProps extends IdeaLinks {
 }
 
 export function IdeasPage({ onTry, onModels, onSettings, onOpenTask, onOpenMemory }: IdeasPageProps) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const timeZone = useTimeZone();
   const [answer, setAnswer] = useState<IdeasListAnswer>();
@@ -141,7 +143,7 @@ export function IdeasPage({ onTry, onModels, onSettings, onOpenTask, onOpenMemor
         return;
       }
       if (Date.now() + REREAD_EVERY_MS > deadline) {
-        setNote("Still looking — check back in a minute.");
+        setNote(t("ideas.page.stillLooking"));
         return;
       }
       timers.current = [setTimeout(() => void tick(), REREAD_EVERY_MS)];
@@ -162,13 +164,7 @@ export function IdeasPage({ onTry, onModels, onSettings, onOpenTask, onOpenMemor
       return;
     }
     const { status } = outcome.value;
-    setNote(
-      status === "busy"
-        ? "New ideas are being looked for elsewhere."
-        : status === "queued"
-          ? "A look is already under way; another follows it."
-          : "Looking for new ideas…",
-    );
+    setNote(status === "busy" ? t("ideas.page.busy") : status === "queued" ? t("ideas.page.queued") : t("ideas.page.looking"));
     watch(before, status === "queued");
   };
   const tryIt = async (idea: Idea): Promise<void> => {
@@ -233,15 +229,13 @@ export function IdeasPage({ onTry, onModels, onSettings, onOpenTask, onOpenMemor
       <header className="ideas-head">
         <div className="ideas-title">
           <h1 ref={heading} tabIndex={-1}>
-            <Icon name="lightbulb" /> Ideas
+            <Icon name="lightbulb" /> {t("ideas.page.title")}
           </h1>
-          <p className="meta-sm">
-            Things I can do for you, from what you have told me and what I can do here. Nothing runs until you send it.
-          </p>
+          <p className="meta-sm">{t("ideas.page.description")}</p>
         </div>
         <div className="ideas-head-actions">
           <Button variant="ghost" size="sm" disabled={refreshing || off} onClick={() => void refresh()}>
-            <Icon name="refresh" size="sm" /> Refresh
+            <Icon name="refresh" size="sm" /> {t("ideas.page.refresh")}
           </Button>
           <Button
             variant="ghost"
@@ -251,7 +245,7 @@ export function IdeasPage({ onTry, onModels, onSettings, onOpenTask, onOpenMemor
             aria-controls={tuning ? `${ids}-tune` : undefined}
             onClick={() => setTuning((now) => !now)}
           >
-            <Icon name="sliders" size="sm" /> Tune
+            <Icon name="sliders" size="sm" /> {t("ideas.page.tune")}
           </Button>
         </div>
       </header>
@@ -262,7 +256,7 @@ export function IdeasPage({ onTry, onModels, onSettings, onOpenTask, onOpenMemor
           onSaved={() => {
             closeTune();
             // The list says whether Ideas are on, not whether they may read the brief: Settings → Ideas says that.
-            setNote(off ? "Brief saved. Ideas are off: no look reads it until they are on." : "Brief saved.");
+            setNote(off ? t("ideas.brief.savedOff") : t("ideas.brief.saved"));
             // A rewritten brief ends the ideas that quoted it and drops its words from pinned ones: shown as they are now.
             void load();
           }}
@@ -271,20 +265,20 @@ export function IdeasPage({ onTry, onModels, onSettings, onOpenTask, onOpenMemor
       <StatusNote note={note} />
       {off ? (
         <Notice as="div" className="ideas-off">
-          <p>Ideas are off — turn them on in Settings → Ideas.</p>
+          <p>{t("ideas.page.off")}</p>
           {onSettings === undefined ? null : (
             <Button size="sm" onClick={onSettings}>
-              Open Settings → Ideas
+              {t("ideas.page.openSettings")}
             </Button>
           )}
         </Notice>
       ) : null}
       {answer?.modelSet === false && !off ? (
         <Notice className="ideas-model">
-          Until a fast model is set, ideas match only the words you used and keep their plain wording.{" "}
+          {t("ideas.page.noModel")}{" "}
           {onModels === undefined ? null : (
             <Button variant="link" onClick={onModels}>
-              Set one in Settings → Models
+              {t("ideas.page.setModel")}
             </Button>
           )}
         </Notice>
@@ -292,20 +286,20 @@ export function IdeasPage({ onTry, onModels, onSettings, onOpenTask, onOpenMemor
       <Failure message={failure} />
       {failure !== undefined && answer === undefined ? (
         <Button size="sm" onClick={() => void load()}>
-          Try again
+          {t("ui.boundary.tryAgain")}
         </Button>
       ) : null}
-      {answer === undefined && failure === undefined ? <Pending label="Loading ideas…" className="notice meta-sm" status /> : null}
+      {answer === undefined && failure === undefined ? <Pending label={t("ideas.page.loading")} className="notice meta-sm" status /> : null}
       {empty ? (
         <div className="ideas-empty">
-          <p>No ideas yet.</p>
-          <p className="meta-sm">Refresh to look for some now, or tell me more about yourself in a chat.</p>
+          <p>{t("ideas.page.empty")}</p>
+          <p className="meta-sm">{t("ideas.page.emptyHint")}</p>
         </div>
       ) : null}
       {layout !== undefined && !empty ? (
         <>
           <section className="ideas-section" aria-labelledby={`${ids}-for-you`}>
-            <h2 id={`${ids}-for-you`}>For you</h2>
+            <h2 id={`${ids}-for-you`}>{t("ideas.page.forYou")}</h2>
             <div className="ideas-grid">{layout.forYou.map(card)}</div>
           </section>
           {layout.sections.map(({ category, ideas }) => {
@@ -329,7 +323,7 @@ export function IdeasPage({ onTry, onModels, onSettings, onOpenTask, onOpenMemor
                       })
                     }
                   >
-                    {expanded ? "Less" : `More (${ideas.length - IDEAS_SECTION_SHOWN})`}
+                    {expanded ? t("ideas.page.less") : t("ideas.page.moreCount", { count: ideas.length - IDEAS_SECTION_SHOWN })}
                   </Button>
                 ) : null}
               </section>
@@ -339,10 +333,10 @@ export function IdeasPage({ onTry, onModels, onSettings, onOpenTask, onOpenMemor
       ) : null}
       {answer === undefined ? null : (
         <footer className="ideas-foot meta-sm">
-          {empty || off ? null : <p>That’s all for now.</p>}
+          {empty || off ? null : <p>{t("ideas.page.allForNow")}</p>}
           <p>
             {lastLooked(answer.lastRun, timeZone)}
-            {answer.nextAt === undefined ? "" : ` Next ${whenLocal(answer.nextAt, timeZone)}.`}
+            {answer.nextAt === undefined ? "" : ` ${t("ideas.page.next", { when: whenLocal(answer.nextAt, timeZone) })}`}
           </p>
         </footer>
       )}
@@ -356,6 +350,7 @@ export function IdeasPage({ onTry, onModels, onSettings, onOpenTask, onOpenMemor
 
 /** *Tune*: the brief ideas are written from — what to favour or avoid, in the person's words. */
 function Tune({ id, onSaved, onCancel }: { readonly id: string; readonly onSaved: () => void; readonly onCancel: () => void }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [text, setText] = useState<string>();
   const [failure, setFailure] = useState<string>();
@@ -372,7 +367,7 @@ function Tune({ id, onSaved, onCancel }: { readonly id: string; readonly onSaved
     };
   }, [client, workspaceId]);
   return (
-    <section id={id} className="section-card ideas-tune" aria-label="Tune ideas">
+    <section id={id} className="section-card ideas-tune" aria-label={t("ideas.tune.label")}>
       <BriefField id={`${id}-brief`} value={text} onChange={setText} />
       <div className="idea-actions">
         <Button
@@ -388,10 +383,10 @@ function Tune({ id, onSaved, onCancel }: { readonly id: string; readonly onSaved
             });
           }}
         >
-          Save
+          {t("ideas.tune.save")}
         </Button>
         <Button variant="ghost" size="sm" disabled={busy} onClick={onCancel}>
-          Cancel
+          {t("ui.confirm.cancel")}
         </Button>
       </div>
       <Failure message={failure} />

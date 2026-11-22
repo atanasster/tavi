@@ -27,6 +27,7 @@ import {
   type IdeaSources,
 } from "@tavi/contracts";
 
+import { translateNow } from "../../lib/i18n.js";
 import { whenLocal } from "../../lib/time.js";
 import { read, type Outcome, type Readable, type SettingsClient } from "../../lib/ipc.js";
 
@@ -150,21 +151,21 @@ export function ideasLayout(listed: readonly Idea[]): IdeasLayout {
  * nothing new, and the person never learns the look did not happen.
  */
 export function lastLooked(run: IdeaRun | undefined, timeZone: string | undefined): string {
-  if (run === undefined) return "Not looked yet.";
-  const when = `Last looked ${whenLocal(run.startedAt, timeZone)}`;
+  if (run === undefined) return translateNow("ideas.look.never");
+  const when = whenLocal(run.startedAt, timeZone);
   const reason = run.outcome === "failed" || run.outcome === "skipped" ? run.reason?.trim() : undefined;
-  if (reason === undefined || reason === "") return `${when}.`;
-  return /[.!?]$/u.test(reason) ? `${when}: ${reason}` : `${when}: ${reason}.`;
+  if (reason === undefined || reason === "") return translateNow("ideas.look.last", { when });
+  return translateNow(/[.!?]$/u.test(reason) ? "ideas.look.lastBecause" : "ideas.look.lastBecauseStop", { when, reason });
 }
 
 /** What a finished look found, as the page says it once a refresh's run is over. */
 export function runNote(run: IdeaRun): string {
   switch (run.outcome) {
     case "generated":
-      return "New ideas are in.";
+      return translateNow("ideas.look.generated");
     case "unchanged":
-      return "Nothing new to suggest yet.";
+      return translateNow("ideas.look.unchanged");
     default:
-      return run.reason?.trim() || (run.outcome === "skipped" ? "The look was skipped." : "The look failed.");
+      return run.reason?.trim() || translateNow(run.outcome === "skipped" ? "ideas.look.skipped" : "ideas.look.failed");
   }
 }

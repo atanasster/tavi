@@ -1,5 +1,6 @@
 import { BROWSER_LIVE_NOTE_MAX } from "@tavi/contracts";
 import type { ReactNode } from "react";
+import { useT } from "../../lib/i18n.js";
 import { Button } from "../../ui/Button.js";
 import { Field } from "../../ui/Field.js";
 
@@ -25,6 +26,7 @@ export function NoteForm({
   readonly onSubmit: () => void;
   readonly onCancel: () => void;
 }) {
+  const t = useT();
   return (
     <form
       className={className}
@@ -36,11 +38,11 @@ export function NoteForm({
       <Field id={id} label={label}>
         <input maxLength={BROWSER_LIVE_NOTE_MAX} value={note} onChange={(event) => onNote(event.target.value)} autoFocus />
       </Field>
-      <small className="muted">Don't include passwords or codes; Tavi will read this.</small>
+      <small className="muted">{t("takeover.note.noSecrets")}</small>
       <Button type="submit" className={submitClassName}>
         {submit}
       </Button>{" "}
-      <Button onClick={onCancel}>Cancel</Button>
+      <Button onClick={onCancel}>{t("ui.confirm.cancel")}</Button>
     </form>
   );
 }

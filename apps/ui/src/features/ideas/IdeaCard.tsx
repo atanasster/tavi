@@ -1,6 +1,7 @@
 import { BUILTIN_IDEAS_PROVIDER_ID, IDEA_CAPABILITY_LABELS, type Idea, type IdeaBasis, type IdeaCategory } from "@tavi/contracts";
 import type { ReactNode } from "react";
 
+import { useT } from "../../lib/i18n.js";
 import { Icon, type IconName } from "../../ui/Icon.js";
 import { Button } from "../../ui/Button.js";
 
@@ -29,8 +30,8 @@ export interface IdeaLinks {
 }
 
 /** A source's words, quoted; a source whose words were dropped (its record rewritten, a pin kept) is named without them. */
-function quoted(lead: string, bare: string, excerpt: string | undefined): string {
-  return excerpt === undefined || excerpt.trim() === "" ? bare : `${lead} “${excerpt}”`;
+function quoted(lead: (excerpt: string) => string, bare: string, excerpt: string | undefined): string {
+  return excerpt === undefined || excerpt.trim() === "" ? bare : lead(excerpt);
 }
 
 function Why({
@@ -42,9 +43,10 @@ function Why({
   readonly links: IdeaLinks;
   readonly providerId: string;
 }): ReactNode {
+  const t = useT();
   switch (basis.kind) {
     case "memory": {
-      const text = quoted("you said", "something you told me", basis.excerpt);
+      const text = quoted((excerpt) => t("ideas.card.why.memory", { excerpt }), t("ideas.card.why.memoryBare"), basis.excerpt);
       return links.onOpenMemory === undefined ? (
         <span>{text}</span>
       ) : (
@@ -54,7 +56,7 @@ function Why({
       );
     }
     case "task": {
-      const text = quoted("chat", "one of your chats", basis.excerpt);
+      const text = quoted((excerpt) => t("ideas.card.why.task", { excerpt }), t("ideas.card.why.taskBare"), basis.excerpt);
       return links.onOpenTask === undefined ? (
         <span>{text}</span>
       ) : (
@@ -64,10 +66,14 @@ function Why({
       );
     }
     case "brief":
-      return <span>{quoted("your brief:", "your brief", basis.excerpt)}</span>;
+      return <span>{quoted((excerpt) => t("ideas.card.why.brief", { excerpt }), t("ideas.card.why.briefBare"), basis.excerpt)}</span>;
     default:
       // Nothing personal: the built-in catalogue's ideas are common asks; a plugin's are its own suggestion.
-      return <span>{providerId === BUILTIN_IDEAS_PROVIDER_ID ? "something many people ask for" : `suggested by ${providerId}`}</span>;
+      return (
+        <span>
+          {providerId === BUILTIN_IDEAS_PROVIDER_ID ? t("ideas.card.why.common") : t("ideas.card.why.provider", { provider: providerId })}
+        </span>
+      );
   }
 }
 
@@ -84,6 +90,7 @@ export function IdeaCard({
   readonly trying?: boolean;
   readonly menu?: ReactNode;
 }) {
+  const t = useT();
   const asks = idea.uses.some((use) => use.approval);
   const titleId = `idea-${idea.id}-title`;
   return (
@@ -93,12 +100,12 @@ export function IdeaCard({
           <Icon name={CATEGORY_ICONS[idea.category]} />
         </span>
         <h3 id={titleId}>{idea.title}</h3>
-        {idea.pinned ? <span className="badge">Pinned</span> : null}
+        {idea.pinned ? <span className="badge">{t("ideas.card.pinned")}</span> : null}
         {menu}
       </div>
       <p className="idea-pitch">{idea.pitch}</p>
       <p className="idea-meta">
-        <strong>Why this:</strong>{" "}
+        <strong>{t("ideas.card.whyLabel")}</strong>{" "}
         {idea.basis.map((basis, index) => (
           <span key={`${basis.kind}:${basis.ref}`}>
             {index === 0 ? null : " · "}
@@ -107,17 +114,17 @@ export function IdeaCard({
         ))}
       </p>
       <p className="idea-meta">
-        <strong>Uses:</strong> {idea.uses.map((use) => IDEA_CAPABILITY_LABELS[use.capability]).join(" · ")}
-        {asks ? " — asks before acting" : ""}
+        <strong>{t("ideas.card.usesLabel")}</strong> {idea.uses.map((use) => IDEA_CAPABILITY_LABELS[use.capability]).join(" · ")}
+        {asks ? t("ideas.card.asks") : ""}
       </p>
       {idea.prepared === undefined ? null : (
         <p className="idea-meta">
-          <strong>Ready:</strong> I looked already; Try it starts from what I found.
+          <strong>{t("ideas.card.readyLabel")}</strong> {t("ideas.card.ready")}
         </p>
       )}
       <div className="idea-actions">
         <Button size="sm" disabled={trying} onClick={() => onTry(idea)} aria-describedby={titleId}>
-          Try it
+          {t("ideas.card.try")}
         </Button>
       </div>
     </article>

@@ -7,6 +7,7 @@ import {
 import type { LiveWatch } from "@tavi/client/browser";
 import { useEffect, useRef, type Dispatch, type RefObject, type SetStateAction } from "react";
 
+import { translateNow } from "../../lib/i18n.js";
 import { refusal } from "../../lib/ipc.js";
 import { InputBatcher } from "./input.js";
 import type { TakeoverClient } from "./Takeover.js";
@@ -130,12 +131,12 @@ export function useTakeoverWatch({
             setDialogText(message.defaultValue ?? "");
           } else if (message.kind === "chooser") {
             setChooser(message);
-            announce("The page asks for a file.");
-          } else if (message.kind === "notice") announce("That shortcut is not passed to the page.");
+            announce(translateNow("takeover.watch.chooser"));
+          } else if (message.kind === "notice") announce(translateNow("takeover.watch.shortcut"));
           // A session whose task ended is kept: still the person's to take, so only a closed one is over.
           else if (message.kind === "ended" && message.reason !== BROWSER_LIVE_ENDED_TASK) {
             setPhase("released");
-            announce("The browser session ended.");
+            announce(translateNow("takeover.watch.ended"));
           } else if (message.kind === "control") {
             if (message.pending === true) setPhase("pending");
             else if (message.state === "operator") {
@@ -155,17 +156,17 @@ export function useTakeoverWatch({
               setPhase(message.controller === "you" ? "control" : message.controller === "none" ? "unattended" : "elsewhere");
               announce(
                 message.controller === "you"
-                  ? "You're in control. Tavi is paused."
+                  ? translateNow("takeover.watch.control")
                   : message.controller === "none"
-                    ? "You still have control."
-                    : "Controlled in another tab.",
+                    ? translateNow("takeover.watch.unattended")
+                    : translateNow("takeover.watch.elsewhere"),
               );
             } else if (message.state === "agent") {
               // Taken back without this surface handing it back: the deadline, the idle limit, or a cancel.
               setPhase((previous) => {
                 const held = previous === "control" || previous === "elsewhere" || previous === "unattended";
                 // Only a page that was the person's goes back; a take that failed or was superseded never had it.
-                if (held && !handingBack.current) announce("Tavi has the browser back.");
+                if (held && !handingBack.current) announce(translateNow("takeover.page.back"));
                 return held ? "released" : previous;
               });
             }
@@ -182,7 +183,7 @@ export function useTakeoverWatch({
         }
         if (opened.watch === undefined) {
           setPhase("failed");
-          setFailure(refusal(opened.response, "The browser could not be shown."));
+          setFailure(refusal(opened.response, translateNow("takeover.watch.unshown")));
           return;
         }
         watch.current = opened.watch;
@@ -190,7 +191,7 @@ export function useTakeoverWatch({
         if (!alive) return;
         if (!taken.ok) {
           setPhase("failed");
-          setFailure(refusal(taken, "The browser could not be taken over."));
+          setFailure(refusal(taken, translateNow("takeover.watch.untaken")));
         } else {
           setPhase("control");
           surface.current?.focus();

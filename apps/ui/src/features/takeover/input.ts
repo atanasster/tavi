@@ -11,6 +11,7 @@ import {
 } from "@tavi/contracts";
 
 import { delay } from "../../lib/delay.js";
+import { translateNow } from "../../lib/i18n.js";
 
 /**
  * The takeover surface's input: what the
@@ -200,10 +201,13 @@ export function uploadChunks(bytes: Uint8Array, chunkBytes = UPLOAD_CHUNK_BYTES)
 
 /** Why these files cannot be handed over, or `undefined` when they can. */
 export function uploadRefusal(files: readonly { readonly size: number }[], multiple: boolean): string | undefined {
-  if (files.length === 0) return "No file was chosen.";
-  if (!multiple && files.length > 1) return "The page takes one file.";
-  if (files.length > BROWSER_LIVE_UPLOAD_MAX_FILES) return `At most ${BROWSER_LIVE_UPLOAD_MAX_FILES} files at once.`;
+  if (files.length === 0) return translateNow("takeover.upload.none");
+  if (!multiple && files.length > 1) return translateNow("takeover.upload.one");
+  if (files.length > BROWSER_LIVE_UPLOAD_MAX_FILES)
+    return translateNow("takeover.upload.tooMany", { count: BROWSER_LIVE_UPLOAD_MAX_FILES });
   if (files.reduce((total, file) => total + file.size, 0) > BROWSER_LIVE_UPLOAD_MAX_BYTES)
-    return `At most ${BROWSER_LIVE_UPLOAD_MAX_BYTES / (1024 * 1024)} MiB of files.`;
+    return translateNow("takeover.upload.tooBig", {
+      size: translateNow("common.bytes.mib", { size: String(BROWSER_LIVE_UPLOAD_MAX_BYTES / (1024 * 1024)) }),
+    });
   return undefined;
 }

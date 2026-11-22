@@ -180,7 +180,7 @@ export const routines = {
   "routines.inspector.refresh": "Обнови пускането",
   "routines.inspector.openTask": "Отвори основния агент и помощника",
   "routines.inspector.cancelConfirm": "Да спра ли пускането сега? Няма да публикува доклад и няма да доставя.",
-  "routines.inspector.cancel": "Спри пускането",
+  "routines.inspector.cancel": "Спри изпълнението",
   "routines.inspector.keepRunning": "Не спирай",
   "routines.inspector.cancelDone": "Спирането е записано",
   "routines.inspector.loading": "Зареждам пускането…",

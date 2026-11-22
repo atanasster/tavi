@@ -2,6 +2,7 @@ import type { IdeaChip } from "@tavi/contracts";
 import { useEffect, useRef, useState } from "react";
 
 import { useLoaded } from "../../hooks/use-loaded.js";
+import { useT } from "../../lib/i18n.js";
 import { ideaChips, tryIdea } from "./ideas-api.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
@@ -37,6 +38,7 @@ export function IdeaChips({
   /** The Ideas tab, when the owner offers it. */
   readonly onMore?: (() => void) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const chips: readonly IdeaChip[] = useLoaded(() => ideaChips(client, workspaceId), [client, workspaceId]).data?.chips ?? [];
   /** A pick on its way: one at a time, so a double click does not mark the idea tried twice. */
@@ -73,7 +75,7 @@ export function IdeaChips({
     }
   };
   return (
-    <div className="idea-chips" role="group" aria-label="Suggestions" hidden={hidden}>
+    <div className="idea-chips" role="group" aria-label={t("ideas.chips.label")} hidden={hidden}>
       {shown.map((chip) => (
         <Button
           variant="ghost"
@@ -89,7 +91,7 @@ export function IdeaChips({
       ))}
       {onMore === undefined ? null : (
         <Button variant="link" className="idea-chips-more" onClick={onMore}>
-          More ideas →
+          {t("ideas.chips.more")}
         </Button>
       )}
     </div>

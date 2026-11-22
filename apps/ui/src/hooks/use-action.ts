@@ -1,6 +1,7 @@
 import { errorMessage } from "@tavi/contracts/util";
 import { useCallback, useState } from "react";
 
+import { translateNow } from "../lib/i18n.js";
 import type { Outcome } from "../lib/ipc.js";
 
 /**
@@ -15,7 +16,7 @@ export function useOpenError(): {
   const [openError, setOpenError] = useState<string>();
   const open = (what: string, opening: () => Promise<unknown>): void => {
     setOpenError(undefined);
-    opening().catch((failure: unknown) => setOpenError(`${what} could not be opened: ${errorMessage(failure)}`));
+    opening().catch((failure: unknown) => setOpenError(translateNow("ui.hooks.openFailed", { what, reason: errorMessage(failure) })));
   };
   return { openError, open };
 }
