@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { CatalogRefSchema, type ConnectRequest, type ConnectableApp } from "@tavi/contracts";
 
+import { useT } from "../../lib/i18n.js";
 import { localTime } from "../../lib/time.js";
 import { Icon } from "../../ui/Icon.js";
 import { Failure } from "../../ui/Parts.js";
@@ -14,6 +15,7 @@ import { loadFlow, loadStatus, ONBOARDING_CHANGED_EVENT } from "../welcome/onboa
 import { Button } from "../../ui/Button.js";
 import { lazyModule } from "../../ui/lazy-module.js";
 import { ViewBoundary } from "../../ui/ViewBoundary.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /** The connect sheet (sign-in and its steps) is its own chunk, fetched the first time a card opens it. */
 const connectSheet = lazyModule(() => import("./ConnectSheet.js").then((module) => module.ConnectSheet));
@@ -158,6 +160,7 @@ export function ConnectCard({ ask }: { readonly ask: ConnectAsk }) {
 }
 
 function ConnectCardFor({ page, ask }: { readonly page: ConnectCardPage; readonly ask: ConnectAsk }) {
+  const t = useT();
   const timeZone = useTimeZone();
   const request = ask.kind === "request" ? ask.request : undefined;
   // The app as the owner holds it now, found by the plugin that failed or the app the agent named.
@@ -172,7 +175,7 @@ function ConnectCardFor({ page, ask }: { readonly page: ConnectCardPage; readonl
   const [sheet, setSheet] = useState<ConnectableApp>();
   const [connected, setConnected] = useState<{ readonly identity?: string | undefined }>();
   const [sent, setSent] = useState(false);
-  const name = app?.name ?? request?.name ?? (ask.kind === "wait" ? ask.request.appName : "This app");
+  const name = app?.name ?? request?.name ?? (ask.kind === "wait" ? ask.request.appName : t("apps.card.thisApp"));
   const accountId =
     ask.kind === "sign-in"
       ? ask.pluginId
@@ -194,21 +197,18 @@ function ConnectCardFor({ page, ask }: { readonly page: ConnectCardPage; readonl
   const setupLine =
     setup === undefined || page.onSetup === undefined ? null : setup.done ? (
       <p className="meta-sm" role="status">
-        <Icon name="check" size="sm" /> Setup's “{setup.title}” step is done.
+        <Icon name="check" size="sm" /> {t("apps.card.setupDone", { step: setup.title })}
       </p>
     ) : (
       <p className="meta-sm">
-        Connecting it also finishes setup's “{setup.title}” step.{" "}
+        {t("apps.card.setupFinishes", { step: setup.title })}{" "}
         <Button variant="link" onClick={() => page.onSetup?.(setup.id)}>
-          Open setup
+          {t("apps.card.openSetup")}
         </Button>
       </p>
     );
   const failure =
-    error ??
-    (data !== undefined && app === undefined && request?.installed !== false
-      ? `${name} is not added on this computer any more.`
-      : undefined);
+    error ?? (data !== undefined && app === undefined && request?.installed !== false ? t("apps.card.notAdded", { app: name }) : undefined);
   // An older card, read again once the app is working: it asks nothing more.
   const account = accountId === undefined ? undefined : app?.accounts.find((candidate) => candidate.accountId === accountId);
   // A task's wait is settled by the owner, not read from the account's health: its card keeps Connect and *Not now*.
@@ -219,42 +219,45 @@ function ConnectCardFor({ page, ask }: { readonly page: ConnectCardPage; readonl
     (account === undefined ? app.health === "ready" : account.health === "ready");
   if (settled) {
     return (
-      <section className="card-flat apps-connect-card" aria-label={`Connect ${name}`}>
+      <section className="card-flat apps-connect-card" aria-label={t("apps.card.connect", { app: name })}>
         <p className="apps-connect-card-title">
-          <Icon name="plug" size="sm" /> {name} is connected
+          <Icon name="plug" size="sm" /> {t("apps.card.isConnected", { app: name })}
         </p>
       </section>
     );
   }
 
   return (
-    <section className="card-flat apps-connect-card" aria-label={`Connect ${name}`}>
+    <section className="card-flat apps-connect-card" aria-label={t("apps.card.connect", { app: name })}>
       <p className="apps-connect-card-title">
         <Icon name="plug" size="sm" />{" "}
         {connected === undefined
-          ? request?.installed === false
-            ? `Add ${name}`
-            : `Connect ${name}`
-          : `Connected${connected.identity === undefined ? "" : ` as ${connected.identity}`}`}
+          ? t(request?.installed === false ? "apps.card.add" : "apps.card.connect", { app: name })
+          : connected.identity === undefined
+            ? t("apps.card.connected")
+            : t("apps.card.connectedAs", { identity: connected.identity })}
       </p>
       {connected === undefined ? (
         <>
           {/* The agent's reason is its words, quoted as such; the rest is Tavi's. */}
           {request?.why !== undefined ? (
             <p className="muted">
-              <span className="apps-connect-card-says">Tavi says:</span> “{request.why}”
+              {withParts(t("apps.card.taviSays"), {
+                says: <span className="apps-connect-card-says">{t("apps.card.taviSaysLabel")}</span>,
+                why: request.why,
+              })}
             </p>
           ) : (
             <p className="muted">
               {ask.kind === "wait" && ask.request.health === "not-set-up"
-                ? `${name} isn't signed in yet: sign in before Tavi can go on.`
+                ? t("apps.card.notSignedIn", { app: name })
                 : ask.kind === "wait" && ask.request.reason !== ""
-                  ? `${name} needs you to sign in again before Tavi can go on: ${ask.request.reason}.`
-                  : `${name} needs you to sign in again before Tavi can go on.`}
+                  ? t("apps.card.signInAgainBecause", { app: name, reason: ask.request.reason })
+                  : t("apps.card.signInAgain", { app: name })}
             </p>
           )}
           {ask.kind === "wait" && ask.deadlineAt !== undefined ? (
-            <p className="meta-sm">Waits until {localTime(ask.deadlineAt, timeZone)}, then goes on without it.</p>
+            <p className="meta-sm">{t("apps.card.waitsUntil", { time: localTime(ask.deadlineAt, timeZone) })}</p>
           ) : null}
           {request === undefined || request.access.length === 0 ? null : (
             <ul className="meta-sm">
@@ -267,17 +270,17 @@ function ConnectCardFor({ page, ask }: { readonly page: ConnectCardPage; readonl
           <Failure message={failure ?? declineFailure} />
           {declined ? (
             <p className="meta-sm" role="status">
-              Tavi goes on without {name}.
+              {t("apps.card.goesOnWithout", { app: name })}
             </p>
           ) : null}
           <div className="actions">
             {request?.installed === false ? (
               <Button variant="primary" size="sm" onClick={() => page.onDiscover(name)}>
-                Add and connect
+                {t("apps.card.addAndConnect")}
               </Button>
             ) : (
               <Button variant="primary" size="sm" disabled={app === undefined || declined} onClick={() => setSheet(app)}>
-                Connect
+                {t("apps.card.connectButton")}
               </Button>
             )}
             {ask.kind === "wait" ? (
@@ -295,7 +298,7 @@ function ConnectCardFor({ page, ask }: { readonly page: ConnectCardPage; readonl
                   });
                 }}
               >
-                Not now
+                {t("apps.card.notNow")}
               </Button>
             ) : null}
           </div>
@@ -303,7 +306,7 @@ function ConnectCardFor({ page, ask }: { readonly page: ConnectCardPage; readonl
       ) : ask.kind === "wait" ? (
         <>
           <p className="meta-sm" role="status">
-            Tavi goes on with {name} now.
+            {t("apps.card.goesOnWith", { app: name })}
           </p>
           {setupLine}
         </>
@@ -320,7 +323,7 @@ function ConnectCardFor({ page, ask }: { readonly page: ConnectCardPage; readonl
                 page.onContinue(continueMessage(name));
               }}
             >
-              Continue
+              {t("apps.card.continue")}
             </Button>
           </div>
         </>

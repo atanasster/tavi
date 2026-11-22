@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 
 import type { ChannelDescriptor, ChannelsCatalogAnswer, ChannelsPeopleAnswer } from "@tavi/contracts";
 
+import { translateNow, useT } from "../../lib/i18n.js";
 import type { SettingsClient } from "../../lib/ipc.js";
 import { Modal } from "../../ui/Modal.js";
 import { Failure, Pending } from "../../ui/Parts.js";
@@ -40,23 +41,24 @@ export function ChannelSheet({
     if (!people.ok) return people;
     const descriptor = catalog.value.channels.find((candidate) => candidate.providerId === providerId);
     return descriptor === undefined
-      ? { ok: false as const, message: `${name} is no longer installed.` }
+      ? { ok: false as const, message: translateNow("apps.channel.notInstalled", { channel: name }) }
       : { ok: true as const, value: { descriptor, operator: people.value.operator } };
   }, [client, workspaceId, providerId, name]);
+  const t = useT();
   const { value: loaded } = useLatest(read);
   const [added, setAdded] = useState<Added>();
   const [paired, setPaired] = useState(false);
   return (
-    <Modal title={`Add ${name}`} wide onClose={added === undefined ? onClose : onDone}>
+    <Modal title={t("apps.channel.add", { channel: name })} wide onClose={added === undefined ? onClose : onDone}>
       {loaded === undefined ? (
         <Pending className="notice" status />
       ) : !loaded.ok ? (
         <Failure>{loaded.message}</Failure>
       ) : !simple(loaded.value.descriptor) ? (
         <div className="apps-step stack">
-          <p role="status">{`${name} needs settings this sheet does not ask for: add it in Settings → Channels.`}</p>
+          <p role="status">{t("apps.channel.notSimple", { channel: name })}</p>
           <div className="actions">
-            <Button onClick={onClose}>Close</Button>
+            <Button onClick={onClose}>{t("apps.channel.close")}</Button>
           </div>
         </div>
       ) : added === undefined ? (
@@ -87,6 +89,7 @@ function AddedStep(props: {
   readonly onPaired: () => void;
   readonly onDone: () => void;
 }) {
+  const t = useT();
   const { added } = props;
   // A channel that pairs: the person pairs themself here, unless a workspace has no operator to pair.
   if (props.descriptor.pairing !== undefined && props.operator !== undefined && !props.paired)
@@ -101,9 +104,7 @@ function AddedStep(props: {
     );
   return (
     <div className="apps-step stack">
-      <p role="status">
-        {props.paired ? `Paired on ${added.label}: your messages there reach Tavi.` : `${added.label} is added and answers.`}
-      </p>
+      <p role="status">{t(props.paired ? "apps.channel.paired" : "apps.channel.added", { channel: added.label })}</p>
       {added.setup?.lines.map((line) => (
         <p key={line} className="settings-description">
           {line}
@@ -118,7 +119,7 @@ function AddedStep(props: {
       )}
       <div className="actions">
         <Button variant="primary" onClick={props.onDone}>
-          Done
+          {t("apps.channel.done")}
         </Button>
       </div>
     </div>

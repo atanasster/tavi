@@ -1,10 +1,11 @@
 import type { AppAccountView, AppMailboxAccess, AppSharing } from "@tavi/contracts";
 
 import { AppLink } from "../shell/AppLink.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import { localDayWithYear } from "../../lib/time.js";
 import { settingsPath } from "../shell/route.js";
 import { useTimeZone } from "../shell/Workspace.js";
-import { HEALTH_BADGE, signInByWords } from "./model.js";
+import { andList, HEALTH_BADGE, signInByWords } from "./model.js";
 import { RowAction, ROW_LINK_CLASS } from "../../ui/RowAction.js";
 
 /**
@@ -48,6 +49,7 @@ export function AccountRow({
   /** Whether the app connects by signing in; false for one set up with keys. */
   readonly signsIn?: boolean;
 }) {
+  const t = useT();
   const timeZone = useTimeZone();
   const badge = HEALTH_BADGE[account.health];
   const name = account.identity ?? account.label;
@@ -57,22 +59,22 @@ export function AccountRow({
       <span className="apps-account-info">
         <span className="apps-title-line cluster">
           <strong>{name}</strong>
-          <span className={`badge badge-${badge.tone}`}>{badge.text}</span>
+          <span className={`badge badge-${badge.tone}`}>{t(badge.textKey)}</span>
         </span>
         <span className="meta-sm">
           {/* An app set up with keys (a Telegram bot token) has no sign-in to report; one that keeps no sign-in time (a
               Google account) is signed in unless its health says it is not set up. */}
           {account.signedInAt !== undefined
-            ? `Signed in ${localDayWithYear(account.signedInAt, timeZone)}.`
+            ? t("apps.account.signedIn", { day: localDayWithYear(account.signedInAt, timeZone) })
             : signsIn && account.health === "not-set-up"
-              ? "Not signed in yet."
+              ? t("apps.account.notSignedIn")
               : ""}
           {account.nextSignInBy === undefined ? "" : ` ${signInByWords(account.nextSignInBy, timeZone)}.`}
-          {account.missingScopes.length > 0 ? " Some of the access it asks for was not allowed." : ""}
+          {account.missingScopes.length > 0 ? ` ${t("apps.account.missingScopes")}` : ""}
         </span>
         <span className="meta-sm">{usageLine(account)}</span>
         {account.keptBy === undefined || account.keptBy.length === 0 ? null : (
-          <span className="meta-sm">{`The same sign-in also connects ${account.keptBy.join(" and ")}.`}</span>
+          <span className="meta-sm">{t("apps.account.keptBy", { apps: andList(account.keptBy) })}</span>
         )}
         {account.setup === undefined ? null : (
           <span className="meta-sm apps-account-setup">
@@ -90,13 +92,13 @@ export function AccountRow({
       {account.readOnly ? (
         <span className="actions">
           <AppLink href={settingsPath("messaging")} className={ROW_LINK_CLASS} onFollow={undefined}>
-            {account.health === "ready" ? "Open in Channels" : `Reconnect ${appName} in Channels`}
+            {account.health === "ready" ? t("apps.account.openInChannels") : t("apps.account.reconnectInChannels", { app: appName })}
           </AppLink>
         </span>
       ) : (
         <span className="actions">
           <fieldset className="apps-sharing">
-            <legend className="visually-hidden">{`Who may use ${name}`}</legend>
+            <legend className="visually-hidden">{t("apps.account.whoMayUse", { account: name })}</legend>
             <label>
               <input
                 type="radio"
@@ -105,7 +107,7 @@ export function AccountRow({
                 disabled={busy}
                 onChange={() => onSharing("personal")}
               />{" "}
-              Personal
+              {t("apps.account.personal")}
             </label>
             <label>
               <input
@@ -115,7 +117,7 @@ export function AccountRow({
                 disabled={busy}
                 onChange={() => onSharing("shared")}
               />{" "}
-              Shared
+              {t("apps.account.shared")}
             </label>
           </fieldset>
           {account.mailbox === undefined || onMailbox === undefined ? null : (
@@ -127,7 +129,7 @@ export function AccountRow({
                   disabled={busy}
                   onChange={(event) => onMailbox(event.target.checked ? "read" : "off")}
                 />{" "}
-                Let the agent read and draft in this mailbox
+                {t("apps.account.mailboxRead")}
               </label>
               <label className="apps-check">
                 <input
@@ -136,47 +138,49 @@ export function AccountRow({
                   disabled={busy || account.mailbox === "off"}
                   onChange={(event) => onMailbox(event.target.checked ? "send" : "read")}
                 />{" "}
-                Send drafts I approve (each one asks, showing it whole)
+                {t("apps.account.mailboxSend")}
               </label>
             </>
           )}
           {account.receives === undefined || onReceive === undefined ? null : (
             <label className="apps-check">
               <input type="checkbox" checked={account.receives} disabled={busy} onChange={(event) => onReceive(event.target.checked)} />{" "}
-              Reach Tavi through this account
+              {t("apps.account.receive")}
             </label>
           )}
           {account.calendar === undefined || onCalendar === undefined ? null : (
             <label className="apps-check">
               <input type="checkbox" checked={account.calendar} disabled={busy} onChange={(event) => onCalendar(event.target.checked)} />{" "}
-              Let the agent use this calendar (each event it adds or changes asks first)
+              {t("apps.account.calendar")}
             </label>
           )}
           {onPeople === undefined ? null : (
             <label className="apps-check">
-              <input type="checkbox" checked={account.people} disabled={busy} onChange={(event) => onPeople(event.target.checked)} /> People
-              you allowed may use it
+              <input type="checkbox" checked={account.people} disabled={busy} onChange={(event) => onPeople(event.target.checked)} />{" "}
+              {t("apps.account.people")}
             </label>
           )}
           {onReconnect === undefined ? null : (
             <RowAction disabled={busy} onClick={onReconnect}>
-              {account.health !== "not-set-up"
-                ? "Reconnect"
-                : !signsIn
-                  ? "Finish setting up"
-                  : account.signedInAt === undefined
-                    ? "Sign in"
-                    : "Reconnect"}
+              {t(
+                account.health !== "not-set-up"
+                  ? "apps.account.reconnect"
+                  : !signsIn
+                    ? "apps.account.finishSetup"
+                    : account.signedInAt === undefined
+                      ? "apps.account.signIn"
+                      : "apps.account.reconnect",
+              )}
             </RowAction>
           )}
           {onTest === undefined ? null : (
             <RowAction disabled={busy} onClick={onTest}>
-              Test
+              {t("apps.account.test")}
             </RowAction>
           )}
           {canDisconnect ? (
             <RowAction tone="danger" disabled={busy} onClick={onDisconnect}>
-              Disconnect
+              {t("apps.disconnect.action")}
             </RowAction>
           ) : null}
         </span>
@@ -187,8 +191,8 @@ export function AccountRow({
 
 /** Where an account is used, as one sentence. */
 function usageLine(account: AppAccountView): string {
-  const people = account.people ? "by people you allowed" : undefined;
-  if (account.workspaces.length === 0)
-    return people === undefined ? "Not offered in any workspace yet." : `Not in your own chats yet; used ${people}.`;
-  return `Used in your chats in ${account.workspaces.join(", ")}${people === undefined ? "" : `, and ${people}`}.`;
+  if (account.workspaces.length === 0) return translateNow(account.people ? "apps.account.usedByPeopleOnly" : "apps.account.notOffered");
+  return translateNow(account.people ? "apps.account.usedInAndByPeople" : "apps.account.usedIn", {
+    workspaces: account.workspaces.join(", "),
+  });
 }

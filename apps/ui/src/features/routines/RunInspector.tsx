@@ -7,6 +7,7 @@ import { useLoaded } from "../../hooks/use-loaded.js";
 import { LIVE_POLL_MS, usePoll } from "../../hooks/use-poll.js";
 import { attempt } from "../../lib/ipc.js";
 import { formatCount } from "../../lib/format.js";
+import { useT } from "../../lib/i18n.js";
 import { formatElapsed, when } from "../../lib/time.js";
 import { ActionNote, DetailHead, Failure, InlineConfirm, LoadState, Section, StatusBadge, Summary } from "../../ui/Parts.js";
 import { json, routineRequest, routineStep, type RunInspection } from "./api.js";
@@ -45,6 +46,7 @@ export function RunInspector({
   readonly onFollow: (taskId: string) => Promise<void>;
 }) {
   const { client, workspaceId } = useWorkspace();
+  const t = useT();
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => heading.current?.focus(), []);
   const inspection = useLoaded(() => routineRequest<RunInspection>(client, workspaceId, { action: "inspect", runId }));
@@ -100,27 +102,21 @@ export function RunInspector({
         headingRef={heading}
         title={
           <>
-            Run {value ? when(value.run.startedAt ?? value.run.claimedAt, timeZone) : ""}{" "}
+            {t("routines.inspector.title", { when: value ? when(value.run.startedAt ?? value.run.claimedAt, timeZone) : "" })}{" "}
             {value ? <StatusBadge status={value.run.status} /> : null}
           </>
         }
-        description={
-          value ? (
-            <>
-              {value.run.mode} · revision {value.run.revision}
-            </>
-          ) : undefined
-        }
+        description={value ? t("routines.inspector.description", { mode: value.run.mode, revision: value.run.revision }) : undefined}
       >
         <div className="actions">
-          <Button onClick={refresh}>Refresh run</Button>
+          <Button onClick={refresh}>{t("routines.inspector.refresh")}</Button>
           {value?.run.taskId ? (
             <Button
               onClick={() => {
                 if (value.run.taskId) void follow(value.run.taskId);
               }}
             >
-              Open parent and sub-agent
+              {t("routines.inspector.openTask")}
             </Button>
           ) : null}
           {value !== undefined && LIVE.includes(value.run.status) ? (
@@ -128,19 +124,19 @@ export function RunInspector({
               <InlineConfirm
                 inline
                 focusCancel
-                message="Stop this run now? It will not publish a report or deliver."
-                confirmLabel="Cancel run"
-                cancelLabel="Keep running"
+                message={t("routines.inspector.cancelConfirm")}
+                confirmLabel={t("routines.inspector.cancel")}
+                cancelLabel={t("routines.inspector.keepRunning")}
                 busy={busy !== undefined}
                 onConfirm={() => {
                   closeCancel();
-                  void change("cancel", { action: "cancel", runId }, "Cancellation recorded");
+                  void change("cancel", { action: "cancel", runId }, t("routines.inspector.cancelDone"));
                 }}
                 onCancel={closeCancel}
               />
             ) : (
               <Button ref={cancelButton} variant="destructive" disabled={busy !== undefined} onClick={() => setCancelling(true)}>
-                Cancel run
+                {t("routines.inspector.cancel")}
               </Button>
             )
           ) : null}
@@ -150,7 +146,7 @@ export function RunInspector({
         error={inspection.error || undefined}
         reload={inspection.reload}
         loading={value === undefined && !inspection.error}
-        label="Loading run…"
+        label={t("routines.inspector.loading")}
       >
         <ActionNote note={note || undefined} tone={tone} />
       </LoadState>
@@ -160,8 +156,8 @@ export function RunInspector({
           {value.run.status === "failed" ? (
             <Failure alert={false} className="run-failure">
               {value.run.data.failureDetail === undefined
-                ? "This run failed before Tavi kept the reason."
-                : `Why it failed: ${value.run.data.failureDetail}`}
+                ? t("routines.inspector.failedUnknown")
+                : t("routines.inspector.failedWhy", { detail: value.run.data.failureDetail })}
             </Failure>
           ) : null}
           {value.run.taskId && LIVE.includes(value.run.status) ? (
@@ -176,24 +172,26 @@ export function RunInspector({
           {value.run.taskId ? (
             <RunQuestions key={`questions-${refreshes}`} revision={polls} routineId={routineId} runId={runId} timeZone={timeZone} />
           ) : null}
-          <Section title="Summary">
+          <Section title={t("routines.inspector.summary")}>
             <Summary
               items={[
-                ["Claimed", when(value.run.claimedAt, timeZone)],
-                ["Started", when(value.run.startedAt, timeZone, "not started")],
-                ["Ended", when(value.run.endedAt, timeZone, "not ended")],
-                ...(duration === null ? [] : [["Duration", formatElapsed(duration)] as const]),
-                ["Model calls", String(value.run.data.modelCalls)],
-                ["Tool calls", String(value.run.data.toolCalls)],
+                [t("routines.inspector.claimed"), when(value.run.claimedAt, timeZone)],
+                [t("routines.inspector.started"), when(value.run.startedAt, timeZone, t("routines.inspector.notStarted"))],
+                [t("routines.inspector.ended"), when(value.run.endedAt, timeZone, t("routines.inspector.notEnded"))],
+                ...(duration === null ? [] : [[t("routines.inspector.duration"), formatElapsed(duration)] as const]),
+                [t("routines.inspector.modelCalls"), String(value.run.data.modelCalls)],
+                [t("routines.inspector.toolCalls"), String(value.run.data.toolCalls)],
                 [
-                  "Known tokens",
-                  `${formatCount(value.run.data.tokensKnown)}${value.run.data.usageComplete ? "" : " (incomplete provider usage)"}`,
+                  t("routines.inspector.knownTokens"),
+                  value.run.data.usageComplete
+                    ? formatCount(value.run.data.tokensKnown)
+                    : t("routines.inspector.incompleteTokens", { tokens: formatCount(value.run.data.tokensKnown) }),
                 ],
-                ...(value.publication?.headline ? [["Headline", value.publication.headline] as const] : []),
+                ...(value.publication?.headline ? [[t("routines.inspector.headline"), value.publication.headline] as const] : []),
               ]}
             />
             <details>
-              <summary className="disclosure">Immutable run configuration and researcher instructions</summary>
+              <summary className="disclosure">{t("routines.inspector.configuration")}</summary>
               <pre>{json(value.run.snapshot)}</pre>
             </details>
           </Section>
@@ -201,7 +199,7 @@ export function RunInspector({
           <RunReport runId={runId} publication={value.publication} busy={busy} run={run} timeZone={timeZone} />
           <Deliveries value={value} busy={busy} change={change} routineId={routineId} timeZone={timeZone} />
 
-          <Section title="Research authority">
+          <Section title={t("routines.inspector.authority")}>
             {value.effectivePolicy ? (
               <ResearchAuthority
                 policy={value.effectivePolicy}
@@ -211,23 +209,23 @@ export function RunInspector({
                   void change(
                     "revoke-grant",
                     { action: "revoke_grant", runId, reason: "Revoked from the run inspector" },
-                    "Grant revoked; the next research fetch and any pending delivery for this run will be refused",
+                    t("routines.inspector.revokeDone"),
                   )
                 }
               />
             ) : (
-              <p className="muted">This run has no durable grant.</p>
+              <p className="muted">{t("routines.inspector.noGrant")}</p>
             )}
           </Section>
 
-          <Section title="Attempts">
+          <Section title={t("routines.inspector.attempts")}>
             <ul className="item-list list-reset">
               {(value.attempts ?? []).map((attempt) => (
                 <li key={attempt.attempt_id} className="item-row">
                   <div className="item-main">
-                    <span className="item-title-text">Generation {attempt.generation}</span>
+                    <span className="item-title-text">{t("routines.inspector.generation", { generation: attempt.generation })}</span>
                     <span className="item-meta meta-sm">
-                      {when(attempt.started_at, timeZone)} → {when(attempt.ended_at, timeZone, "ongoing")}
+                      {when(attempt.started_at, timeZone)} → {when(attempt.ended_at, timeZone, t("routines.inspector.ongoing"))}
                     </span>
                   </div>
                   <StatusBadge status={attempt.status} />

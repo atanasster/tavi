@@ -18,6 +18,7 @@ import {
 } from "./api.js";
 import { mergeBy } from "../../lib/paging.js";
 import { ActionNote, DetailHead, LoadState, Notice, Section, StatusBadge, Summary } from "../../ui/Parts.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import { when } from "../../lib/time.js";
 import { EditRoutine } from "./RoutineForms.js";
 import { RunInspector } from "./RunInspector.js";
@@ -26,38 +27,45 @@ import { Revisions } from "./RoutineRevisions.js";
 import { CodeText, RoutineResearcher, RoutineRuns } from "./RoutineSections.js";
 import { evaluationWords, pausedDeliveryTarget, routineStatusView, type StatusNoticeAction } from "./status.js";
 import { Button } from "../../ui/Button.js";
+import type { UiKey } from "../../locales/en.js";
 import { AppLink } from "../shell/AppLink.js";
 import { useWorkspace } from "../shell/Workspace.js";
 
-const ACCEPTED = "Owner accepted the action.";
-
 /** What an action changed, once the owner took it, said of the routine `name`d. */
-function changedText(input: RoutineRequest, name: string): string {
+function changedText(input: RoutineRequest, routineName: string | undefined): string {
+  const name =
+    routineName === undefined
+      ? translateNow("routines.overview.theRoutine")
+      : translateNow("routines.overview.named", { name: routineName });
   switch (input.action) {
     case "pause":
-      return `${name} paused.`;
+      return translateNow("routines.overview.paused", { name });
     case "resume":
-      return `${name} resumed.`;
+      return translateNow("routines.overview.resumed", { name });
     case "reevaluate":
-      return `${name} is being evaluated again.`;
+      return translateNow("routines.overview.reevaluating", { name });
     case "run":
-      return "Run started.";
+      return translateNow("routines.overview.runStarted");
     case "preview":
-      return "Preview run started.";
+      return translateNow("routines.overview.previewStarted");
     case "resume_delivery":
-      return `${name}'s delivery resumed; its waiting reports are sent again.`;
+      return translateNow("routines.overview.deliveryResumed", { name });
     case "undo":
-      return `${name} restored revision ${input.revision ?? ""} as its newest.`;
+      return translateNow("routines.overview.restored", { name, revision: input.revision ?? "" });
     case "archive":
-      return `${name} archived.`;
+      return translateNow("routines.overview.archived", { name });
     default:
-      return ACCEPTED;
+      return translateNow("routines.overview.accepted");
   }
 }
 
 type Confirmable = "archive";
-const CONFIRM: Readonly<Record<Confirmable, { readonly title: string; readonly message: string }>> = {
-  archive: { title: "Archive routine", message: "Archive this routine and stop its future triggers?" },
+const CONFIRM: Readonly<Record<Confirmable, { readonly title: UiKey; readonly message: UiKey; readonly action: UiKey }>> = {
+  archive: {
+    title: "routines.overview.archiveTitle",
+    message: "routines.overview.archiveMessage",
+    action: "routines.overview.confirmArchive",
+  },
 };
 
 /**
@@ -93,6 +101,7 @@ export function RoutineOverview({
   readonly timeZone: string | undefined;
 }) {
   const { client, workspaceId } = useWorkspace();
+  const t = useT();
   const heading = useRef<HTMLHeadingElement>(null);
   const current = useLoaded(() => routineRequest<RoutineOverviewData>(client, workspaceId, { action: "get", routineId }), [revision], {
     serial: true,
@@ -104,7 +113,7 @@ export function RoutineOverview({
         workspaceId,
         { action: "history", routineId, limit: ROUTINE_PAGE },
         "runs",
-        "run history",
+        t("routines.overview.historyWhat"),
       ),
     [revision],
   );
@@ -127,7 +136,7 @@ export function RoutineOverview({
   const act = (input: RoutineRequest) => {
     setStartedUnseen(false);
     return run(input.action, () =>
-      routineStep(client, workspaceId, { routineId, ...input }, () => changedText(input, current.data?.routine.name ?? "The routine")),
+      routineStep(client, workspaceId, { routineId, ...input }, () => changedText(input, current.data?.routine.name)),
     );
   };
   // Moves as the person leaves this routine, or this page for one of its runs.
@@ -147,7 +156,7 @@ export function RoutineOverview({
     return run(input.action, async () => {
       const answer = await routineStep<{ readonly runId?: unknown } | null>(client, workspaceId, { routineId, ...input }, (value) => {
         started = typeof value?.runId === "string" ? value.runId : undefined;
-        return changedText(input, current.data?.routine.name ?? "The routine");
+        return changedText(input, current.data?.routine.name);
       });
       accepted = answer.ok;
       return answer;
@@ -241,12 +250,12 @@ export function RoutineOverview({
         (page) => {
           const older = page.runs ?? [];
           setOlderRuns((before) => [...before, ...older]);
-          return older.length > 0 ? undefined : "No older runs";
+          return older.length > 0 ? undefined : t("routines.overview.noOlder");
         },
       ),
     );
 
-  const name = value?.routine.name ?? "Routine";
+  const name = value?.routine.name ?? t("routines.overview.routine");
   if (openRun !== undefined) {
     return (
       <RunInspector
@@ -264,7 +273,7 @@ export function RoutineOverview({
   return (
     <div className="routine-page">
       <DetailHead
-        back="Schedule"
+        back={t("routines.overview.back")}
         onBack={onClose}
         headingRef={heading}
         title={
@@ -278,12 +287,12 @@ export function RoutineOverview({
           <div className="actions">
             {view.pause ? (
               <Button disabled={busy !== undefined} onClick={() => void act({ action: "pause", expectedVersion: value.routine.version })}>
-                Pause
+                {t("routines.overview.pause")}
               </Button>
             ) : null}
             {view.resume ? (
               <Button disabled={busy !== undefined} onClick={() => void act({ action: "resume", expectedVersion: value.routine.version })}>
-                Resume
+                {t("routines.overview.resume")}
               </Button>
             ) : null}
             {view.evaluateAgain ? (
@@ -291,10 +300,10 @@ export function RoutineOverview({
                 disabled={busy !== undefined}
                 onClick={() => void act({ action: "reevaluate", expectedVersion: value.routine.version })}
               >
-                Evaluate again
+                {t("routines.overview.evaluateAgain")}
               </Button>
             ) : null}
-            {view.edit ? <Button onClick={() => setEdit(true)}>Edit routine</Button> : null}
+            {view.edit ? <Button onClick={() => setEdit(true)}>{t("routines.overview.edit")}</Button> : null}
             <Button
               variant="primary"
               disabled={busy !== undefined || !view.run}
@@ -302,7 +311,7 @@ export function RoutineOverview({
               aria-describedby={view.runBlocked === undefined ? undefined : "run-blocked"}
               onClick={() => void start({ action: "run", operationKey: operationKey() })}
             >
-              Run now
+              {t("routines.overview.runNow")}
             </Button>
             {view.runBlocked === undefined ? null : (
               <span id="run-blocked" className="visually-hidden">
@@ -321,14 +330,14 @@ export function RoutineOverview({
       {/* A model's change made after its chat read untrusted content, until the person edits the routine's words. */}
       {value !== undefined && routineProvenanceLine(value.revision.provenance) !== undefined ? (
         <Notice className="routine-provenance">
-          {routineProvenanceLine(value.revision.provenance)}. Check its objective and instructions; editing them yourself clears this note.
+          {t("routines.overview.provenance", { provenance: routineProvenanceLine(value.revision.provenance) ?? "" })}
         </Notice>
       ) : null}
       <LoadState
         error={current.error || undefined}
         reload={current.reload}
         loading={value === undefined && !current.error}
-        label="Loading routine…"
+        label={t("routines.overview.loading")}
       >
         <ActionNote note={note || undefined} tone={tone} />
         {startedUnseen && busy === undefined ? (
@@ -341,7 +350,7 @@ export function RoutineOverview({
                 latest?.focus();
               }}
             >
-              See it under Runs
+              {t("routines.overview.seeUnderRuns")}
             </Button>
           </p>
         ) : null}
@@ -350,34 +359,42 @@ export function RoutineOverview({
       {value === undefined ? null : (
         <>
           <Section
-            title="Overview"
+            title={t("routines.overview.title")}
             actions={
               <Button variant="ghost" size="sm" disabled={busy !== undefined} onClick={reload}>
-                Refresh details
+                {t("routines.overview.refresh")}
               </Button>
             }
           >
             <Summary
               items={[
-                ["Owner", value.hostStatus],
+                [t("routines.overview.owner"), value.hostStatus],
                 ...(value.schedules ?? []).map(
                   (schedule, index) =>
                     [
-                      index === 0 ? "Schedule" : `Schedule ${index + 1}`,
-                      `Next ${when(schedule.next_run_at, timeZone, "not armed")} · last ${when(schedule.last_run_at, timeZone, "never")}`,
+                      index === 0 ? t("routines.overview.schedule") : t("routines.overview.scheduleNumbered", { number: index + 1 }),
+                      t("routines.overview.scheduleLine", {
+                        next: when(schedule.next_run_at, timeZone, t("routines.overview.notArmed")),
+                        last: when(schedule.last_run_at, timeZone, t("routines.overview.never")),
+                      }),
                     ] as const,
                 ),
                 [
-                  "Evaluation",
+                  t("routines.overview.evaluation"),
                   <>
                     <StatusBadge status={value.evaluation.status} /> <EvaluationText evaluation={value.evaluation} />
                   </>,
                 ],
                 [
-                  "Configuration",
-                  `Active revision: ${value.routine.activeRevision ?? "none"}; latest configuration: ${value.revision.revision}. Runs keep their original configuration.`,
+                  t("routines.overview.configuration"),
+                  t("routines.overview.configurationLine", {
+                    active: value.routine.activeRevision ?? t("routines.overview.none"),
+                    latest: value.revision.revision,
+                  }),
                 ],
-                ...(value.lastSevenDays === undefined ? [] : [["Last 7 days", weekEffort(value.lastSevenDays)] as const]),
+                ...(value.lastSevenDays === undefined
+                  ? []
+                  : [[t("routines.overview.lastSevenDays"), weekEffort(value.lastSevenDays)] as const]),
               ]}
             />
           </Section>
@@ -412,9 +429,9 @@ export function RoutineOverview({
           />
 
           {view?.archive ? (
-            <section className="danger-zone routine-danger" aria-label="Archive">
+            <section className="danger-zone routine-danger" aria-label={t("routines.overview.archiveSection")}>
               <Button variant="danger-ghost" onClick={() => setConfirm("archive")}>
-                Archive routine
+                {t("routines.overview.archiveTitle")}
               </Button>
             </section>
           ) : null}
@@ -432,9 +449,9 @@ export function RoutineOverview({
           ) : null}
           {confirm ? (
             <Confirm
-              title={CONFIRM[confirm].title}
-              message={CONFIRM[confirm].message}
-              action={`Confirm ${confirm}`}
+              title={t(CONFIRM[confirm].title)}
+              message={t(CONFIRM[confirm].message)}
+              action={t(CONFIRM[confirm].action)}
               onConfirm={() => act({ action: confirm, expectedVersion: value.routine.version })}
               onClose={() => setConfirm(undefined)}
             />
@@ -447,13 +464,14 @@ export function RoutineOverview({
 
 /** A setup check in plain words, the scorer's measurements behind a disclosure. */
 function EvaluationText({ evaluation }: { readonly evaluation: RoutineDetail["evaluation"] }) {
+  const t = useT();
   const { summary, measured } = evaluationWords(evaluation);
   return (
     <>
       <CodeText text={summary} />
       {measured === undefined ? null : (
         <details className="routine-evaluation-measured">
-          <summary className="disclosure">What it measured</summary>
+          <summary className="disclosure">{t("routines.overview.measured")}</summary>
           {measured}
         </details>
       )}

@@ -12,6 +12,7 @@ import {
   type ScheduleSpec,
 } from "@tavi/contracts";
 
+import { translateNow, useT } from "../../lib/i18n.js";
 import { Select } from "../../ui/Select.js";
 import { Modal } from "../../ui/Modal.js";
 import { FormActions, FormFailure, LoadError } from "../settings/FormParts.js";
@@ -23,6 +24,7 @@ import { Button } from "../../ui/Button.js";
 import { cadenceProblems, sameCadence } from "../../ui/cadence.js";
 import { CadenceField, type CadenceAllows } from "../../ui/CadenceField.js";
 import { useTimeZone, useWorkspace } from "../shell/Workspace.js";
+import { andList } from "../apps/model.js";
 
 /** A routine trigger is one cadence: a one-off runs once, at one time. */
 const TRIGGER_ALLOWS: CadenceAllows = { once: "single" };
@@ -95,7 +97,7 @@ export function routineDraft(detail: RoutineDetail): RoutineDraft {
   return {
     routineId: detail.routine.routineId,
     ...(detail.revision.provenance === undefined ? {} : { provenance: detail.revision.provenance }),
-    name: `${detail.routine.name} (copy)`,
+    name: translateNow("routines.create.copyName", { name: detail.routine.name }),
     objective: snapshot.objective,
     timezone: snapshot.execution.timezone,
     triggers: snapshot.triggers,
@@ -142,6 +144,7 @@ export function CreateRoutine({
   readonly saved: (routineId: string) => void;
 }) {
   const { client, workspaceId } = useWorkspace();
+  const t = useT();
   const [name, setName] = useState(draft?.name ?? start?.name ?? "");
   const [objective, setObjective] = useState(draft?.objective ?? start?.objective ?? "");
   const [first] = useState(() => {
@@ -158,11 +161,10 @@ export function CreateRoutine({
   const [instructions, setInstructions] = useState(draft?.instructions ?? "");
   const provenance = routineProvenanceLine(draft?.provenance);
   const notCopied = [
-    ...(draft !== undefined && draft.otherTargets > 0
-      ? [draft.otherTargets === 1 ? "its other destination" : `its ${draft.otherTargets} other destinations`]
-      : []),
-    ...(draft?.window === true ? ["its delivery window"] : []),
+    ...(draft !== undefined && draft.otherTargets > 0 ? [t("routines.create.otherDestinations", { count: draft.otherTargets })] : []),
+    ...(draft?.window === true ? [t("routines.create.window")] : []),
   ];
+  const notCopiedItems = andList(notCopied);
   // One key per dialog: a retried save is the same create, not a second routine.
   const operation = useRef(operationKey());
   const created = useRef("");
@@ -173,9 +175,9 @@ export function CreateRoutine({
   } = useFormSubmit(
     true,
     async () => {
-      if (!name.trim() || !objective.trim()) return "Enter a name and an objective.";
+      if (!name.trim() || !objective.trim()) return t("routines.create.emptyFields");
       const problem = cadenceProblems(spec)[0];
-      if (problem !== undefined) return `When it runs: ${problem.message}`;
+      if (problem !== undefined) return t("routines.create.cadenceProblem", { problem: problem.message });
       // A daily time is set up as before; any other cadence is the routine's one trigger. A copy keeps its other triggers.
       const shown =
         first !== undefined && sameCadence(spec, first.spec) ? first.trigger : cadenceTrigger(first?.trigger.id ?? "cadence", spec);
@@ -205,7 +207,7 @@ export function CreateRoutine({
   );
 
   return (
-    <Modal title="Create routine" busy={busy} onClose={onClose}>
+    <Modal title={t("routines.create.title")} busy={busy} onClose={onClose}>
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -215,15 +217,21 @@ export function CreateRoutine({
         <BusyFieldset busy={busy} className="settings-fields">
           {notice}
           <label>
-            Name
-            <input required value={name} maxLength={200} placeholder="News watch" onChange={(event) => setName(event.target.value)} />
+            {t("routines.create.name")}
+            <input
+              required
+              value={name}
+              maxLength={200}
+              placeholder={t("routines.create.namePlaceholder")}
+              onChange={(event) => setName(event.target.value)}
+            />
           </label>
           <label>
-            Objective
+            {t("routines.create.objective")}
             <textarea
               required
               value={objective}
-              placeholder="Find the latest news and material updates on a topic"
+              placeholder={t("routines.create.objectivePlaceholder")}
               onChange={(event) => setObjective(event.target.value)}
             />
           </label>
@@ -235,33 +243,25 @@ export function CreateRoutine({
             workspaceId={workspaceId}
             allows={TRIGGER_ALLOWS}
           />
-          {others.length === 0 ? null : (
-            <p className="muted">
-              {others.length === 1
-                ? "Its other trigger is copied as it is."
-                : `Its ${others.length} other triggers are copied as they are.`}
-            </p>
-          )}
+          {others.length === 0 ? null : <p className="muted">{t("routines.create.otherTriggers", { count: others.length })}</p>}
           {draft === undefined ? null : (
             <>
               {provenance === undefined ? null : (
-                <Notice className="routine-provenance">
-                  {provenance}. Check its objective and instructions; editing them yourself clears this note on the copy.
-                </Notice>
+                <Notice className="routine-provenance">{t("routines.create.provenance", { provenance })}</Notice>
               )}
               <label>
-                Researcher instructions
+                {t("routines.create.instructions")}
                 <textarea required value={instructions} onChange={(event) => setInstructions(event.target.value)} />
               </label>
               <p className="muted">
-                Its report style, skills, models and first destination are copied too.
-                {notCopied.length === 0 ? null : ` Not copied: ${notCopied.join(" and ")}; add them once it is saved.`}
+                {t("routines.create.copiedToo")}
+                {notCopied.length === 0 ? null : ` ${t("routines.create.notCopied", { items: notCopiedItems })}`}
               </p>
             </>
           )}
-          <p>Before it starts, Tavi checks that the routine works with your models; the next run shown waits for that check to pass.</p>
+          <p>{t("routines.create.beforeStart")}</p>
           {error ? <Failure>{error}</Failure> : null}
-          <FormActions saving={busy} label="Save routine" onCancel={onClose} />
+          <FormActions saving={busy} label={t("routines.create.save")} onCancel={onClose} />
         </BusyFieldset>
       </form>
     </Modal>
@@ -288,6 +288,7 @@ export function EditRoutine({
   readonly saved: () => void;
 }) {
   const { client, workspaceId } = useWorkspace();
+  const t = useT();
   const pageZone = useTimeZone();
   const workspaceZone = timeZone ?? pageZone;
   const snapshot = value.revision.snapshot;
@@ -344,7 +345,7 @@ export function EditRoutine({
     true,
     async () => {
       const problem = triggers.flatMap((trigger) => cadenceProblems(trigger.spec))[0];
-      if (problem !== undefined) return `When it runs: ${problem.message}`;
+      if (problem !== undefined) return t("routines.create.cadenceProblem", { problem: problem.message });
       const answer = await edit();
       return answer.ok ? undefined : answer.message;
     },
@@ -352,7 +353,7 @@ export function EditRoutine({
   );
 
   return (
-    <Modal title="Edit routine" busy={busy} onClose={onClose}>
+    <Modal title={t("routines.edit.title")} busy={busy} onClose={onClose}>
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -361,17 +362,17 @@ export function EditRoutine({
       >
         <BusyFieldset busy={busy} className="settings-fields">
           <label>
-            Name
+            {t("routines.create.name")}
             <input required value={name} maxLength={200} onChange={(event) => setName(event.target.value)} />
           </label>
           <label>
-            Objective
+            {t("routines.create.objective")}
             <textarea required value={objective} maxLength={20_000} onChange={(event) => setObjective(event.target.value)} />
           </label>
           {triggers.map((trigger, index) => (
             <div key={trigger.id} className="cadence-trigger">
               <CadenceField
-                legend={triggers.length === 1 ? "When" : `Trigger ${index + 1}`}
+                legend={triggers.length === 1 ? t("ui.cadence.legend") : t("routines.edit.trigger", { number: index + 1 })}
                 value={trigger.spec}
                 onChange={(spec) => setTriggers((before) => before.map((each) => (each.id === trigger.id ? { ...each, spec } : each)))}
                 workspaceZone={workspaceZone}
@@ -381,7 +382,7 @@ export function EditRoutine({
               />
               {triggers.length > 1 ? (
                 <Button variant="ghost" size="sm" onClick={() => setTriggers((before) => before.filter((each) => each.id !== trigger.id))}>
-                  Remove trigger {index + 1}
+                  {t("routines.edit.removeTrigger", { number: index + 1 })}
                 </Button>
               ) : null}
             </div>
@@ -397,31 +398,35 @@ export function EditRoutine({
                   ])
                 }
               >
-                Add a trigger
+                {t("routines.edit.addTrigger")}
               </Button>
             </div>
           ) : null}
           <label>
-            Researcher instructions
+            {t("routines.create.instructions")}
             <textarea required value={instructions} onChange={(event) => setInstructions(event.target.value)} />
           </label>
           <label>
-            Report style
-            <Select aria-label="Report style" value={style} onChange={(event) => setStyle(event.target.value as typeof style)}>
-              <option value="summary">Summary with links</option>
-              <option value="detailed">Detailed with links</option>
+            {t("routines.edit.reportStyle")}
+            <Select
+              aria-label={t("routines.edit.reportStyle")}
+              value={style}
+              onChange={(event) => setStyle(event.target.value as typeof style)}
+            >
+              <option value="summary">{t("routines.edit.styleSummary")}</option>
+              <option value="detailed">{t("routines.edit.styleDetailed")}</option>
             </Select>
           </label>
           <label>
-            Maximum stories
+            {t("routines.edit.maxStories")}
             <input type="number" min={1} max={20} value={maxItems} onChange={(event) => setMaxItems(Number(event.target.value))} />
           </label>
           <label>
             <input type="checkbox" checked={pdf} onChange={(event) => setPdf(event.target.checked)} />
-            Generate PDF
+            {t("routines.edit.pdf")}
           </label>
           <fieldset>
-            <legend>Authorized destinations</legend>
+            <legend>{t("routines.edit.destinations")}</legend>
             {choices.map((target) => {
               const chosen = targets.includes(target.targetId);
               return (
@@ -437,41 +442,36 @@ export function EditRoutine({
                     }
                   />
                   {target.label}
-                  {target.authorized ? "" : " — unavailable"}
+                  {target.authorized ? "" : ` — ${t("routines.edit.unavailable")}`}
                 </label>
               );
             })}
-            {available.data !== undefined && choices.length === 0 ? (
-              <p>No destination configured. Ask in chat to add an explicitly selected destination after configuring Messaging.</p>
-            ) : null}
+            {available.data !== undefined && choices.length === 0 ? <p>{t("routines.edit.noDestination")}</p> : null}
           </fieldset>
           {available.error ? <Failure>{available.error}</Failure> : null}
           <label>
-            Questions while it runs
+            {t("routines.edit.questions")}
             <Select
-              aria-label="Questions while it runs"
+              aria-label={t("routines.edit.questions")}
               value={asking}
               disabled={targets.length === 0}
               onChange={(event) => setCheckpoints(event.target.value as typeof checkpoints)}
             >
-              <option value="off">Never ask — decide alone</option>
-              <option value="ask-with-default">Ask the destination, with a default</option>
+              <option value="off">{t("routines.edit.neverAsk")}</option>
+              <option value="ask-with-default">{t("routines.edit.askDefault")}</option>
             </Select>
           </label>
           <p className="muted">
             {targets.length === 0
-              ? "Choose a destination above to let a run ask you something."
+              ? t("routines.edit.hintNoDestination")
               : asking === "ask-with-default"
-                ? "A run may stop to ask you in the destination, always with the option it takes if you don't answer in time. It waits inside its time budget, then goes on."
-                : "A run never stops to ask: it decides with what it has."}
+                ? t("routines.edit.hintAsk")
+                : t("routines.edit.hintNever")}
           </p>
           <StandingAnswers routineId={value.routine.routineId} />
-          <p>
-            Name, objective, trigger, report and delivery changes preserve the researcher instructions. Instruction changes require
-            evaluation; the previous active revision continues until it passes.
-          </p>
+          <p>{t("routines.edit.note")}</p>
           {error ? <Failure>{error}</Failure> : null}
-          <FormActions saving={busy} label="Save revision" onCancel={onClose} />
+          <FormActions saving={busy} label={t("routines.edit.save")} onCancel={onClose} />
         </BusyFieldset>
       </form>
     </Modal>
@@ -489,13 +489,14 @@ function freeTriggerId(taken: readonly string[]): string {
  */
 function StandingAnswers({ routineId }: { readonly routineId: string }) {
   const { client, workspaceId } = useWorkspace();
+  const t = useT();
   const loaded = useLoaded(() =>
     requestList<{ readonly answers: readonly RoutineStandingAnswer[] }>(
       client,
       workspaceId,
       { action: "answers", routineId },
       "answers",
-      "standing answers",
+      t("routines.answers.what"),
     ),
   );
   const [forgotten, setForgotten] = useState<readonly string[]>([]);
@@ -512,7 +513,7 @@ function StandingAnswers({ routineId }: { readonly routineId: string }) {
   };
   return (
     <fieldset>
-      <legend>Answered without asking</legend>
+      <legend>{t("routines.answers.legend")}</legend>
       <ul className="standing-answers">
         {answers.map((answer) => (
           <li key={answer.questionKey}>
@@ -522,10 +523,10 @@ function StandingAnswers({ routineId }: { readonly routineId: string }) {
             <Button
               variant="ghost"
               size="sm"
-              aria-label={`Forget the answer to ${answer.question}`}
+              aria-label={t("routines.answers.forgetLabel", { question: answer.question })}
               onClick={() => forget(answer.questionKey)}
             >
-              Forget
+              {t("routines.answers.forget")}
             </Button>
           </li>
         ))}

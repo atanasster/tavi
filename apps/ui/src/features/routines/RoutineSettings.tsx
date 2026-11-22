@@ -1,5 +1,6 @@
 import type { RoutineSnapshot } from "@tavi/contracts";
 
+import { translateNow, useT } from "../../lib/i18n.js";
 import { Summary } from "../../ui/Parts.js";
 import { json } from "./api.js";
 
@@ -23,8 +24,8 @@ function fieldLabel(words: readonly string[]): string {
 
 /** A leaf value in words. */
 function leafText(value: unknown): string {
-  if (value === undefined || value === null || value === "") return "Not set";
-  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (value === undefined || value === null || value === "") return translateNow("routines.settings.notSet");
+  if (typeof value === "boolean") return translateNow(value ? "routines.settings.yes" : "routines.settings.no");
   if (typeof value === "string") return value;
   if (typeof value === "number") return String(value);
   return JSON.stringify(value);
@@ -51,7 +52,7 @@ function elementWords(value: unknown, index: number): string {
       if (typeof word === "string" && word !== "") return word;
     }
   }
-  return `Item ${index + 1}`;
+  return translateNow("routines.settings.item", { number: index + 1 });
 }
 
 /** `words` runs beside `parts`: an object key in words, an array element by its name (`parts` keeps its id, by which two revisions compare). */
@@ -59,7 +60,11 @@ function flatten(value: unknown, parts: readonly string[], words: readonly strin
   if (Array.isArray(value)) {
     // A list of plain values is one setting; a list of objects is one per item.
     if (value.every((item) => item === null || typeof item !== "object")) {
-      into.push({ path: parts.join("."), label: fieldLabel(words), value: value.length === 0 ? "None" : value.map(leafText).join(", ") });
+      into.push({
+        path: parts.join("."),
+        label: fieldLabel(words),
+        value: value.length === 0 ? translateNow("routines.settings.none") : value.map(leafText).join(", "),
+      });
       return;
     }
     value.forEach((item, index) => {
@@ -69,7 +74,8 @@ function flatten(value: unknown, parts: readonly string[], words: readonly strin
   }
   if (value !== null && typeof value === "object") {
     const entries = Object.entries(value as Record<string, unknown>);
-    if (entries.length === 0 && parts.length > 0) into.push({ path: parts.join("."), label: fieldLabel(words), value: "None" });
+    if (entries.length === 0 && parts.length > 0)
+      into.push({ path: parts.join("."), label: fieldLabel(words), value: translateNow("routines.settings.none") });
     for (const [key, item] of entries) flatten(item, [...parts, key], [...words, keyWords(key)], into);
     return;
   }
@@ -99,8 +105,8 @@ function snapshotChanges(revision: RoutineSnapshot, current: RoutineSnapshot): r
   return paths.flatMap((path) => {
     const before = then.get(path);
     const after = now.get(path);
-    const was = before?.value ?? "Not set";
-    const is = after?.value ?? "Not set";
+    const was = before?.value ?? translateNow("routines.settings.notSet");
+    const is = after?.value ?? translateNow("routines.settings.notSet");
     if (was === is) return [];
     return [{ path, label: (after ?? before)!.label, before: was, now: is }];
   });
@@ -114,12 +120,13 @@ const SHOWN_ELSEWHERE = /^(objective$|agent\.instructions$|skills(\.|$))/;
  * (and its state) behind a disclosure.
  */
 export function RoutineSettingsView({ snapshot, state }: { readonly snapshot: RoutineSnapshot; readonly state: unknown }) {
+  const t = useT();
   const fields = snapshotFields(snapshot).filter((field) => !SHOWN_ELSEWHERE.test(field.path));
   return (
     <>
       <Summary items={fields.map((field) => [field.label, field.value] as const)} />
       <details>
-        <summary className="disclosure">Raw configuration (JSON)</summary>
+        <summary className="disclosure">{t("routines.settings.raw")}</summary>
         <pre>{json(snapshot)}</pre>
         <pre>{json(state)}</pre>
       </details>
@@ -143,29 +150,27 @@ export function RevisionChanges({
   readonly current: RoutineSnapshot;
   readonly currentRevision: number;
 }) {
+  const t = useT();
   const changes = snapshotChanges(snapshot, current);
   return (
     <div className="revision-changes">
       {revision === currentRevision ? (
-        <p>This is the current revision.</p>
+        <p>{t("routines.settings.current")}</p>
       ) : changes.length === 0 ? (
-        <p>Its settings are the same as the current revision's ({currentRevision}).</p>
+        <p>{t("routines.settings.same", { revision: currentRevision })}</p>
       ) : (
         <>
-          <p>
-            Restoring it changes {changes.length === 1 ? "one setting" : `${changes.length} settings`} from the current revision (
-            {currentRevision}):
-          </p>
-          <dl className="revision-diff" aria-label={`Changes from revision ${currentRevision}`}>
+          <p>{t("routines.settings.changes", { count: changes.length, revision: currentRevision })}</p>
+          <dl className="revision-diff" aria-label={t("routines.settings.diffLabel", { revision: currentRevision })}>
             {changes.map((change) => (
               <div key={change.path}>
                 <dt>{change.label}</dt>
                 <dd>
                   <span className="revision-diff-now">
-                    <span className="revision-diff-tag">Now</span> {change.now}
+                    <span className="revision-diff-tag">{t("routines.settings.now")}</span> {change.now}
                   </span>
                   <span className="revision-diff-then">
-                    <span className="revision-diff-tag">Revision {revision}</span> {change.before}
+                    <span className="revision-diff-tag">{t("routines.settings.revisionTag", { revision })}</span> {change.before}
                   </span>
                 </dd>
               </div>
@@ -174,7 +179,7 @@ export function RevisionChanges({
         </>
       )}
       <details>
-        <summary className="disclosure">Raw configuration (JSON)</summary>
+        <summary className="disclosure">{t("routines.settings.raw")}</summary>
         <pre>{json(snapshot)}</pre>
       </details>
     </div>

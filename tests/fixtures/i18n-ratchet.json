@@ -1,12 +1,11 @@
 {
-  "features/apps": 159,
+  "features/apps": 5,
   "features/center": 609,
   "features/chat": 7,
   "features/chat-panel": 135,
   "features/ideas": 81,
   "features/needs": 27,
   "features/plugin-host": 1,
-  "features/routines": 137,
   "features/sessions": 14,
   "features/settings": 595,
   "features/shell": 1,

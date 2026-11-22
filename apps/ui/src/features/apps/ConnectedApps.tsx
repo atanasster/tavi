@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { AppCategory, AppHealth, ConnectableApp } from "@tavi/contracts";
 
 import { ANNOUNCER_ID } from "../shell/a11y.js";
+import { useT } from "../../lib/i18n.js";
 import { FilterChip, LoadState, PageHead, PageNote, SearchField } from "../../ui/Parts.js";
 import { mcpActions } from "../settings/plugins-api.js";
 import { appActions } from "./apps-api.js";
@@ -28,6 +29,7 @@ import {
 import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
 import { Command } from "../../ui/Command.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * Settings → Connected apps: the
@@ -76,6 +78,7 @@ export function ConnectedApps({
   /** The Center feed's `plugin` revision: an install or removal elsewhere re-reads the list. */
   readonly revision?: number;
 }) {
+  const t = useT();
   const [review, setReview] = useState(reviewQuery);
   // The app an old link's review opens on, and only that app.
   const [reviewFor, setReviewFor] = useState<{ readonly appId: string; readonly pluginId: string }>();
@@ -101,25 +104,21 @@ export function ConnectedApps({
   }
   return (
     <section className="settings">
-      <PageHead
-        className="settings-head"
-        title="Connected apps"
-        description="The accounts and apps Tavi works with. Nothing is read until you connect, and you choose what each may change."
-      >
-        <nav className="segmented" aria-label="Connected apps">
+      <PageHead className="settings-head" title={t("apps.page.title")} description={t("apps.page.description")}>
+        <nav className="segmented" aria-label={t("apps.page.title")}>
           <Button
             className="segment"
             aria-current={where.tab === "connected" ? "page" : undefined}
             onClick={() => onWhere({ tab: "connected" })}
           >
-            Connected
+            {t("apps.page.connected")}
           </Button>
           <Button
             className="segment"
             aria-current={where.tab === "discover" ? "page" : undefined}
             onClick={() => onWhere({ tab: "discover" })}
           >
-            Discover
+            {t("apps.page.discover")}
           </Button>
         </nav>
       </PageHead>
@@ -168,6 +167,7 @@ function ConnectedList({
   readonly onOpen: (appId: string, connect?: { readonly accountId?: string }) => void;
   readonly onDiscover: (query?: string) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   // A plugin installed or removed elsewhere shows here without a reload.
   const { data, error, loading, reload } = useLoaded(() => appActions.list(client, workspaceId), [revision]);
@@ -205,9 +205,9 @@ function ConnectedList({
       {data !== undefined && apps.length === 0 ? <EmptyApps onDiscover={onDiscover} /> : null}
       {!filtered ? null : (
         <div className="apps-filters">
-          <SearchField value={query} placeholder="Search your apps" label="Search your apps" onChange={setQuery} />
+          <SearchField value={query} placeholder={t("apps.list.search")} label={t("apps.list.search")} onChange={setQuery} />
           <FilterChip pressed={needsYou} onPick={() => setNeedsYou((current) => !current)}>
-            Needs you only
+            {t("apps.list.needsYouOnly")}
           </FilterChip>
           {categories.length < 2
             ? null
@@ -217,7 +217,7 @@ function ConnectedList({
                   pressed={category === each}
                   onPick={() => setCategory((current) => (current === each ? undefined : each))}
                 >
-                  {CATEGORY_WORDS[each]}
+                  {t(CATEGORY_WORDS[each])}
                 </FilterChip>
               ))}
         </div>
@@ -225,7 +225,7 @@ function ConnectedList({
       {groupApps(shown).map(({ group, apps: members }) => (
         <section key={group} aria-labelledby={`apps-group-${group}`}>
           <h2 id={`apps-group-${group}`} className="settings-section-title">
-            {GROUP_TITLES[group]}
+            {t(GROUP_TITLES[group])}
           </h2>
           <ul className="rows">
             {members.map((app) => (
@@ -236,16 +236,19 @@ function ConnectedList({
       ))}
       {apps.some((app) => app.source.kind === "mcp" && app.health !== "off") ? (
         <p className="muted">
-          The kill switch:{" "}
-          <Button
-            variant="danger"
-            size="sm"
-            disabled={busy !== undefined}
-            onClick={() => void run("mcp:off", () => mcpActions.off(client))}
-          >
-            Turn every MCP app off
-          </Button>{" "}
-          (turning it on again is <Command>tavi mcp on</Command>).
+          {withParts(t("apps.list.killSwitch"), {
+            button: (
+              <Button
+                variant="danger"
+                size="sm"
+                disabled={busy !== undefined}
+                onClick={() => void run("mcp:off", () => mcpActions.off(client))}
+              >
+                {t("apps.list.allOff")}
+              </Button>
+            ),
+            command: <Command>tavi mcp on</Command>,
+          })}
         </p>
       ) : null}
     </>
@@ -254,25 +257,26 @@ function ConnectedList({
 
 /** Nothing connected yet: Tavi's presets, read from the owner's catalog (which sends nothing out), each opening Discover on it. */
 function EmptyApps({ onDiscover }: { readonly onDiscover: (query?: string) => void }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const featured = useLoaded(() => appActions.catalog(client, workspaceId, ""));
   const presets = (featured.data?.catalog.sections ?? []).find((section) => section.section === "presets")?.entries ?? [];
   return (
     <div className="empty apps-empty">
-      <p>No apps yet. Connect your calendar, to-dos and home so Tavi can plan around your day.</p>
+      <p>{t("apps.list.empty")}</p>
       {presets.length === 0 ? null : (
-        <ul className="actions list-reset" aria-label="Featured apps">
+        <ul className="actions list-reset" aria-label={t("apps.list.featured")}>
           {presets.map((entry) => (
             <li key={entry.name}>
               <Button size="sm" onClick={() => onDiscover(entry.name)}>
-                Add {entry.name}
+                {t("apps.list.add", { app: entry.name })}
               </Button>
             </li>
           ))}
         </ul>
       )}
       <Button variant="primary" onClick={() => onDiscover()}>
-        Discover apps
+        {t("apps.list.discover")}
       </Button>
     </div>
   );
@@ -285,6 +289,7 @@ function AppRow({
   readonly app: ConnectableApp;
   readonly onOpen: (appId: string, connect?: { readonly accountId?: string }) => void;
 }) {
+  const t = useT();
   const timeZone = useTimeZone();
   const badge = HEALTH_BADGE[app.health];
   const repair = primaryRepair(app);
@@ -299,7 +304,7 @@ function AppRow({
             {app.name}
           </Button>
           {/* A working app sits under Connected: its badge would say the heading again. */}
-          {app.health === "ready" ? null : <span className={`badge badge-${badge.tone}`}>{badge.text}</span>}
+          {app.health === "ready" ? null : <span className={`badge badge-${badge.tone}`}>{t(badge.textKey)}</span>}
         </span>
         {/* An account named like its app (a channel's) says nothing the title does not. */}
         {accounts === app.name ? null : <span className="meta-sm">{accounts}</span>}

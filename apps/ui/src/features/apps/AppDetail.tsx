@@ -8,7 +8,9 @@ import { Select } from "../../ui/Select.js";
 import { settingsPath } from "../shell/route.js";
 import { mcpActions, pluginActions } from "../settings/plugins-api.js";
 import { appActions } from "./apps-api.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import { mapOutcome } from "../../lib/ipc.js";
+import type { UiKey } from "../../locales/en.js";
 import { ChannelAppConnections } from "../settings/ChannelsSettings.js";
 import { Confirm } from "../../ui/Confirm.js";
 import { McpLogsModal, McpReviewModal } from "../settings/McpServers.js";
@@ -18,11 +20,12 @@ import { AccountRow } from "./AccountRow.js";
 import { ConnectSheet } from "./ConnectSheet.js";
 import { RecentActivity } from "./RecentActivity.js";
 import { AppIcon } from "./AppIcon.js";
-import { authorsWords, HEALTH_BADGE, isolationWords, keptByWords, lendingWords, pageFix, primaryRepair, testedWords } from "./model.js";
+import { authorsWords, HEALTH_BADGE, isolationWords, keptByWords, lendingAccess, pageFix, primaryRepair, testedWords } from "./model.js";
 import { SettingsForm } from "./SettingsForm.js";
 import { ToolDecisions } from "./ToolDecisions.js";
 import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 import { useWorkspace } from "../shell/Workspace.js";
 
 /**
@@ -33,13 +36,16 @@ import { useWorkspace } from "../shell/Workspace.js";
  */
 
 /** What a site profile lets the agent do there, in a few words. */
-const SITE_MODE_WORDS: Readonly<Record<"read" | "assist-only" | "stage" | "none" | "person-opens", string>> = {
-  read: "Reads",
-  "assist-only": "Reads for the chat only",
-  stage: "Fills forms up to the last step",
-  none: "Link only",
-  "person-opens": "Reads only pages you open",
+const SITE_MODE_WORDS: Readonly<Record<"read" | "assist-only" | "stage" | "none" | "person-opens", UiKey>> = {
+  read: "apps.site.read",
+  "assist-only": "apps.site.assistOnly",
+  stage: "apps.site.stage",
+  none: "apps.site.none",
+  "person-opens": "apps.site.personOpens",
 };
+
+/** The lending question, by what the account's tools do. */
+const LEND_MESSAGE = { read: "apps.lend.messageRead", change: "apps.lend.messageChange", send: "apps.lend.messageSend" } as const;
 export function AppDetail({
   appId,
   connecting,
@@ -58,6 +64,7 @@ export function AppDetail({
   /** Opens a chat in place; absent, its link loads the page. */
   readonly onOpenTask?: ((taskId: string) => void) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const loaded = useLoaded(() => appActions.show(client, appId, workspaceId));
   const { data, error, loading } = loaded;
@@ -85,7 +92,7 @@ export function AppDetail({
   const busyNow = busy !== undefined;
   return (
     <section className="settings apps-detail">
-      <BackLink label="Connected apps" onBack={onBack} />
+      <BackLink label={t("apps.page.title")} onBack={onBack} />
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         <PageNote tone={tone} note={note} />
       </LoadState>
@@ -121,7 +128,7 @@ export function AppDetail({
                 const accountId = repair.accountId;
                 void run(`sharing:${accountId}`, async () => {
                   const shared = await appActions.sharing(client, workspaceId, app.appId, accountId, "shared");
-                  return mapOutcome(shared, () => `${app.name} is shared again.`);
+                  return mapOutcome(shared, () => t("apps.detail.sharedAgain", { app: app.name }));
                 });
               }
             }}
@@ -129,8 +136,8 @@ export function AppDetail({
           {app.warnings.map((warning) => (
             <Notice key={warning}>{warning}</Notice>
           ))}
-          <Section title="Accounts">
-            {app.accounts.length === 0 ? <Empty>Not connected.</Empty> : null}
+          <Section title={t("apps.detail.accounts")}>
+            {app.accounts.length === 0 ? <Empty>{t("apps.detail.notConnected")}</Empty> : null}
             <ul className="rows">
               {app.accounts.map((account) => (
                 <AccountRow
@@ -166,11 +173,13 @@ export function AppDetail({
                           void run(`mailbox:${account.accountId}`, async () => {
                             const set = await appActions.mailbox(client, workspaceId, app.appId, account.accountId, mailbox);
                             return mapOutcome(set, () =>
-                              mailbox === "off"
-                                ? "The agent no longer reads this mailbox."
-                                : mailbox === "read"
-                                  ? "The agent may read and draft in this mailbox; it never sends."
-                                  : "The agent may also send drafts you approve, each one shown before it goes.",
+                              t(
+                                mailbox === "off"
+                                  ? "apps.detail.mailboxOff"
+                                  : mailbox === "read"
+                                    ? "apps.detail.mailboxRead"
+                                    : "apps.detail.mailboxSend",
+                              ),
                             );
                           })
                   }
@@ -180,11 +189,7 @@ export function AppDetail({
                       : (on) =>
                           void run(`receive:${account.accountId}`, async () => {
                             const set = await appActions.receive(client, workspaceId, app.appId, account.accountId, on);
-                            return mapOutcome(set, () =>
-                              on
-                                ? "Tavi is reached through this account again. If the provider has not allowed it yet, sign in again."
-                                : "This account takes nothing in: it only carries what you turned on.",
-                            );
+                            return mapOutcome(set, () => t(on ? "apps.detail.receiveOn" : "apps.detail.receiveOff"));
                           })
                   }
                   onCalendar={
@@ -193,11 +198,7 @@ export function AppDetail({
                       : (on) =>
                           void run(`calendar:${account.accountId}`, async () => {
                             const set = await appActions.calendar(client, workspaceId, app.appId, account.accountId, on);
-                            return mapOutcome(set, () =>
-                              on
-                                ? "The agent may use this calendar. If Google has not allowed it yet, sign in again."
-                                : "The agent no longer uses this calendar.",
-                            );
+                            return mapOutcome(set, () => t(on ? "apps.detail.calendarOn" : "apps.detail.calendarOff"));
                           })
                   }
                   onPeople={
@@ -214,9 +215,9 @@ export function AppDetail({
                     void run(`sharing:${account.accountId}`, async () => {
                       const set = await appActions.sharing(client, workspaceId, app.appId, account.accountId, sharing);
                       return mapOutcome(set, () =>
-                        sharing === "personal"
-                          ? `${account.identity ?? account.label} is Personal: only your own chats use it.`
-                          : `${account.identity ?? account.label} is Shared: people you allowed may use it.`,
+                        t(sharing === "personal" ? "apps.detail.sharingPersonal" : "apps.detail.sharingShared", {
+                          account: account.identity ?? account.label,
+                        }),
                       );
                     })
                   }
@@ -225,33 +226,31 @@ export function AppDetail({
             </ul>
             {(app.auth.kind === "oauth" && app.source.preset !== undefined) || (signsIn(app.auth) && app.source.kind === "channel") ? (
               <Button size="sm" disabled={busyNow} onClick={() => onConnect({ addAccount: true })}>
-                Add another account
+                {t("apps.detail.addAccount")}
               </Button>
             ) : null}
           </Section>
           {/* A channel's connections: their settings and who may reach the agent through each. */}
           {app.source.kind !== "channel" ? null : (
-            <Section title="Connections and people">
+            <Section title={t("apps.detail.connections")}>
               {/* Read again whenever the app is, so a choice the connect sheet saved shows at once. */}
               <ChannelAppConnections key={appRevision} providerId={app.appId} />
             </Section>
           )}
           {app.sites === undefined || app.sites.length === 0 ? null : (
-            <Section title="Sites this app may browse">
-              <p className="muted">
-                Each is off until you turn it on. On, the agent browses it in your browser within the rules shown, with your session and its
-                page limits.
-              </p>
+            <Section title={t("apps.detail.sites")}>
+              <p className="muted">{t("apps.detail.sitesNote")}</p>
               <ul className="rows">
                 {app.sites.map((site) => (
                   <li key={site.siteId} className="row apps-account">
                     <span className="apps-account-info">
                       <strong>{site.name}</strong>{" "}
-                      <span className="badge">{SITE_MODE_WORDS[site.navigate ? site.mode : "person-opens"]}</span>
+                      <span className="badge">{t(SITE_MODE_WORDS[site.navigate ? site.mode : "person-opens"])}</span>
                       <span className="meta-sm">{site.hosts.join(", ")}</span>
                       <span className="meta-sm">
                         {site.reason}
-                        {site.watchable ? " Read on a schedule too, where its robots.txt allows." : ""}
+                        {/* Its own sentence after the site's reason. */}
+                        {site.watchable ? ` ${t("apps.detail.siteWatchable")}` : ""}
                       </span>
                     </span>
                     <span className="actions">
@@ -263,11 +262,13 @@ export function AppDetail({
                           onChange={(event) =>
                             void run(`sites:${site.siteId}`, async () => {
                               const set = await appActions.sites(client, workspaceId, app.appId, site.siteId, event.target.checked);
-                              return mapOutcome(set, () => (event.target.checked ? `${site.name} is on.` : `${site.name} is off.`));
+                              return mapOutcome(set, () =>
+                                t(event.target.checked ? "apps.detail.siteOn" : "apps.detail.siteOff", { site: site.name }),
+                              );
                             })
                           }
                         />{" "}
-                        On
+                        {t("apps.detail.on")}
                       </label>
                     </span>
                   </li>
@@ -275,7 +276,7 @@ export function AppDetail({
               </ul>
             </Section>
           )}
-          <Section title="What it can do">
+          <Section title={t("apps.detail.tools")}>
             <ToolDecisions
               tools={app.tools}
               busy={busyNow}
@@ -288,33 +289,39 @@ export function AppDetail({
               onPick={(tool, target) =>
                 void run(`permission:${tool.toolId}`, async () => {
                   const set = await appActions.permission(client, workspaceId, app.appId, tool.toolId, target);
-                  return mapOutcome(
-                    set,
-                    () => `${tool.title}: ${target === "allow" ? "allowed" : target === "ask" ? "asks first" : "blocked"}.`,
+                  return mapOutcome(set, () =>
+                    t(
+                      target === "allow"
+                        ? "apps.detail.toolAllowed"
+                        : target === "ask"
+                          ? "apps.detail.toolAsks"
+                          : "apps.detail.toolBlocked",
+                      { tool: tool.title },
+                    ),
                   );
                 })
               }
             />
             {/* Only while an account takes messages in: one that only carries its mailbox or calendar is no way to reach Tavi. */}
             {app.channel === undefined || !app.accounts.some((account) => account.receives !== false) ? null : (
-              <p className="muted">Also a channel: people can reach Tavi through it.</p>
+              <p className="muted">{t("apps.detail.alsoChannel")}</p>
             )}
           </Section>
-          <Section title="Recent activity">
+          <Section title={t("apps.detail.activity")}>
             <RecentActivity appId={app.appId} onOpenTask={onOpenTask} />
           </Section>
-          <Section title="Data and privacy">
+          <Section title={t("apps.detail.privacy")}>
             <DataAndPrivacy app={app} />
           </Section>
           {/* A channel's settings stay in Settings → Channels. */}
           {app.settings.length > 0 && app.source.kind !== "channel" && app.accounts[0] !== undefined && !app.accounts[0].readOnly ? (
-            <Section title="Settings">
+            <Section title={t("apps.detail.settings")} anchor="settings">
               {/* Each account has its own settings: the one chosen is the one saved. */}
               {app.accounts.length > 1 ? (
                 <label className="apps-field">
-                  Account{" "}
+                  {t("apps.detail.account")}{" "}
                   <Select
-                    aria-label="Account to set up"
+                    aria-label={t("apps.detail.accountToSetUp")}
                     value={settingsAccountId ?? ""}
                     onChange={(event) => setSettingsAccount(event.target.value)}
                   >
@@ -336,28 +343,40 @@ export function AppDetail({
                       values,
                       ...(settingsAccountId === undefined ? {} : { accountId: settingsAccountId }),
                     });
-                    return mapOutcome(saved, () => "Saved.");
+                    return mapOutcome(saved, () => t("apps.detail.saved"));
                   })
                 }
               />
             </Section>
           ) : null}
-          <Section title="Advanced">
+          <Section title={t("apps.detail.advanced")}>
             <p className="muted">
-              Source: {app.source.kind === "mcp" ? "an MCP server" : app.source.kind === "channel" ? "a channel" : "a plugin"}
-              {app.source.pluginIds.length === 0 ? "" : ` (${app.source.pluginIds.join(", ")})`}
-              {app.source.verified === "tavi-preset" ? ", a Tavi preset" : app.source.verified === "unreviewed" ? ", not reviewed yet" : ""}
-              .
+              {t(
+                app.source.kind === "mcp"
+                  ? "apps.detail.sourceMcp"
+                  : app.source.kind === "channel"
+                    ? "apps.detail.sourceChannel"
+                    : "apps.detail.sourcePlugin",
+                {
+                  plugins: app.source.pluginIds.length === 0 ? "" : ` (${app.source.pluginIds.join(", ")})`,
+                  verified:
+                    app.source.verified === "tavi-preset"
+                      ? t("apps.detail.sourcePreset")
+                      : app.source.verified === "unreviewed"
+                        ? t("apps.detail.sourceUnreviewed")
+                        : "",
+                },
+              )}
             </p>
             {app.source.kind === "mcp" ? (
               <div className="actions">
                 {app.source.pluginIds.map((pluginId) => (
                   <span key={pluginId}>
                     <Button size="sm" onClick={() => setReviewing(pluginId)}>
-                      Review {app.source.pluginIds.length > 1 ? pluginId : "tools"}
+                      {app.source.pluginIds.length > 1 ? t("apps.detail.reviewPlugin", { plugin: pluginId }) : t("apps.detail.reviewTools")}
                     </Button>{" "}
                     <Button size="sm" onClick={() => setLogs(pluginId)}>
-                      View log{app.source.pluginIds.length > 1 ? ` (${pluginId})` : ""}
+                      {app.source.pluginIds.length > 1 ? t("apps.detail.viewLogOf", { plugin: pluginId }) : t("apps.detail.viewLog")}
                     </Button>
                   </span>
                 ))}
@@ -381,21 +400,19 @@ export function AppDetail({
                         )
                       }
                     >
-                      Turn {app.accounts.length > 1 ? account.label : app.name} off
+                      {t("apps.detail.turnOff", { name: app.accounts.length > 1 ? account.label : app.name })}
                     </Button>
                   ))}
                 {/* A channel is removed from Settings → Channels. */}
                 {app.source.kind === "channel" ? null : (
                   <Button size="sm" variant="danger" disabled={busyNow} onClick={() => setRemoving(true)}>
-                    Remove {app.name}
+                    {t("apps.detail.remove", { app: app.name })}
                   </Button>
                 )}
               </div>
             ) : null}
             {app.repairs.length === 0 ? null : (
-              <p className="meta-sm">
-                The same fix from a terminal: <code>{app.repairs[0]?.cli}</code>
-              </p>
+              <p className="meta-sm">{withParts(t("apps.detail.sameFix"), { command: <code>{app.repairs[0]?.cli}</code> })}</p>
             )}
           </Section>
           {connecting === undefined ? null : (
@@ -437,12 +454,14 @@ export function AppDetail({
           {logs === undefined ? null : <McpLogsModal pluginId={logs} onClose={() => setLogs(undefined)} />}
           {disconnecting === undefined ? null : (
             <Confirm
-              title={`Disconnect ${app.accounts.find((account) => account.accountId === disconnecting)?.identity ?? disconnecting}?`}
+              title={t("apps.disconnect.title", {
+                account: app.accounts.find((account) => account.accountId === disconnecting)?.identity ?? disconnecting,
+              })}
               message={disconnectWords(
                 app,
                 app.accounts.find((account) => account.accountId === disconnecting),
               )}
-              action="Disconnect"
+              action={t("apps.disconnect.action")}
               onClose={() => {
                 setDisconnecting(undefined);
                 setRemoveToo(false);
@@ -450,39 +469,43 @@ export function AppDetail({
               onConfirm={() =>
                 run(`disconnect:${disconnecting}`, async () => {
                   const out = await appActions.disconnect(client, workspaceId, app.appId, disconnecting, secondary && removeToo);
-                  return mapOutcome(out, () => (secondary && removeToo ? "Disconnected and removed." : "Disconnected."));
+                  return mapOutcome(out, () => t(secondary && removeToo ? "apps.disconnect.doneRemoved" : "apps.disconnect.done"));
                 })
               }
             >
               {/* The first account only signs out; another may go with it, if the person says so. */}
               {secondary ? (
                 <label className="apps-remove-too">
-                  <input type="checkbox" checked={removeToo} onChange={(event) => setRemoveToo(event.target.checked)} /> Also remove this
-                  account and its tools
+                  <input type="checkbox" checked={removeToo} onChange={(event) => setRemoveToo(event.target.checked)} />{" "}
+                  {t("apps.disconnect.removeToo")}
                 </label>
               ) : null}
             </Confirm>
           )}
           {lending === undefined ? null : (
             <Confirm
-              title={`Let people use ${lent?.identity ?? app.name}?`}
-              message={`The people you allowed in this workspace will be able to ask Tavi to ${lendingWords(app)} your ${app.name}${lent?.identity === undefined ? "" : ` (${lent.identity})`}${app.auth.kind === "api-key" ? ", with your key" : signsIn(app.auth) ? ", with your sign-in" : ""}.`}
-              action="Let them use it"
+              title={t("apps.lend.title", { account: lent?.identity ?? app.name })}
+              message={t(LEND_MESSAGE[lendingAccess(app)], {
+                app: app.name,
+                identity: lent?.identity === undefined ? "" : ` (${lent.identity})`,
+                with: app.auth.kind === "api-key" ? t("apps.lend.withKey") : signsIn(app.auth) ? t("apps.lend.withSignIn") : "",
+              })}
+              action={t("apps.lend.action")}
               onClose={() => setLending(undefined)}
               onConfirm={() => run(`people:${lending}`, () => mcpActions.people(client, lending, true, workspaceId))}
             />
           )}
           {removing ? (
             <Confirm
-              title={`Remove ${app.name}?`}
-              message={`Every account of ${app.name} is removed with it, and its tools stop. What Tavi already remembered stays.`}
-              action="Remove"
+              title={t("apps.removeApp.title", { app: app.name })}
+              message={t("apps.removeApp.message", { app: app.name })}
+              action={t("apps.removeApp.action")}
               onClose={() => setRemoving(false)}
               onConfirm={() =>
                 run("remove", async () => {
                   const out = await appActions.remove(client, workspaceId, app.appId);
                   if (out.ok) onBack();
-                  return mapOutcome(out, () => `${app.name} removed.`);
+                  return mapOutcome(out, () => t("apps.removeApp.done", { app: app.name }));
                 })
               }
             />
@@ -496,12 +519,12 @@ export function AppDetail({
 /** What a disconnect does, said before it is done: one revoke can end other apps' sign-ins, so it waits for the last. */
 function disconnectWords(app: ConnectableApp, account: ConnectableApp["accounts"][number] | undefined): string {
   const kept = account?.keptBy ?? [];
-  const provider = app.publisher ?? "The provider";
-  const revoke = kept.length === 0 ? "Its sign-in is revoked where the provider allows it" : keptByWords(kept, provider);
-  return `The agent can no longer use this ${app.name} account. ${revoke}${app.accounts.length > 1 ? ", and this account is removed" : ""}. What Tavi already remembered stays; delete it in Soul & memory.`;
+  const revoke = kept.length === 0 ? translateNow("apps.disconnect.revoked") : keptByWords(kept, app.publisher);
+  return translateNow(app.accounts.length > 1 ? "apps.disconnect.messageRemoved" : "apps.disconnect.message", { app: app.name, revoke });
 }
 
 function AppHead({ app, busy, onRepair }: { readonly app: ConnectableApp; readonly busy: boolean; readonly onRepair: () => void }) {
+  const t = useT();
   const badge = HEALTH_BADGE[app.health];
   const repair = primaryRepair(app);
   const fix = pageFix(app, repair);
@@ -509,28 +532,26 @@ function AppHead({ app, busy, onRepair }: { readonly app: ConnectableApp; readon
     <header className="settings-head apps-head">
       <div>
         <h1>
-          <AppIcon name={app.name} icon={app.icon} /> {app.name} <span className={`badge badge-${badge.tone}`}>{badge.text}</span>
+          <AppIcon name={app.name} icon={app.icon} /> {app.name} <span className={`badge badge-${badge.tone}`}>{t(badge.textKey)}</span>
         </h1>
         <p className="settings-description">
           {authorsWords(app) && app.summaryByTavi !== true ? (
-            <span data-source="author">{`Its author says: “${app.summary}”`}</span>
+            <span data-source="author">{t("apps.detail.authorSays", { summary: app.summary })}</span>
           ) : (
             app.summary
           )}
           {app.publisher === undefined ? "" : ` · ${app.publisher}`}
-          {app.source.verified === "tavi-preset" ? " · Tavi preset" : ""}
+          {app.source.verified === "tavi-preset" ? ` · ${t("apps.badge.taviPreset")}` : ""}
         </p>
         {repair === undefined ? null : <p className="muted">{repair.detail}</p>}
       </div>
       {fix === undefined ? (
         repair === undefined ? null : (
-          <p className="meta-sm">
-            Fix it from a terminal: <code>{repair.cli}</code>
-          </p>
+          <p className="meta-sm">{withParts(t("apps.detail.fixFromTerminal"), { command: <code>{repair.cli}</code> })}</p>
         )
       ) : fix === "channels" ? (
         <AppLink href={settingsPath("messaging")} className="button-primary" onFollow={undefined}>
-          {`${repair?.title ?? app.name} in Channels`}
+          {t("apps.detail.inChannels", { action: repair?.title ?? app.name })}
         </AppLink>
       ) : (
         <Button variant="primary" disabled={busy} onClick={onRepair}>
@@ -542,47 +563,60 @@ function AppHead({ app, busy, onRepair }: { readonly app: ConnectableApp; readon
 }
 
 function DataAndPrivacy({ app }: { readonly app: ConnectableApp }) {
+  const t = useT();
   const scopes = app.auth.kind === "oauth" || app.auth.kind === "device" ? app.auth.scopes : [];
   const missing = new Set(app.accounts.flatMap((account) => account.missingScopes));
   return (
     <dl className="summary-grid">
       <div>
-        <dt>Access it asks for{authorsWords(app) ? ", in its author's words" : ""}</dt>
+        <dt>{t(authorsWords(app) ? "apps.privacy.accessAuthor" : "apps.privacy.access")}</dt>
         <dd>
           {scopes.length === 0
-            ? "No sign-in access."
-            : scopes.map((scope) => `${scope.says}${missing.has(scope.scope) ? " (not allowed)" : ""}`).join(" · ")}
+            ? t("apps.privacy.noAccess")
+            : scopes
+                .map((scope) => (missing.has(scope.scope) ? t("apps.privacy.notAllowed", { scope: scope.says }) : scope.says))
+                .join(" · ")}
         </dd>
       </div>
       <div>
-        <dt>Where calls go</dt>
+        <dt>{t("apps.privacy.where")}</dt>
         <dd>
-          {app.egress.anyNetwork
-            ? "Any network"
-            : app.egress.hosts.length === 0
-              ? "Nowhere off this computer"
-              : app.egress.hosts.join(", ")}
-          {app.egress.lan ? ", and your local network" : ""}
+          {(() => {
+            const where = app.egress.anyNetwork
+              ? t("apps.privacy.anyNetwork")
+              : app.egress.hosts.length === 0
+                ? t("apps.privacy.nowhere")
+                : app.egress.hosts.join(", ");
+            return app.egress.lan ? t("apps.privacy.andLan", { where }) : where;
+          })()}
         </dd>
       </div>
       <div>
-        <dt>What runs</dt>
+        <dt>{t("apps.privacy.runs")}</dt>
         <dd>{isolationWords(app)}</dd>
       </div>
       <div>
-        <dt>Credentials it receives</dt>
+        <dt>{t("apps.privacy.credentials")}</dt>
         <dd>
           {app.credentials.length === 0
-            ? "None"
-            : app.credentials.map((credential) => `${credential.name}${credential.raw ? " (handed over as itself)" : ""}`).join(", ")}
+            ? t("apps.privacy.none")
+            : app.credentials
+                .map((credential) => (credential.raw ? t("apps.privacy.raw", { credential: credential.name }) : credential.name))
+                .join(", ")}
         </dd>
       </div>
       <div>
-        <dt>What it returns</dt>
+        <dt>{t("apps.privacy.returns")}</dt>
         <dd>
-          Treated as {app.trust.output === "untrusted" ? "untrusted content" : "trusted"}
-          {app.trust.confidentiality === "personal" ? ", and as personal data" : ""}. Disconnecting does not delete what Tavi already
-          remembered, or what the provider holds.
+          {t(
+            app.trust.output === "untrusted"
+              ? app.trust.confidentiality === "personal"
+                ? "apps.privacy.untrustedPersonal"
+                : "apps.privacy.untrusted"
+              : app.trust.confidentiality === "personal"
+                ? "apps.privacy.trustedPersonal"
+                : "apps.privacy.trusted",
+          )}
         </dd>
       </div>
     </dl>

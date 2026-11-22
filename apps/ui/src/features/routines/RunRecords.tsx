@@ -5,6 +5,8 @@ import { approvalChannelLabel, type RoutineLedgerEvent, type RoutineNewsSource }
 import { useAction } from "../../hooks/use-action.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { mergeBy } from "../../lib/paging.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import { when } from "../../lib/time.js";
 import { Modal } from "../../ui/Modal.js";
 import { ActionNote, LoadError, LoadMore, Section, StatusBadge } from "../../ui/Parts.js";
@@ -31,6 +33,7 @@ export function RunRecords({
   readonly timeZone: string | undefined;
 }) {
   const { client, workspaceId } = useWorkspace();
+  const t = useT();
   const channels = useChannelNames();
   const timeline = useLoaded(
     () =>
@@ -39,13 +42,13 @@ export function RunRecords({
         workspaceId,
         { action: "ledger", routineId, runId, limit: EVENTS_PAGE },
         "events",
-        "run timeline",
+        t("routines.records.timelineWhat"),
       ),
     [revision],
     { serial: true },
   );
   const sources = useLoaded(
-    () => requestList<SourcePage>(client, workspaceId, { action: "sources", runId }, "sources", "fetched evidence"),
+    () => requestList<SourcePage>(client, workspaceId, { action: "sources", runId }, "sources", t("routines.records.evidenceWhat")),
     [revision],
     { serial: true },
   );
@@ -79,7 +82,7 @@ export function RunRecords({
           const next = page.events ?? [];
           setOlderEvents((before) => [...before, ...next]);
           setMoreEvents(next.length >= EVENTS_PAGE);
-          return next.length > 0 ? undefined : "No more timeline events";
+          return next.length > 0 ? undefined : t("routines.records.noMoreEvents");
         },
       ),
     );
@@ -94,16 +97,17 @@ export function RunRecords({
 
   return (
     <>
-      <Section title="Timeline and actual prompts">
+      <Section title={t("routines.records.timeline")}>
         {timeline.error ? <LoadError error={timeline.error} reload={timeline.reload} /> : null}
         <ActionNote note={note || undefined} tone={tone} announce={false} />
-        {timeline.data !== undefined && events.length === 0 ? <p className="muted">Nothing recorded yet.</p> : null}
+        {timeline.data !== undefined && events.length === 0 ? <p className="muted">{t("routines.records.nothing")}</p> : null}
         <ol className="item-list list-reset">
           {events.map((event) => (
             <li key={event.sequence} className="item-row">
               <div className="item-main">
                 <span className="item-title-text">
-                  {event.envelope.step ?? "run"} · {checkpointLine(event.envelope, channels.connection) ?? EVENT_WORDS[event.envelope.code]}
+                  {event.envelope.step ?? t("routines.records.stepRun")} ·{" "}
+                  {checkpointLine(event.envelope, channels.connection) ?? t(EVENT_WORDS[event.envelope.code])}
                 </span>
                 <span className="item-meta meta-sm">
                   {when(event.at, timeZone)}
@@ -118,7 +122,7 @@ export function RunRecords({
                     if (event.detailId) void inspect(event.detailId);
                   }}
                 >
-                  Inspect retained detail {event.sequence}
+                  {t("routines.records.inspectDetail", { sequence: String(event.sequence) })}
                 </Button>
               ) : null}
             </li>
@@ -129,7 +133,7 @@ export function RunRecords({
             className={null}
             buttonClassName="ghost button-sm"
             busy={false}
-            label="Load more timeline"
+            label={t("routines.records.loadMore")}
             onLoad={() => {
               const last = events.at(-1);
               if (last !== undefined) void loadEvents(last.sequence);
@@ -137,11 +141,12 @@ export function RunRecords({
           />
         ) : null}
         {detail ? (
-          <Modal title="Retained detail" wide onClose={() => setDetail(undefined)}>
+          <Modal title={t("routines.records.detail")} wide onClose={() => setDetail(undefined)}>
             {detail.payload === null ? (
               <p>
-                Detail expired {detail.prunedAt === null ? "at an unknown time" : when(detail.prunedAt, timeZone)}; the integrity envelope
-                remains.
+                {t("routines.records.detailExpired", {
+                  at: detail.prunedAt === null ? t("routines.records.unknownTime") : when(detail.prunedAt, timeZone),
+                })}
               </p>
             ) : (
               <pre>{detail.payload}</pre>
@@ -149,9 +154,9 @@ export function RunRecords({
           </Modal>
         ) : null}
       </Section>
-      <Section title="Fetched evidence">
+      <Section title={t("routines.records.evidence")}>
         {sources.error ? <LoadError error={sources.error} reload={sources.reload} /> : null}
-        {sources.data !== undefined && evidence.length === 0 ? <p className="muted">No evidence fetched.</p> : null}
+        {sources.data !== undefined && evidence.length === 0 ? <p className="muted">{t("routines.records.noEvidence")}</p> : null}
         <ul className="item-list list-reset">
           {evidence.map((source) => (
             <li key={source.sourceId} className="item-row evidence-row">
@@ -160,14 +165,19 @@ export function RunRecords({
                   <SourceLink url={source.canonicalUrl} label={source.publisher} />
                 </span>
                 <span className="item-meta meta-sm">
-                  published {when(source.publishedAt, timeZone, "unknown")} · fetched {when(source.retrievedAt, timeZone)} · hash{" "}
-                  {source.contentHash ?? "not fetched"}
+                  {t("routines.records.sourceMeta", {
+                    published: when(source.publishedAt, timeZone, t("routines.records.unknown")),
+                    fetched: when(source.retrievedAt, timeZone),
+                    hash: source.contentHash ?? t("routines.records.notFetched"),
+                  })}
                 </span>
                 {source.prunedAt ? (
-                  <span className="item-meta meta-sm">Evidence expired at {when(source.prunedAt, timeZone)}</span>
+                  <span className="item-meta meta-sm">
+                    {t("routines.records.evidenceExpired", { at: when(source.prunedAt, timeZone) })}
+                  </span>
                 ) : (
                   // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable excerpt must take focus so a keyboard can scroll it.
-                  <pre tabIndex={0} role="region" aria-label={`Excerpt from ${source.publisher}`}>
+                  <pre tabIndex={0} role="region" aria-label={t("routines.records.excerpt", { publisher: source.publisher })}>
                     {source.excerpt}
                   </pre>
                 )}
@@ -181,7 +191,7 @@ export function RunRecords({
             className={null}
             buttonClassName="ghost button-sm"
             busy={false}
-            label="Load more sources"
+            label={t("routines.records.loadSources")}
             onLoad={() => void loadSources(nextSource)}
           />
         ) : null}
@@ -190,34 +200,34 @@ export function RunRecords({
   );
 }
 /** A run's timeline event, in words: never its machine code. */
-const EVENT_WORDS: Readonly<Record<RoutineLedgerEvent["envelope"]["code"], string>> = {
-  "model-retired": "its model was retired",
-  transient: "a provider hiccup; tried again",
-  "setup-needed": "needs setup",
-  "auto-paused": "paused itself",
-  claimed: "picked up",
-  started: "started",
-  recovered: "carried on after a restart",
-  completed: "completed",
-  failed: "failed",
-  cancelled: "cancelled",
-  missed: "missed",
-  overlap: "skipped: the previous run was still going",
-  "daily-budget": "skipped: the day's run limit was reached",
-  budget: "stopped at its budget",
-  expired: "expired",
-  credentials: "a credential is missing or invalid",
-  revoked: "a permission was revoked",
-  model: "a model call",
-  tool: "a tool call",
-  heartbeat: "still working",
-  published: "published its report",
-  delivery: "a delivery changed state",
-  pruned: "older records pruned",
-  grant: "a permission was checked",
-  unsupported: "not supported",
-  asked: "asked a question",
-  answered: "a question was answered",
+const EVENT_WORDS: Readonly<Record<RoutineLedgerEvent["envelope"]["code"], UiKey>> = {
+  "model-retired": "routines.event.modelRetired",
+  transient: "routines.event.transient",
+  "setup-needed": "routines.event.setupNeeded",
+  "auto-paused": "routines.event.autoPaused",
+  claimed: "routines.event.claimed",
+  started: "routines.event.started",
+  recovered: "routines.event.recovered",
+  completed: "routines.event.completed",
+  failed: "routines.event.failed",
+  cancelled: "routines.event.cancelled",
+  missed: "routines.event.missed",
+  overlap: "routines.event.overlap",
+  "daily-budget": "routines.event.dailyBudget",
+  budget: "routines.event.budget",
+  expired: "routines.event.expired",
+  credentials: "routines.event.credentials",
+  revoked: "routines.event.revoked",
+  model: "routines.event.model",
+  tool: "routines.event.tool",
+  heartbeat: "routines.event.heartbeat",
+  published: "routines.event.published",
+  delivery: "routines.event.delivery",
+  pruned: "routines.event.pruned",
+  grant: "routines.event.grant",
+  unsupported: "routines.event.unsupported",
+  asked: "routines.event.asked",
+  answered: "routines.event.answered",
 };
 
 /** A checkpoint in the run's timeline, said as its receipt; `undefined` for any other event. */
@@ -227,18 +237,23 @@ export function checkpointLine(
 ): string | undefined {
   const checkpoint = envelope.checkpoint;
   if (checkpoint === undefined || (envelope.code !== "asked" && envelope.code !== "answered")) return undefined;
-  if (envelope.code === "asked") return `asked: ${checkpoint.question ?? "a question"}`;
+  if (envelope.code === "asked")
+    return translateNow("routines.checkpoint.asked", { question: checkpoint.question ?? translateNow("routines.checkpoint.aQuestion") });
   const answer = checkpoint.answers?.join(", ") ?? "";
   switch (checkpoint.outcome) {
     case "defaulted":
-      return answer === "" ? "nobody answered; went on without one" : `nobody answered; the default ${answer} was taken`;
+      return answer === "" ? translateNow("routines.checkpoint.defaultedNone") : translateNow("routines.checkpoint.defaulted", { answer });
     case "undelivered":
-      return "the question could not be sent; went on without asking";
+      return translateNow("routines.checkpoint.undelivered");
     case "withdrawn":
-      return "the question was withdrawn";
+      return translateNow("routines.checkpoint.withdrawn");
     default:
-      return checkpoint.via === "standing-answer"
-        ? `answered ${answer} by your standing answer${checkpoint.question === undefined ? "" : `: ${checkpoint.question}`}`
-        : `answered ${answer}${checkpoint.via === undefined ? "" : ` via ${approvalChannelLabel(checkpoint.via, connectionName)}`}`;
+      if (checkpoint.via === "standing-answer")
+        return checkpoint.question === undefined
+          ? translateNow("routines.checkpoint.standing", { answer })
+          : translateNow("routines.checkpoint.standingQuestion", { answer, question: checkpoint.question });
+      return checkpoint.via === undefined
+        ? translateNow("routines.checkpoint.answered", { answer })
+        : translateNow("routines.checkpoint.answeredVia", { answer, channel: approvalChannelLabel(checkpoint.via, connectionName) });
   }
 }

@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 
 import type { AppSettingField } from "@tavi/contracts";
 
+import { useT } from "../../lib/i18n.js";
 import { PasswordInput } from "../settings/PasswordInput.js";
 import { Button } from "../../ui/Button.js";
 import { Select } from "../../ui/Select.js";
@@ -24,6 +25,7 @@ export function SettingsForm({
   readonly busy: boolean;
   readonly onSave: (values: Readonly<Record<string, Value>>) => void;
 }) {
+  const t = useT();
   const base = useId();
   const [values, setValues] = useState<Record<string, Value>>({});
   const field = (each: AppSettingField) => (
@@ -55,13 +57,13 @@ export function SettingsForm({
       {fields.filter((each) => !each.advanced).map(field)}
       {advanced.length === 0 ? null : (
         <details className="apps-more-settings">
-          <summary className="disclosure">More settings</summary>
+          <summary className="disclosure">{t("apps.settings.more")}</summary>
           {advanced.map(field)}
         </details>
       )}
       <div className="actions">
         <Button variant="primary" type="submit" disabled={busy || Object.keys(values).length === 0}>
-          Save
+          {t("apps.settings.save")}
         </Button>
       </div>
     </form>
@@ -79,11 +81,13 @@ function SettingField({
   readonly value: Value | undefined;
   readonly onChange: (next: Value | undefined) => void;
 }) {
+  const t = useT();
   const text = typeof value === "string" ? value : "";
-  const placeholder = field.placeholder ?? (field.default === undefined ? undefined : `Default: ${String(field.default)}`);
+  const placeholder =
+    field.placeholder ?? (field.default === undefined ? undefined : t("apps.settings.default", { value: String(field.default) }));
   const helpId = field.help === undefined ? undefined : `${id}-help`;
   const described = helpId === undefined ? {} : { "aria-describedby": helpId };
-  const label = `${field.label}${field.required ? " (required)" : ""}`;
+  const label = field.required ? t("apps.settings.required", { label: field.label }) : field.label;
   return (
     <div className="apps-field">
       {/* A list has no control here, so its name is a heading of the note, not a label. */}
@@ -92,7 +96,7 @@ function SettingField({
         <PasswordInput
           id={id}
           value={text}
-          placeholder="Stored as a credential; leave empty to keep it"
+          placeholder={t("apps.settings.credential")}
           invalid={false}
           {...(helpId === undefined ? {} : { describedBy: helpId })}
           onChange={(next) => onChange(next === "" ? undefined : next)}
@@ -120,7 +124,7 @@ function SettingField({
       {field.type === "choice" ? (
         <Select id={id} value={text} {...described} onChange={(event) => onChange(event.target.value)}>
           <option value="" disabled>
-            {placeholder ?? "Choose…"}
+            {placeholder ?? t("apps.settings.choose")}
           </option>
           {(field.choices ?? []).map((choice) => (
             <option key={choice.value} value={choice.value}>
@@ -141,7 +145,7 @@ function SettingField({
         />
       ) : null}
       {/* A list is not one value this form can save: it is set where its plugin is configured. */}
-      {field.type === "strings" ? <span className="meta-sm">A list: set it in Settings → Plugins.</span> : null}
+      {field.type === "strings" ? <span className="meta-sm">{t("apps.settings.list")}</span> : null}
       {field.help === undefined ? null : (
         <span id={helpId} className="meta-sm">
           {field.help}

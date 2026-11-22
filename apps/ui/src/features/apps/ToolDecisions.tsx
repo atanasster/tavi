@@ -3,6 +3,8 @@ import { useId } from "react";
 import type { AppPermissionTarget, AppToolView } from "@tavi/contracts";
 
 import { usePhone } from "../../hooks/page.js";
+import { useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import { Select } from "../../ui/Select.js";
 import { ACCESS_TITLES, ceilingOf, toolsByAccess } from "./model.js";
 import { Empty } from "../../ui/Empty.js";
@@ -13,10 +15,10 @@ import { Button } from "../../ui/Button.js";
  * is shown, disabled, with why; the owner decides what each pick changes.
  */
 
-const TARGETS: readonly { readonly value: AppPermissionTarget; readonly label: string }[] = [
-  { value: "allow", label: "Allow" },
-  { value: "ask", label: "Ask" },
-  { value: "block", label: "Block" },
+const TARGETS: readonly { readonly value: AppPermissionTarget; readonly labelKey: UiKey }[] = [
+  { value: "allow", labelKey: "apps.tools.allow" },
+  { value: "ask", labelKey: "apps.tools.ask" },
+  { value: "block", labelKey: "apps.tools.block" },
 ];
 
 export function ToolDecisions({
@@ -33,12 +35,13 @@ export function ToolDecisions({
   ) => void /** Opens the review a tool waits for, when there is one to open. */;
   readonly onReview?: ((tool: AppToolView) => void) | undefined;
 }) {
-  if (tools.length === 0) return <Empty>It offers no tools here.</Empty>;
+  const t = useT();
+  if (tools.length === 0) return <Empty>{t("apps.tools.none")}</Empty>;
   return (
     <div className="apps-tools">
       {toolsByAccess(tools).map(({ access, tools: group }) => (
         <div key={access} className="apps-tool-group">
-          <h4>{ACCESS_TITLES[access]}</h4>
+          <h4>{t(ACCESS_TITLES[access])}</h4>
           <ul className="rows">
             {group.map((tool) => (
               <li key={tool.toolId} className="row apps-tool">
@@ -58,10 +61,10 @@ export function ToolDecisions({
 }
 
 /** Whose words a tool's sentence is: Tavi's own carry no note. */
-const SAYS_SOURCE_NOTE: Readonly<Record<NonNullable<AppToolView["saysSource"]>, string>> = {
-  tavi: "",
-  author: " (its author's words)",
-  "server-approved": " (the server's words)",
+const SAYS_SOURCE_NOTE: Readonly<Record<NonNullable<AppToolView["saysSource"]>, UiKey | undefined>> = {
+  tavi: undefined,
+  author: "apps.tools.authorsWords",
+  "server-approved": "apps.tools.serversWords",
 };
 
 function ToolChoice({
@@ -75,6 +78,7 @@ function ToolChoice({
   readonly onPick: (target: AppPermissionTarget) => void;
   readonly onReview?: () => void;
 }) {
+  const t = useT();
   const id = useId();
   const phone = usePhone();
   const ceiling = ceilingOf(tool);
@@ -87,8 +91,10 @@ function ToolChoice({
       {tool.says === undefined ? null : (
         <span className="muted">
           {" "}
-          {tool.says}
-          {tool.saysSource === undefined ? "" : SAYS_SOURCE_NOTE[tool.saysSource]}
+          {(() => {
+            const note = tool.saysSource === undefined ? undefined : SAYS_SOURCE_NOTE[tool.saysSource];
+            return note === undefined ? tool.says : t(note, { says: tool.says });
+          })()}
         </span>
       )}
     </span>
@@ -99,14 +105,14 @@ function ToolChoice({
       {label}
       {phone ? (
         <Select
-          aria-label={`${tool.title}: what Tavi does`}
+          aria-label={t("apps.tools.whatTaviDoes", { tool: tool.title })}
           value={tool.decision}
           disabled={busy || settable.length === 0}
           onChange={(event) => onPick(event.target.value as AppPermissionTarget)}
         >
           {TARGETS.map((target) => (
             <option key={target.value} value={target.value} disabled={!settable.includes(target.value)}>
-              {target.label}
+              {t(target.labelKey)}
             </option>
           ))}
         </Select>
@@ -125,7 +131,7 @@ function ToolChoice({
                   aria-describedby={allowed ? undefined : reasonId}
                   onChange={() => onPick(target.value)}
                 />{" "}
-                {target.label}
+                {t(target.labelKey)}
               </label>
             );
           })}
@@ -138,7 +144,7 @@ function ToolChoice({
             <>
               {" "}
               <Button variant="link" onClick={onReview}>
-                Review it
+                {t("apps.tools.reviewIt")}
               </Button>
             </>
           ) : null}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useT } from "../../lib/i18n.js";
 import { when } from "../../lib/time.js";
 import { Section, StatusBadge } from "../../ui/Parts.js";
 import { operationKey, type routineStep, type RunInspection } from "./api.js";
@@ -19,17 +20,18 @@ export function Deliveries({
   readonly busy: string | undefined;
   readonly change: (key: string, request: Parameters<typeof routineStep>[2], done: string) => Promise<void>;
 }) {
+  const t = useT();
   const [acknowledged, setAcknowledged] = useState(false);
   const deliveries = value.deliveries ?? [];
   return (
-    <Section title="Delivery and receipts">
+    <Section title={t("routines.deliveries.title")}>
       {deliveries.length === 0 ? (
-        <p className="muted">No delivery requested.</p>
+        <p className="muted">{t("routines.deliveries.none")}</p>
       ) : (
         <>
           <label className="acknowledge">
-            <input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} /> I understand
-            resending may deliver a duplicate.
+            <input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} />{" "}
+            {t("routines.deliveries.acknowledge")}
           </label>
           <ul className="item-list list-reset">
             {deliveries.map((job) => {
@@ -39,15 +41,21 @@ export function Deliveries({
                   <div className="item-main">
                     <span className="item-title-text">
                       {job.data.target.label}
-                      {job.data.text === undefined ? "" : " · sent as text (no PDF)"}
+                      {job.data.text === undefined ? "" : ` · ${t("routines.deliveries.sentAsText")}`}
                     </span>
                     <span className="item-meta meta-sm">
-                      Provider message IDs: {job.data.providerMessageIds?.join(", ") || "none recorded"} · {health?.failures ?? 0}{" "}
-                      consecutive failures; blocked since {health?.blockedSince ?? "not blocked"}
+                      {t("routines.deliveries.health", {
+                        ids: job.data.providerMessageIds?.join(", ") || t("routines.deliveries.noIds"),
+                        count: health?.failures ?? 0,
+                        since: health?.blockedSince ?? t("routines.deliveries.notBlocked"),
+                      })}
                     </span>
                     <span className="item-meta meta-sm">
-                      Updated {when(job.updatedAt, timeZone)} · earliest send {when(job.notBefore, timeZone)} · expires{" "}
-                      {when(job.expiresAt, timeZone)}
+                      {t("routines.deliveries.times", {
+                        updated: when(job.updatedAt, timeZone),
+                        earliest: when(job.notBefore, timeZone),
+                        expires: when(job.expiresAt, timeZone),
+                      })}
                     </span>
                     {job.data.error ? <span className="role-problem">{job.data.error}</span> : null}
                   </div>
@@ -59,11 +67,11 @@ export function Deliveries({
                         void change(
                           "resend",
                           { action: "retry_delivery", jobId: job.jobId, operationKey: operationKey(), acknowledgeDuplicateRisk: true },
-                          "Resend recorded using the original artifact and destination",
+                          t("routines.deliveries.resendDone"),
                         )
                       }
                     >
-                      {job.data.text === undefined ? "Resend original PDF" : "Resend original message"}
+                      {t(job.data.text === undefined ? "routines.deliveries.resendPdf" : "routines.deliveries.resendMessage")}
                     </RowAction>
                     <RowAction
                       disabled={busy !== undefined}
@@ -71,11 +79,11 @@ export function Deliveries({
                         void change(
                           "resume-delivery",
                           { action: "resume_delivery", routineId, targetId: job.data.targetId },
-                          "Delivery target resumed; existing pending jobs will be reconsidered",
+                          t("routines.deliveries.resumeDone"),
                         )
                       }
                     >
-                      Resume this delivery target
+                      {t("routines.deliveries.resume")}
                     </RowAction>
                   </div>
                 </li>

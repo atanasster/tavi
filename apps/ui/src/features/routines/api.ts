@@ -9,11 +9,10 @@ import type {
   RoutineRunSummary,
   RoutinesPayload,
 } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
-
 import { readChunks } from "../../lib/chunks.js";
 import { formatCount } from "../../lib/format.js";
 import { formatElapsed } from "../../lib/time.js";
+import { translateNow } from "../../lib/i18n.js";
 import { ask, mapOutcome, withList, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 
 /**
@@ -95,7 +94,7 @@ export interface LedgerDetail {
 }
 
 export function routineRequest<T>(client: SettingsClient, workspaceId: string, input: RoutineRequest): Promise<Outcome<T>> {
-  return ask<T>(client, "routines", { ...input, workspaceId }, { timeoutMs: null, refused: "Routine action refused" });
+  return ask<T>(client, "routines", { ...input, workspaceId }, { timeoutMs: null, refused: translateNow("routines.api.refused") });
 }
 
 /** A request whose answer carries a list under `field` (`withList`): one without it is a failure to read. */
@@ -125,10 +124,10 @@ export async function listDeliveryTargets(
       client,
       "routines",
       { action: "targets", workspaceId, ...(routineId === undefined ? {} : { routineId }) },
-      { refused: "Routine action refused" },
+      { refused: translateNow("routines.api.refused") },
     ),
     "targets",
-    "delivery destinations",
+    translateNow("routines.api.deliveryTargets"),
   );
 }
 
@@ -143,7 +142,7 @@ export function listRoutines(
   client: SettingsClient,
   workspaceId: string,
 ): Promise<Outcome<{ readonly routines: readonly ListedRoutine[] }>> {
-  return requestList(client, workspaceId, { action: "list", limit: ROUTINES_LIMIT }, "routines", "routines");
+  return requestList(client, workspaceId, { action: "list", limit: ROUTINES_LIMIT }, "routines", translateNow("routines.api.routines"));
 }
 
 /**
@@ -164,18 +163,20 @@ export async function routineStep<T>(
 export function runEffort(run: Pick<RunSummary, "durationMs" | "tokensKnown">): readonly string[] {
   return [
     ...(run.durationMs === undefined || run.durationMs === null ? [] : [formatElapsed(run.durationMs)]),
-    ...(run.tokensKnown === undefined || run.tokensKnown === 0 ? [] : [`${formatCount(run.tokensKnown)} tokens`]),
+    ...(run.tokensKnown === undefined || run.tokensKnown === 0
+      ? []
+      : [translateNow("routines.api.tokens", { tokens: formatCount(run.tokensKnown) })]),
   ];
 }
 
 /** A routine's runs over the last seven days, summed in one line. */
 export function weekEffort(totals: RoutineRunEffortTotals): string {
   return [
-    plural(totals.runs, "run"),
+    translateNow("routines.api.runs", { count: totals.runs }),
     ...(totals.durationMs > 0 ? [formatElapsed(totals.durationMs)] : []),
-    plural(totals.modelCalls, "model call"),
-    plural(totals.toolCalls, "tool call"),
-    `${formatCount(totals.tokensKnown)} tokens`,
+    translateNow("routines.api.modelCalls", { count: totals.modelCalls }),
+    translateNow("routines.api.toolCalls", { count: totals.toolCalls }),
+    translateNow("routines.api.tokens", { tokens: formatCount(totals.tokensKnown) }),
   ].join(" · ");
 }
 
@@ -201,7 +202,7 @@ export function webUrl(url: string | undefined): string | undefined {
 
 /** A comma list, or `none`. */
 export const listed = (items: readonly string[] | undefined): string =>
-  items === undefined || items.length === 0 ? "none" : items.join(", ");
+  items === undefined || items.length === 0 ? translateNow("routines.api.none") : items.join(", ");
 
 type ArtifactChunk = {
   readonly artifactId: string;
@@ -232,7 +233,7 @@ export async function readArtifact(
   const last = await readChunks(
     (offset) => routineRequest<ArtifactChunk>(client, workspaceId, { action: "artifact", runId, artifactKind: kind, offset }),
     (chunk) => {
-      if (chunk.totalBytes > MAX_ARTIFACT_BYTES || chunk.totalBytes < 1) return "Report changed during download";
+      if (chunk.totalBytes > MAX_ARTIFACT_BYTES || chunk.totalBytes < 1) return translateNow("routines.api.reportChanged");
       bytes ??= new Uint8Array(chunk.totalBytes);
       const part = Uint8Array.from(atob(chunk.base64), (character) => character.charCodeAt(0));
       if (
@@ -240,18 +241,18 @@ export async function readArtifact(
         chunk.offset + part.length > bytes.length ||
         (chunk.nextOffset !== null && chunk.nextOffset !== chunk.offset + part.length)
       )
-        return "Invalid report chunk";
+        return translateNow("routines.api.invalidChunk");
       bytes.set(part, chunk.offset);
       filled = chunk.offset + part.length;
       return undefined;
     },
-    { changed: "Report changed during download" },
+    { changed: translateNow("routines.api.reportChanged") },
   );
   if (!last.ok) throw new Error(last.message);
-  if (bytes === undefined || filled !== bytes.length) throw new Error("Incomplete report");
+  if (bytes === undefined || filled !== bytes.length) throw new Error(translateNow("routines.api.incomplete"));
   const digest = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))]
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
-  if (digest !== last.value.hash) throw new Error("Report checksum mismatch");
+  if (digest !== last.value.hash) throw new Error(translateNow("routines.api.checksum"));
   return { bytes, type: last.value.contentType };
 }

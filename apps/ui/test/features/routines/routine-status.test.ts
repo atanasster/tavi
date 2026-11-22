@@ -1,6 +1,7 @@
 import type { RoutineDetail } from "@tavi/contracts";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
+import { setLocale } from "../../../src/lib/i18n.js";
 import { settingsPath } from "../../../src/features/shell/route.js";
 import { evaluationWords, pausedDeliveryTarget, routineStatusView } from "../../../src/features/routines/status.js";
 
@@ -199,5 +200,19 @@ describe("a routine's status, as its page presents it", () => {
       pausedDeliveryTarget(health({ t: { failures: 0, blockedSince: "2026-10-25T11:00:00.000Z", notified: false } }), execution, now),
     ).toBe("t");
     expect(pausedDeliveryTarget(null, execution, now)).toBeUndefined();
+  });
+});
+
+describe("a routine's status, in Bulgarian", () => {
+  afterEach(async () => {
+    await setLocale("en");
+  });
+
+  it("puts the owner's reason first, then what to do about it", async () => {
+    await setLocale("bg");
+    const failedFirst = routineStatusView(detail({ status: "draft" }, { status: "failed", detail: "Оценката прекъсна." }));
+    expect(failedFirst.notice?.detail).toBe("Оценката прекъсна. Оцени я отново или редактирай рутината, за да запазиш нова версия.");
+    const noReason = routineStatusView(detail({ status: "draft" }, { status: "failed" }));
+    expect(noReason.notice?.detail).toMatch(/^Версията не мина оценката си\. Оцени я отново/);
   });
 });

@@ -1,5 +1,6 @@
 import type { RoutineDetail, RoutineEvaluation, RoutineRecord, RoutineSnapshot } from "@tavi/contracts";
 
+import { translateNow } from "../../lib/i18n.js";
 import { settingsPath } from "../shell/route.js";
 
 /** What a status notice offers to do about it: a page to go to, a check to run, a paused target to resume, a preview. */
@@ -43,7 +44,7 @@ export interface RoutineStatusView {
   readonly checkReadiness: boolean;
 }
 
-const CHECK_READINESS: StatusNoticeAction = { kind: "readiness", label: "Check readiness" };
+const checkReadiness = (): StatusNoticeAction => ({ kind: "readiness", label: translateNow("routines.status.checkReadiness") });
 
 /**
  * The delivery target the owner holds paused, if any, from the routine's
@@ -104,12 +105,12 @@ export function routineStatusView(detail: RoutineDetail & { readonly topicNotice
   const runBlocked = runnable
     ? undefined
     : archived
-      ? "Archived routines cannot run."
+      ? translateNow("routines.status.blockedArchived")
       : !evaluated
-        ? "Available once the routine has passed its evaluation."
+        ? translateNow("routines.status.blockedUnevaluated")
         : status === "completed"
-          ? "This routine has no trigger left to run."
-          : "Resume the routine to run it.";
+          ? translateNow("routines.status.blockedCompleted")
+          : translateNow("routines.status.blockedPaused");
 
   const base = {
     ...routineToggle(routine),
@@ -129,7 +130,7 @@ export function routineStatusView(detail: RoutineDetail & { readonly topicNotice
       pause: false,
       resume: false,
       run: false,
-      runBlocked: "Its owner is no longer allowed in this workspace.",
+      runBlocked: translateNow("routines.status.blockedRevoked"),
       evaluateAgain: false,
       edit: false,
       archive: !archived,
@@ -138,8 +139,8 @@ export function routineStatusView(detail: RoutineDetail & { readonly topicNotice
       checkReadiness: false,
       notice: {
         tone: "warning",
-        title: "Owner no longer allowed",
-        detail: `${routine.principalId} was removed from Allowed people, so this routine no longer runs. Archive it, or allow them again to use it.`,
+        title: translateNow("routines.status.revokedTitle"),
+        detail: translateNow("routines.status.revokedDetail", { principal: routine.principalId }),
       },
     };
   }
@@ -149,11 +150,9 @@ export function routineStatusView(detail: RoutineDetail & { readonly topicNotice
       ...base,
       notice: {
         tone: "warning",
-        title: "Setup needed",
-        detail:
-          evaluation.detail ||
-          "The owner could not start this routine's evaluation. Check Health below for what is missing, then restart `tavi serve`.",
-        action: CHECK_READINESS,
+        title: translateNow("routines.status.setupTitle"),
+        detail: evaluation.detail || translateNow("routines.status.setupDetail"),
+        action: checkReadiness(),
       },
     };
   }
@@ -162,8 +161,8 @@ export function routineStatusView(detail: RoutineDetail & { readonly topicNotice
       ...base,
       notice: {
         tone: "info",
-        title: "Evaluating",
-        detail: "The owner checks both model roles against a fixed test set before the routine can run. This page updates while it does.",
+        title: translateNow("routines.status.evaluatingTitle"),
+        detail: translateNow("routines.status.evaluatingDetail"),
       },
     };
   }
@@ -172,8 +171,9 @@ export function routineStatusView(detail: RoutineDetail & { readonly topicNotice
       ...base,
       notice: {
         tone: "bad",
-        title: "Evaluation failed",
-        detail: `${evaluation.detail || "The revision did not pass its evaluation."} Evaluate again, or edit the routine to save a new revision.`,
+        title: translateNow("routines.status.failedTitle"),
+        // The owner's reason, then what to do about it: two sentences, each whole.
+        detail: `${evaluation.detail || translateNow("routines.status.failedFallback")} ${translateNow("routines.status.failedDetail")}`,
       },
     };
   }
@@ -182,9 +182,9 @@ export function routineStatusView(detail: RoutineDetail & { readonly topicNotice
       ...base,
       notice: {
         tone: "warning",
-        title: "Paused after repeated failures",
-        detail: "Research kept failing, so the owner paused this routine. Check Health below, then Resume.",
-        action: CHECK_READINESS,
+        title: translateNow("routines.status.pausedFailuresTitle"),
+        detail: translateNow("routines.status.pausedFailuresDetail"),
+        action: checkReadiness(),
       },
     };
   }
@@ -193,17 +193,30 @@ export function routineStatusView(detail: RoutineDetail & { readonly topicNotice
       ...base,
       notice: {
         tone: "warning",
-        title: "Research is blocked",
-        detail:
-          "A model or tool credential this routine uses is failing. Fix it in Settings; the routine resumes on its own once research works again.",
-        action: { kind: "link", label: "Open credentials", href: settingsPath("credentials") },
+        title: translateNow("routines.status.blockedTitle"),
+        detail: translateNow("routines.status.blockedDetail"),
+        action: { kind: "link", label: translateNow("routines.status.openCredentials"), href: settingsPath("credentials") },
       },
     };
   }
   if (status === "completed")
-    return { ...base, notice: { tone: "info", title: "Completed", detail: "Its triggers that end have all run their last time." } };
+    return {
+      ...base,
+      notice: {
+        tone: "info",
+        title: translateNow("routines.status.completedTitle"),
+        detail: translateNow("routines.status.completedDetail"),
+      },
+    };
   if (archived)
-    return { ...base, notice: { tone: "info", title: "Archived", detail: "This routine no longer runs. Its history is kept." } };
+    return {
+      ...base,
+      notice: {
+        tone: "info",
+        title: translateNow("routines.status.archivedTitle"),
+        detail: translateNow("routines.status.archivedDetail"),
+      },
+    };
   // An active or paused routine whose newer revision is still on its way.
   if (candidate && evaluated) {
     if (failed) {
@@ -211,8 +224,11 @@ export function routineStatusView(detail: RoutineDetail & { readonly topicNotice
         ...base,
         notice: {
           tone: "bad",
-          title: `Revision ${routine.latestRevision} failed its evaluation`,
-          detail: `${evaluation.detail || "It did not pass."} Revision ${routine.activeRevision} keeps running.`,
+          title: translateNow("routines.status.candidateFailedTitle", { revision: routine.latestRevision }),
+          detail: `${evaluation.detail || translateNow("routines.status.candidateFailedFallback")} ${translateNow(
+            "routines.status.activeKeepsRunning",
+            { active: routine.activeRevision },
+          )}`,
         },
       };
     }
@@ -222,13 +238,13 @@ export function routineStatusView(detail: RoutineDetail & { readonly topicNotice
         notice: evaluation.detail
           ? {
               tone: "warning",
-              title: `Revision ${routine.latestRevision} cannot be evaluated yet`,
-              detail: `${evaluation.detail} Revision ${routine.activeRevision} keeps running.`,
+              title: translateNow("routines.status.candidateWaitingTitle", { revision: routine.latestRevision }),
+              detail: `${evaluation.detail} ${translateNow("routines.status.activeKeepsRunning", { active: routine.activeRevision })}`,
             }
           : {
               tone: "info",
-              title: `Evaluating revision ${routine.latestRevision}`,
-              detail: `Revision ${routine.activeRevision} keeps running until it passes.`,
+              title: translateNow("routines.status.candidateEvaluatingTitle", { revision: routine.latestRevision }),
+              detail: translateNow("routines.status.candidateEvaluatingDetail", { active: routine.activeRevision }),
             },
       };
     }
@@ -238,10 +254,9 @@ export function routineStatusView(detail: RoutineDetail & { readonly topicNotice
       ...base,
       notice: {
         tone: "warning",
-        title: "Delivery is paused",
-        detail:
-          "Sending its reports kept failing, or its destination's credentials stayed missing, so the owner stopped sending them. Reports are still written. Resume delivery once the destination works again.",
-        action: { kind: "resume-delivery", label: "Resume delivery", targetId: pausedTarget },
+        title: translateNow("routines.status.deliveryPausedTitle"),
+        detail: translateNow("routines.status.deliveryPausedDetail"),
+        action: { kind: "resume-delivery", label: translateNow("routines.status.resumeDelivery"), targetId: pausedTarget },
       },
     };
   }
@@ -250,9 +265,9 @@ export function routineStatusView(detail: RoutineDetail & { readonly topicNotice
       ...base,
       notice: {
         tone: "info",
-        title: "Not yet tried on its topic",
+        title: translateNow("routines.status.untriedTitle"),
         detail: untriedDetail(detail.topicNotice),
-        action: { kind: "preview", label: "Preview" },
+        action: { kind: "preview", label: translateNow("routines.status.preview") },
       },
     };
   }
@@ -282,9 +297,9 @@ export function evaluationWords(evaluation: Pick<RoutineEvaluation, "status" | "
   const why = / (?:Incomplete|Safety failure): .*$/.exec(detail)?.[0].trim();
   const said =
     status === "passed"
-      ? "Passed its setup check on a fixed test set."
+      ? translateNow("routines.status.setupPassed")
       : status === "failed"
-        ? "Did not pass its setup check on a fixed test set."
-        : "Its setup check is not finished.";
+        ? translateNow("routines.status.setupFailed")
+        : translateNow("routines.status.setupUnfinished");
   return { summary: why === undefined ? said : `${said} ${why}`, measured: detail };
 }

@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import type { CatalogEntry, CatalogRef } from "@tavi/contracts";
 
 import { LoadState, PageNote, SearchField } from "../../ui/Parts.js";
+import { useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import { Select } from "../../ui/Select.js";
 import { mcpActions } from "../settings/plugins-api.js";
 import { ChannelSheet } from "./ChannelSheet.js";
@@ -25,11 +27,11 @@ import { useWorkspace } from "../shell/Workspace.js";
  */
 
 const SECTION_TITLES = {
-  presets: "Tavi presets",
-  installed: "Installed, not set up",
-  channels: "Channels",
-  registry: "MCP Registry",
-} as const;
+  presets: "apps.discover.presets",
+  installed: "apps.discover.installed",
+  channels: "apps.discover.channels",
+  registry: "apps.discover.registry",
+} as const satisfies Readonly<Record<string, UiKey>>;
 
 /** How long typing settles before the catalog is asked again. */
 const SEARCH_SETTLE_MS = 350;
@@ -41,6 +43,7 @@ export function Discover({
   readonly initialQuery?: string | undefined;
   readonly onOpen: (appId: string, connect: boolean) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [typed, setTyped] = useState(initialQuery);
   const [query, setQuery] = useState(initialQuery);
@@ -99,19 +102,19 @@ export function Discover({
   };
   return (
     <div className="apps-discover">
-      <SearchField value={typed} placeholder="Search Tavi's apps" label="Search apps" onChange={setTyped} />
+      <SearchField value={typed} placeholder={t("apps.discover.searchPlaceholder")} label={t("apps.discover.search")} onChange={setTyped} />
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         <PageNote tone={tone} note={note} />
       </LoadState>
       {data !== undefined && sections.every((section) => section.entries.length === 0) ? (
-        <Empty>Nothing of Tavi's matches "{query}". Search the MCP Registry below.</Empty>
+        <Empty>{t("apps.discover.noMatch", { query })}</Empty>
       ) : null}
       {sections
         .filter((section) => section.entries.length > 0)
         .map((section) => (
           <section key={section.section} aria-labelledby={`apps-section-${section.section}`} className="apps-catalog-section">
             <h2 id={`apps-section-${section.section}`} className="settings-section-title">
-              {SECTION_TITLES[section.section]}
+              {t(SECTION_TITLES[section.section])}
             </h2>
             <ul className="apps-grid">
               {section.entries.map((entry) => (
@@ -129,20 +132,24 @@ export function Discover({
         ))}
       <section aria-labelledby="apps-section-registry" className="apps-catalog-section">
         <h2 id="apps-section-registry" className="settings-section-title">
-          MCP Registry
+          {t("apps.discover.registry")}
         </h2>
-        <p className="muted">Tavi does not review registry listings; you review each tool before the agent can use it.</p>
+        <p className="muted">{t("apps.discover.registryNote")}</p>
         <DiscoverPanel busy={busy !== undefined} onAdd={addServer} />
       </section>
       <details className="apps-by-address">
-        <summary className="disclosure">Add an MCP server by its address or npm package</summary>
+        <summary className="disclosure">{t("apps.discover.byAddress")}</summary>
         <AddServerForm busy={busy !== undefined} onAdd={addServer} />
       </details>
       {switching === undefined ? null : (
         <Confirm
-          title={`Switch ${switching.name} to ${switching.toName}?`}
-          message={`Tavi keeps one ${switching.toName.replace(/ \(.*\)$/, "")}. Switching removes ${switching.pluginIds.join(", ")} with what it keeps: its token or sign-in, the choices on its page, and who may use it. ${switching.toName} is added in its place, and you review its tools again.`}
-          action={`Switch to ${switching.toName}`}
+          title={t("apps.discover.switchTitle", { from: switching.name, to: switching.toName })}
+          message={t("apps.discover.switchMessage", {
+            app: switching.toName.replace(/ \(.*\)$/, ""),
+            plugins: switching.pluginIds.join(", "),
+            to: switching.toName,
+          })}
+          action={t("apps.discover.switchAction", { to: switching.toName })}
           onClose={() => setSwitching(undefined)}
           onConfirm={async () => {
             const { ref } = switching;
@@ -182,6 +189,7 @@ function CatalogCard({
   readonly onAdd: (option?: string) => void;
   readonly onOpen: () => void;
 }) {
+  const t = useT();
   const [option, setOption] = useState(entry.options[0]);
   return (
     <article className="card-flat apps-card" aria-label={entry.name}>
@@ -193,18 +201,22 @@ function CatalogCard({
       <p className="apps-badges">
         {entry.badges.map((badge) => (
           <span key={badge} className="badge">
-            {BADGE_WORDS[badge]}
+            {t(BADGE_WORDS[badge])}
           </span>
         ))}
       </p>
       <div className="actions">
         {entry.installed && entry.appId !== undefined ? (
           <Button size="sm" onClick={onOpen}>
-            {entry.ref.kind === "installed" ? "Set up" : "Open"}
+            {t(entry.ref.kind === "installed" ? "apps.discover.setUp" : "apps.discover.open")}
           </Button>
         ) : entry.ref.kind === "registry" && entry.options.length > 1 ? (
           <>
-            <Select aria-label={`How to add ${entry.name}`} value={option ?? ""} onChange={(event) => setOption(event.target.value)}>
+            <Select
+              aria-label={t("apps.discover.howToAdd", { app: entry.name })}
+              value={option ?? ""}
+              onChange={(event) => setOption(event.target.value)}
+            >
               {entry.options.map((each) => (
                 <option key={each} value={each}>
                   {each}
@@ -212,12 +224,12 @@ function CatalogCard({
               ))}
             </Select>
             <Button variant="primary" size="sm" disabled={busy} onClick={() => onAdd(option)}>
-              Add
+              {t("apps.discover.add")}
             </Button>
           </>
         ) : (
           <Button variant="primary" size="sm" disabled={busy} onClick={() => onAdd(option)}>
-            Add
+            {t("apps.discover.add")}
           </Button>
         )}
       </div>

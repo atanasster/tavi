@@ -3,6 +3,8 @@ import { useState } from "react";
 import type { AppActivityRow } from "@tavi/contracts";
 
 import { AppLink } from "../shell/AppLink.js";
+import { useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import { whenLocalWithYear } from "../../lib/time.js";
 import { Failure, LoadState } from "../../ui/Parts.js";
 import { taskPath } from "../shell/route.js";
@@ -18,21 +20,18 @@ import { Button } from "../../ui/Button.js";
  * each opening its chat. Reads are not recorded, and the page says so.
  */
 
-const STATE_WORDS: Readonly<Record<string, { readonly text: string; readonly tone: "ok" | "warning" | "bad" | "muted" }>> = {
-  accepted: { text: "Done", tone: "ok" },
-  pending: { text: "In progress", tone: "muted" },
-  rejected: { text: "Refused", tone: "bad" },
-  uncertain: { text: "Outcome unknown", tone: "warning" },
-  granted: { text: "You allowed it", tone: "ok" },
-  denied: { text: "You declined it", tone: "bad" },
-  expired: { text: "Not answered in time", tone: "warning" },
-  cancelled: { text: "Cancelled", tone: "muted" },
+const STATE_WORDS: Readonly<Record<string, { readonly textKey: UiKey; readonly tone: "ok" | "warning" | "bad" | "muted" }>> = {
+  accepted: { textKey: "apps.activity.accepted", tone: "ok" },
+  pending: { textKey: "apps.activity.pending", tone: "muted" },
+  rejected: { textKey: "apps.activity.rejected", tone: "bad" },
+  uncertain: { textKey: "apps.activity.uncertain", tone: "warning" },
+  granted: { textKey: "apps.activity.granted", tone: "ok" },
+  denied: { textKey: "apps.activity.denied", tone: "bad" },
+  expired: { textKey: "apps.activity.expired", tone: "warning" },
+  cancelled: { textKey: "apps.activity.cancelled", tone: "muted" },
   // A read-only tool's call, whatever came of it: one a hook refused, or that failed, is listed too.
-  called: { text: "Called", tone: "muted" },
+  called: { textKey: "apps.activity.called", tone: "muted" },
 };
-
-/** Said under every list: older calls were recorded without their tool. */
-const READS_NOTE = "Calls that only read are listed from when Tavi began recording them; older ones are not.";
 
 export function RecentActivity({
   appId,
@@ -41,6 +40,7 @@ export function RecentActivity({
   readonly appId: string;
   readonly onOpenTask?: ((taskId: string) => void) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const timeZone = useTimeZone();
   const { data, error, loading, reload } = useLoaded(() => appActions.activity(client, workspaceId, appId));
@@ -65,13 +65,13 @@ export function RecentActivity({
   return (
     <>
       <LoadState error={error} reload={reload} loading={loading && data === undefined} />
-      {first !== undefined && rows.length === 0 ? (
-        <Empty>Nothing yet: its calls that read, what it changes and sends, and what you were asked about it, show here.</Empty>
-      ) : null}
+      {first !== undefined && rows.length === 0 ? <Empty>{t("apps.activity.empty")}</Empty> : null}
       {rows.length === 0 ? null : (
         <ul className="rows apps-activity">
           {rows.map((row) => {
-            const words = STATE_WORDS[row.state] ?? { text: row.state, tone: "muted" as const };
+            const known = STATE_WORDS[row.state];
+            // A state this page has no words for is said as the owner wrote it.
+            const words = known === undefined ? { text: row.state, tone: "muted" as const } : { text: t(known.textKey), tone: known.tone };
             return (
               <li key={`${row.kind}:${row.id}`} className="row">
                 <span className="apps-activity-info">
@@ -98,10 +98,11 @@ export function RecentActivity({
       <Failure message={failure} />
       {cursor === undefined ? null : (
         <Button size="sm" disabled={busy} onClick={() => void showMore()}>
-          Show more
+          {t("apps.activity.showMore")}
         </Button>
       )}
-      {first === undefined ? null : <p className="meta-sm">{READS_NOTE}</p>}
+      {/* Said under every list: older calls were recorded without their tool. */}
+      {first === undefined ? null : <p className="meta-sm">{t("apps.activity.readsNote")}</p>}
     </>
   );
 }

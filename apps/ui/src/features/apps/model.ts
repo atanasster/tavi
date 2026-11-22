@@ -9,7 +9,9 @@ import {
   type ConnectableApp,
 } from "@tavi/contracts";
 
+import { translateNow } from "../../lib/i18n.js";
 import { localDay } from "../../lib/time.js";
+import type { UiKey } from "../../locales/en.js";
 
 /**
  * Connected apps' words and groupings:
@@ -18,18 +20,18 @@ import { localDay } from "../../lib/time.js";
  * from the owner.
  */
 
-/** The badge a health word shows: its text, and the tone the badge classes use. */
+/** The badge a health word shows: its text's key, and the tone the badge classes use. */
 export const HEALTH_BADGE: Readonly<
-  Record<AppHealth, { readonly text: string; readonly tone: "ok" | "info" | "warning" | "bad" | "muted" }>
+  Record<AppHealth, { readonly textKey: UiKey; readonly tone: "ok" | "info" | "warning" | "bad" | "muted" }>
 > = {
-  ready: { text: "Connected", tone: "ok" },
-  "needs-sign-in": { text: "Needs sign-in", tone: "warning" },
-  "needs-access": { text: "Needs more access", tone: "warning" },
-  "needs-review": { text: "Review", tone: "info" },
-  "not-set-up": { text: "Not set up", tone: "muted" },
-  paused: { text: "Paused", tone: "muted" },
-  off: { text: "Off", tone: "muted" },
-  error: { text: "Not working", tone: "bad" },
+  ready: { textKey: "apps.health.ready", tone: "ok" },
+  "needs-sign-in": { textKey: "apps.health.needsSignIn", tone: "warning" },
+  "needs-access": { textKey: "apps.health.needsAccess", tone: "warning" },
+  "needs-review": { textKey: "apps.health.needsReview", tone: "info" },
+  "not-set-up": { textKey: "apps.health.notSetUp", tone: "muted" },
+  paused: { textKey: "apps.health.paused", tone: "muted" },
+  off: { textKey: "apps.health.off", tone: "muted" },
+  error: { textKey: "apps.health.error", tone: "bad" },
 };
 
 /** The Connected list's groups: what needs you, what works, what is turned off. */
@@ -41,7 +43,11 @@ export function groupOf(health: AppHealth): AppGroup {
   return "needs-you";
 }
 
-export const GROUP_TITLES: Readonly<Record<AppGroup, string>> = { "needs-you": "Needs you", connected: "Connected", paused: "Paused" };
+export const GROUP_TITLES: Readonly<Record<AppGroup, UiKey>> = {
+  "needs-you": "apps.group.needsYou",
+  connected: "apps.group.connected",
+  paused: "apps.group.paused",
+};
 
 /** The apps of each group, in the owner's order (worst health first). */
 export function groupApps(
@@ -63,7 +69,11 @@ export function appMatches(app: ConnectableApp, query: string): boolean {
 }
 
 /** What a tool's calls do, grouped as the page lists them. */
-export const ACCESS_TITLES: Readonly<Record<AppAccess, string>> = { read: "Reads", change: "Changes", send: "Reaches other people" };
+export const ACCESS_TITLES: Readonly<Record<AppAccess, UiKey>> = {
+  read: "apps.access.read",
+  change: "apps.access.change",
+  send: "apps.access.send",
+};
 
 export function toolsByAccess(
   tools: readonly AppToolView[],
@@ -76,26 +86,24 @@ export function toolsByAccess(
 
 /** Why a choice cannot be made here, in Tavi's words; undefined when nothing holds it back. */
 export function ceilingOf(tool: AppToolView): string | undefined {
-  if (tool.state === "disabled") return "Left out by its review: change that in the review.";
-  if (tool.state !== "offered") return "Waiting for its review: review it first.";
-  if (tool.because.includes("critical")) return "Asked every time: it can reach a lock, an alarm or other people's things.";
-  if (!tool.canSetHere.includes("allow") && tool.because.includes("never-always"))
-    return "Tavi asks before MCP tools change or send; allow one chat at a time from the approval card. Allowing without asking is a CLI rule (tavi permissions add).";
-  if (!tool.canSetHere.includes("allow") && tool.effect !== "read-only")
-    return "Allowing a change without asking is a CLI rule (tavi permissions add).";
-  if (tool.canSetHere.length === 1) return "Blocked by a rule made in the CLI (tavi permissions rm to remove it).";
+  if (tool.state === "disabled") return translateNow("apps.ceiling.disabled");
+  if (tool.state !== "offered") return translateNow("apps.ceiling.waiting");
+  if (tool.because.includes("critical")) return translateNow("apps.ceiling.critical");
+  if (!tool.canSetHere.includes("allow") && tool.because.includes("never-always")) return translateNow("apps.ceiling.neverAlways");
+  if (!tool.canSetHere.includes("allow") && tool.effect !== "read-only") return translateNow("apps.ceiling.cliAllow");
+  if (tool.canSetHere.length === 1) return translateNow("apps.ceiling.cliBlocked");
   return undefined;
 }
 
 /** A catalog badge's words; never colour alone. */
-export const BADGE_WORDS: Readonly<Record<CatalogBadge, string>> = {
-  "tavi-preset": "Tavi preset",
-  "built-in": "Built in",
-  "own-client": "Your own client",
-  remote: "Remote",
-  "runs-here": "Runs on this computer",
-  "unreviewed-listing": "Unreviewed listing",
-  lan: "On your network",
+export const BADGE_WORDS: Readonly<Record<CatalogBadge, UiKey>> = {
+  "tavi-preset": "apps.badge.taviPreset",
+  "built-in": "apps.badge.builtIn",
+  "own-client": "apps.badge.ownClient",
+  remote: "apps.badge.remote",
+  "runs-here": "apps.badge.runsHere",
+  "unreviewed-listing": "apps.badge.unreviewedListing",
+  lan: "apps.badge.lan",
 };
 
 /** Two letters for an app with no icon. */
@@ -162,13 +170,13 @@ export function pageFix(app: ConnectableApp, repair: AppRepair | undefined): Pag
 export function isolationWords(app: ConnectableApp): string {
   switch (app.source.isolation) {
     case "remote":
-      return "its provider's server, reached over https";
+      return translateNow("apps.isolation.remote");
     case "sandboxed":
-      return "a program on this computer, sandboxed";
+      return translateNow("apps.isolation.sandboxed");
     case "unsandboxed":
-      return "a program on this computer, not sandboxed: it may reach any network";
+      return translateNow("apps.isolation.unsandboxed");
     case "in-process":
-      return "Tavi itself";
+      return translateNow("apps.isolation.inProcess");
   }
 }
 
@@ -186,11 +194,11 @@ export function authorsWords(app: ConnectableApp): boolean {
 function healthAnnouncement(appName: string, health: AppHealth): string | undefined {
   switch (health) {
     case "needs-sign-in":
-      return `${appName} needs you to sign in again`;
+      return translateNow("apps.announce.needsSignIn", { app: appName });
     case "needs-access":
-      return `${appName} needs more access`;
+      return translateNow("apps.announce.needsAccess", { app: appName });
     case "error":
-      return `${appName} stopped working`;
+      return translateNow("apps.announce.error", { app: appName });
     default:
       return undefined;
   }
@@ -208,23 +216,23 @@ export function healthChanges(before: ReadonlyMap<string, AppHealth> | undefined
 }
 
 /** A category's words, for the list's filter. */
-export const CATEGORY_WORDS: Readonly<Record<AppCategory, string>> = {
-  calendar: "Calendar",
-  email: "Mail",
-  chat: "Chat",
-  notes: "Notes",
-  tasks: "Tasks",
-  files: "Files",
-  home: "Home",
-  dev: "Developer",
-  business: "Business",
-  search: "Search",
-  other: "Other",
+export const CATEGORY_WORDS: Readonly<Record<AppCategory, UiKey>> = {
+  calendar: "apps.category.calendar",
+  email: "apps.category.email",
+  chat: "apps.category.chat",
+  notes: "apps.category.notes",
+  tasks: "apps.category.tasks",
+  files: "apps.category.files",
+  home: "apps.category.home",
+  dev: "apps.category.dev",
+  business: "apps.category.business",
+  search: "apps.category.search",
+  other: "apps.category.other",
 };
 
 /** When a forecast sign-in is due, said the same on the list's row and an account's. */
 export function signInByWords(iso: string, timeZone: string | undefined): string {
-  return `Sign in again by ${localDay(iso, timeZone)}`;
+  return translateNow("apps.signIn.by", { day: localDay(iso, timeZone) });
 }
 
 /** The soonest an app's accounts must sign in again, as a row says it; none when no account forecasts one. */
@@ -236,13 +244,26 @@ export function nextSignInLine(app: ConnectableApp, timeZone: string | undefined
 /** "you@example.com, +1" for a row. */
 export function accountsLine(app: ConnectableApp): string {
   const names = app.accounts.map((account) => account.identity ?? account.label);
-  if (names.length === 0) return "No account yet";
-  return names.length === 1 ? (names[0] as string) : `${names[0] as string}, +${String(names.length - 1)}`;
+  if (names.length === 0) return translateNow("apps.accounts.none");
+  return names.length === 1
+    ? (names[0] as string)
+    : translateNow("apps.accounts.more", { first: names[0] as string, more: String(names.length - 1) });
 }
 
-/** Who keeps a provider's grant a disconnect leaves behind, said the same in Connected apps and Settings → Channels. */
-export function keptByWords(kept: readonly string[], provider: string): string {
-  return `${kept.join(" and ")} stays connected; ${provider} will still list Tavi under your account until you disconnect ${kept.length > 1 ? "them" : "it"} too`;
+/** Names joined as one list ("Gmail and Calendar"), in the page's language. */
+export function andList(names: readonly string[]): string {
+  const last = names.at(-1);
+  if (names.length < 2 || last === undefined) return last ?? "";
+  return `${names.slice(0, -1).join(translateNow("apps.list.between"))}${translateNow("apps.list.and")}${last}`;
+}
+
+/**
+ * Who keeps a provider's grant a disconnect leaves behind, said the same in Connected apps and Settings → Channels;
+ * `provider` absent, the provider is not named.
+ */
+export function keptByWords(kept: readonly string[], provider: string | undefined): string {
+  const params = { kept: andList(kept), provider: provider ?? translateNow("apps.keptBy.theProvider") };
+  return translateNow(kept.length > 1 ? "apps.keptBy.many" : "apps.keptBy.one", params);
 }
 
 /** Whether a test's answer says its server listed its tools without checking the key (Google Maps'). */
@@ -256,19 +277,19 @@ export function keyUnchecked(tested: unknown): boolean {
  * Credentials reads the same): "encrypted" only when it is; plain when it is not, or when the owner did not say.
  */
 export function storedWords(kept: "none" | "file" | "keychain" | undefined): string {
-  if (kept === "file" || kept === "keychain") return "Stored encrypted, never shown again";
-  return kept === "none" ? "Stored by Tavi, not encrypted, never shown again" : "Stored by Tavi, never shown again";
+  if (kept === "file" || kept === "keychain") return translateNow("apps.stored.encrypted");
+  return translateNow(kept === "none" ? "apps.stored.plain" : "apps.stored.unknown");
 }
 
 /** What a passed test says of an account: it answered, or only listed its tools when its server never checked the key. */
 export function testedWords(who: string, tested: unknown): string {
-  return keyUnchecked(tested) ? `${who} listed its tools; the key is checked when a tool is first used.` : `${who} answered.`;
+  return translateNow(keyUnchecked(tested) ? "apps.tested.listed" : "apps.tested.answered", { who });
 }
 
-/** What lending an account lets people ask for, from what its tools do: "read", "read and change", "read, change and send through". */
-export function lendingWords(app: Pick<ConnectableApp, "tools">): string {
+/** What lending an account lets people ask for, from what its tools do: read; read and change; or read, change and send through. */
+export function lendingAccess(app: Pick<ConnectableApp, "tools">): AppAccess {
   const access = new Set(app.tools.map((tool) => tool.access));
-  if (access.has("send")) return "read, change and send through";
-  if (access.has("change")) return "read and change";
+  if (access.has("send")) return "send";
+  if (access.has("change")) return "change";
   return "read";
 }

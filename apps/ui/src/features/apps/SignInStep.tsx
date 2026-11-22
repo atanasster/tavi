@@ -2,6 +2,7 @@ import { useId, useRef, useState } from "react";
 
 import { signsIn, type AppDeviceCode, type ConnectableApp } from "@tavi/contracts";
 
+import { translateNow, useT } from "../../lib/i18n.js";
 import { localTime } from "../../lib/time.js";
 import { useCopied, usePhone } from "../../hooks/page.js";
 import { usePoll } from "../../hooks/use-poll.js";
@@ -12,6 +13,7 @@ import { useTimeZone } from "../shell/Workspace.js";
 import { tunnelCommand } from "./model.js";
 import { Button } from "../../ui/Button.js";
 import { Command } from "../../ui/Command.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /** How often a waiting sign-in is asked after; the owner's flow lives 10 minutes. */
 const SIGN_IN_POLL_MS = 2_000;
@@ -40,8 +42,14 @@ function pastedAddress(redirectUri: string, address: string, typed: { readonly c
 function grantWords(app: ConnectableApp, accountId: string): string {
   const account = app.accounts.find((candidate) => candidate.accountId === accountId);
   const scopes = signsIn(app.auth) ? app.auth.scopes.map((scope) => scope.says) : [];
-  const who = account === undefined ? `a new ${app.name} account` : (account.identity ?? account.label);
-  return `Finishing signs in ${who}${scopes.length === 0 ? "" : `, allowing: ${scopes.join("; ")}`}.`;
+  if (account === undefined)
+    return scopes.length === 0
+      ? translateNow("apps.signIn.grantNew", { app: app.name })
+      : translateNow("apps.signIn.grantNewAllowing", { app: app.name, access: scopes.join("; ") });
+  const who = account.identity ?? account.label;
+  return scopes.length === 0
+    ? translateNow("apps.signIn.grant", { account: who })
+    : translateNow("apps.signIn.grantAllowing", { account: who, access: scopes.join("; ") });
 }
 
 export function SignInStep({
@@ -66,6 +74,7 @@ export function SignInStep({
   readonly onBusy: (busy: boolean) => void;
   readonly onDone: (done: { readonly accountId: string; readonly identity?: string | undefined }) => Promise<void>;
 }) {
+  const t = useT();
   const timeZone = useTimeZone();
   const phone = usePhone();
   const pasteField = useId();
@@ -146,12 +155,7 @@ export function SignInStep({
         if (now.state === "pending") return;
         setWaiting(false);
         if (now.state === "done") await onDone({ accountId: now.accountId ?? flowAccount, identity: now.identity });
-        else
-          onFailure(
-            now.state === "expired"
-              ? "The sign-in took too long. Start it again."
-              : (now.message ?? "The sign-in did not finish. Start it again."),
-          );
+        else onFailure(now.state === "expired" ? t("apps.signIn.expired") : (now.message ?? t("apps.signIn.unfinished")));
       });
     },
     SIGN_IN_POLL_MS,
@@ -162,13 +166,11 @@ export function SignInStep({
   return (
     <div className="apps-step stack">
       {app.auth.kind === "oauth" && app.auth.scopes.some((scope) => scope.optional) ? (
-        <p className="muted">
-          The provider may list each access with its own box, none ticked: tick every one (or Select all), or what you leave out stays off.
-        </p>
+        <p className="muted">{t("apps.signIn.tickEvery")}</p>
       ) : null}
       <div className="actions">
         <Button variant="primary" disabled={starting} onClick={() => void start("here")}>
-          {byCode ? `Get a code to sign in to ${app.name}` : `Sign in to ${app.name}`}
+          {t(byCode ? "apps.signIn.getCode" : "apps.signIn.signInTo", { app: app.name })}
         </Button>
         {flow === undefined ? null : (
           <Button
@@ -178,82 +180,95 @@ export function SignInStep({
               void appActions.cancel(client, flow.flowId, workspaceId);
             }}
           >
-            Cancel
+            {t("ui.confirm.cancel")}
           </Button>
         )}
       </div>
       {flow?.device === undefined ? null : (
         <div className="apps-device-code">
           <p>
-            On any phone or computer, open{" "}
-            <a href={flow.authorizeUrl} target="_blank" rel="noopener noreferrer">
-              {flow.device.verificationUri}
-            </a>{" "}
-            and enter this code:
+            {withParts(t("apps.signIn.openAndEnter"), {
+              address: (
+                <a href={flow.authorizeUrl} target="_blank" rel="noopener noreferrer">
+                  {flow.device.verificationUri}
+                </a>
+              ),
+            })}
           </p>
           <p>
-            Code: <code className="apps-user-code">{flow.device.userCode}</code>{" "}
-            <Button size="sm" aria-label="Copy the sign-in code" onClick={() => copy(flow.device?.userCode ?? "")}>
-              {copied ? "Copied" : "Copy"}
+            {withParts(t("apps.signIn.code"), { code: <code className="apps-user-code">{flow.device.userCode}</code> })}{" "}
+            <Button size="sm" aria-label={t("apps.signIn.copyCode")} onClick={() => copy(flow.device?.userCode ?? "")}>
+              {copied ? t("apps.connect.copied") : t("apps.connect.copy")}
             </Button>
           </p>
-          <p className="meta-sm">Enter it only on {app.name}'s own page. Tavi never asks for it anywhere else.</p>
+          <p className="meta-sm">{t("apps.signIn.onlyThere", { app: app.name })}</p>
         </div>
       )}
       {flow !== undefined && flow.via !== "paste" && flow.device === undefined ? (
         <p className="meta-sm">
-          No window opened?{" "}
-          <a href={flow.authorizeUrl} target="_blank" rel="noopener noreferrer">
-            Open the sign-in page
-          </a>
-          .
+          {withParts(t("apps.signIn.noWindow"), {
+            link: (
+              <a href={flow.authorizeUrl} target="_blank" rel="noopener noreferrer">
+                {t("apps.signIn.openPage")}
+              </a>
+            ),
+          })}
         </p>
       ) : null}
       {waiting ? (
         <p role="status" className="muted">
           {flow?.device === undefined
-            ? "Waiting for the sign-in… (it waits 10 minutes)"
-            : `Waiting for the code to be entered… (it works until ${localTime(flow.device.expiresAt, timeZone)})`}
+            ? t("apps.signIn.waiting")
+            : t("apps.signIn.waitingCode", { time: localTime(flow.device.expiresAt, timeZone) })}
         </p>
       ) : null}
       {byCode ? null : (
         <details className="apps-elsewhere" open={elsewhere} onToggle={(event) => setElsewhere((event.target as HTMLDetailsElement).open)}>
-          <summary className="disclosure">Signing in from another computer?</summary>
+          <summary className="disclosure">{t("apps.signIn.elsewhere")}</summary>
           <p>
-            <strong>A. Tunnel.</strong> On that computer run <code>{tunnelCommand(port === "" ? "<port>" : port)}</code>{" "}
-            <Button size="sm" onClick={() => copy(tunnelCommand(port === "" ? "<port>" : port))}>
-              {copied ? "Copied" : "Copy"}
-            </Button>
-            , open the address <Command>tavi ui --print-url</Command> prints there, and sign in from it.
+            {withParts(t("apps.signIn.tunnel"), {
+              title: <strong>{t("apps.signIn.tunnelTitle")}</strong>,
+              command: <code>{tunnelCommand(port === "" ? "<port>" : port)}</code>,
+              copy: (
+                <Button size="sm" onClick={() => copy(tunnelCommand(port === "" ? "<port>" : port))}>
+                  {copied ? t("apps.connect.copied") : t("apps.connect.copy")}
+                </Button>
+              ),
+              printUrl: <Command>tavi ui --print-url</Command>,
+            })}
           </p>
           {sharedClient ? null : (
             <p>
-              <strong>B. This server's https address.</strong> Only your browser must reach it (a Tailscale name will do); it is set with{" "}
-              <Command>tavi channels ingress --public-url</Command>.{" "}
+              {withParts(t("apps.signIn.publicAddress"), {
+                title: <strong>{t("apps.signIn.publicTitle")}</strong>,
+                command: <Command>tavi channels ingress --public-url</Command>,
+              })}{" "}
               <Button size="sm" disabled={starting} onClick={() => void start("public")}>
-                Use it
+                {t("apps.signIn.useIt")}
               </Button>
             </p>
           )}
           <div>
             <p>
-              <strong>C. Paste the address you land on.</strong> Start the sign-in, finish it in any browser, then paste the address it
-              lands on here — even if that page fails to open.{" "}
+              {withParts(t("apps.signIn.paste"), { title: <strong>{t("apps.signIn.pasteTitle")}</strong> })}{" "}
               <Button size="sm" disabled={starting} onClick={() => void start("paste")}>
-                Start
+                {t("apps.signIn.start")}
               </Button>
             </p>
             {flow?.via === "paste" ? (
               <p className="meta-sm">
-                Sign in at:{" "}
-                <a href={flow.authorizeUrl} target="_blank" rel="noopener noreferrer">
-                  the sign-in page
-                </a>
+                {withParts(t("apps.signIn.signInAt"), {
+                  link: (
+                    <a href={flow.authorizeUrl} target="_blank" rel="noopener noreferrer">
+                      {t("apps.signIn.thePage")}
+                    </a>
+                  ),
+                })}
               </p>
             ) : null}
-            <label htmlFor={pasteField}>Address you landed on after signing in</label>
+            <label htmlFor={pasteField}>{t("apps.signIn.landedOn")}</label>
             <p id={`${pasteField}-warn`} className="meta-sm">
-              Paste it only here, in Tavi. Never paste a sign-in address into a chat, an email or another site.
+              {t("apps.signIn.pasteOnlyHere")}
             </p>
             <input
               id={pasteField}
@@ -269,7 +284,7 @@ export function SignInStep({
               }}
             />
             <details className="apps-paste-parts" open={phone}>
-              <summary className="disclosure">Or type its code and state</summary>
+              <summary className="disclosure">{t("apps.signIn.typeParts")}</summary>
               <label>
                 code{" "}
                 <input
@@ -317,7 +332,7 @@ export function SignInStep({
                 });
               }}
             >
-              Finish
+              {t("apps.signIn.finish")}
             </Button>
           </div>
         </details>

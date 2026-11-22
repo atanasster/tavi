@@ -2,6 +2,7 @@ import { Fragment } from "react";
 
 import type { useLoaded } from "../../hooks/use-loaded.js";
 import { firstLine } from "../../lib/format.js";
+import { useT } from "../../lib/i18n.js";
 import { when } from "../../lib/time.js";
 import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
@@ -32,10 +33,11 @@ export function RoutineRuns({
   readonly onOpenRun: (runId: string) => void;
   readonly onLoadOlder: () => void;
 }) {
+  const t = useT();
   return (
-    <Section title="Runs">
+    <Section title={t("routines.runs.title")} anchor="runs">
       {history.error ? <LoadError error={history.error} reload={history.reload} /> : null}
-      {runs.length === 0 && history.data !== undefined ? <p className="muted">No runs yet.</p> : null}
+      {runs.length === 0 && history.data !== undefined ? <p className="muted">{t("routines.runs.none")}</p> : null}
       <ul className="item-list list-reset">
         {runs.map((item) => (
           <li key={item.runId} className="item-row">
@@ -43,15 +45,17 @@ export function RoutineRuns({
               <Button variant="link" className="item-title" onClick={() => onOpenRun(item.runId)}>
                 {when(item.startedAt ?? item.claimedAt, timeZone)}
               </Button>
-              <span className="item-meta meta-sm">{[item.mode, `revision ${item.revision}`, ...runEffort(item)].join(" · ")}</span>
+              <span className="item-meta meta-sm">
+                {[item.mode, t("routines.runs.revision", { revision: item.revision }), ...runEffort(item)].join(" · ")}
+              </span>
               {item.headline ? <span className="item-meta meta-sm">{firstLine(item.headline, 120)}</span> : null}
             </div>
             <StatusBadge status={item.status} />
             <RowAction
-              aria-label={`Inspect the run of ${when(item.startedAt ?? item.claimedAt, timeZone)}`}
+              aria-label={t("routines.runs.inspectLabel", { when: when(item.startedAt ?? item.claimedAt, timeZone) })}
               onClick={() => onOpenRun(item.runId)}
             >
-              Inspect
+              {t("routines.runs.inspect")}
             </RowAction>
           </li>
         ))}
@@ -61,8 +65,8 @@ export function RoutineRuns({
           className={null}
           buttonClassName="ghost button-sm"
           busy={busy !== undefined}
-          label="Load older runs"
-          busyLabel="Load older runs"
+          label={t("routines.runs.loadOlder")}
+          busyLabel={t("routines.runs.loadOlder")}
           onLoad={onLoadOlder}
         />
       ) : null}
@@ -83,41 +87,54 @@ export function RoutineResearcher({
   readonly preview: boolean;
   readonly onPreview: () => void;
 }) {
+  const t = useT();
+  const foreign = value.foreignSkills ?? [];
   return (
     <Section
-      title="Researcher and settings"
+      title={t("routines.researcher.title")}
       actions={
         preview ? (
           <Button variant="ghost" size="sm" disabled={busy !== undefined} onClick={onPreview}>
-            Preview latest revision
+            {t("routines.researcher.previewLatest")}
           </Button>
         ) : null
       }
     >
       <details open>
         <summary className="disclosure">
-          Researcher instructions · {value.revision.snapshot.agent.name} · version {value.revision.snapshot.agent.revision}
+          {t("routines.researcher.instructions", {
+            name: value.revision.snapshot.agent.name,
+            version: value.revision.snapshot.agent.revision,
+          })}
         </summary>
         <pre>{value.revision.snapshot.agent.instructions}</pre>
       </details>
       <p className="muted">
-        Skills are pinned separately:{" "}
-        {(value.revision.snapshot.skills ?? []).map((skill) => `${skill.skillId} (version ${skill.version})`).join(", ") || "None"}
+        {t("routines.researcher.skills", {
+          skills:
+            (value.revision.snapshot.skills ?? [])
+              .map((skill) => t("routines.researcher.skill", { skill: skill.skillId, version: skill.version }))
+              .join(", ") || t("routines.researcher.noSkills"),
+        })}
       </p>
-      {value.foreignSkills?.length ? (
+      {foreign.length > 0 ? (
         <Notice className="routine-foreign-skills">
-          {value.foreignSkills
-            .map(
-              (skill) =>
-                `${skill.skillId} (version ${skill.version}, ${skill.source === "chat" ? "proposed in a chat" : "imported from an archive"})`,
-            )
-            .join(", ")}{" "}
-          {value.foreignSkills.length === 1 ? "was" : "were"} written by someone other than you, so each run starts as one that read
-          untrusted content: a tool call that would ask you first is refused, since nobody is there to answer.
+          {t("routines.researcher.foreign", {
+            count: foreign.length,
+            skills: foreign
+              .map((skill) =>
+                t("routines.researcher.foreignSkill", {
+                  skill: skill.skillId,
+                  version: skill.version,
+                  source: t(skill.source === "chat" ? "routines.researcher.fromChat" : "routines.researcher.fromArchive"),
+                }),
+              )
+              .join(", "),
+          })}
         </Notice>
       ) : null}
       <details>
-        <summary className="disclosure">Current models, permissions, report and delivery settings</summary>
+        <summary className="disclosure">{t("routines.researcher.currentSettings")}</summary>
         <RoutineSettingsView snapshot={value.revision.snapshot} state={value.state} />
       </details>
     </Section>

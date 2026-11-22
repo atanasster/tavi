@@ -3,6 +3,7 @@ import { routineFileSlug, type RoutineGrantView, type RoutineNewsReport } from "
 import type { useAction } from "../../hooks/use-action.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { saveFile } from "../../lib/download.js";
+import { useT } from "../../lib/i18n.js";
 import { when } from "../../lib/time.js";
 import { attempt } from "../../lib/ipc.js";
 import { Failure, Section } from "../../ui/Parts.js";
@@ -22,21 +23,36 @@ export function ResearchAuthority({
   readonly busy: string | undefined;
   readonly onRevoke: () => void;
 }) {
+  const t = useT();
   const narrowed = policy.narrowedTools ?? [];
   return (
     <div>
       <p>
-        Grant {policy.grantId} · policy revision {policy.policyRevision} · pinned from revision {policy.revision} · {policy.mode} · egress{" "}
-        {policy.networkMode}. {policy.revokedAt ? `Revoked ${policy.revokedAt}: ${policy.revokedReason ?? "no reason recorded"}.` : "Live."}
+        {t("routines.authority.grant", {
+          grant: policy.grantId,
+          policy: policy.policyRevision,
+          revision: policy.revision,
+          mode: policy.mode,
+          network: policy.networkMode,
+          state: policy.revokedAt
+            ? t("routines.authority.revoked", {
+                at: policy.revokedAt,
+                reason: policy.revokedReason ?? t("routines.authority.noReason"),
+              })
+            : t("routines.authority.live"),
+        })}
       </p>
       <p>
-        Fetch hosts: {listed(policy.allowedHosts)}. Research tools: {listed(policy.researchTools)}. Delivery destinations:{" "}
-        {listed(policy.destinationIds)}.
+        {t("routines.authority.scope", {
+          hosts: listed(policy.allowedHosts),
+          tools: listed(policy.researchTools),
+          destinations: listed(policy.destinationIds),
+        })}
       </p>
-      {narrowed.length > 0 ? <p>Tools the revision declared that no research path exposes: {narrowed.join(", ")}.</p> : null}
+      {narrowed.length > 0 ? <p>{t("routines.authority.narrowed", { tools: narrowed.join(", ") })}</p> : null}
       {revocable ? (
         <Button disabled={busy !== undefined} onClick={onRevoke}>
-          Revoke this run's grant
+          {t("routines.authority.revoke")}
         </Button>
       ) : null}
     </div>
@@ -58,6 +74,7 @@ export function RunReport({
   readonly run: Runner;
 }) {
   const { client, workspaceId } = useWorkspace();
+  const t = useT();
   const artifactId = publication?.reportArtifactId;
   const { data: report, error: reportError } = useLoaded(
     () =>
@@ -74,26 +91,26 @@ export function RunReport({
       attempt(async () => {
         const { bytes, type } = await readArtifact(client, workspaceId, runId, kind);
         saveFile(bytes, type, `${routineFileSlug(report?.title ?? "")}-${runId}.${kind}`);
-        return "Report downloaded";
+        return t("routines.report.downloaded");
       }),
     );
 
   return (
-    <Section title="Report">
+    <Section title={t("routines.report.title")}>
       {publication ? (
         <div className="actions">
           <Button disabled={busy !== undefined} onClick={() => void download("json")}>
-            Download report JSON
+            {t("routines.report.downloadJson")}
           </Button>
           {publication.pdfArtifactId ? (
             <Button disabled={busy !== undefined} onClick={() => void download("pdf")}>
-              Download PDF
+              {t("routines.report.downloadPdf")}
             </Button>
           ) : null}
           {publication.pdfError ? <p>{publication.pdfError}</p> : null}
         </div>
       ) : (
-        <p className="muted">No report published.</p>
+        <p className="muted">{t("routines.report.none")}</p>
       )}
       <Failure message={reportError || undefined} />
       {report ? <ReportView report={report} timeZone={timeZone} /> : null}
@@ -101,10 +118,11 @@ export function RunReport({
   );
 }
 function ReportView({ report, timeZone }: { readonly report: RoutineNewsReport; readonly timeZone: string | undefined }) {
+  const t = useT();
   return (
     <div className="routine-report">
       {report.quiet ? (
-        <p>No qualifying news verified.</p>
+        <p>{t("routines.report.quiet")}</p>
       ) : (
         (report.stories ?? []).map((story) => (
           <article key={story.storyId}>
@@ -124,9 +142,7 @@ function ReportView({ report, timeZone }: { readonly report: RoutineNewsReport; 
           </article>
         ))
       )}
-      <p>
-        Coverage: {when(report.coverage.from, timeZone)} — {when(report.coverage.to, timeZone)}
-      </p>
+      <p>{t("routines.report.coverage", { from: when(report.coverage.from, timeZone), to: when(report.coverage.to, timeZone) })}</p>
       {(report.coverage.gaps ?? []).map((gap) => (
         <p key={gap}>{gap}</p>
       ))}

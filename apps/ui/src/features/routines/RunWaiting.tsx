@@ -3,6 +3,7 @@ import { useState } from "react";
 import { approvalChannelLabel, type NeedRow, type RoutineCheckpoint } from "@tavi/contracts";
 
 import { useLoaded } from "../../hooks/use-loaded.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import { when } from "../../lib/time.js";
 import { Failure, LoadError, Notice, Section } from "../../ui/Parts.js";
 import { answerNeed, listNeeds } from "../center/approvals-api.js";
@@ -30,6 +31,7 @@ export function RunWaiting({
   readonly onOpen: () => void;
 }) {
   const { client, workspaceId } = useWorkspace();
+  const t = useT();
   const needs = useLoaded(() => listNeeds(client, workspaceId, taskId), [revision], { serial: true });
   const [answers, setAnswers] = useState<Readonly<Record<string, AnswerState>>>({});
   const listed: readonly NeedRow[] = needs.data?.needs ?? [];
@@ -43,8 +45,8 @@ export function RunWaiting({
     });
   };
   return (
-    <section className="routine-waiting" aria-label="waiting on you">
-      <h3>Waiting on you</h3>
+    <section className="routine-waiting" aria-label={t("routines.waiting.label")}>
+      <h3>{t("routines.waiting.title")}</h3>
       {listed.map((need) =>
         need.kind === "question" ? (
           <QuestionCard
@@ -58,10 +60,9 @@ export function RunWaiting({
       )}
       {others === 0 ? null : (
         <Notice>
-          {others === 1 ? "A decision" : `${others} decisions`}{" "}
-          {others === listed.length ? (others === 1 ? "waits" : "wait") : others === 1 ? "also waits" : "also wait"} in the run's task.{" "}
+          {t(others === listed.length ? "routines.waiting.decisions" : "routines.waiting.decisionsAlso", { count: others })}{" "}
           <Button variant="ghost" size="sm" onClick={onOpen}>
-            Open it
+            {t("routines.waiting.open")}
           </Button>
         </Notice>
       )}
@@ -78,17 +79,20 @@ function checkpointReceipt(
   const at = checkpoint.at === undefined ? "" : ` · ${when(checkpoint.at, timeZone)}`;
   switch (checkpoint.state) {
     case "open":
-      return `waiting for an answer until ${when(checkpoint.deadlineAt, timeZone)}`;
+      return translateNow("routines.receipt.open", { when: when(checkpoint.deadlineAt, timeZone) });
     case "answered":
-      return checkpoint.via === "standing-answer"
-        ? `${answer}, by your standing answer${at}`
-        : `${answer}, answered${checkpoint.via === undefined ? "" : ` via ${approvalChannelLabel(checkpoint.via, connectionName)}`}${at}`;
+      if (checkpoint.via === "standing-answer") return translateNow("routines.receipt.standing", { answer, at });
+      return checkpoint.via === undefined
+        ? translateNow("routines.receipt.answered", { answer, at })
+        : translateNow("routines.receipt.answeredVia", { answer, channel: approvalChannelLabel(checkpoint.via, connectionName), at });
     case "defaulted":
-      return answer === "" ? `nobody answered; the run went on without one${at}` : `nobody answered; the default ${answer} was taken${at}`;
+      return answer === ""
+        ? translateNow("routines.receipt.defaultedNone", { at })
+        : translateNow("routines.receipt.defaulted", { answer, at });
     case "undelivered":
-      return `could not be sent; the run went on without asking${at}`;
+      return translateNow("routines.receipt.undelivered", { at });
     case "withdrawn":
-      return `withdrawn when the run ended${at}`;
+      return translateNow("routines.receipt.withdrawn", { at });
   }
 }
 /**
@@ -109,6 +113,7 @@ export function RunQuestions({
   readonly timeZone: string | undefined;
 }) {
   const { client, workspaceId } = useWorkspace();
+  const t = useT();
   const channels = useChannelNames();
   const loaded = useLoaded(
     () =>
@@ -117,7 +122,7 @@ export function RunQuestions({
         workspaceId,
         { action: "checkpoints", routineId, runId },
         "checkpoints",
-        "run's questions",
+        t("routines.questions.what"),
       ),
     [revision],
     { serial: true },
@@ -133,7 +138,7 @@ export function RunQuestions({
     );
   };
   return (
-    <Section title="Questions">
+    <Section title={t("routines.questions.title")}>
       <ul className="routine-checkpoints">
         {checkpoints.map((checkpoint) => {
           const answers = checkpoint.answers ?? [];
@@ -147,7 +152,7 @@ export function RunQuestions({
           return (
             <li key={checkpoint.waitId}>
               <p>
-                <strong>{checkpoint.header ?? checkpoint.question ?? "A question"}</strong>
+                <strong>{checkpoint.header ?? checkpoint.question ?? t("routines.questions.aQuestion")}</strong>
                 {checkpoint.header !== undefined && checkpoint.question !== undefined ? (
                   <span className="muted"> — {checkpoint.question}</span>
                 ) : null}
@@ -155,12 +160,12 @@ export function RunQuestions({
               <p className="muted">{checkpointReceipt(checkpoint, timeZone, channels.connection)}</p>
               {!offer ? null : state === "saved" ? (
                 <p className="muted" role="status">
-                  Kept: questions like this are answered {answers.join(", ")} from now on. Forget it in Edit routine.
+                  {t("routines.questions.kept", { answers: answers.join(", ") })}
                 </p>
               ) : (
                 <>
                   <Button variant="ghost" size="sm" disabled={state === "saving"} onClick={() => keep(checkpoint, answers)}>
-                    Always answer {answers.join(", ")} for this routine
+                    {t("routines.questions.always", { answers: answers.join(", ") })}
                   </Button>
                   <Failure message={state !== undefined && state !== "saving" ? state : undefined} />
                 </>

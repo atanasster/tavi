@@ -1,9 +1,10 @@
 import { useEffect, useId, useRef, useState } from "react";
 
 import type { AppAccountView, AppClientSetupStep, AppMailboxAccess, AppSettingField, AppSharing, ConnectableApp } from "@tavi/contracts";
-import { definedOnly, plural } from "@tavi/contracts/util";
+import { definedOnly } from "@tavi/contracts/util";
 
 import { useCopied } from "../../hooks/page.js";
+import { useT } from "../../lib/i18n.js";
 import { Failure } from "../../ui/Parts.js";
 import { appActions } from "./apps-api.js";
 import type { SettingsClient } from "../../lib/ipc.js";
@@ -49,6 +50,7 @@ export function ConnectSheet({
   /** An MCP server's tools reviewed once it is signed in, for the account just connected. */
   readonly onReview?: ((accountId: string) => void) | undefined;
 }) {
+  const t = useT();
   // However the sheet closes, setup's checklist reads its status again: it unmounts on every close.
   useEffect(() => () => announceOnboardingChanged(), []);
   // A secret field says "encrypted" only when the credential store is: read once, as Settings → Credentials reads it.
@@ -103,7 +105,7 @@ export function ConnectSheet({
     if (chose.current && account?.sharing !== sharing) {
       const set = await appActions.sharing(client, workspaceId, app.appId, done.accountId, sharing);
       if (!set.ok) {
-        setFailure(`${keyed ? "Connected" : "Signed in"}, but who may use it was not saved: ${set.message}`);
+        setFailure(t(keyed ? "apps.connect.sharingFailedKeyed" : "apps.connect.sharingFailed", { reason: set.message }));
         return;
       }
     }
@@ -111,12 +113,12 @@ export function ConnectSheet({
     setStep("done");
   };
   const titleOf: Readonly<Record<Step, string>> = {
-    what: "What it can do",
-    client: app.clientSetup?.title ?? "Your client",
-    "own-client": "Your client",
-    "sign-in": "Sign in",
-    key: "Your key",
-    done: onReview === undefined ? "Connected" : "Review tools",
+    what: t("apps.connect.stepWhat"),
+    client: app.clientSetup?.title ?? t("apps.connect.stepClient"),
+    "own-client": t("apps.connect.stepClient"),
+    "sign-in": t("apps.connect.stepSignIn"),
+    key: t("apps.connect.stepKey"),
+    done: onReview === undefined ? t("apps.connect.stepConnected") : t("apps.connect.stepReview"),
   };
   // Each step takes focus at its first item as it opens (the dialog's own pick skips links), so a step change never drops
   // focus to the page; a step with nothing to focus yet holds it itself.
@@ -126,11 +128,11 @@ export function ConnectSheet({
     (host?.querySelector<HTMLElement>(STEP_START) ?? host)?.focus();
   }, [step]);
   return (
-    <Modal title={`Connect ${app.name}`} wide busy={busy} onClose={onClose}>
-      <ol className="apps-steps" aria-label="steps">
+    <Modal title={t("apps.card.connect", { app: app.name })} wide busy={busy} onClose={onClose}>
+      <ol className="apps-steps" aria-label={t("apps.connect.steps")}>
         {steps.map((each, index) => (
           <li key={each} aria-current={each === step ? "step" : undefined}>
-            {String(index + 1)}. {titleOf[each]}
+            {t("apps.connect.stepNumbered", { number: String(index + 1), title: titleOf[each] })}
           </li>
         ))}
       </ol>
@@ -230,7 +232,7 @@ export function ConnectSheet({
                 setBusy(true);
                 const tested = await appActions.test(client, workspaceId, app.appId, done.accountId);
                 setBusy(false);
-                if (!tested.ok) setFailure(`Signed in, but its tools could not be listed yet: ${tested.message}`);
+                if (!tested.ok) setFailure(t("apps.connect.toolsNotListed", { reason: tested.message }));
               }
               await finish(done);
             }}
@@ -253,7 +255,7 @@ export function ConnectSheet({
             onBack={() => setStep("what")}
             onSave={async (values) => {
               if (connecting === undefined) {
-                setFailure(`Add ${app.name} again from Discover for another account.`);
+                setFailure(t("apps.connect.addAgain", { app: app.name }));
                 return;
               }
               setBusy(true);
@@ -264,7 +266,7 @@ export function ConnectSheet({
               const tested = saved.ok ? await appActions.test(client, workspaceId, app.appId, connecting.accountId) : saved;
               if (!tested.ok) {
                 setBusy(false);
-                setFailure(saved.ok ? `The key is saved, but the test failed: ${tested.message}` : tested.message);
+                setFailure(saved.ok ? t("apps.connect.testFailed", { reason: tested.message }) : tested.message);
                 return;
               }
               // Busy until who may use it is written too, so the key is not saved and tested twice meanwhile.
@@ -277,34 +279,33 @@ export function ConnectSheet({
           <div className="apps-step stack">
             {connected.keyUnchecked === true ? (
               <>
-                <p role="status">Saved the key; {app.name} listed its tools.</p>
-                <p className="muted">
-                  {app.name} lists its tools without checking the key, so a wrong key shows only when Tavi first uses a tool.
-                </p>
+                <p role="status">{t("apps.connect.keySaved", { app: app.name })}</p>
+                <p className="muted">{t("apps.connect.keyUnchecked", { app: app.name })}</p>
               </>
             ) : (
               <p role="status">
-                Connected {app.name}
-                {connected.identity === undefined ? "" : ` as ${connected.identity}`}.
+                {connected.identity === undefined
+                  ? t("apps.connect.connected", { app: app.name })
+                  : t("apps.connect.connectedAs", { app: app.name, identity: connected.identity })}
               </p>
             )}
             {onReview === undefined ? (
               <>
-                <p className="muted">Review its tools before the agent uses them, if it asks you to.</p>
+                <p className="muted">{t("apps.connect.reviewIfAsked")}</p>
                 <div className="actions">
                   <Button variant="primary" onClick={() => onConnected(connected.accountId)}>
-                    Done
+                    {t("apps.channel.done")}
                   </Button>
                 </div>
               </>
             ) : (
               <>
-                <p className="muted">Its tools are offered once you have reviewed what each may do.</p>
+                <p className="muted">{t("apps.connect.offeredOnceReviewed")}</p>
                 <div className="actions">
                   <Button variant="primary" onClick={() => onReview(connected.accountId)}>
-                    Review its tools
+                    {t("apps.connect.reviewItsTools")}
                   </Button>
-                  <Button onClick={() => onConnected(connected.accountId)}>Later</Button>
+                  <Button onClick={() => onConnected(connected.accountId)}>{t("apps.connect.later")}</Button>
                 </div>
               </>
             )}
@@ -366,6 +367,7 @@ function WhatItCanDo({
   readonly onNext: (options: AccountOptions) => void;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   const [calendar, setCalendar] = useState(account?.calendar);
   const [mailbox, setMailbox] = useState(account?.mailbox);
   const [receives, setReceives] = useState(account?.receives);
@@ -380,18 +382,16 @@ function WhatItCanDo({
       {byAccess.length === 0 ? (
         <p>
           {app.tools.length === 0
-            ? `${app.name} offers no tools yet: they are listed once it is reviewed.`
-            : `${app.name} offers ${plural(app.tools.length, "tool")}, listed on its page.`}
+            ? t("apps.connect.noTools", { app: app.name })
+            : t("apps.connect.offersTools", { app: app.name, count: app.tools.length })}
         </p>
       ) : (
         <>
-          <p>
-            {app.name} will be able to{authorsWords(app) ? ", in its author's words" : ""}:
-          </p>
+          <p>{t(authorsWords(app) ? "apps.connect.willBeAbleAuthor" : "apps.connect.willBeAble", { app: app.name })}</p>
           <dl className="apps-scopes">
             {byAccess.map(({ access, items }) => (
               <div key={access}>
-                <dt>{ACCESS_TITLES[access]}</dt>
+                <dt>{t(ACCESS_TITLES[access])}</dt>
                 {items.map((scope) => (
                   <dd key={scope.scope}>{scope.says}</dd>
                 ))}
@@ -401,30 +401,33 @@ function WhatItCanDo({
         </>
       )}
       <p className="muted">
-        Calls go to{" "}
-        {app.egress.anyNetwork ? "any network" : app.egress.hosts.length === 0 ? "nowhere off this computer" : app.egress.hosts.join(", ")}{" "}
-        ({isolationWords(app)}). What it returns is treated as untrusted
-        {app.trust.confidentiality === "personal" ? ", personal data" : " content"}. Tavi asks before anything changes or is sent; you can
-        tighten this later.
+        {t(app.trust.confidentiality === "personal" ? "apps.connect.callsGoPersonal" : "apps.connect.callsGo", {
+          where: app.egress.anyNetwork
+            ? t("apps.connect.anyNetwork")
+            : app.egress.hosts.length === 0
+              ? t("apps.connect.nowhere")
+              : t("apps.connect.toHosts", { hosts: app.egress.hosts.join(", ") }),
+          isolation: isolationWords(app),
+        })}
       </p>
       <fieldset className="apps-sharing">
-        <legend>Is this your own account, or one your household or team shares?</legend>
+        <legend>{t("apps.connect.whoseAccount")}</legend>
         <label>
-          <input type="radio" name={name} checked={sharing === "personal"} onChange={() => onSharing("personal")} /> Personal: only in your
-          own chats
+          <input type="radio" name={name} checked={sharing === "personal"} onChange={() => onSharing("personal")} />{" "}
+          {t("apps.connect.personal")}
         </label>
         <label>
-          <input type="radio" name={name} checked={sharing === "shared"} onChange={() => onSharing("shared")} /> Shared: people you allowed
-          may use it too{app.source.kind === "mcp" ? ", once you let them on its page" : ""}
+          <input type="radio" name={name} checked={sharing === "shared"} onChange={() => onSharing("shared")} />{" "}
+          {t(app.source.kind === "mcp" ? "apps.connect.sharedMcp" : "apps.connect.shared")}
         </label>
       </fieldset>
       {calendar === undefined && mailbox === undefined && receives === undefined ? null : (
         <fieldset className="apps-options">
-          <legend>What to turn on (each asks before it changes or sends anything)</legend>
+          <legend>{t("apps.connect.turnOn")}</legend>
           {calendar === undefined ? null : (
             <label className="apps-check">
-              <input type="checkbox" checked={calendar} onChange={(event) => setCalendar(event.target.checked)} /> Let the agent use your
-              calendar
+              <input type="checkbox" checked={calendar} onChange={(event) => setCalendar(event.target.checked)} />{" "}
+              {t("apps.connect.calendar")}
             </label>
           )}
           {mailbox === undefined ? null : (
@@ -435,7 +438,7 @@ function WhatItCanDo({
                   checked={mailbox !== "off"}
                   onChange={(event) => setMailbox(event.target.checked ? "read" : "off")}
                 />{" "}
-                Let the agent read and draft in your mailbox
+                {t("apps.connect.mailboxRead")}
               </label>
               <label className="apps-check">
                 <input
@@ -444,24 +447,24 @@ function WhatItCanDo({
                   disabled={mailbox === "off"}
                   onChange={(event) => setMailbox(event.target.checked ? "send" : "read")}
                 />{" "}
-                Send drafts I approve
+                {t("apps.connect.mailboxSend")}
               </label>
             </>
           )}
           {receives === undefined ? null : (
             <label className="apps-check">
-              <input type="checkbox" checked={receives} onChange={(event) => setReceives(event.target.checked)} /> Reach Tavi through this
-              account
+              <input type="checkbox" checked={receives} onChange={(event) => setReceives(event.target.checked)} />{" "}
+              {t("apps.account.receive")}
             </label>
           )}
         </fieldset>
       )}
       <div className="actions">
         <Button variant="ghost" onClick={onClose}>
-          Cancel
+          {t("ui.confirm.cancel")}
         </Button>
         <Button variant="primary" disabled={busy} onClick={() => onNext(definedOnly({ calendar, mailbox, receives }))}>
-          Next
+          {t("apps.connect.next")}
         </Button>
       </div>
     </div>
@@ -482,6 +485,7 @@ function ClientStep({
   readonly onBack: () => void;
   readonly onSave: (values: { readonly values?: Readonly<Record<string, string>>; readonly clientFile?: string }) => Promise<void>;
 }) {
+  const t = useT();
   const setup = app.clientSetup;
   const idField = useId();
   const secretField = useId();
@@ -499,13 +503,13 @@ function ClientStep({
     setFile(undefined);
     if (picked === undefined) return;
     if (picked.size > 8_192) {
-      setFileProblem("That file is too large to be a client file.");
+      setFileProblem(t("apps.connect.fileTooLarge"));
       return;
     }
     try {
       setFile({ name: picked.name, text: await picked.text() });
     } catch {
-      setFileProblem("That file could not be read.");
+      setFileProblem(t("apps.connect.fileUnreadable"));
     }
   };
   return (
@@ -522,7 +526,7 @@ function ClientStep({
         );
       }}
     >
-      {setup.ready ? <p className="muted">A client is set up already, and is reused: add another file only to change it.</p> : null}
+      {setup.ready ? <p className="muted">{t("apps.connect.clientReady")}</p> : null}
       <ol className="apps-guide">
         {setup.steps.map((step) => (
           <SetupStep key={step.text} step={step} />
@@ -541,7 +545,7 @@ function ClientStep({
           void take(event.dataTransfer.files[0]);
         }}
       >
-        {file === undefined ? "Drop the client's JSON file here, or choose it" : `Client file: ${file.name}`}
+        {file === undefined ? t("apps.connect.dropFile") : t("apps.connect.clientFile", { file: file.name })}
         <input
           type="file"
           accept="application/json,.json"
@@ -551,11 +555,11 @@ function ClientStep({
       </label>
       {fileProblem === undefined ? null : <p role="alert">{fileProblem}</p>}
       <details>
-        <summary className="disclosure">More: paste the client id and secret instead</summary>
-        <Field id={idField} label="Client id">
+        <summary className="disclosure">{t("apps.connect.pasteInstead")}</summary>
+        <Field id={idField} label={t("apps.connect.clientId")}>
           <input value={clientId} autoComplete="off" spellCheck={false} onChange={(event) => setClientId(event.target.value)} />
         </Field>
-        <Field id={secretField} label="Client secret">
+        <Field id={secretField} label={t("apps.connect.clientSecret")}>
           {(control) => (
             <PasswordInput
               id={control.id}
@@ -569,9 +573,9 @@ function ClientStep({
         </Field>
       </details>
       <div className="actions">
-        <Button onClick={onBack}>Back</Button>
+        <Button onClick={onBack}>{t("apps.connect.back")}</Button>
         <Button variant="primary" type="submit" disabled={busy || (!ready && !typed && file === undefined)}>
-          {ready ? "Next" : "Save and next"}
+          {ready ? t("apps.connect.next") : t("apps.connect.saveAndNext")}
         </Button>
       </div>
     </form>
@@ -599,6 +603,7 @@ function KeyStep({
   readonly onBack: () => void;
   readonly onSave: (values: Readonly<Record<string, string>>) => Promise<void>;
 }) {
+  const t = useT();
   const fieldId = useId();
   const [values, setValues] = useState<Readonly<Record<string, string>>>({});
   // A required setting may already be saved (a key refused later): only the keys must be given here.
@@ -659,9 +664,9 @@ function KeyStep({
         </Field>
       ))}
       <div className="actions">
-        <Button onClick={onBack}>Back</Button>
+        <Button onClick={onBack}>{t("apps.connect.back")}</Button>
         <Button variant="primary" type="submit" disabled={busy || !ready}>
-          Save and test
+          {t("apps.connect.saveAndTest")}
         </Button>
       </div>
     </form>
@@ -688,6 +693,7 @@ function OwnClientStep({
   readonly onBack: () => void;
   readonly onSave: (values: Readonly<Record<string, string>>) => Promise<void>;
 }) {
+  const t = useT();
   const idField = useId();
   const secretField = useId();
   const [clientId, setClientId] = useState("");
@@ -700,22 +706,19 @@ function OwnClientStep({
         void onSave({ clientId: clientId.trim(), ...(secret === "" ? {} : { clientSecret: secret }) });
       }}
     >
-      <p>
-        {app.name} does not register Tavi by itself. Create an OAuth app in its developer settings, give it this redirect address, and paste
-        its client id here.
-      </p>
+      <p>{t("apps.connect.ownClient", { app: app.name })}</p>
       <dl className="apps-values">
         <div>
-          <dt>Redirect address</dt>
+          <dt>{t("apps.connect.redirect")}</dt>
           <dd>
             <CopyValue value={redirect} />
           </dd>
         </div>
       </dl>
-      <Field id={idField} label="Client id">
+      <Field id={idField} label={t("apps.connect.clientId")}>
         <input value={clientId} autoComplete="off" spellCheck={false} onChange={(event) => setClientId(event.target.value)} />
       </Field>
-      <Field id={secretField} label="Client secret (if it has one)">
+      <Field id={secretField} label={t("apps.connect.clientSecretOptional")}>
         {(control) => (
           <PasswordInput
             id={control.id}
@@ -728,9 +731,9 @@ function OwnClientStep({
         )}
       </Field>
       <div className="actions">
-        <Button onClick={onBack}>Back</Button>
+        <Button onClick={onBack}>{t("apps.connect.back")}</Button>
         <Button variant="primary" type="submit" disabled={busy || clientId.trim() === ""}>
-          Save and sign in
+          {t("apps.connect.saveAndSignIn")}
         </Button>
       </div>
     </form>
@@ -767,12 +770,13 @@ function SetupStep({ step }: { readonly step: AppClientSetupStep }) {
 }
 
 function CopyValue({ value }: { readonly value: string }) {
+  const t = useT();
   const { copied, copy } = useCopied();
   return (
     <>
       <code>{value}</code>{" "}
       <Button size="sm" onClick={() => copy(value)}>
-        {copied ? "Copied" : "Copy"}
+        {copied ? t("apps.connect.copied") : t("apps.connect.copy")}
       </Button>
     </>
   );
