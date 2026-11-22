@@ -4,7 +4,10 @@ All notable changes to Tavi are recorded here. The project follows
 [Semantic Versioning](https://semver.org); before 1.0, a minor version may
 change behaviour or stored data.
 
-## Unreleased
+## 0.4.0 — 2026-11-22
+
+Voice messages are transcribed on this computer, with a setup step that
+installs what they need; plus fixes and layout polish from a fresh install.
 
 ### Added
 

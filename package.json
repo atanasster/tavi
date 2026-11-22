@@ -1,6 +1,6 @@
 {
   "name": "tavi-monorepo",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "private": true,
   "description": "Tavi \u2014 local-first agent application (monorepo root)",
   "license": "MIT",
