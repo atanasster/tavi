@@ -9,6 +9,9 @@ import { errors } from "./bg/errors.js";
 import { notices } from "./bg/notices.js";
 import { onboarding } from "./bg/onboarding.js";
 import { nav } from "./bg/nav.js";
+import { agent } from "./bg/agent.js";
+import { reports } from "./bg/reports.js";
+import { channels } from "./bg/channels.js";
 
 /** The `core` namespace in Bulgarian: weekdays and months are lowercase, and a day reads "вт, 29 сеп". */
 export const CORE_BG = {
@@ -21,4 +24,7 @@ export const CORE_BG = {
   ...notices,
   ...onboarding,
   ...nav,
+  ...agent,
+  ...reports,
+  ...channels,
 } as const satisfies CatalogFor<typeof CORE_EN>;
