@@ -4,6 +4,13 @@ All notable changes to Tavi are recorded here. The project follows
 [Semantic Versioning](https://semver.org); before 1.0, a minor version may
 change behaviour or stored data.
 
+## Unreleased
+
+### Fixed
+
+- Setup's "You're set up" and "Tavi is off" cards keep a gutter from the
+  window's edges in a narrow window, instead of touching them.
+
 ## 0.4.0 — 2026-11-22
 
 Voice messages are transcribed on this computer, with a setup step that

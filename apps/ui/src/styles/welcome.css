@@ -121,7 +121,9 @@
   color: hsl(var(--card-foreground));
   box-shadow: var(--shadow-sm);
 }
+/* A solo card (set up, Tavi off) is the page's column itself: it keeps the column's gutter off the window's edges. */
 .welcome-solo {
+  width: calc(100% - 2 * var(--space-4));
   max-width: var(--width-prose);
   padding: var(--space-8);
 }
