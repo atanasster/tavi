@@ -1,0 +1,19 @@
+{
+  "app": 2,
+  "features/apps": 159,
+  "features/center": 609,
+  "features/chat": 166,
+  "features/chat-panel": 135,
+  "features/ideas": 81,
+  "features/needs": 27,
+  "features/plugin-host": 1,
+  "features/routines": 137,
+  "features/sessions": 14,
+  "features/settings": 595,
+  "features/shell": 16,
+  "features/takeover": 26,
+  "features/transcript": 23,
+  "features/welcome": 112,
+  "features/workers": 31,
+  "ui": 51
+}

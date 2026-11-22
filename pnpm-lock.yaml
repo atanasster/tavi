@@ -313,6 +313,9 @@ importers:
       knip:
         specifier: 'catalog:'
         version: 6.45.1
+      oxc-parser:
+        specifier: 0.156.0
+        version: 0.156.0
       turbo:
         specifier: 'catalog:'
         version: 2.11.11
