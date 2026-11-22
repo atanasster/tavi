@@ -17,6 +17,8 @@ import { getHeartbeatOffer } from "./heartbeat-api.js";
 import { Button } from "../../ui/Button.js";
 import { useTimeZone, useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * Setup's checklist card on Home, in
@@ -54,10 +56,12 @@ export function promiseWords(nextAt: string, now: Date, timeZone?: string): stri
   };
   const next = new Date(nextAt);
   const days = dayNumber(next) - dayNumber(now);
-  if (days <= 0) return "Later today I'll have new ideas for you.";
+  if (days <= 0) return translateNow("center.onboarding.promise.today");
   if (days === 1)
-    return Number(parts(next)["hour"]) < 12 ? "Tomorrow morning I'll have ideas for you." : "Tomorrow I'll have ideas for you.";
-  return "Soon I'll have ideas for you.";
+    return translateNow(
+      Number(parts(next)["hour"]) < 12 ? "center.onboarding.promise.tomorrowMorning" : "center.onboarding.promise.tomorrow",
+    );
+  return translateNow("center.onboarding.promise.soon");
 }
 
 /** A row's words: the step's own detail, and where a step this canvas cannot do is done. */
@@ -65,8 +69,10 @@ function rowDetail(step: OnboardingStatus["steps"][number] | undefined): string 
   if (step === undefined) return "";
   if (step.elsewhere !== "cli") return step.detail;
   // Installing the service is a terminal's: channels and schedules stop with `tavi serve` until it is done.
-  const where = `in a terminal: ${step.kind === "service" ? SERVICE_SETUP_COMMAND : "tavi onboard"}`;
-  return step.detail === "" ? where : `${step.detail} · ${where}`;
+  const command = step.kind === "service" ? SERVICE_SETUP_COMMAND : "tavi onboard";
+  return step.detail === ""
+    ? translateNow("center.onboarding.inTerminal", { command })
+    : translateNow("center.onboarding.detailInTerminal", { detail: step.detail, command });
 }
 
 interface Loaded {
@@ -94,6 +100,7 @@ export function OnboardingChecklist({
   /** Welcome at `stepId`, or at the first open step. */
   readonly onOpenStep: (stepId?: string) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const timeZone = useTimeZone();
   const ids = useId();
@@ -178,7 +185,7 @@ export function OnboardingChecklist({
           {
             kind: "model" as const,
             step: fastStep,
-            title: "Verify the model",
+            title: t("center.onboarding.verifyModel"),
             detail: modelStatus?.detail.split(" · ").slice(0, 2).join(" · ") ?? "",
           },
         ]
@@ -186,13 +193,13 @@ export function OnboardingChecklist({
   const rows = [
     ...(fastAdvice === undefined || fastStep === undefined
       ? []
-      : [{ kind: "model" as const, step: fastStep, title: "Fix the fast model", detail: fastAdvice }]),
+      : [{ kind: "model" as const, step: fastStep, title: t("center.onboarding.fixFastModel"), detail: fastAdvice }]),
     ...verify,
     ...listed,
   ];
   if (rows.length === 0) {
     return loaded.promise === undefined ? null : (
-      <section className="section-card onboarding-promise" aria-label="Ideas">
+      <section className="section-card onboarding-promise" aria-label={t("center.onboarding.ideas")}>
         <p>{loaded.promise}</p>
       </section>
     );
@@ -214,22 +221,17 @@ export function OnboardingChecklist({
   return (
     <section className="section-card onboarding-checklist" aria-labelledby={`${ids}-title`}>
       <h2 className="center-subhead" id={`${ids}-title`}>
-        Setup checklist{" "}
-        <span className="meta-sm">
-          {done} of {total}
-        </span>
+        {t("center.onboarding.title")} <span className="meta-sm">{t("center.onboarding.progress", { done, total })}</span>
       </h2>
       {loaded.promise === undefined ? null : <p>{loaded.promise}</p>}
       {fallback === undefined ? null : (
         <p className="meta-sm onboarding-fallback" role="status">
-          Setup is showing Tavi's own steps: {fallback}
+          {t("center.onboarding.fallback", { reason: fallback })}
         </p>
       )}
-      {status.returning === undefined ? null : <p className="meta-sm">New in this version of setup:</p>}
+      {status.returning === undefined ? null : <p className="meta-sm">{t("center.onboarding.newInVersion")}</p>}
       {status.providerId === null ? (
-        <p className="meta-sm">
-          Guided setup is turned off here: run <Command>tavi onboard</Command> for the command for each step.
-        </p>
+        <p className="meta-sm">{withParts(t("center.onboarding.guidedOff"), { command: <Command>tavi onboard</Command> })}</p>
       ) : null}
       <ul className="list-reset onboarding-checklist-rows">
         {rows.map((row) => (
@@ -237,16 +239,16 @@ export function OnboardingChecklist({
             <Button variant="link" onClick={() => onOpenStep(row.step?.id)}>
               {row.title ?? row.step?.title}
             </Button>
-            {row.detail === "" ? null : <span className="meta-sm"> — {row.detail}</span>}
+            {row.detail === "" ? null : <span className="meta-sm">{t("center.onboarding.rowDetail", { detail: row.detail })}</span>}
           </li>
         ))}
       </ul>
       <div className="heartbeat-actions cluster">
         <Button size="sm" onClick={() => onOpenStep(continueAt)}>
-          Continue setup
+          {t("center.onboarding.continue")}
         </Button>
         <Button variant="ghost" size="sm" disabled={busy} onClick={() => void dismiss()}>
-          Dismiss
+          {t("center.onboarding.dismiss")}
         </Button>
       </div>
       <Failure message={failure} />

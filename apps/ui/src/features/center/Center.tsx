@@ -20,6 +20,7 @@ import { Schedule } from "./Schedule.js";
 import { SoulAndMemory } from "./Soul.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { type AppRepairItem, CenterRail } from "./CenterRail.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 
 /**
  * The Command Center: the section nav in the
@@ -100,6 +101,7 @@ export function CenterPage({
   readonly onDoHeartbeatItem?: ((item: HeartbeatItemView) => void) | undefined;
   readonly onChatAboutHeartbeatItem?: ((item: HeartbeatItemView) => void) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const decisions = (feed.revisions.approval ?? 0) + (feed.revisions.review ?? 0) + (feed.revisions.question ?? 0);
   /**
@@ -128,7 +130,7 @@ export function CenterPage({
   return (
     <div className="center" ref={scroller}>
       <div className="center-main">
-        {feed.error === undefined ? null : <Notice>Live updates paused: {feed.error}. Trying again shortly.</Notice>}
+        {feed.error === undefined ? null : <Notice>{t("center.page.paused", { error: feed.error })}</Notice>}
         {section === "activity" ? (
           <Activity
             key={workspaceId}
@@ -223,7 +225,7 @@ export function CenterPage({
 /** An in-place repair, as the app's page runs it: *Try again* tests the server, *Turn on* enables it here. */
 async function fixAppInPlace(client: SettingsClient, workspaceId: string, item: AppRepairItem): Promise<Outcome<unknown>> {
   const accountId = item.accountId;
-  if (accountId === undefined) return { ok: false, message: "Open the app to fix this." };
+  if (accountId === undefined) return { ok: false, message: translateNow("center.page.openAppToFix") };
   return item.kind === "retry"
     ? appActions.test(client, workspaceId, item.appId, accountId)
     : mcpActions.setEnabled(client, accountId, true, workspaceId);

@@ -43,7 +43,7 @@ describe("an entry that cannot be rendered", () => {
         <EntryBoundary what="answer">
           <p className="text">before</p>
         </EntryBoundary>
-        <EntryBoundary what="tool call">
+        <EntryBoundary what="toolCall">
           <Boom />
         </EntryBoundary>
         <EntryBoundary what="answer">

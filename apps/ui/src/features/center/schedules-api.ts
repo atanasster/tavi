@@ -12,10 +12,11 @@ import type {
   ChannelsCatalogAnswer,
   ChannelsListAnswer,
 } from "@tavi/contracts";
+import { translateNow } from "../../lib/i18n.js";
 import { ask, withList, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 
 export function scheduleRequest<T>(client: SettingsClient, payload: SchedulesPayload): Promise<Outcome<T>> {
-  return ask<T>(client, "schedules", { ...payload }, { refused: "Schedule action refused." });
+  return ask<T>(client, "schedules", { ...payload }, { refused: translateNow("center.schedulesApi.refused") });
 }
 
 /** The workspace's agents for the picker; an answer without a list (an owner without agents) is none. */
@@ -24,7 +25,7 @@ export async function loadAgents(client: SettingsClient, workspaceId: string): P
     client,
     "agents",
     { action: "list", workspaceId },
-    { timeoutMs: null, refused: "Agents unavailable" },
+    { timeoutMs: null, refused: translateNow("center.schedulesApi.agentsUnavailable") },
   );
   if (!answer.ok) return answer;
   const result = answer.value;
@@ -58,7 +59,7 @@ export async function listSchedules(client: SettingsClient, workspaceId: string,
   return withList(
     await scheduleRequest<SchedulesListResult>(client, { action: "list", workspaceId, ...(withUsage ? { withUsage } : {}) }),
     "schedules",
-    "schedules",
+    translateNow("center.schedulesApi.schedules"),
   );
 }
 
@@ -129,7 +130,7 @@ export async function scheduleHistory(
   return withList(
     await scheduleRequest<ScheduleHistoryResult>(client, { action: "history", workspaceId, scheduleId, limit }),
     "fires",
-    "fires",
+    translateNow("center.schedulesApi.fires"),
   );
 }
 

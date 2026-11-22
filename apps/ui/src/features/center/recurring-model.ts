@@ -2,7 +2,9 @@ import type { HeartbeatGetAnswer } from "@tavi/contracts";
 import type { ReactNode } from "react";
 import type { useLoaded } from "../../hooks/use-loaded.js";
 import type { Outcome } from "../../lib/ipc.js";
+import { currentLocale, translateNow } from "../../lib/i18n.js";
 import { durationText } from "../../lib/time.js";
+import type { UiKey } from "../../locales/en.js";
 import type { RecurringKind } from "./RecurringRow.js";
 import { weekdaysText } from "./schedule-model.js";
 
@@ -10,18 +12,18 @@ import { weekdaysText } from "./schedule-model.js";
 export type Loaded<T> = ReturnType<typeof useLoaded<T>>;
 
 /** What a row says when nothing has run yet, whatever its kind. */
-export const NOT_RUN = "Not run yet.";
+export const notRun = (): string => translateNow("center.recurringModel.notRun");
 
 /** The filter chips, in order. */
 export const FILTERS = [
-  { value: "all", label: "All" },
-  { value: "reminder", label: "Reminders" },
-  { value: "routine", label: "Routines" },
-  { value: "schedule", label: "Schedules" },
-  { value: "watcher", label: "Watchers" },
-  { value: "failing", label: "Failing" },
-  { value: "paused", label: "Paused" },
-] as const;
+  { value: "all", labelKey: "center.recurringModel.filter.all" },
+  { value: "reminder", labelKey: "center.recurringModel.filter.reminder" },
+  { value: "routine", labelKey: "center.recurringModel.filter.routine" },
+  { value: "schedule", labelKey: "center.recurringModel.filter.schedule" },
+  { value: "watcher", labelKey: "center.recurringModel.filter.watcher" },
+  { value: "failing", labelKey: "center.recurringModel.filter.failing" },
+  { value: "paused", labelKey: "center.recurringModel.filter.paused" },
+] as const satisfies readonly { readonly value: string; readonly labelKey: UiKey }[];
 
 export type Filter = (typeof FILTERS)[number]["value"];
 
@@ -49,7 +51,7 @@ export function byNextRun(a: Entry, b: Entry): number {
   const at = (entry: Entry): number =>
     entry.next === null || entry.next === undefined ? Number.POSITIVE_INFINITY : Date.parse(entry.next);
   const gap = at(a) - at(b);
-  return Number.isNaN(gap) || gap === 0 ? a.name.localeCompare(b.name) : gap;
+  return Number.isNaN(gap) || gap === 0 ? a.name.localeCompare(b.name, currentLocale()) : gap;
 }
 
 export function matches(entry: Entry, filter: Filter, text: string): boolean {
@@ -66,5 +68,14 @@ export const ROUTINE_TROUBLE: ReadonlySet<string> = new Set(["credential-blocked
 /** The heartbeat's cadence in the words a schedule's has: "Mon–Fri every 30 min 08:00–22:00 · Europe/Berlin". */
 export function heartbeatCadence(answer: Pick<HeartbeatGetAnswer, "config" | "timezone">): string {
   const { config } = answer;
-  return `${weekdaysText(config.daysOfWeek) ?? "Daily"} every ${durationText(config.everyMs)} ${config.activeHours.start}–${config.activeHours.end} · ${answer.timezone}`;
+  const days = weekdaysText(config.daysOfWeek);
+  const params = {
+    interval: durationText(config.everyMs),
+    start: config.activeHours.start,
+    end: config.activeHours.end,
+    zone: answer.timezone,
+  };
+  return days === undefined
+    ? translateNow("center.recurringModel.heartbeatCadenceDaily", params)
+    : translateNow("center.recurringModel.heartbeatCadence", { days, ...params });
 }

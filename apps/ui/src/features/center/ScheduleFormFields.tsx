@@ -12,12 +12,15 @@ import {
 import { Icon } from "../../ui/Icon.js";
 import { Select } from "../../ui/Select.js";
 import { Button } from "../../ui/Button.js";
+import { useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /** The form's words for each pre-check, and what its field asks for. */
-const PRECHECK_LABELS: Readonly<Record<SchedulePrecheckKind, { readonly label: string; readonly target: string }>> = {
-  "page-changed": { label: "A page changed", target: "https://example.com/page" },
-  "feed-has-new": { label: "A feed has new items", target: "https://example.com/feed.xml" },
-  "file-changed": { label: "A file changed", target: "/path/under/an/fs-root" },
+const PRECHECK_LABELS: Readonly<Record<SchedulePrecheckKind, { readonly label: UiKey; readonly target: string }>> = {
+  "page-changed": { label: "center.scheduleFields.precheck.page", target: "https://example.com/page" },
+  "feed-has-new": { label: "center.scheduleFields.precheck.feed", target: "https://example.com/feed.xml" },
+  "file-changed": { label: "center.scheduleFields.precheck.file", target: "/path/under/an/fs-root" },
 };
 
 /** How often a watcher made in the form checks: every hour up to every `SCHEDULE_MAX_EVERY_HOURS`. */
@@ -56,19 +59,20 @@ export function ScheduleToolsField({
   /** The suggestions' datalist id (the form's own). */
   readonly toolListId: string;
 }) {
+  const t = useT();
   // A search only sends its query out, which its own line says: it changes nothing.
   const changing = writing.filter((tool) => tool !== "web_search");
   return (
     <>
       <label>
-        Allowed tool
+        {t("center.scheduleFields.allowedTool")}
         <input
-          aria-label="Allowed tool"
+          aria-label={t("center.scheduleFields.allowedTool")}
           value={tool}
           maxLength={128}
           list={toolListId}
           autoComplete="off"
-          placeholder="web_search or reports.*"
+          placeholder={t("center.scheduleFields.toolPlaceholder")}
           onChange={(event) => setTool(event.target.value)}
           onKeyDown={(event) => {
             // Enter adds the tool rather than saving the whole form with it unfinished.
@@ -83,14 +87,14 @@ export function ScheduleToolsField({
           <option key={value} value={value} />
         ))}
       </datalist>
-      <Button onClick={addTool}>Add tool</Button>
+      <Button onClick={addTool}>{t("center.scheduleFields.addTool")}</Button>
       <div>
         {tools.map((value) => (
           <span className="chip" key={value}>
             {value}
             <Button
               variant="bare"
-              aria-label={`Remove tool ${value}`}
+              aria-label={t("center.scheduleFields.removeTool", { tool: value })}
               onClick={() => setTools((before) => before.filter((item) => item !== value))}
             >
               <Icon name="close" size="sm" />
@@ -100,22 +104,23 @@ export function ScheduleToolsField({
       </div>
       {unpicked.length > 0 ? (
         <p>
-          Used in this chat — add:{" "}
-          {unpicked.map((value) => (
-            <Button
-              key={value}
-              variant="link"
-              aria-label={`Add tool ${value}`}
-              onClick={() => setTools((before) => (before.includes(value) ? before : [...before, value]))}
-            >
-              {value}
-            </Button>
-          ))}
+          {withParts(t("center.scheduleFields.usedInChat"), {
+            tools: unpicked.map((value) => (
+              <Button
+                key={value}
+                variant="link"
+                aria-label={t("center.scheduleFields.addToolNamed", { tool: value })}
+                onClick={() => setTools((before) => (before.includes(value) ? before : [...before, value]))}
+              >
+                {value}
+              </Button>
+            )),
+          })}
         </p>
       ) : null}
-      {changing.length > 0 ? <p>{changing.join(", ")} can change or send things without asking.</p> : null}
-      {writing.includes("web_search") ? <p>web_search sends its queries to your search provider.</p> : null}
-      <p>The allowlist governs calls needing approval. Read-only tools still run.</p>
+      {changing.length > 0 ? <p>{t("center.scheduleFields.changing", { tools: changing.join(", ") })}</p> : null}
+      {writing.includes("web_search") ? <p>{t("center.scheduleFields.webSearch")}</p> : null}
+      <p>{t("center.scheduleFields.allowlist")}</p>
     </>
   );
 }
@@ -132,12 +137,13 @@ export function ScheduleLimitFields({
   readonly setRunLimit: (value: string) => void;
   readonly setMaxTokens: (value: string) => void;
 }) {
+  const t = useT();
   return (
     <>
       <label>
-        Run limit (minutes)
+        {t("center.scheduleFields.runLimit")}
         <input
-          aria-label="Schedule run limit"
+          aria-label={t("center.scheduleFields.runLimitLabel")}
           inputMode="numeric"
           placeholder={String(SCHEDULE_DEFAULT_MAX_RUN_MINUTES)}
           maxLength={4}
@@ -146,28 +152,25 @@ export function ScheduleLimitFields({
         />
       </label>
       <p className="muted">
-        A run still working after {runLimit.trim() === "" ? SCHEDULE_DEFAULT_MAX_RUN_MINUTES : runLimit.trim()} minutes is stopped, recorded
-        failed and told once.
+        {t("center.scheduleFields.runLimitHint", {
+          minutes: runLimit.trim() === "" ? SCHEDULE_DEFAULT_MAX_RUN_MINUTES : runLimit.trim(),
+        })}
       </p>
       <label>
-        Token ceiling
+        {t("center.scheduleFields.tokenCeiling")}
         <input
-          aria-label="Schedule token ceiling"
+          aria-label={t("center.scheduleFields.tokenCeilingLabel")}
           inputMode="numeric"
-          placeholder="None"
+          placeholder={t("center.scheduleFields.none")}
           maxLength={13}
           value={maxTokens}
           onChange={(event) => setMaxTokens(event.target.value)}
         />
       </label>
-      <p className="muted">
-        {maxTokens.trim() === ""
-          ? "No ceiling: a run uses what it needs, within its time limit."
-          : "A run, its workers included, that uses more tokens than this is stopped, recorded failed and told once. The next run goes ahead. The ceiling is checked between model calls, so a run can go past it by one call."}
-      </p>
+      <p className="muted">{maxTokens.trim() === "" ? t("center.scheduleFields.noCeiling") : t("center.scheduleFields.ceilingHint")}</p>
       {belowOneCall(maxTokens) ? (
         <p className="schedule-ceiling-low" role="status">
-          Below one model call: a run can go past it by one call (a run's first call alone takes about 25,000 tokens).
+          {t("center.scheduleFields.belowOneCall", { tokens: 25_000 })}
         </p>
       ) : null}
     </>
@@ -194,28 +197,29 @@ export function SchedulePrecheckFields({
   readonly setWatch: (watch: boolean) => void;
   readonly setSpec: (spec: ScheduleSpec) => void;
 }) {
+  const t = useT();
   return (
     <>
       <label>
-        Only run when
+        {t("center.scheduleFields.onlyRunWhen")}
         <Select
-          aria-label="Schedule pre-check"
+          aria-label={t("center.scheduleFields.precheckLabel")}
           value={precheckKind}
           onChange={(event) => setPrecheckKind(event.target.value as SchedulePrecheckKind | "none")}
         >
-          <option value="none">Always: no pre-check</option>
+          <option value="none">{t("center.scheduleFields.always")}</option>
           {SCHEDULE_PRECHECK_KINDS.map((value) => (
             <option key={value} value={value}>
-              {PRECHECK_LABELS[value].label}
+              {t(PRECHECK_LABELS[value].label)}
             </option>
           ))}
         </Select>
       </label>
       {precheckKind === "none" ? null : (
         <label>
-          {precheckKind === "file-changed" ? "File" : "Address"}
+          {precheckKind === "file-changed" ? t("center.scheduleFields.file") : t("center.scheduleFields.address")}
           <input
-            aria-label="Schedule pre-check target"
+            aria-label={t("center.scheduleFields.targetLabel")}
             placeholder={PRECHECK_LABELS[precheckKind].target}
             maxLength={2048}
             value={precheckTarget}
@@ -225,9 +229,9 @@ export function SchedulePrecheckFields({
       )}
       {precheckKind === "none" ? null : (
         <label>
-          Watch it
+          {t("center.scheduleFields.watch")}
           <Select
-            aria-label="Schedule watch mode"
+            aria-label={t("center.scheduleFields.watchLabel")}
             value={watch ? String(spec.everyHours ?? 1) : "times"}
             onChange={(event) => {
               const value = event.target.value;
@@ -235,10 +239,10 @@ export function SchedulePrecheckFields({
               if (value !== "times") setSpec(everyHoursSpec(spec, Number(value)));
             }}
           >
-            <option value="times">No: it runs at its times, when something changed</option>
+            <option value="times">{t("center.scheduleFields.watchNo")}</option>
             {WATCH_EVERY_HOURS.map((hours) => (
               <option key={hours} value={String(hours)}>
-                {`Yes: check every ${hours === 1 ? "hour" : `${String(hours)} hours`}, run only on a change`}
+                {t("center.scheduleFields.watchEvery", { count: hours })}
               </option>
             ))}
           </Select>
@@ -246,14 +250,18 @@ export function SchedulePrecheckFields({
       )}
       <p className="muted">
         {precheckKind === "none"
-          ? "Every run goes ahead."
+          ? t("center.scheduleFields.everyRun")
           : precheckKind === "file-changed"
-            ? "Before each run the file is read (it must be under one of the owner's --fs-root folders); when it has not changed, nothing runs and no model is called."
-            : `Before each run the ${precheckKind === "page-changed" ? "page" : "feed"} is fetched from its own site, with no sign-in; when nothing is new, nothing runs and no model is called.`}{" "}
-        A run is told what changed, never the content, and reads it itself.
-        {watch && precheckKind === "file-changed"
-          ? ` While the owner runs, the file is also checked about 30 seconds after it changes, at most once a minute and ${String(SCHEDULE_WATCH_MAX_PER_HOUR)} times an hour.`
-          : ""}
+            ? t("center.scheduleFields.fileHint")
+            : precheckKind === "page-changed"
+              ? t("center.scheduleFields.pageHint")
+              : t("center.scheduleFields.feedHint")}{" "}
+        {t("center.scheduleFields.toldWhatChanged")}
+        {watch && precheckKind === "file-changed" ? (
+          <> {t("center.scheduleFields.fileWatch", { count: SCHEDULE_WATCH_MAX_PER_HOUR })}</>
+        ) : (
+          ""
+        )}
       </p>
     </>
   );

@@ -18,10 +18,10 @@ import {
   type HeartbeatSettingsChange,
   type HeartbeatTickRecord,
 } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 
 import { z } from "zod";
 
+import { translateNow } from "../../lib/i18n.js";
 import { mapOutcome, read, type Outcome, type Readable, type SettingsClient } from "../../lib/ipc.js";
 
 /**
@@ -186,10 +186,10 @@ export const ranProvider = (tick: HeartbeatTickRecord): boolean => (tick.kind ==
 
 /** The log's filters: everything, what was told, what was skipped, what failed. */
 export const LOG_FILTERS = [
-  { value: "all", label: "All" },
-  { value: "told", label: "Told you" },
-  { value: "skipped", label: "Skipped" },
-  { value: "failed", label: "Failed" },
+  { value: "all", labelKey: "center.heartbeatApi.filter.all" },
+  { value: "told", labelKey: "center.heartbeatApi.filter.told" },
+  { value: "skipped", labelKey: "center.heartbeatApi.filter.skipped" },
+  { value: "failed", labelKey: "center.heartbeatApi.filter.failed" },
 ] as const;
 export type LogFilter = (typeof LOG_FILTERS)[number]["value"];
 
@@ -221,15 +221,25 @@ export function logLine(tick: HeartbeatTickRecord): string {
 
 function tickLine(tick: HeartbeatTickRecord): string {
   const reason = tick.reason === null ? "" : tick.reason.replaceAll("-", " ");
-  if (tick.kind === "window") return "Closed hours";
-  if (tick.kind === "digest") return `Summary: ${plural(tick.itemsLater, "item")}`;
-  if (tick.outcome === "skipped" || tick.outcome === "deferred")
-    return `${tick.outcome === "deferred" ? "Waited" : "Skipped"}${reason === "" ? "" : ` — ${reason}`}`;
-  if (tick.outcome === "failed") return `Failed${reason === "" ? "" : ` — ${reason}`}`;
-  const what = tick.kind === "deep" ? "Looked deeper" : "Checked what changed";
-  if (tick.itemsNow + tick.itemsLater === 0)
-    return `${what} — ${tick.outcome === "quiet:withheld" ? "quiet (a result was withheld)" : "all quiet"}`;
-  return `${what} — told you ${tick.itemsNow} now, ${tick.itemsLater} later`;
+  if (tick.kind === "window") return translateNow("center.heartbeatApi.closedHours");
+  if (tick.kind === "digest") return translateNow("center.heartbeatApi.summary", { count: tick.itemsLater });
+  if (tick.outcome === "skipped" || tick.outcome === "deferred") {
+    if (tick.outcome === "deferred")
+      return reason === "" ? translateNow("center.heartbeatApi.waited") : translateNow("center.heartbeatApi.waitedBecause", { reason });
+    return reason === "" ? translateNow("center.heartbeatApi.skipped") : translateNow("center.heartbeatApi.skippedBecause", { reason });
+  }
+  if (tick.outcome === "failed")
+    return reason === "" ? translateNow("center.heartbeatApi.failed") : translateNow("center.heartbeatApi.failedBecause", { reason });
+  const deep = tick.kind === "deep";
+  if (tick.itemsNow + tick.itemsLater === 0) {
+    if (tick.outcome === "quiet:withheld")
+      return translateNow(deep ? "center.heartbeatApi.deepWithheld" : "center.heartbeatApi.checkedWithheld");
+    return translateNow(deep ? "center.heartbeatApi.deepQuiet" : "center.heartbeatApi.checkedQuiet");
+  }
+  return translateNow(deep ? "center.heartbeatApi.deepTold" : "center.heartbeatApi.checkedTold", {
+    now: tick.itemsNow,
+    later: tick.itemsLater,
+  });
 }
 
 /** A channel heartbeat messages may go to: one of the workspace's enabled connections. */

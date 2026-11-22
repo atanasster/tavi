@@ -9,6 +9,9 @@ import { Failure } from "../../ui/Parts.js";
 import { TabList } from "../../ui/Tabs.js";
 import { Tooltip } from "../../ui/Tooltip.js";
 import { type PanelBounds, useResizablePanel } from "../../hooks/resizable.js";
+import { useT } from "../../lib/i18n.js";
+import type { Translate } from "@tavi/contracts/i18n";
+import type { UiKey } from "../../locales/en.js";
 import { readStored, writeStored } from "../../lib/storage.js";
 import {
   CHAT_PANEL_LABELS,
@@ -89,8 +92,8 @@ function Badge({ badge }: { readonly badge: ChatPanelBadge | undefined }) {
 }
 
 /** A tab's or rail icon's name with what its badge says: "Activity, 3 new", "Details, changed". */
-const named = (label: string, badge: ChatPanelBadge | undefined): string =>
-  !shows(badge) ? label : `${label}, ${badge === "dot" ? "changed" : `${badge} new`}`;
+const named = (t: Translate<UiKey>, label: string, badge: ChatPanelBadge | undefined): string =>
+  !shows(badge) ? label : badge === "dot" ? t("chatPanel.tab.changed", { label }) : t("chatPanel.tab.new", { label, count: badge });
 
 /**
  * A tab a UI plugin contributes (slot `chat.panel.tab`): its title, its icon
@@ -161,13 +164,16 @@ export function ChatPanel({
   /** The `chat.panel.top` slot's content, given the phone sheet's height. */
   readonly top?: ((sheet: SheetSnap) => ReactNode) | undefined;
 }) {
+  const t = useT();
   const id = useId();
   const tabs = useRef<Partial<Record<PanelTab, HTMLButtonElement | null>>>({});
   /** Every tab in order; a contributed tab that has gone (its plugin was disabled) shows Activity instead. */
   const order: readonly PanelTab[] = [...CHAT_PANEL_TABS, ...pluginTabs.map((plugin) => plugin.tab)];
   const shown: PanelTab = order.includes(tab) ? tab : "activity";
   const labelOf = (value: PanelTab): string =>
-    isChatPanelTab(value) ? CHAT_PANEL_LABELS[value] : (pluginTabs.find((plugin) => plugin.tab === value)?.label ?? "Plugin");
+    isChatPanelTab(value)
+      ? CHAT_PANEL_LABELS[value]
+      : (pluginTabs.find((plugin) => plugin.tab === value)?.label ?? t("chatPanel.tab.plugin"));
   const badgeOf = (value: PanelTab): ChatPanelBadge | undefined =>
     isChatPanelTab(value) ? badges[value] : pluginTabs.find((plugin) => plugin.tab === value)?.badge;
   // A tab-panel id may not hold the contributed tab's colon or slash.
@@ -234,13 +240,13 @@ export function ChatPanel({
   // Arrow keys move between tabs and select them (the APG's automatic tabs).
   if (!open) {
     return (
-      <aside ref={rail} className="panel-rail chat-panel-rail" aria-label="this chat">
+      <aside ref={rail} className="panel-rail chat-panel-rail" aria-label={t("chatPanel.label")}>
         <span className="chat-panel-rail-toggle">
           <IconButton
             icon="panel-right-open"
             className="chat-panel-toggle button-sm"
-            label="Show this chat's panel"
-            tooltip="Show this chat's panel (Cmd+Shift+.)"
+            label={t("chatPanel.show")}
+            tooltip={t("chatPanel.showTooltip", { chord: "Cmd+Shift+." })}
             aria-expanded={false}
             onClick={() => {
               focusAfter.current = "tab";
@@ -249,7 +255,7 @@ export function ChatPanel({
           />
           {/* On a phone the rail is this one button: it marks that any tab has news. */}
           {order.some((value) => shows(badgeOf(value))) ? (
-            <span className="chat-panel-dot chat-panel-any" role="img" aria-label="something here changed" />
+            <span className="chat-panel-dot chat-panel-any" role="img" aria-label={t("chatPanel.anyChanged")} />
           ) : null}
         </span>
         {order.map((value) => (
@@ -258,7 +264,7 @@ export function ChatPanel({
               <IconButton
                 icon={CHAT_PANEL_ICONS[value]}
                 className="button-sm"
-                label={named(CHAT_PANEL_LABELS[value], badgeOf(value))}
+                label={named(t, CHAT_PANEL_LABELS[value], badgeOf(value))}
                 tooltip={CHAT_PANEL_LABELS[value]}
                 onClick={() => pick(value)}
               />
@@ -268,7 +274,7 @@ export function ChatPanel({
                   variant="ghost"
                   size="sm"
                   className="button-icon"
-                  aria-label={named(labelOf(value), badgeOf(value))}
+                  aria-label={named(t, labelOf(value), badgeOf(value))}
                   onClick={() => pick(value)}
                 >
                   <TabGlyph tab={value} pluginTabs={pluginTabs} />
@@ -286,7 +292,7 @@ export function ChatPanel({
     <aside
       ref={aside}
       className={`side-panel chat-panel sheet-${sheet}`}
-      aria-label="this chat"
+      aria-label={t("chatPanel.label")}
       style={{ "--chat-panel-width": `${width}px`, "--chat-panel-sheet-height": `${height}dvh` } as CSSProperties}
       onFocus={() => {
         focusInside.current = true;
@@ -308,7 +314,7 @@ export function ChatPanel({
         className={`panel-resizer chat-panel-resizer${dragging ? " active" : ""}`}
         role="separator"
         aria-orientation="vertical"
-        aria-label="Resize this chat's panel"
+        aria-label={t("chatPanel.resize")}
         aria-valuenow={width}
         aria-valuemin={MIN_CHAT_PANEL_WIDTH}
         aria-valuemax={MAX_CHAT_PANEL_WIDTH}
@@ -318,7 +324,7 @@ export function ChatPanel({
       <div className="chat-panel-head">
         <div className="chat-panel-title">
           {onRename === undefined ? (
-            <h2 className="truncate">{title ?? "This chat"}</h2>
+            <h2 className="truncate">{title ?? t("chatPanel.thisChat")}</h2>
           ) : (
             <ChatTitle key={titleKey} title={title} renamed={renamed} onRename={onRename} />
           )}
@@ -328,21 +334,21 @@ export function ChatPanel({
           icon="panel-right-close"
           size="sm"
           className="chat-panel-toggle"
-          label="Hide this chat's panel"
-          tooltip="Hide this chat's panel (Cmd+Shift+.)"
+          label={t("chatPanel.hide")}
+          tooltip={t("chatPanel.hideTooltip", { chord: "Cmd+Shift+." })}
           aria-expanded={true}
           onClick={close}
         />
       </div>
       {top?.(sheet)}
       <TabList
-        label="this chat's sections"
+        label={t("chatPanel.sections")}
         className="chat-panel-tabs segmented"
         tabClassName="chat-panel-tab segment"
         activeClassName="active"
         items={order.map((value) => ({
           value,
-          ariaLabel: named(labelOf(value), badgeOf(value)),
+          ariaLabel: named(t, labelOf(value), badgeOf(value)),
           content: (
             <>
               <TabGlyph tab={value} pluginTabs={pluginTabs} />
@@ -385,6 +391,7 @@ function ChatTitle({
   readonly renamed: boolean;
   readonly onRename: (title: string | null) => Promise<string | undefined>;
 }) {
+  const t = useT();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
@@ -404,11 +411,11 @@ function ChatTitle({
   if (!editing) {
     return (
       <div className="chat-panel-name">
-        <h2 className="truncate">{title ?? "This chat"}</h2>
+        <h2 className="truncate">{title ?? t("chatPanel.thisChat")}</h2>
         <IconButton
           icon="instructions"
           size="sm"
-          label="Rename this chat"
+          label={t("chatPanel.rename.action")}
           onClick={() => {
             setDraft(title ?? "");
             setFailure(undefined);
@@ -426,7 +433,7 @@ function ChatTitle({
         void save(draft);
       }}
     >
-      <Field id={id} label="The chat's name" labelClassName="visually-hidden">
+      <Field id={id} label={t("chatPanel.rename.field")} labelClassName="visually-hidden">
         <input
           ref={field}
           value={draft}
@@ -444,7 +451,7 @@ function ChatTitle({
       </Field>
       {renamed ? (
         <Button variant="ghost" size="sm" disabled={saving} onClick={() => void save(null)}>
-          Use the generated name
+          {t("chatPanel.rename.generated")}
         </Button>
       ) : null}
       <Failure message={failure} />
@@ -479,6 +486,7 @@ function SheetHandle({
   readonly onDrag: (offset: number) => void;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   const start = useRef<number | undefined>(undefined);
   const moved = useRef(false);
   const settle = (next: number) => {
@@ -489,8 +497,8 @@ function SheetHandle({
   return (
     <Button
       className="chat-panel-grip"
-      aria-label={full ? "Shrink this chat's panel" : "Expand this chat's panel"}
-      title="Drag to resize"
+      aria-label={full ? t("chatPanel.sheet.shrink") : t("chatPanel.sheet.expand")}
+      title={t("chatPanel.sheet.drag")}
       onPointerDown={(event) => {
         start.current = event.clientY;
         moved.current = false;

@@ -6,6 +6,7 @@ import { instantLabel, todayIn } from "../../lib/time.js";
 import { LayerRow } from "../center/LayerRow.js";
 import { copyDraft } from "../../lib/clipboard.js";
 import { formatCount } from "../../lib/format.js";
+import { useT } from "../../lib/i18n.js";
 import { ConflictNotice } from "../settings/SystemPromptEditor.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { Failure, Pending, StatusNote } from "../../ui/Parts.js";
@@ -49,6 +50,7 @@ export function Instructions({
   /** What changes when the chat's instructions may have changed elsewhere: they are read again then. */
   readonly version?: string | undefined;
 }) {
+  const t = useT();
   const taskId = session?.taskId;
   /** Moves on each save, so the preview below is read again with the new instructions. */
   const [saved, setSaved] = useState(0);
@@ -73,20 +75,17 @@ export function Instructions({
       <Inherited version={`${version}|${saved}`} taskId={editable ? taskId : undefined} />
       <p className="chat-panel-links">
         <Button variant="ghost" size="sm" onClick={onSettings}>
-          Edit base instructions in Settings →
+          {t("chatPanel.instructions.settingsLink")}
         </Button>
         {onSoul === undefined ? null : (
           <Button variant="ghost" size="sm" onClick={onSoul}>
-            Personas in Soul & memory →
+            {t("chatPanel.instructions.soulLink")}
           </Button>
         )}
       </p>
     </>
   );
 }
-
-/** What an empty instructions box suggests writing. */
-const INSTRUCTIONS_PLACEHOLDER = "How this chat should work: tone, language, what to focus on…";
 
 /** What the character count says, and whether the text is over the bound. */
 function Count({ text }: { readonly text: string }) {
@@ -99,22 +98,23 @@ function Count({ text }: { readonly text: string }) {
 }
 
 function DraftInstructions({ draft, onDraft }: { readonly draft: string; readonly onDraft: (text: string) => void }) {
+  const t = useT();
   const id = useId();
   return (
-    <section className="chat-panel-editor" aria-label="this chat's instructions">
+    <section className="chat-panel-editor" aria-label={t("chatPanel.instructions.label")}>
       <h4>
-        <label htmlFor={id}>This chat's instructions</label>
+        <label htmlFor={id}>{t("chatPanel.instructions.heading")}</label>
       </h4>
       <textarea
         id={id}
         rows={6}
         value={draft}
         aria-invalid={draft.length > CHAT_INSTRUCTIONS_MAX}
-        placeholder={INSTRUCTIONS_PLACEHOLDER}
+        placeholder={t("chatPanel.instructions.placeholder")}
         onChange={(event) => onDraft(event.target.value)}
       />
       <p className="chat-panel-note meta-sm">
-        Sent with your first message: the chat's first turn runs under them. <Count text={draft} />
+        {t("chatPanel.instructions.draftNote")} <Count text={draft} />
       </p>
     </section>
   );
@@ -131,6 +131,7 @@ function ChatInstructions({
   readonly onOpenTask?: ((taskId: string) => void) | undefined;
   readonly onSaved?: (() => void) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { data: loaded, error, reload } = useLoaded(() => loadChatContext(client, workspaceId, taskId), [version]);
   /** A save's acknowledgement: the saved state until a read at least as new arrives. */
@@ -170,12 +171,12 @@ function ChatInstructions({
   if (data === undefined) return <Pending error={error} />;
   if (data.delegatedFrom !== undefined) {
     return (
-      <section className="chat-panel-editor" aria-label="this chat's instructions">
-        <h4>This chat's instructions</h4>
-        <p className="chat-panel-note meta-sm">This is an agent's task: it runs under its agent's instructions, not its chat's.</p>
+      <section className="chat-panel-editor" aria-label={t("chatPanel.instructions.label")}>
+        <h4>{t("chatPanel.instructions.heading")}</h4>
+        <p className="chat-panel-note meta-sm">{t("chatPanel.instructions.agentTask")}</p>
         {onOpenTask === undefined ? null : (
           <Button variant="ghost" size="sm" onClick={() => onOpenTask(data.delegatedFrom as string)}>
-            Open the chat it works for →
+            {t("chatPanel.instructions.openParent")}
           </Button>
         )}
       </section>
@@ -200,20 +201,20 @@ function ChatInstructions({
       setHistory((value) => value + 1);
       reload();
       onSaved?.();
-    } else if (outcome.code === "CONFLICT") setConflict("These instructions were changed elsewhere since you opened them.");
+    } else if (outcome.code === "CONFLICT") setConflict(t("chatPanel.instructions.conflict"));
     else setRefusal(outcome.message);
   };
   return (
-    <section className="chat-panel-editor" aria-label="this chat's instructions">
+    <section className="chat-panel-editor" aria-label={t("chatPanel.instructions.label")}>
       <h4>
-        <label htmlFor={id}>This chat's instructions</label>{" "}
-        {data.revision === 0 ? null : <span className="muted">revision {data.revision}</span>}
+        <label htmlFor={id}>{t("chatPanel.instructions.heading")}</label>{" "}
+        {data.revision === 0 ? null : <span className="muted">{t("chatPanel.instructions.revision", { revision: data.revision })}</span>}
       </h4>
       <textarea
         id={id}
         rows={8}
         value={text}
-        placeholder={INSTRUCTIONS_PLACEHOLDER}
+        placeholder={t("chatPanel.instructions.placeholder")}
         onChange={(event) => {
           setDraft(event.target.value);
           setSavedNote(false);
@@ -221,7 +222,8 @@ function ChatInstructions({
         aria-invalid={over}
       />
       <p className="chat-panel-note meta-sm">
-        {dirty || savedNote ? <span className="chat-panel-pill">Applies from your next message</span> : null} <Count text={text} />
+        {dirty || savedNote ? <span className="chat-panel-pill">{t("chatPanel.instructions.appliesNext")}</span> : null}{" "}
+        <Count text={text} />
       </p>
       <StatusNote note={copied} className="" />
       {conflict === undefined ? null : (
@@ -241,12 +243,12 @@ function ChatInstructions({
       <Failure message={refusal} />
       <div className="actions">
         <Button variant="primary" size="sm" disabled={!dirty || saving || over} onClick={() => void save(text)}>
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("ui.parts.saving") : t("chatPanel.instructions.save")}
         </Button>
         {/* Discard is offered for an edit, Clear for saved instructions: each only when it would do something. */}
         {dirty ? (
           <Button variant="ghost" size="sm" disabled={saving} onClick={() => setDraft(saved)}>
-            Discard
+            {t("chatPanel.instructions.discard")}
           </Button>
         ) : null}
         {saved === "" ? null : (
@@ -259,7 +261,7 @@ function ChatInstructions({
               void save("");
             }}
           >
-            Clear
+            {t("chatPanel.instructions.clear")}
           </Button>
         )}
       </div>
@@ -279,16 +281,18 @@ function ChatInstructions({
 
 /** Earlier revisions, read when opened; any can be taken back into the draft (undo). */
 function History({ taskId, onUse }: { readonly taskId: string; readonly onUse: (revision: ChatInstructionsRevision) => void }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   return (
     <details className="chat-panel-inherited" onToggle={(event) => setOpen((event.target as HTMLDetailsElement).open)}>
-      <summary className="disclosure">History</summary>
+      <summary className="disclosure">{t("chatPanel.instructions.history")}</summary>
       {open ? <HistoryList taskId={taskId} onUse={onUse} /> : null}
     </details>
   );
 }
 
 function HistoryList({ taskId, onUse }: { readonly taskId: string; readonly onUse: (revision: ChatInstructionsRevision) => void }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { data, error } = useLoaded(() => loadChatHistory(client, workspaceId, taskId));
   const timeZone = useTimeZone();
@@ -298,11 +302,17 @@ function HistoryList({ taskId, onUse }: { readonly taskId: string; readonly onUs
     <ol className="chat-panel-records">
       {data.revisions.map((revision) => (
         <li key={revision.revision}>
-          <span className="chat-panel-item-title truncate">{revision.text === "" ? "Cleared" : revision.text}</span>
+          <span className="chat-panel-item-title truncate">
+            {revision.text === "" ? t("chatPanel.instructions.cleared") : revision.text}
+          </span>
           <span className="chat-panel-item-detail meta-sm">
-            Revision {revision.revision} · {revision.author} · {instantLabel(revision.recordedAt, timeZone, today)}{" "}
+            {t("chatPanel.instructions.revisionLine", {
+              revision: revision.revision,
+              author: revision.author,
+              when: instantLabel(revision.recordedAt, timeZone, today),
+            })}{" "}
             <Button variant="ghost" size="sm" onClick={() => onUse(revision)}>
-              Use this
+              {t("chatPanel.instructions.useThis")}
             </Button>
           </span>
         </li>
@@ -323,6 +333,7 @@ function Inherited({
   /** Read again when it changes: after each save. */ readonly version: string;
   readonly taskId: string | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { data, error } = useLoaded(
     () => (taskId === undefined ? loadPromptPreview(client, workspaceId) : loadChatPreview(client, workspaceId, taskId)),
@@ -331,18 +342,16 @@ function Inherited({
   return (
     <details className="chat-panel-inherited" open={taskId === undefined}>
       <summary className="disclosure">
-        {taskId === undefined ? "Layers a new chat is given" : "The prompt this chat's next turn gets"}
+        {t(taskId === undefined ? "chatPanel.instructions.newChatLayers" : "chatPanel.instructions.nextTurnPrompt")}
       </summary>
       <p className="chat-panel-note meta-sm">
-        {taskId === undefined
-          ? "These are the layers a new chat is given now; a workspace edit reaches every chat from its next message."
-          : "These are the layers its next message is given; a workspace edit reaches it from its next message."}
+        {t(taskId === undefined ? "chatPanel.instructions.newChatNote" : "chatPanel.instructions.nextTurnNote")}
       </p>
       {data === undefined ? (
         <Pending error={error} />
       ) : (
         <>
-          <ol className="soul-layers list-reset" aria-label="Prompt layers">
+          <ol className="soul-layers list-reset" aria-label={t("chatPanel.instructions.layers")}>
             {data.layers.map((layer, index) => (
               <LayerRow key={`${layer.kind}:${layer.source ?? ""}:${index}`} layer={layer} />
             ))}
@@ -363,16 +372,13 @@ const BUDGET_WARN_SHARE = 0.6;
  * squeezed out first.
  */
 function Budget({ fixed, max }: { readonly fixed: number; readonly max: number }) {
+  const t = useT();
   const over = fixed > max;
   const near = !over && fixed > max * BUDGET_WARN_SHARE;
   return (
     <p className={over || near ? "chat-panel-budget meta-sm warn" : "chat-panel-budget meta-sm"} role={over || near ? "alert" : undefined}>
-      About {formatCount(fixed)} of {formatCount(max)} tokens before memory and skills.
-      {over
-        ? " Over the budget: calls will be refused until the instructions are shorter."
-        : near
-          ? " Close to the budget: memory and skills get little room."
-          : null}
+      {t("chatPanel.instructions.budget", { fixed, max })}
+      {over ? ` ${t("chatPanel.instructions.overBudget")}` : near ? ` ${t("chatPanel.instructions.nearBudget")}` : null}
     </p>
   );
 }

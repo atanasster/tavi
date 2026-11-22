@@ -1,9 +1,11 @@
 import type { PendingQuestionRow, PendingReviewRow } from "@tavi/contracts";
 
-import { ANSWERED_ELSEWHERE, QuestionCard, deliveryName, questionNeed, type AnswerState } from "../needs/NeedCard.js";
+import { ANSWERED_ELSEWHERE_KEY, QuestionCard, deliveryName, questionNeed, type AnswerState } from "../needs/NeedCard.js";
 import { AppLink } from "../shell/AppLink.js";
 import { taskPath } from "../shell/route.js";
 import { Button } from "../../ui/Button.js";
+import { useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * A question waiting on the reader, answered right here: the same card
@@ -26,13 +28,19 @@ export function QuestionNeedCard({
   readonly onAnswer: (text: string) => void;
   readonly onOpen: () => void;
 }) {
+  const t = useT();
   const title = row.taskTitle ?? row.taskId;
   // The task is named under the card; the schedule and the person are not.
   const askedBy = [row.originLabel, person].filter((part) => part !== undefined).join(" · ");
   return (
-    <li className="center-card center-card-question" aria-label={`Question: ${row.question}`} hidden={hidden} tabIndex={-1}>
+    <li
+      className="center-card center-card-question"
+      aria-label={t("center.needCards.questionLabel", { question: row.question })}
+      hidden={hidden}
+      tabIndex={-1}
+    >
       {state === "elsewhere" ? (
-        <p className="need-receipt">{ANSWERED_ELSEWHERE}</p>
+        <p className="need-receipt">{t(ANSWERED_ELSEWHERE_KEY)}</p>
       ) : (
         <QuestionCard
           density="compact"
@@ -44,10 +52,13 @@ export function QuestionNeedCard({
         />
       )}
       <p className="center-card-ctx meta">
-        In{" "}
-        <AppLink href={taskPath(row.taskId)} onFollow={onOpen}>
-          {title}
-        </AppLink>
+        {withParts(t("center.roundCard.in"), {
+          chat: (
+            <AppLink href={taskPath(row.taskId)} onFollow={onOpen}>
+              {title}
+            </AppLink>
+          ),
+        })}
       </p>
     </li>
   );
@@ -64,25 +75,29 @@ export function ReviewNeedCard({
   readonly person: string | undefined;
   readonly onOpen: () => void;
 }) {
+  const t = useT();
   const title = row.taskTitle ?? row.taskId;
   return (
-    <li className="center-card" aria-label={`Review: ${title}`} hidden={hidden} tabIndex={-1}>
+    <li className="center-card" aria-label={t("center.needCards.reviewLabel", { title })} hidden={hidden} tabIndex={-1}>
       <div className="center-card-top">
-        <span className="center-risk-tag eyebrow">Review</span>
+        <span className="center-risk-tag eyebrow">{t("center.needCards.review")}</span>
       </div>
-      <h3>{row.artifactCount === 1 ? "A result waits for your review" : `${row.artifactCount} results wait for your review`}</h3>
+      <h3>{t("center.needCards.resultsWait", { count: row.artifactCount })}</h3>
       <p className="center-card-ctx meta">
-        In{" "}
-        <AppLink href={taskPath(row.taskId)} onFollow={onOpen}>
-          {title}
-        </AppLink>
+        {withParts(t("center.roundCard.in"), {
+          chat: (
+            <AppLink href={taskPath(row.taskId)} onFollow={onOpen}>
+              {title}
+            </AppLink>
+          ),
+        })}
         {person === undefined ? null : <> · {person}</>}
       </p>
       <div className="center-card-actions">
         <Button variant="primary" size="sm" onClick={onOpen}>
-          Open
+          {t("center.needCards.open")}
         </Button>
-        <span className="center-card-note meta">Keep or reject the results where they were made.</span>
+        <span className="center-card-note meta">{t("center.needCards.keepOrReject")}</span>
       </div>
     </li>
   );

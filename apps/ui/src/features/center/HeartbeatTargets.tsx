@@ -2,6 +2,7 @@ import { HEARTBEAT_LIMITS, type HeartbeatTarget } from "@tavi/contracts";
 import { useState } from "react";
 
 import { useLoaded } from "../../hooks/use-loaded.js";
+import { useT } from "../../lib/i18n.js";
 
 import { heartbeatChannels, type HeartbeatChannel } from "./heartbeat-api.js";
 import { Select } from "../../ui/Select.js";
@@ -22,6 +23,7 @@ export function HeartbeatTargets({
   /** Applied, when its turn comes, to the targets as the owner last answered them. */
   readonly onChange: (update: (current: readonly HeartbeatTarget[]) => readonly HeartbeatTarget[], said: string) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { data, error: unreadable } = useLoaded(() => heartbeatChannels(client, workspaceId), [client, workspaceId]);
   const channels: readonly HeartbeatChannel[] = data ?? [];
@@ -38,46 +40,49 @@ export function HeartbeatTargets({
   /** Why a target cannot be added now, when it cannot. */
   const blocked =
     unreadable !== undefined
-      ? `The channels could not be read: ${unreadable}`
+      ? t("center.heartbeatTargets.unreadable", { error: unreadable })
       : channels.length === 0
-        ? "Connect a channel in Settings → Channels to be messaged there too."
+        ? t("center.heartbeatTargets.noChannels")
         : full
-          ? `At most ${HEARTBEAT_LIMITS.targets} channel targets: remove one to add another.`
+          ? t("center.heartbeatTargets.full", { count: HEARTBEAT_LIMITS.targets })
           : undefined;
   return (
     <fieldset className="heartbeat-targets">
-      <legend>Where</legend>
+      <legend>{t("center.heartbeatTargets.where")}</legend>
       <ul>
-        <li>Home (always, when it is on)</li>
+        <li>{t("center.heartbeatTargets.home")}</li>
         {targets.map((target) => (
           <li key={`${target.connectionId}\u0000${target.to}`}>
             {nameOf(target.connectionId)} · {target.to}{" "}
             <Button
               variant="ghost"
               size="sm"
-              aria-label={`Stop messaging ${target.to} on ${nameOf(target.connectionId)}`}
-              onClick={() => onChange((current) => current.filter((other) => !same(other, target)), "Removed.")}
+              aria-label={t("center.heartbeatTargets.stop", { to: target.to, channel: nameOf(target.connectionId) })}
+              onClick={() => onChange((current) => current.filter((other) => !same(other, target)), t("center.heartbeatTargets.removed"))}
             >
-              Remove
+              {t("center.heartbeatTargets.remove")}
             </Button>
           </li>
         ))}
       </ul>
       {confirming !== undefined ? (
         <p role="alert">
-          The heartbeat will also message {confirming.to} on {nameOf(confirming.connectionId)}: urgent items as they come, and the summary.{" "}
+          {t("center.heartbeatTargets.confirmText", { to: confirming.to, channel: nameOf(confirming.connectionId) })}{" "}
           <Button
             size="sm"
             onClick={() => {
-              onChange((current) => (current.some((other) => same(other, confirming)) ? current : [...current, confirming]), "Added.");
+              onChange(
+                (current) => (current.some((other) => same(other, confirming)) ? current : [...current, confirming]),
+                t("center.heartbeatTargets.added"),
+              );
               setConfirming(undefined);
               setTo("");
             }}
           >
-            Confirm
+            {t("center.heartbeatTargets.confirm")}
           </Button>{" "}
           <Button variant="ghost" size="sm" onClick={() => setConfirming(undefined)}>
-            Cancel
+            {t("ui.confirm.cancel")}
           </Button>
         </p>
       ) : blocked !== undefined ? (
@@ -91,8 +96,12 @@ export function HeartbeatTargets({
           }}
         >
           <label>
-            Channel{" "}
-            <Select aria-label="Channel" value={connectionId} onChange={(event) => setConnectionId(event.target.value)}>
+            {t("center.heartbeatTargets.channel")}{" "}
+            <Select
+              aria-label={t("center.heartbeatTargets.channel")}
+              value={connectionId}
+              onChange={(event) => setConnectionId(event.target.value)}
+            >
               {channels.map((channel) => (
                 <option key={channel.connectionId} value={channel.connectionId}>
                   {channel.label}
@@ -101,10 +110,10 @@ export function HeartbeatTargets({
             </Select>
           </label>
           <label>
-            To <input value={to} maxLength={256} onChange={(event) => setTo(event.target.value)} />
+            {t("center.heartbeatTargets.to")} <input value={to} maxLength={256} onChange={(event) => setTo(event.target.value)} />
           </label>
           <Button type="submit" disabled={proposed.to === "" || known}>
-            Add
+            {t("center.heartbeatTargets.add")}
           </Button>
         </form>
       )}

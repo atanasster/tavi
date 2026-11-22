@@ -8,8 +8,8 @@ import {
   memoryProvenanceUntrusted,
   memoryUpdatesLine,
 } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 
+import { translateNow, useT } from "../../lib/i18n.js";
 import { localDate, shortDay } from "../../lib/time.js";
 import { Failure, InlineConfirm, StatusNote } from "../../ui/Parts.js";
 import { decideAllMemory, decideMemory, forgetMemory, forgetWaitsFor, replaceMemory } from "./memory-api.js";
@@ -21,8 +21,7 @@ import { useMemoryDecision } from "./use-memory-decision.js";
 
 /** "3 things the agent would like to remember", with "at least" when more wait than are counted. */
 export function proposalsHeadline(count: number, atLeast: boolean): string {
-  const figure = `${atLeast ? "At least " : ""}${count}`;
-  return count === 1 && !atLeast ? "1 thing the agent would like to remember" : `${figure} things the agent would like to remember`;
+  return translateNow(atLeast ? "center.proposals.headlineAtLeast" : "center.proposals.headline", { count });
 }
 /**
  * One proposal: what the agent would keep, where, and on what evidence — Keep or Discard. An update
@@ -38,14 +37,17 @@ export function Proposal({
   readonly context: Context;
   readonly onDecided: (recordId: string) => void;
 }) {
+  const t = useT();
   const { busy, failure, reveal, shown, decide: run } = useMemoryDecision(item, onDecided);
   const decide = (keep: boolean | "replace"): void =>
     run((client, workspaceId) =>
       keep === "replace" ? replaceMemory(client, workspaceId, item) : decideMemory(client, workspaceId, item.recordId, keep),
     );
-  const source = item.sourceCount === 0 ? undefined : `From ${plural(item.sourceCount, "source")}`;
+  const source = item.sourceCount === 0 ? undefined : t("center.proposals.sources", { count: item.sourceCount });
   const expires =
-    item.expiresAt === undefined ? undefined : `Expires ${shortDay(localDate(item.expiresAt, context.timeZone), context.today)}`;
+    item.expiresAt === undefined
+      ? undefined
+      : t("center.proposals.expires", { day: shortDay(localDate(item.expiresAt, context.timeZone), context.today) });
   const until = untilLine(item, context);
   const name = item.title ?? KIND_LABELS[item.kind];
   return (
@@ -73,7 +75,11 @@ export function Proposal({
           <p className="meta-sm memory-related">{memoryMayUpdateLine(item.mayUpdate)}</p>
         ) : null}
         {item.similarTo === undefined ? null : (
-          <p className="meta-sm memory-related">similar to: {item.similarTo.title ?? "a kept memory"}</p>
+          <p className="meta-sm memory-related">
+            {item.similarTo.title === null || item.similarTo.title === undefined
+              ? t("center.proposals.similarToKept")
+              : t("center.proposals.similarTo", { title: item.similarTo.title })}
+          </p>
         )}
         <ProvenanceLine item={item} />
         {failure === undefined && reveal.failure === undefined ? null : <Failure>{failure ?? reveal.failure}</Failure>}
@@ -82,22 +88,28 @@ export function Proposal({
         {item.redacted ? <RevealButton reveal={reveal} disabled={busy} /> : null}
         {item.updates === undefined && item.mayUpdate === undefined ? (
           <Button variant="primary" size="sm" disabled={busy} onClick={() => decide(true)}>
-            Keep
+            {t("center.proposals.keep")}
           </Button>
         ) : (
           <>
-            <Button variant="primary" size="sm" disabled={busy} aria-label={`Replace: ${name}`} onClick={() => decide("replace")}>
-              Replace
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={busy}
+              aria-label={t("center.proposals.replaceFor", { name })}
+              onClick={() => decide("replace")}
+            >
+              {t("center.proposals.replace")}
             </Button>
             {item.kind === "fact" ? (
-              <Button size="sm" disabled={busy} aria-label={`Keep both: ${name}`} onClick={() => decide(true)}>
-                Keep both
+              <Button size="sm" disabled={busy} aria-label={t("center.proposals.keepBothFor", { name })} onClick={() => decide(true)}>
+                {t("center.proposals.keepBoth")}
               </Button>
             ) : null}
           </>
         )}
         <Button size="sm" disabled={busy} onClick={() => decide(false)}>
-          Discard
+          {t("center.proposals.discard")}
         </Button>
       </div>
     </li>
@@ -128,6 +140,7 @@ function plainProposal(item: MemoryItem): boolean {
  * politely; the receipt outlives the list, which a keep may empty.
  */
 export function MemoryBulkDecide({ items, onDone }: { readonly items: readonly MemoryItem[]; readonly onDone: () => void }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -149,7 +162,11 @@ export function MemoryBulkDecide({ items, onDone }: { readonly items: readonly M
       }
       const { kept, needsLook } = outcome.value;
       setSaved(kept.length === 0 ? undefined : kept);
-      setNote(`Kept ${kept.length}${needsLook === 0 ? "" : ` · ${needsLook} needs a look`}.`);
+      setNote(
+        needsLook === 0
+          ? t("center.proposals.kept", { count: kept.length })
+          : t("center.proposals.keptNeedsLook", { kept: kept.length, count: needsLook }),
+      );
       onDone();
     });
   };
@@ -163,7 +180,7 @@ export function MemoryBulkDecide({ items, onDone }: { readonly items: readonly M
         setFailure(outcome.message);
         return;
       }
-      setNote(`Discarded ${outcome.value.discarded}.`);
+      setNote(t("center.proposals.discarded", { count: outcome.value.discarded }));
       onDone();
     });
   };
@@ -185,7 +202,11 @@ export function MemoryBulkDecide({ items, onDone }: { readonly items: readonly M
       setBusy(false);
       setSaved(undefined);
       const providers = memoryPendingProvidersNote([...waiting].sort());
-      setNote(`Forgotten ${forgotten}. ${MEMORY_FORGET_UNREACHED}${providers === undefined ? "" : ` ${providers}`}`);
+      setNote(
+        providers === undefined
+          ? t("center.proposals.forgotten", { count: forgotten, unreached: MEMORY_FORGET_UNREACHED })
+          : t("center.proposals.forgottenWaiting", { count: forgotten, unreached: MEMORY_FORGET_UNREACHED, providers }),
+      );
       setFailure(refused);
       onDone();
     })();
@@ -194,16 +215,16 @@ export function MemoryBulkDecide({ items, onDone }: { readonly items: readonly M
   return (
     <div className="memory-bulk" role="group" aria-labelledby={`${id}-bulk`}>
       <span id={`${id}-bulk`} className="visually-hidden">
-        Every listed proposal
+        {t("center.proposals.everyListed")}
       </span>
       {items.length === 0 ? null : confirming ? (
         <div className="memory-actions">
           <InlineConfirm
             inline
             focusCancel
-            message={`Discard all ${items.length} listed? Nothing of them is kept.`}
-            confirmLabel="Discard all"
-            cancelLabel="Cancel"
+            message={t("center.proposals.discardAllConfirm", { count: items.length })}
+            confirmLabel={t("center.proposals.discardAll")}
+            cancelLabel={t("ui.confirm.cancel")}
             busy={busy}
             onConfirm={discardAll}
             onCancel={() => setConfirming(false)}
@@ -216,33 +237,33 @@ export function MemoryBulkDecide({ items, onDone }: { readonly items: readonly M
               variant="primary"
               size="sm"
               disabled={busy}
-              aria-label={`Keep all: the ${plural(plain, "plain proposal")} listed`}
+              aria-label={t("center.proposals.keepAllFor", { count: plain })}
               onClick={keepAll}
             >
-              Keep all
+              {t("center.proposals.keepAll")}
             </Button>
           )}
           <Button
             size="sm"
             disabled={busy}
-            aria-label={`Discard all: the ${plural(items.length, "proposal")} listed`}
+            aria-label={t("center.proposals.discardAllFor", { count: items.length })}
             onClick={() => setConfirming(true)}
           >
-            Discard all
+            {t("center.proposals.discardAll")}
           </Button>
         </div>
       )}
       {saved === undefined ? null : (
         <div className="memory-actions memory-receipt">
-          <span>Saved · {saved.length}</span>
+          <span>{t("center.proposals.saved", { count: saved.length })}</span>
           <Button
             variant="ghost"
             size="sm"
             disabled={busy}
-            aria-label={`Undo: forget the ${plural(saved.length, "memory", "memories")} just kept`}
+            aria-label={t("center.proposals.undoFor", { count: saved.length })}
             onClick={undo}
           >
-            Undo
+            {t("center.proposals.undo")}
           </Button>
         </div>
       )}

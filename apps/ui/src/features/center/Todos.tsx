@@ -9,6 +9,7 @@ import { Failure, LoadError } from "../../ui/Parts.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { addTodo, listTodos, setTodoStatus } from "./reminders-api.js";
 import { dayTime, shortDay } from "../../lib/time.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 
 /**
  * To-dos in Schedule: the workspace's open to-dos (the same list a chat adds
@@ -27,11 +28,12 @@ export function todosByList(todos: readonly Todo[]): readonly { readonly list: s
 /** A to-do's due as the row says it: a date as a short day ("Mon 5 Oct"), a time in the workspace's zone. */
 export function dueText(todo: Todo, timeZone: string): string | undefined {
   if (todo.due === undefined) return undefined;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(todo.due)) return `due ${shortDay(todo.due)}`;
-  return `due ${dayTime(todo.due, timeZone)}`;
+  const when = /^\d{4}-\d{2}-\d{2}$/.test(todo.due) ? shortDay(todo.due) : dayTime(todo.due, timeZone);
+  return translateNow("center.todos.due", { when });
 }
 
 export function Todos({ revision }: { readonly revision: number }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const todos = useLoaded<TodosListAnswer>(() => listTodos(client, workspaceId), [revision]);
   const [text, setText] = useState("");
@@ -64,10 +66,10 @@ export function Todos({ revision }: { readonly revision: number }) {
     <section className="center-todos" aria-labelledby="center-todos-title">
       {/* The hint sits beside the heading, not in it: the heading's name is "To-dos". */}
       <div className="center-subhead">
-        <h2 id="center-todos-title">To-dos</h2> <span>ask in any chat: “add milk to my list”</span>
+        <h2 id="center-todos-title">{t("center.todos.title")}</h2> <span>{t("center.todos.hint")}</span>
       </div>
       {todos.error ? <LoadError error={todos.error} reload={todos.reload} /> : null}
-      {todos.data !== undefined && groups.length === 0 ? <p className="meta-sm">Nothing on your list.</p> : null}
+      {todos.data !== undefined && groups.length === 0 ? <p className="meta-sm">{t("center.todos.empty")}</p> : null}
       {groups.map((group) => (
         <div key={group.list} className="center-todo-list">
           <h3 className="meta-sm">{group.list}</h3>
@@ -98,8 +100,8 @@ export function Todos({ revision }: { readonly revision: number }) {
       <form className="center-todo-add" onSubmit={(event) => void submit(event)}>
         <input
           type="text"
-          aria-label="New to-do"
-          placeholder="Add a to-do"
+          aria-label={t("center.todos.newLabel")}
+          placeholder={t("center.todos.addPlaceholder")}
           maxLength={500}
           value={text}
           disabled={busy}
@@ -107,7 +109,7 @@ export function Todos({ revision }: { readonly revision: number }) {
         />
         <Button type="submit" disabled={busy || text.trim() === ""}>
           <Icon name="plus" size="sm" />
-          Add
+          {t("center.todos.add")}
         </Button>
       </form>
       {failed === undefined ? null : <Failure message={failed} />}

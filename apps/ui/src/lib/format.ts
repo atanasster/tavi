@@ -42,6 +42,12 @@ export function formatTokens(count: number): string {
   return formatCount(count);
 }
 
+/** Items as the page's language lists them in a sentence: "a, b, c" in English, „а, б и в“ in Bulgarian. */
+export function listed(items: readonly string[]): string {
+  if (items.length < 2) return items[0] ?? "";
+  return translateNow("common.list.last", { rest: items.slice(0, -1).join(", "), last: items.at(-1) ?? "" });
+}
+
 /** A text's first line, trimmed and clipped: what a session list or a title shows of a prompt. */
 export const firstLine = (text: string, max = 80): string => clip(text.split("\n", 1)[0]?.trim() ?? "", max);
 

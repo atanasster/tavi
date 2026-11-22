@@ -1,11 +1,9 @@
-import {
-  BUILTIN_HEARTBEAT_PROVIDER_ID,
-  HEARTBEAT_TELL_ME,
-  formatHeartbeatInterval,
-  type HeartbeatGetAnswer,
-  type HeartbeatSettingsChange,
-} from "@tavi/contracts";
+import { BUILTIN_HEARTBEAT_PROVIDER_ID, HEARTBEAT_TELL_ME, type HeartbeatGetAnswer, type HeartbeatSettingsChange } from "@tavi/contracts";
 
+import type { Translate } from "@tavi/contracts/i18n";
+
+import { useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import { localTime, whenLocal } from "../../lib/time.js";
 import { Failure, LoadState, Notice, PageHead, StatusNote } from "../../ui/Parts.js";
 import { Select } from "../../ui/Select.js";
@@ -21,10 +19,10 @@ import {
   resumeHeartbeat,
   type LogFilter,
 } from "./heartbeat-api.js";
-import { TELL_LABELS, PAUSES, todaysFigures } from "./heartbeat-options.js";
+import { TELL_LABELS, PAUSES, everyInterval, todaysFigures } from "./heartbeat-options.js";
 import { HeartbeatItemCard, type HeartbeatItemView } from "./HeartbeatItem.js";
 import { HeartbeatTargets } from "./HeartbeatTargets.js";
-import { formatCount } from "../../lib/format.js";
+import { decimal, formatCount } from "../../lib/format.js";
 import { Button } from "../../ui/Button.js";
 import { EVERY_DAY, toggleDay } from "../../ui/cadence.js";
 import { DayChips } from "../../ui/DayChips.js";
@@ -58,6 +56,7 @@ export function Heartbeat({
   readonly onDoIt?: ((item: HeartbeatItemView) => void) | undefined;
   readonly onChat?: ((item: HeartbeatItemView) => void) | undefined;
 }) {
+  const t = useT();
   const {
     client,
     workspaceId,
@@ -91,7 +90,7 @@ export function Heartbeat({
   if (answer === undefined) {
     return (
       <section className="center-section heartbeat-page" aria-labelledby={`${ids}-title`}>
-        <PageHead className="center-head" id={`${ids}-title`} title="Heartbeat" />
+        <PageHead className="center-head" id={`${ids}-title`} title={t("center.heartbeat.title")} />
         <LoadState error={error} reload={() => void load()} loading={loading} />
       </section>
     );
@@ -121,27 +120,27 @@ export function Heartbeat({
       <PageHead
         className="center-head"
         id={`${ids}-title`}
-        title="Heartbeat"
-        description="Checks, inside the hours you allow, whether anything needs you, and tells you only then."
+        title={t("center.heartbeat.title")}
+        description={t("center.heartbeat.description")}
       >
         <div className="heartbeat-actions cluster">
           {/* A switch says its state by its look and its label, not by a button's word that could be an action. */}
           <span className="meta" aria-hidden="true">
-            {config.enabled ? "On" : "Off"}
+            {config.enabled ? t("center.heartbeat.on") : t("center.heartbeat.off")}
           </span>
           <Button
             variant="bare"
             className="switch"
             role="switch"
             aria-checked={config.enabled}
-            aria-label="Heartbeat"
+            aria-label={t("center.heartbeat.title")}
             onClick={() =>
               void apply(
                 (at) => changeHeartbeat(client, workspaceId, at, { enabled: !(configRef.current ?? config).enabled }),
                 undefined,
               ).then((done) => {
                 // Said from what the owner answered: two quick taps say where it ended.
-                if (done) setNote(configRef.current?.enabled === true ? "Turned on." : "Turned off.");
+                if (done) setNote(configRef.current?.enabled === true ? t("center.heartbeat.turnedOn") : t("center.heartbeat.turnedOff"));
               })
             }
           />
@@ -150,78 +149,78 @@ export function Heartbeat({
             <Button
               size="sm"
               disabled={paused !== undefined || !answer.hostRunning}
-              title={answer.hostRunning ? undefined : "The heartbeat runs in tavi serve"}
+              title={answer.hostRunning ? undefined : t("center.heartbeat.runsInServe")}
               onClick={() =>
                 void checkHeartbeatNow(client, workspaceId).then((outcome) => {
                   if (!outcome.ok) setFailure(outcome.message);
                   else {
                     setFailure(undefined);
-                    setNote(outcome.value.status === "started" ? "Checking now." : "A check is running; this one follows it.");
+                    setNote(outcome.value.status === "started" ? t("center.heartbeat.checkingNow") : t("center.heartbeat.checkQueued"));
                   }
                 })
               }
             >
-              Check now
+              {t("center.heartbeat.checkNow")}
             </Button>
           )}
           {!config.enabled && paused === undefined ? null : paused === undefined ? (
             <label className="heartbeat-pause">
-              <span className="visually-hidden">Pause</span>
+              <span className="visually-hidden">{t("center.heartbeat.pause")}</span>
               <Select
-                aria-label="Pause"
+                aria-label={t("center.heartbeat.pause")}
                 value=""
                 disabled={answer.state === undefined}
                 onChange={(event) => {
                   const choice = PAUSES.find((pause) => pause.value === event.target.value);
-                  if (choice !== undefined) void apply(() => pauseHeartbeat(client, workspaceId, choice.forMs), "Paused.");
+                  if (choice !== undefined)
+                    void apply(() => pauseHeartbeat(client, workspaceId, choice.forMs), t("center.heartbeat.paused"));
                 }}
               >
-                <option value="">Pause…</option>
+                <option value="">{t("center.heartbeat.pauseMenu")}</option>
                 {PAUSES.map((pause) => (
                   <option key={pause.value} value={pause.value}>
-                    {pause.label}
+                    {t(pause.labelKey)}
                   </option>
                 ))}
               </Select>
             </label>
           ) : (
-            <Button size="sm" onClick={() => void apply(() => resumeHeartbeat(client, workspaceId), "Resumed.")}>
-              Resume
+            <Button size="sm" onClick={() => void apply(() => resumeHeartbeat(client, workspaceId), t("center.heartbeat.resumed"))}>
+              {t("center.heartbeat.resume")}
             </Button>
           )}
         </div>
       </PageHead>
       <Failure message={failure} />
       {/* What is shown is the last good read: a read that failed since says so, rather than passing stale figures for live ones. */}
-      <Failure message={error === undefined ? undefined : `Could not refresh: ${error}`} alert={false} />
+      <Failure message={error === undefined ? undefined : t("center.heartbeat.couldNotRefresh", { error })} alert={false} />
       <StatusNote note={note} />
       {paused === undefined ? null : (
-        <Notice>
-          Paused (
-          {paused.reason === "user"
-            ? "by you"
-            : paused.reason === "budget"
-              ? "today's limit was reached"
-              : paused.reason === "failures"
-                ? "it failed repeatedly"
-                : "its provider is unavailable"}
-          ){paused.until === undefined ? "" : ` until ${whenLocal(paused.until, timezone)}`}.
-        </Notice>
+        <Notice>{pausedNotice(t, paused.reason, paused.until === undefined ? undefined : whenLocal(paused.until, timezone))}</Notice>
       )}
       {/* Said only when there is something to say: a heartbeat that is off and never checked has no figures. */}
       {logError === undefined && last === undefined && answer.state?.nextTickAt === undefined ? null : (
         <p className="meta-sm heartbeat-status">
-          Last check{" "}
           {logError !== undefined
-            ? "unknown"
+            ? t("center.heartbeat.lastUnknown")
             : last === undefined
-              ? "never"
-              : `${localTime(last.createdAt, timezone)} · ${logLine(last).toLowerCase()}`}
-          {answer.state?.nextTickAt === undefined ? null : <> · next {localTime(answer.state.nextTickAt, timezone)}</>}
+              ? t("center.heartbeat.lastNever")
+              : t("center.heartbeat.lastAt", { time: localTime(last.createdAt, timezone), line: logLine(last).toLowerCase() })}
+          {answer.state?.nextTickAt === undefined ? null : (
+            <>
+              {" · "}
+              {t("center.heartbeat.next", { time: localTime(answer.state.nextTickAt, timezone) })}
+            </>
+          )}
           {figures.checks === 0 ? null : (
             <>
-              {" · "}today {figures.checks} checks · {figures.deep} looked deeper · {formatCount(figures.tokens)} tokens ·{" "}
-              {figures.usd === null ? "cost unknown" : `$${figures.usd.toFixed(2)}`}
+              {" · "}
+              {t("center.heartbeat.today", {
+                count: figures.checks,
+                deep: figures.deep,
+                tokens: formatCount(figures.tokens),
+                cost: figures.usd === null ? t("center.heartbeat.costUnknown") : `$${decimal(figures.usd, 2)}`,
+              })}
             </>
           )}
         </p>
@@ -230,9 +229,12 @@ export function Heartbeat({
       {items.length === 0 && itemsError === undefined ? null : (
         <section aria-labelledby={`${ids}-items`}>
           <h2 className="center-subhead" id={`${ids}-items`}>
-            What it told you
+            {t("center.heartbeat.itemsHeading")}
           </h2>
-          <Failure message={itemsError === undefined ? undefined : `What it told you could not be read: ${itemsError}`} alert={false} />
+          <Failure
+            message={itemsError === undefined ? undefined : t("center.heartbeat.itemsUnreadable", { error: itemsError })}
+            alert={false}
+          />
           <ul className="heartbeat-items list-reset">
             {items.map((item) => (
               <li key={item.itemId}>
@@ -261,27 +263,27 @@ export function Heartbeat({
 
       <section aria-labelledby={`${ids}-settings`}>
         <h2 className="center-subhead" id={`${ids}-settings`}>
-          When and how
+          {t("center.heartbeat.settingsHeading")}
         </h2>
         <div className="settings-fields">
           <label>
-            How often{" "}
+            {t("center.heartbeat.howOften")}{" "}
             <Select
-              aria-label="How often"
+              aria-label={t("center.heartbeat.howOften")}
               value={String(config.everyMs)}
               onChange={(event) => void change({ everyMs: Number(event.target.value) })}
             >
               {answer.options.every.map((ms) => (
                 <option key={ms} value={String(ms)}>
-                  Every {formatHeartbeatInterval(ms)}
+                  {everyInterval(ms)}
                 </option>
               ))}
             </Select>
           </label>
           {/* One range on one row: from and to side by side, its zone after them. */}
-          <div className="heartbeat-hours" role="group" aria-label="Active hours">
+          <div className="heartbeat-hours" role="group" aria-label={t("center.heartbeat.activeHours")}>
             <label>
-              Active from{" "}
+              {t("center.heartbeat.activeFrom")}{" "}
               <input
                 type="time"
                 value={config.activeHours.start}
@@ -292,7 +294,7 @@ export function Heartbeat({
               />
             </label>
             <label>
-              to{" "}
+              {t("center.heartbeat.activeTo")}{" "}
               <input
                 type="time"
                 value={config.activeHours.end}
@@ -313,7 +315,7 @@ export function Heartbeat({
             onPreset={(days) => void change({ daysOfWeek: [...days] })}
           />
           <fieldset className="heartbeat-tell">
-            <legend>Tell me</legend>
+            <legend>{t("center.heartbeat.tellMe")}</legend>
             {HEARTBEAT_TELL_ME.map((mode) => (
               <label key={mode} className="heartbeat-radio">
                 <input
@@ -323,7 +325,7 @@ export function Heartbeat({
                   checked={config.tellMe === mode}
                   onChange={() => void change({ tellMe: mode })}
                 />
-                {TELL_LABELS[mode]}
+                {t(TELL_LABELS[mode])}
               </label>
             ))}
           </fieldset>
@@ -333,9 +335,9 @@ export function Heartbeat({
           />
         </div>
         <p className="meta-sm">
-          Estimated: up to {estimate.checks} checks a day
-          {estimate.tokens === undefined ? "" : ` · ~${formatCount(estimate.tokens)} tokens`}
-          {ran.length === 0 ? " (tokens are estimated once it has run)" : ""}.
+          {estimate.tokens === undefined
+            ? t("center.heartbeat.estimateFirst", { count: estimate.checks })
+            : t("center.heartbeat.estimate", { count: estimate.checks, tokens: formatCount(estimate.tokens) })}
         </p>
       </section>
 
@@ -358,21 +360,21 @@ export function Heartbeat({
 
       <section aria-labelledby={`${ids}-log`}>
         <h2 className="center-subhead" id={`${ids}-log`}>
-          Log
+          {t("center.heartbeat.logHeading")}
         </h2>
-        <Failure message={logError === undefined ? undefined : `The log could not be read: ${logError}`} alert={false} />
+        <Failure message={logError === undefined ? undefined : t("center.heartbeat.logUnreadable", { error: logError })} alert={false} />
         <label>
-          <span className="visually-hidden">Show</span>
-          <Select aria-label="Show" value={filter} onChange={(event) => setFilter(event.target.value as LogFilter)}>
+          <span className="visually-hidden">{t("center.heartbeat.show")}</span>
+          <Select aria-label={t("center.heartbeat.show")} value={filter} onChange={(event) => setFilter(event.target.value as LogFilter)}>
             {LOG_FILTERS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.labelKey)}
               </option>
             ))}
           </Select>
         </label>
         {logError !== undefined ? null : shown.length === 0 ? (
-          <p className="muted">{ticks.length === 0 ? "No checks yet." : "Nothing matches."}</p>
+          <p className="muted">{ticks.length === 0 ? t("center.heartbeat.noChecks") : t("center.heartbeat.nothingMatches")}</p>
         ) : (
           <ol className="heartbeat-log list-reset">
             {shown.map((tick) => (
@@ -381,7 +383,12 @@ export function Heartbeat({
                   {localTime(tick.createdAt, timezone)}
                 </time>{" "}
                 {logLine(tick)}
-                {tick.tokens === 0 ? null : <span className="meta-sm"> · {formatCount(tick.tokens)} tokens</span>}
+                {tick.tokens === 0 ? null : (
+                  <span className="meta-sm">
+                    {" · "}
+                    {t("center.heartbeat.tickTokens", { tokens: formatCount(tick.tokens) })}
+                  </span>
+                )}
               </li>
             ))}
           </ol>
@@ -389,4 +396,16 @@ export function Heartbeat({
       </section>
     </section>
   );
+}
+
+/** Why the heartbeat is paused, and until when, in one sentence. */
+function pausedNotice(t: Translate<UiKey>, reason: string, until: string | undefined): string {
+  const keys: Readonly<Record<"user" | "budget" | "failures" | "provider", readonly [UiKey, UiKey]>> = {
+    user: ["center.heartbeat.pausedByUser", "center.heartbeat.pausedByUserUntil"],
+    budget: ["center.heartbeat.pausedBudget", "center.heartbeat.pausedBudgetUntil"],
+    failures: ["center.heartbeat.pausedFailures", "center.heartbeat.pausedFailuresUntil"],
+    provider: ["center.heartbeat.pausedProvider", "center.heartbeat.pausedProviderUntil"],
+  };
+  const [plain, timed] = keys[reason === "user" || reason === "budget" || reason === "failures" ? reason : "provider"];
+  return until === undefined ? t(plain) : t(timed, { when: until });
 }

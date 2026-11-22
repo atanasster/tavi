@@ -1,9 +1,11 @@
-import { formatHeartbeatInterval, type HeartbeatGetAnswer } from "@tavi/contracts";
+import type { HeartbeatGetAnswer } from "@tavi/contracts";
 import { useEffect, useId, useState } from "react";
 
+import { useT } from "../../lib/i18n.js";
 import { Failure } from "../../ui/Parts.js";
 import { dismissHeartbeatOffer, getHeartbeatOffer, heartbeatEstimate, startHeartbeat } from "./heartbeat-api.js";
 import { Button } from "../../ui/Button.js";
+import { heartbeatInterval } from "./heartbeat-options.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Field } from "../../ui/Field.js";
 
@@ -15,6 +17,7 @@ import { Field } from "../../ui/Field.js";
  * the person may edit first); *Not now* is for good.
  */
 export function HeartbeatOffer({ onDone }: { readonly onDone?: (() => void) | undefined }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [answer, setAnswer] = useState<HeartbeatGetAnswer | undefined>();
   const [instructions, setInstructions] = useState("");
@@ -49,17 +52,17 @@ export function HeartbeatOffer({ onDone }: { readonly onDone?: (() => void) | un
   return (
     <section className="section-card heartbeat-offer" aria-labelledby={`${ids}-title`}>
       <h2 className="center-subhead" id={`${ids}-title`}>
-        Want a heartbeat?
+        {t("center.heartbeatOffer.title")}
       </h2>
       <p>
-        Want me to check on things every {formatHeartbeatInterval(config.everyMs)} between {config.activeHours.start} and{" "}
-        {config.activeHours.end}, and only message you when something needs you?
+        {t("center.heartbeatOffer.ask", {
+          interval: heartbeatInterval(config.everyMs),
+          start: config.activeHours.start,
+          end: config.activeHours.end,
+        })}
       </p>
-      <p className="meta-sm">
-        Up to {estimate.checks} checks a day, each a short read-only turn on your fast model; you can change all of it later in Center →
-        Heartbeat.
-      </p>
-      <Field id={`${ids}-watch`} label="What I'd keep an eye on">
+      <p className="meta-sm">{t("center.heartbeatOffer.hint", { count: estimate.checks })}</p>
+      <Field id={`${ids}-watch`} label={t("center.heartbeatOffer.watch")}>
         <textarea className="heartbeat-editor" rows={5} value={instructions} onChange={(event) => setInstructions(event.target.value)} />
       </Field>
       <div className="heartbeat-actions cluster">
@@ -71,7 +74,7 @@ export function HeartbeatOffer({ onDone }: { readonly onDone?: (() => void) | un
             void startHeartbeat(client, workspaceId, answer.revision, instructions).then(settle);
           }}
         >
-          Turn on
+          {t("center.heartbeatOffer.turnOn")}
         </Button>
         <Button
           variant="ghost"
@@ -82,7 +85,7 @@ export function HeartbeatOffer({ onDone }: { readonly onDone?: (() => void) | un
             void dismissHeartbeatOffer(client, workspaceId).then(settle);
           }}
         >
-          Not now
+          {t("center.heartbeatOffer.notNow")}
         </Button>
       </div>
       <Failure message={failure} />

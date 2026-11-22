@@ -22,6 +22,7 @@ import {
 } from "./inbox-model.js";
 import { manyPeople } from "./model.js";
 import { useWorkspace } from "../shell/Workspace.js";
+import { useT } from "../../lib/i18n.js";
 
 const decidedAt = (item: ApprovalHistoryItem): string => item.decidedAt;
 /** The decisions made before, newest first, a page at a time. */
@@ -40,6 +41,7 @@ export function HistoryTable({
   readonly onOpen: (taskId: string) => void;
   readonly onPermissions: (ruleId?: string) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [kind, setKind] = useState<ApprovalHistoryKind | "all">("all");
   const [verdict, setVerdict] = useState<VerdictFilter | "all">("all");
@@ -105,17 +107,17 @@ export function HistoryTable({
 
   return (
     <>
-      <h2 className="center-subhead">History</h2>
-      <div className="center-chips" role="group" aria-label="Filter by kind">
+      <h2 className="center-subhead">{t("center.inboxHistory.title")}</h2>
+      <div className="center-chips" role="group" aria-label={t("center.inboxHistory.filterByKind")}>
         {KIND_FILTERS.map((item) => (
           <FilterChip key={item.value} pressed={kind === item.value} onPick={() => pickKind(item.value)}>
-            {item.label}
+            {t(item.labelKey)}
           </FilterChip>
         ))}
       </div>
-      <div className="center-chips" role="group" aria-label="Filter by decision">
+      <div className="center-chips" role="group" aria-label={t("center.inboxHistory.filterByDecision")}>
         <FilterChip pressed={verdict === "all"} onPick={() => setVerdict("all")}>
-          Any decision
+          {t("center.inboxHistory.anyDecision")}
         </FilterChip>
         {verdictFilters(kind).map((item) => (
           <FilterChip key={item} pressed={verdict === item} onPick={() => setVerdict(item)}>
@@ -124,9 +126,9 @@ export function HistoryTable({
         ))}
       </div>
       {toolChips.length > 1 || tool !== "all" ? (
-        <div className="center-chips" role="group" aria-label="Filter by tool">
+        <div className="center-chips" role="group" aria-label={t("center.inboxHistory.filterByTool")}>
           <FilterChip pressed={tool === "all"} onPick={() => setTool("all")}>
-            Any tool
+            {t("center.inboxHistory.anyTool")}
           </FilterChip>
           {toolChips.map((toolId) => (
             <FilterChip key={toolId} pressed={tool === toolId} onPick={() => setTool(toolId)}>
@@ -140,23 +142,23 @@ export function HistoryTable({
         error={error}
         reload={() => setAttempt((value) => value + 1)}
         loading={history === undefined && error === undefined}
-        label="Loading history…"
+        label={t("center.inboxHistory.loading")}
         status
       />
       {history !== undefined && items.length === 0 ? (
-        <Empty className="center-empty">{filtered ? "No decisions match these filters." : "Decisions you make appear here."}</Empty>
+        <Empty className="center-empty">{filtered ? t("center.inboxHistory.noMatch") : t("center.inboxHistory.empty")}</Empty>
       ) : null}
       {items.length === 0 ? null : (
         <div className="center-table-wrap card-flat">
           <table className="center-history">
             <thead>
               <tr>
-                <th scope="col">Decision</th>
-                <th scope="col">Request</th>
-                <th scope="col">Task</th>
-                <th scope="col">By · via</th>
-                <th scope="col">Scope</th>
-                <th scope="col">When</th>
+                <th scope="col">{t("center.inboxHistory.column.decision")}</th>
+                <th scope="col">{t("center.inboxHistory.column.request")}</th>
+                <th scope="col">{t("center.inboxHistory.column.task")}</th>
+                <th scope="col">{t("center.inboxHistory.column.byVia")}</th>
+                <th scope="col">{t("center.inboxHistory.column.scope")}</th>
+                <th scope="col">{t("center.inboxHistory.column.when")}</th>
               </tr>
             </thead>
             <tbody>
@@ -175,7 +177,9 @@ export function HistoryTable({
           </table>
         </div>
       )}
-      {history?.nextCursor === undefined ? null : <LoadMore busy={older.busy} onLoad={loadMore} label="Load more" />}
+      {history?.nextCursor === undefined ? null : (
+        <LoadMore busy={older.busy} onLoad={loadMore} label={t("center.inboxHistory.loadMore")} />
+      )}
     </>
   );
 }
@@ -194,10 +198,13 @@ function HistoryRow({
   readonly onOpen: (taskId: string) => void;
   readonly onPermissions: (ruleId?: string) => void;
 }) {
+  const t = useT();
   const verdict = verdictOf(item.state);
   // A question answered before who and how were recorded names neither.
   const by = deciderLabel(item.decidedBy, people);
-  const via = item.kind === "review" || item.kind === "connect" ? undefined : (item.channel ?? item.via);
+  const through = item.kind === "review" || item.kind === "connect" ? undefined : (item.channel ?? item.via);
+  // The policy is named in the page's language, by and via alike.
+  const via = through === "policy" ? t("center.inboxModel.policy") : through;
   return (
     <tr>
       <td>
@@ -213,21 +220,21 @@ function HistoryRow({
             </>
           ) : item.kind === "review" ? (
             <>
-              <div>Review of a result</div>
+              <div>{t("center.inboxHistory.reviewOfResult")}</div>
               <code className="center-tool">{item.contentType}</code>
             </>
           ) : item.kind === "connect" ? (
-            <div>Sign in to {item.appName} again</div>
+            <div>{t("center.inboxHistory.signInAgain", { app: item.appName })}</div>
           ) : (
             <>
               <div>{item.question}</div>
               <div className="center-history-note meta-sm">
-                {item.answer === null ? item.state === "answered" ? "Answered" : null : <>→ {item.answer}</>}
+                {item.answer === null ? item.state === "answered" ? t("center.inboxModel.verdict.answered") : null : <>→ {item.answer}</>}
               </div>
             </>
           )}
           {(item.kind === "approval" || item.kind === "review") && item.note !== null && item.note !== "" ? (
-            <div className="center-history-note meta-sm">“{item.note}”</div>
+            <div className="center-history-note meta-sm">{t("center.inboxHistory.quoted", { text: item.note })}</div>
           ) : null}
         </div>
       </td>
@@ -252,7 +259,7 @@ function HistoryRow({
                   href={settingsPath("permissions", `rule-${encodeURIComponent(item.ruleId)}`)}
                   onFollow={() => onPermissions(item.ruleId)}
                 >
-                  Revoke in Permissions
+                  {t("center.inboxHistory.revoke")}
                 </AppLink>
               </div>
             ) : null}

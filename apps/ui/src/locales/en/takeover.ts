@@ -77,6 +77,10 @@ export const takeover = {
   "takeover.upload.tooMany": { one: "At most {count} file at once.", other: "At most {count} files at once." },
   "takeover.upload.tooBig": "At most {size} of files.",
 
+  /** How long a person had the page: "1 m 12 s", "45 s". The numbers come written. */
+  "takeover.controlled.seconds": "{seconds} s",
+  "takeover.controlled.minutesSeconds": "{minutes} m {seconds} s",
+
   "takeover.decline.unreachable": "The browser could not be reached.",
   "takeover.decline.untold": "Tavi could not be told.",
 } as const;

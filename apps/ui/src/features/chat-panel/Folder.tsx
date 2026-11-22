@@ -6,10 +6,11 @@ import {
   type FolderFilesAnswer,
   type FolderView,
 } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 import { useRef, useState } from "react";
 
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import { saidRecord } from "../shell/said.js";
 import { formatBytes } from "../../lib/format.js";
 import { usePhone } from "../../hooks/page.js";
 import { Icon } from "../../ui/Icon.js";
@@ -42,19 +43,25 @@ import { useWorkspace } from "../shell/Workspace.js";
  * tokens it issued (I-web).
  */
 
-const MODE_LABELS: Readonly<Record<ChatFolderMode, string>> = { ro: "read-only", rw: "read-write" };
+const MODE_LABELS: Readonly<Record<ChatFolderMode, string>> = saidRecord({
+  ro: "chatPanel.folder.mode.ro",
+  rw: "chatPanel.folder.mode.rw",
+});
 
 /** The folder button's name: what the chat works in. */
 function folderChipLabel(view: FolderView): string {
-  if (view.unavailable !== undefined || view.primary === undefined) return "Folder unavailable";
-  return view.primary.kind === "managed" ? MANAGED_FOLDER_LABEL : `Folder ${view.primary.label}`;
+  if (view.unavailable !== undefined || view.primary === undefined) return translateNow("chatPanel.folder.chipUnavailable");
+  return view.primary.kind === "managed" ? MANAGED_FOLDER_LABEL : translateNow("chatPanel.folder.chip", { label: view.primary.label });
 }
 
 /** The chip's tooltip: where the chat works, and what unavailable means for it. */
 function folderChipTitle(view: FolderView): string {
   if (view.unavailable !== undefined || view.primary === undefined)
-    return `${view.unavailable ?? "This chat's folder is unavailable."} Reset puts the chat back in its own ${MANAGED_FOLDER_LABEL}.`;
-  return `Working folder: ${view.primary.path}`;
+    return translateNow("chatPanel.folder.chipTitleUnavailable", {
+      reason: view.unavailable ?? translateNow("chatPanel.folder.unavailable"),
+      folder: MANAGED_FOLDER_LABEL,
+    });
+  return translateNow("chatPanel.folder.chipTitle", { path: view.primary.path });
 }
 
 /** An attachment's label, from its root id (`attachment:<label>`). */
@@ -72,6 +79,7 @@ export function FolderChip({
   /** What changes when the folder may have changed elsewhere (a turn, another tab): it is read again then. */
   readonly version?: string;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const phone = usePhone();
   const { data, error, reload } = useLoaded(() => showFolder(client, workspaceId, taskId), [version]);
@@ -88,7 +96,7 @@ export function FolderChip({
     return error === undefined ? null : (
       <span className="folder-chip-wrap">
         <Button variant="ghost" size="sm" className="folder-chip" title={error} onClick={reload}>
-          Folder
+          {t("chatPanel.folder.folder")}
         </Button>
       </span>
     );
@@ -108,11 +116,7 @@ export function FolderChip({
     }
   };
   const reset = () =>
-    change(
-      "reset",
-      () => resetFolder(client, workspaceId, taskId),
-      `Reset: the chat works in its own ${MANAGED_FOLDER_LABEL} with the default attachments.`,
-    );
+    change("reset", () => resetFolder(client, workspaceId, taskId), t("chatPanel.folder.resetDone", { folder: MANAGED_FOLDER_LABEL }));
   return (
     <span className="folder-chip-wrap">
       {/* A folder icon in the header's tools: what it holds is its name, and the full path its tooltip. */}
@@ -135,7 +139,7 @@ export function FolderChip({
       </Button>
       {unavailable ? (
         <Button size="sm" disabled={busy !== undefined} onClick={() => void reset()}>
-          {busy === "reset" ? "Resetting…" : "Reset"}
+          {busy === "reset" ? t("chatPanel.folder.resetting") : t("chatPanel.folder.reset")}
         </Button>
       ) : null}
       {open ? (
@@ -187,6 +191,7 @@ export function DraftFolderChip({
   readonly draft: readonly DraftFolder[];
   readonly onChange: (next: readonly DraftFolder[]) => void;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [picking, setPicking] = useState(false);
   const [note, setNote] = useState<string>();
@@ -197,15 +202,15 @@ export function DraftFolderChip({
   };
   const attach = (entry: BrowseEntry, mode: ChatFolderMode): void => {
     if (draft.some((folder) => folder.path === entry.path)) {
-      setNote(`${entry.name} is attached already: detach it to change how.`);
+      setNote(t("chatPanel.folder.attachedAlready", { name: entry.name }));
       return;
     }
     if (draft.length >= CHAT_FOLDER_ATTACHMENTS_MAX) {
-      setNote(`A chat attaches at most ${CHAT_FOLDER_ATTACHMENTS_MAX} folders: detach one first.`);
+      setNote(t("chatPanel.folder.atMost", { count: CHAT_FOLDER_ATTACHMENTS_MAX }));
       return;
     }
     onChange([...draft, { token: entry.token, name: entry.name, path: entry.path, mode }]);
-    setNote(`Attached ${entry.name}, ${MODE_LABELS[mode]}, from this chat's first message.`);
+    setNote(t("chatPanel.folder.attachedDraft", { name: entry.name, mode: MODE_LABELS[mode] }));
   };
   return (
     <span className="folder-chip-wrap">
@@ -216,7 +221,7 @@ export function DraftFolderChip({
         ref={chip}
         aria-expanded={open}
         aria-haspopup="dialog"
-        title="This chat starts with the folders attached here"
+        title={t("chatPanel.folder.draftTitle")}
         onClick={() => {
           if (!open) setNote(undefined);
           setOpen(!open);
@@ -225,17 +230,21 @@ export function DraftFolderChip({
         <span className="truncate">{draft.length === 0 ? MANAGED_FOLDER_LABEL : `${MANAGED_FOLDER_LABEL} +${draft.length}`}</span>
       </Button>
       {open ? (
-        <Popover as="section" className="folder-panel" label="Chat folder" initialFocus=".folder-panel-head h2" onClose={close}>
+        <Popover
+          as="section"
+          className="folder-panel"
+          label={t("chatPanel.folder.title")}
+          initialFocus=".folder-panel-head h2"
+          onClose={close}
+        >
           <div className="folder-panel-head">
-            <h2 tabIndex={-1}>Chat folder</h2>
-            <IconButton icon="close" label="Close" size="sm" onClick={close} />
+            <h2 tabIndex={-1}>{t("chatPanel.folder.title")}</h2>
+            <IconButton icon="close" label={t("chatPanel.folder.close")} size="sm" onClick={close} />
           </div>
-          <p className="meta-sm">
-            This chat hasn't started: the folders you attach here go with its first message. Reloading the page drops them.
-          </p>
+          <p className="meta-sm">{t("chatPanel.folder.draftNote")}</p>
           <StatusNote note={note} />
           {draft.length === 0 ? null : (
-            <ul className="folder-roots" aria-label="Folders">
+            <ul className="folder-roots" aria-label={t("chatPanel.folder.folders")}>
               {draft.map((folder) => (
                 <li key={folder.token} className="folder-root">
                   <span className="truncate" title={folder.path}>
@@ -245,13 +254,13 @@ export function DraftFolderChip({
                   <Button
                     variant="ghost"
                     size="sm"
-                    aria-label={`Detach ${folder.name}`}
+                    aria-label={t("chatPanel.folder.detachLabel", { name: folder.name })}
                     onClick={() => {
                       onChange(draft.filter((kept) => kept.token !== folder.token));
-                      setNote(`Detached ${folder.name}.`);
+                      setNote(t("chatPanel.folder.detached", { name: folder.name }));
                     }}
                   >
-                    Detach
+                    {t("chatPanel.folder.detach")}
                   </Button>
                 </li>
               ))}
@@ -259,7 +268,7 @@ export function DraftFolderChip({
           )}
           <div className="folder-panel-actions cluster">
             <Button variant="ghost" size="sm" aria-expanded={picking} onClick={() => setPicking((was) => !was)}>
-              Attach a folder…
+              {t("chatPanel.folder.attach")}
             </Button>
           </div>
           {picking ? <FolderPicker busy={false} onAttach={attach} /> : null}
@@ -291,6 +300,7 @@ function FolderPanel({
   readonly onReset: () => Promise<void>;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const taskId = view.taskId;
   const unavailable = view.unavailable !== undefined || view.primary === undefined;
@@ -298,16 +308,22 @@ function FolderPanel({
   const [confirmReset, setConfirmReset] = useState(false);
   const working = busy !== undefined;
   return (
-    <Popover as="section" className="folder-panel" label="Chat folder" initialFocus=".folder-panel-head h2" onClose={() => onClose()}>
+    <Popover
+      as="section"
+      className="folder-panel"
+      label={t("chatPanel.folder.title")}
+      initialFocus=".folder-panel-head h2"
+      onClose={() => onClose()}
+    >
       <div className="folder-panel-head">
-        <h2 tabIndex={-1}>Chat folder</h2>
-        <IconButton icon="close" label="Close" size="sm" onClick={onClose} />
+        <h2 tabIndex={-1}>{t("chatPanel.folder.title")}</h2>
+        <IconButton icon="close" label={t("chatPanel.folder.close")} size="sm" onClick={onClose} />
       </div>
       {unavailable ? (
         <div className="folder-unavailable" role="alert">
-          <p>{view.unavailable ?? "This chat's folder is unavailable."}</p>
+          <p>{view.unavailable ?? t("chatPanel.folder.unavailable")}</p>
           <Button size="sm" disabled={working} onClick={() => void onReset()}>
-            {busy === "reset" ? "Resetting…" : "Reset"}
+            {busy === "reset" ? t("chatPanel.folder.resetting") : t("chatPanel.folder.reset")}
           </Button>
         </div>
       ) : null}
@@ -320,7 +336,7 @@ function FolderPanel({
         <div className="folder-panel-actions cluster">
           {canBrowse ? (
             <Button variant="ghost" size="sm" aria-expanded={picking} onClick={() => setPicking((was) => !was)}>
-              Attach a folder…
+              {t("chatPanel.folder.attach")}
             </Button>
           ) : null}
           {view.primary?.kind === "host" ? (
@@ -332,26 +348,26 @@ function FolderPanel({
                 void onChange(
                   "set:managed",
                   () => setFolder(client, workspaceId, taskId, { managed: true }),
-                  `The chat now works in its own ${MANAGED_FOLDER_LABEL}.`,
+                  t("chatPanel.folder.nowManaged", { folder: MANAGED_FOLDER_LABEL }),
                 )
               }
             >
-              Work in {MANAGED_FOLDER_LABEL}
+              {t("chatPanel.folder.workInManaged", { folder: MANAGED_FOLDER_LABEL })}
             </Button>
           ) : null}
           {unavailable ? null : confirmReset ? (
             <InlineConfirm
               inline
-              message={`Back to this chat's defaults: its own ${MANAGED_FOLDER_LABEL} and the default attachments. No file is deleted.`}
-              confirmLabel={busy === "reset" ? "Resetting…" : "Reset"}
-              cancelLabel="Cancel"
+              message={t("chatPanel.folder.resetConfirm", { folder: MANAGED_FOLDER_LABEL })}
+              confirmLabel={busy === "reset" ? t("chatPanel.folder.resetting") : t("chatPanel.folder.reset")}
+              cancelLabel={t("ui.confirm.cancel")}
               busy={working}
               onConfirm={() => void onReset().then(() => setConfirmReset(false))}
               onCancel={() => setConfirmReset(false)}
             />
           ) : (
             <Button variant="ghost" size="sm" disabled={working} onClick={() => setConfirmReset(true)}>
-              Reset…
+              {t("chatPanel.folder.resetMore")}
             </Button>
           )}
         </div>
@@ -363,14 +379,14 @@ function FolderPanel({
             void onChange(
               `attach:${entry.token}`,
               () => attachFolder(client, workspaceId, taskId, entry.token, mode),
-              `Attached ${entry.name}, ${MODE_LABELS[mode]}.`,
+              t("chatPanel.folder.attached", { name: entry.name, mode: MODE_LABELS[mode] }),
             )
           }
           onWorkIn={(entry) =>
             void onChange(
               `set:${entry.token}`,
               () => setFolder(client, workspaceId, taskId, { pick: entry.token } satisfies FolderPick),
-              `The chat now works in ${entry.name}.`,
+              t("chatPanel.folder.nowIn", { name: entry.name }),
             )
           }
         />
@@ -391,6 +407,7 @@ function FolderListing({
   readonly working: boolean;
   readonly onChange: (key: string, work: () => Promise<Outcome<FolderView>>, said: string) => Promise<void>;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [root, setRoot] = useState<string>();
   const [dir, setDir] = useState("");
@@ -411,7 +428,7 @@ function FolderListing({
   return (
     <>
       {shown === undefined ? null : (
-        <ul className="folder-roots" aria-label="Folders">
+        <ul className="folder-roots" aria-label={t("chatPanel.folder.folders")}>
           {shown.roots.map((candidate) => {
             const label = attachmentLabel(candidate.id);
             return (
@@ -431,12 +448,16 @@ function FolderListing({
                     variant="ghost"
                     size="sm"
                     disabled={working}
-                    aria-label={`Detach ${label}`}
+                    aria-label={t("chatPanel.folder.detachLabel", { name: label })}
                     onClick={() =>
-                      void onChange(`detach:${label}`, () => detachFolder(client, workspaceId, taskId, label), `Detached ${label}.`)
+                      void onChange(
+                        `detach:${label}`,
+                        () => detachFolder(client, workspaceId, taskId, label),
+                        t("chatPanel.folder.detached", { name: label }),
+                      )
                     }
                   >
-                    Detach
+                    {t("chatPanel.folder.detach")}
                   </Button>
                 )}
               </li>
@@ -471,6 +492,7 @@ function FileList({
   readonly onOpen: (dir: string) => void;
   readonly onDownload: (path: string) => void;
 }) {
+  const t = useT();
   if (listing === undefined) return null;
   const within = (name: string): string => (dir === "" ? name : `${dir}/${name}`);
   return (
@@ -481,17 +503,22 @@ function FileList({
       </p>
       {dir === "" ? null : (
         <Button variant="ghost" size="sm" onClick={() => onOpen(dir.split("/").slice(0, -1).join("/"))}>
-          Up
+          {t("chatPanel.folder.up")}
         </Button>
       )}
       {listing.entries.length === 0 ? (
-        <Empty>Nothing here yet.</Empty>
+        <Empty>{t("chatPanel.folder.emptyFolder")}</Empty>
       ) : (
-        <ul aria-label="Files">
+        <ul aria-label={t("chatPanel.folder.files")}>
           {listing.entries.map((entry) => (
             <li key={entry.name} className="folder-entry" data-kind={entry.kind}>
               {entry.kind === "directory" ? (
-                <Button variant="ghost" size="sm" aria-label={`Open ${entry.name}`} onClick={() => onOpen(within(entry.name))}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={t("chatPanel.folder.openLabel", { name: entry.name })}
+                  onClick={() => onOpen(within(entry.name))}
+                >
                   {entry.name}/
                 </Button>
               ) : (
@@ -502,11 +529,11 @@ function FileList({
                     <Button
                       variant="ghost"
                       size="sm"
-                      aria-label={`Download ${entry.name}`}
+                      aria-label={t("chatPanel.folder.downloadLabel", { name: entry.name })}
                       disabled={downloading !== undefined}
                       onClick={() => onDownload(within(entry.name))}
                     >
-                      {downloading === within(entry.name) ? "Downloading…" : "Download"}
+                      {downloading === within(entry.name) ? t("chatPanel.folder.downloading") : t("chatPanel.folder.download")}
                     </Button>
                   ) : null}
                 </>
@@ -515,7 +542,7 @@ function FileList({
           ))}
         </ul>
       )}
-      {listing.truncated ? <p className="meta-sm">Only the first {plural(listing.entries.length, "entry", "entries")} are shown.</p> : null}
+      {listing.truncated ? <p className="meta-sm">{t("chatPanel.folder.firstEntries", { count: listing.entries.length })}</p> : null}
     </div>
   );
 }
@@ -535,27 +562,28 @@ function FolderPicker({
   /** Absent, a folder is attached only (a chat not started yet). */
   readonly onWorkIn?: (entry: BrowseEntry) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   /** The token of the folder listed; absent, the `--fs-root` folders. */
   const [under, setUnder] = useState<string>();
   const { data, error, loading, reload } = useLoaded(() => browseFolders(client, workspaceId, under), [under ?? ""]);
   return (
-    <section className="folder-picker" aria-label="Attach a folder">
-      <p className="folder-where meta-sm">{data?.at?.path ?? "The folders tavi may use"}</p>
+    <section className="folder-picker" aria-label={t("chatPanel.folder.pickerLabel")}>
+      <p className="folder-where meta-sm">{data?.at?.path ?? t("chatPanel.folder.pickerTop")}</p>
       {under === undefined ? null : (
         <p>
           <Button variant="ghost" size="sm" onClick={() => setUnder(data?.parent?.token)}>
-            Up
+            {t("chatPanel.folder.up")}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setUnder(undefined)}>
-            Top
+            {t("chatPanel.folder.top")}
           </Button>
         </p>
       )}
       {data === undefined ? null : data.entries.length === 0 ? (
-        <Empty>No folders here.</Empty>
+        <Empty>{t("chatPanel.folder.noFolders")}</Empty>
       ) : (
-        <ul aria-label="Folders to attach">
+        <ul aria-label={t("chatPanel.folder.toAttach")}>
           {data.entries.map((entry) => (
             <li key={entry.token} className="folder-entry">
               {entry.opens ? (
@@ -563,7 +591,7 @@ function FolderPicker({
                   variant="ghost"
                   size="sm"
                   title={entry.path}
-                  aria-label={`Open ${entry.name}`}
+                  aria-label={t("chatPanel.folder.openLabel", { name: entry.name })}
                   onClick={() => setUnder(entry.token)}
                 >
                   {entry.name}/
@@ -578,29 +606,29 @@ function FolderPicker({
                   variant="ghost"
                   size="sm"
                   disabled={busy}
-                  aria-label={`Attach read-only: ${entry.name}`}
+                  aria-label={t("chatPanel.folder.attachRoLabel", { name: entry.name })}
                   onClick={() => onAttach(entry, "ro")}
                 >
-                  Attach read-only
+                  {t("chatPanel.folder.attachRo")}
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   disabled={busy}
-                  aria-label={`Attach read-write: ${entry.name}`}
+                  aria-label={t("chatPanel.folder.attachRwLabel", { name: entry.name })}
                   onClick={() => onAttach(entry, "rw")}
                 >
-                  Attach read-write
+                  {t("chatPanel.folder.attachRw")}
                 </Button>
                 {onWorkIn === undefined ? null : (
                   <Button
                     variant="ghost"
                     size="sm"
                     disabled={busy}
-                    aria-label={`Work in this folder: ${entry.name}`}
+                    aria-label={t("chatPanel.folder.workInLabel", { name: entry.name })}
                     onClick={() => onWorkIn(entry)}
                   >
-                    Work in this folder
+                    {t("chatPanel.folder.workIn")}
                   </Button>
                 )}
               </span>
@@ -608,7 +636,7 @@ function FolderPicker({
           ))}
         </ul>
       )}
-      {data?.truncated === true ? <p className="meta-sm">Only the first {plural(data.entries.length, "folder")} are shown.</p> : null}
+      {data?.truncated === true ? <p className="meta-sm">{t("chatPanel.folder.firstFolders", { count: data.entries.length })}</p> : null}
       <LoadState error={error} reload={reload} loading={loading} className="empty" />
     </section>
   );

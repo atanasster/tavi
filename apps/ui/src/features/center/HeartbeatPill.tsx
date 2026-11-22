@@ -1,3 +1,4 @@
+import { useT } from "../../lib/i18n.js";
 import { localTime } from "../../lib/time.js";
 import { Button } from "../../ui/Button.js";
 import { HEARTBEAT_POLL_MS, useSharedHeartbeat } from "./heartbeat-source.js";
@@ -15,17 +16,20 @@ export function HeartbeatPill({
   readonly refreshMs?: number;
   readonly onOpen: () => void;
 }) {
+  const t = useT();
   const { data: answer } = useSharedHeartbeat({ refreshMs, revision });
   if (answer === undefined) return null;
   const { config } = answer;
   const status = !config.enabled
-    ? "off"
+    ? t("center.heartbeatPill.off")
     : config.paused !== undefined
-      ? "paused"
-      : `on · next ${answer.state?.nextTickAt === undefined ? "—" : localTime(answer.state.nextTickAt, answer.timezone)}`;
+      ? t("center.heartbeatPill.paused")
+      : t("center.heartbeatPill.on", {
+          time: answer.state?.nextTickAt === undefined ? "—" : localTime(answer.state.nextTickAt, answer.timezone),
+        });
   return (
     <Button className="chip heartbeat-pill" onClick={onOpen}>
-      Heartbeat {status}
+      {status}
     </Button>
   );
 }

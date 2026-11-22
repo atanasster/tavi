@@ -37,4 +37,5 @@ export const common = {
   "common.elapsed.hoursMinutes": "{hours} ч {minutes} мин",
   "common.toolDuration.milliseconds": "{milliseconds} мс",
   "common.toolDuration.seconds": "{seconds} сек",
+  "common.list.last": "{rest} и {last}",
 } as const satisfies CatalogFor<typeof en>;

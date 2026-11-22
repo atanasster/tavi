@@ -4,6 +4,7 @@ import { AgentTreeResultSchema, type AgentTreeNode, type AgentTreeResult, type T
 import { clip, errorMessage } from "@tavi/contracts/util";
 
 import { mergeBy } from "../../lib/paging.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import { Markdown } from "../../ui/Markdown.js";
 import { Failure, Notice, Pending } from "../../ui/Parts.js";
 import { read, type SettingsClient } from "../../lib/ipc.js";
@@ -61,12 +62,11 @@ export async function loadAgentTree(client: SettingsClient, workspaceId: string,
     "agents",
     { action: "tree", workspaceId, taskId, limit: 200, ...(detail ? {} : { detail: false }) },
     AgentTreeResultSchema,
-    { timeoutMs: null, refused: "Tree unavailable. Restart the owner with this build." },
+    { timeoutMs: null, refused: translateNow("workers.view.treeUnavailable") },
   );
   if (!answer.ok) throw new Error(answer.message);
   const result = answer.value;
-  if (result.workspaceId !== workspaceId || result.taskId !== taskId)
-    throw new Error("Tree response belongs to another task or workspace.");
+  if (result.workspaceId !== workspaceId || result.taskId !== taskId) throw new Error(translateNow("workers.view.treeMismatch"));
   return result;
 }
 
@@ -102,16 +102,17 @@ export function useSettledRevision(revision: number | undefined, ms = WATCH_SETT
 
 /** A worker's final text, clipped, with **Show all** for the rest. */
 export function FinalText({ text, label }: { readonly text: string; readonly label: string }) {
+  const t = useT();
   const [all, setAll] = useState(false);
   const long = text.length > WORKER_FINAL_CLIP;
   return (
     <div className="worker-final">
-      <span className="visually-hidden">{label}'s final answer: </span>
+      <span className="visually-hidden">{t("workers.view.finalAnswer", { label })}</span>
       {/* An agent's answer is Markdown, as a chat's is: read as such, never as its raw marks. */}
       <Markdown text={all || !long ? text : markdownPreview(text, WORKER_FINAL_CLIP)} tainted />
       {long ? (
         <Button aria-expanded={all} onClick={() => setAll((before) => !before)}>
-          {all ? "Show less" : "Show all"}
+          {all ? t("workers.view.showLess") : t("workers.view.showAll")}
         </Button>
       ) : null}
     </div>
@@ -170,6 +171,7 @@ export function WorkerTranscript({
   readonly revision?: number | undefined;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   const { workspaceId } = useWorkspace();
   const { taskId, label } = worker;
   const settled = useSettledRevision(revision);
@@ -188,7 +190,7 @@ export function WorkerTranscript({
   }, [taskId]);
   useEffect(() => {
     let current = true;
-    void loadTranscriptPage(client, workspaceId, taskId, undefined, "This worker's history could not be read.")
+    void loadTranscriptPage(client, workspaceId, taskId, undefined, translateNow("workers.view.historyUnread"))
       .then((page) => {
         if (!current) return;
         if (!page.ok) {
@@ -252,7 +254,7 @@ export function WorkerTranscript({
     // One page back at a time: a second click while one is read asks nothing.
     if (before === undefined || !held?.more || loading.current) return;
     loading.current = true;
-    void loadTranscriptPage(client, workspaceId, taskId, before, "Earlier turns could not be read.")
+    void loadTranscriptPage(client, workspaceId, taskId, before, t("workers.view.earlierUnread"))
       .then((page) => {
         if (!page.ok) {
           setError(page.message);
@@ -276,7 +278,7 @@ export function WorkerTranscript({
   return (
     <aside
       className="worker-view"
-      aria-label={`Worker ${label} — view only`}
+      aria-label={t("workers.view.title", { label })}
       onKeyDown={(event) => {
         if (event.key !== "Escape") return;
         // Taken here: the page's own Esc stops the chat's running turn.
@@ -287,47 +289,49 @@ export function WorkerTranscript({
     >
       <header className="worker-view-head">
         <h2 tabIndex={-1} ref={heading}>
-          Worker {label} — view only
+          {t("workers.view.title", { label })}
         </h2>
-        <Button onClick={onClose}>Close</Button>
+        <Button onClick={onClose}>{t("workers.view.close")}</Button>
       </header>
-      <p className="muted">A worker is not a chat: it takes no messages, and what it asks is answered in this chat.</p>
+      <p className="muted">{t("workers.view.notAChat")}</p>
       {/* A worker has no chat panel: its plan is drawn here, where the chat's goes to the Activity tab. */}
       {plan === undefined ? null : <PlanCard plan={plan} />}
       <Failure message={error} />
-      {held === undefined && error === undefined ? <Pending label="Loading the worker's history…" className="notice" status /> : null}
+      {held === undefined && error === undefined ? <Pending label={t("workers.view.loading")} className="notice" status /> : null}
       {held?.more ? (
         <p className="older">
-          <Button onClick={loadEarlier}>Load earlier turns</Button>
+          <Button onClick={loadEarlier}>{t("workers.view.loadEarlier")}</Button>
         </p>
       ) : null}
       {turns.map((turn) => (
         <article key={turn.seq} className="worker-turn">
           {turn.turn.prompt ? (
             <div className="user-message">
-              <div className="message-heading">Asked of {label}</div>
+              <div className="message-heading">{t("workers.view.askedOf", { label })}</div>
               <p className="prompt">{turn.turn.prompt}</p>
             </div>
           ) : null}
           <Transcript entries={savedEntries(turn)} tainted={turn.turn.tainted} knownUrls={turn.turn.knownUrls} />
           {turn.turn.outcome.status === "failed" ? (
-            <Failure alert={false}>Failed{turn.turn.outcome.message ? `: ${turn.turn.outcome.message}` : ""}</Failure>
+            <Failure alert={false}>
+              {turn.turn.outcome.message ? t("workers.view.failedWith", { message: turn.turn.outcome.message }) : t("workers.view.failed")}
+            </Failure>
           ) : turn.turn.outcome.status === "stopped" ? (
-            <Notice>{turn.turn.outcome.message ?? "Stopped."}</Notice>
+            <Notice>{turn.turn.outcome.message ?? t("workers.view.stopped")}</Notice>
           ) : turn.turn.outcome.status === "waiting" ? (
-            <Notice>Waited on a person.</Notice>
+            <Notice>{t("workers.view.waited")}</Notice>
           ) : null}
         </article>
       ))}
       {working ? (
         <article className="worker-turn worker-live">
           <div className="message-heading">
-            {label} <span>Working…</span>
+            {label} <span>{t("workers.view.working")}</span>
           </div>
           <Transcript entries={live.transcript} tainted={live.tainted} knownUrls={live.knownUrls} />
         </article>
       ) : null}
-      {held !== undefined && turns.length === 0 && !working ? <p>Nothing saved yet: a turn shows here once it ends.</p> : null}
+      {held !== undefined && turns.length === 0 && !working ? <p>{t("workers.view.nothingSaved")}</p> : null}
     </aside>
   );
 }

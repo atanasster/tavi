@@ -9,6 +9,8 @@ import {
 } from "@tavi/contracts";
 
 import { localDate } from "../../lib/time.js";
+import { translateNow } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import type { SettingsClient } from "../../lib/ipc.js";
 import { readStoredJson, writeStoredJson } from "../../lib/storage.js";
 
@@ -92,6 +94,26 @@ export function directoryGroup(row: TaskListRow, timeZone: string | undefined): 
   if (row.needs.length) return "Needs you";
   if (["submitted", "working", "unknown", "input-required"].includes(row.status)) return "Working";
   return `${row.status === "stopped" ? "Stopped" : "Completed"} · ${localDate(row.updatedAt, timeZone)}`;
+}
+
+/** The headings `directoryGroup` and `directoryLayout` name a section by, as the reader sees them. */
+const GROUP_HEADINGS: Readonly<Record<string, UiKey>> = {
+  "Needs you": "sessions.group.needsYou",
+  Working: "sessions.group.working",
+  Home: "sessions.group.home",
+  Pinned: "sessions.group.pinned",
+  Conversations: "sessions.group.conversations",
+  Activity: "sessions.group.activity",
+};
+
+/** A section's label in the page's language: the label itself stays the group's name, which the layout sorts by. */
+export function groupHeading(label: string): string {
+  const key = GROUP_HEADINGS[label];
+  if (key !== undefined) return translateNow(key);
+  const at = label.indexOf(" · ");
+  if (at === -1) return label;
+  const day = label.slice(at + " · ".length);
+  return translateNow(label.startsWith("Stopped") ? "sessions.group.stopped" : "sessions.group.completed", { day });
 }
 
 /** A sidebar section: its heading, and its chats in order. */

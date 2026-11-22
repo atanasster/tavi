@@ -5,6 +5,8 @@ import { AppLink } from "../shell/AppLink.js";
 import { copyDraft } from "../../lib/clipboard.js";
 import { Icon } from "../../ui/Icon.js";
 import { formatCount } from "../../lib/format.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 import { useUnsavedGuard } from "../../hooks/page.js";
 import { useOpenError } from "../../hooks/use-action.js";
 import { SETTINGS_BOUNDS } from "../settings/common.js";
@@ -65,7 +67,9 @@ function RoutineLink({
 /** "Morning news and Evening digest": routines named in a sentence. */
 function routineNames(pins: readonly { readonly name: string }[]): string {
   const names = pins.map((pin) => pin.name);
-  return names.length <= 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names.at(-1) ?? ""}`;
+  return names.length <= 1
+    ? (names[0] ?? "")
+    : translateNow("center.soul.namesAnd", { names: names.slice(0, -1).join(", "), last: names.at(-1) ?? "" });
 }
 
 function SoulPane({
@@ -76,6 +80,7 @@ function SoulPane({
   /** A routine's page, where a routine's pinned instructions are edited. */
   readonly onOpenRoutine?: ((routineId: string) => void) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [tab, setTab] = useState<SoulTab>("prompt");
   const [agentId, setAgentId] = useState<string | undefined>(agents[0]?.agentId);
@@ -95,9 +100,9 @@ function SoulPane({
   if (previewAgent !== NO_AGENT && !agents.some((agent) => agent.agentId === previewAgent)) setPreviewAgent(NO_AGENT);
   // No agents, no Persona tab to stand on.
   const tabs: readonly { readonly value: SoulTab; readonly label: string }[] = [
-    { value: "prompt", label: "Your prompt" },
-    ...(agents.length > 0 ? [{ value: "persona" as const, label: "Persona" }] : []),
-    { value: "shipped", label: "Shipped default" },
+    { value: "prompt", label: t("center.soul.tabPrompt") },
+    ...(agents.length > 0 ? [{ value: "persona" as const, label: t("center.soul.tabPersona") }] : []),
+    { value: "shipped", label: t("center.soul.tabShipped") },
   ];
   const current = tabs.some((item) => item.value === tab) ? tab : "prompt";
 
@@ -108,20 +113,19 @@ function SoulPane({
           <Icon name="sparkles" size="sm" />
         </span>
         <div>
-          <h2 id="soul-title">Soul</h2>
-          <p className="soul-pane-sub meta-sm">The system prompt, in the order the model receives it</p>
+          <h2 id="soul-title">{t("center.soul.title")}</h2>
+          <p className="soul-pane-sub meta-sm">{t("center.soul.sub")}</p>
         </div>
       </header>
 
       {agents.length === 0 ? null : (
         <p className="soul-preview-for">
-          <Field id={`${ids}-preview`} label="Layers for" inline>
+          <Field id={`${ids}-preview`} label={t("center.soul.layersFor")} inline>
             <Select value={previewAgent} onChange={(event) => setPreviewAgent(event.target.value)}>
-              <option value={NO_AGENT}>None (plain tasks)</option>
+              <option value={NO_AGENT}>{t("center.soul.noAgent")}</option>
               {agents.map((agent) => (
                 <option key={agent.agentId} value={agent.agentId}>
-                  {agent.name}
-                  {agent.enabled ? "" : " (disabled)"}
+                  {agent.enabled ? agent.name : t("center.soul.agentDisabled", { name: agent.name })}
                 </option>
               ))}
             </Select>
@@ -132,7 +136,7 @@ function SoulPane({
 
       <div className="soul-editor">
         <TabList
-          label="Edit"
+          label={t("center.soul.editTabs")}
           className="soul-tabs tabs-underline"
           tabClassName="button-bare"
           items={tabs.map((item) => ({ value: item.value, content: item.label }))}
@@ -142,18 +146,25 @@ function SoulPane({
           panelId={`${ids}-panel`}
         />
         <div className="soul-panel" role="tabpanel" id={`${ids}-panel`} aria-labelledby={`${ids}-tab-${current}`}>
-          <p className="soul-note meta-sm">Changes apply from the next message. A turn already running keeps the prompt it started with.</p>
+          <p className="soul-note meta-sm">{t("center.soul.applies")}</p>
           {current === "prompt" ? (
             editor.saved === undefined ? (
-              <Pending error={editor.error} reload={editor.reload} label="Loading system prompt…" className="notice" status />
+              <Pending error={editor.error} reload={editor.reload} label={t("center.soul.loadingPrompt")} className="notice" status />
             ) : (
               <>
                 {editor.error === undefined ? null : <LoadError error={editor.error} reload={editor.reloadSaved} />}
                 <p className="soul-status meta-sm">
-                  <strong>{editor.saved.mode === "default" ? "Shipped default in use" : "Your prompt"}</strong> · revision{" "}
-                  {editor.saved.revision}
+                  {withParts(t("center.soul.status", { revision: String(editor.saved.revision) }), {
+                    mode: <strong>{editor.saved.mode === "default" ? t("center.soul.statusDefault") : t("center.soul.tabPrompt")}</strong>,
+                  })}
                 </p>
-                <SystemPromptEditor editor={editor} id="soul-prompt" rows={12} defaultLabel="Use shipped default" className="soul-form" />
+                <SystemPromptEditor
+                  editor={editor}
+                  id="soul-prompt"
+                  rows={12}
+                  defaultLabel={t("center.soul.useDefault")}
+                  className="soul-form"
+                />
               </>
             )
           ) : current === "persona" ? (
@@ -163,12 +174,17 @@ function SoulPane({
           ) : (
             <>
               <p className="soul-status meta-sm">
-                Read-only · shipped with Tavi ({editor.saved.shipped.templateVersion}) ·{" "}
-                <span className="soul-figure">{formatCount(editor.saved.shipped.text.length)}</span> characters
+                {withParts(
+                  t("center.soul.shippedStatus", {
+                    count: editor.saved.shipped.text.length,
+                    version: editor.saved.shipped.templateVersion,
+                  }),
+                  { figure: <span className="soul-figure">{formatCount(editor.saved.shipped.text.length)}</span> },
+                )}
               </p>
               {/* Rendered as text, never as markup: a prompt is data. */}
               {/* biome-ignore lint/a11y/noNoninteractiveTabindex: a scrolling region must take focus to scroll by keyboard */}
-              <pre className="soul-shipped" role="region" aria-label="Shipped default system prompt" tabIndex={0}>
+              <pre className="soul-shipped" role="region" aria-label={t("center.soul.shippedLabel")} tabIndex={0}>
                 {editor.saved.shipped.text}
               </pre>
             </>
@@ -181,6 +197,7 @@ function SoulPane({
 
 /** The layer stack, read again whenever `refresh` or the picked agent moves. */
 function PromptLayers({ agentId, refresh }: { readonly agentId: string | undefined; readonly refresh: number }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   // A failed read keeps the layers shown before beside its failure.
   const {
@@ -190,7 +207,7 @@ function PromptLayers({ agentId, refresh }: { readonly agentId: string | undefin
   } = useLoaded(() => loadPromptPreview(client, workspaceId, agentId), [JSON.stringify([workspaceId, agentId ?? null, refresh])]);
   if (preview === undefined) {
     return error === undefined ? (
-      <Pending label="Loading the prompt's layers…" className="notice soul-layers-status" status />
+      <Pending label={t("center.soul.loadingLayers")} className="notice soul-layers-status" status />
     ) : (
       <div className="soul-layers-status">
         <LoadError error={error} reload={reload} />
@@ -204,7 +221,7 @@ function PromptLayers({ agentId, refresh }: { readonly agentId: string | undefin
           {error}
         </Failure>
       )}
-      <ol className="soul-layers list-reset" aria-label="Prompt layers">
+      <ol className="soul-layers list-reset" aria-label={t("center.soul.layers")}>
         {preview.layers.map((layer, index) => (
           <LayerRow key={`${layer.kind}:${layer.source ?? ""}:${index}`} layer={layer} />
         ))}
@@ -215,7 +232,7 @@ function PromptLayers({ agentId, refresh }: { readonly agentId: string | undefin
 
 /** Why a persona draft cannot be saved, or `undefined` when it can. */
 function personaProblem(text: string): string | undefined {
-  if (text.trim().length === 0) return "A persona cannot be empty";
+  if (text.trim().length === 0) return translateNow("center.soul.personaEmpty");
   return systemPromptLengthProblem(text);
 }
 
@@ -301,16 +318,16 @@ function usePersonaEditor(
       const pins = agents.find((agent) => agent.agentId === agentId)?.pinnedBy ?? [];
       setNote(
         pins.length === 0
-          ? `Saved. Chats with ${outcome.value.name} use this persona from the next message.`
-          : `Saved. Chats with ${outcome.value.name} use this persona from the next message; ${pins.length === 1 ? "routine" : "routines"} ${routineNames(pins)} ${pins.length === 1 ? "keeps its" : "keep their"} own pinned instructions.`,
+          ? translateNow("center.soul.saved", { name: outcome.value.name })
+          : translateNow("center.soul.savedPinned", { count: pins.length, name: outcome.value.name, routines: routineNames(pins) }),
       );
       onSaved();
       return;
     }
     if (outcome.code === "CONFLICT") setConflict(outcome.message);
     else if (outcome.code !== undefined && outcome.code !== "INTERNAL")
-      setFailure(`${outcome.message} Nothing was saved, and your draft is kept.`);
-    else setFailure(`${outcome.message} The write may still have been applied — reload the saved persona before retrying.`);
+      setFailure(translateNow("center.soul.refused", { reason: outcome.message }));
+    else setFailure(translateNow("center.soul.mayHaveApplied", { reason: outcome.message }));
   };
 
   return {
@@ -354,6 +371,7 @@ function PersonaEditor({
   readonly onPick: (agentId: string) => void;
   readonly onOpenRoutine?: ((routineId: string) => void) | undefined;
 }) {
+  const t = useT();
   const { saved, draft, dirty, loadError, saving, note, conflict, failure } = persona;
   /** An agent picked while the draft was dirty, waiting for Discard or Keep editing. */
   const [pending, setPending] = useState<string>();
@@ -365,7 +383,7 @@ function PersonaEditor({
 
   return (
     <div className="soul-form">
-      <Field id={`${ids}-agent`} label="Agent">
+      <Field id={`${ids}-agent`} label={t("center.soul.agent")}>
         <Select
           value={agentId ?? ""}
           disabled={saving || pending !== undefined}
@@ -376,8 +394,7 @@ function PersonaEditor({
         >
           {agents.map((agent) => (
             <option key={agent.agentId} value={agent.agentId}>
-              {agent.name}
-              {agent.enabled ? "" : " (disabled)"}
+              {agent.enabled ? agent.name : t("center.soul.agentDisabled", { name: agent.name })}
             </option>
           ))}
         </Select>
@@ -385,14 +402,14 @@ function PersonaEditor({
       {pending === undefined ? null : (
         <InlineConfirm
           focusCancel
-          label="Unsaved persona"
+          label={t("center.soul.unsaved")}
           message={
-            <>
-              Your changes to {saved?.name ?? "this persona"} are not saved. Discard them and open {pendingName}?
-            </>
+            saved === undefined
+              ? t("center.soul.unsavedThis", { other: pendingName ?? "" })
+              : t("center.soul.unsavedNamed", { name: saved.name, other: pendingName ?? "" })
           }
-          confirmLabel="Discard"
-          cancelLabel="Keep editing"
+          confirmLabel={t("center.soul.discard")}
+          cancelLabel={t("center.soul.keepEditing")}
           onConfirm={() => {
             setPending(undefined);
             onPick(pending);
@@ -400,17 +417,16 @@ function PersonaEditor({
           onCancel={() => setPending(undefined)}
         />
       )}
-      {picked !== undefined && !picked.enabled ? (
-        <Notice>This agent is disabled, so its persona is not appended until it is enabled.</Notice>
-      ) : null}
+      {picked !== undefined && !picked.enabled ? <Notice>{t("center.soul.agentOff")}</Notice> : null}
       {(picked?.pinnedBy ?? []).map((pin) => (
         <Notice key={pin.routineId} className="soul-pinned">
-          Routine <RoutineLink routineId={pin.routineId} name={pin.name} onOpen={onOpenRoutine} /> runs its own pinned instructions; edit
-          them on the routine&rsquo;s page.
+          {withParts(t("center.soul.pinned"), {
+            routine: <RoutineLink routineId={pin.routineId} name={pin.name} onOpen={onOpenRoutine} />,
+          })}
         </Notice>
       ))}
       {loadError !== undefined || saved === undefined ? (
-        <Pending error={loadError} reload={persona.reloadSaved} label="Loading persona…" className="notice" status />
+        <Pending error={loadError} reload={persona.reloadSaved} label={t("center.soul.loadingPersona")} className="notice" status />
       ) : (
         <form
           onSubmit={(event) => {
@@ -418,10 +434,10 @@ function PersonaEditor({
             void persona.submit();
           }}
         >
-          <label htmlFor={`${ids}-text`}>Persona</label>
+          <label htmlFor={`${ids}-text`}>{t("center.soul.tabPersona")}</label>
           <textarea
             id={`${ids}-text`}
-            aria-label={`Persona of ${saved.name}`}
+            aria-label={t("center.soul.personaOf", { name: saved.name })}
             aria-describedby={`${ids}-count ${ids}-problem`}
             rows={10}
             maxLength={SETTINGS_BOUNDS.systemPrompt}
@@ -430,18 +446,18 @@ function PersonaEditor({
             onChange={(event) => persona.setDraft(event.target.value)}
           />
           <p id={`${ids}-count`} className="editor-count">
-            {formatCount(draft.length)} of {formatCount(SETTINGS_BOUNDS.systemPrompt)} characters
+            {t("center.soul.count", { count: draft.length, max: SETTINGS_BOUNDS.systemPrompt })}
           </p>
           <Failure alert={false} id={`${ids}-problem`}>
             {problem ?? ""}
           </Failure>
           <div className="actions">
             <Button variant="primary" type="submit" disabled={!canSave}>
-              {saving ? "Saving…" : "Save persona"}
+              {saving ? t("ui.parts.saving") : t("center.soul.savePersona")}
             </Button>
             {dirty ? (
               <Button disabled={saving} onClick={persona.discard}>
-                Discard changes
+                {t("center.soul.discardChanges")}
               </Button>
             ) : null}
           </div>
@@ -490,6 +506,7 @@ export function SoulAndMemory({
   readonly focusProposals: boolean;
   readonly onProposalsFocused: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   // The last agents read stay listed beside a failed reload.
   const listed = useLoaded(() => listAgents(client, workspaceId), [workspaceId]);
@@ -501,10 +518,12 @@ export function SoulAndMemory({
       <PageHead
         className="center-head"
         id="center-soul-title"
-        title="Soul & memory"
-        description="Who the agent is told to be, and what it knows about you."
+        title={t("shell.route.centerSection.identity")}
+        description={t("center.soul.description")}
       />
-      {agentsError === undefined ? null : <LoadError error={`Agents could not be listed: ${agentsError}`} reload={listed.reload} />}
+      {agentsError === undefined ? null : (
+        <LoadError error={t("center.soul.agentsFailed", { error: agentsError })} reload={listed.reload} />
+      )}
       <div className="soul-split">
         <SoulPane agents={agents} onOpenRoutine={onOpenRoutine} />
         <MemoryPane
@@ -531,18 +550,19 @@ export function SoulAndMemory({
  * does not show. Each opens its chat's panel, where it is edited.
  */
 function ChatNotesAcrossChats({ onOpen }: { readonly onOpen: (taskId: string) => Promise<void> }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { data, error } = useLoaded(() => listEveryChatNote(client, workspaceId));
   const { openError: failure, open } = useOpenError();
   const notes = data?.records ?? [];
   return (
     <section className="soul-chat-notes" aria-labelledby="soul-chat-notes-title">
-      <h2 id="soul-chat-notes-title">Chat notes</h2>
-      <p className="settings-description">Kept for one chat each, recalled only in it. Open a chat to change its notes.</p>
+      <h2 id="soul-chat-notes-title">{t("center.soul.notesTitle")}</h2>
+      <p className="settings-description">{t("center.soul.notesDescription")}</p>
       {data === undefined ? (
         <Pending error={error} />
       ) : notes.length === 0 ? (
-        <Empty>No chat has notes yet.</Empty>
+        <Empty>{t("center.soul.notesEmpty")}</Empty>
       ) : (
         <ul className="soul-chat-notes-list list-reset">
           {notes.map((record) => {
@@ -551,9 +571,9 @@ function ChatNotesAcrossChats({ onOpen }: { readonly onOpen: (taskId: string) =>
               <li key={record.recordId}>
                 <span className="soul-chat-note">
                   {recordTitle(record)}
-                  {record.status === "proposed" ? <span className="muted"> · proposed</span> : null}
+                  {record.status === "proposed" ? <span className="muted">{t("center.soul.noteProposed")}</span> : null}
                 </span>
-                <Button variant="ghost" size="sm" onClick={() => open(`Chat ${taskId}`, () => onOpen(taskId))}>
+                <Button variant="ghost" size="sm" onClick={() => open(t("center.soul.chat", { task: taskId }), () => onOpen(taskId))}>
                   <ChatName taskId={taskId} /> →
                 </Button>
               </li>
@@ -561,7 +581,7 @@ function ChatNotesAcrossChats({ onOpen }: { readonly onOpen: (taskId: string) =>
           })}
         </ul>
       )}
-      {data?.more === true ? <Empty>More chats have notes than one list holds; open a chat to see its own.</Empty> : null}
+      {data?.more === true ? <Empty>{t("center.soul.notesMore")}</Empty> : null}
       <Failure message={failure} />
     </section>
   );

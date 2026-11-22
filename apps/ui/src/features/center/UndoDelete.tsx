@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useSyncExternalStore, type ReactNod
 import { errorMessage } from "@tavi/contracts/util";
 
 import type { ActionTone } from "../../hooks/use-action.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import type { Outcome } from "../../lib/ipc.js";
 import { Button } from "../../ui/Button.js";
 import { focusRowMenu } from "./RecurringRow.js";
@@ -116,8 +117,15 @@ function flush(): void {
       if (!done.ok) {
         show(pending.key, true);
         unseen = lists.size === 0;
-        update({ said: { scope: pending.scope, note: `${pending.name} was not deleted: ${done.message}`, tone: "failure" } });
-      } else if (lists.size > 0) update({ said: { scope: pending.scope, note: `${pending.name} deleted.`, tone: "note" } });
+        update({
+          said: {
+            scope: pending.scope,
+            note: translateNow("center.undoDelete.notDeleted", { name: pending.name, reason: done.message }),
+            tone: "failure",
+          },
+        });
+      } else if (lists.size > 0)
+        update({ said: { scope: pending.scope, note: translateNow("center.undoDelete.deleted", { name: pending.name }), tone: "note" } });
       // Nobody is looking: the lists read on return no longer have it.
       else show(pending.key, true);
       for (const list of lists) list.current();
@@ -144,7 +152,11 @@ function undo(): void {
   clearTimeout(timer);
   clearTimeout(pauseTimer);
   show(pending.key, true);
-  update({ held: undefined, paused: false, said: { scope: pending.scope, note: `${pending.name} kept.`, tone: "note" } });
+  update({
+    held: undefined,
+    paused: false,
+    said: { scope: pending.scope, note: translateNow("center.undoDelete.kept", { name: pending.name }), tone: "note" },
+  });
   // The row is back: focus goes to its More button, where the delete was asked.
   focusRowMenu(pending.key);
 }
@@ -220,6 +232,7 @@ export function useUndoDelete(settled: () => void, scope: string, delayMs: numbe
  * delete is announced.
  */
 export function UndoToast({ undo, delayMs = UNDO_DELETE_MS }: { readonly undo: UndoDelete; readonly delayMs?: number }) {
+  const t = useT();
   const button = useRef<HTMLButtonElement>(null);
   const hadFocus = useRef(false);
   const given = useRef(false);
@@ -238,9 +251,15 @@ export function UndoToast({ undo, delayMs = UNDO_DELETE_MS }: { readonly undo: U
     <div className="undo-toast-region" role="status">
       {undo.held === undefined ? null : (
         <ToastBody key={undo.held.key} undo={undo} hadFocus={hadFocus} given={given}>
-          <span className="undo-toast-text">{undo.held.name} deleted.</span>
-          <Button ref={button} size="sm" variant="ghost" aria-label={`Undo deleting ${undo.held.name}`} onClick={undo.undo}>
-            Undo
+          <span className="undo-toast-text">{t("center.undoDelete.deleted", { name: undo.held.name })}</span>
+          <Button
+            ref={button}
+            size="sm"
+            variant="ghost"
+            aria-label={t("center.undoDelete.undoLabel", { name: undo.held.name })}
+            onClick={undo.undo}
+          >
+            {t("center.undoDelete.undo")}
           </Button>
           <span className="need-undo-bar" aria-hidden="true" style={{ animationDuration: `${delayMs}ms` }} />
         </ToastBody>

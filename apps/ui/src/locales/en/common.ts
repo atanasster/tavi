@@ -36,4 +36,6 @@ export const common = {
   "common.elapsed.hoursMinutes": "{hours}h {minutes}m",
   "common.toolDuration.milliseconds": "{milliseconds}ms",
   "common.toolDuration.seconds": "{seconds}s",
+  /** A list's last item joined to the rest: "a, b, c". `{rest}` is the earlier items, comma-joined. */
+  "common.list.last": "{rest}, {last}",
 } as const;

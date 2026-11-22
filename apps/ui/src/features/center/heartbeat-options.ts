@@ -1,6 +1,8 @@
 import { type HEARTBEAT_TELL_ME, heartbeatCheckRan, type HeartbeatTickRecord } from "@tavi/contracts";
 
+import { translateNow } from "../../lib/i18n.js";
 import { localDate, todayIn } from "../../lib/time.js";
+import type { UiKey } from "../../locales/en.js";
 
 /** One-tap lines the instructions can take, each a thing the built-in signals see. */
 export const HEARTBEAT_SUGGESTIONS: readonly string[] = [
@@ -9,16 +11,16 @@ export const HEARTBEAT_SUGGESTIONS: readonly string[] = [
   "Scheduled runs that fail",
   "Channels that need signing in again",
 ];
-export const TELL_LABELS: Readonly<Record<(typeof HEARTBEAT_TELL_ME)[number], string>> = {
-  "urgent-now": "Urgent things right away; the rest quietly here and in a summary when your next window opens",
-  "everything-now": "Everything as it happens (still at most the hourly limit)",
-  "digest-only": "Only the summary when your next window opens",
+export const TELL_LABELS: Readonly<Record<(typeof HEARTBEAT_TELL_ME)[number], UiKey>> = {
+  "urgent-now": "center.heartbeatOptions.tell.urgentNow",
+  "everything-now": "center.heartbeatOptions.tell.everythingNow",
+  "digest-only": "center.heartbeatOptions.tell.digestOnly",
 };
-export const PAUSES: readonly { readonly value: string; readonly label: string; readonly forMs?: number }[] = [
-  { value: "1h", label: "For an hour", forMs: 60 * 60_000 },
-  { value: "4h", label: "For 4 hours", forMs: 4 * 60 * 60_000 },
-  { value: "1d", label: "For a day", forMs: 24 * 60 * 60_000 },
-  { value: "resume", label: "Until I resume it" },
+export const PAUSES: readonly { readonly value: string; readonly labelKey: UiKey; readonly forMs?: number }[] = [
+  { value: "1h", labelKey: "center.heartbeatOptions.pause.hour", forMs: 60 * 60_000 },
+  { value: "4h", labelKey: "center.heartbeatOptions.pause.fourHours", forMs: 4 * 60 * 60_000 },
+  { value: "1d", labelKey: "center.heartbeatOptions.pause.day", forMs: 24 * 60 * 60_000 },
+  { value: "resume", labelKey: "center.heartbeatOptions.pause.resume" },
 ];
 export const EGRESS = ["instructions", "signals", "ledger", "memory"] as const;
 /** Today's figures from the log: checks, deeper looks and tokens since the workspace's midnight. */
@@ -37,18 +39,36 @@ export function todaysFigures(
   };
 }
 /** The built-in signal sources by what they watch. */
-export const SOURCE_LABELS: Readonly<Record<string, string>> = {
-  needs: "Approvals, questions and reviews waiting",
-  agenda: "Reminders and events coming up",
-  schedules: "Scheduled runs that fail",
-  apps: "Apps that need signing in again",
+const SOURCE_LABELS: Readonly<Record<string, UiKey>> = {
+  needs: "center.heartbeatOptions.source.needs",
+  agenda: "center.heartbeatOptions.source.agenda",
+  schedules: "center.heartbeatOptions.source.schedules",
+  apps: "center.heartbeatOptions.source.apps",
   // An owner without Connected apps names its channels' source so.
-  connections: "Channels that need signing in again",
-  held: "Messages held for review",
-  messages: "Messages waiting for an answer",
-  sends: "Messages that bounce or fail",
-  routines: "Routines that fail",
-  pages: "Watched pages",
-  rooms: "Rooms waiting to be added or left",
-  storage: "Storage running low",
+  connections: "center.heartbeatOptions.source.connections",
+  held: "center.heartbeatOptions.source.held",
+  messages: "center.heartbeatOptions.source.messages",
+  sends: "center.heartbeatOptions.source.sends",
+  routines: "center.heartbeatOptions.source.routines",
+  pages: "center.heartbeatOptions.source.pages",
+  rooms: "center.heartbeatOptions.source.rooms",
+  storage: "center.heartbeatOptions.source.storage",
 };
+
+/** A built-in signal source's name, in the page's language; undefined for one that is not built in. */
+export function sourceLabel(id: string): string | undefined {
+  const key = SOURCE_LABELS[id];
+  return key === undefined ? undefined : translateNow(key);
+}
+
+/** How often, as a choice in a list: "Every 30m", "Every 2h". */
+export function everyInterval(ms: number): string {
+  return translateNow("center.heartbeatOptions.every", { interval: heartbeatInterval(ms) });
+}
+
+/** A heartbeat interval in the page's language: "30m", "2h", "45s". */
+export function heartbeatInterval(ms: number): string {
+  if (ms % 3_600_000 === 0) return translateNow("center.heartbeatOptions.interval.hours", { count: ms / 3_600_000 });
+  if (ms % 60_000 === 0) return translateNow("center.heartbeatOptions.interval.minutes", { count: ms / 60_000 });
+  return translateNow("center.heartbeatOptions.interval.seconds", { count: Math.round(ms / 1000) });
+}

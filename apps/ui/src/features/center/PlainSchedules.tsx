@@ -2,7 +2,9 @@ import { useId, useState, type ReactNode } from "react";
 import type { ScheduleRecord, SchedulesPayload } from "@tavi/contracts";
 import { definedOnly } from "@tavi/contracts/util";
 
+import { translateNow, useT } from "../../lib/i18n.js";
 import { attempt, type Outcome, type SettingsClient } from "../../lib/ipc.js";
+import type { UiKey } from "../../locales/en.js";
 import { useAction, type ActionTone } from "../../hooks/use-action.js";
 import { Button } from "../../ui/Button.js";
 import { notStartedText } from "./schedule-model.js";
@@ -34,9 +36,9 @@ export interface ScheduleActions {
 }
 
 /** What each change says once the owner took it. */
-const CHANGED: Partial<Record<SchedulesPayload["action"], string>> = {
-  enable: "resumed",
-  disable: "paused",
+const CHANGED: Partial<Record<SchedulesPayload["action"], UiKey>> = {
+  enable: "center.plainSchedules.resumed",
+  disable: "center.plainSchedules.paused",
 };
 
 /** An action that only reads: nothing is read again after it. */
@@ -55,6 +57,7 @@ export function useScheduleActions(
   onFollow?: (taskId: string) => Promise<void>,
   timeZone?: string,
 ): ScheduleActions {
+  const t = useT();
   const { busy, note, tone, run, say } = useAction(reload);
   const [editing, setEditing] = useState<ScheduleRecord | ScheduleDraft | "new">();
   const follow = (taskId: string, done: string, refused: string): Promise<Outcome<string | undefined>> =>
@@ -63,7 +66,7 @@ export function useScheduleActions(
         await onFollow?.(taskId);
         return done;
       },
-      (message) => `${refused}: ${message}. Retry opening it from Chats.`,
+      (message) => t("center.plainSchedules.openRefused", { refused, message }),
     );
   const act = (payload: SchedulesPayload, name: string) =>
     run(`${payload.action}:${payload.scheduleId ?? ""}`, async () => {
@@ -74,10 +77,14 @@ export function useScheduleActions(
       if (!answer.ok) return answer;
       if (payload.action === "run") {
         if (answer.value.taskId)
-          return follow(answer.value.taskId, `${name} started.`, `${name} started, but its task could not be opened`);
-        return { ok: false, message: `${name} did not start: ${notStartedText(answer.value.outcome)}.` };
+          return follow(
+            answer.value.taskId,
+            t("center.plainSchedules.started", { name }),
+            t("center.plainSchedules.startedNotOpened", { name }),
+          );
+        return { ok: false, message: t("center.plainSchedules.notStarted", { name, reason: notStartedText(answer.value.outcome) }) };
       }
-      return { ok: true, value: `${name} ${CHANGED[payload.action] ?? "saved"}.` };
+      return { ok: true, value: t(CHANGED[payload.action] ?? "center.plainSchedules.saved", { name }) };
     });
   const edit = (scheduleId: string): void =>
     void run(
@@ -102,7 +109,11 @@ export function useScheduleActions(
       READ_ONLY,
     );
   const openLast = (taskId: string): void =>
-    void run(`open:${taskId}`, () => follow(taskId, "Task opened.", "Could not open the task"), READ_ONLY);
+    void run(
+      `open:${taskId}`,
+      () => follow(taskId, t("center.plainSchedules.taskOpened"), t("center.plainSchedules.taskNotOpened")),
+      READ_ONLY,
+    );
   const existing = editing !== undefined && editing !== "new" && "scheduleId" in editing ? editing : undefined;
   const form = editing ? (
     <ScheduleForm
@@ -116,7 +127,7 @@ export function useScheduleActions(
       onSaved={(name) => {
         setEditing(undefined);
         reload();
-        say(`${name} ${existing === undefined ? "created" : "saved"}.`);
+        say(t(existing === undefined ? "center.plainSchedules.created" : "center.plainSchedules.saved", { name }));
       }}
     />
   ) : null;
@@ -135,7 +146,7 @@ export type ScheduleDraft = Pick<ScheduleRecord, "name" | "prompt" | "spec" | "m
 /** A copy of `record` to start a new schedule from: its settings, named "<name> (copy)". */
 function scheduleDraft(record: ScheduleRecord): ScheduleDraft {
   return {
-    name: `${record.name} (copy)`,
+    name: translateNow("center.plainSchedules.copyName", { name: record.name }),
     prompt: record.prompt,
     spec: record.spec,
     missedRunPolicy: record.missedRunPolicy,
@@ -172,6 +183,7 @@ export function Switch({
   readonly disabled: boolean;
   readonly onToggle: () => void;
 }) {
+  const t = useT();
   const describedId = useId();
   const said = warning ?? hint;
   return (
@@ -183,7 +195,7 @@ export function Switch({
         aria-checked={on}
         aria-label={label}
         aria-describedby={said === undefined ? undefined : describedId}
-        title={said === undefined ? label : `${label}. ${said}`}
+        title={said === undefined ? label : t("center.plainSchedules.switchTitle", { label, said })}
         disabled={disabled}
         onClick={onToggle}
       />

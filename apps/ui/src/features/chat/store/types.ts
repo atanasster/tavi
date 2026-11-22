@@ -22,7 +22,7 @@ import type { Said } from "./said.js";
 export interface WorkerAnswer {
   readonly text: string;
   readonly status: "sending" | "recorded" | "uncertain" | "failed";
-  readonly message?: string;
+  readonly message?: Said;
   readonly question: PendingQuestionRow;
 }
 
@@ -103,7 +103,7 @@ export interface CanvasRun {
     readonly key: string;
     readonly text: string;
     readonly status: "sending" | "recorded" | "uncertain" | "failed";
-    readonly message?: string;
+    readonly message?: Said;
   };
   readonly run: RunState;
   /** The plugins whose status line this turn's stream set or cleared (`chatPluginStatus`). */
@@ -155,7 +155,7 @@ export interface CanvasState {
     readonly nextCursor?: string;
     readonly needsTruncated: boolean;
     readonly loading: boolean;
-    readonly error?: string;
+    readonly error?: Said;
   };
   readonly connection: ClientState;
   /** Why the client closed on its own: shown with how to get a new link. */

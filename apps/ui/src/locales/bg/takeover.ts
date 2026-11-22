@@ -81,6 +81,9 @@ export const takeover = {
   "takeover.upload.tooMany": { one: "Най-много {count} файл наведнъж.", other: "Най-много {count} файла наведнъж." },
   "takeover.upload.tooBig": "Общо най-много {size}.",
 
+  "takeover.controlled.seconds": "{seconds} сек",
+  "takeover.controlled.minutesSeconds": "{minutes} мин {seconds} сек",
+
   "takeover.decline.unreachable": "Не успях да се свържа с браузъра.",
   "takeover.decline.untold": "Отговорът ти не стигна до Tavi.",
 } as const satisfies CatalogFor<typeof en>;

@@ -26,6 +26,7 @@ import {
   type SystemPromptPreview,
 } from "@tavi/contracts";
 
+import { translateNow } from "../../lib/i18n.js";
 import { mapOutcome, read, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 
 /** The owner command that makes the chat panel's instructions and notes editable. */
@@ -75,7 +76,9 @@ export async function loadArchive(
   );
   if (!answer.ok) return answer;
   const row = answer.value.rows.find((candidate) => candidate.artifactId === artifactId && candidate.workspaceId === workspaceId);
-  return row === undefined ? { ok: false, message: `The archive ${artifactId} is no longer kept.` } : { ok: true, value: row };
+  return row === undefined
+    ? { ok: false, message: translateNow("chatPanel.api.archiveGone", { id: artifactId }) }
+    : { ok: true, value: row };
 }
 
 /** A chat's instructions now, and the chat a delegated task belongs to. */
@@ -280,7 +283,7 @@ export async function keepEditedMemory(
       },
       MemoryItemSchema,
     );
-    return corrected.ok ? corrected : { ...corrected, message: `Kept as proposed; the edit was not saved: ${corrected.message}` };
+    return corrected.ok ? corrected : { ...corrected, message: translateNow("chatPanel.api.editNotSaved", { message: corrected.message }) };
   }
   return read(
     client,

@@ -13,6 +13,9 @@ import { agendaReminderText } from "./reminder-model.js";
 import { ReminderLink } from "./ReminderRows.js";
 import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
+import { useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /** How many of the week's days Coming up shows before the rest is asked for. */
 const DAYS_SHOWN = 2;
@@ -56,6 +59,7 @@ export function ComingUp({
   /** What a reminder's occurrence adds below its cadence: the person, where it was asked. */
   readonly reminderRow: (item: AgendaItem) => ReactNode;
 }) {
+  const t = useT();
   const now = useNow(MINUTE_TICK_MS);
   const today = summaryToday ?? todayIn(timeZone, now);
   const answer = agenda.data;
@@ -68,27 +72,35 @@ export function ComingUp({
   return (
     <>
       <h2 className="center-subhead">
-        Coming up <span>next 7 days{timeZone === undefined ? "" : ` · ${timeZone}`}</span>
+        {withParts(t("center.scheduleLists.comingUp"), {
+          detail: (
+            <span>
+              {timeZone === undefined ? t("center.scheduleLists.next7Days") : t("center.scheduleLists.next7DaysIn", { zone: timeZone })}
+            </span>
+          ),
+        })}
       </h2>
       <LoadState
         error={agenda.error || undefined}
         reload={agenda.reload}
         loading={agenda.loading && answer === undefined}
-        label="Loading what comes up…"
+        label={t("center.scheduleLists.loading")}
         status
       />
-      {answer?.truncated ? (
-        <Notice>Showing the first {answer.items.length} occurrences; later ones this week are not listed.</Notice>
-      ) : null}
+      {answer?.truncated ? <Notice>{t("center.scheduleLists.truncated", { count: answer.items.length })}</Notice> : null}
       {answer !== undefined && answer.skipped.length > 0 ? (
-        <p className="muted schedule-skipped">Left out, their stored schedule cannot be read: {answer.skipped.join(", ")}</p>
+        <p className="muted schedule-skipped">{t("center.scheduleLists.skipped", { names: answer.skipped.join(", ") })}</p>
       ) : null}
-      {!quiet && items?.length === 0 ? <Empty className="center-empty">Nothing runs in the next 7 days.</Empty> : null}
+      {!quiet && items?.length === 0 ? <Empty className="center-empty">{t("center.scheduleLists.nothing")}</Empty> : null}
       {shown.map((day) => {
         const label = longDay(day.date, today);
         const relative = relativeDay(day.date, today, "future")?.replace(/^./, (first) => first.toUpperCase());
         return (
-          <section key={day.date} className="schedule-day" aria-label={relative === undefined ? label : `${relative}, ${label}`}>
+          <section
+            key={day.date}
+            className="schedule-day"
+            aria-label={relative === undefined ? label : t("center.scheduleLists.dayLabel", { relative, day: label })}
+          >
             <h3 className="center-day-head">
               {label}
               {relative === undefined ? null : <span>{relative}</span>}
@@ -114,14 +126,18 @@ export function ComingUp({
       })}
       {rest === 0 ? null : (
         <Button variant="ghost" size="sm" className="schedule-more" aria-expanded={whole} onClick={() => setWhole(!whole)}>
-          {whole ? "Show less" : `Show the rest of the week (${rest} more)`}
+          {whole ? t("center.scheduleLists.showLess") : t("center.scheduleLists.showRest", { count: rest })}
         </Button>
       )}
     </>
   );
 }
 
-const KIND_LABELS: Readonly<Record<AgendaItem["kind"], string>> = { routine: "Routine", schedule: "Schedule", reminder: "Reminder" };
+const KIND_LABELS: Readonly<Record<AgendaItem["kind"], UiKey>> = {
+  routine: "center.scheduleLists.kind.routine",
+  schedule: "center.scheduleLists.kind.schedule",
+  reminder: "center.scheduleLists.kind.reminder",
+};
 
 function AgendaRow({
   item,
@@ -145,6 +161,8 @@ function AgendaRow({
   readonly onOpenSchedule: (scheduleId: string) => void;
   readonly extra: ReactNode;
 }) {
+  const t = useT();
+  const kind = KIND_LABELS[item.kind];
   return (
     <li className={`schedule-item schedule-item-${item.kind}`}>
       <time dateTime={item.at}>{localTime(item.at, timeZone)}</time>
@@ -152,7 +170,9 @@ function AgendaRow({
         <i />
       </span>
       <span className="schedule-what">
-        <span className={`schedule-kind eyebrow schedule-kind-${item.kind}`}>{todo ? "To-do" : (KIND_LABELS[item.kind] ?? item.kind)}</span>
+        <span className={`schedule-kind eyebrow schedule-kind-${item.kind}`}>
+          {todo ? t("center.scheduleLists.kind.todo") : kind === undefined ? item.kind : t(kind)}
+        </span>
         {todo ? (
           <AppLink className="schedule-title" href={centerPath("schedule")} onFollow={() => onOpenReminder(item.id)}>
             {item.title}
@@ -184,7 +204,7 @@ function AgendaRow({
         </span>
       </span>
       {item.overdue === true ? (
-        <span className="schedule-overdue meta-sm">Overdue — runs shortly</span>
+        <span className="schedule-overdue meta-sm">{t("center.scheduleLists.overdue")}</span>
       ) : (
         <span className="schedule-rel meta-sm">{relativeTime(item.at, now, timeZone)}</span>
       )}

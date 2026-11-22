@@ -1,9 +1,9 @@
 import { hostTimeZone, type ReminderFire, type ReminderView, type RoutineDetail, type SchedulesListResult } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 import { useState } from "react";
 
 import { useAction } from "../../hooks/use-action.js";
 import { MINUTE_TICK_MS, useNow } from "../../hooks/use-poll.js";
+import { useT } from "../../lib/i18n.js";
 import { localDate, localTime, relativeTime, shortDay, todayIn } from "../../lib/time.js";
 import { Button } from "../../ui/Button.js";
 import { Confirm } from "../../ui/Confirm.js";
@@ -74,6 +74,7 @@ export function Recurring({
   readonly onOpenSchedule: (scheduleId: string) => void;
   readonly onFollow: (taskId: string) => Promise<void>;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const actions = useAction(changed);
   const scheduleActions = useScheduleActions(client, workspaceId, changed, onFollow, timeZone);
@@ -95,7 +96,9 @@ export function Recurring({
   const plain = schedules.data?.schedules.filter((row) => row.routineId === undefined) ?? [];
   const at = (iso: string): string => `${shortDay(localDate(iso, timeZone))} ${localTime(iso, timeZone)}`;
   const nextText = (next: string | null | undefined): string =>
-    next === null || next === undefined ? "Not armed" : `Next ${at(next)}, ${relativeTime(next, now, timeZone)}`;
+    next === null || next === undefined
+      ? t("center.recurring.notArmed")
+      : t("center.recurring.next", { at: at(next), relative: relativeTime(next, now, timeZone) });
   const zone = timeZone ?? hostTimeZone();
 
   /** A routine's `get`, then `then` with it: Edit and Duplicate start from the routine as it is now. */
@@ -162,15 +165,18 @@ export function Recurring({
       const paused: Entry[] = [];
       const refused: string[] = [];
       for (const entry of pausable) {
-        const done = (await entry.pause?.()) ?? { ok: false as const, message: "it cannot be paused" };
+        const done = (await entry.pause?.()) ?? { ok: false as const, message: t("center.recurring.cannotPause") };
         if (done.ok) paused.push(entry);
-        else refused.push(`${entry.name} (${done.message})`);
+        else refused.push(t("center.recurring.refusedItem", { name: entry.name, reason: done.message }));
       }
       setAskingPauseAll(false);
       setResumable(paused.map((entry) => entry.key));
-      const said = `Paused ${paused.length} of ${pausable.length}${paused.length === 0 ? "" : `: ${paused.map((entry) => entry.name).join(", ")}`}.${
-        refused.length === 0 ? "" : ` Not paused: ${refused.join("; ")}.`
-      }`;
+      const counts = { count: paused.length, total: pausable.length };
+      const done =
+        paused.length === 0
+          ? t("center.recurring.pausedNone", counts)
+          : t("center.recurring.paused", { ...counts, names: paused.map((entry) => entry.name).join(", ") });
+      const said = refused.length === 0 ? done : `${done} ${t("center.recurring.notPaused", { refused: refused.join("; ") })}`;
       return refused.length === 0 ? { ok: true, value: said } : { ok: false, message: said };
     });
   const resumeThose = (): void =>
@@ -182,21 +188,23 @@ export function Recurring({
         if (entry?.resume === undefined) continue;
         const done = await entry.resume();
         if (done.ok) resumed.push(entry.name);
-        else refused.push(`${entry.name} (${done.message})`);
+        else refused.push(t("center.recurring.refusedItem", { name: entry.name, reason: done.message }));
       }
       setResumable([]);
-      const said = `Resumed ${resumed.length}${resumed.length === 0 ? "" : `: ${resumed.join(", ")}`}.${
-        refused.length === 0 ? "" : ` Not resumed: ${refused.join("; ")}.`
-      }`;
+      const done =
+        resumed.length === 0
+          ? t("center.recurring.resumedNone", { count: 0 })
+          : t("center.recurring.resumed", { count: resumed.length, names: resumed.join(", ") });
+      const said = refused.length === 0 ? done : `${done} ${t("center.recurring.notResumed", { refused: refused.join("; ") })}`;
       return refused.length === 0 ? { ok: true, value: said } : { ok: false, message: said };
     });
 
   return (
     <>
       <h2 className="center-subhead schedule-recurring-head" id={UNDO_DELETE_RETURN_ID} tabIndex={-1}>
-        Recurring <span>{loaded ? `${entries.length}` : ""}</span>
+        {t("center.recurring.heading")} <span>{loaded ? `${entries.length}` : ""}</span>
         <Button variant="ghost" size="sm" disabled={busy !== undefined} onClick={scheduleActions.create}>
-          New schedule
+          {t("center.recurring.newSchedule")}
         </Button>
       </h2>
       {schedules.data?.scheduledWork === undefined ? null : <ScheduledWork usage={schedules.data.scheduledWork} />}
@@ -205,7 +213,7 @@ export function Recurring({
         error={schedules.error || undefined}
         reload={schedules.reload}
         loading={(routines.loading && routines.data === undefined) || (schedules.loading && schedules.data === undefined)}
-        label="Loading routines and schedules…"
+        label={t("center.recurring.loading")}
         status
       />
       <ActionNote note={actions.note || undefined} tone={actions.tone} />
@@ -214,12 +222,14 @@ export function Recurring({
       {resumable.length === 0 ? null : (
         <p className="notice cluster">
           <Button size="sm" disabled={busy !== undefined} onClick={resumeThose}>
-            Resume the {plural(resumable.length, "paused item")}
+            {t("center.recurring.resumeThose", { count: resumable.length })}
           </Button>
         </p>
       )}
-      {listed.length === ROUTINES_LIMIT ? <p className="muted">Showing the first {ROUTINES_LIMIT} routines.</p> : null}
-      {schedules.data?.truncated ? <p className="muted">Showing the first {schedules.data.schedules.length} schedules.</p> : null}
+      {listed.length === ROUTINES_LIMIT ? <p className="muted">{t("center.recurring.firstRoutines", { count: ROUTINES_LIMIT })}</p> : null}
+      {schedules.data?.truncated ? (
+        <p className="muted">{t("center.recurring.firstSchedules", { count: schedules.data.schedules.length })}</p>
+      ) : null}
       {copyingReminder === undefined ? null : (
         <NewReminderForm
           timeZone={zone}
@@ -254,37 +264,40 @@ export function Recurring({
           }}
         />
       )}
-      {!quiet && loaded && entries.length === 0 ? <Empty className="center-empty">No routines or schedules yet.</Empty> : null}
+      {!quiet && loaded && entries.length === 0 ? <Empty className="center-empty">{t("center.recurring.empty")}</Empty> : null}
       {entries.length > 0 ? (
         <>
           <div className="schedule-recurring-tools">
-            <div className="center-chips" role="group" aria-label="Show">
+            <div className="center-chips" role="group" aria-label={t("center.recurring.show")}>
               {FILTERS.filter((each) => each.value !== "reminder" || remindersOffered).map((each) => (
                 <FilterChip key={each.value} pressed={filter === each.value} onPick={() => setFilter(each.value)}>
-                  {each.label}
+                  {t(each.labelKey)}
                 </FilterChip>
               ))}
             </div>
-            <SearchField value={text} placeholder="Filter by name" label="Filter recurring by name" onChange={setText} />
+            <SearchField
+              value={text}
+              placeholder={t("center.recurring.filterPlaceholder")}
+              label={t("center.recurring.filterLabel")}
+              onChange={setText}
+            />
             <Button
               size="sm"
               disabled={busy !== undefined || pausable.length === 0 || askingPauseAll}
               onClick={() => setAskingPauseAll(true)}
             >
-              Pause all
+              {t("center.recurring.pauseAll")}
             </Button>
           </div>
           {askingPauseAll ? (
             <InlineConfirm
-              label="Pause all"
-              message={
-                <>
-                  Pause {plural(pausable.length, filtering ? "item shown" : "item")}: {pausable.map((entry) => entry.name).join(", ")}? Each
-                  can be resumed.
-                </>
-              }
-              confirmLabel="Pause them"
-              cancelLabel="Keep running"
+              label={t("center.recurring.pauseAll")}
+              message={t(filtering ? "center.recurring.pauseShownAsk" : "center.recurring.pauseAsk", {
+                count: pausable.length,
+                names: pausable.map((entry) => entry.name).join(", "),
+              })}
+              confirmLabel={t("center.recurring.pauseThem")}
+              cancelLabel={t("center.recurring.keepRunning")}
               focusCancel
               busy={busy !== undefined}
               onConfirm={pauseAll}
@@ -293,10 +306,10 @@ export function Recurring({
           ) : null}
           {/* Mounted while nothing is filtered, so the first filter's count is announced. */}
           <p className={filtering ? "meta-sm muted" : "visually-hidden"} role="status">
-            {filtering ? `${shown.length} of ${entries.length} shown` : ""}
+            {filtering ? t("center.recurring.shownOf", { shown: shown.length, total: entries.length }) : ""}
           </p>
           {shown.length === 0 ? (
-            <Empty className="center-empty">Nothing here matches.</Empty>
+            <Empty className="center-empty">{t("center.recurring.noMatch")}</Empty>
           ) : (
             <ul className="schedule-recurring-list card-flat list-reset">{shown.map((entry) => entry.row)}</ul>
           )}
@@ -310,7 +323,7 @@ export function Recurring({
           onClose={() => setEditingRoutine(undefined)}
           saved={() => {
             setEditingRoutine(undefined);
-            actions.say(`${editingRoutine.routine.name} saved.`);
+            actions.say(t("center.recurring.routineSaved", { name: editingRoutine.routine.name }));
             changed();
           }}
         />
@@ -329,16 +342,16 @@ export function Recurring({
       )}
       {archiving === undefined ? null : (
         <Confirm
-          title="Archive routine"
-          message={`Archive ${archiving.name} and stop its future triggers? Its runs and reports are kept.`}
-          action="Archive"
+          title={t("center.recurring.archiveTitle")}
+          message={t("center.recurring.archiveMessage", { name: archiving.name })}
+          action={t("center.recurring.archive")}
           onConfirm={() =>
             actions.run(`archive:${archiving.routineId}`, () =>
               routineStep(
                 client,
                 workspaceId,
                 { action: "archive", routineId: archiving.routineId, expectedVersion: archiving.version },
-                () => `${archiving.name} archived.`,
+                () => t("center.recurring.archived", { name: archiving.name }),
               ),
             )
           }
@@ -351,12 +364,13 @@ export function Recurring({
 
 /** What the workspace's schedules and routines spent this month, and its share of the monthly budget when one is set. */
 function ScheduledWork({ usage }: { readonly usage: NonNullable<SchedulesListResult["scheduledWork"]> }) {
+  const t = useT();
   const line = scheduledWorkLine(usage);
   return (
     <p className="meta-sm muted schedule-month">
       {line.over ? (
         <>
-          <span className="badge badge-warning">Near budget</span>{" "}
+          <span className="badge badge-warning">{t("center.recurring.nearBudget")}</span>{" "}
         </>
       ) : null}
       {line.text}

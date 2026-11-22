@@ -1,11 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import type { NeedRow } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
 import { answerNeed, listNeeds } from "../center/approvals-api.js";
 import { useAnnounce } from "../../hooks/use-announce.js";
 import { readStored, writeStored } from "../../lib/storage.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import { Icon } from "../../ui/Icon.js";
 import { QuestionCard, answerOutcome, questionNeed, type AnswerState } from "./NeedCard.js";
 import type { SettingsClient } from "../../lib/ipc.js";
@@ -60,16 +60,26 @@ export function notifyHidden(title: string, body: string, tag: string): void {
 
 /** What a need says in one line: the question, or the call an approval names. */
 export function needHeadline(need: NeedRow): { readonly title: string; readonly body: string } {
+  const aChat = (): string => translateNow("needs.notify.aChat");
   if (need.kind === "question")
-    return { title: `${need.question.originLabel ?? need.question.taskTitle ?? "A chat"} asks`, body: need.question.question };
+    return {
+      title: translateNow("needs.notify.asks", { chat: need.question.originLabel ?? need.question.taskTitle ?? aChat() }),
+      body: need.question.question,
+    };
   if (need.kind === "approval")
-    return { title: `${need.approval.taskTitle ?? "A chat"} needs approval`, body: need.approval.summary ?? need.approval.toolId };
+    return {
+      title: translateNow("needs.notify.approval", { chat: need.approval.taskTitle ?? aChat() }),
+      body: need.approval.summary ?? need.approval.toolId,
+    };
   if (need.kind === "connect")
     return {
-      title: `${need.connect.taskTitle ?? "A chat"} waits for ${need.connect.appName}`,
-      body: `Sign in to ${need.connect.appName} again`,
+      title: translateNow("needs.notify.connect", { chat: need.connect.taskTitle ?? aChat(), app: need.connect.appName }),
+      body: translateNow("needs.notify.signIn", { app: need.connect.appName }),
     };
-  return { title: `${need.review.taskTitle ?? "A chat"} has results to review`, body: plural(need.review.artifactCount, "result") };
+  return {
+    title: translateNow("needs.notify.review", { chat: need.review.taskTitle ?? aChat() }),
+    body: translateNow("needs.notify.results", { count: need.review.artifactCount }),
+  };
 }
 
 export interface NeedToastState {
@@ -172,7 +182,7 @@ export function useNeedNotifications({
       try {
         // A notification has no actions: a click opens the page, where a decision is made.
         const shown = new Notification(title, {
-          body: ordered.length > 1 ? `${body} (+${ordered.length - 1} more)` : body,
+          body: ordered.length > 1 ? translateNow("needs.notify.more", { body, count: ordered.length - 1 }) : body,
           tag: newest.needId,
         });
         shown.onclick = () => {
@@ -273,6 +283,7 @@ export function NeedToast({
   /** Told when the question was answered in the toast. */
   readonly onAnswered?: (() => void) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const timeZone = useTimeZone();
   const [answer, setAnswer] = useState<AnswerState>();
@@ -283,10 +294,10 @@ export function NeedToast({
   return (
     // Not a live region: the page's announcer already says what waits, and the
     // card's own status lines would be read twice inside one.
-    <aside ref={box} id={NEED_TOAST_ID} tabIndex={-1} className="need-toast" aria-label="Needs you">
+    <aside ref={box} id={NEED_TOAST_ID} tabIndex={-1} className="need-toast" aria-label={t("needs.toast.label")}>
       <div className="need-toast-head">
         <strong>{title}</strong>
-        <Button variant="ghost" size="sm" aria-label="Dismiss" onClick={onDismiss}>
+        <Button variant="ghost" size="sm" aria-label={t("needs.toast.dismiss")} onClick={onDismiss}>
           <Icon name="close" size="sm" />
         </Button>
       </div>
@@ -309,11 +320,11 @@ export function NeedToast({
       )}
       <div className="need-toast-actions">
         <Button size="sm" onClick={() => onOpen(need)}>
-          Open the task
+          {t("needs.toast.open")}
         </Button>
         {more === 0 ? null : (
           <Button variant="ghost" size="sm" onClick={onOpenAll}>
-            +{more} more in Approvals
+            {t("needs.toast.more", { count: more })}
           </Button>
         )}
       </div>
@@ -321,25 +332,25 @@ export function NeedToast({
   );
 }
 
-const NOTIFY_OFFER_TEXT = "Something needed you while this tab was in the background. Get a browser notification next time?";
-
 /** The one-time, in-context question: notify me when something needs me? */
 export function NotifyOffer({ onAccept, onDecline }: { readonly onAccept: () => void; readonly onDecline: () => void }) {
+  const t = useT();
   const box = useRef<HTMLElement>(null);
   useFocusMainOnLeave(box);
+  const offer = t("needs.offer.text");
   // It comes up unasked, at the page's end: said, so a screen reader hears it is there.
-  useAnnounce(`Notifications are available: ${NOTIFY_OFFER_TEXT}`);
+  useAnnounce(t("needs.offer.announce", { offer }));
   return (
-    <aside ref={box} id={NEED_TOAST_ID} tabIndex={-1} className="need-toast need-offer" aria-label="Notifications">
+    <aside ref={box} id={NEED_TOAST_ID} tabIndex={-1} className="need-toast need-offer" aria-label={t("needs.offer.label")}>
       <p>
-        <Icon name="bell" size="sm" /> {NOTIFY_OFFER_TEXT}
+        <Icon name="bell" size="sm" /> {offer}
       </p>
       <div className="need-toast-actions">
         <Button variant="primary" size="sm" onClick={onAccept}>
-          Turn on
+          {t("needs.offer.accept")}
         </Button>
         <Button variant="ghost" size="sm" onClick={onDecline}>
-          Not now
+          {t("needs.offer.decline")}
         </Button>
       </div>
     </aside>
@@ -352,10 +363,11 @@ export function NotifyOffer({ onAccept, onDecline }: { readonly onAccept: () => 
  * not been given; off stays off until turned on here.
  */
 export function NeedNotifyToggle() {
+  const t = useT();
   const [preference, setPreference] = useState<NotifyPreference>(readPreference);
   const [state, setState] = useState(permission);
   if (state === "unsupported") return null;
-  if (state === "denied") return <span className="muted">Notifications are blocked for this site in the browser's settings</span>;
+  if (state === "denied") return <span className="muted">{t("needs.toggle.blocked")}</span>;
   const on = preference === "on" && state === "granted";
   return (
     <Button
@@ -381,7 +393,7 @@ export function NeedNotifyToggle() {
             .catch(() => setState(permission()));
       }}
     >
-      <Icon name="bell" size="sm" /> {on ? "Notifications on" : "Notify me"}
+      <Icon name="bell" size="sm" /> {on ? t("needs.toggle.on") : t("needs.toggle.off")}
     </Button>
   );
 }

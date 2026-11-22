@@ -1,2 +1,46 @@
 /** The words of features/workers, in English. */
-export const workers = {} as const;
+export const workers = {
+  "workers.tree.cancelRefused": "Cancellation refused",
+  "workers.tree.label": "agent hierarchy",
+  "workers.tree.ancestry": "task ancestry",
+  "workers.tree.loading": "Loading tree…",
+  "workers.tree.ancestryUnknown": "Historical parent/root ancestry is incomplete.",
+  "workers.tree.truncated": "Tree truncated at {tasks} tasks or {ancestors} ancestors. Open a child to inspect its subtree.",
+  "workers.tree.needs":
+    "This agent or the agents under it need: {needs}. A worker's question or browser handoff is answered here and in the chat's transcript.",
+  "workers.tree.completed": "Completed ({count})",
+  "workers.tree.noChildren": "No recorded children.",
+  "workers.tree.updated": "updated {when}",
+  "workers.tree.using": "Using {tool}",
+  "workers.tree.nodeNeeds": "Needs {needs}",
+  "workers.tree.cancel": "Cancel {id}",
+  "workers.tree.dismiss": "Dismiss {id}",
+  "workers.tree.under": { one: "{count} agent under it", other: "{count} agents under it" },
+
+  "workers.needs.worker": "worker {id}",
+  "workers.needs.label": "your workers ask",
+  "workers.needs.whose": "{asker}'s question",
+  "workers.needs.several":
+    "More than one question is open: answer each in its card. A message typed below is sent to the chat, not as an answer.",
+  "workers.needs.asks": "{asker} asks:",
+
+  "workers.view.treeUnavailable": "Tree unavailable. Restart the owner with this build.",
+  "workers.view.treeMismatch": "Tree response belongs to another task or workspace.",
+  "workers.view.finalAnswer": "{label}'s final answer: ",
+  "workers.view.showLess": "Show less",
+  "workers.view.showAll": "Show all",
+  "workers.view.historyUnread": "This worker's history could not be read.",
+  "workers.view.earlierUnread": "Earlier turns could not be read.",
+  "workers.view.title": "Worker {label} — view only",
+  "workers.view.close": "Close",
+  "workers.view.notAChat": "A worker is not a chat: it takes no messages, and what it asks is answered in this chat.",
+  "workers.view.loading": "Loading the worker's history…",
+  "workers.view.loadEarlier": "Load earlier turns",
+  "workers.view.askedOf": "Asked of {label}",
+  "workers.view.failed": "Failed",
+  "workers.view.failedWith": "Failed: {message}",
+  "workers.view.stopped": "Stopped.",
+  "workers.view.waited": "Waited on a person.",
+  "workers.view.working": "Working…",
+  "workers.view.nothingSaved": "Nothing saved yet: a turn shows here once it ends.",
+} as const;

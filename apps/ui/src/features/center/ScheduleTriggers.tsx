@@ -19,6 +19,9 @@ import { Failure, LoadError, Pending, Summary } from "../../ui/Parts.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { emailTriggerConnections, setScheduleEmailTrigger, setScheduleWebhook } from "./schedules-api.js";
 import { Command } from "../../ui/Command.js";
+import { useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
+import type { UiKey } from "../../locales/en.js";
 
 /**
  * The schedule's webhook: off by default; on, a call with its secret fires it now. A new secret is shown here once,
@@ -34,6 +37,7 @@ export function Webhook({
   readonly zone: string | undefined;
   readonly changed: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string>();
@@ -66,46 +70,50 @@ export function Webhook({
   return (
     <div className="schedule-webhook">
       <p>
-        {on ? (
-          <>
-            On since {dayTime(schedule.webhook.since, zone, todayIn(zone))}: a <code>POST</code> to{" "}
-            <code>{schedule.webhookUrl ?? made?.url ?? `<public address>${scheduleWebhookPath(schedule.scheduleId)}`}</code> with its secret
-            runs it now, at most once a minute and {SCHEDULE_WEBHOOK_MAX_PER_HOUR} times an hour. What the call carries reaches the run as
-            quoted data, never as instructions, and the run starts as one that read untrusted content.
-          </>
-        ) : (
-          "Off: nothing outside can start it. Turned on, a call with its secret to the webhook listener runs it now."
-        )}
+        {on
+          ? withParts(
+              t("center.triggers.webhookOn", {
+                since: dayTime(schedule.webhook.since, zone, todayIn(zone)),
+                count: SCHEDULE_WEBHOOK_MAX_PER_HOUR,
+              }),
+              {
+                post: <code>POST</code>,
+                url: (
+                  <code>
+                    {schedule.webhookUrl ??
+                      made?.url ??
+                      t("center.triggers.webhookAddress", { path: scheduleWebhookPath(schedule.scheduleId) })}
+                  </code>
+                ),
+              },
+            )
+          : t("center.triggers.webhookOff")}
       </p>
       {made?.secret === undefined ? null : (
-        <div className="schedule-webhook-secret" role="group" aria-label="New webhook secret">
+        <div className="schedule-webhook-secret" role="group" aria-label={t("center.triggers.newSecretLabel")}>
           <p ref={intro} tabIndex={-1}>
-            New secret below. Copy it now: it is shown once. The secret is stored only as its hash, the signing key only encrypted.
+            {t("center.triggers.newSecretIntro")}
           </p>
           <Summary
             items={[
-              ["Secret", <SecretField key="secret" label="Webhook secret" value={made.secret} />],
-              ["Send it as", <code key="bearer">Authorization: Bearer &lt;secret&gt;</code>],
+              [t("center.triggers.secret"), <SecretField key="secret" kind="secret" value={made.secret} />],
+              [t("center.triggers.sendAs"), <code key="bearer">Authorization: Bearer &lt;secret&gt;</code>],
               made.signingKey !== undefined && [
-                "Or sign with",
-                <SecretField key="signing" label="Webhook signing key" value={made.signingKey} />,
+                t("center.triggers.orSign"),
+                <SecretField key="signing" kind="signing" value={made.signingKey} />,
               ],
               [
-                "Signed calls",
-                made.signingKey === undefined ? (
-                  <>
-                    Need an encrypted credential store (<Command>tavi credentials encrypt</Command>), then a new secret.
-                  </>
-                ) : (
-                  <>
-                    <code>X-Tavi-Timestamp</code> (Unix seconds) and{" "}
-                    <code>X-Tavi-Signature: sha256=&lt;HMAC-SHA256 of "timestamp.body"&gt;</code>
-                  </>
-                ),
+                t("center.triggers.signedCalls"),
+                made.signingKey === undefined
+                  ? withParts(t("center.triggers.needEncrypted"), { command: <Command>tavi credentials encrypt</Command> })
+                  : withParts(t("center.triggers.signedHeaders"), {
+                      timestamp: <code>X-Tavi-Timestamp</code>,
+                      signature: <code>X-Tavi-Signature: sha256=&lt;HMAC-SHA256 of "timestamp.body"&gt;</code>,
+                    }),
               ],
             ]}
           />
-          <Button onClick={done}>Done</Button>
+          <Button onClick={done}>{t("center.triggers.done")}</Button>
         </div>
       )}
       <Failure message={failure} />
@@ -113,27 +121,23 @@ export function Webhook({
         {on ? (
           <>
             <Button ref={newSecret} disabled={busy} onClick={() => setConfirming("rotate")}>
-              New secret
+              {t("center.triggers.newSecret")}
             </Button>
             <Button variant="danger-ghost" disabled={busy} onClick={() => setConfirming("off")}>
-              Turn off
+              {t("center.triggers.turnOff")}
             </Button>
           </>
         ) : (
-          <Button disabled={busy} onClick={() => void turn("on")} aria-label="Turn on webhook">
-            Turn on
+          <Button disabled={busy} onClick={() => void turn("on")} aria-label={t("center.triggers.turnOnWebhook")}>
+            {t("center.triggers.turnOn")}
           </Button>
         )}
       </div>
       {confirming === undefined ? null : (
         <Confirm
-          title={confirming === "off" ? "Turn the webhook off?" : "Make a new secret?"}
-          message={
-            confirming === "off"
-              ? "Calls to its address will be refused, as if it never had one."
-              : "Calls with the current secret or signing key will be refused from now on."
-          }
-          action={confirming === "off" ? "Turn off" : "New secret"}
+          title={confirming === "off" ? t("center.triggers.confirmOffTitle") : t("center.triggers.confirmRotateTitle")}
+          message={confirming === "off" ? t("center.triggers.confirmOffMessage") : t("center.triggers.confirmRotateMessage")}
+          action={confirming === "off" ? t("center.triggers.turnOff") : t("center.triggers.newSecret")}
           onConfirm={() => turn(confirming)}
           onClose={() => setConfirming(undefined)}
         />
@@ -142,24 +146,42 @@ export function Webhook({
   );
 }
 
+/** Each secret's words: its field's name, its Copy button's, and what copying it says. */
+const SECRET_WORDS = {
+  secret: {
+    label: "center.triggers.secretField.secret.label",
+    copy: "center.triggers.secretField.secret.copy",
+    copied: "center.triggers.secretField.secret.copied",
+    notCopied: "center.triggers.secretField.secret.notCopied",
+  },
+  signing: {
+    label: "center.triggers.secretField.signing.label",
+    copy: "center.triggers.secretField.signing.copy",
+    copied: "center.triggers.secretField.signing.copied",
+    notCopied: "center.triggers.secretField.signing.notCopied",
+  },
+} as const satisfies Readonly<Record<string, Readonly<Record<"label" | "copy" | "copied" | "notCopied", UiKey>>>>;
+
 /**
  * A secret shown once: in a read-only field, selected as it gets focus, with Copy beside it. When the browser will not
  * copy, the field is selected for copying by hand, and either outcome is said.
  */
-function SecretField({ label, value }: { readonly label: string; readonly value: string }) {
+function SecretField({ kind, value }: { readonly kind: keyof typeof SECRET_WORDS; readonly value: string }) {
+  const t = useT();
+  const words = SECRET_WORDS[kind];
   const field = useRef<HTMLInputElement>(null);
   const copy = (): void =>
     void copyText(value).then((copied) => {
-      if (copied) return say(`${label} copied.`);
+      if (copied) return say(t(words.copied));
       field.current?.focus();
       field.current?.select();
-      say(`Could not copy: the ${label.toLowerCase()} is selected, copy it by hand.`);
+      say(t(words.notCopied));
     });
   return (
     <span className="schedule-secret-field">
-      <input ref={field} aria-label={label} readOnly value={value} onFocus={(event) => event.currentTarget.select()} />
-      <Button size="sm" variant="ghost" aria-label={`Copy ${label.toLowerCase()}`} onClick={copy}>
-        Copy
+      <input ref={field} aria-label={t(words.label)} readOnly value={value} onFocus={(event) => event.currentTarget.select()} />
+      <Button size="sm" variant="ghost" aria-label={t(words.copy)} onClick={copy}>
+        {t("center.triggers.copy")}
       </Button>
     </span>
   );
@@ -179,6 +201,7 @@ export function EmailTrigger({
   readonly zone: string | undefined;
   readonly changed: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const trigger = schedule.emailTrigger;
   // Read only once a person sets one up: a page that is only looked at asks for no connections.
@@ -211,35 +234,40 @@ export function EmailTrigger({
     }
     changed();
   };
-  const warning =
-    "Email is where injected instructions come from most. List only senders you trust: a run an email starts may only read — no tool that changes or sends anything runs, whatever its tool list allows, besides delivering its result as this schedule is set to — and the email reaches it as quoted data, never as instructions.";
+  const warning = t("center.triggers.emailWarning");
   if (trigger !== undefined)
     return (
       <div className="schedule-email-trigger">
         <p>
-          On since {dayTime(trigger.since, zone, todayIn(zone))}: an email on <code>{trigger.connectionId}</code> from{" "}
-          {trigger.senders.map((sender, index) => (
-            <span key={sender}>
-              {index === 0 ? "" : ", "}
-              <code>{sender}</code>
-            </span>
-          ))}
-          {trigger.subject === undefined ? null : <> with “{trigger.subject}” in its subject</>}, whose domain the channel verified, runs it
-          now, at most once a minute and {SCHEDULE_WEBHOOK_MAX_PER_HOUR} times an hour. Such an email is this trigger's, never also a chat
-          message.
+          {withParts(
+            t(trigger.subject === undefined ? "center.triggers.emailOn" : "center.triggers.emailOnSubject", {
+              since: dayTime(trigger.since, zone, todayIn(zone)),
+              count: SCHEDULE_WEBHOOK_MAX_PER_HOUR,
+            }),
+            {
+              subject: trigger.subject,
+              connection: <code>{trigger.connectionId}</code>,
+              senders: trigger.senders.map((sender, index) => (
+                <span key={sender}>
+                  {index === 0 ? "" : ", "}
+                  <code>{sender}</code>
+                </span>
+              )),
+            },
+          )}
         </p>
         <p className="muted">{warning}</p>
         <Failure message={failure} />
         <div className="actions">
           <Button variant="danger-ghost" disabled={busy} onClick={() => setConfirming(true)}>
-            Turn off
+            {t("center.triggers.turnOff")}
           </Button>
         </div>
         {confirming ? (
           <Confirm
-            title="Turn the email trigger off?"
-            message="Email from its senders will be handled as any other message again."
-            action="Turn off"
+            title={t("center.triggers.confirmEmailOffTitle")}
+            message={t("center.triggers.confirmEmailOffMessage")}
+            action={t("center.triggers.turnOff")}
             onConfirm={() => turn("off")}
             onClose={() => setConfirming(false)}
           />
@@ -248,26 +276,30 @@ export function EmailTrigger({
     );
   return (
     <div className="schedule-email-trigger">
-      <p>Off: no email starts it. Turned on, an email from a sender you list runs it now, read-only.</p>
+      <p>{t("center.triggers.emailOff")}</p>
       {!settingUp ? (
         <div className="actions">
-          <Button onClick={() => setSettingUp(true)}>Set up</Button>
+          <Button onClick={() => setSettingUp(true)}>{t("center.triggers.setUp")}</Button>
         </div>
       ) : (
         <>
           <p className="muted">{warning}</p>
           {connections.loading ? (
-            <Pending label="Loading the email connections…" className="notice" status />
+            <Pending label={t("center.triggers.loadingConnections")} className="notice" status />
           ) : connections.error !== undefined ? (
             <LoadError error={connections.error} reload={connections.reload} />
           ) : offered.length === 0 ? (
-            <p className="muted">No email connection that checks its senders is set up in this workspace.</p>
+            <p className="muted">{t("center.triggers.noConnections")}</p>
           ) : (
             <>
               <label>
-                Email connection
-                <Select aria-label="Email connection" value={connectionId} onChange={(event) => setPicked(event.target.value)}>
-                  <option value="">Choose a connection</option>
+                {t("center.triggers.emailConnection")}
+                <Select
+                  aria-label={t("center.triggers.emailConnection")}
+                  value={connectionId}
+                  onChange={(event) => setPicked(event.target.value)}
+                >
+                  <option value="">{t("center.triggers.chooseConnection")}</option>
                   {offered.map((connection) => (
                     <option key={connection.connectionId} value={connection.connectionId}>
                       {connection.label} ({connection.accountIdentity || connection.connectionId})
@@ -276,31 +308,29 @@ export function EmailTrigger({
                 </Select>
               </label>
               <label>
-                From
+                {t("center.triggers.from")}
                 <input
-                  aria-label="From"
+                  aria-label={t("center.triggers.from")}
                   placeholder="ann@example.com, @example.org"
                   value={senders}
                   onChange={(event) => setSenders(event.target.value)}
                 />
               </label>
               <label>
-                Subject holds (optional)
-                <input aria-label="Subject holds (optional)" value={subject} onChange={(event) => setSubject(event.target.value)} />
+                {t("center.triggers.subject")}
+                <input aria-label={t("center.triggers.subject")} value={subject} onChange={(event) => setSubject(event.target.value)} />
               </label>
-              <p className="muted">
-                Its subject and text, at most {SCHEDULE_EMAIL_MAX_TEXT_BYTES / 1024} KiB, reach the run as quoted, untrusted data.
-              </p>
+              <p className="muted">{t("center.triggers.emailSize", { size: String(SCHEDULE_EMAIL_MAX_TEXT_BYTES / 1024) })}</p>
               <Failure message={failure} />
               <div className="actions">
                 <Button
-                  aria-label="Turn on email trigger"
+                  aria-label={t("center.triggers.turnOnEmail")}
                   disabled={busy || connectionId === "" || listed.length === 0}
                   onClick={() =>
                     void turn({ connectionId, senders: listed, ...(subject.trim() === "" ? {} : { subject: subject.trim() }) })
                   }
                 >
-                  Turn on
+                  {t("center.triggers.turnOn")}
                 </Button>
               </div>
             </>

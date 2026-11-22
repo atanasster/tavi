@@ -1,5 +1,7 @@
 import type { CenterSummaryAnswer, TaskChannelKind, TaskListRow, TaskOrigin } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
+
+import { translateNow } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 
 /**
  * The Command Center's pure reads: what a task's row says about where it
@@ -22,16 +24,25 @@ export type SourceKind = TaskChannelKind | "other";
  * messaging task's source is its channel's provider id,
  * named by the channel's descriptor (`sourceLabel`), never here.
  */
-export const SOURCE_LABELS: Readonly<Record<string, string>> = {
-  web: "Web",
-  terminal: "Terminal",
-  messaging: "Messaging",
-  routine: "Routine",
-  reminder: "Reminder",
-  schedule: "Schedule",
-  agent: "Agent",
-  other: "Other",
-};
+export const SOURCE_LABELS: Readonly<Record<string, string>> = saidLabels({
+  web: "center.model.source.web",
+  terminal: "center.model.source.terminal",
+  messaging: "center.model.source.messaging",
+  routine: "center.model.source.routine",
+  reminder: "center.model.source.reminder",
+  schedule: "center.model.source.schedule",
+  agent: "center.model.source.agent",
+  other: "center.model.source.other",
+});
+
+/** A table of names by their keys, each said in the page's language when read. */
+export function saidLabels<Name extends string>(keys: Readonly<Record<Name, UiKey>>): Readonly<Record<Name, string>> {
+  const said = {} as Record<Name, string>;
+  for (const [name, key] of Object.entries(keys) as [Name, UiKey][]) {
+    Object.defineProperty(said, name, { enumerable: true, get: () => translateNow(key) });
+  }
+  return said;
+}
 
 const ORIGIN_SOURCES: Readonly<Record<TaskOrigin, SourceKind>> = {
   cli: "terminal",
@@ -70,28 +81,29 @@ export function sourceChip(
   const label = row.channel?.label;
   const text = sourceLabel(kind, channelLabel);
   if (label === undefined) return { kind, text };
-  if (kind === "routine" || kind === "schedule") return { kind, text: `${text}: ${label}`, title: label };
+  if (kind === "routine" || kind === "schedule")
+    return { kind, text: translateNow("center.model.sourceNamed", { source: text, name: label }), title: label };
   return { kind, text, title: label };
 }
 
 /** "2 follow-ups": how many prompts a task was sent after its first, or nothing for none. */
 export function followUpsLabel(count: number | undefined): string | undefined {
   if (count === undefined || count <= 0) return undefined;
-  return plural(count, "follow-up");
+  return translateNow("center.model.followUps", { count });
 }
 
 /** Where a task stands, as its row marks it. */
 export type RowMark = "done" | "working" | "needs" | "failed" | "stopped" | "cancelled" | "unknown";
 
-export const ROW_MARK_LABELS: Readonly<Record<RowMark, string>> = {
-  done: "Done",
-  working: "Working",
-  needs: "Needs you",
-  failed: "Failed",
-  stopped: "Stopped",
-  cancelled: "Cancelled",
-  unknown: "Unknown",
-};
+export const ROW_MARK_LABELS: Readonly<Record<RowMark, string>> = saidLabels({
+  done: "center.model.mark.done",
+  working: "center.model.mark.working",
+  needs: "center.model.mark.needs",
+  failed: "center.model.mark.failed",
+  stopped: "center.model.mark.stopped",
+  cancelled: "center.model.mark.cancelled",
+  unknown: "center.model.mark.unknown",
+});
 
 /**
  * A row's mark. Waiting on the reader wins over everything else, including a
@@ -145,11 +157,9 @@ export function previewText(text: string): string {
 
 /** What a row is called: its title, else the start of its prompt, else its id. */
 export function rowTitle(row: Pick<TaskListRow, "title" | "promptPreview" | "taskId">): string {
-  return row.title || row.promptPreview || UNTITLED_CHAT;
+  // A chat with no title and no prompt to name it by: never its task id, which says nothing to a person.
+  return row.title || row.promptPreview || translateNow("shell.session.untitled");
 }
-
-/** A chat with no title and no prompt to name it by: never its task id, which says nothing to a person. */
-export const UNTITLED_CHAT = "Untitled chat";
 
 // ---- People ----------------------------------------------------------------
 

@@ -1,10 +1,11 @@
 import type { MemoryItem } from "@tavi/contracts";
 import { memoryPendingProvidersNote } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 import { useId, useState } from "react";
 
 import { decideMemory, forgetMemory, listMemory } from "../center/memory-api.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import { dayMonth, localDate, localTime } from "../../lib/time.js";
+import { listed } from "../../lib/format.js";
 import { KIND_LABELS, recordTitle, scopeLabel } from "../center/memory-model.js";
 import type { Outcome, SettingsClient } from "../../lib/ipc.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
@@ -45,7 +46,9 @@ async function loadInherited(client: SettingsClient, workspaceId: string): Promi
 export function usedWhen(usedAt: string | undefined, timeZone: string | undefined, now: Date = new Date()): string | undefined {
   if (usedAt === undefined || Number.isNaN(Date.parse(usedAt))) return undefined;
   const date = localDate(usedAt, timeZone);
-  return date === localDate(now.toISOString(), timeZone) ? `today ${localTime(usedAt, timeZone)}` : dayMonth(date);
+  return date === localDate(now.toISOString(), timeZone)
+    ? translateNow("chatPanel.memory.today", { time: localTime(usedAt, timeZone) })
+    : dayMonth(date);
 }
 
 /**
@@ -74,6 +77,7 @@ export function Memory({
   /** What changes when the chat's or the workspace's memory may have: both are read again then. */
   readonly version?: string | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { data, error, reload } = useLoaded(() => loadInherited(client, workspaceId), [version]);
   const taskId = session?.taskId;
@@ -96,11 +100,10 @@ export function Memory({
       ) : (
         <details className="chat-panel-inherited">
           <summary className="disclosure">
-            Global memory ({data.records.length}
-            {data.more ? "+" : ""})
+            {t(data.more ? "chatPanel.memory.globalMore" : "chatPanel.memory.global", { count: data.records.length })}
           </summary>
           {data.records.length === 0 ? (
-            <Empty>Nothing remembered yet.</Empty>
+            <Empty>{t("chatPanel.memory.nothingRemembered")}</Empty>
           ) : (
             <ul className="chat-panel-records">
               {data.records.map((record) => (
@@ -117,9 +120,12 @@ export function Memory({
       )}
       {/* Waiting proposals make the way to the Command Center say what waits there. */}
       {waiting && onCenter === undefined ? (
-        <p className="chat-panel-note meta-sm">{plural(proposals, "proposal waits", "proposals wait")} for review in the Command Center.</p>
+        <p className="chat-panel-note meta-sm">{t("chatPanel.memory.proposalsWait", { count: proposals })}</p>
       ) : (
-        <CenterLink what={waiting ? `Review ${plural(proposals, "proposal")}` : "Soul & memory"} onCenter={onCenter} />
+        <CenterLink
+          what={waiting ? t("chatPanel.memory.reviewProposals", { count: proposals }) : t("chatPanel.memory.soul")}
+          onCenter={onCenter}
+        />
       )}
     </>
   );
@@ -127,22 +133,19 @@ export function Memory({
 
 /** The chat's own memory: resolved to the chat a delegated task belongs to, whose notes it reads. */
 function ChatMemory({ version, taskId, onChanged }: { readonly version: string; readonly taskId: string; readonly onChanged: () => void }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { data, error } = useLoaded(() => loadChatContext(client, workspaceId, taskId));
   if (data === undefined) return <Pending error={error} />;
   const chatTaskId = data.delegatedFrom ?? taskId;
   return (
     <>
-      {data.delegatedFrom === undefined ? null : (
-        <p className="chat-panel-note meta-sm">This agent's task reads the notes of the chat it works for, shown here.</p>
-      )}
+      {data.delegatedFrom === undefined ? null : <p className="chat-panel-note meta-sm">{t("chatPanel.memory.agentNotes")}</p>}
       <ChatNotes version={version} chatTaskId={chatTaskId} readOnly={data.delegatedFrom !== undefined} onChanged={onChanged} />
       {data.delegatedFrom === undefined ? (
-        <section aria-label="this chat's history">
-          <h4>History</h4>
-          <p className="chat-panel-note meta-sm">
-            A long chat summarizes its earlier turns by itself. Fresh context does it at your next message.
-          </p>
+        <section aria-label={t("chatPanel.memory.historyLabel")}>
+          <h4>{t("chatPanel.memory.history")}</h4>
+          <p className="chat-panel-note meta-sm">{t("chatPanel.memory.historyNote")}</p>
           <FreshContext taskId={taskId} version={version} />
           <ForgetHistory version={version} taskId={taskId} onChanged={onChanged} />
         </section>
@@ -183,6 +186,7 @@ function ForgetHistory({
   readonly taskId: string;
   readonly onChanged: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { data } = useLoaded(() => loadTaught(client, workspaceId, taskId), [version]);
   const [asking, setAsking] = useState(false);
@@ -202,16 +206,19 @@ function ForgetHistory({
     }
     const { forgotten, archives = 0, proposals = 0, memories = 0, memoryNotYours, memoryWaitsFor } = answer.value;
     const went = [
-      plural(forgotten, "saved turn"),
-      ...(archives === 0 ? [] : [plural(archives, "archive")]),
-      ...(proposals === 0 ? [] : [plural(proposals, "waiting proposal")]),
-      ...(memories === 0 ? [] : [plural(memories, "memory", "memories")]),
+      t("chatPanel.memory.went.turns", { count: forgotten }),
+      ...(archives === 0 ? [] : [t("chatPanel.memory.went.archives", { count: archives })]),
+      ...(proposals === 0 ? [] : [t("chatPanel.memory.went.proposals", { count: proposals })]),
+      ...(memories === 0 ? [] : [t("chatPanel.memory.went.memories", { count: memories })]),
     ];
     // A bound person's chat keeps their memory (invariant 21), even with the box ticked.
-    const kept = memoryNotYours === true ? " Its memory belongs to the person the chat is with and was not touched." : "";
+    const kept = memoryNotYours === true ? ` ${t("chatPanel.memory.notYours")}` : "";
     // A provider that could not take a removal now is named.
     const waiting = memoryPendingProvidersNote(memoryWaitsFor)?.replace(/^It will/, " What it taught will") ?? "";
-    setSaid({ text: `Forgotten: ${went.join(", ")}.${kept}${waiting} Reopen the chat to see what is left.`, failed: false });
+    setSaid({
+      text: `${t("chatPanel.memory.forgotten", { list: listed(went) })}${kept}${waiting} ${t("chatPanel.memory.reopen")}`,
+      failed: false,
+    });
     setWithMemory(false);
     onChanged();
   };
@@ -221,11 +228,10 @@ function ForgetHistory({
         <InlineConfirm
           focusCancel
           busy={busy}
-          label="Forget this chat's history"
+          label={t("chatPanel.memory.forgetLabel")}
           message={
             <>
-              Forget this chat's history? Its saved turns, the archives of its earlier turns and the memory it proposed that still waits are
-              erased for good. Its folder is not touched.
+              {t("chatPanel.memory.forgetConfirm")}
               {taught === undefined ? null : (
                 <>
                   <br />
@@ -237,14 +243,16 @@ function ForgetHistory({
                       disabled={busy}
                       onChange={(event) => setWithMemory(event.target.checked)}
                     />{" "}
-                    Also forget the {taught} {data?.count === 1 && data.more !== true ? "memory" : "memories"} this chat taught
+                    {t(data?.count === 1 && data.more !== true ? "chatPanel.memory.alsoForgetOne" : "chatPanel.memory.alsoForget", {
+                      taught,
+                    })}
                   </label>
                 </>
               )}
             </>
           }
-          confirmLabel={busy ? "Forgetting…" : "Forget history"}
-          cancelLabel="Keep it"
+          confirmLabel={busy ? t("chatPanel.memory.forgetting") : t("chatPanel.memory.forgetHistory")}
+          cancelLabel={t("chatPanel.memory.keepIt")}
           onConfirm={() => void forget()}
           onCancel={() => setAsking(false)}
         />
@@ -257,7 +265,7 @@ function ForgetHistory({
             setAsking(true);
           }}
         >
-          Forget history…
+          {t("chatPanel.memory.forgetMore")}
         </Button>
       )}
       <StatusNote note={said?.text} className={said?.failed === true ? "failure" : "chat-panel-note meta-sm"} />
@@ -271,6 +279,7 @@ function ForgetHistory({
  * What proposals that summary's flush makes wait in the Command Center.
  */
 function FreshContext({ taskId, version }: { readonly taskId: string; readonly version: string }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   // "Your next message starts a new epoch" holds until that message: the chat's next run (its newest, by id) clears it;
   // earlier runs loaded into view do not.
@@ -281,7 +290,7 @@ function FreshContext({ taskId, version }: { readonly taskId: string; readonly v
   return (
     <>
       <Button variant="ghost" size="sm" disabled={state.busy} onClick={state.ask}>
-        Fresh context
+        {t("chatPanel.memory.fresh")}
       </Button>
       <StatusNote note={state.said} className={state.failed === true ? "failure" : "chat-panel-note meta-sm"} />
     </>
@@ -326,6 +335,7 @@ function ChatNotes({
   readonly readOnly: boolean /** Told after each change, which may move a record into or out of the workspace's memory. */;
   readonly onChanged: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   /** The workspace's zone, the one when a record was used is said in. */
   const timeZone = useTimeZone();
@@ -351,7 +361,7 @@ function ChatNotes({
       <span className="chat-panel-item-title truncate">{recordTitle(record)}</span>
       <span className="chat-panel-item-detail meta-sm">
         {KIND_LABELS[record.kind]}
-        {record.status === "proposed" ? " · proposed" : ""}
+        {record.status === "proposed" ? ` · ${t("chatPanel.memory.proposed")}` : ""}
         {readOnly
           ? null
           : actions.map((action) => (
@@ -365,26 +375,26 @@ function ChatNotes({
   const decide = (record: MemoryItem) =>
     record.status === "proposed"
       ? [
-          { label: "Keep", run: () => decideMemory(client, workspaceId, record.recordId, true) },
-          { label: "Discard", run: () => decideMemory(client, workspaceId, record.recordId, false) },
+          { label: t("chatPanel.memory.keep"), run: () => decideMemory(client, workspaceId, record.recordId, true) },
+          { label: t("chatPanel.memory.discard"), run: () => decideMemory(client, workspaceId, record.recordId, false) },
         ]
       : [];
   return (
     <>
-      <section aria-label="this chat's notes">
-        <h4>Chat notes</h4>
-        <p className="chat-panel-note meta-sm">Recalled in this chat only, for as long as it lasts.</p>
+      <section aria-label={t("chatPanel.memory.notesLabel")}>
+        <h4>{t("chatPanel.memory.notes")}</h4>
+        <p className="chat-panel-note meta-sm">{t("chatPanel.memory.notesNote")}</p>
         {data.notes.length === 0 ? (
-          <Empty>No notes yet.</Empty>
+          <Empty>{t("chatPanel.memory.noNotes")}</Empty>
         ) : (
           <ul className="chat-panel-records">
             {data.notes.map((record) =>
               row(record, [
                 ...decide(record),
                 ...(record.status === "approved"
-                  ? [{ label: "Remember everywhere", run: () => moveMemory(client, workspaceId, record, "personal") }]
+                  ? [{ label: t("chatPanel.memory.everywhere"), run: () => moveMemory(client, workspaceId, record, "personal") }]
                   : []),
-                { label: "Forget", run: () => forgetMemory(client, workspaceId, record.recordId) },
+                { label: t("chatPanel.memory.forget"), run: () => forgetMemory(client, workspaceId, record.recordId) },
               ]),
             )}
           </ul>
@@ -401,44 +411,46 @@ function ChatNotes({
               });
             }}
           >
-            <Field id={id} label="A note for this chat" labelClassName="visually-hidden">
+            <Field id={id} label={t("chatPanel.memory.noteField")} labelClassName="visually-hidden">
               <input
                 className="field-sm"
                 value={note}
-                placeholder="Add a note for this chat"
+                placeholder={t("chatPanel.memory.notePlaceholder")}
                 onChange={(event) => setNote(event.target.value)}
               />
             </Field>
             <Button variant="ghost" size="sm" type="submit" disabled={busy || note.trim() === ""}>
-              Add
+              {t("chatPanel.memory.add")}
             </Button>
           </form>
         )}
       </section>
-      <section aria-label="learned in this chat">
-        <h4>Learned here</h4>
-        <p className="chat-panel-note meta-sm">Memory this chat added for every chat.</p>
+      <section aria-label={t("chatPanel.memory.learnedLabel")}>
+        <h4>{t("chatPanel.memory.learned")}</h4>
+        <p className="chat-panel-note meta-sm">{t("chatPanel.memory.learnedNote")}</p>
         {data.learned.length === 0 ? (
-          <Empty>Nothing yet.</Empty>
+          <Empty>{t("chatPanel.memory.nothingYet")}</Empty>
         ) : (
           <ul className="chat-panel-records">
             {data.learned.map((record) =>
               row(record, [
                 ...decide(record),
                 ...(record.status === "approved" && record.target !== "shared"
-                  ? [{ label: "Keep to this chat", run: () => moveMemory(client, workspaceId, record, `chat:${chatTaskId}`) }]
+                  ? [{ label: t("chatPanel.memory.keepHere"), run: () => moveMemory(client, workspaceId, record, `chat:${chatTaskId}`) }]
                   : []),
-                ...(record.target === "shared" ? [] : [{ label: "Forget", run: () => forgetMemory(client, workspaceId, record.recordId) }]),
+                ...(record.target === "shared"
+                  ? []
+                  : [{ label: t("chatPanel.memory.forget"), run: () => forgetMemory(client, workspaceId, record.recordId) }]),
               ]),
             )}
           </ul>
         )}
       </section>
-      <section aria-label="used in this chat">
-        <h4>Used here</h4>
-        <p className="chat-panel-note meta-sm">Memory used in this chat: what its answers were given, most recent first.</p>
+      <section aria-label={t("chatPanel.memory.usedLabel")}>
+        <h4>{t("chatPanel.memory.used")}</h4>
+        <p className="chat-panel-note meta-sm">{t("chatPanel.memory.usedNote")}</p>
         {data.used.length === 0 ? (
-          <Empty>Nothing recalled yet.</Empty>
+          <Empty>{t("chatPanel.memory.nothingRecalled")}</Empty>
         ) : (
           <ul className="chat-panel-records">
             {data.used.map((record) => {
@@ -449,8 +461,9 @@ function ChatNotes({
                     {recordTitle(record)}
                   </span>
                   <span className="chat-panel-item-detail meta-sm">
-                    {KIND_LABELS[record.kind]} · {record.target.startsWith("chat:") ? "This chat" : scopeLabel(record.target, {})}
-                    {when === undefined ? "" : ` · used ${when}`}
+                    {KIND_LABELS[record.kind]} ·{" "}
+                    {record.target.startsWith("chat:") ? t("chatPanel.thisChat") : scopeLabel(record.target, {})}
+                    {when === undefined ? "" : ` · ${t("chatPanel.memory.usedWhen", { when })}`}
                   </span>
                 </li>
               );

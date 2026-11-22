@@ -14,6 +14,7 @@ import {
 import { errorMessage } from "@tavi/contracts/util";
 
 import { readChunks } from "../../lib/chunks.js";
+import { translateNow } from "../../lib/i18n.js";
 import { saveFile } from "../../lib/download.js";
 import { read, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 
@@ -114,7 +115,7 @@ export async function readFolderFile(
   path: string,
 ): Promise<Outcome<{ readonly name: string; readonly bytes: Uint8Array<ArrayBuffer> }>> {
   const name = path.split("/").at(-1) ?? path;
-  const changed = `${name} changed while it was downloaded. Download it again.`;
+  const changed = translateNow("chatPanel.download.changed", { name });
   let first: string | undefined;
   let bytes: Uint8Array<ArrayBuffer> | undefined;
   let filled = 0;
@@ -135,7 +136,7 @@ export async function readFolderFile(
       ),
     (chunk) => {
       if (chunk.totalBytes > FOLDER_READ_MAX_BYTES)
-        return `${name} is larger than the ${FOLDER_READ_MAX_BYTES / (1024 * 1024)} MiB a download may be.`;
+        return translateNow("chatPanel.download.tooLargeMax", { name, size: String(FOLDER_READ_MAX_BYTES / (1024 * 1024)) });
       first ??= chunk.hash;
       bytes ??= new Uint8Array(chunk.totalBytes);
       if (chunk.totalBytes !== bytes.length) return changed;
@@ -143,7 +144,7 @@ export async function readFolderFile(
       try {
         part = Uint8Array.from(atob(chunk.base64), (character) => character.charCodeAt(0));
       } catch {
-        return `${name} came back unreadable.`;
+        return translateNow("chatPanel.download.unreadable", { name });
       }
       // The chunks tile the file: each starts where the last ended, none is empty but an empty file's, none runs past the end.
       if (
@@ -152,26 +153,25 @@ export async function readFolderFile(
         chunk.offset + part.length > bytes.length ||
         (chunk.nextOffset !== null && chunk.nextOffset !== chunk.offset + part.length)
       )
-        return `${name} came back in pieces that do not fit together.`;
+        return translateNow("chatPanel.download.pieces", { name });
       bytes.set(part, chunk.offset);
       filled = chunk.offset + part.length;
       return undefined;
     },
-    { changed, maxChunks: MAX_CHUNKS, tooLarge: `${name} is larger than a download may be.` },
+    { changed, maxChunks: MAX_CHUNKS, tooLarge: translateNow("chatPanel.download.tooLarge", { name }) },
   );
   if (!last.ok) return last.code === "CONFLICT" ? { ok: false, message: changed, code: "CONFLICT" } : last;
-  if (bytes === undefined || filled !== bytes.length) return { ok: false, message: `${name} came back incomplete.` };
+  if (bytes === undefined || filled !== bytes.length)
+    return { ok: false, message: translateNow("chatPanel.download.incomplete", { name }) };
   const subtle = globalThis.crypto?.subtle;
-  if (subtle === undefined)
-    return { ok: false, message: "This page cannot check a download here: open the canvas over https or on localhost." };
+  if (subtle === undefined) return { ok: false, message: translateNow("chatPanel.download.insecure") };
   let digest: string;
   try {
     digest = hex(await subtle.digest("SHA-256", bytes));
   } catch (error) {
     return { ok: false, message: errorMessage(error) };
   }
-  if (digest !== last.value.hash)
-    return { ok: false, message: `${name} failed its checksum (SHA-256 mismatch): it changed while it was downloaded. Download it again.` };
+  if (digest !== last.value.hash) return { ok: false, message: translateNow("chatPanel.download.checksum", { name }) };
   return { ok: true, value: { name: last.value.name, bytes } };
 }
 

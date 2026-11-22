@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReminderFireView } from "@tavi/contracts";
 
 import { useAction } from "../../hooks/use-action.js";
+import { useT } from "../../lib/i18n.js";
 import { mapOutcome, type SettingsClient } from "../../lib/ipc.js";
 import { readStoredJson, writeStoredJson } from "../../lib/storage.js";
 import { dayTime, todayIn } from "../../lib/time.js";
@@ -23,15 +24,16 @@ export function UnseenReminderCards({
   /** A card was answered: the unseen list is read again. */
   readonly changed: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { busy, note, tone, run } = useAction(changed);
   if (fires.length === 0 && note === undefined) return null;
   const key = (fire: ReminderFireView) => `${fire.reminderId}@${fire.fireAt}`;
   return (
-    <section className="reminder-cards" aria-label="Reminders">
+    <section className="reminder-cards" aria-label={t("center.reminderNotify.heading")}>
       <h2 className="eyebrow">
         <Icon name="bell" size="sm" />
-        Reminders
+        {t("center.reminderNotify.heading")}
       </h2>
       <ul className="list-reset">
         {fires.map((fire) => (
@@ -39,14 +41,14 @@ export function UnseenReminderCards({
             <span className="reminder-card-text">{fire.text}</span>
             <span className="reminder-card-when meta-sm">
               {dayTime(fire.firedAt ?? fire.fireAt, timeZone, todayIn(timeZone))}
-              {fire.late === true ? " · late" : ""}
+              {fire.late === true ? ` · ${t("center.reminderModel.late")}` : ""}
             </span>
             <span className="reminder-card-actions">
               {/* Outlined, not filled: several reminders stack in the rail, and a filled bar on each was the loudest thing on
                   the page. The snoozes are quieter still. */}
               <Button
                 size="sm"
-                aria-label={`Done: ${fire.text}`}
+                aria-label={t("center.reminderNotify.doneFor", { text: fire.text })}
                 disabled={busy !== undefined}
                 onClick={() =>
                   void run(`done:${key(fire)}`, async () => {
@@ -55,23 +57,27 @@ export function UnseenReminderCards({
                   })
                 }
               >
-                Done
+                {t("center.reminderNotify.done")}
               </Button>
               {([10, 60] as const).map((minutes) => (
                 <Button
                   variant="ghost"
                   size="sm"
                   key={minutes}
-                  aria-label={`Snooze ${minutes === 10 ? "10 min" : "1 h"}: ${fire.text}`}
+                  aria-label={t(minutes === 10 ? "center.reminderNotify.snooze10For" : "center.reminderNotify.snooze60For", {
+                    text: fire.text,
+                  })}
                   disabled={busy !== undefined}
                   onClick={() =>
                     void run(`snooze:${key(fire)}`, async () => {
                       const done = await snoozeReminder(client, workspaceId, fire.reminderId, minutes, fire.fireAt);
-                      return mapOutcome(done, (value) => `Snoozed “${fire.text}” until ${dayTime(value.followUp.fireAt, timeZone)}.`);
+                      return mapOutcome(done, (value) =>
+                        t("center.reminderNotify.snoozed", { text: fire.text, at: dayTime(value.followUp.fireAt, timeZone) }),
+                      );
                     })
                   }
                 >
-                  Snooze {minutes === 10 ? "10 min" : "1 h"}
+                  {t(minutes === 10 ? "center.reminderPage.snooze10" : "center.reminderPage.snooze60")}
                 </Button>
               ))}
             </span>
@@ -93,12 +99,12 @@ function notificationState(): NotificationState {
  * notification while the canvas is open.
  */
 export function NotificationToggle() {
+  const t = useT();
   const [state, setState] = useState<NotificationState>(notificationState);
   const [asking, setAsking] = useState(false);
   if (state === "unsupported") return null;
-  if (state === "granted") return <span className="muted reminder-notify-on">Notifications on while this page is open</span>;
-  if (state === "denied")
-    return <span className="muted reminder-notify-off">Notifications are blocked for this site in the browser's settings</span>;
+  if (state === "granted") return <span className="muted reminder-notify-on">{t("center.reminderNotify.on")}</span>;
+  if (state === "denied") return <span className="muted reminder-notify-off">{t("center.reminderNotify.blocked")}</span>;
   return (
     <Button
       variant="ghost"
@@ -112,7 +118,7 @@ export function NotificationToggle() {
       }}
     >
       <Icon name="bell" size="sm" />
-      Turn on notifications
+      {t("center.reminderNotify.turnOn")}
     </Button>
   );
 }

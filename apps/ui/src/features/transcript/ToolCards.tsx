@@ -12,7 +12,7 @@ import {
   toolCallHeadline,
   toolFamily,
 } from "@tavi/contracts";
-import { clip, plural } from "@tavi/contracts/util";
+import { clip } from "@tavi/contracts/util";
 
 import { AppLink } from "../shell/AppLink.js";
 import { ConnectCard, connectAskOf, type ConnectAsk } from "../apps/ConnectCard.js";
@@ -23,6 +23,9 @@ import { taskPath } from "../shell/route.js";
 import { ErrorBoundary } from "../../ui/ViewBoundary.js";
 import { Failure } from "../../ui/Parts.js";
 import { render } from "./Receipts.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
+import { saidRecord } from "../shell/said.js";
 
 /**
  * What counts a render of each entry, when something installs one — the
@@ -43,7 +46,7 @@ export function instrumentRenders(count: ((key: string) => void) | undefined): v
 
 /** A failover's line, the same inside a block or on its own. */
 export function failoverText(boundary: AttemptBoundary): string {
-  return `Retried on another model: ${boundary.reason}`;
+  return translateNow("transcript.tool.retriedOn", { reason: boundary.reason });
 }
 
 /** What one tool family adds to the generic card. */
@@ -123,10 +126,11 @@ function Payload({ label, children }: { readonly label: string; readonly childre
 
 /** A tool card's input and output, each as a `Payload`. */
 function Payloads({ card }: { readonly card: ToolCard }) {
+  const t = useT();
   return (
     <>
-      {card.input !== undefined ? <Payload label="What the tool was given">{render(card.input)}</Payload> : null}
-      {card.output !== undefined ? <Payload label="What the tool answered">{render(card.output)}</Payload> : null}
+      {card.input !== undefined ? <Payload label={t("transcript.tool.input")}>{render(card.input)}</Payload> : null}
+      {card.output !== undefined ? <Payload label={t("transcript.tool.output")}>{render(card.output)}</Payload> : null}
     </>
   );
 }
@@ -149,12 +153,15 @@ function PastChatLinks({
   readonly found: number;
   readonly chats: readonly { readonly taskId: string; readonly title: string }[];
 }) {
+  const t = useT();
   const open = useContext(OpenChatContext);
   if (chats.length === 0)
-    return <p className="meta-base">{found === 0 ? "No earlier chat matched." : `${plural(found, "chat")} found; none can be listed.`}</p>;
+    return (
+      <p className="meta-base">{found === 0 ? t("transcript.pastChats.none") : t("transcript.pastChats.unlisted", { count: found })}</p>
+    );
   return (
     <>
-      <ul className="past-chats" aria-label="Earlier chats found">
+      <ul className="past-chats" aria-label={t("transcript.pastChats.label")}>
         {chats.map((chat) => (
           <li key={chat.taskId}>
             <AppLink href={taskPath(chat.taskId)} onFollow={open === undefined ? undefined : () => open(chat.taskId)}>
@@ -163,9 +170,7 @@ function PastChatLinks({
           </li>
         ))}
       </ul>
-      {found > chats.length ? (
-        <p className="meta-base">{plural(found - chats.length, "more chat")} not listed: the answer was too long to show whole.</p>
-      ) : null}
+      {found > chats.length ? <p className="meta-base">{t("transcript.pastChats.more", { count: found - chats.length })}</p> : null}
     </>
   );
 }
@@ -186,7 +191,7 @@ const TOOL_ID_RENDERERS: Record<string, ToolRenderer> = {
   "video.pose": { headline: (card) => toolCallHeadline(card.toolName, card.input), body: (card) => <VideoCard card={card} /> },
   [SESSIONS_SEARCH_TOOL_ID]: {
     label: (card) => {
-      if (card.status === "running") return "Searching earlier chats";
+      if (card.status === "running") return translateNow("transcript.pastChats.searching");
       const cited = card.status === "completed" ? pastChatSearchCitations(card.output) : undefined;
       return cited === undefined ? undefined : pastChatSearchSummary(cited.found);
     },
@@ -230,7 +235,18 @@ export function headlineOf(card: ToolCard): string | undefined {
  * expected rather than exceptional: it is caught here, named, and the rows
  * around it are untouched.
  */
-export function EntryBoundary({ children, what }: { readonly children: ReactNode; readonly what: string }) {
+/** What an entry is, as its error row names it. */
+type EntryKind = "answer" | "message" | "note" | "toolCall" | "connectCard";
+
+const UNRENDERED: Readonly<Record<EntryKind, UiKey>> = {
+  answer: "transcript.unrendered.answer",
+  message: "transcript.unrendered.message",
+  note: "transcript.unrendered.note",
+  toolCall: "transcript.unrendered.toolCall",
+  connectCard: "transcript.unrendered.connectCard",
+};
+
+export function EntryBoundary({ children, what }: { readonly children: ReactNode; readonly what: EntryKind }) {
   // A card that threw mid-flight — a half-written payload — is tried again
   // once its payload changes, rather than staying an error row for the rest
   // of the session. One that is genuinely undrawable simply fails again.
@@ -238,23 +254,19 @@ export function EntryBoundary({ children, what }: { readonly children: ReactNode
     <ErrorBoundary
       resetOn={children}
       logAs="a transcript entry"
-      fallback={(failed) => (
-        <p className="unrendered">
-          This {what} could not be shown ({failed}). The rest of the session is unaffected.
-        </p>
-      )}
+      fallback={(failed) => <p className="unrendered">{translateNow(UNRENDERED[what], { failed })}</p>}
     >
       {children}
     </ErrorBoundary>
   );
 }
 
-const STATUS_LABELS: Readonly<Record<ToolCard["status"], string>> = {
-  running: "running",
-  completed: "done",
-  failed: "failed",
-  interrupted: "interrupted",
-};
+const STATUS_LABELS: Readonly<Record<ToolCard["status"], string>> = saidRecord({
+  running: "transcript.tool.status.running",
+  completed: "transcript.tool.status.completed",
+  failed: "transcript.tool.status.failed",
+  interrupted: "transcript.tool.status.interrupted",
+});
 
 /** A family's words for the call, in place of its id; nothing when it has none or its renderer threw. */
 function labelOf(card: ToolCard): string | undefined {
@@ -327,10 +339,11 @@ function ToolBody({ card }: { readonly card: ToolCard }) {
 /** One tool call: collapsed, with its family's headline and its status on the summary. */
 export const Tool = memo(function Tool({ card }: { readonly card: ToolCard }) {
   countRender?.(card.key);
+  const t = useT();
   return (
     <details className={`tool tool-${card.status}`} data-tool-key={card.key}>
       <summary className="disclosure">
-        <span className="visually-hidden">tool: </span>
+        <span className="visually-hidden">{t("transcript.tool.said")}</span>
         <ToolLine card={card} />
       </summary>
       <ToolBody card={card} />
@@ -414,11 +427,12 @@ export const ToolGroup = memo(function ToolGroup({ cards, failovers }: ToolGroup
   const steps = cards.filter((card) => card.toolName !== PLAN_TOOL_ID);
   // The step under way, if any: the block's summary says what the turn is doing now.
   const current = steps.findLast((card) => card.status === "running");
+  const t = useT();
   return (
     <>
       <details className={failed > 0 ? "tools tools-failed" : "tools"} data-tool-key={solo?.key}>
         <summary className="disclosure">
-          <span className="visually-hidden">tool: </span>
+          <span className="visually-hidden">{t("transcript.tool.said")}</span>
           {solo !== undefined ? (
             <ToolLine card={solo} />
           ) : (
@@ -426,16 +440,18 @@ export const ToolGroup = memo(function ToolGroup({ cards, failovers }: ToolGroup
               {/* Its words keep one line; the calls' names after them give way (ellipsis) in a narrow line. */}
               <span className="tool-label">
                 {steps.length === 0
-                  ? "Updated the plan"
-                  : `${current === undefined ? "Worked" : "Working"} · ${plural(steps.length, "step")}`}
+                  ? t("transcript.tool.updatedPlan")
+                  : t(current === undefined ? "transcript.tool.worked" : "transcript.tool.working", { count: steps.length })}
               </span>
               <span className="tool-headline meta-base truncate">
                 {current === undefined ? tally(steps) : `${current.toolName} ${headlineOf(current) ?? ""}`.trimEnd()}
               </span>
-              {failed > 0 ? <span className="badge badge-plain status-tool-failed">{failed} failed</span> : null}
+              {failed > 0 ? (
+                <span className="badge badge-plain status-tool-failed">{t("transcript.tool.failedCount", { count: failed })}</span>
+              ) : null}
             </>
           )}
-          {failovers.length > 0 ? <span className="badge badge-plain">retried</span> : null}
+          {failovers.length > 0 ? <span className="badge badge-plain">{t("transcript.tool.retried")}</span> : null}
         </summary>
         {failovers.map((boundary) => (
           <p key={boundary.key} className="boundary">
@@ -443,18 +459,18 @@ export const ToolGroup = memo(function ToolGroup({ cards, failovers }: ToolGroup
           </p>
         ))}
         {solo !== undefined ? (
-          <EntryBoundary what="tool call">
+          <EntryBoundary what="toolCall">
             <ToolBody card={solo} />
           </EntryBoundary>
         ) : (
           cards.map((card) => (
-            <EntryBoundary key={card.key} what="tool call">
+            <EntryBoundary key={card.key} what="toolCall">
               <Tool card={card} />
             </EntryBoundary>
           ))
         )}
       </details>
-      <EntryBoundary what="connect card">
+      <EntryBoundary what="connectCard">
         <ConnectCards cards={cards} />
       </EntryBoundary>
     </>

@@ -1,5 +1,4 @@
 import { formatBrowserDuration, type BrowserSessionView, type CenterSummaryAnswer } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { AppLink } from "../shell/AppLink.js";
@@ -8,6 +7,7 @@ import { useOpenError } from "../../hooks/use-action.js";
 import { useLazyLoad } from "../../hooks/use-loaded.js";
 import { useNearViewport } from "../../hooks/use-near-viewport.js";
 import { taskPath } from "../shell/route.js";
+import { useT } from "../../lib/i18n.js";
 import type { Outcome, SettingsClient } from "../../lib/ipc.js";
 import { appendPage, refreshFirstPage, useOlderPage, type Paged } from "../../lib/paging.js";
 import { Disclosure, Failure, LoadMore, LoadState, PageHead } from "../../ui/Parts.js";
@@ -146,6 +146,7 @@ export function Browser({
   /** Open a card's task, at the call that opened its session when the owner recorded it. */
   readonly onOpenTask: (taskId: string, openedByCallId: string | undefined) => Promise<void>;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const throttled = useThrottledRevision(revision, BROWSER_REFRESH_MS);
   /** The newest live sessions, when they were read, and whether more are open than one read lists. */
@@ -195,7 +196,8 @@ export function Browser({
   const moreLive =
     live?.truncated === true ? Math.max(0, (summary?.counts.liveBrowserSessions ?? 0) - open.filter((item) => item.live).length) : 0;
 
-  const openTask = (item: BrowserSessionView): void => follow(`Task ${item.taskId}`, () => onOpenTask(item.taskId, item.openedByCallId));
+  const openTask = (item: BrowserSessionView): void =>
+    follow(t("center.browser.task", { id: item.taskId }), () => onOpenTask(item.taskId, item.openedByCallId));
   const slot = useCenterBrowserSlot();
   // A live tile on the newest live cards only: each is a watch on the connection every tab shares.
   const tiles = new Set(
@@ -229,32 +231,35 @@ export function Browser({
       <PageHead
         className="center-head"
         id="center-browser-title"
-        title="Browser"
-        description="Sites the agent has open or visited, by task. Kept 30 days; addresses are stored without query strings."
+        title={t("center.browser.title")}
+        description={t("center.browser.description")}
       />
       <LoadState
         error={error}
         reload={() => setAttempt((value) => value + 1)}
         loading={!loaded && error === undefined}
-        label="Loading browser history…"
+        label={t("center.browser.loading")}
         status
       >
         <Failure message={openError} alert={false} />
       </LoadState>
       {loaded && open.length === 0 && closed.length === 0 ? (
         <div className="empty-state">
-          <p>Nothing browsed in the last 30 days.</p>
+          <p>{t("center.browser.empty")}</p>
         </div>
       ) : null}
       {open.length === 0 ? null : (
         <section className="browser-group" aria-labelledby="browser-open-title">
           <h2 id="browser-open-title" className="center-day-head">
-            Open now<span>{open.filter((item) => item.live).length} live</span>
+            {t("center.browser.openNow")}
+            <span>{t("center.browser.liveCount", { count: open.filter((item) => item.live).length })}</span>
           </h2>
           <ul className="browser-grid list-reset">{open.map(card)}</ul>
           {live?.truncated === true ? (
             <p className="muted browser-more">
-              {moreLive > 0 ? `And ${moreLive} more live` : "More are open"}; the newest {open.length} are shown.
+              {moreLive > 0
+                ? t("center.browser.moreLive", { more: moreLive, count: open.length })
+                : t("center.browser.moreOpen", { count: open.length })}
             </p>
           ) : null}
         </section>
@@ -262,13 +267,13 @@ export function Browser({
       {closed.length === 0 ? null : (
         <section className="browser-group" aria-labelledby="browser-earlier-title">
           <h2 id="browser-earlier-title" className="center-day-head">
-            Earlier
+            {t("center.browser.earlier")}
           </h2>
           {visited.length === 0 ? null : <ul className="browser-grid list-reset">{visited.map(card)}</ul>}
           {/* A session that never reached a page has nothing to show but its task: folded, so the visited ones lead. */}
           {blank.length === 0 ? null : (
             <details className="browser-blank">
-              <summary className="disclosure">{plural(blank.length, "session")} that opened no page</summary>
+              <summary className="disclosure">{t("center.browser.blank", { count: blank.length })}</summary>
               <ul className="browser-grid list-reset">{blank.map(card)}</ul>
             </details>
           )}
@@ -297,22 +302,23 @@ function BrowserCard({
   readonly person: string | undefined;
   readonly onOpen: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { state: closeState, failure: closeError, close } = useCloseBrowser(client, workspaceId, item.sessionId);
   const takeover = useTakeover();
   const closed = closeState === "closed";
-  const title = item.taskTitle ?? `Task ${item.taskId}`;
-  const page = [item.host ?? (item.lastUrl === null ? "No page yet" : hostPath(item.lastUrl)), item.lastTitle]
+  const title = item.taskTitle ?? t("center.browser.task", { id: item.taskId });
+  const page = [item.host ?? (item.lastUrl === null ? t("center.browser.noPage") : hostPath(item.lastUrl)), item.lastTitle]
     .filter((part): part is string => part !== null && part !== "")
     .join(" · ");
-  const pages = plural(item.pages, "page");
+  const pages = t("center.browser.pages", { count: item.pages });
   const duration = item.live
     ? formatBrowserDuration(durationMs)
     : `${nearDay(localDate(item.openedAt, timeZone), today, "past")} · ${formatBrowserDuration(durationMs)}`;
   const pill = item.live ? (
     <span className="browser-live">
       <span className="center-pulse" aria-hidden="true" />
-      Live
+      {t("center.browser.live")}
     </span>
   ) : null;
   return (
@@ -327,7 +333,11 @@ function BrowserCard({
         {tile !== undefined ? null : (
           <div className="browser-thumb">
             <Thumbnail artifactId={item.thumbnail?.artifactId} host={item.host} />
-            {item.live ? pill : item.inactive === true && !closed ? <span className="browser-live browser-ended">Ended</span> : null}
+            {item.live ? (
+              pill
+            ) : item.inactive === true && !closed ? (
+              <span className="browser-live browser-ended">{t("center.browser.ended")}</span>
+            ) : null}
           </div>
         )}
         <span className="browser-card-body">
@@ -347,13 +357,13 @@ function BrowserCard({
             size="sm"
             onClick={() => takeover.open({ taskId: item.taskId, sessionId: item.sessionId, ...(item.live ? {} : { kept: true as const }) })}
           >
-            Take control
+            {t("center.browser.takeControl")}
           </Button>
         ) : null}
         {/* Its task ended; the session is kept open (a browser in memory) until closed. */}
         {item.inactive === true && !closed ? (
           <Button variant="ghost" size="sm" disabled={closeState === "closing"} onClick={() => void close()}>
-            {closeState === "closing" ? "Closing…" : "Close browser"}
+            {closeState === "closing" ? t("center.browser.closing") : t("center.browser.close")}
           </Button>
         ) : null}
         {closeError === undefined ? null : <Failure as="span">{closeError}</Failure>}
@@ -378,6 +388,7 @@ function Visits({
   readonly openedAt: string;
   readonly timeZone: string | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { open, loaded, error, loading, load, toggle } = useLazyLoad(() => loadBrowserVisits(client, workspaceId, sessionId), pages);
   if (pages === 0) return null;
@@ -386,11 +397,11 @@ function Visits({
     <Disclosure
       className="browser-visits"
       id={`browser-visits-${sessionId}`}
-      label={open ? "Hide visits" : "Show visits"}
+      label={open ? t("center.browser.hideVisits") : t("center.browser.showVisits")}
       open={open}
       onToggle={toggle}
       loading={loading}
-      loadingLabel="Loading visits…"
+      loadingLabel={t("center.browser.loadingVisits")}
       error={error}
       reload={load}
     >
@@ -410,7 +421,7 @@ function Visits({
               </li>
             );
           })}
-          {loaded.nextCursor === undefined ? null : <li className="muted">Later visits are in the chat.</li>}
+          {loaded.nextCursor === undefined ? null : <li className="muted">{t("center.browser.laterVisits")}</li>}
         </ol>
       )}
     </Disclosure>

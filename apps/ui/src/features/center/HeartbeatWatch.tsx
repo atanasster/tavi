@@ -1,5 +1,6 @@
 import type { HeartbeatGetAnswer } from "@tavi/contracts";
 
+import { useT } from "../../lib/i18n.js";
 import { localDate, localTime } from "../../lib/time.js";
 import { heartbeatHistory, setHeartbeatInstructions } from "./heartbeat-api.js";
 import { HEARTBEAT_SUGGESTIONS } from "./heartbeat-options.js";
@@ -45,16 +46,17 @@ export function HeartbeatWatch({
   readonly revisionRef: HeartbeatPage["revisionRef"];
   readonly setFailure: HeartbeatPage["setFailure"];
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   return (
     <section aria-labelledby={`${ids}-watch`}>
       <h2 className="center-subhead" id={`${ids}-watch`}>
-        What should I keep an eye on?
+        {t("center.heartbeatWatch.heading")}
       </h2>
       {editing === undefined ? (
         <>
           {lines.length === 0 ? (
-            <p className="muted">Nothing yet: add a line, or pick a suggestion.</p>
+            <p className="muted">{t("center.heartbeatWatch.empty")}</p>
           ) : (
             <ul className="heartbeat-lines">
               {lines.map((line, index) => (
@@ -68,7 +70,7 @@ export function HeartbeatWatch({
               size="sm"
               onClick={() => setEditing({ text: config.instructions, base: config.instructions, revision })}
             >
-              {lines.length === 0 ? "Add a line" : "Edit"}
+              {lines.length === 0 ? t("center.heartbeatWatch.addLine") : t("center.heartbeatWatch.edit")}
             </Button>
             <Button
               variant="ghost"
@@ -82,10 +84,10 @@ export function HeartbeatWatch({
                   );
               }}
             >
-              History
+              {t("center.heartbeatWatch.history")}
             </Button>
           </div>
-          <ul className="heartbeat-suggestions list-reset" aria-label="Suggestions">
+          <ul className="heartbeat-suggestions list-reset" aria-label={t("center.heartbeatWatch.suggestions")}>
             {HEARTBEAT_SUGGESTIONS.filter((suggestion) => !lines.includes(suggestion)).map((suggestion) => (
               <li key={suggestion}>
                 <Button
@@ -100,7 +102,7 @@ export function HeartbeatWatch({
                         at,
                         `${current.trimEnd()}${current.trim() === "" ? "" : "\n"}${suggestion}\n`,
                       );
-                    }, "Added.")
+                    }, t("center.heartbeatWatch.added"))
                   }
                 >
                   + {suggestion}
@@ -109,15 +111,19 @@ export function HeartbeatWatch({
             ))}
           </ul>
           {history === undefined ? null : (
-            <ol className="heartbeat-history list-reset" aria-label="Instructions history">
+            <ol className="heartbeat-history list-reset" aria-label={t("center.heartbeatWatch.historyLabel")}>
               {history.length === 0 ? (
-                <li className="muted">No earlier instructions.</li>
+                <li className="muted">{t("center.heartbeatWatch.noHistory")}</li>
               ) : (
                 history.map((entry) => (
                   <li key={entry.revision}>
                     <span className="meta-sm">
-                      Revision {entry.revision} · {localDate(entry.createdAt, timezone)} {localTime(entry.createdAt, timezone)} ·{" "}
-                      {entry.author}
+                      {t("center.heartbeatWatch.revision", {
+                        revision: String(entry.revision),
+                        date: localDate(entry.createdAt, timezone),
+                        time: localTime(entry.createdAt, timezone),
+                        author: entry.author,
+                      })}
                     </span>
                     <pre className="heartbeat-history-text">{entry.text}</pre>
                   </li>
@@ -131,7 +137,10 @@ export function HeartbeatWatch({
           onSubmit={(event) => {
             event.preventDefault();
             // Written over the revision the editor opened at: a change made meanwhile (by chat, the terminal) is refused, never lost.
-            void apply(() => setHeartbeatInstructions(client, workspaceId, editing.revision, editing.text), "Saved.").then((saved) => {
+            void apply(
+              () => setHeartbeatInstructions(client, workspaceId, editing.revision, editing.text),
+              t("center.heartbeatWatch.saved"),
+            ).then((saved) => {
               if (saved) setEditing(undefined);
               // Refused, the person has been told why and the page read again: a second Save writes over what is there now.
               else
@@ -141,7 +150,7 @@ export function HeartbeatWatch({
             });
           }}
         >
-          <Field id={`${ids}-text`} label="Instructions" labelClassName="visually-hidden">
+          <Field id={`${ids}-text`} label={t("center.heartbeatWatch.instructions")} labelClassName="visually-hidden">
             <textarea
               className="heartbeat-editor"
               rows={8}
@@ -151,10 +160,10 @@ export function HeartbeatWatch({
           </Field>
           <div className="heartbeat-actions cluster">
             <Button size="sm" type="submit">
-              Save
+              {t("center.heartbeatWatch.save")}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setEditing(undefined)}>
-              Cancel
+              {t("ui.confirm.cancel")}
             </Button>
           </div>
         </form>

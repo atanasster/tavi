@@ -17,6 +17,7 @@ import {
 } from "@tavi/contracts";
 
 import { readChunks } from "../../lib/chunks.js";
+import { translateNow } from "../../lib/i18n.js";
 import { read, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 
 /** Closed sessions per page of Earlier. */
@@ -122,11 +123,15 @@ export async function readThumbnail(client: SettingsClient, workspaceId: string,
       parts.push(chunk.base64);
       return undefined;
     },
-    { changed: "The thumbnail changed while it was read", tooLarge: "The thumbnail is too large to show", maxChunks: THUMBNAIL_MAX_CHUNKS },
+    {
+      changed: translateNow("center.browserApi.thumbnailChanged"),
+      tooLarge: translateNow("center.browserApi.thumbnailTooLarge"),
+      maxChunks: THUMBNAIL_MAX_CHUNKS,
+    },
   );
   if (!last.ok) return last;
   const contentType = last.value.contentType;
-  if (!/^image\/(jpeg|png|webp)$/.test(contentType)) return { ok: false, message: "The thumbnail is not an image" };
+  if (!/^image\/(jpeg|png|webp)$/.test(contentType)) return { ok: false, message: translateNow("center.browserApi.thumbnailNotImage") };
   // Chunks are cut at byte offsets, so each one's base64 is decoded and joined as bytes.
   const bytes = parts.length === 1 ? undefined : parts.map((part) => atob(part)).join("");
   return { ok: true, value: `data:${contentType};base64,${bytes === undefined ? parts[0] : btoa(bytes)}` };

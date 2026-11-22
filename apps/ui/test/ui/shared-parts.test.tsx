@@ -9,7 +9,7 @@ import { useNow } from "../../src/hooks/use-poll.js";
 import { useOpenError, useAction } from "../../src/hooks/use-action.js";
 import { useLazyLoad, useSerialRead } from "../../src/hooks/use-loaded.js";
 import { announced, freshAnnouncer } from "../announced.js";
-import { answerOutcome, ANSWERED_ELSEWHERE, deliveryName, questionNeed, sentAnswer } from "../../src/features/needs/NeedCard.js";
+import { answerOutcome, ANSWERED_ELSEWHERE_KEY, deliveryName, questionNeed, sentAnswer } from "../../src/features/needs/NeedCard.js";
 import { appendPage, refreshFirstPage, useOlderPage } from "../../src/lib/paging.js";
 import {
   ActionNote,
@@ -530,7 +530,7 @@ describe("question helpers", () => {
     expect(answerOutcome("1", { ok: false, code: "CONFLICT", message: "x" })).toEqual({
       status: "uncertain",
       text: "1",
-      message: ANSWERED_ELSEWHERE,
+      message: { key: ANSWERED_ELSEWHERE_KEY },
     });
     expect(answerOutcome("1", { ok: false, message: "down" })).toEqual({ status: "failed", text: "1", message: "down" });
     expect([

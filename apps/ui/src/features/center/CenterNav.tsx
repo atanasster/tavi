@@ -7,6 +7,9 @@ import { decisionCount, tasksToday } from "./model.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Button } from "../../ui/Button.js";
 import { useCurrentNavInView } from "../../ui/useCurrentNavInView.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 const SECTION_ICONS: Readonly<Record<CenterSection, IconName>> = {
   activity: "center-activity",
@@ -52,21 +55,25 @@ interface SectionCount {
 /** What each section's nav item counts; nothing for a section with nothing to count yet. */
 export function sectionCount(section: CenterSection, summary: CenterSummaryAnswer | undefined): SectionCount | undefined {
   if (summary === undefined) return undefined;
-  const count = (value: number, spoken: string, waiting: boolean): SectionCount | undefined =>
-    value > 0 ? { value, spoken: `${value} ${spoken}`, waiting } : undefined;
+  const count = (value: number, spoken: UiKey, waiting: boolean): SectionCount | undefined =>
+    value > 0 ? { value, spoken: translateNow(spoken, { count: value }), waiting } : undefined;
   switch (section) {
     case "activity":
-      return count(tasksToday(summary), "today", false);
+      return count(tasksToday(summary), "center.nav.count.today", false);
     case "approvals":
-      return count(decisionCount(summary), "waiting", true);
+      return count(decisionCount(summary), "center.nav.count.waiting", true);
     case "schedule":
-      return count(summary.counts.activeRoutines + summary.counts.schedules + (summary.counts.reminders ?? 0), "scheduled", false);
+      return count(
+        summary.counts.activeRoutines + summary.counts.schedules + (summary.counts.reminders ?? 0),
+        "center.nav.count.scheduled",
+        false,
+      );
     case "heartbeat":
       return undefined;
     case "identity":
-      return count(summary.counts.memoryProposals, "to review", true);
+      return count(summary.counts.memoryProposals, "center.nav.count.toReview", true);
     case "browser":
-      return count(summary.counts.liveBrowserSessions ?? 0, "open now", false);
+      return count(summary.counts.liveBrowserSessions ?? 0, "center.nav.count.openNow", false);
   }
 }
 
@@ -95,6 +102,7 @@ export function CenterNav({
   readonly onSection: (section: CenterSection) => void;
   readonly onCollapse?: (() => void) | undefined;
 }) {
+  const t = useT();
   const { workspaceId } = useWorkspace();
   useCurrentNavInView(section);
   return (
@@ -119,7 +127,7 @@ export function CenterNav({
         })}
       </ul>
       <p className="scope meta-sm center-nav-foot">
-        Workspace <code>{workspaceId}</code>
+        {withParts(t("center.nav.workspace"), { id: <code>{workspaceId}</code> })}
         {summary === undefined ? null : <> · {summary.timezone}</>}
       </p>
     </SidebarFrame>

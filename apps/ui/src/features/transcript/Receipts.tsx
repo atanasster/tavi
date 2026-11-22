@@ -1,5 +1,6 @@
 import type { BrowserControlReceipt, SettledWait } from "@tavi/client/browser";
 import { formatControlled } from "../takeover/input.js";
+import { translateNow } from "../../lib/i18n.js";
 
 export function render(value: unknown): string {
   return typeof value === "string" ? value : JSON.stringify(value, null, 2);
@@ -8,16 +9,17 @@ export function render(value: unknown): string {
 /** How a person's hold of the browser went, in one line: the same words wherever it is said. */
 function controlledText(outcome: "done" | "failed" | "timeout" | "cancelled", controlledMs: number, note: string | undefined): string {
   const said = note === undefined || note === "" ? "" : ` · ${note}`;
-  if (controlledMs === 0 && outcome === "failed") return `You told Tavi you couldn't do it${said}`;
-  const how =
+  if (controlledMs === 0 && outcome === "failed") return `${translateNow("transcript.handoff.told")}${said}`;
+  const how = translateNow(
     outcome === "done"
-      ? "done"
+      ? "transcript.handoff.done"
       : outcome === "failed"
-        ? "couldn't do it"
+        ? "transcript.handoff.failed"
         : outcome === "timeout"
-          ? "handed back when it went idle"
-          : "the session ended";
-  return `You controlled the browser for ${formatControlled(controlledMs)} — ${how}${said}`;
+          ? "transcript.handoff.timeout"
+          : "transcript.handoff.cancelled",
+  );
+  return `${translateNow("transcript.handoff.controlled", { time: formatControlled(controlledMs), how })}${said}`;
 }
 
 /**
@@ -43,8 +45,8 @@ export function HandoffReceipt({ receipt }: { readonly receipt: SettledWait }) {
     receipt.handoff !== undefined
       ? controlledText(receipt.handoff.outcome, receipt.handoff.controlledMs, receipt.replyText)
       : receipt.outcome === "wait-timeout"
-        ? "Nobody took over the browser in time; Tavi carried on"
-        : "The browser handoff ended without you";
+        ? translateNow("transcript.handoff.nobody")
+        : translateNow("transcript.handoff.without");
   return (
     <p className="handoff-receipt meta-base" role="note">
       {text}

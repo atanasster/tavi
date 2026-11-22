@@ -17,6 +17,7 @@ import {
   skillUsageOf,
 } from "@tavi/contracts";
 
+import { translateNow } from "../../lib/i18n.js";
 import { ask, read, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { operationKey } from "../routines/api.js";
 
@@ -74,7 +75,7 @@ export async function sendSkillFeedback(
 ): Promise<Outcome<{ readonly taskId: string }>> {
   const taskId = skillProposalChatOf(proposal);
   if (taskId === undefined || proposal.manifest.proposal === undefined)
-    return { ok: false, message: "This version was not proposed in a chat: there is no chat to send feedback to." };
+    return { ok: false, message: translateNow("center.skillsApi.noChat") };
   const sent = await ask(client, "reply", {
     workspaceId,
     taskId,

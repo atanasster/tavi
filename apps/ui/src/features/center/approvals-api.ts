@@ -19,6 +19,7 @@ import { z } from "zod";
 
 import { ask, mapOutcome, read, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { approvePayload } from "../chat/tasks-api.js";
+import { translateNow } from "../../lib/i18n.js";
 
 /** History items per page: the owner's default. */
 const HISTORY_PAGE_SIZE = 50;
@@ -184,7 +185,7 @@ export async function decideRound(
       decision.decisions ?? decision.approved,
       { scope: decision.scope, note: decision.note },
     ),
-    { timeoutMs: null, refused: "The decision was refused" },
+    { timeoutMs: null, refused: translateNow("center.approvalsApi.refused") },
   );
   if (answer.ok) return { ok: true };
   const settled = ApprovalSettlementSchema.safeParse(answer.details?.["settled"]);

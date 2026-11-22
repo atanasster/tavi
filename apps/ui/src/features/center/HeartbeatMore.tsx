@@ -1,19 +1,23 @@
-import {
-  BUILTIN_HEARTBEAT_PROVIDER_ID,
-  HEARTBEAT_LIMITS,
-  formatHeartbeatInterval,
-  type HeartbeatGetAnswer,
-  type HeartbeatSettingsChange,
-} from "@tavi/contracts";
+import { BUILTIN_HEARTBEAT_PROVIDER_ID, HEARTBEAT_LIMITS, type HeartbeatGetAnswer, type HeartbeatSettingsChange } from "@tavi/contracts";
+import { useT } from "../../lib/i18n.js";
 import { Select } from "../../ui/Select.js";
 import { ProviderPanel } from "../plugin-host/CenterHeartbeatSlot.js";
 import { forgetHeartbeat, setHeartbeatEgress, setHeartbeatProvider, unmuteHeartbeat } from "./heartbeat-api.js";
-import { EGRESS, SOURCE_LABELS } from "./heartbeat-options.js";
+import { EGRESS, everyInterval, sourceLabel } from "./heartbeat-options.js";
 import { HeartbeatTurn } from "./HeartbeatTurn.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
 
+import type { UiKey } from "../../locales/en.js";
 import type { HeartbeatPage } from "./use-heartbeat-page.js";
+
+/** What a provider may receive, by field. */
+const EGRESS_LABELS: Readonly<Record<(typeof EGRESS)[number], UiKey>> = {
+  instructions: "center.heartbeatMore.egress.instructions",
+  signals: "center.heartbeatMore.egress.signals",
+  ledger: "center.heartbeatMore.egress.ledger",
+  memory: "center.heartbeatMore.egress.memory",
+};
 
 /**
  * Heartbeat's *More*: deeper looks, its turn, daily limits, signal sources,
@@ -53,16 +57,17 @@ export function HeartbeatMore({
   readonly onChanged: (() => void) | undefined;
   readonly load: HeartbeatPage["load"];
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { config, revision } = answer;
   return (
     <details className="heartbeat-more">
-      <summary className="disclosure">More</summary>
+      <summary className="disclosure">{t("center.heartbeatMore.more")}</summary>
       <div className="settings-fields">
         <label>
-          Look deeper{" "}
+          {t("center.heartbeatMore.lookDeeper")}{" "}
           <Select
-            aria-label="Look deeper"
+            aria-label={t("center.heartbeatMore.lookDeeper")}
             value={String(config.deepCheckEveryMs)}
             onChange={(event) => void change({ deepCheckEveryMs: Number(event.target.value) })}
           >
@@ -70,7 +75,7 @@ export function HeartbeatMore({
               .filter((ms) => ms >= config.everyMs)
               .map((ms) => (
                 <option key={ms} value={String(ms)}>
-                  Every {formatHeartbeatInterval(ms)}
+                  {everyInterval(ms)}
                 </option>
               ))}
           </Select>
@@ -96,15 +101,16 @@ export function HeartbeatMore({
                 },
                 maxNowPerHour: Number(data.get("hourly")),
               },
-              "Limits saved.",
+              t("center.heartbeatMore.limitsSaved"),
             );
           }}
         >
           <label>
-            Checks a day <input name="ticks" type="number" min={1} defaultValue={config.budget.modelTicksPerDay} />
+            {t("center.heartbeatMore.checksADay")}{" "}
+            <input name="ticks" type="number" min={1} defaultValue={config.budget.modelTicksPerDay} />
           </label>
           <label>
-            Tokens a day{" "}
+            {t("center.heartbeatMore.tokensADay")}{" "}
             <input
               name="tokens"
               type="number"
@@ -113,30 +119,29 @@ export function HeartbeatMore({
             />
           </label>
           <label>
-            Dollars a day{" "}
+            {t("center.heartbeatMore.dollarsADay")}{" "}
             <input
               name="usd"
               type="number"
               min={0.01}
               max={10_000}
               step={0.01}
-              placeholder="No limit"
+              placeholder={t("center.heartbeatMore.noLimit")}
               defaultValue={config.budget.usdPerDay ?? ""}
             />
           </label>
           <label>
-            Urgent messages an hour <input name="hourly" type="number" required min={1} max={60} defaultValue={config.maxNowPerHour} />
+            {t("center.heartbeatMore.urgentAnHour")}{" "}
+            <input name="hourly" type="number" required min={1} max={60} defaultValue={config.maxNowPerHour} />
           </label>
           <Button size="sm" type="submit">
-            Save limits
+            {t("center.heartbeatMore.saveLimits")}
           </Button>
         </form>
         {answer.sources.length === 0 && config.disabledSources.length === 0 ? null : (
           <fieldset className="heartbeat-sources">
-            <legend>Signal sources</legend>
-            <p className="meta-sm">
-              What it gathers to look at. One turned off is not read; what it found before is kept, not taken for resolved.
-            </p>
+            <legend>{t("center.heartbeatMore.sources")}</legend>
+            <p className="meta-sm">{t("center.heartbeatMore.sourcesHint")}</p>
             {/* One turned off and since uninstalled still shows, so it can be cleared. */}
             {[
               ...answer.sources,
@@ -158,16 +163,16 @@ export function HeartbeatMore({
                             ? current.disabledSources.filter((id) => id !== source.id)
                             : [...current.disabledSources, source.id],
                         }),
-                        on ? "Source turned off." : "Source turned on.",
+                        on ? t("center.heartbeatMore.sourceOff") : t("center.heartbeatMore.sourceOn"),
                       )
                     }
                   />
                   <span>
-                    {SOURCE_LABELS[source.id] ?? ("label" in source ? source.label : undefined) ?? source.id}
+                    {sourceLabel(source.id) ?? ("label" in source ? source.label : undefined) ?? source.id}
                     {source.kind === "plugin" ? (
-                      <span className="meta-sm"> (plugin)</span>
+                      <span className="meta-sm"> {t("center.heartbeatMore.plugin")}</span>
                     ) : source.kind === "gone" ? (
-                      <span className="meta-sm"> (not installed)</span>
+                      <span className="meta-sm"> {t("center.heartbeatMore.notInstalled")}</span>
                     ) : null}
                   </span>
                 </label>
@@ -177,14 +182,14 @@ export function HeartbeatMore({
         )}
         {answer.toolChoices.length === 0 && config.extraTools.length === 0 ? null : (
           <fieldset className="heartbeat-tools">
-            <legend>Extra tools it may use</legend>
-            <p className="meta-sm">Read-only tools your plugins and MCP servers add, for its checks to use as well.</p>
+            <legend>{t("center.heartbeatMore.tools")}</legend>
+            <p className="meta-sm">{t("center.heartbeatMore.toolsHint")}</p>
             {/* A tool chosen earlier and no longer offered still shows, so it can be taken off. */}
             {[
               ...answer.toolChoices,
               ...config.extraTools
                 .filter((id) => !answer.toolChoices.some((tool) => tool.id === id))
-                .map((id) => ({ id, description: "No longer offered by a loaded plugin or MCP server" })),
+                .map((id) => ({ id, description: t("center.heartbeatMore.toolGone") })),
             ].map((tool) => {
               const on = config.extraTools.includes(tool.id);
               return (
@@ -200,7 +205,7 @@ export function HeartbeatMore({
                             ? current.extraTools.filter((id) => id !== tool.id)
                             : [...current.extraTools, tool.id],
                         }),
-                        on ? "Tool removed." : "Tool added.",
+                        on ? t("center.heartbeatMore.toolRemoved") : t("center.heartbeatMore.toolAdded"),
                       )
                     }
                   />
@@ -214,7 +219,7 @@ export function HeartbeatMore({
         )}
         {config.mutes.length === 0 ? null : (
           <fieldset className="heartbeat-mutes">
-            <legend>Not told about</legend>
+            <legend>{t("center.heartbeatMore.mutes")}</legend>
             <ul>
               {config.mutes.map((prefix) => (
                 <li key={prefix}>
@@ -222,10 +227,15 @@ export function HeartbeatMore({
                   <Button
                     variant="ghost"
                     size="sm"
-                    aria-label={`Tell me about ${prefix} again`}
-                    onClick={() => void apply((revisionNow) => unmuteHeartbeat(client, workspaceId, revisionNow, prefix), "Unmuted.")}
+                    aria-label={t("center.heartbeatMore.unmuteLabel", { prefix })}
+                    onClick={() =>
+                      void apply(
+                        (revisionNow) => unmuteHeartbeat(client, workspaceId, revisionNow, prefix),
+                        t("center.heartbeatMore.unmuted"),
+                      )
+                    }
                   >
-                    Unmute
+                    {t("center.heartbeatMore.unmute")}
                   </Button>
                 </li>
               ))}
@@ -235,7 +245,7 @@ export function HeartbeatMore({
         {/* Added when a watched page's line is saved; a site removed here is never read again. */}
         {config.fetchHosts.length === 0 ? null : (
           <fieldset className="heartbeat-sites">
-            <legend>Sites it may read</legend>
+            <legend>{t("center.heartbeatMore.sites")}</legend>
             <ul>
               {config.fetchHosts.map((host) => (
                 <li key={host}>
@@ -243,12 +253,15 @@ export function HeartbeatMore({
                   <Button
                     variant="ghost"
                     size="sm"
-                    aria-label={`Stop reading ${host}`}
+                    aria-label={t("center.heartbeatMore.stopReading", { host })}
                     onClick={() =>
-                      void changeFrom((current) => ({ fetchHosts: current.fetchHosts.filter((entry) => entry !== host) }), "Site removed.")
+                      void changeFrom(
+                        (current) => ({ fetchHosts: current.fetchHosts.filter((entry) => entry !== host) }),
+                        t("center.heartbeatMore.siteRemoved"),
+                      )
                     }
                   >
-                    Remove
+                    {t("center.heartbeatMore.remove")}
                   </Button>
                 </li>
               ))}
@@ -256,33 +269,33 @@ export function HeartbeatMore({
           </fieldset>
         )}
         <label>
-          Provider{" "}
+          {t("center.heartbeatMore.provider")}{" "}
           <Select
-            aria-label="Provider"
+            aria-label={t("center.heartbeatMore.provider")}
             value={config.providerId}
             onChange={(event) => {
               // Read now: the write waits its turn, and by then the select shows the current provider again.
               const providerId = event.target.value;
-              void apply((at) => setHeartbeatProvider(client, workspaceId, at, providerId), "Provider changed.");
+              void apply((at) => setHeartbeatProvider(client, workspaceId, at, providerId), t("center.heartbeatMore.providerChanged"));
             }}
           >
             {[...new Set([BUILTIN_HEARTBEAT_PROVIDER_ID, ...answer.providers, config.providerId])]
               .filter((id) => id !== "off")
               .map((id) => (
                 <option key={id} value={id}>
-                  {id === BUILTIN_HEARTBEAT_PROVIDER_ID ? "Built in" : id}
+                  {id === BUILTIN_HEARTBEAT_PROVIDER_ID ? t("center.heartbeatMore.builtIn") : id}
                 </option>
               ))}
-            <option value="off">Off</option>
+            <option value="off">{t("center.heartbeatMore.off")}</option>
           </Select>
         </label>
         {builtin || config.providerId === "off" ? null : (
           <fieldset>
-            <legend>What {config.providerId} may receive</legend>
+            <legend>{t("center.heartbeatMore.mayReceive", { provider: config.providerId })}</legend>
             {selected?.disclosure === undefined ? null : <p className="heartbeat-disclosure">{selected.disclosure}</p>}
             {/* Only what its approved manifest asks for: a field it never declared is never sent, whatever the switch says. */}
             {selected === undefined ? (
-              <p className="meta-sm">{config.providerId} is not loaded here: nothing can be switched on for it until it is.</p>
+              <p className="meta-sm">{t("center.heartbeatMore.notLoaded", { provider: config.providerId })}</p>
             ) : null}
             {/* Not loaded, what it declares cannot be read: only what is already on is shown, so it can be switched off. */}
             {EGRESS.filter((field) => (selected === undefined ? config.providerEgress[field] : selected.receives.includes(field))).map(
@@ -297,7 +310,7 @@ export function HeartbeatMore({
                       )
                     }
                   />
-                  {field}
+                  {t(EGRESS_LABELS[field])}
                 </label>
               ),
             )}
@@ -308,7 +321,7 @@ export function HeartbeatMore({
         )}
         {confirmForget ? (
           <p>
-            Delete its log, what it told you, its notes and its tasks? Its settings stay.{" "}
+            {t("center.heartbeatMore.forgetQuestion")}{" "}
             <Button
               size="sm"
               onClick={() =>
@@ -317,17 +330,17 @@ export function HeartbeatMore({
                   if (!outcome.ok) setFailure(outcome.message);
                   else {
                     setFailure(undefined);
-                    setNote("Forgotten.");
+                    setNote(t("center.heartbeatMore.forgotten"));
                     onChanged?.();
                     void load();
                   }
                 })
               }
             >
-              Forget everything
+              {t("center.heartbeatMore.forgetEverything")}
             </Button>{" "}
             <Button variant="ghost" size="sm" onClick={() => setConfirmForget(false)}>
-              Cancel
+              {t("ui.confirm.cancel")}
             </Button>
           </p>
         ) : (
@@ -338,7 +351,7 @@ export function HeartbeatMore({
             disabled={answer.state === undefined}
             onClick={() => setConfirmForget(true)}
           >
-            Forget heartbeat history
+            {t("center.heartbeatMore.forgetHistory")}
           </Button>
         )}
       </div>

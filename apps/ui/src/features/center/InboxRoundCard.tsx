@@ -10,6 +10,9 @@ import { taskPath } from "../shell/route.js";
 import type { loadRoundCalls } from "./approvals-api.js";
 import { expiryLabel, scopeButton, type PendingRoundCard } from "./inbox-model.js";
 import { Button } from "../../ui/Button.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
+import { spoken, type Said } from "../chat/store/said.js";
 
 /** Where a card stands after the reader acted on it. */
 export type CardOutcome =
@@ -20,7 +23,7 @@ export type CardOutcome =
       readonly scope: ApprovalScope;
       readonly partial?: { readonly approved: number; readonly of: number };
     }
-  | { readonly kind: "settled"; readonly text: string }
+  | { readonly kind: "settled"; readonly text: Said }
   | { readonly kind: "error"; readonly message: string };
 /** A round's decision as the card makes it: whole, or per call with the rest rejected; a rejection may say why. */
 export interface RoundDecision {
@@ -55,6 +58,7 @@ export function RoundCard({
   /** Its "In" link followed in place; absent, the link opens as the browser would. */
   readonly onOpen?: (() => void) | undefined;
 }) {
+  const t = useT();
   const channels = useChannelNames();
   /** A critical round's approval, held for its second step. */
   const [armed, setArmed] = useState<RoundDecision>();
@@ -78,27 +82,28 @@ export function RoundCard({
   useEffect(() => {
     if (rejecting !== undefined) reasonBox.current?.focus();
   }, [rejecting !== undefined]);
-  const what = single === undefined ? `${card.calls.length} tool calls` : toolCallTitle(single.toolId, single.summary);
+  const what =
+    single === undefined ? t("center.roundCard.toolCalls", { count: card.calls.length }) : toolCallTitle(single.toolId, single.summary);
   if (outcome?.kind === "done" || outcome?.kind === "settled") {
     const verdict =
       outcome.kind === "settled"
         ? undefined
         : outcome.partial !== undefined
-          ? `Allowed ${outcome.partial.approved} of ${outcome.partial.of}, denied the rest`
+          ? t("center.roundCard.allowedSome", { count: outcome.partial.approved, of: outcome.partial.of })
           : !outcome.approved
-            ? "Denied"
+            ? t("center.roundCard.denied")
             : outcome.scope === "session"
               ? card.lastingChat
-                ? "Allowed until tomorrow"
-                : "Allowed for this chat"
+                ? t("center.roundCard.allowedUntilTomorrow")
+                : t("center.roundCard.allowedForChat")
               : outcome.scope === "always"
-                ? "Always allowed"
-                : "Allowed once";
+                ? t("center.roundCard.alwaysAllowed")
+                : t("center.roundCard.allowedOnce");
     return (
       <li className="center-card center-card-decided" hidden={hidden}>
         <p className="center-decided" role="status" tabIndex={-1} ref={decidedLine}>
           {verdict === undefined ? (
-            <span>{outcome.kind === "settled" ? outcome.text : null}</span>
+            <span>{outcome.kind === "settled" ? spoken(outcome.text, t) : null}</span>
           ) : (
             <span
               className={
@@ -107,7 +112,7 @@ export function RoundCard({
                   : "center-verdict center-verdict-rejected"
               }
             >
-              {verdict} · just now
+              {t("center.roundCard.justNow", { verdict })}
             </span>
           )}
           <span className="center-decided-what">{what}</span>
@@ -155,7 +160,7 @@ export function RoundCard({
   return (
     <li
       className={card.risk === undefined ? "center-card" : `center-card center-card-${card.risk}`}
-      aria-label={`Approval: ${what}`}
+      aria-label={t("center.roundCard.label", { what })}
       hidden={hidden}
       tabIndex={-1}
     >
@@ -165,10 +170,12 @@ export function RoundCard({
             {tool}
           </code>
         ))}
-        {card.risk === undefined ? null : <span className="center-risk-tag eyebrow">{card.risk} risk</span>}
+        {card.risk === undefined ? null : <span className="center-risk-tag eyebrow">{t(`center.roundCard.risk.${card.risk}`)}</span>}
         {card.announcedIn === undefined ? null : (
           <span className="center-card-note meta">
-            Asked in {card.announcedIn.channel ?? approvalChannelLabel(card.announcedIn.connectionId, channels.connection)}
+            {t("center.roundCard.askedIn", {
+              channel: card.announcedIn.channel ?? approvalChannelLabel(card.announcedIn.connectionId, channels.connection),
+            })}
           </span>
         )}
         {card.expiresAt === undefined ? null : (
@@ -177,7 +184,7 @@ export function RoundCard({
           </time>
         )}
       </div>
-      <h3>{single === undefined ? `${card.calls.length} tool calls wait together` : what}</h3>
+      <h3>{single === undefined ? t("center.roundCard.waitTogether", { count: card.calls.length }) : what}</h3>
       {card.provenance === undefined ? null : (
         <p className="center-card-provenance meta">
           {/[.!?]$/.test(card.provenance) ? card.provenance : `${card.provenance}.`}
@@ -185,7 +192,7 @@ export function RoundCard({
         </p>
       )}
       {single === undefined ? (
-        <ul className="center-card-calls list-reset" aria-label="Calls in this round — untick one to deny it">
+        <ul className="center-card-calls list-reset" aria-label={t("center.roundCard.callsLabel")}>
           {card.calls.map((call) => (
             <li key={call.approvalId}>
               <label>
@@ -203,7 +210,7 @@ export function RoundCard({
       ) : null}
       {partial && !choosing ? (
         <label className="center-reason">
-          Why deny the unticked? (optional — the agent reads it)
+          {t("center.roundCard.whyDenyUnticked")}
           <textarea
             value={partialReason}
             maxLength={REJECT_REASON_MAX}
@@ -220,7 +227,7 @@ export function RoundCard({
             if ((event.currentTarget as HTMLDetailsElement).open) openDetails();
           }}
         >
-          <summary className="disclosure">Details</summary>
+          <summary className="disclosure">{t("center.roundCard.details")}</summary>
           {details === undefined || !details.ok ? (
             <Pending error={details?.ok === false ? details.message : undefined} className="notice" status />
           ) : (
@@ -238,16 +245,19 @@ export function RoundCard({
         </details>
       )}
       <p className="center-card-ctx meta">
-        In{" "}
-        <AppLink href={taskPath(linkTo ?? card.chatTaskId)} onFollow={onOpen}>
-          {card.taskTitle ?? card.taskId}
-        </AppLink>
+        {withParts(t("center.roundCard.in"), {
+          chat: (
+            <AppLink href={taskPath(linkTo ?? card.chatTaskId)} onFollow={onOpen}>
+              {card.taskTitle ?? card.taskId}
+            </AppLink>
+          ),
+        })}
         {person === undefined ? null : <> · {person}</>}
       </p>
       {rejecting !== undefined ? (
         <div className="confirmation">
           <label className="center-reason">
-            Why deny it? (optional — the agent reads it)
+            {t("center.roundCard.whyDeny")}
             <textarea
               ref={reasonBox}
               value={rejecting}
@@ -266,10 +276,10 @@ export function RoundCard({
                 setRejecting(undefined);
               }}
             >
-              Deny
+              {t("center.roundCard.deny")}
             </Button>
             <Button variant="ghost" size="sm" disabled={busy} onClick={() => setRejecting(undefined)}>
-              Go back
+              {t("center.roundCard.goBack")}
             </Button>
           </div>
         </div>
@@ -277,8 +287,8 @@ export function RoundCard({
         <InlineConfirm
           focusCancel
           message={confirmCallsText(card.risk === "critical", single !== undefined)}
-          confirmLabel="Confirm and run"
-          cancelLabel="Go back"
+          confirmLabel={t("center.roundCard.confirmAndRun")}
+          cancelLabel={t("center.roundCard.goBack")}
           busy={busy}
           onConfirm={() => {
             onDecide(armed);
@@ -290,7 +300,7 @@ export function RoundCard({
         <div className="center-card-actions">
           {partial ? (
             <Button variant="primary" size="sm" disabled={busy || unticked.size === card.calls.length} onClick={() => approve("once")}>
-              Allow ticked, deny the rest
+              {t("center.roundCard.allowTicked")}
             </Button>
           ) : (
             card.allowedScopes.map((scope, index) => (
@@ -302,9 +312,7 @@ export function RoundCard({
                 onClick={() => approve(scope)}
                 {...(scope === "session"
                   ? {
-                      title: card.lastingChat
-                        ? "Runs without asking in this chat for a day, or until it rolls over"
-                        : "Runs without asking for the rest of this chat",
+                      title: card.lastingChat ? t("center.roundCard.sessionLastingTitle") : t("center.roundCard.sessionTitle"),
                     }
                   : {})}
               >
@@ -313,17 +321,17 @@ export function RoundCard({
             ))
           )}
           <Button variant="danger-ghost" size="sm" disabled={busy} onClick={() => setRejecting("")}>
-            Deny…
+            {t("center.roundCard.denyEllipsis")}
           </Button>
           {busy ? (
             <span className="center-card-note meta" role="status">
-              Deciding…
+              {t("center.roundCard.deciding")}
             </span>
           ) : null}
         </div>
       )}
       {card.allowedScopes.includes("always") && armed === undefined ? (
-        <p className="center-card-hint meta">Always allow saves a workspace rule; revoke it in Settings → Permissions.</p>
+        <p className="center-card-hint meta">{t("center.roundCard.alwaysHint")}</p>
       ) : null}
       {outcome?.kind === "error" ? <Failure>{outcome.message}</Failure> : null}
     </li>
@@ -334,7 +342,7 @@ function inputText(input: unknown): string {
   const text = typeof input === "string" ? input : (JSON.stringify(input, null, 2) ?? "");
   // Cut, it says so and by how much: the hidden part could be what matters.
   return text.length > INPUT_SHOWN_CHARS
-    ? `${text.slice(0, INPUT_SHOWN_CHARS)}\n… ${text.length - INPUT_SHOWN_CHARS} more characters — follow the card's link for the whole input.`
+    ? `${text.slice(0, INPUT_SHOWN_CHARS)}\n${translateNow("center.roundCard.inputCut", { count: text.length - INPUT_SHOWN_CHARS })}`
     : text;
 }
 /** How much of one call's input Details shows. */

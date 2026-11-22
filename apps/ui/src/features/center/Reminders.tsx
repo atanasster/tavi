@@ -13,6 +13,7 @@ import {
 import { definedOnly } from "@tavi/contracts/util";
 
 import { useLoaded } from "../../hooks/use-loaded.js";
+import { useT } from "../../lib/i18n.js";
 import { localDate, localTime, shiftDate } from "../../lib/time.js";
 import { Icon } from "../../ui/Icon.js";
 import { Select } from "../../ui/Select.js";
@@ -108,6 +109,7 @@ export function NewReminderForm({
   readonly onClose: () => void;
   readonly onSaved: (reminder: ReminderView, message: string) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [operationKey] = useState(newOperationKey);
   const seed = editing ?? draft;
@@ -146,9 +148,9 @@ export function NewReminderForm({
 
   const addNotice = (): void => {
     const notice = noticeFrom(Number(noticeAmount), noticeUnit, noticeUnit === "d" ? noticeAt : undefined);
-    if (notice === undefined) return setError("A notice is a whole number of minutes, hours or days before, at most 30 days.");
-    if (notices.includes(notice)) return setError("That notice is already there.");
-    if (notices.length >= REMINDER_MAX_NOTICES) return setError(`An event can have at most ${REMINDER_MAX_NOTICES} notices.`);
+    if (notice === undefined) return setError(t("center.reminders.noticeInvalid"));
+    if (notices.includes(notice)) return setError(t("center.reminders.noticeTaken"));
+    if (notices.length >= REMINDER_MAX_NOTICES) return setError(t("center.reminders.noticesMax", { count: REMINDER_MAX_NOTICES }));
     setNotices([...notices, notice]);
     setError(undefined);
   };
@@ -165,20 +167,20 @@ export function NewReminderForm({
       };
     }
     const at = localToInstant(date, time, timeZone);
-    if (at === undefined) return "Pick a date and a time.";
+    if (at === undefined) return t("center.reminders.pickDateTime");
     if (kind === "once") return { kind: "once", at };
-    if (notices.length === 0) return "An event needs at least one notice.";
+    if (notices.length === 0) return t("center.reminders.eventNeedsNotice");
     return { kind: "event", at, notify: [...notices] };
   };
 
   const submit = async (): Promise<void> => {
     if (saving) return;
     const trimmed = text.trim();
-    if (trimmed === "") return setError("Say what to remind you of.");
+    if (trimmed === "") return setError(t("center.reminders.textMissing"));
     const when = build();
     if (typeof when === "string") return setError(when);
     const task = withPrompt ? prompt.trim() : "";
-    if (withPrompt && task === "") return setError("Write the task's prompt, or untick “Also start a task”.");
+    if (withPrompt && task === "") return setError(t("center.reminders.promptMissing"));
     setSaving(true);
     setError(undefined);
     const deliverTo: ReminderDeliverTo | undefined =
@@ -202,7 +204,7 @@ export function NewReminderForm({
       const changed = await updateReminder(client, workspaceId, editing.reminderId, editing.updatedAt, changes);
       setSaving(false);
       if (!changed.ok) return setError(changed.message);
-      onSaved(changed.value.reminder, `${changed.value.reminder.text} saved.`);
+      onSaved(changed.value.reminder, t("center.reminders.saved", { name: changed.value.reminder.text }));
       return;
     }
     const answer = await createReminder(client, workspaceId, {
@@ -220,52 +222,52 @@ export function NewReminderForm({
     const skipped = answer.value.skippedNotices.map(noticeLabel);
     const note =
       answer.value.duplicate === true
-        ? "That reminder was already set."
+        ? t("center.reminders.alreadySet")
         : skipped.length > 0
-          ? `Reminder set. Already past, so not sent: ${skipped.join(", ")}.`
-          : "Reminder set.";
+          ? t("center.reminders.setSkipped", { notices: skipped.join(", ") })
+          : t("center.reminders.set");
     onSaved(answer.value.reminder, note);
   };
 
   return (
     <form
       className="section-card reminder-form"
-      aria-label={editing === undefined ? "New reminder" : "Edit reminder"}
+      aria-label={editing === undefined ? t("center.reminders.newTitle") : t("center.reminders.editTitle")}
       onSubmit={(event) => {
         event.preventDefault();
         void submit();
       }}
     >
-      <h2 className="center-subhead">{editing === undefined ? "New reminder" : "Edit reminder"}</h2>
+      <h2 className="center-subhead">{editing === undefined ? t("center.reminders.newTitle") : t("center.reminders.editTitle")}</h2>
       <BusyFieldset busy={saving} className="settings-fields">
         <label>
-          Remind me to
+          {t("center.reminders.remindMeTo")}
           <input
             name="text"
             autoFocus
             maxLength={REMINDER_TEXT_MAX}
             value={text}
-            placeholder="Take your pills"
+            placeholder={t("center.reminders.textPlaceholder")}
             onChange={(event) => setText(event.target.value)}
           />
         </label>
-        <div className="reminder-kinds" role="radiogroup" aria-label="Kind">
+        <div className="reminder-kinds" role="radiogroup" aria-label={t("center.reminders.kind")}>
           {(
             [
-              ["once", "Once"],
-              ["event", "Event"],
-              ["repeat", "Repeat"],
+              ["once", "center.reminders.kindOnce"],
+              ["event", "center.reminders.kindEvent"],
+              ["repeat", "center.reminders.kindRepeat"],
             ] as const
-          ).map(([value, label]) => (
+          ).map(([value, labelKey]) => (
             <label key={value} className="reminder-kind">
               <input type="radio" name="reminder-kind" value={value} checked={kind === value} onChange={() => setKind(value)} />
-              {label}
+              {t(labelKey)}
             </label>
           ))}
         </div>
         {kind === "repeat" ? (
           <CadenceField
-            legend="Repeats"
+            legend={t("ui.cadence.repeats")}
             value={repeat}
             onChange={setRepeat}
             workspaceZone={timeZone}
@@ -277,25 +279,25 @@ export function NewReminderForm({
         ) : (
           <div className="reminder-row">
             <label>
-              {kind === "event" ? "Event date" : "Date"}
+              {kind === "event" ? t("center.reminders.eventDate") : t("center.reminders.date")}
               <input name="date" type="date" required value={date} min={today} onChange={(event) => setDate(event.target.value)} />
             </label>
             <label>
-              Time
+              {t("ui.cadence.time")}
               <input name="time" type="time" required value={time} onChange={(event) => setTime(event.target.value)} />
             </label>
           </div>
         )}
         {kind === "event" ? (
           <div className="reminder-notices">
-            <span className="reminder-label">Remind me</span>
-            <ul className="list-reset" aria-label="Notices">
+            <span className="reminder-label">{t("center.reminders.remindMe")}</span>
+            <ul className="list-reset" aria-label={t("center.reminders.notices")}>
               {notices.map((notice) => (
                 <li key={notice} className="chip">
                   {noticeLabel(notice)}
                   <Button
                     variant="bare"
-                    aria-label={`Remove notice ${noticeLabel(notice)}`}
+                    aria-label={t("center.reminders.removeNotice", { notice: noticeLabel(notice) })}
                     onClick={() => setNotices(notices.filter((item) => item !== notice))}
                   >
                     <Icon name="close" size="sm" />
@@ -305,7 +307,7 @@ export function NewReminderForm({
             </ul>
             <div className="reminder-row">
               <input
-                aria-label="Notice amount"
+                aria-label={t("center.reminders.noticeAmount")}
                 type="number"
                 min={1}
                 max={43200}
@@ -313,34 +315,39 @@ export function NewReminderForm({
                 onChange={(event) => setNoticeAmount(event.target.value)}
               />
               <Select
-                aria-label="Notice unit"
+                aria-label={t("center.reminders.noticeUnit")}
                 value={noticeUnit}
                 onChange={(event) => setNoticeUnit(event.target.value as "m" | "h" | "d")}
               >
-                <option value="m">minutes before</option>
-                <option value="h">hours before</option>
-                <option value="d">days before</option>
+                <option value="m">{t("center.reminders.minutesBefore")}</option>
+                <option value="h">{t("center.reminders.hoursBefore")}</option>
+                <option value="d">{t("center.reminders.daysBefore")}</option>
               </Select>
               {noticeUnit === "d" ? (
-                <input aria-label="Notice time" type="time" value={noticeAt} onChange={(event) => setNoticeAt(event.target.value)} />
+                <input
+                  aria-label={t("center.reminders.noticeTime")}
+                  type="time"
+                  value={noticeAt}
+                  onChange={(event) => setNoticeAt(event.target.value)}
+                />
               ) : null}
               <Button size="sm" onClick={addNotice}>
-                Add notice
+                {t("center.reminders.addNotice")}
               </Button>
             </div>
           </div>
         ) : null}
-        {kind === "repeat" ? null : <p className="muted">Times are in {timeZone}.</p>}
+        {kind === "repeat" ? null : <p className="muted">{t("center.reminders.timesIn", { zone: timeZone })}</p>}
         <div className="reminder-deliver">
           <label>
-            <span className="reminder-label">Deliver to</span>
+            <span className="reminder-label">{t("center.reminders.deliverTo")}</span>
             <Select
-              aria-label="Deliver to"
+              aria-label={t("center.reminders.deliverTo")}
               value={chat !== undefined ? chat.targetId : deliver === HOME ? HOME : IN_APP}
               onChange={(event) => setDeliver(event.target.value)}
             >
-              <option value={IN_APP}>This app</option>
-              <option value={HOME}>Home</option>
+              <option value={IN_APP}>{t("center.reminders.thisApp")}</option>
+              <option value={HOME}>{t("center.reminders.home")}</option>
               {chats.map((target) => (
                 <option key={target.targetId} value={target.targetId}>
                   {target.label}
@@ -350,26 +357,26 @@ export function NewReminderForm({
           </label>
           <p className="muted">
             {chat === undefined && deliver === HOME
-              ? "A notice in your Home, and its task's result another when it settles. With Home turned off, it is said in this app."
+              ? t("center.reminders.deliverHome")
               : chat === undefined
-                ? `The Center's badge and rail, and a browser notification when turned on. ${chats.length === 0 ? "To be reminded in a chat on one of your channels, ask for the reminder in that chat." : "Or pick a chat you added as a delivery target."}`
-                : `Said in ${chat.label}. If it cannot be sent there for a while, it shows in this app instead.`}
+                ? t(chats.length === 0 ? "center.reminders.deliverAppNoChats" : "center.reminders.deliverAppChats")
+                : t("center.reminders.deliverChat", { chat: chat.label })}
           </p>
         </div>
         <label className="reminder-check">
           <input type="checkbox" checked={withPrompt} onChange={(event) => setWithPrompt(event.target.checked)} />
-          Also start a task with this prompt
+          {t("center.reminders.alsoStartTask")}
         </label>
         {withPrompt ? (
           <textarea
-            aria-label="Task prompt"
+            aria-label={t("center.reminders.taskPrompt")}
             maxLength={REMINDER_PROMPT_MAX}
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
           />
         ) : null}
         <FormFailure message={error} />
-        <FormActions saving={saving} label="Save reminder" onCancel={onClose} />
+        <FormActions saving={saving} label={t("center.reminders.save")} onCancel={onClose} />
       </BusyFieldset>
     </form>
   );

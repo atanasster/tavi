@@ -2,17 +2,18 @@ import { useChannelNames } from "../shell/ChannelNames.js";
 import { useEffect, useRef, useState } from "react";
 import type { RecordedTask } from "@tavi/client/browser";
 import { APPROVAL_HISTORY_MAX_LIMIT, toolCallTitle, type ApprovalHistoryItem } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 type AdmissionRecord = NonNullable<RecordedTask["admissions"]>[number];
 
+import { translateNow, useT } from "../../lib/i18n.js";
+import { saidRecord } from "../shell/said.js";
 import { dayHeading, groupByDay, localTime, todayIn } from "../../lib/time.js";
 import type { Outcome, SettingsClient } from "../../lib/ipc.js";
-import { firstLine } from "../../lib/format.js";
-import { CenterLink, CHAT_NOT_STARTED, Failure, LoadMore, NO_CHAT_SELECTED, Pending } from "../../ui/Parts.js";
+import { firstLine, listed } from "../../lib/format.js";
+import { CenterLink, Failure, LoadMore, Pending } from "../../ui/Parts.js";
 import { appendPage, refreshFirstPage, useOlderPage, type Page, type Paged } from "../../lib/paging.js";
 import type { Session } from "../shell/shell.js";
 import { QuestionCard, sentAnswer, type AnswerState, type QuestionNeed } from "../needs/NeedCard.js";
-import { questionBlocker, questionKey, RECONNECT_TO_ANSWER } from "../chat/store/runs.js";
+import { questionBlocker, questionKey, RECONNECT_TO_ANSWER_KEY } from "../chat/store/runs.js";
 import type { WorkerNeeds } from "../chat/store/types.js";
 import { deciderName, decisionsOf } from "../chat/Approvals.js";
 import { listHistory } from "../center/approvals-api.js";
@@ -87,12 +88,12 @@ export function foldDecisions(items: readonly ActivityItem[]): readonly (Activit
 /** How a tool call's approval ended, as Activity labels it. */
 type Verdict = "approved" | "rejected" | "expired" | "cancelled";
 
-const VERDICT_LABELS: Readonly<Record<Verdict, string>> = {
-  approved: "Approved",
-  rejected: "Rejected",
-  expired: "Expired",
-  cancelled: "Cancelled",
-};
+const VERDICT_LABELS: Readonly<Record<Verdict, string>> = saidRecord({
+  approved: "chatPanel.activity.verdict.approved",
+  rejected: "chatPanel.activity.verdict.rejected",
+  expired: "chatPanel.activity.verdict.expired",
+  cancelled: "chatPanel.activity.verdict.cancelled",
+});
 
 /** An approval the owner recorded for the chat (`approvals history`). */
 export type RecordedDecision = Extract<ApprovalHistoryItem, { readonly kind: "approval" }>;
@@ -100,12 +101,18 @@ export type RecordedDecision = Extract<ApprovalHistoryItem, { readonly kind: "ap
 /** A recorded decision as a line of the timeline. */
 function recordedItem(decision: RecordedDecision): ActivityItem {
   const verdict: Verdict = decision.state === "granted" ? "approved" : decision.state === "denied" ? "rejected" : decision.state;
+  const who =
+    decision.decidedBy === null
+      ? translateNow("chatPanel.activity.someone")
+      : deciderName(decision.decidedBy, decision.state === "granted" ? true : decision.state === "denied" ? false : undefined);
   const detail =
     decision.state === "expired"
-      ? "No decision before it expired"
+      ? translateNow("chatPanel.activity.expiredDetail")
       : decision.state === "cancelled"
-        ? "Closed with its chat"
-        : `Decided by ${decision.decidedBy === null ? "someone" : deciderName(decision.decidedBy, decision.state === "granted" ? true : decision.state === "denied" ? false : undefined)}${decision.channel === undefined ? "" : ` in ${decision.channel}`}`;
+        ? translateNow("chatPanel.activity.cancelledDetail")
+        : decision.channel === undefined
+          ? translateNow("chatPanel.activity.decidedBy", { who })
+          : translateNow("chatPanel.activity.decidedByIn", { who, channel: decision.channel });
   return {
     key: `decision:${decision.approvalId}`,
     at: decision.decidedAt,
@@ -142,18 +149,22 @@ export interface WaitingItem {
  * reader, `answered` by a later message, waits no more.
  */
 function stateOf(admission: AdmissionRecord, answered: boolean): string {
-  if (admission.state === "pending") return "queued";
-  if (admission.state === "claimed") return "working";
-  if (admission.state === "refused") return "refused";
-  if (admission.state === "failed") return "failed";
-  if (admission.result?.status === "waiting") return answered ? "answered by your next message" : "waiting for you";
-  return admission.result?.status ?? "done";
+  if (admission.state === "pending") return translateNow("chatPanel.activity.state.queued");
+  if (admission.state === "claimed") return translateNow("chatPanel.activity.state.working");
+  if (admission.state === "refused") return translateNow("chatPanel.activity.state.refused");
+  if (admission.state === "failed") return translateNow("chatPanel.activity.state.failed");
+  if (admission.result?.status === "waiting")
+    return translateNow(answered ? "chatPanel.activity.state.answered" : "chatPanel.activity.state.waiting");
+  // A status the owner names stays as it arrives.
+  return admission.result?.status ?? translateNow("chatPanel.activity.state.done");
 }
 
 /** A follow-up's detail is its state alone; the first turn says it started the chat. */
 function turnDetail(admission: AdmissionRecord, answered: boolean): string {
   const state = stateOf(admission, answered);
-  return admission.kind === "start" ? `Started · ${state}` : `${state.charAt(0).toUpperCase()}${state.slice(1)}`;
+  return admission.kind === "start"
+    ? translateNow("chatPanel.activity.started", { state })
+    : `${state.charAt(0).toUpperCase()}${state.slice(1)}`;
 }
 
 /** A fold's span of time: one time when its ends share the minute, else earliest–latest. */
@@ -189,8 +200,8 @@ export function activityOf(
       items.push({
         key: `${admission.admissionId}:instructions`,
         at: admission.createdAt,
-        title: `Instructions changed (revision ${revision})`,
-        detail: "From this turn",
+        title: translateNow("chatPanel.activity.instructionsChanged", { revision }),
+        detail: translateNow("chatPanel.activity.fromThisTurn"),
         ...(turn === undefined ? {} : { turn }),
       });
     }
@@ -198,7 +209,7 @@ export function activityOf(
     items.push({
       key: admission.admissionId,
       at: admission.createdAt,
-      title: firstLine(prompt) || "(empty prompt)",
+      title: firstLine(prompt) || translateNow("chatPanel.activity.emptyPrompt"),
       detail: turnDetail(
         admission,
         turns.slice(index + 1).some((later) => later.admission.state !== "refused"),
@@ -212,8 +223,8 @@ export function activityOf(
       spawned.set(event.childRunId, {
         key: `spawn:${event.childRunId}`,
         at: event.at,
-        title: `Delegated to ${event.agentDefinitionId ?? event.workerAgentId}`,
-        detail: `Agent task ${event.childRunId}`,
+        title: translateNow("chatPanel.activity.delegated", { agent: event.agentDefinitionId ?? event.workerAgentId }),
+        detail: translateNow("chatPanel.activity.agentTask", { id: event.childRunId }),
         taskId: event.childRunId,
       });
     }
@@ -231,7 +242,7 @@ export function activityOf(
         key: decided.key,
         at: decided.at,
         title: decided.description === undefined ? decided.toolName : `${decided.toolName} ${decided.description}`,
-        detail: `Decided by ${decided.decider}`,
+        detail: translateNow("chatPanel.activity.decidedBy", { who: decided.decider }),
         verdict: decided.approved ? "approved" : "rejected",
         tool: decided.toolName,
       });
@@ -254,27 +265,27 @@ export function waitingOf(
   for (const run of session.runs) {
     for (const round of run.run.pending) {
       const tools = [...new Set(round.requests.map((request) => request.toolName))];
-      items.push({ key: `${run.id}:round:${round.steps}`, title: `Approve ${tools.join(", ")}` });
+      items.push({ key: `${run.id}:round:${round.steps}`, title: translateNow("chatPanel.waiting.approve", { tools: listed(tools) }) });
     }
     if (run.run.review !== undefined)
       items.push({
         key: `${run.id}:review:${run.run.review.steps}`,
-        title: `Review ${plural(run.run.review.requests.length, "archived output")}`,
+        title: translateNow("chatPanel.waiting.review", { count: run.run.review.requests.length }),
       });
     const waiting = run.run.waiting;
     if (waiting?.question !== undefined) {
       const key = questionKey(waiting, run.questionId);
       items.push({
         key: `${run.id}:question`,
-        title: `Answer: ${firstLine(waiting.question)}`,
+        title: translateNow("chatPanel.waiting.answer", { question: firstLine(waiting.question) }),
         question: {
           runId: run.id,
           key,
           need: { question: waiting.question, choices: waiting.choices, context: waiting.context, deadlineAt: waiting.deadlineAt },
           answer: run.answer?.key === key ? run.answer : undefined,
           blocked: questionBlocker(run, connected, {
-            round: "Decide the approval in the chat first.",
-            review: "Decide the review in the chat first.",
+            round: translateNow("chatPanel.waiting.roundFirst"),
+            review: translateNow("chatPanel.waiting.reviewFirst"),
           })?.text,
         },
       });
@@ -286,12 +297,12 @@ export function waitingOf(
     if (sent !== undefined && sent.status !== "failed") continue;
     items.push({
       key: `worker:${row.waitId}`,
-      title: `Answer ${workerAsker(row)}: ${firstLine(row.question)}`,
+      title: translateNow("chatPanel.waiting.answerWorker", { asker: workerAsker(row), question: firstLine(row.question) }),
       worker: { waitId: row.waitId, need: workerQuestionNeed(row, connectionName), answer: sentAnswer(sent) },
     });
   }
   for (const row of workers?.handoffs ?? [])
-    items.push({ key: `worker:${row.waitId}`, title: `Act in the browser for ${workerAsker(row)}` });
+    items.push({ key: `worker:${row.waitId}`, title: translateNow("chatPanel.waiting.handoff", { asker: workerAsker(row) }) });
   return items;
 }
 
@@ -315,7 +326,7 @@ export function revealWaiting(root: ParentNode): boolean {
 }
 
 const loadTask = (client: SettingsClient, taskId: string): Promise<Outcome<TaskRecord>> =>
-  readTaskRecord(client, undefined, taskId, { notFound: "The owner has no record of this chat." });
+  readTaskRecord(client, undefined, taskId, { notFound: translateNow("chatPanel.activity.notFound") });
 
 /**
  * A page of the approvals the owner recorded for a chat, newest first. An
@@ -374,16 +385,17 @@ export function Activity({
   /** The Command Center's Activity; absent when the owner does not offer it. */
   readonly onCenter?: (() => void) | undefined;
 }) {
+  const t = useT();
   const timeZone = useTimeZone();
   const channels = useChannelNames();
-  if (session === undefined) return <Empty>{NO_CHAT_SELECTED}</Empty>;
+  if (session === undefined) return <Empty>{t("ui.parts.noChatSelected")}</Empty>;
   const waiting = waitingOf(session, connected, workers, channels.connection);
   const plan = sessionPlan(session);
   return (
     <>
       {waiting.length === 0 ? null : (
-        <section className="chat-panel-waiting" aria-label="waiting on you">
-          <h4>Waiting on you ({waiting.length})</h4>
+        <section className="chat-panel-waiting" aria-label={t("chatPanel.waiting.label")}>
+          <h4>{t("chatPanel.waiting.heading", { count: waiting.length })}</h4>
           <ul>
             {waiting.map((item) => (
               <li key={item.key}>
@@ -405,7 +417,7 @@ export function Activity({
                     timeZone={timeZone}
                     need={item.worker.need}
                     answer={item.worker.answer}
-                    blocked={connected ? undefined : { reason: RECONNECT_TO_ANSWER }}
+                    blocked={connected ? undefined : { reason: t(RECONNECT_TO_ANSWER_KEY) }}
                     onAnswer={(text) => item.worker !== undefined && onAnswerWorker(item.worker.waitId, text)}
                   />
                 ) : (
@@ -420,7 +432,7 @@ export function Activity({
       )}
       {plan === undefined ? null : <PlanCard plan={plan} />}
       {session.taskId === undefined ? (
-        <Empty>{CHAT_NOT_STARTED}</Empty>
+        <Empty>{t("ui.parts.chatNotStarted")}</Empty>
       ) : (
         <Timeline
           key={session.taskId}
@@ -431,7 +443,7 @@ export function Activity({
           onOpenTask={onOpenTask}
         />
       )}
-      <CenterLink what="Activity" onCenter={onCenter} />
+      <CenterLink what={t("chatPanel.tab.activity")} onCenter={onCenter} />
     </>
   );
 }
@@ -449,6 +461,7 @@ function Timeline({
   readonly onTurn: (turn: number) => void;
   readonly onOpenTask: (taskId: string) => void;
 }) {
+  const t = useT();
   const { client } = useWorkspace();
   const timeZone = useTimeZone();
   const { data, error } = useLoaded(() => loadTask(client, taskId), [chatVersion(session)]);
@@ -480,7 +493,7 @@ function Timeline({
   };
   if (data === undefined) return <Pending error={error} />;
   const items = activityOf(data, session, decisions?.items ?? []);
-  if (items.length === 0) return <Empty>Nothing recorded yet.</Empty>;
+  if (items.length === 0) return <Empty>{t("chatPanel.activity.empty")}</Empty>;
   const today = todayIn(timeZone);
   return (
     <>
@@ -531,7 +544,7 @@ function Timeline({
         );
       })}
       {decisions?.nextCursor === undefined ? null : (
-        <LoadMore busy={older.busy} onLoad={loadOlder} label="Load older decisions">
+        <LoadMore busy={older.busy} onLoad={loadOlder} label={t("chatPanel.activity.loadOlder")}>
           {olderError === undefined ? null : (
             <Failure as="span" className="meta-sm">
               {olderError}

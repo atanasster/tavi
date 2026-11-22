@@ -28,6 +28,7 @@ import { z } from "zod";
 
 import { listDeliveryTargets } from "../routines/api.js";
 import { firstLine } from "../../lib/format.js";
+import { translateNow } from "../../lib/i18n.js";
 import { read, type Outcome, type Readable, type SettingsClient } from "../../lib/ipc.js";
 import { admissionPrompt, loadTaskRecord } from "../chat/tasks-api.js";
 
@@ -233,7 +234,7 @@ export async function listReminderTargets(client: SettingsClient, workspaceId: s
   const outcome = await listDeliveryTargets(client, workspaceId);
   if (!outcome.ok) return outcome;
   const parsed = ChatTargetsSchema.safeParse(outcome.value.targets);
-  if (!parsed.success) return { ok: false, message: "The owner's delivery targets could not be read." };
+  if (!parsed.success) return { ok: false, message: translateNow("center.remindersApi.targetsUnreadable") };
   return {
     ok: true,
     value: parsed.data

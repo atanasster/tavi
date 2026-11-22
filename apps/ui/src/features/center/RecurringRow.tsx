@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 
+import { useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
 import { AppLink } from "../shell/AppLink.js";
@@ -8,11 +10,11 @@ import { Switch } from "./PlainSchedules.js";
 /** What a row in Recurring is. */
 export type RecurringKind = "reminder" | "routine" | "schedule" | "heartbeat";
 
-const KIND_WORDS: Readonly<Record<RecurringKind, string>> = {
-  reminder: "Reminder",
-  routine: "Routine",
-  schedule: "Schedule",
-  heartbeat: "Heartbeat",
+const KIND_WORDS: Readonly<Record<RecurringKind, UiKey>> = {
+  reminder: "center.recurringRow.kind.reminder",
+  routine: "center.recurringRow.kind.routine",
+  schedule: "center.recurringRow.kind.schedule",
+  heartbeat: "center.recurringRow.kind.heartbeat",
 };
 
 /** Focus the More button of the row `rowKey`, once it is drawn: where an action that took the row away, or opened a form, began. */
@@ -92,11 +94,12 @@ export function RecurringRow({
   /** An action is on its way: nothing else starts. */
   readonly busy: boolean;
 }) {
+  const t = useT();
   return (
     <li className={`schedule-recurring schedule-recurring-${kind}`} data-row-key={rowKey}>
       <div className="schedule-recurring-main">
         <span className="schedule-recurring-title">
-          <span className={`schedule-kind eyebrow schedule-kind-${kind}`}>{KIND_WORDS[kind]}</span>
+          <span className={`schedule-kind eyebrow schedule-kind-${kind}`}>{t(KIND_WORDS[kind])}</span>
           <AppLink
             className={linkClassName === undefined ? "item-title button-link" : `item-title ${linkClassName} button-link`}
             href={href}
@@ -114,12 +117,12 @@ export function RecurringRow({
       <div className="schedule-recurring-controls">
         {runNow === undefined ? null : (
           <RowAction
-            aria-label={`Run now: ${name}`}
+            aria-label={t("center.recurringRow.runNowFor", { name })}
             title={runNow.title}
             disabled={busy || runNow.disabled === true}
             onClick={runNow.onRun}
           >
-            Run now
+            {t("center.recurringRow.runNow")}
           </RowAction>
         )}
         <Switch
@@ -130,7 +133,7 @@ export function RecurringRow({
           disabled={busy || toggle.disabled}
           onToggle={toggle.onToggle}
         />
-        {menu.length === 0 ? null : <MoreMenu label={`More actions for ${name}`} items={menu} disabled={busy} />}
+        {menu.length === 0 ? null : <MoreMenu label={t("center.recurringRow.moreFor", { name })} items={menu} disabled={busy} />}
       </div>
     </li>
   );
@@ -153,6 +156,7 @@ function MoreMenu({
   readonly items: readonly RowMenuItem[];
   readonly disabled?: boolean;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLSpanElement>(null);
   const button = useRef<HTMLButtonElement>(null);
@@ -209,7 +213,7 @@ function MoreMenu({
           setOpen(true);
         }}
       >
-        More
+        {t("center.recurringRow.more")}
       </Button>
       {open ? (
         <div id={menuId} ref={list} role="menu" aria-label={label} className="row-menu-list surface-popover" onKeyDown={move}>

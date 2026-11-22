@@ -1,6 +1,7 @@
 import type { HeartbeatGetAnswer, HeartbeatSettingsChange } from "@tavi/contracts";
 
 import { useLoaded } from "../../hooks/use-loaded.js";
+import { useT } from "../../lib/i18n.js";
 import { loadModels, type BrowsedModel } from "../settings/models-api.js";
 import { listAgents, type AgentSummary } from "./memory-api.js";
 import { Select } from "../../ui/Select.js";
@@ -18,6 +19,7 @@ export function HeartbeatTurn({
   readonly config: Pick<HeartbeatGetAnswer["config"], "model" | "agentId">;
   readonly onChange: (change: HeartbeatSettingsChange, said: string) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const models: readonly BrowsedModel[] = useLoaded(() => loadModels(client, workspaceId), [client, workspaceId]).data?.models ?? [];
   const agents: readonly AgentSummary[] =
@@ -29,20 +31,20 @@ export function HeartbeatTurn({
   return (
     <>
       <label>
-        Model{" "}
+        {t("center.heartbeatTurn.model")}{" "}
         <Select
-          aria-label="Model"
+          aria-label={t("center.heartbeatTurn.model")}
           value={chosen}
           onChange={(event) => {
             const value = event.target.value;
             const model = models.find((entry) => `${entry.connectionId}/${entry.modelId}` === value);
             onChange(
               model === undefined ? { model: null } : { model: { connectionId: model.connectionId, model: model.modelId } },
-              "Model changed.",
+              t("center.heartbeatTurn.modelChanged"),
             );
           }}
         >
-          <option value="">Workspace fast model</option>
+          <option value="">{t("center.heartbeatTurn.fastModel")}</option>
           {modelListed ? null : <option value={chosen}>{chosen}</option>}
           {models.map((model) => (
             <option key={`${model.connectionId}/${model.modelId}`} value={`${model.connectionId}/${model.modelId}`}>
@@ -52,13 +54,15 @@ export function HeartbeatTurn({
         </Select>
       </label>
       <label>
-        Persona{" "}
+        {t("center.heartbeatTurn.persona")}{" "}
         <Select
-          aria-label="Persona"
+          aria-label={t("center.heartbeatTurn.persona")}
           value={config.agentId ?? ""}
-          onChange={(event) => onChange({ agentId: event.target.value === "" ? null : event.target.value }, "Persona changed.")}
+          onChange={(event) =>
+            onChange({ agentId: event.target.value === "" ? null : event.target.value }, t("center.heartbeatTurn.personaChanged"))
+          }
         >
-          <option value="">None</option>
+          <option value="">{t("center.heartbeatTurn.none")}</option>
           {agentListed || config.agentId === undefined ? null : <option value={config.agentId}>{config.agentId}</option>}
           {agents.map((agent) => (
             <option key={agent.agentId} value={agent.agentId}>

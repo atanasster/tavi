@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 
 import { type MemoryItem, MEMORY_IPC_LIST_MAX } from "@tavi/contracts";
 
+import { useT } from "../../lib/i18n.js";
 import { mergeBy, useOlderPage } from "../../lib/paging.js";
 import { localDate, shortDay } from "../../lib/time.js";
 import { Failure, LoadMore } from "../../ui/Parts.js";
@@ -28,6 +29,7 @@ export function PastMemory({
   readonly revision: number;
   readonly onKept: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [past, setPast] = useState<{ readonly records: readonly MemoryItem[]; readonly nextCursor: string | undefined }>();
   const [error, setError] = useState<string>();
@@ -68,7 +70,7 @@ export function PastMemory({
   return (
     <section className="memory-group memory-past" aria-labelledby={`${id}-past`}>
       <h3 className="eyebrow" id={`${id}-past`}>
-        <span>Past</span>
+        <span>{t("center.memoryPast.title")}</span>
         <span className="soul-figure">{past.nextCursor === undefined ? past.records.length : `${past.records.length}+`}</span>
       </h3>
       <ul className="list-reset">
@@ -81,12 +83,13 @@ export function PastMemory({
           {error}
         </Failure>
       )}
-      {past.nextCursor === undefined ? null : <LoadMore busy={older.busy} onLoad={loadMore} label="Load more" />}
+      {past.nextCursor === undefined ? null : <LoadMore busy={older.busy} onLoad={loadMore} label={t("center.memoryPast.loadMore")} />}
     </section>
   );
 }
 /** One past record: what it was, when it ended or expired and when it is erased, and *Keep longer*. */
 function PastRow({ item, context, onKept }: { readonly item: MemoryItem; readonly context: Context; readonly onKept: () => void }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [until, setUntil] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -95,13 +98,20 @@ function PastRow({ item, context, onKept }: { readonly item: MemoryItem; readonl
   const locked = readOnly(item);
   const end = item.expiryAt ?? item.validTo;
   const ended = end === undefined ? undefined : shortDay(endDay(end, context.timeZone), context.today);
+  const erased = item.erasesAt === undefined ? undefined : shortDay(localDate(item.erasesAt, context.timeZone), context.today);
   const when =
     item.expiryAt === undefined && item.validTo !== undefined
-      ? `Ended ${ended ?? ""} · kept`
-      : `Expired${ended === undefined ? "" : ` ${ended}`}${item.erasesAt === undefined ? "" : ` · erased on ${shortDay(localDate(item.erasesAt, context.timeZone), context.today)}`}`;
+      ? t("center.memoryPast.ended", { day: ended ?? "" })
+      : ended === undefined
+        ? erased === undefined
+          ? t("center.memoryPast.expired")
+          : t("center.memoryPast.expiredErased", { erased })
+        : erased === undefined
+          ? t("center.memoryPast.expiredOn", { day: ended })
+          : t("center.memoryPast.expiredOnErased", { day: ended, erased });
   const save = (): void => {
     if (until === undefined || until === "") {
-      setFailure("Pick the last day to keep it.");
+      setFailure(t("center.memoryPast.pickDay"));
       return;
     }
     setBusy(true);
@@ -113,11 +123,7 @@ function PastRow({ item, context, onKept }: { readonly item: MemoryItem; readonl
         onKept();
         return;
       }
-      setFailure(
-        outcome.code === "MEMORY_CONFLICT"
-          ? "Another value for this preference is kept now. Forget that one first, or keep this one gone."
-          : outcome.message,
-      );
+      setFailure(outcome.code === "MEMORY_CONFLICT" ? t("center.memoryPast.conflict") : outcome.message);
     });
   };
   return (
@@ -133,9 +139,9 @@ function PastRow({ item, context, onKept }: { readonly item: MemoryItem; readonl
             size="sm"
             disabled={busy}
             onClick={() => setUntil(context.today)}
-            aria-label={`Keep longer: ${item.title ?? KIND_LABELS[item.kind]}`}
+            aria-label={t("center.memoryPast.keepLongerFor", { name: item.title ?? KIND_LABELS[item.kind] })}
           >
-            Keep longer
+            {t("center.memoryPast.keepLonger")}
           </Button>
         </div>
       ) : (
@@ -146,7 +152,7 @@ function PastRow({ item, context, onKept }: { readonly item: MemoryItem; readonl
             save();
           }}
         >
-          <Field id={`${ids}-until`} label="Keep until">
+          <Field id={`${ids}-until`} label={t("center.memoryPast.keepUntil")}>
             <input type="date" value={until} min={context.today} disabled={busy} onChange={(event) => setUntil(event.target.value)} />
           </Field>
           <FormActions
@@ -154,7 +160,7 @@ function PastRow({ item, context, onKept }: { readonly item: MemoryItem; readonl
             saving={busy}
             disabled={busy}
             cancelDisabled={busy}
-            label="Keep longer"
+            label={t("center.memoryPast.keepLonger")}
             onCancel={() => {
               setUntil(undefined);
               setFailure(undefined);

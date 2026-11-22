@@ -34,6 +34,8 @@ import { Recurring } from "./Recurring.js";
 import { UndoToast, useUndoDelete, type UndoDelete } from "./UndoDelete.js";
 import { Todos } from "./Todos.js";
 import { Command } from "../../ui/Command.js";
+import { useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /** Reminders in the order they run: a paused one, with no next run, comes last. */
 const byNextFire = (a: { readonly nextFireAt: string | null }, b: { readonly nextFireAt: string | null }): number =>
@@ -102,6 +104,7 @@ export function Schedule({
   readonly onOpenSchedule?: ((scheduleId: string) => void) | undefined;
   readonly onFollow: (taskId: string) => Promise<void>;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { heard, reloaded } = useHeardRevision(revision);
   // The lists are read only while they are shown: a page of its own reads what it shows, and the lists are read again on return.
@@ -192,7 +195,7 @@ export function Schedule({
 
   if (routineId !== undefined) {
     return (
-      <section className="center-section routines" aria-label="Schedule">
+      <section className="center-section routines" aria-label={t("center.schedule.title")}>
         <RoutineOverview
           key={routineId}
           routineId={routineId}
@@ -232,9 +235,9 @@ export function Schedule({
   if (reminderId !== undefined) {
     if (!offersReminders) {
       return (
-        <section className="center-section" aria-label="Schedule">
-          <BackLink label="Schedule" onBack={() => onOpenRoutine(undefined)} />
-          <Notice role="status">This reminder was not found.</Notice>
+        <section className="center-section" aria-label={t("center.schedule.title")}>
+          <BackLink label={t("center.schedule.title")} onBack={() => onOpenRoutine(undefined)} />
+          <Notice role="status">{t("center.schedule.reminderNotFound")}</Notice>
         </section>
       );
     }
@@ -290,13 +293,11 @@ export function Schedule({
       <PageHead
         className="center-head"
         id="center-schedule-title"
-        title="Schedule"
+        title={t("center.schedule.title")}
         description={
           <>
-            {offersReminders
-              ? "Reminders, routines and schedules, in the order they run. Ask in any chat: “remind me…” or “every weekday at 7…”."
-              : "Routines and schedules, in the order they run."}{" "}
-            Tavi has to be running (<Command>tavi serve</Command>) when they are due.
+            {offersReminders ? t("center.schedule.introReminders") : t("center.schedule.intro")}{" "}
+            {withParts(t("center.schedule.mustRun"), { command: <Command>tavi serve</Command> })}
           </>
         }
       >
@@ -305,12 +306,12 @@ export function Schedule({
           {offersReminders ? (
             <Button ref={newReminderButton} onClick={() => setNewReminder(true)} disabled={newReminder}>
               <Icon name="bell" size="sm" />
-              New reminder
+              {t("center.schedule.newReminder")}
             </Button>
           ) : null}
           <Button variant="primary" onClick={() => setCreate(true)}>
             <Icon name="plus" size="sm" />
-            New routine
+            {t("center.schedule.newRoutine")}
           </Button>
         </div>
       </PageHead>
@@ -338,13 +339,10 @@ export function Schedule({
       <StatusNote note={note} />
 
       {empty ? (
-        <EmptyState title="Nothing scheduled yet">
-          {offersReminders ? <p>Try asking: “remind me to stretch every day at 15:00”.</p> : null}
-          <p>
-            A routine researches on a schedule, writes a report and can deliver it. Create one here, or ask in chat: “Find the latest LLM
-            model news every morning at 9am.”
-          </p>
-          <p>Or start from a template, and change anything before you save it:</p>
+        <EmptyState title={t("center.schedule.emptyTitle")}>
+          {offersReminders ? <p>{t("center.schedule.emptyReminders")}</p> : null}
+          <p>{t("center.schedule.emptyRoutines")}</p>
+          <p>{t("center.schedule.emptyTemplates")}</p>
           <ScheduleTemplates reminders={offersReminders} onPick={startFrom} />
         </EmptyState>
       ) : null}
@@ -396,7 +394,7 @@ export function Schedule({
       {later.length > 0 ? (
         <>
           <h2 className="center-subhead">
-            Later <span>one-off reminders after this week</span>
+            {withParts(t("center.schedule.later"), { detail: <span>{t("center.schedule.laterDetail")}</span> })}
           </h2>
           <ul className="schedule-recurring-list card-flat list-reset">
             {[...later].sort(byNextFire).map((reminder) => (
@@ -426,7 +424,7 @@ export function Schedule({
           onClose={() => setScheduleStart(undefined)}
           onSaved={(name) => {
             setScheduleStart(undefined);
-            setNote(`${name} created.`);
+            setNote(t("center.schedule.created", { name }));
             reloadAll();
           }}
         />
@@ -481,18 +479,23 @@ function Deleting({
   readonly what: "schedule" | "reminder";
   readonly onBack: () => void;
 }) {
+  const t = useT();
   const held = undoDelete.held?.key === rowKey ? undoDelete.held : undefined;
   return (
-    <section className="center-section" aria-label="Schedule">
-      <BackLink label="Schedule" onBack={onBack} />
+    <section className="center-section" aria-label={t("center.schedule.title")}>
+      <BackLink label={t("center.schedule.title")} onBack={onBack} />
       <Notice role="status" className="cluster">
         {held === undefined ? (
-          `This ${what} was deleted.`
+          what === "schedule" ? (
+            t("center.schedule.scheduleDeleted")
+          ) : (
+            t("center.schedule.reminderDeleted")
+          )
         ) : (
           <>
-            <span>{held.name} is being deleted.</span>
-            <Button size="sm" aria-label={`Undo deleting ${held.name}`} onClick={undoDelete.undo}>
-              Undo
+            <span>{t("center.schedule.beingDeleted", { name: held.name })}</span>
+            <Button size="sm" aria-label={t("center.undoDelete.undoLabel", { name: held.name })} onClick={undoDelete.undo}>
+              {t("center.undoDelete.undo")}
             </Button>
           </>
         )}

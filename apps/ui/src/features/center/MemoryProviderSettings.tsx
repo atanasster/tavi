@@ -1,8 +1,9 @@
 import { useId, useState } from "react";
 
 import { BUILTIN_MEMORY_PROVIDER_ID, type MemoryEgressField } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 
+import { useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { Failure, InlineConfirm, StatusNote } from "../../ui/Parts.js";
 import { Select } from "../../ui/Select.js";
@@ -12,10 +13,10 @@ import { useWorkspace } from "../shell/Workspace.js";
 import { Field } from "../../ui/Field.js";
 
 /** What each egress switch says it lets the provider receive. */
-const EGRESS_LABELS: Readonly<Record<MemoryEgressField, { readonly label: string; readonly hint: string }>> = {
-  records: { label: "Records", hint: "Approved memories of this workspace, never sensitive ones" },
-  personal: { label: "Personal memory too", hint: "Your own memory, shared by all your workspaces" },
-  conversation: { label: "Conversation", hint: "Each recall's query and the chat spans it drafts proposals from" },
+const EGRESS_LABELS: Readonly<Record<MemoryEgressField, { readonly label: UiKey; readonly hint: UiKey }>> = {
+  records: { label: "center.memoryProvider.records", hint: "center.memoryProvider.recordsHint" },
+  personal: { label: "center.memoryProvider.personal", hint: "center.memoryProvider.personalHint" },
+  conversation: { label: "center.memoryProvider.conversation", hint: "center.memoryProvider.conversationHint" },
 };
 /**
  * *More → Provider*: the
@@ -27,6 +28,7 @@ const EGRESS_LABELS: Readonly<Record<MemoryEgressField, { readonly label: string
  * built-in, said here. `onChanged` is told after each change it made.
  */
 export function MemoryProviderSettings({ onChanged }: { readonly onChanged?: () => void }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const {
     data: answer,
@@ -86,56 +88,59 @@ export function MemoryProviderSettings({ onChanged }: { readonly onChanged?: () 
         checked={switchOf(field)}
         disabled={unavailable(field)}
         onChange={(event) =>
-          void change({ field, on: event.target.checked }, `${EGRESS_LABELS[field].label} ${event.target.checked ? "on" : "off"}.`)
+          void change(
+            { field, on: event.target.checked },
+            t(event.target.checked ? "center.memoryProvider.switchOn" : "center.memoryProvider.switchOff", {
+              label: t(EGRESS_LABELS[field].label),
+            }),
+          )
         }
       />{" "}
-      {EGRESS_LABELS[field].label}
+      {t(EGRESS_LABELS[field].label)}
     </label>
   );
   return (
     <section className="memory-provider" aria-labelledby={`${id}-title`}>
-      <h4 id={`${id}-title`}>Provider</h4>
+      <h4 id={`${id}-title`}>{t("center.memoryProvider.title")}</h4>
       <p>
         <Field
           id={`${id}-provider`}
-          label="Memory provider"
+          label={t("center.memoryProvider.label")}
           inline
           hintAs="span"
           hintClassName="meta-sm"
-          hint={
-            external
-              ? (selected?.disclosure ?? "Its declaration cannot be read while it is not running.")
-              : "The built-in: memory stays on this machine, ranked by Tavi itself."
-          }
+          hint={external ? (selected?.disclosure ?? t("center.memoryProvider.unreadable")) : t("center.memoryProvider.builtinHint")}
         >
           <Select
             value={answer.selected}
             disabled={busy || asking !== undefined}
-            onChange={(event) => void change({ providerId: event.target.value }, `Memory provider: ${event.target.value}.`)}
+            onChange={(event) =>
+              void change({ providerId: event.target.value }, t("center.memoryProvider.chosen", { provider: event.target.value }))
+            }
           >
             {answer.providers.some((provider) => provider.id === answer.selected) ? null : (
-              <option value={answer.selected}>{answer.selected} (not running)</option>
+              <option value={answer.selected}>{t("center.memoryProvider.notRunning", { provider: answer.selected })}</option>
             )}
             {answer.providers.map((provider) => (
               <option key={provider.id} value={provider.id}>
-                {provider.kind === "builtin" ? "Built-in" : provider.id}
+                {provider.kind === "builtin" ? t("center.memoryProvider.builtin") : provider.id}
               </option>
             ))}
           </Select>
         </Field>
       </p>
       {answer.fallback === undefined ? null : <Failure role="status">{answer.fallback}</Failure>}
-      <ul className="list-reset memory-provider-egress" aria-label="What the provider may receive">
+      <ul className="list-reset memory-provider-egress" aria-label={t("center.memoryProvider.receives")}>
         <li>
           {egressSwitch("records")}{" "}
           <span id={`${id}-records`} className="meta-sm">
-            {EGRESS_LABELS.records.hint}
+            {t(EGRESS_LABELS.records.hint)}
           </span>
           <ul className="list-reset memory-provider-nested">
             <li>
               {egressSwitch("personal")}{" "}
               <span id={`${id}-personal`} className="meta-sm">
-                {answer.egress.records ? EGRESS_LABELS.personal.hint : `${EGRESS_LABELS.personal.hint}; needs Records on`}
+                {answer.egress.records ? t(EGRESS_LABELS.personal.hint) : t("center.memoryProvider.personalHintOff")}
               </span>
             </li>
           </ul>
@@ -143,23 +148,21 @@ export function MemoryProviderSettings({ onChanged }: { readonly onChanged?: () 
         <li>
           {egressSwitch("conversation")}{" "}
           <span id={`${id}-conversation`} className="meta-sm">
-            {EGRESS_LABELS.conversation.hint}
+            {t(EGRESS_LABELS.conversation.hint)}
           </span>
         </li>
       </ul>
-      {external ? null : <p className="meta-sm">The built-in receives nothing: the switches apply to a provider plugin.</p>}
+      {external ? null : <p className="meta-sm">{t("center.memoryProvider.builtinNothing")}</p>}
       {answer.pendingRemovals === 0 ? null : (
-        <p className="meta-sm">
-          {plural(answer.pendingRemovals, "forgotten memory", "forgotten memories")} still to be removed from a provider when it next runs.
-        </p>
+        <p className="meta-sm">{t("center.memoryProvider.pendingRemovals", { count: answer.pendingRemovals })}</p>
       )}
       {asking === undefined ? null : (
         <InlineConfirm
           className="memory-confirm"
-          label="Send memory to the provider"
+          label={t("center.memoryProvider.ask")}
           message={asking.message}
-          confirmLabel={busy ? "Saving…" : "Go on"}
-          cancelLabel="Cancel"
+          confirmLabel={busy ? t("ui.parts.saving") : t("center.memoryProvider.goOn")}
+          cancelLabel={t("ui.confirm.cancel")}
           busy={busy}
           onConfirm={() => void change(asking.change, asking.done, true)}
           onCancel={() => setAsking(undefined)}

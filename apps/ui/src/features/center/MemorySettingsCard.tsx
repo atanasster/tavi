@@ -10,7 +10,9 @@ import {
 } from "@tavi/contracts";
 
 import { useLoaded } from "../../hooks/use-loaded.js";
-import { formatCount } from "../../lib/format.js";
+import { useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 import { Failure, InlineConfirm, StatusNote } from "../../ui/Parts.js";
 import { Select } from "../../ui/Select.js";
 import { LoadError } from "../settings/FormParts.js";
@@ -24,10 +26,26 @@ import { useWorkspace } from "../shell/Workspace.js";
 import { Field } from "../../ui/Field.js";
 
 /** *Keep without asking*'s ticks, one per kind, in the order the Center lists them. */
-const KEEP_WITHOUT_ASKING: readonly { readonly kind: MemoryAutoApproveKind; readonly label: string }[] = [
-  { kind: "preference", label: "Preferences" },
-  { kind: "fact", label: "Facts" },
-  { kind: "lesson", label: "Lessons" },
+const KEEP_WITHOUT_ASKING: readonly {
+  readonly kind: MemoryAutoApproveKind;
+  readonly label: UiKey;
+  /** What a tick says once saved, and what clearing it says. */
+  readonly kept: UiKey;
+  readonly waits: UiKey;
+}[] = [
+  {
+    kind: "preference",
+    label: "center.memoryModel.group.preference",
+    kept: "center.memorySettings.keptPreference",
+    waits: "center.memorySettings.waitPreference",
+  },
+  { kind: "fact", label: "center.memoryModel.group.fact", kept: "center.memorySettings.keptFact", waits: "center.memorySettings.waitFact" },
+  {
+    kind: "lesson",
+    label: "center.memoryModel.group.lesson",
+    kept: "center.memorySettings.keptLesson",
+    waits: "center.memorySettings.waitLesson",
+  },
 ];
 /** A disclosure the owner refused a change with, and the connection it named: a yes accepts that one alone. */
 interface Disclosure {
@@ -56,6 +74,7 @@ export function MemorySettingsCard({
   /** Told whether memory is on and proposes, each time that changes. */
   readonly onMode?: ((mode: MemoryMode) => void) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   /** `loadError`: why the settings could not be read; a refused change is `error`, which a re-read keeps. */
   const {
@@ -131,7 +150,7 @@ export function MemorySettingsCard({
   return (
     <section className="memory-settings" aria-labelledby={`${id}-title`}>
       <h3 id={`${id}-title`} className="eyebrow">
-        Settings
+        {t("center.memorySettings.title")}
       </h3>
       <ul className="list-reset memory-settings-list">
         <li>
@@ -145,16 +164,14 @@ export function MemorySettingsCard({
               onChange={(event) =>
                 void save(
                   [["enabled", event.target.checked ? "on" : "off"]],
-                  event.target.checked
-                    ? "Memory is on."
-                    : "Memory is paused: nothing is recalled or captured anywhere. What is kept stays.",
+                  event.target.checked ? t("center.memorySettings.memoryOnNote") : t("center.memorySettings.memoryPausedNote"),
                 )
               }
             />{" "}
-            Memory
+            {t("center.memorySettings.memory")}
           </label>{" "}
           <span id={`${id}-enabled`} className="meta-sm">
-            {effective.enabled ? "On" : "Paused: nothing is recalled or captured; what is kept stays"}
+            {effective.enabled ? t("center.memorySettings.memoryOn") : t("center.memorySettings.memoryPaused")}
           </span>
         </li>
         <li>
@@ -168,38 +185,35 @@ export function MemorySettingsCard({
               onChange={(event) =>
                 void save(
                   [["capture", event.target.checked ? "suggest" : "off"]],
-                  event.target.checked
-                    ? "The agent may suggest things to remember again."
-                    : "The agent no longer suggests things to remember; what you write yourself is still kept.",
+                  event.target.checked ? t("center.memorySettings.captureOnNote") : t("center.memorySettings.captureOffNote"),
                 )
               }
             />{" "}
-            Learn from chats
+            {t("center.memorySettings.capture")}
           </label>{" "}
           <span id={`${id}-capture`} className="meta-sm">
-            {effective.capture === "suggest"
-              ? "On: the agent suggests things to remember, and you decide."
-              : "Off: only what you write yourself."}
+            {effective.capture === "suggest" ? t("center.memorySettings.captureOn") : t("center.memorySettings.captureOff")}
           </span>{" "}
           <span className="meta-sm">
-            Suggested by the capture model, the extraction role in{" "}
-            <AppLink href={settingsPath("models")} onFollow={onModels}>
-              Settings → Models
-            </AppLink>
-            .
+            {withParts(t("center.memorySettings.captureModel"), {
+              link: (
+                <AppLink href={settingsPath("models")} onFollow={onModels}>
+                  {t("center.memorySettings.modelsLink")}
+                </AppLink>
+              ),
+            })}
           </span>
         </li>
         <li>
           {/* Auto-approve: opt-in per kind, all unticked; only the operator's own words, still shown with Undo. */}
           <fieldset className="memory-settings-keep" aria-describedby={`${id}-keep`}>
-            <legend>Keep without asking</legend>
+            <legend>{t("center.memorySettings.keepLegend")}</legend>
             {/* What may be kept, under the group's name and before its ticks: under the last one it read as that one's. */}
             <span id={`${id}-keep`} className="meta-sm memory-settings-keep-help">
-              Only what you typed yourself in your own chats; never sensitive topics, updates, what came from tools, pages or messages, or
-              anything in a chat once it has read one
+              {t("center.memorySettings.keepHelp")}
             </span>
             <ul className="list-reset">
-              {KEEP_WITHOUT_ASKING.map(({ kind, label }) => {
+              {KEEP_WITHOUT_ASKING.map(({ kind, label, kept, waits }) => {
                 const ticked = effective.autoApprove?.includes(kind) === true;
                 return (
                   <li key={kind}>
@@ -215,19 +229,17 @@ export function MemorySettingsCard({
                           );
                           void save(
                             [["auto-approve", next.length === 0 ? "none" : next.join(",")]],
-                            event.target.checked
-                              ? `${label} you write are now kept without asking; each still shows with Undo.`
-                              : `${label} wait for you again.`,
+                            event.target.checked ? t(kept) : t(waits),
                           );
                         }}
                       />{" "}
-                      {label}
+                      {t(label)}
                     </label>
                     {ticked ? (
                       <>
                         {" "}
                         <span id={`${id}-keep-${kind}`} className="meta-sm">
-                          You'll still see each one, with Undo
+                          {t("center.memorySettings.stillSee")}
                         </span>
                       </>
                     ) : null}
@@ -240,14 +252,14 @@ export function MemorySettingsCard({
         <li>
           <Field
             id={`${id}-sensitive-mode`}
-            label="Sensitive topics"
+            label={t("center.memorySettings.sensitive")}
             inline
             hintAs="span"
             hintClassName="meta-sm"
             hint={
               effective.sensitive === "suggest"
-                ? "Health, beliefs, money and similar are suggested, masked until you reveal them, and never recalled automatically"
-                : "Health, beliefs, money and similar are not saved from chats, unless you ask"
+                ? t("center.memorySettings.sensitiveSuggestHint")
+                : t("center.memorySettings.sensitiveSkipHint")
             }
           >
             <Select
@@ -257,32 +269,26 @@ export function MemorySettingsCard({
                 const mode = event.target.value === "suggest" ? "suggest" : "skip";
                 void save(
                   [["sensitive", mode]],
-                  mode === "suggest"
-                    ? "Sensitive topics are suggested, masked until you reveal them."
-                    : "Sensitive topics are no longer saved from chats.",
+                  mode === "suggest" ? t("center.memorySettings.sensitiveSuggestNote") : t("center.memorySettings.sensitiveSkipNote"),
                 );
               }}
             >
-              <option value="skip">Don't save</option>
-              <option value="suggest">Suggest, masked</option>
+              <option value="skip">{t("center.memorySettings.sensitiveSkip")}</option>
+              <option value="suggest">{t("center.memorySettings.sensitiveSuggest")}</option>
             </Select>
           </Field>
         </li>
       </ul>
       <details className="memory-settings-more">
-        <summary className="disclosure">More</summary>
+        <summary className="disclosure">{t("center.memorySettings.more")}</summary>
         <p>
           <Field
             id={`${id}-retrieval`}
-            label="Search quality"
+            label={t("center.memorySettings.retrieval")}
             inline
             hintAs="span"
             hintClassName="meta-sm"
-            hint={
-              effective.retrieval === "hybrid"
-                ? "Recall also finds memories worded differently, through the embedding model in Settings → Models; words alone when it cannot answer"
-                : "Recall matches words; meaning search needs an embedding model in Settings → Models"
-            }
+            hint={effective.retrieval === "hybrid" ? t("center.memorySettings.hybridHint") : t("center.memorySettings.lexicalHint")}
           >
             <Select
               value={effective.retrieval}
@@ -291,24 +297,24 @@ export function MemorySettingsCard({
                 const mode = event.target.value === "hybrid" ? "hybrid" : "lexical";
                 void save(
                   [["retrieval", mode]],
-                  mode === "hybrid" ? "Memory is now searched by meaning too." : "Memory is searched by its words again.",
+                  mode === "hybrid" ? t("center.memorySettings.hybridNote") : t("center.memorySettings.lexicalNote"),
                 );
               }}
             >
-              <option value="lexical">Words</option>
-              <option value="hybrid">Words and meaning</option>
+              <option value="lexical">{t("center.memorySettings.lexical")}</option>
+              <option value="hybrid">{t("center.memorySettings.hybrid")}</option>
             </Select>
           </Field>
         </p>
         {disclosure === undefined ? null : (
           <InlineConfirm
             className="memory-confirm"
-            label="Turn on meaning search"
+            label={t("center.memorySettings.hybridAsk")}
             message={disclosure.message}
-            confirmLabel={busy ? "Turning on…" : "Turn on"}
-            cancelLabel="Cancel"
+            confirmLabel={busy ? t("center.memorySettings.turningOn") : t("center.memorySettings.turnOn")}
+            cancelLabel={t("ui.confirm.cancel")}
             busy={busy}
-            onConfirm={() => void save([["retrieval", "hybrid"]], "Memory is now searched by meaning too.", disclosure.connectionId)}
+            onConfirm={() => void save([["retrieval", "hybrid"]], t("center.memorySettings.hybridNote"), disclosure.connectionId)}
             onCancel={() => setDisclosure(undefined)}
           />
         )}
@@ -323,34 +329,29 @@ export function MemorySettingsCard({
                 disabled={busy || personalDisclosure !== undefined}
                 onChange={(event) =>
                   event.target.checked
-                    ? void save([["retrieval", "hybrid"]], "Personal memory is now searched by meaning too.", undefined, true)
-                    : void save(
-                        [["retrieval", "hybrid"]],
-                        "Personal memory is searched by its words again; its embeddings are removed.",
-                        undefined,
-                        false,
-                      )
+                    ? void save([["retrieval", "hybrid"]], t("center.memorySettings.personalHybridNote"), undefined, true)
+                    : void save([["retrieval", "hybrid"]], t("center.memorySettings.personalLexicalNote"), undefined, false)
                 }
               />{" "}
-              Personal memory too
+              {t("center.memorySettings.personal")}
             </label>{" "}
             <span id={`${id}-retrieval-personal`} className="meta-sm">
               {effective.retrievalPersonal !== undefined && effective.retrievalPersonal === effective.retrievalConnection
-                ? `Your personal memory is searched by meaning too, through ${effective.retrievalConnection}`
-                : `Your personal memory, shared by all your workspaces, is matched by its words; on, it is sent to ${effective.retrievalConnection} too`}
+                ? t("center.memorySettings.personalOn", { connection: effective.retrievalConnection })
+                : t("center.memorySettings.personalOff", { connection: effective.retrievalConnection })}
             </span>
           </p>
         )}
         {personalDisclosure === undefined ? null : (
           <InlineConfirm
             className="memory-confirm"
-            label="Search personal memory by meaning too"
+            label={t("center.memorySettings.personalAsk")}
             message={personalDisclosure.message}
-            confirmLabel={busy ? "Turning on…" : "Turn on for personal memory"}
-            cancelLabel="Cancel"
+            confirmLabel={busy ? t("center.memorySettings.turningOn") : t("center.memorySettings.personalTurnOn")}
+            cancelLabel={t("ui.confirm.cancel")}
             busy={busy}
             onConfirm={() =>
-              void save([["retrieval", "hybrid"]], "Personal memory is now searched by meaning too.", personalDisclosure.connectionId, true)
+              void save([["retrieval", "hybrid"]], t("center.memorySettings.personalHybridNote"), personalDisclosure.connectionId, true)
             }
             onCancel={() => setPersonalDisclosure(undefined)}
           />
@@ -366,16 +367,14 @@ export function MemorySettingsCard({
               onChange={(event) =>
                 void save(
                   [["digest", event.target.checked ? "weekly" : "off"]],
-                  event.target.checked ? "The weekly digest is on." : "No more digests: proposals still wait here until they expire.",
+                  event.target.checked ? t("center.memorySettings.digestOnNote") : t("center.memorySettings.digestOffNote"),
                 )
               }
             />{" "}
-            Weekly digest
+            {t("center.memorySettings.digest")}
           </label>{" "}
           <span id={`${id}-digest`} className="meta-sm">
-            {effective.digest === "weekly"
-              ? "On: what waits for you is gathered weekly, and before anything expires"
-              : "Off: no digest; proposals still wait here until they expire"}
+            {effective.digest === "weekly" ? t("center.memorySettings.digestOn") : t("center.memorySettings.digestOff")}
           </span>
         </p>
         <p>
@@ -389,28 +388,24 @@ export function MemorySettingsCard({
               onChange={(event) =>
                 void save(
                   [["consolidation", event.target.checked ? "weekly" : "off"]],
-                  event.target.checked
-                    ? "Weekly tidy-up suggestions are on: each one waits for you here."
-                    : "No more tidy-up suggestions; the ones waiting stay until you decide them.",
+                  event.target.checked ? t("center.memorySettings.tidyOnNote") : t("center.memorySettings.tidyOffNote"),
                 )
               }
             />{" "}
-            Tidy-up suggestions
+            {t("center.memorySettings.tidy")}
           </label>{" "}
           <span id={`${id}-consolidation`} className="meta-sm">
-            {effective.consolidation === "weekly"
-              ? "Weekly: suggestions to merge, replace or end what is kept, each shown before and after; nothing changes until you keep one"
-              : "Off: what is kept is never tidied"}
+            {effective.consolidation === "weekly" ? t("center.memorySettings.tidyOn") : t("center.memorySettings.tidyOff")}
           </span>
         </p>
         <form
           className="memory-settings-limits"
-          aria-label="Memory limits"
+          aria-label={t("center.memorySettings.limits")}
           // The owner's bounds are said in words, naming what was typed, rather than by the browser's bubble.
           noValidate
           onSubmit={(event) => {
             event.preventDefault();
-            if (limitChanges.length > 0) void save(limitChanges, "Memory limits saved.");
+            if (limitChanges.length > 0) void save(limitChanges, t("center.memorySettings.limitsSaved"));
           }}
         >
           {MEMORY_LIMIT_FIELDS.map((field) => {
@@ -423,11 +418,12 @@ export function MemorySettingsCard({
                   inline
                   hintAs="span"
                   hintClassName="meta-sm"
-                  hint={
-                    <>
-                      {field.hint} {formatCount(bounds.min)}–{formatCount(bounds.max)}; default {formatCount(bounds.default)}.
-                    </>
-                  }
+                  hint={t("center.memorySettings.limitHint", {
+                    hint: field.hint,
+                    min: bounds.min,
+                    max: bounds.max,
+                    byDefault: bounds.default,
+                  })}
                 >
                   <input
                     type="number"
@@ -444,7 +440,7 @@ export function MemorySettingsCard({
             );
           })}
           <Button size="sm" type="submit" disabled={busy || limitChanges.length === 0}>
-            Save limits
+            {t("center.memorySettings.saveLimits")}
           </Button>
         </form>
         {/* A provider change moves the settings' revision: read them again, so the next save here starts from it. */}

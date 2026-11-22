@@ -1,5 +1,4 @@
 import { MCP_PLUGIN_PREFIX, type CenterSummaryAnswer } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 import { useState, type ReactNode } from "react";
 
 import { Icon, type IconName } from "../../ui/Icon.js";
@@ -14,54 +13,58 @@ import { tasksInWindow, tasksToday } from "./model.js";
 import { localDate, localTime, nearDay } from "../../lib/time.js";
 import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
+import { useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
-/** One kind of thing waiting on the reader, and the section that holds it. */
+/** One kind of thing waiting on the reader, and the section that holds it; its words by key, said where shown. */
 const WAITING: readonly {
   readonly key: "approvals" | "reviews" | "questions" | "handoffs" | "connects" | "memoryProposals";
-  readonly one: string;
-  readonly many: string;
-  readonly detail: string;
+  /** A counted message: "2 approvals". */
+  readonly countKey: UiKey;
+  readonly detailKey: UiKey;
   readonly section: CenterSection;
   readonly icon: IconName;
 }[] = [
   {
     key: "approvals",
-    one: "approval",
-    many: "approvals",
-    detail: "Tool calls waiting for your decision",
+    countKey: "center.rail.waiting.approvals",
+    detailKey: "center.rail.waiting.approvalsDetail",
     section: "approvals",
     icon: "center-approvals",
   },
   {
     key: "reviews",
-    one: "review",
-    many: "reviews",
-    detail: "Results waiting for you to keep or reject",
+    countKey: "center.rail.waiting.reviews",
+    detailKey: "center.rail.waiting.reviewsDetail",
     section: "approvals",
     icon: "check",
   },
-  { key: "questions", one: "question", many: "questions", detail: "Tasks waiting for your answer", section: "approvals", icon: "info" },
+  {
+    key: "questions",
+    countKey: "center.rail.waiting.questions",
+    detailKey: "center.rail.waiting.questionsDetail",
+    section: "approvals",
+    icon: "info",
+  },
   {
     key: "handoffs",
-    one: "browser handoff",
-    many: "browser handoffs",
-    detail: "Tasks waiting for you to act in their browser",
+    countKey: "center.rail.waiting.handoffs",
+    detailKey: "center.rail.waiting.handoffsDetail",
     section: "browser",
     icon: "info",
   },
   {
     key: "connects",
-    one: "app to connect",
-    many: "apps to connect",
-    detail: "Tasks waiting for you to sign an app in again",
+    countKey: "center.rail.waiting.connects",
+    detailKey: "center.rail.waiting.connectsDetail",
     section: "approvals",
     icon: "plug",
   },
   {
     key: "memoryProposals",
-    one: "memory proposal",
-    many: "memory proposals",
-    detail: "Things the agent would like to remember",
+    countKey: "center.rail.waiting.memoryProposals",
+    detailKey: "center.rail.waiting.memoryProposalsDetail",
     section: "identity",
     icon: "sparkles",
   },
@@ -69,6 +72,7 @@ const WAITING: readonly {
 
 /** An OAuth connection whose sign-in lapsed: named by its channel, it opens Settings → Channels. */
 function ReconnectLink({ item }: { readonly item: NonNullable<CenterSummaryAnswer["reconnect"]>[number] }) {
+  const t = useT();
   const channels = useChannelNames();
   const name = item.label ?? channels.label(item.providerId) ?? item.providerId;
   return (
@@ -77,9 +81,9 @@ function ReconnectLink({ item }: { readonly item: NonNullable<CenterSummaryAnswe
         <Icon name="info" size="sm" />
       </span>
       <span className="center-need-text">
-        <span className="center-need-title">Reconnect {name}</span>
+        <span className="center-need-title">{t("center.rail.reconnect", { name })}</span>
         <span className="center-need-detail meta-sm">
-          {item.authState === "needs-consent" ? "It asks for access it was not granted" : "Its sign-in expired or was revoked"}
+          {item.authState === "needs-consent" ? t("center.rail.reconnectConsent") : t("center.rail.reconnectExpired")}
         </span>
       </span>
     </AppLink>
@@ -103,6 +107,7 @@ function AppRepairLink({
   readonly item: AppRepairItem;
   readonly onFix?: ((item: AppRepairItem) => Promise<Outcome<unknown>>) | undefined;
 }) {
+  const t = useT();
   const [state, setState] = useState<{ readonly busy: boolean; readonly said?: string }>({ busy: false });
   // An MCP server's review opens on arrival, as its notice's did.
   const review = item.kind === "review-tools" && item.accountId?.startsWith(MCP_PLUGIN_PREFIX) === true ? item.accountId : undefined;
@@ -124,7 +129,7 @@ function AppRepairLink({
         disabled={state.busy}
         onClick={() => {
           setState({ busy: true });
-          void onFix(item).then((outcome) => setState({ busy: false, said: outcome.ok ? "Done." : outcome.message }));
+          void onFix(item).then((outcome) => setState({ busy: false, said: outcome.ok ? t("center.rail.fixed") : outcome.message }));
         }}
       >
         {body}
@@ -142,18 +147,19 @@ function AppRepairLink({
   );
 }
 
-/** What an MCP server's notice asks, in Tavi's words, with the command that decides it. */
+/** What an MCP server's notice asks, in Tavi's words (by key: "{plugin}: its tools changed"), with the command that decides it. */
 const SERVER_NOTICE_WORDS: Readonly<
-  Record<NonNullable<CenterSummaryAnswer["servers"]>[number]["kind"], { readonly title: string; readonly command: string }>
+  Record<NonNullable<CenterSummaryAnswer["servers"]>[number]["kind"], { readonly titleKey: UiKey; readonly command: string }>
 > = {
-  drift: { title: "its tools changed", command: "tavi mcp review" },
-  failed: { title: "stopped after repeated failures", command: "tavi mcp logs" },
-  budget: { title: "its tools do not fit", command: "tavi mcp review" },
-  login: { title: "needs you to sign in again", command: "tavi mcp review" },
-  scope: { title: "asks for more access", command: "tavi mcp review" },
+  drift: { titleKey: "center.rail.server.drift", command: "tavi mcp review" },
+  failed: { titleKey: "center.rail.server.failed", command: "tavi mcp logs" },
+  budget: { titleKey: "center.rail.server.budget", command: "tavi mcp review" },
+  login: { titleKey: "center.rail.server.login", command: "tavi mcp review" },
+  scope: { titleKey: "center.rail.server.scope", command: "tavi mcp review" },
 };
 
 function ServerNotice({ item }: { readonly item: NonNullable<CenterSummaryAnswer["servers"]>[number] }) {
+  const t = useT();
   const words = SERVER_NOTICE_WORDS[item.kind];
   // Opens the server's review in Settings → Plugins, where a drift is read and decided.
   return (
@@ -162,14 +168,15 @@ function ServerNotice({ item }: { readonly item: NonNullable<CenterSummaryAnswer
         <Icon name="info" size="sm" />
       </span>
       <span className="center-need-text">
-        <span className="center-need-title">
-          {item.pluginId}: {words.title}
-        </span>
+        <span className="center-need-title">{t(words.titleKey, { plugin: item.pluginId })}</span>
         <span className="center-need-detail meta-sm">
-          Review it, or{" "}
-          <code>
-            {words.command} {item.pluginId}
-          </code>
+          {withParts(t("center.rail.reviewIt"), {
+            command: (
+              <code>
+                {words.command} {item.pluginId}
+              </code>
+            ),
+          })}
         </span>
       </span>
     </AppLink>
@@ -208,9 +215,10 @@ export function CenterRail({
   /** Leave out Coming up: the Schedule section lists the same, in full. */
   readonly hideComingUp?: boolean;
 }) {
+  const t = useT();
   if (summary === undefined) {
     return (
-      <aside className="center-rail" aria-label="Needs attention">
+      <aside className="center-rail" aria-label={t("center.rail.label")}>
         <Pending className="notice" status />
       </aside>
     );
@@ -224,16 +232,16 @@ export function CenterRail({
   const total = tasksInWindow(summary);
   const todays = tasksToday(summary);
   return (
-    <aside className="center-rail" aria-label="Needs attention">
+    <aside className="center-rail" aria-label={t("center.rail.label")}>
       {heartbeat}
       {reminders}
       <section>
         <h2 className="eyebrow">
           <Icon name="bell" size="sm" />
-          Waiting on you
+          {t("center.rail.waitingOnYou")}
         </h2>
         {apps.length === 0 ? null : (
-          <ul className="center-needs list-reset" aria-label="Connected apps">
+          <ul className="center-needs list-reset" aria-label={t("center.rail.connectedApps")}>
             {apps.map((item) => (
               <li key={`${item.appId}:${item.kind}:${item.accountId ?? ""}`}>
                 <AppRepairLink item={item} onFix={onFixApp} />
@@ -242,7 +250,7 @@ export function CenterRail({
           </ul>
         )}
         {reconnect.length === 0 ? null : (
-          <ul className="center-needs list-reset" aria-label="Channels to reconnect">
+          <ul className="center-needs list-reset" aria-label={t("center.rail.channelsToReconnect")}>
             {reconnect.map((item) => (
               <li key={item.connectionId}>
                 <ReconnectLink item={item} />
@@ -251,7 +259,7 @@ export function CenterRail({
           </ul>
         )}
         {servers.length === 0 ? null : (
-          <ul className="center-needs list-reset" aria-label="Servers">
+          <ul className="center-needs list-reset" aria-label={t("center.rail.servers")}>
             {servers.map((item) => (
               <li key={`${item.pluginId}:${item.kind}`}>
                 <ServerNotice item={item} />
@@ -260,7 +268,7 @@ export function CenterRail({
           </ul>
         )}
         {waiting.length === 0 && apps.length === 0 && reconnect.length === 0 && servers.length === 0 ? (
-          <Empty>{unseenReminders > 0 ? "Nothing else is waiting on you." : "Nothing is waiting on you."}</Empty>
+          <Empty>{unseenReminders > 0 ? t("center.rail.nothingElse") : t("center.rail.nothing")}</Empty>
         ) : null}
         {waiting.length === 0 ? null : (
           <ul className="center-needs list-reset">
@@ -290,8 +298,8 @@ export function CenterRail({
                       <Icon name={item.icon} size="sm" />
                     </span>
                     <span className="center-need-text">
-                      <span className="center-need-title">{plural(count ?? 0, item.one, item.many)}</span>
-                      <span className="center-need-detail meta-sm">{item.detail}</span>
+                      <span className="center-need-title">{t(item.countKey, { count: count ?? 0 })}</span>
+                      <span className="center-need-detail meta-sm">{t(item.detailKey)}</span>
                     </span>
                   </AppLink>
                 </li>
@@ -305,10 +313,10 @@ export function CenterRail({
         <section>
           <h2 className="eyebrow">
             <Icon name="calendar" size="sm" />
-            Coming up
+            {t("center.rail.comingUp")}
           </h2>
           {summary.next.length === 0 ? (
-            <Empty>Nothing scheduled.</Empty>
+            <Empty>{t("center.rail.nothingScheduled")}</Empty>
           ) : (
             <ul className="center-next list-reset">
               {summary.next.map((item) => {
@@ -318,8 +326,16 @@ export function CenterRail({
                     <span>
                       <span className="center-next-title">{item.title}</span>
                       <span className="center-next-detail meta-sm">
-                        {item.kind === "routine" ? "Routine" : item.kind === "reminder" ? "Reminder" : "Schedule"} ·{" "}
-                        {nearDay(localDate(item.at, summary.timezone), summary.today, "future")}
+                        {t("center.rail.nextDetail", {
+                          kind: t(
+                            item.kind === "routine"
+                              ? "center.model.source.routine"
+                              : item.kind === "reminder"
+                                ? "center.model.source.reminder"
+                                : "center.model.source.schedule",
+                          ),
+                          day: nearDay(localDate(item.at, summary.timezone), summary.today, "future"),
+                        })}
                       </span>
                     </span>
                   </>
@@ -347,19 +363,19 @@ export function CenterRail({
       )}
       <dl className="center-stats card-flat">
         <div>
-          <dt>turns today</dt>
+          <dt>{t("center.rail.stat.turnsToday")}</dt>
           <dd>{todays}</dd>
         </div>
         <div>
-          <dt>running now</dt>
+          <dt>{t("center.rail.stat.runningNow")}</dt>
           <dd>{summary.counts.runningTasks}</dd>
         </div>
         <div>
-          <dt>turns in {summary.perDay.length} days</dt>
+          <dt>{t("center.rail.stat.turnsInDays", { count: summary.perDay.length })}</dt>
           <dd>{total}</dd>
         </div>
         <div>
-          <dt>{summary.counts.reminders === undefined ? "routines and schedules" : "reminders, routines and schedules"}</dt>
+          <dt>{summary.counts.reminders === undefined ? t("center.rail.stat.routines") : t("center.rail.stat.remindersRoutines")}</dt>
           <dd>{summary.counts.activeRoutines + summary.counts.schedules + (summary.counts.reminders ?? 0)}</dd>
         </div>
       </dl>

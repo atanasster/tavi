@@ -1,9 +1,8 @@
 import { translateNow } from "../../../lib/i18n.js";
 import { conversationOfRecorded, turnEnded } from "@tavi/client/browser";
 import { TASK_NEEDS, type TaskListFilters, TaskListResultSchema, type TaskListRow } from "@tavi/contracts";
-import { errorMessage } from "@tavi/contracts/util";
 
-import { refusal } from "../../../lib/ipc.js";
+import { refusedAs, said, SaidError, saidOf } from "./said.js";
 import { mergeBy } from "../../../lib/paging.js";
 import { readTaskRecord } from "../tasks-api.js";
 import type { StoreContext } from "./context.js";
@@ -60,14 +59,14 @@ export function installSessions(ctx: StoreContext): void {
       ]);
       if (ctx.disposed || generation !== listGeneration) return;
       if (!page.ok || !inbox.ok)
-        throw new Error(
-          translateNow("chat.files.restartHint", {
-            message: page.error?.message ?? inbox.error?.message ?? translateNow("chat.store.listRefused"),
+        throw new SaidError(
+          said("chat.files.restartHint", {
+            message: page.error?.message ?? inbox.error?.message ?? said("chat.store.listRefused"),
           }),
         );
       const list = TaskListResultSchema.safeParse(page.result);
       const needs = TaskListResultSchema.safeParse(inbox.result);
-      if (!list.success || !needs.success) throw new Error(translateNow("chat.store.listUnsupported"));
+      if (!list.success || !needs.success) throw new SaidError(said("chat.store.listUnsupported"));
       const inWorkspace = (row: TaskListRow) => row.workspaceId === options.workspaceId;
       // A worker is no chat: its need is its root's, which counts it (`descendantNeeds`)
       // and shows it in the root's transcript, so its own inbox row is never listed.
@@ -77,7 +76,10 @@ export function installSessions(ctx: StoreContext): void {
       for (let pageIndex = 1; pageIndex < pages && nextCursor; pageIndex++) {
         const answer = await client.request("tasks", { ...query, action: "list", workspaceId: options.workspaceId, cursor: nextCursor });
         if (ctx.disposed || generation !== listGeneration) return;
-        if (!answer.ok) throw new Error(refusal(answer, translateNow("chat.store.listRefused")));
+        if (!answer.ok) {
+          const why = refusedAs(answer, said("chat.store.listRefused"));
+          throw typeof why === "string" ? new Error(why) : new SaidError(why);
+        }
         const next = TaskListResultSchema.parse(answer.result);
         pageRows.push(...next.rows.filter(inWorkspace));
         nextCursor = next.nextCursor;
@@ -146,7 +148,7 @@ export function installSessions(ctx: StoreContext): void {
             needs: previous?.needs ?? [],
             needsTruncated: previous?.needsTruncated ?? false,
             loading: false,
-            error: errorMessage(error),
+            error: saidOf(error),
           },
         });
     }

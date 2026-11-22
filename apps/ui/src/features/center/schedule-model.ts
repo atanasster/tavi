@@ -19,6 +19,7 @@ import {
   type ScheduledWorkUsage,
 } from "@tavi/contracts";
 
+import { translateNow } from "../../lib/i18n.js";
 import { dayTime, durationText, monthYear } from "../../lib/time.js";
 
 /**
@@ -38,9 +39,17 @@ export function weekdaysText(days: readonly number[] | undefined): string | unde
 
 /** A cadence in words: "Daily 21:00 · Europe/Berlin", "Mon–Fri 07:00 · Europe/Berlin", "Once". */
 export function cadenceText(cadence: AgendaCadence): string {
-  if (cadence.kind === "once") return "Once";
-  if (cadence.kind === "repeat") return `${repeatDaysText(cadence, "label")}, ${cadence.at} · ${cadence.timezone}`;
-  return `${weekdaysText(cadence.daysOfWeek) ?? "Daily"} ${cadence.at} · ${cadence.timezone}`;
+  if (cadence.kind === "once") return translateNow("center.scheduleModel.once");
+  if (cadence.kind === "repeat")
+    return translateNow("center.scheduleModel.repeatCadence", {
+      days: repeatDaysText(cadence, "label"),
+      at: cadence.at,
+      zone: cadence.timezone,
+    });
+  const days = weekdaysText(cadence.daysOfWeek);
+  return days === undefined
+    ? translateNow("center.scheduleModel.dailyCadence", { at: cadence.at, zone: cadence.timezone })
+    : translateNow("center.scheduleModel.daysCadence", { days, at: cadence.at, zone: cadence.timezone });
 }
 
 /**
@@ -73,9 +82,14 @@ export function routineCadence(triggers: readonly RoutineListTrigger[]): string 
   });
   const once = triggers.filter((trigger) => trigger.kind === "once");
   const pending = once.filter((trigger) => trigger.consumed !== true).length;
-  const parts = [...daily, ...(pending > 0 ? [pending === 1 ? "Once" : `Once ×${pending}`] : [])];
+  const parts = [
+    ...daily,
+    ...(pending > 0
+      ? [pending === 1 ? translateNow("center.scheduleModel.once") : translateNow("center.scheduleModel.onceTimes", { times: pending })]
+      : []),
+  ];
   if (parts.length > 0) return parts.join("; ");
-  return once.length > 0 ? "Once · fired" : "No trigger";
+  return once.length > 0 ? translateNow("center.scheduleModel.onceFired") : translateNow("center.scheduleModel.noTrigger");
 }
 
 /**
@@ -150,8 +164,7 @@ export function outcomeReason(outcome: string | null | undefined): ScheduleFireR
 }
 
 /** What a finished schedule's switch says of itself: it cannot be resumed as it is. */
-export const FINISHED_HINT =
-  "Finished: its last run is past. Edit it to move its once or until date later, or drop the until, to run it again.";
+export const finishedHint = (): string => translateNow("center.scheduleModel.finishedHint");
 
 /**
  * A plain schedule's state: finished when it is off because its `once` or
@@ -209,7 +222,7 @@ export function pausedText(row: {
   readonly pausedReason?: SchedulePausedReason;
   readonly spec?: ScheduleSpec;
 }): string {
-  const text = schedulePausedText(row) ?? "paused";
+  const text = schedulePausedText(row) ?? translateNow("center.scheduleModel.paused");
   return `${text.charAt(0).toUpperCase()}${text.slice(1)}`;
 }
 
@@ -218,6 +231,21 @@ function detail(text: string): string {
   const trimmed = text.trim();
   const clipped = trimmed.length > DETAIL_CHARS ? `${trimmed.slice(0, DETAIL_CHARS - 1)}…` : trimmed;
   return /[.!?…]$/.test(clipped) ? clipped : `${clipped}.`;
+}
+
+/** A sentence lowercased at its start, to follow the words that say how its run began. */
+function lowerFirst(said: string): string {
+  return `${said.charAt(0).toLowerCase()}${said.slice(1)}`;
+}
+
+/** What a call carried, without its digest: "payload 312 bytes". */
+function withoutDigest(carried: string): string {
+  return carried.replace(/, sha256 [0-9a-f]+$/, "");
+}
+
+/** A count of tokens as the scheduler wrote it ("12,345"), as a number to write in the page's language. */
+function tokens(written: string): number {
+  return Number(written.replaceAll(",", ""));
 }
 
 /** "Missed by 2 h 5 min" from the scheduler's "missed by 125m". */
@@ -232,98 +260,109 @@ function missedBy(minutes: string): string {
  * this build does not know are shown as they came, as a sentence.
  */
 export function outcomeSentence(outcome: string | null | undefined, timeZone: string | undefined): string {
-  if (outcome === null || outcome === undefined) return "Not run yet.";
+  if (outcome === null || outcome === undefined) return translateNow("center.scheduleModel.notRunYet");
   if (outcome.startsWith(MANUAL)) {
     const said = outcomeSentence(outcome.slice(MANUAL.length), timeZone);
-    return `Run now: ${said.charAt(0).toLowerCase()}${said.slice(1)}`;
+    return translateNow("center.scheduleModel.runNow", { said: lowerFirst(said) });
   }
   if (outcome.startsWith(WATCH)) {
     const said = outcomeSentence(outcome.slice(WATCH.length), timeZone);
-    return `Its file changed: ${said.charAt(0).toLowerCase()}${said.slice(1)}`;
+    return translateNow("center.scheduleModel.fileChanged", { said: lowerFirst(said) });
   }
   const webhook = WEBHOOK.exec(outcome);
   if (webhook !== null) {
     const said = outcomeSentence(outcome.slice(webhook[0].length), timeZone);
-    const carried = webhook[1] === undefined ? "" : ` (${webhook[1].replace(/, sha256 [0-9a-f]+$/, "")})`;
-    return `Webhook call${carried}: ${said.charAt(0).toLowerCase()}${said.slice(1)}`;
+    return webhook[1] === undefined
+      ? translateNow("center.scheduleModel.webhookCall", { said: lowerFirst(said) })
+      : translateNow("center.scheduleModel.webhookCallCarrying", { carried: withoutDigest(webhook[1]), said: lowerFirst(said) });
   }
   const email = EMAIL.exec(outcome);
   if (email !== null) {
     const said = outcomeSentence(outcome.slice(email[0].length), timeZone);
-    const carried = email[1] === undefined ? "" : ` (${email[1].replace(/, sha256 [0-9a-f]+$/, "")})`;
-    return `Email${carried}: ${said.charAt(0).toLowerCase()}${said.slice(1)}`;
+    return email[1] === undefined
+      ? translateNow("center.scheduleModel.email", { said: lowerFirst(said) })
+      : translateNow("center.scheduleModel.emailCarrying", { carried: withoutDigest(email[1]), said: lowerFirst(said) });
   }
   const marked = DISPATCH.exec(outcome);
-  if (marked !== null) return "Starting its run; no result yet.";
-  if (outcome.startsWith(FINISHED)) return "Finished: its last run is past, so it runs no more.";
+  if (marked !== null) return translateNow("center.scheduleModel.starting");
+  if (outcome.startsWith(FINISHED)) return translateNow("center.scheduleModel.finished");
   const after = (prefix: string): string => outcome.slice(prefix.length).trim();
   const asCame = (): string => detail(outcome.charAt(0).toUpperCase() + outcome.slice(1));
   switch (outcomeReason(outcome)) {
     case "undelivered":
-      return "Completed, but sent nothing it was to send.";
+      return translateNow("center.scheduleModel.undelivered");
     case "ok":
-      return "Completed.";
+      return translateNow("center.scheduleModel.completed");
     case "stopped":
-      return "You stopped this run.";
+      return translateNow("center.scheduleModel.stopped");
     case "quiet":
       return outcome.includes("unchanged")
-        ? "Completed with the same result as last time, so it was not sent again."
-        : "Completed with nothing to report, so nothing was sent.";
+        ? translateNow("center.scheduleModel.quietUnchanged")
+        : translateNow("center.scheduleModel.quiet");
     case "unchanged":
-      return "Nothing new at its pre-check, so nothing ran and no model was called.";
+      return translateNow("center.scheduleModel.unchanged");
     case "timeout": {
       const timedOut = /^timed out: stopped after (\d+) minutes/.exec(outcome);
-      return timedOut === null ? asCame() : `Stopped after ${timedOut[1]} minutes of work, its run limit.`;
+      return timedOut === null ? asCame() : translateNow("center.scheduleModel.timeout", { count: Number(timedOut[1]) });
     }
     case "budget": {
       const over = /^over budget: stopped after ([\d,]+) tokens?, past its ceiling of ([\d,]+) tokens?/.exec(outcome);
-      return over === null ? asCame() : `Stopped after ${over[1]} tokens, past its ceiling of ${over[2]} tokens.`;
+      return over === null
+        ? asCame()
+        : translateNow("center.scheduleModel.budget", { spent: tokens(over[1] as string), ceiling: tokens(over[2] as string) });
     }
     case "waiting":
-      return "Waiting on a worker it started; goes on once that finishes.";
+      return translateNow("center.scheduleModel.waiting");
     case "asked":
-      return "Asked a question; goes on with its default if nobody answers in time.";
+      return translateNow("center.scheduleModel.asked");
     case "failed": {
       const stuck = /^waiting: suspended on (.+?), which nothing/.exec(outcome);
-      if (stuck !== null) return `Stopped waiting on ${stuck[1]}, which nobody answers in an unattended run.`;
-      if (outcome.startsWith("failed after its wait:")) return `Failed after its wait: ${detail(after("failed after its wait:"))}`;
-      if (outcome.startsWith("admission failed:")) return `Could not start: ${detail(after("admission failed:"))}`;
-      if (outcome.startsWith("fire threw:")) return `Could not start: ${detail(after("fire threw:"))}`;
+      if (stuck !== null) return translateNow("center.scheduleModel.stuck", { what: stuck[1] as string });
+      if (outcome.startsWith("failed after its wait:"))
+        return translateNow("center.scheduleModel.failedAfterWait", { detail: detail(after("failed after its wait:")) });
+      if (outcome.startsWith("admission failed:"))
+        return translateNow("center.scheduleModel.couldNotStart", { detail: detail(after("admission failed:")) });
+      if (outcome.startsWith("fire threw:"))
+        return translateNow("center.scheduleModel.couldNotStart", { detail: detail(after("fire threw:")) });
       if (outcome.startsWith("pre-check failed:"))
-        return `Did not run: its pre-check could not be made: ${detail(after("pre-check failed:"))}`;
-      if (outcome.startsWith("failed:")) return `Failed: ${detail(after("failed:"))}`;
+        return translateNow("center.scheduleModel.precheckFailed", { detail: detail(after("pre-check failed:")) });
+      if (outcome.startsWith("failed:")) return translateNow("center.scheduleModel.failed", { detail: detail(after("failed:")) });
       return asCame();
     }
     case "overlap":
-      return "Skipped: the previous run was still going.";
+      return translateNow("center.scheduleModel.overlap");
     case "retry": {
       const retrying = /^retrying at (\S+) \(retry (\d+) of/.exec(outcome);
       if (retrying === null) return asCame();
       const at = retrying[1] as string;
-      return `Failed on a provider error; trying again at ${Number.isNaN(Date.parse(at)) ? at : dayTime(at, timeZone)} (retry ${retrying[2]} of ${SCHEDULE_RETRY_BACKOFF_MINUTES.length}).`;
+      return translateNow("center.scheduleModel.retry", {
+        at: Number.isNaN(Date.parse(at)) ? at : dayTime(at, timeZone),
+        retry: Number(retrying[2]),
+        of: SCHEDULE_RETRY_BACKOFF_MINUTES.length,
+      });
     }
     case "paused":
       return `${pausedText({ enabled: false, pausedReason: "failures" })}.`;
     case "missed": {
-      if (outcome.startsWith("skipped: missed while the owner was not running")) return "Missed: Tavi was not running at the time.";
-      if (outcome.startsWith("skipped: its retry did not run")) return "Its retry did not run before the next run came due.";
+      if (outcome.startsWith("skipped: missed while the owner was not running")) return translateNow("center.scheduleModel.missedOffline");
+      if (outcome.startsWith("skipped: its retry did not run")) return translateNow("center.scheduleModel.retryMissed");
       const missed = /^skipped: missed by (\d+)m \((policy: skip|beyond)/.exec(outcome);
       if (missed === null) return asCame();
       return missed[2] === "policy: skip"
-        ? `Missed by ${missedBy(missed[1] as string)}; this schedule skips missed runs.`
-        : `Missed by ${missedBy(missed[1] as string)}, too late to catch up (6 hours at most).`;
+        ? translateNow("center.scheduleModel.missedSkip", { by: missedBy(missed[1] as string) })
+        : translateNow("center.scheduleModel.missedLate", { by: missedBy(missed[1] as string) });
     }
     case "disk": {
       const disk = /^refused: only (\d+) MiB free/.exec(outcome);
-      return disk === null ? asCame() : `Did not start: only ${disk[1]} MiB free on the data disk. It runs once space is freed.`;
+      return disk === null ? asCame() : translateNow("center.scheduleModel.disk", { free: disk[1] as string });
     }
     case "disabled":
-      return `Turned off: its time has no next run (${after("disabled:")}).`;
+      return translateNow("center.scheduleModel.disabled", { why: after("disabled:") });
     case "orphaned": {
       const orphaned = /^orphaned: the (\S+) fire/.exec(outcome);
       if (orphaned === null) return asCame();
       const at = orphaned[1] as string;
-      return `The run for ${Number.isNaN(Date.parse(at)) ? at : dayTime(at, timeZone)} never reported a result.`;
+      return translateNow("center.scheduleModel.orphaned", { at: Number.isNaN(Date.parse(at)) ? at : dayTime(at, timeZone) });
     }
     default:
       return asCame();
@@ -340,7 +379,7 @@ export function scheduledWorkLine(usage: ScheduledWorkUsage): { readonly text: s
   const label =
     year === undefined || month === undefined || Number.isNaN(year) || Number.isNaN(month) ? usage.month : monthYear(year, month);
   return {
-    text: `Scheduled work in ${label}: ${scheduledWorkText(usage)}.`,
+    text: translateNow("center.scheduleModel.scheduledWork", { month: label, usage: scheduledWorkText(usage) }),
     over: usage.percent !== undefined && usage.percent >= SCHEDULED_BUDGET_NOTICE_PERCENT,
   };
 }
@@ -350,13 +389,13 @@ export function notStartedText(outcome: { readonly kind?: string; readonly reaso
   const reason = outcome?.reason;
   switch (reason) {
     case "overlap":
-      return "the previous run is still going";
+      return translateNow("center.scheduleModel.notStarted.overlap");
     case "already-claimed":
-      return "this fire was already being run";
+      return translateNow("center.scheduleModel.notStarted.claimed");
     case "missed":
-      return "it was too late to run";
+      return translateNow("center.scheduleModel.notStarted.missed");
     case undefined:
-      return outcome?.kind ?? "the owner started no task";
+      return outcome?.kind ?? translateNow("center.scheduleModel.notStarted.none");
     default:
       return reason;
   }

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { manyPeople, personName, previewText } from "../../src/features/center/model.js";
 import { groupByDay, relativeDay, todayIn, durationText } from "../../src/lib/time.js";
-import { transitionWord } from "../../src/features/center/reminder-model.js";
+import { transitionSaid } from "../../src/features/center/reminder-model.js";
 import { readChunks } from "../../src/lib/chunks.js";
 import { firstLine, hostOf } from "../../src/lib/format.js";
 import { ask, attempt, read, withList, type SettingsClient } from "../../src/lib/ipc.js";
@@ -290,7 +290,11 @@ describe("consolidated helpers", () => {
   });
 
   it("names what a reminder became", () => {
-    expect([transitionWord("cancel"), transitionWord("pause"), transitionWord("resume")]).toEqual(["cancelled", "paused", "resumed"]);
+    expect([transitionSaid("cancel"), transitionSaid("pause"), transitionSaid("resume", "Walk")]).toEqual([
+      "Reminder cancelled.",
+      "Reminder paused.",
+      "Walk resumed.",
+    ]);
   });
 });
 

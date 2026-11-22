@@ -1,4 +1,4 @@
-import { translateNow } from "../../../lib/i18n.js";
+import { said, type Said } from "./said.js";
 import { CLIENT_TIMEOUT, type ClientResponse } from "@tavi/client/browser";
 import { IPC_MAX_PROMPT_CHARS } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
@@ -15,8 +15,8 @@ import type { CanvasStore } from "./types.js";
 export function answerStatus(
   response: ClientResponse,
   retriedByTask: boolean,
-  refused: string,
-): { readonly status: "recorded" | "uncertain" | "failed"; readonly message: string | undefined } {
+  refused: Said,
+): { readonly status: "recorded" | "uncertain" | "failed"; readonly message: Said | undefined } {
   if (response.ok) return { status: "recorded", message: undefined };
   if (retriedByTask && response.error?.code === "CONFLICT") return { status: "uncertain", message: response.error.message };
   return { status: response.error?.code === CLIENT_TIMEOUT ? "uncertain" : "failed", message: response.error?.message ?? refused };
@@ -45,10 +45,12 @@ export function installQuestions(ctx: StoreContext): void {
     if (current.answer?.key === key && current.answer.status !== "failed") return;
     const clientMessageId = options.mintKey();
     ctx.update(id, (run) => ({ ...run, answer: { key, text, status: "sending" } }));
-    const finish = (status: "recorded" | "uncertain" | "failed", message?: string) => {
+    const finish = (status: "recorded" | "uncertain" | "failed", message?: Said) => {
       if (!ctx.disposed)
         ctx.update(id, (run) =>
-          run.answer?.key === key ? { ...run, answer: { key, text, status, ...(message ? { message } : {}) } } : run,
+          run.answer?.key === key
+            ? { ...run, answer: { key, text, status, ...(message === undefined || message === "" ? {} : { message }) } }
+            : run,
         );
     };
     void (async () => {
@@ -67,11 +69,7 @@ export function installQuestions(ctx: StoreContext): void {
       try {
         const { response, retried } = await ctx.sendOnceMore(send);
         if (ctx.disposed) return;
-        const { status, message } = answerStatus(
-          response,
-          retried && conversationId === undefined,
-          translateNow("chat.store.replyRefused"),
-        );
+        const { status, message } = answerStatus(response, retried && conversationId === undefined, said("chat.store.replyRefused"));
         finish(status, message);
       } catch (error) {
         finish("uncertain", errorMessage(error));

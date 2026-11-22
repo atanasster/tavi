@@ -2,6 +2,7 @@ import { Fragment, memo, useMemo } from "react";
 
 import type { AttemptBoundary, SettledWait, ToolCard, TranscriptEntry } from "@tavi/client/browser";
 import { Markdown } from "../../ui/Markdown.js";
+import { useT } from "../../lib/i18n.js";
 import { QuestionReceipt } from "../needs/NeedCard.js";
 import { HandoffReceipt } from "./Receipts.js";
 import { EntryBoundary, Tool, ToolGroup, countRender, failoverText } from "./ToolCards.js";
@@ -85,12 +86,15 @@ type LinkTaint = { readonly tainted?: boolean | undefined; readonly knownUrls?: 
 /** Text, a steered message, a tool card, or a failover outside any group; a resume draws nothing. */
 const Entry = memo(function Entry({ entry, tainted, knownUrls }: { readonly entry: TranscriptEntry } & LinkTaint) {
   countRender?.(entry.key);
+  const t = useT();
   switch (entry.kind) {
     case "text":
       return (
         <div className={entry.discarded === true ? "text discarded" : "text"}>
           {/* Struck through on screen; said in words for a screen reader. */}
-          <span className="visually-hidden">{entry.discarded === true ? "assistant, discarded draft: " : "assistant: "}</span>
+          <span className="visually-hidden">
+            {t(entry.discarded === true ? "transcript.entry.discarded" : "transcript.entry.assistant")}
+          </span>
           <Markdown text={entry.text} tainted={tainted} knownUrls={knownUrls} />
         </div>
       );
@@ -106,10 +110,10 @@ const Entry = memo(function Entry({ entry, tainted, knownUrls }: { readonly entr
       return (
         <div className="user-message steered">
           <div className="message-heading" aria-hidden="true">
-            You, during this turn
+            {t("transcript.entry.steerHeading")}
           </div>
           <p className="prompt">
-            <span className="visually-hidden">you, during this turn: </span>
+            <span className="visually-hidden">{t("transcript.entry.steerSaid")}</span>
             {entry.text}
           </p>
         </div>

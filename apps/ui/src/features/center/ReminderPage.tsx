@@ -1,11 +1,12 @@
 import { useAction } from "../../hooks/use-action.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
+import { useT } from "../../lib/i18n.js";
 import { mapOutcome } from "../../lib/ipc.js";
 import { dayTime } from "../../lib/time.js";
 import { Empty } from "../../ui/Empty.js";
 import { ActionNote, BackLink, Notice, Pending, StatusBadge } from "../../ui/Parts.js";
 import { manyPeople } from "./model.js";
-import { eventLine, fireOutcomeText, noticeLabel, repeatText, transitionWord } from "./reminder-model.js";
+import { eventLine, fireOutcomeText, noticeLabel, repeatText, transitionSaid } from "./reminder-model.js";
 import { AddedFrom } from "./ReminderRows.js";
 import { getReminder, snoozeReminder, transitionReminder } from "./reminders-api.js";
 import { Button } from "../../ui/Button.js";
@@ -32,6 +33,7 @@ export function ReminderPage({
   /** Something changed here: Schedule's lists are read again. */
   readonly changed: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const loaded = useLoaded(() => getReminder(client, workspaceId, reminderId), [revision]);
   const reload = loaded.reload;
@@ -42,12 +44,12 @@ export function ReminderPage({
   const answer = loaded.data;
   if (answer === undefined) {
     return (
-      <section className="center-section reminder-page" aria-label="Reminder">
-        <BackLink label="Schedule" onBack={onBack} />
+      <section className="center-section reminder-page" aria-label={t("center.reminderPage.label")}>
+        <BackLink label={t("center.reminderPage.back")} onBack={onBack} />
         {loaded.error !== undefined && /does not exist|not found/i.test(loaded.error) ? (
-          <Notice role="status">This reminder was not found.</Notice>
+          <Notice role="status">{t("center.reminderPage.notFound")}</Notice>
         ) : (
-          <Pending error={loaded.error} reload={reload} label="Loading the reminder…" className="notice" status />
+          <Pending error={loaded.error} reload={reload} label={t("center.reminderPage.loading")} className="notice" status />
         )}
       </section>
     );
@@ -62,38 +64,42 @@ export function ReminderPage({
     void run(action, async () => {
       const done = await transitionReminder(client, workspaceId, reminder.reminderId, action);
       if (!done.ok) return done;
-      return { ok: true, value: `Reminder ${transitionWord(action)}.` };
+      return { ok: true, value: transitionSaid(action) };
     });
   const snooze = (minutes: 10 | 60): void =>
     void run(`snooze:${minutes}`, async () => {
       const done = await snoozeReminder(client, workspaceId, reminder.reminderId, minutes, unseen?.fireAt);
-      return mapOutcome(done, (value) => `Snoozed until ${dayTime(value.followUp.fireAt, zone)}.`);
+      return mapOutcome(done, (value) => t("center.reminderPage.snoozedUntil", { at: dayTime(value.followUp.fireAt, zone) }));
     });
   const live = reminder.status === "active" || reminder.status === "paused";
   return (
     <section className="center-section reminder-page" aria-labelledby="reminder-title">
-      <BackLink label="Schedule" onBack={onBack} />
+      <BackLink label={t("center.reminderPage.back")} onBack={onBack} />
       <header className="center-head">
         <div>
-          <span className="schedule-kind eyebrow schedule-kind-reminder">Reminder</span>
+          <span className="schedule-kind eyebrow schedule-kind-reminder">{t("center.reminderPage.label")}</span>
           <h1 id="reminder-title">{reminder.text}</h1>
           <p className="settings-description">
             <span className="schedule-cadence">
               {when.kind === "event"
-                ? `Event ${eventLine(
-                    when.at,
-                    reminder.upcoming.map((fire) => fire.at),
-                    zone,
-                  )}`
+                ? t("center.reminderPage.event", {
+                    line: eventLine(
+                      when.at,
+                      reminder.upcoming.map((fire) => fire.at),
+                      zone,
+                    ),
+                  })
                 : when.kind === "once"
-                  ? `Once ${dayTime(when.at, zone)}`
+                  ? t("center.reminderPage.once", { at: dayTime(when.at, zone) })
                   : repeatText(when)}
             </span>{" "}
             · {reminder.timezone} · <StatusBadge status={reminder.status} />
           </p>
           <p className="reminder-meta">
-            {reminder.deliverTo.kind === "app" ? "Delivered in this app" : "Delivered in the chat it was asked in"}
-            {people !== undefined && manyPeople(people) ? <> · for {people[reminder.principalId] ?? reminder.principalId}</> : null}
+            {reminder.deliverTo.kind === "app" ? t("center.reminderPage.deliveredApp") : t("center.reminderPage.deliveredChat")}
+            {people !== undefined && manyPeople(people) ? (
+              <> · {t("center.reminderPage.forPerson", { person: people[reminder.principalId] ?? reminder.principalId })}</>
+            ) : null}
             {reminder.createdBy === "agent" ? (
               <>
                 {" · "}
@@ -101,41 +107,43 @@ export function ReminderPage({
               </>
             ) : null}
           </p>
-          {reminder.prompt === undefined ? null : <p className="muted">Also starts a task: “{reminder.prompt}”</p>}
+          {reminder.prompt === undefined ? null : (
+            <p className="muted">{t("center.reminderPage.alsoStarts", { prompt: reminder.prompt })}</p>
+          )}
         </div>
       </header>
       <div className="item-actions reminder-actions">
         {unseen === undefined ? null : (
           <>
             <Button size="sm" disabled={busy !== undefined} onClick={() => snooze(10)}>
-              Snooze 10 min
+              {t("center.reminderPage.snooze10")}
             </Button>
             <Button size="sm" disabled={busy !== undefined} onClick={() => snooze(60)}>
-              Snooze 1 h
+              {t("center.reminderPage.snooze60")}
             </Button>
           </>
         )}
         {reminder.status === "active" ? (
           <Button size="sm" disabled={busy !== undefined} onClick={() => transition("pause")}>
-            Pause
+            {t("center.reminderPage.pause")}
           </Button>
         ) : null}
         {reminder.status === "paused" ? (
           <Button size="sm" disabled={busy !== undefined} onClick={() => transition("resume")}>
-            Resume
+            {t("center.reminderPage.resume")}
           </Button>
         ) : null}
         {live ? (
           <Button variant="danger-ghost" size="sm" disabled={busy !== undefined} onClick={() => onDelete(reminder)}>
-            Delete
+            {t("center.reminderPage.delete")}
           </Button>
         ) : null}
       </div>
       <ActionNote note={note} tone={tone} />
-      <h2 className="center-subhead">Next</h2>
+      <h2 className="center-subhead">{t("center.reminderPage.next")}</h2>
       {reminder.upcoming.length === 0 ? (
         <Empty className="center-empty">
-          {reminder.status === "paused" ? "Paused: nothing fires until it is resumed." : "Nothing left to fire."}
+          {reminder.status === "paused" ? t("center.reminderPage.pausedNothing") : t("center.reminderPage.nothingLeft")}
         </Empty>
       ) : (
         <ul className="reminder-fires list-reset">
@@ -147,9 +155,9 @@ export function ReminderPage({
           ))}
         </ul>
       )}
-      <h2 className="center-subhead">Recent fires</h2>
+      <h2 className="center-subhead">{t("center.reminderPage.recentFires")}</h2>
       {fires.length === 0 ? (
-        <Empty className="center-empty">It has not fired yet.</Empty>
+        <Empty className="center-empty">{t("center.reminderPage.notFired")}</Empty>
       ) : (
         <ul className="reminder-fires list-reset">
           {fires.map((fire) => (
@@ -157,12 +165,14 @@ export function ReminderPage({
               <time dateTime={fire.fireAt}>{dayTime(fire.fireAt, zone)}</time> ·{" "}
               <span className="reminder-outcome">{fireOutcomeText(fire)}</span>
               {fire.noticeOffset === undefined ? null : <span className="muted"> · {noticeLabel(fire.noticeOffset)}</span>}
-              {fire.snoozedUntil === undefined ? null : <span className="muted"> · until {dayTime(fire.snoozedUntil, zone)}</span>}
+              {fire.snoozedUntil === undefined ? null : (
+                <span className="muted"> · {t("center.reminderPage.until", { at: dayTime(fire.snoozedUntil, zone) })}</span>
+              )}
               {fire.taskId === undefined ? null : (
                 <>
                   {" · "}
                   <Button variant="ghost" size="sm" onClick={() => void onFollow(fire.taskId as string)}>
-                    Open its task
+                    {t("center.reminderPage.openTask")}
                   </Button>
                 </>
               )}

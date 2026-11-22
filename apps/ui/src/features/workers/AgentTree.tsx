@@ -1,6 +1,9 @@
 import { useRef, useState, type ReactNode } from "react";
 import type { AgentTreeNode, AgentTreeResult } from "@tavi/contracts";
-import { errorMessage, nowTimestamp, plural } from "@tavi/contracts/util";
+import { errorMessage, nowTimestamp } from "@tavi/contracts/util";
+import { translateNow, useT } from "../../lib/i18n.js";
+import { listed } from "../../lib/format.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 import { instantLabel, todayIn, formatElapsed } from "../../lib/time.js";
 import { useSerialRead } from "../../hooks/use-loaded.js";
 import { usePoll } from "../../hooks/use-poll.js";
@@ -86,6 +89,7 @@ export function AgentTree({
   readonly opened?: string | undefined /** The chat's workers' questions and handoffs as cards, answered here. */;
   readonly needs?: ReactNode;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const timeZone = useTimeZone();
   const [tree, setTree] = useState<AgentTreeResult>();
@@ -154,7 +158,7 @@ export function AgentTree({
   const cancel = (id: string) =>
     act(id, async () => {
       const answer = await client.request("cancel", { taskId: id, reason: "Cancelled from canvas agent tree" });
-      if (!answer.ok) throw new Error(refusal(answer, "Cancellation refused"));
+      if (!answer.ok) throw new Error(refusal(answer, t("workers.tree.cancelRefused")));
       setRevision((before) => before + 1);
     });
   const rows = tree
@@ -178,11 +182,11 @@ export function AgentTree({
       return false;
     }).length ?? 0;
   return (
-    <section className="agent-tree" aria-label="agent hierarchy">
+    <section className="agent-tree" aria-label={t("workers.tree.label")}>
       <div className="agent-tree-column">
         {/* A trail only for an agent with parents: a chat's own, alone, would be a bare task id. */}
         {tree?.ancestors.length ? (
-          <nav aria-label="task ancestry">
+          <nav aria-label={t("workers.tree.ancestry")}>
             {tree.ancestors.map((id) => (
               <Button key={id} disabled={busy !== undefined} onClick={() => void act(id, () => onOpen(id))}>
                 {id} /
@@ -192,22 +196,17 @@ export function AgentTree({
           </nav>
         ) : null}
         <Failure message={error || undefined} />
-        {!tree && !error ? <Pending label="Loading tree…" className="notice" status /> : null}
-        {tree?.ancestryUnknown ? <p>Historical parent/root ancestry is incomplete.</p> : null}
-        {tree?.truncated ? <p>Tree truncated at 200 tasks or 32 ancestors. Open a child to inspect its subtree.</p> : null}
-        {tree?.nodes[0]?.needs?.length ? (
-          <p role="status">
-            This agent or the agents under it need: {tree.nodes[0].needs.join(", ")}. A worker's question or browser handoff is answered
-            here and in the chat's transcript.
-          </p>
-        ) : null}
+        {!tree && !error ? <Pending label={t("workers.tree.loading")} className="notice" status /> : null}
+        {tree?.ancestryUnknown ? <p>{t("workers.tree.ancestryUnknown")}</p> : null}
+        {tree?.truncated ? <p>{t("workers.tree.truncated", { tasks: 200, ancestors: 32 })}</p> : null}
+        {tree?.nodes[0]?.needs?.length ? <p role="status">{t("workers.tree.needs", { needs: listed(tree.nodes[0].needs) })}</p> : null}
         {needs}
         {folded.size ? (
           <Button aria-expanded={showCompleted} onClick={() => setShowCompleted((before) => !before)}>
-            Completed ({folded.size})
+            {t("workers.tree.completed", { count: folded.size })}
           </Button>
         ) : null}
-        {tree && tree.nodes.length === 1 ? <p>No recorded children.</p> : null}
+        {tree && tree.nodes.length === 1 ? <p>{t("workers.tree.noChildren")}</p> : null}
         <ul>
           {rows.map((node) => (
             <li
@@ -224,25 +223,28 @@ export function AgentTree({
                 {" "}
                 ·{" "}
                 {formatElapsed(Math.max(0, Date.parse(ended(node.status) ? node.updatedAt : nowTimestamp()) - Date.parse(node.createdAt)))}{" "}
-                · updated <time dateTime={node.updatedAt}>{instantLabel(node.updatedAt, timeZone, todayIn(timeZone))}</time>
+                ·{" "}
+                {withParts(t("workers.tree.updated"), {
+                  when: <time dateTime={node.updatedAt}>{instantLabel(node.updatedAt, timeZone, todayIn(timeZone))}</time>,
+                })}
                 {agentsUnder(countDescendants(node.taskId))}
               </span>
               {node.activity !== undefined && !ended(node.status) ? (
                 <p className="agent-tree-activity truncate">
-                  {node.activity.kind === "tool" ? `Using ${node.activity.text}` : node.activity.text}
+                  {node.activity.kind === "tool" ? t("workers.tree.using", { tool: node.activity.text }) : node.activity.text}
                 </p>
               ) : null}
               {node.finalText !== undefined && ended(node.status) ? (
                 <FinalText key={`${node.taskId}:${node.updatedAt}`} text={node.finalText} label={workerLabel(node)} />
               ) : null}
-              {node.needs?.length ? <strong> · Needs {node.needs.join(", ")}</strong> : null}
+              {node.needs?.length ? <strong> · {t("workers.tree.nodeNeeds", { needs: listed(node.needs) })}</strong> : null}
               {!ended(node.status) ? (
                 <Button disabled={busy !== undefined} onClick={() => void cancel(node.taskId)}>
-                  Cancel {node.taskId}
+                  {t("workers.tree.cancel", { id: node.taskId })}
                 </Button>
               ) : node.status !== "completed" && !node.needs?.length ? (
                 <Button onClick={() => setDismissed((before) => new Set([...before, `${node.taskId}:${node.updatedAt}`].slice(-200)))}>
-                  Dismiss {node.taskId}
+                  {t("workers.tree.dismiss", { id: node.taskId })}
                 </Button>
               ) : null}
             </li>
@@ -255,5 +257,5 @@ export function AgentTree({
 
 /** How many agents a row's agent started, shown in the tree, as its line says it: nothing for none. */
 function agentsUnder(count: number): string | null {
-  return count === 0 ? null : ` · ${plural(count, "agent")} under it`;
+  return count === 0 ? null : ` · ${translateNow("workers.tree.under", { count })}`;
 }

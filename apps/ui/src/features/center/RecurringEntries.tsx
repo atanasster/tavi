@@ -1,7 +1,7 @@
 import type { HeartbeatGetAnswer, ReminderFire, ReminderView, RoutineDetail } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 
 import type { useAction } from "../../hooks/use-action.js";
+import { translateNow as t } from "../../lib/i18n.js";
 import { dayTime, relativeTime, when } from "../../lib/time.js";
 import { StatusBadge } from "../../ui/Parts.js";
 import { operationKey, routineRequest, routineStep, type ListedRoutine } from "../routines/api.js";
@@ -14,12 +14,12 @@ import type { useSharedHeartbeat } from "./heartbeat-source.js";
 import type { ScheduleActions } from "./PlainSchedules.js";
 import { removeSchedule, switchSchedule, type ListedSchedule } from "./schedules-api.js";
 import { RecurringRow, type RowMenuItem } from "./RecurringRow.js";
-import { lastFireText, repeatText, transitionWord, whenText } from "./reminder-model.js";
+import { lastFireText, repeatText, transitionSaid, whenText } from "./reminder-model.js";
 import { AddedFrom, ReminderPerson } from "./ReminderRows.js";
 import { transitionReminder } from "./reminders-api.js";
-import { FINISHED_HINT, outcomeSentence, pausedText, routineCadence, scheduleState, specText, watchText } from "./schedule-model.js";
+import { finishedHint, outcomeSentence, pausedText, routineCadence, scheduleState, specText, watchText } from "./schedule-model.js";
 import type { UndoDelete } from "./UndoDelete.js";
-import { heartbeatCadence, NOT_RUN, ROUTINE_TROUBLE, type Entry } from "./recurring-model.js";
+import { heartbeatCadence, notRun, ROUTINE_TROUBLE, type Entry } from "./recurring-model.js";
 
 /** What the rows' builders read from Recurring: its owner, actions, clock, people and the forms its menus open. */
 export interface EntryContext {
@@ -84,7 +84,7 @@ export function routineEntry(context: EntryContext, routine: ListedRoutine): Ent
         client,
         workspaceId,
         { action: pause ? "pause" : "resume", routineId: routine.routineId, expectedVersion: routine.version },
-        () => `${routine.name} ${pause ? "paused" : "resumed"}.`,
+        () => t(pause ? "center.recurringEntries.paused" : "center.recurringEntries.resumed", { name: routine.name }),
       ),
     );
   const runNow = (): void => {
@@ -97,7 +97,7 @@ export function routineEntry(context: EntryContext, routine: ListedRoutine): Ent
           { action: "run", routineId: routine.routineId, operationKey: operationKey() },
           (value) => {
             started = typeof value?.runId === "string" ? value.runId : undefined;
-            return `${routine.name} started.`;
+            return t("center.recurringEntries.started", { name: routine.name });
           },
         ),
       )
@@ -108,9 +108,14 @@ export function routineEntry(context: EntryContext, routine: ListedRoutine): Ent
   const menu: RowMenuItem[] = [
     ...(routine.status === "archived" || revoked
       ? []
-      : [{ label: "Edit", onSelect: () => withRoutine(routine, "edit", setEditingRoutine) }]),
-    { label: "Duplicate", onSelect: () => withRoutine(routine, "duplicate", (detail) => setCopyingRoutine(routineDraft(detail))) },
-    ...(routine.status === "archived" ? [] : [{ label: "Archive", danger: true, onSelect: () => setArchiving(routine) }]),
+      : [{ label: t("center.recurringEntries.edit"), onSelect: () => withRoutine(routine, "edit", setEditingRoutine) }]),
+    {
+      label: t("center.recurringEntries.duplicate"),
+      onSelect: () => withRoutine(routine, "duplicate", (detail) => setCopyingRoutine(routineDraft(detail))),
+    },
+    ...(routine.status === "archived"
+      ? []
+      : [{ label: t("center.recurringEntries.archive"), danger: true, onSelect: () => setArchiving(routine) }]),
   ];
   return {
     key,
@@ -133,7 +138,7 @@ export function routineEntry(context: EntryContext, routine: ListedRoutine): Ent
         titleExtra={
           <>
             <ReminderPerson principalId={routine.principalId} people={people} show={showPerson || revoked} lead=" · " />
-            {revoked ? <span className="meta"> · no longer allowed</span> : null}
+            {revoked ? <span className="meta"> · {t("center.recurringEntries.noLongerAllowed")}</span> : null}
           </>
         }
         when={
@@ -149,21 +154,22 @@ export function routineEntry(context: EntryContext, routine: ListedRoutine): Ent
         last={
           last ? (
             <>
-              Last run {when(last.startedAt ?? last.claimedAt, timeZone)} · <StatusBadge status={last.status} />
+              {t("center.recurringEntries.lastRun", { when: when(last.startedAt ?? last.claimedAt, timeZone) })} ·{" "}
+              <StatusBadge status={last.status} />
             </>
           ) : (
-            NOT_RUN
+            notRun()
           )
         }
         runNow={{
           onRun: runNow,
           disabled: revoked || routine.activeRevision === null || !on,
-          title: on ? undefined : "Resume the routine to run it.",
+          title: on ? undefined : t("center.recurringEntries.resumeToRun"),
         }}
         toggle={{
           on,
-          label: `${on ? "Pause" : "Resume"} ${routine.name}`,
-          warning: routine.status === "credential-blocked" ? "Research is blocked: a credential it uses is failing." : undefined,
+          label: t(on ? "center.recurringEntries.pauseNamed" : "center.recurringEntries.resumeNamed", { name: routine.name }),
+          warning: routine.status === "credential-blocked" ? t("center.recurringEntries.credentialBlocked") : undefined,
           disabled: !(on ? can.pause : can.resume),
           onToggle: () => toggle(on),
         }}
@@ -200,7 +206,7 @@ export function reminderEntry(context: EntryContext, reminder: ReminderView): En
     void actions.run(`${action}:${reminder.reminderId}`, async () => {
       const answer = await transitionReminder(client, workspaceId, reminder.reminderId, action);
       if (!answer.ok) return answer;
-      return { ok: true, value: `${reminder.text} ${transitionWord(action)}.` };
+      return { ok: true, value: transitionSaid(action, reminder.text) };
     });
   const reminderWhen = reminder.when;
   return {
@@ -230,35 +236,42 @@ export function reminderEntry(context: EntryContext, reminder: ReminderView): En
             {" · "}
             {reminder.nextFireAt === null
               ? on
-                ? "Nothing left to fire"
-                : "Paused"
-              : `Next ${dayTime(reminder.nextFireAt, timeZone)}, ${relativeTime(reminder.nextFireAt, now, timeZone)}`}
+                ? t("center.recurringEntries.nothingLeft")
+                : t("center.recurringEntries.pausedState")
+              : t("center.recurringEntries.next", {
+                  at: dayTime(reminder.nextFireAt, timeZone),
+                  relative: relativeTime(reminder.nextFireAt, now, timeZone),
+                })}
           </>
         }
         lastClassName="reminder-meta"
         last={
           <>
             {lastFire !== undefined
-              ? `Last: ${lastFireText(lastFire, timeZone)}`
+              ? t("center.recurringEntries.lastFire", { fire: lastFireText(lastFire, timeZone) })
               : reminder.lastFiredAt === null
-                ? NOT_RUN
-                : `Last fired ${dayTime(reminder.lastFiredAt, timeZone)}`}
+                ? notRun()
+                : t("center.recurringEntries.lastFired", { at: dayTime(reminder.lastFiredAt, timeZone) })}
             <ReminderPerson principalId={reminder.principalId} people={people} show={showPerson} />
             <AddedFrom reminder={reminder} onFollow={onFollow} />
           </>
         }
         toggle={{
           on,
-          label: `${on ? "Pause" : "Resume"} ${reminder.text}`,
+          label: t(on ? "center.recurringEntries.pauseNamed" : "center.recurringEntries.resumeNamed", { name: reminder.text }),
           disabled: reminder.status !== "active" && reminder.status !== "paused",
           onToggle: () => act(on ? "pause" : "resume"),
         }}
         menu={[
           ...(reminder.status === "active" || reminder.status === "paused"
-            ? [{ label: "Edit", onSelect: () => setEditingReminder(reminder) }]
+            ? [{ label: t("center.recurringEntries.edit"), onSelect: () => setEditingReminder(reminder) }]
             : []),
-          { label: "Duplicate", onSelect: () => setCopyingReminder(reminder) },
-          { label: "Delete", danger: true, onSelect: () => undoDelete.hold(key, reminder.text, transition("cancel")) },
+          { label: t("center.recurringEntries.duplicate"), onSelect: () => setCopyingReminder(reminder) },
+          {
+            label: t("center.recurringEntries.delete"),
+            danger: true,
+            onSelect: () => undoDelete.hold(key, reminder.text, transition("cancel")),
+          },
         ]}
         busy={busy !== undefined}
       />
@@ -274,11 +287,11 @@ export function scheduleEntry(context: EntryContext, row: ListedSchedule): Entry
   const taskId = row.lastRunTaskId;
   const request = (action: "enable" | "disable") => () => switchSchedule(client, workspaceId, row.scheduleId, action);
   const menu: RowMenuItem[] = [
-    { label: "Edit", onSelect: () => scheduleActions.edit(row.scheduleId) },
-    { label: "Duplicate", onSelect: () => scheduleActions.duplicate(row.scheduleId) },
-    ...(taskId ? [{ label: "Open last task", onSelect: () => scheduleActions.openLast(taskId) }] : []),
+    { label: t("center.recurringEntries.edit"), onSelect: () => scheduleActions.edit(row.scheduleId) },
+    { label: t("center.recurringEntries.duplicate"), onSelect: () => scheduleActions.duplicate(row.scheduleId) },
+    ...(taskId ? [{ label: t("center.recurringEntries.openLastTask"), onSelect: () => scheduleActions.openLast(taskId) }] : []),
     {
-      label: "Delete",
+      label: t("center.recurringEntries.delete"),
       danger: true,
       onSelect: () => undoDelete.hold(key, row.name, () => removeSchedule(client, workspaceId, row.scheduleId)),
     },
@@ -308,7 +321,7 @@ export function scheduleEntry(context: EntryContext, row: ListedSchedule): Entry
           <>
             {watching === undefined ? null : (
               <span className="badge" title={watching}>
-                Watcher
+                {t("center.recurringEntries.watcher")}
               </span>
             )}
             {state === undefined ? null : <StatusBadge status={state} />}
@@ -322,17 +335,17 @@ export function scheduleEntry(context: EntryContext, row: ListedSchedule): Entry
         }
         last={
           <>
-            {row.lastRunAt === null ? null : `Last run ${at(row.lastRunAt)} · `}
+            {row.lastRunAt === null ? null : `${t("center.recurringEntries.lastRun", { when: at(row.lastRunAt) })} · `}
             {outcomeSentence(row.lastOutcome, timeZone)}
-            {row.consecutiveFailures > 0 ? ` ${plural(row.consecutiveFailures, "failure")} in a row.` : ""}
+            {row.consecutiveFailures > 0 ? ` ${t("center.recurringEntries.failuresInARow", { count: row.consecutiveFailures })}` : ""}
           </>
         }
         runNow={{ onRun: () => void scheduleActions.act({ action: "run", scheduleId: row.scheduleId }, row.name) }}
         toggle={{
           on: row.enabled,
-          label: `${row.enabled ? "Pause" : "Resume"} ${row.name}`,
+          label: t(row.enabled ? "center.recurringEntries.pauseNamed" : "center.recurringEntries.resumeNamed", { name: row.name }),
           disabled: finished,
-          hint: finished ? FINISHED_HINT : undefined,
+          hint: finished ? finishedHint() : undefined,
           onToggle: () => void scheduleActions.act({ action: row.enabled ? "disable" : "enable", scheduleId: row.scheduleId }, row.name),
         }}
         menu={menu}
@@ -357,7 +370,10 @@ export function heartbeatEntry(context: EntryContext, answer: HeartbeatGetAnswer
         return done;
       }
       heartbeat.replace(done.value);
-      return { ok: true, value: done.value.config.enabled ? "Heartbeat turned on." : "Heartbeat turned off." };
+      return {
+        ok: true,
+        value: t(done.value.config.enabled ? "center.recurringEntries.heartbeatOn" : "center.recurringEntries.heartbeatOff"),
+      };
     });
   const check = (): void =>
     void actions.run("heartbeat-check", async () => {
@@ -365,13 +381,13 @@ export function heartbeatEntry(context: EntryContext, answer: HeartbeatGetAnswer
       if (!done.ok) return done;
       return {
         ok: true,
-        value: done.value.status === "started" ? "Heartbeat checking now." : "A check is running; this one follows it.",
+        value: t(done.value.status === "started" ? "center.recurringEntries.checking" : "center.recurringEntries.checkQueued"),
       };
     });
   return {
     key: "heartbeat",
     kind: "heartbeat",
-    name: "Heartbeat",
+    name: t("center.recurringEntries.heartbeat"),
     next,
     failing: paused?.reason === "failures" || paused?.reason === "provider",
     paused: !config.enabled || paused !== undefined,
@@ -380,7 +396,7 @@ export function heartbeatEntry(context: EntryContext, answer: HeartbeatGetAnswer
         key="heartbeat"
         kind="heartbeat"
         rowKey="heartbeat"
-        name="Heartbeat"
+        name={t("center.recurringEntries.heartbeat")}
         href={centerPath("heartbeat")}
         onOpen={onOpenHeartbeat}
         badge={!config.enabled ? <StatusBadge status="off" /> : paused === undefined ? null : <StatusBadge status="paused" />}
@@ -388,27 +404,29 @@ export function heartbeatEntry(context: EntryContext, answer: HeartbeatGetAnswer
           <>
             <span className="schedule-cadence">{heartbeatCadence(answer)}</span> ·{" "}
             {!config.enabled
-              ? "Off"
+              ? t("center.recurringEntries.off")
               : paused !== undefined
-                ? `Paused${paused.until === undefined ? "" : ` until ${dayTime(paused.until, answer.timezone)}`}`
+                ? paused.until === undefined
+                  ? t("center.recurringEntries.pausedState")
+                  : t("center.recurringEntries.pausedUntil", { until: dayTime(paused.until, answer.timezone) })
                 : next === undefined
-                  ? "No check due"
-                  : `Next check ${at(next)}, ${relativeTime(next, now, answer.timezone)}`}
+                  ? t("center.recurringEntries.noCheckDue")
+                  : t("center.recurringEntries.nextCheck", { at: at(next), relative: relativeTime(next, now, answer.timezone) })}
           </>
         }
-        last={lastTick === undefined ? NOT_RUN : `Last check ${at(lastTick)}`}
+        last={lastTick === undefined ? notRun() : t("center.recurringEntries.lastCheck", { at: at(lastTick) })}
         runNow={{
           onRun: check,
           disabled: !config.enabled || paused !== undefined || !answer.hostRunning,
-          title: answer.hostRunning ? undefined : "The heartbeat runs in tavi serve",
+          title: answer.hostRunning ? undefined : t("center.recurringEntries.runsInServe"),
         }}
         toggle={{
           on: config.enabled,
-          label: `${config.enabled ? "Turn off" : "Turn on"} Heartbeat`,
+          label: t(config.enabled ? "center.recurringEntries.turnOffHeartbeat" : "center.recurringEntries.turnOnHeartbeat"),
           disabled: false,
           onToggle: toggle,
         }}
-        menu={[{ label: "Edit", onSelect: onOpenHeartbeat }]}
+        menu={[{ label: t("center.recurringEntries.edit"), onSelect: onOpenHeartbeat }]}
         busy={busy !== undefined}
       />
     ),

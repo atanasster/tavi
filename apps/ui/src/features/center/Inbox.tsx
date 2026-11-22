@@ -7,7 +7,6 @@ import {
   type PendingQuestionRow,
   type PendingReviewRow,
 } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 
 import { useOpenError } from "../../hooks/use-action.js";
 import { MINUTE_TICK_MS, useNow } from "../../hooks/use-poll.js";
@@ -28,7 +27,7 @@ import {
   INBOX_FILTERS,
   keepOrder,
   resolvedText,
-  LASTING_SESSION_BUTTON,
+  lastingSessionButton,
   SCOPE_BUTTONS,
   settledText,
   type InboxFilter,
@@ -41,6 +40,8 @@ import { QuestionNeedCard, ReviewNeedCard } from "./InboxNeedCards.js";
 import { type CardOutcome, type RoundDecision, RoundCard } from "./InboxRoundCard.js";
 import { personName } from "./model.js";
 import { useWorkspace } from "../shell/Workspace.js";
+import { useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * Approvals: what
@@ -78,6 +79,7 @@ export function ApprovalsInbox({
   /** Settings → Permissions, where an "Always allow" rule is revoked; with a rule, that rule. */
   readonly onPermissions: (ruleId?: string) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const timeZone = summary?.timezone;
   const today = summary?.today ?? todayIn(timeZone);
@@ -193,7 +195,7 @@ export function ApprovalsInbox({
               ...goneQuestions.map((row) => ({
                 key: `question:${row.waitId}`,
                 text: resolvedText(
-                  `“${row.question}”`,
+                  t("center.inboxHistory.quoted", { text: row.question }),
                   items.find((item) => item.kind === "question" && item.waitId === row.waitId),
                   timeZone,
                   today,
@@ -205,9 +207,9 @@ export function ApprovalsInbox({
                 text: resolvedText(
                   card.calls.length === 1
                     ? card.calls[0] === undefined
-                      ? "A tool call"
+                      ? t("center.inbox.aToolCall")
                       : toolCallTitle(card.calls[0].toolId, card.calls[0].summary)
-                    : `${card.calls.length} tool calls`,
+                    : t("center.roundCard.toolCalls", { count: card.calls.length }),
                   items.find((item) => item.kind === "approval" && card.calls.some((call) => call.approvalId === item.approvalId)),
                   timeZone,
                   today,
@@ -266,7 +268,7 @@ export function ApprovalsInbox({
     });
   };
 
-  const open = (taskId: string): void => openTask(`Task ${taskId}`, () => onOpenTask(taskId));
+  const open = (taskId: string): void => openTask(t("center.activity.openTask", { id: taskId }), () => onOpenTask(taskId));
 
   const rounds = waiting.order.map((key) => waiting.cards[key]).filter((card): card is PendingRoundCard => card !== undefined);
   const pendingRounds = rounds.filter(
@@ -296,10 +298,10 @@ export function ApprovalsInbox({
   const nothing =
     loaded && waitingError === undefined && rounds.length === 0 && reviews.length === 0 && questions.length === 0 && connects.length === 0;
   const waitingCounts = [
-    openQuestions === 0 ? undefined : plural(openQuestions, "question"),
-    pendingRounds === 0 ? undefined : plural(pendingRounds, "approval"),
-    reviews.length === 0 ? undefined : plural(reviews.length, "review"),
-    connects.length === 0 ? undefined : plural(connects.length, "app to connect", "apps to connect"),
+    openQuestions === 0 ? undefined : t("center.inbox.count.questions", { count: openQuestions }),
+    pendingRounds === 0 ? undefined : t("center.inbox.count.approvals", { count: pendingRounds }),
+    reviews.length === 0 ? undefined : t("center.inbox.count.reviews", { count: reviews.length }),
+    connects.length === 0 ? undefined : t("center.inbox.count.connects", { count: connects.length }),
   ].filter((part) => part !== undefined);
   const items: InboxItem[] = [
     ...rounds.map(
@@ -371,16 +373,16 @@ export function ApprovalsInbox({
         .find((button) => !button.disabled && label(button.textContent ?? ""))
         ?.click();
     const keys: Readonly<Record<string, (text: string) => boolean>> = {
-      a: (text) => text === SCOPE_BUTTONS.once || text === "Allow ticked, deny the rest",
-      s: (text) => text === SCOPE_BUTTONS.session || text === LASTING_SESSION_BUTTON,
-      r: (text) => text === "Deny…",
-      o: (text) => text === "Open",
+      a: (text) => text === SCOPE_BUTTONS.once || text === t("center.roundCard.allowTicked"),
+      s: (text) => text === SCOPE_BUTTONS.session || text === lastingSessionButton(),
+      r: (text) => text === t("center.roundCard.denyEllipsis"),
+      o: (text) => text === t("center.needCards.open"),
     };
     const label = keys[event.key];
     if (label === undefined) return;
     event.preventDefault();
     // A card without an Open button opens through its task's link.
-    if (event.key === "o" && ![...card.querySelectorAll("button")].some((button) => button.textContent === "Open")) {
+    if (event.key === "o" && ![...card.querySelectorAll("button")].some((button) => button.textContent === t("center.needCards.open"))) {
       card.querySelector<HTMLAnchorElement>(".center-card-ctx a")?.click();
       return;
     }
@@ -403,14 +405,14 @@ export function ApprovalsInbox({
       <PageHead
         className="center-head"
         id="center-approvals-title"
-        title="Approvals"
-        description="Questions, tool calls and reviews waiting on you across every chat and schedule — the soonest first — and what you decided before."
+        title={t("center.inbox.title")}
+        description={t("center.inbox.description")}
       >
         <NeedNotifyToggle />
       </PageHead>
 
       <h2 className="center-subhead" id={WAITING_ANCHOR} tabIndex={-1}>
-        Waiting
+        {t("center.inbox.waiting")}
         {waitingCounts.length === 0 ? null : <span>{waitingCounts.join(" · ")}</span>}
       </h2>
       <LoadState
@@ -421,13 +423,9 @@ export function ApprovalsInbox({
       >
         <Failure message={openError} alert={false} />
       </LoadState>
-      {nothing ? (
-        <Empty className="center-empty">
-          Nothing needs you. When a chat or a schedule asks something, it waits here — and in the chat it asked in.
-        </Empty>
-      ) : null}
+      {nothing ? <Empty className="center-empty">{t("center.inbox.nothing")}</Empty> : null}
       {connects.length === 0 ? null : (
-        <ul className="center-cards list-reset" aria-label="Apps to connect">
+        <ul className="center-cards list-reset" aria-label={t("center.inbox.appsToConnect")}>
           {connects.map((row) => (
             <li key={row.waitId}>
               <AppLink href={taskPath(row.taskId)} onFollow={() => open(row.taskId)}>
@@ -440,12 +438,20 @@ export function ApprovalsInbox({
       )}
       {items.length === 0 ? null : (
         <p className="center-card-hint meta center-keys">
-          Keys: <kbd>j</kbd>/<kbd>k</kbd> move · <kbd>1</kbd>–<kbd>4</kbd> pick an option · <kbd>a</kbd> allow once · <kbd>s</kbd> for this
-          chat · <kbd>r</kbd> deny · <kbd>o</kbd> open
+          {withParts(t("center.inbox.keys"), {
+            j: <kbd>j</kbd>,
+            k: <kbd>k</kbd>,
+            one: <kbd>1</kbd>,
+            four: <kbd>4</kbd>,
+            a: <kbd>a</kbd>,
+            s: <kbd>s</kbd>,
+            r: <kbd>r</kbd>,
+            o: <kbd>o</kbd>,
+          })}
         </p>
       )}
       {items.length === 0 ? null : (
-        <div className="center-chips" role="group" aria-label="Show">
+        <div className="center-chips" role="group" aria-label={t("center.inbox.show")}>
           {INBOX_FILTERS.map((option) => (
             <FilterChip key={option} pressed={filter === option} onPick={() => setFilter(option)}>
               {INBOX_FILTER_LABELS[option]}
@@ -453,7 +459,7 @@ export function ApprovalsInbox({
           ))}
         </div>
       )}
-      {items.length > 0 && shown.size === 0 ? <Empty className="center-empty">Nothing of this kind is waiting.</Empty> : null}
+      {items.length > 0 && shown.size === 0 ? <Empty className="center-empty">{t("center.inbox.nothingOfKind")}</Empty> : null}
       {groups.length === 0 ? null : (
         <ul className="center-cards list-reset" onKeyDown={triage}>
           {groups.map((group) => (
@@ -463,7 +469,9 @@ export function ApprovalsInbox({
                   <AppLink href={taskPath(group.taskId)} onFollow={() => open(group.taskId)}>
                     {group.title ?? group.taskId}
                   </AppLink>
-                  {group.items.filter(stillWaits).length === 0 ? null : <> · {group.items.filter(stillWaits).length} waiting</>}
+                  {group.items.filter(stillWaits).length === 0 ? null : (
+                    <> · {t("center.inbox.groupWaiting", { count: group.items.filter(stillWaits).length })}</>
+                  )}
                 </li>
               ) : null}
               {group.items.map((item) =>
@@ -506,7 +514,7 @@ export function ApprovalsInbox({
       )}
       {resolved.length === 0 ? null : (
         <details className="center-resolved">
-          <summary className="disclosure">Resolved just now ({resolved.length})</summary>
+          <summary className="disclosure">{t("center.inbox.resolvedNow", { count: resolved.length })}</summary>
           <ul>
             {resolved.map((line) => (
               <li key={line.key}>{line.text}</li>
@@ -514,14 +522,8 @@ export function ApprovalsInbox({
           </ul>
         </details>
       )}
-      {truncated ? (
-        <Notice>More approvals are waiting than one page holds; the oldest are shown. Decide these to see the rest.</Notice>
-      ) : null}
-      {needsTruncated ? (
-        <Notice>
-          More questions and reviews are waiting than one page holds; the questions due soonest and the oldest reviews are shown.
-        </Notice>
-      ) : null}
+      {truncated ? <Notice>{t("center.inbox.moreApprovals")}</Notice> : null}
+      {needsTruncated ? <Notice>{t("center.inbox.moreNeeds")}</Notice> : null}
 
       <HistoryTable revision={revision} timeZone={timeZone} today={today} people={people} onOpen={open} onPermissions={onPermissions} />
     </section>

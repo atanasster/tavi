@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 
 import { type MemoryKind, type MemoryScopeTarget, MAX_MEMORY_TITLE_CHARS } from "@tavi/contracts";
 
+import { useT } from "../../lib/i18n.js";
 import { Select } from "../../ui/Select.js";
 import { FormActions, FormFailure } from "../settings/FormParts.js";
 import { rememberMemory, type AgentSummary } from "./memory-api.js";
@@ -19,6 +20,7 @@ export function RememberForm({
   readonly agents: readonly AgentSummary[];
   readonly onDone: (saved: boolean) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [kind, setKind] = useState<MemoryKind>("fact");
   const [scope, setScope] = useState<MemoryScopeTarget>("personal");
@@ -31,11 +33,7 @@ export function RememberForm({
   const ids = useId();
   const preference = kind === "preference";
   const problem =
-    body.trim() === ""
-      ? "Write what to remember."
-      : preference && key.trim() === ""
-        ? "A preference needs a key, such as reply.channel."
-        : undefined;
+    body.trim() === "" ? t("center.remember.needsBody") : preference && key.trim() === "" ? t("center.remember.needsKey") : undefined;
 
   const submit = (): void => {
     if (problem !== undefined) {
@@ -62,7 +60,7 @@ export function RememberForm({
     <form
       id={id}
       className="memory-form memory-remember"
-      aria-label="Remember"
+      aria-label={t("center.remember.label")}
       onSubmit={(event) => {
         event.preventDefault();
         submit();
@@ -70,7 +68,7 @@ export function RememberForm({
     >
       <div className="memory-form-row">
         <span>
-          <Field id={`${ids}-kind`} label="Kind">
+          <Field id={`${ids}-kind`} label={t("center.remember.kind")}>
             <Select value={kind} disabled={busy} onChange={(event) => setKind(event.target.value as MemoryKind)}>
               {MEMORY_GROUPS.map((group) => (
                 <option key={group.kind} value={group.kind}>
@@ -81,13 +79,13 @@ export function RememberForm({
           </Field>
         </span>
         <span>
-          <Field id={`${ids}-scope`} label="Where">
+          <Field id={`${ids}-scope`} label={t("center.remember.where")}>
             <Select value={scope} disabled={busy} onChange={(event) => setScope(event.target.value as MemoryScopeTarget)}>
-              <option value="personal">Personal</option>
-              <option value="workspace">Workspace</option>
+              <option value="personal">{t("center.memoryModel.scope.personal")}</option>
+              <option value="workspace">{t("center.memoryModel.scope.workspace")}</option>
               {agents.map((agent) => (
                 <option key={agent.agentId} value={`agent:${agent.agentId}`}>
-                  Agent: {agent.name}
+                  {t("center.memoryModel.scope.agent", { agent: agent.name })}
                 </option>
               ))}
             </Select>
@@ -96,28 +94,35 @@ export function RememberForm({
       </div>
       <p className="memory-hint meta-sm">
         {scope === "personal"
-          ? "Yours, in every workspace."
+          ? t("center.remember.hintPersonal")
           : scope === "workspace"
-            ? "Yours, in this workspace only."
-            : "Yours, for this agent only."}
+            ? t("center.remember.hintWorkspace")
+            : t("center.remember.hintAgent")}
       </p>
       {preference ? (
-        <Field id={`${ids}-key`} label="Key">
+        <Field id={`${ids}-key`} label={t("center.remember.key")}>
           <input value={key} placeholder="reply.channel" disabled={busy} onChange={(event) => setKey(event.target.value)} />
         </Field>
       ) : null}
-      <Field id={`${ids}-title`} label="Title (optional)">
+      <Field id={`${ids}-title`} label={t("center.remember.title")}>
         <input value={title} maxLength={MAX_MEMORY_TITLE_CHARS} disabled={busy} onChange={(event) => setTitle(event.target.value)} />
       </Field>
-      <Field id={`${ids}-body`} label={preference ? "Value" : "What to remember"}>
+      <Field id={`${ids}-body`} label={preference ? t("center.remember.value") : t("center.remember.body")}>
         <textarea rows={3} value={body} disabled={busy} onChange={(event) => setBody(event.target.value)} />
       </Field>
       <label className="memory-check">
         <input type="checkbox" checked={sensitive} disabled={busy} onChange={(event) => setSensitive(event.target.checked)} />
-        Sensitive (hidden until revealed)
+        {t("center.remember.sensitive")}
       </label>
       <FormFailure message={failure} />
-      <FormActions small saving={busy} disabled={busy} cancelDisabled={busy} label="Remember" onCancel={() => onDone(false)} />
+      <FormActions
+        small
+        saving={busy}
+        disabled={busy}
+        cancelDisabled={busy}
+        label={t("center.remember.label")}
+        onCancel={() => onDone(false)}
+      />
     </form>
   );
 }

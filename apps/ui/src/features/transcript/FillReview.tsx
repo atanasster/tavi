@@ -1,6 +1,8 @@
 import { errorMessage, isRecord } from "@tavi/contracts/util";
 import { createContext, useContext, useState } from "react";
 import { useLoaded } from "../../hooks/use-loaded.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import { listed } from "../../lib/format.js";
 import { Notice } from "../../ui/Parts.js";
 import { FormFillTable } from "./FormFillTable.js";
 import { Button } from "../../ui/Button.js";
@@ -35,11 +37,16 @@ export function usePreviewImage(artifactId: string): string | undefined {
 }
 
 export function PdfPage({ page, artifactId }: { readonly page: number; readonly artifactId: string }) {
+  const t = useT();
   const src = usePreviewImage(artifactId);
   return (
     <figure className="pdf-page">
-      {src === undefined ? <div className="pdf-page-empty" aria-hidden="true" /> : <img src={src} alt={`Page ${page}`} />}
-      <figcaption className="meta-sm">Page {page}</figcaption>
+      {src === undefined ? (
+        <div className="pdf-page-empty" aria-hidden="true" />
+      ) : (
+        <img src={src} alt={t("transcript.fill.page", { page })} />
+      )}
+      <figcaption className="meta-sm">{t("transcript.fill.page", { page })}</figcaption>
     </figure>
   );
 }
@@ -70,7 +77,7 @@ const strings = (value: unknown): readonly string[] =>
 
 /** A value as the form shows it: a box ticked or not, a list's picks. */
 function shownValue(value: unknown): string {
-  if (typeof value === "boolean") return value ? "ticked" : "not ticked";
+  if (typeof value === "boolean") return translateNow(value ? "transcript.fill.ticked" : "transcript.fill.notTicked");
   if (Array.isArray(value)) return strings(value).join(", ");
   return text(value);
 }
@@ -85,24 +92,36 @@ function sourceOf(
   source: Record<string, unknown> | undefined,
   rows: readonly Record<string, unknown>[],
 ): Pick<Row, "source" | "check" | "checkWords"> {
-  const quote = `"${text(source?.["quote"])}"`;
+  const quote = translateNow("transcript.fill.quote", { text: text(source?.["quote"]) });
+  const verified = { check: translateNow("transcript.fill.verified"), checkWords: translateNow("transcript.fill.verifiedWords") };
   switch (source?.["kind"]) {
     case "file":
-      return { source: `${text(source["path"])}: ${quote}`, check: "verified", checkWords: "found in its source" };
+      return { source: translateNow("transcript.fill.fromFile", { path: text(source["path"]), quote }), ...verified };
     case "attachment":
-      return { source: `attachment ${text(source["artifactId"])}: ${quote}`, check: "verified", checkWords: "found in its source" };
+      return { source: translateNow("transcript.fill.fromAttachment", { id: text(source["artifactId"]), quote }), ...verified };
     case "memory":
-      return { source: `memory: ${quote}`, check: "verified", checkWords: "found in its source" };
+      return { source: translateNow("transcript.fill.fromMemory", { quote }), ...verified };
     case "person":
-      return { source: `your words: ${quote}`, check: "your words", checkWords: "your own words, checked when you approved" };
+      return {
+        source: translateNow("transcript.fill.fromPerson", { quote }),
+        check: translateNow("transcript.fill.personCheck"),
+        checkWords: translateNow("transcript.fill.personWords"),
+      };
     case "document":
-      return { source: `the form, page ${String(source["page"])}: ${quote}`, check: "the form's", checkWords: "the form's own words" };
+      return {
+        source: translateNow("transcript.fill.fromDocument", { page: String(source["page"]), quote }),
+        check: translateNow("transcript.fill.documentCheck"),
+        checkWords: translateNow("transcript.fill.documentWords"),
+      };
     case "choice": {
       const from = typeof source["from"] === "number" ? rows[source["from"]] : undefined;
+      const row = from === undefined ? translateNow("transcript.fill.earlierRow") : text(from["field"]);
+      const note = text(source["note"]);
       return {
-        source: `a choice from ${from === undefined ? "an earlier row" : text(from["field"])}${text(source["note"]) === "" ? "" : `: ${text(source["note"])}`}`,
-        check: "a choice",
-        checkWords: "a choice, not a copy",
+        source:
+          note === "" ? translateNow("transcript.fill.fromChoice", { row }) : translateNow("transcript.fill.fromChoiceNote", { row, note }),
+        check: translateNow("transcript.fill.choiceCheck"),
+        checkWords: translateNow("transcript.fill.choiceWords"),
       };
     }
     default:
@@ -130,6 +149,7 @@ function rowsOf(input: unknown): readonly Row[] {
  * document's, a source's or the model's, so React's escaping is all it gets.
  */
 export function FillReview({ input, output }: { readonly input: unknown; readonly output: unknown }) {
+  const t = useT();
   const result = record(output);
   const download = useContext(FillDownloadContext);
   const [saving, setSaving] = useState<"idle" | "saving" | { readonly failed: string }>("idle");
@@ -148,15 +168,13 @@ export function FillReview({ input, output }: { readonly input: unknown; readonl
   };
   return (
     <div className="fill-review">
-      <div className="fill-review-pages pdf-pages" role="group" aria-label="Filled pages">
+      <div className="fill-review-pages pdf-pages" role="group" aria-label={t("transcript.fill.pages")}>
         {previews.map((entry) => (
           <PdfPage key={entry.artifactId} page={entry.page} artifactId={entry.artifactId} />
         ))}
       </div>
       <div className="fill-review-side form-fill">
-        {result?.["answerSheet"] === true ? (
-          <Notice>The form could not be filled: this is an answer sheet to copy onto it by hand.</Notice>
-        ) : null}
+        {result?.["answerSheet"] === true ? <Notice>{t("transcript.fill.answerSheet")}</Notice> : null}
         <FormFillTable>
           <tbody>
             {rows.map((row, index) => (
@@ -171,17 +189,15 @@ export function FillReview({ input, output }: { readonly input: unknown; readonl
             ))}
           </tbody>
         </FormFillTable>
-        {result?.["verified"] === false ? (
-          <Notice>Not every value read back as written: check the filled copy before you use it.</Notice>
-        ) : null}
-        {userOnly.length === 0 ? null : <p className="meta-sm">Left blank for you to sign or complete: {userOnly.join(", ")}</p>}
-        {required.length === 0 ? null : <p className="meta-sm">Required, still blank: {required.join(", ")}</p>}
+        {result?.["verified"] === false ? <Notice>{t("transcript.fill.unverified")}</Notice> : null}
+        {userOnly.length === 0 ? null : <p className="meta-sm">{t("transcript.fill.userOnly", { fields: listed(userOnly) })}</p>}
+        {required.length === 0 ? null : <p className="meta-sm">{t("transcript.fill.required", { fields: listed(required) })}</p>}
         {path === "" ? null : (
           <p className="meta-sm fill-review-download">
             <code>{path}</code>{" "}
             {download === undefined ? null : (
               <Button size="sm" aria-busy={saving === "saving"} onClick={save}>
-                {saving === "saving" ? "Downloading…" : "Download"}
+                {saving === "saving" ? t("transcript.fill.downloading") : t("transcript.fill.download")}
               </Button>
             )}
           </p>

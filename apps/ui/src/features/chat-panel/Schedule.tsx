@@ -3,6 +3,8 @@ import { clip } from "@tavi/contracts/util";
 import { useState } from "react";
 
 import { listSchedules } from "../center/schedules-api.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 import { dayTime, todayIn } from "../../lib/time.js";
 import { whenText } from "../center/reminder-model.js";
 import { NewReminderForm } from "../center/Reminders.js";
@@ -11,7 +13,7 @@ import type { Outcome, SettingsClient } from "../../lib/ipc.js";
 import { loadTaskRecord } from "../chat/tasks-api.js";
 import { RepeatForms } from "../chat/RepeatThis.js";
 import { openingPrompt } from "../chat/repeat.js";
-import { CenterLink, CHAT_NOT_STARTED, NO_CHAT_SELECTED, Pending, StatusNote } from "../../ui/Parts.js";
+import { CenterLink, Pending, StatusNote } from "../../ui/Parts.js";
 import type { Session } from "../shell/shell.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { chatVersion } from "./load.js";
@@ -98,7 +100,7 @@ async function loadChatSchedule(
   const startedBy =
     firedBy === undefined
       ? undefined
-      : { reminderId: firedBy, text: fired?.ok === true ? fired.value.reminder.text : "a reminder whose text could not be read" };
+      : { reminderId: firedBy, text: fired?.ok === true ? fired.value.reminder.text : translateNow("chatPanel.schedule.unreadReminder") };
   const found = chatScheduleOf(row, schedules?.ok === true ? schedules.value.schedules : [], listed?.value.reminders ?? [], startedBy);
   return { ok: true, value: { ...found, timezone: listed?.value.timezone } };
 }
@@ -134,11 +136,12 @@ export function Schedule({
   /** The Command Center's Schedule; absent when the owner does not offer it. */
   readonly onCenter?: (() => void) | undefined;
 }) {
-  if (session === undefined) return <Empty>{NO_CHAT_SELECTED}</Empty>;
+  const t = useT();
+  if (session === undefined) return <Empty>{t("ui.parts.noChatSelected")}</Empty>;
   return (
     <>
       {session.taskId === undefined ? (
-        <Empty>{CHAT_NOT_STARTED}</Empty>
+        <Empty>{t("ui.parts.chatNotStarted")}</Empty>
       ) : (
         <ChatScheduleView
           key={session.taskId}
@@ -152,7 +155,7 @@ export function Schedule({
           onCenter={onCenter}
         />
       )}
-      <CenterLink what="Schedule" onCenter={onCenter} />
+      <CenterLink what={t("chatPanel.tab.schedule")} onCenter={onCenter} />
     </>
   );
 }
@@ -176,6 +179,7 @@ function ChatScheduleView({
   readonly onOpenSchedule?: ((scheduleId: string) => void) | undefined;
   readonly onCenter?: (() => void) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { data, error, reload } = useLoaded(() => loadChatSchedule(client, workspaceId, taskId, reminders), [chatVersion(session)]);
   const [adding, setAdding] = useState(false);
@@ -198,38 +202,42 @@ function ChatScheduleView({
   return (
     <>
       {origin === undefined ? null : (
-        <section aria-label="what started this chat">
-          <h4>Started by</h4>
+        <section aria-label={t("chatPanel.schedule.originLabel")}>
+          <h4>{t("chatPanel.schedule.originHeading")}</h4>
           {origin.kind === "schedule" ? (
             <p>
-              {origin.routineId === undefined ? "The schedule" : "The routine"} <strong>{origin.name ?? origin.scheduleId}</strong>
+              {withParts(t(origin.routineId === undefined ? "chatPanel.schedule.bySchedule" : "chatPanel.schedule.byRoutine"), {
+                name: <strong>{origin.name ?? origin.scheduleId}</strong>,
+              })}
               {openSchedule === undefined ? null : (
                 <>
                   {" "}
                   <Button variant="ghost" size="sm" onClick={openSchedule}>
-                    Open
+                    {t("chatPanel.schedule.open")}
                   </Button>
                 </>
               )}
             </p>
           ) : (
             <p>
-              The reminder{" "}
-              <Button variant="ghost" size="sm" onClick={() => onOpenReminder(origin.reminderId)}>
-                {origin.text}
-              </Button>
+              {withParts(t("chatPanel.schedule.byReminder"), {
+                reminder: (
+                  <Button variant="ghost" size="sm" onClick={() => onOpenReminder(origin.reminderId)}>
+                    {origin.text}
+                  </Button>
+                ),
+              })}
             </p>
           )}
         </section>
       )}
       {!repeat ? null : (
-        <section aria-label="repeat on a schedule">
-          <h4>Repeat on a schedule</h4>
+        <section aria-label={t("chatPanel.schedule.repeatLabel")}>
+          <h4>{t("chatPanel.schedule.repeatHeading")}</h4>
           {/* Says what it repeats: the chat's first message, which the form fills in. Another message repeats from its own button. */}
           {opening === "" ? null : (
             <p className="chat-panel-repeat meta-sm">
-              Runs “{clip(opening, REPEAT_PREVIEW_CHARS, { squeeze: true })}” again on its own, on the days and times you pick. To repeat
-              another message, use the calendar button under it.
+              {t("chatPanel.schedule.repeatHint", { prompt: clip(opening, REPEAT_PREVIEW_CHARS, { squeeze: true }) })}
             </p>
           )}
           <StatusNote note={repeated} className="chat-panel-note meta-sm" />
@@ -242,7 +250,7 @@ function ChatScheduleView({
               setRepeating(true);
             }}
           >
-            Set up a schedule…
+            {t("chatPanel.schedule.setUp")}
           </Button>
           {repeating ? (
             <RepeatForms
@@ -257,10 +265,10 @@ function ChatScheduleView({
         </section>
       )}
       {!reminders ? null : (
-        <section aria-label="reminders from this chat">
-          <h4>Reminders</h4>
+        <section aria-label={t("chatPanel.schedule.remindersLabel")}>
+          <h4>{t("chatPanel.schedule.remindersHeading")}</h4>
           {data.reminders.length === 0 ? (
-            <Empty>No reminders from this chat yet.</Empty>
+            <Empty>{t("chatPanel.schedule.noReminders")}</Empty>
           ) : (
             <ol className="chat-panel-timeline list-reset">
               {data.reminders.map((reminder) => (
@@ -271,8 +279,8 @@ function ChatScheduleView({
                       {whenText(reminder.when, data.timezone, today)} ·{" "}
                       {reminder.status === "active"
                         ? reminder.nextFireAt === null
-                          ? "nothing due"
-                          : `next ${dayTime(reminder.nextFireAt, data.timezone, today)}`
+                          ? t("chatPanel.schedule.nothingDue")
+                          : t("chatPanel.schedule.next", { when: dayTime(reminder.nextFireAt, data.timezone, today) })
                         : reminder.status}
                     </span>
                   </ChatPanelItem>
@@ -302,7 +310,7 @@ function ChatScheduleView({
                 setAdding(true);
               }}
             >
-              Remind me about this chat…
+              {t("chatPanel.schedule.remind")}
             </Button>
           )}
         </section>

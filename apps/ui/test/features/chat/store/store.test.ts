@@ -2707,7 +2707,7 @@ it("rejects a legacy list response with the owner restart remedy", async () => {
   const { client } = fakeClient(() => ({ ok: true, result: { tasks: [] } }));
   const store = createCanvasStore(client, { workspaceId: "default", principal: "operator", mintKey: () => "open" });
   await store.loadSessions();
-  expect(store.getSnapshot().directory?.error).toContain("Restart the owner");
+  expect(words(store.getSnapshot().directory?.error)).toContain("Restart the owner");
   store.dispose();
 });
 
@@ -3674,10 +3674,8 @@ describe("a root chat's workers' questions", () => {
     await store.loadWorkerNeeds("task-1");
     store.submit("the docs");
     for (let index = 0; index < 6; index += 1) await settle();
-    expect(store.getSnapshot().workers?.["task-1"]?.answers["wait-1"]).toMatchObject({
-      status: "failed",
-      message: "The answer was not recorded.",
-    });
+    expect(store.getSnapshot().workers?.["task-1"]?.answers["wait-1"]?.status).toBe("failed");
+    expect(words(store.getSnapshot().workers?.["task-1"]?.answers["wait-1"]?.message)).toBe("The answer was not recorded.");
     expect(store.getSnapshot().next).toEqual({ kind: "answer", taskId: "worker-1", waitId: "wait-1", rootTaskId: "task-1" });
     fake.answer = answer;
     store.answerWorker("task-1", "wait-1", "the docs");

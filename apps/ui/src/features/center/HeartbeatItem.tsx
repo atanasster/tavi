@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
 import { Failure } from "../../ui/Parts.js";
 import { getHeartbeatItem, heartbeatItemOp } from "./heartbeat-api.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import { localTime, whenLocal } from "../../lib/time.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
@@ -24,10 +25,10 @@ const DAY_MINUTES = 24 * 60;
 
 /** The one-line receipt of an item that no longer waits, or undefined for one that does. */
 export function itemReceipt(item: HeartbeatItemView, timeZone: string | undefined, now = Date.now()): string | undefined {
-  if (item.state === "resolved") return `Resolved · ${localTime(item.updatedAt, timeZone)}`;
-  if (item.state === "muted") return "Muted: you won't hear about this again";
+  if (item.state === "resolved") return translateNow("center.heartbeatItem.resolved", { time: localTime(item.updatedAt, timeZone) });
+  if (item.state === "muted") return translateNow("center.heartbeatItem.muted");
   if (item.state === "snoozed" && item.snoozedUntil !== undefined && Date.parse(item.snoozedUntil) > now)
-    return `Snoozed until ${whenLocal(item.snoozedUntil, timeZone, now)}`;
+    return translateNow("center.heartbeatItem.snoozed", { when: whenLocal(item.snoozedUntil, timeZone, now) });
   return undefined;
 }
 
@@ -49,6 +50,7 @@ export function HeartbeatItemCard({
   /** *Chat about this*: a turn quoting the item. */
   readonly onChat?: ((item: HeartbeatItemView) => void) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [item, setItem] = useState<HeartbeatItemView | undefined>(initial);
   /** The memories the check that told it was given: read with the item, never from a list's copy. */
@@ -87,7 +89,7 @@ export function HeartbeatItemCard({
   const sources = item.sources.map((source) => source.label).join(", ");
   const [first = "", ...rest] = (item.body ?? "").split("\n");
   return (
-    <article className="heartbeat-item" data-urgency={item.urgency} aria-label={`Heartbeat: ${item.title}`}>
+    <article className="heartbeat-item" data-urgency={item.urgency} aria-label={t("center.heartbeatItem.label", { title: item.title })}>
       <p className="heartbeat-item-title">{item.title}</p>
       {receipt === undefined ? (
         <>
@@ -102,35 +104,39 @@ export function HeartbeatItemCard({
               ) : null}
               {rest.length === 0 ? null : (
                 <Button variant="link" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
-                  {expanded ? " Less" : " More"}
+                  {` ${expanded ? t("center.heartbeatItem.less") : t("center.heartbeatItem.more")}`}
                 </Button>
               )}
             </p>
           )}
           <p className="meta-sm heartbeat-item-source">
             {sources} · {localTime(item.lastToldAt, timeZone)}
-            {item.instructionLine === undefined ? "" : ` · from your line ${item.instructionLine}`}
-            {item.heldBack ? " · held back (hourly limit)" : ""}
+            {item.instructionLine === undefined ? "" : ` · ${t("center.heartbeatItem.fromLine", { line: String(item.instructionLine) })}`}
+            {item.heldBack ? ` · ${t("center.heartbeatItem.heldBack")}` : ""}
           </p>
           {because.length === 0 ? null : (
-            <p className="meta-sm heartbeat-item-because">Because you said: {because.map((title) => `“${title}”`).join(", ")}</p>
+            <p className="meta-sm heartbeat-item-because">
+              {t("center.heartbeatItem.because", {
+                titles: because.map((title) => t("center.heartbeatItem.quoted", { title })).join(", "),
+              })}
+            </p>
           )}
           <div className="heartbeat-actions cluster">
             {item.proposedAction === undefined || onDoIt === undefined ? null : (
               <Button size="sm" disabled={!connected} title={item.proposedAction.summary} onClick={() => onDoIt(item)}>
-                Do it
+                {t("center.heartbeatItem.doIt")}
               </Button>
             )}
             {onChat === undefined ? null : (
               <Button variant="ghost" size="sm" disabled={!connected} onClick={() => onChat(item)}>
-                Chat about this
+                {t("center.heartbeatItem.chat")}
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={() => act({ op: "snooze", minutes: DAY_MINUTES })}>
-              Snooze for a day
+              {t("center.heartbeatItem.snooze")}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => act({ op: "mute" })}>
-              Don't tell me about this
+              {t("center.heartbeatItem.mute")}
             </Button>
             <Button
               variant="ghost"
@@ -138,7 +144,7 @@ export function HeartbeatItemCard({
               aria-pressed={item.feedback === "up"}
               onClick={() => act({ op: "feedback", feedback: item.feedback === "up" ? null : "up" })}
             >
-              Useful
+              {t("center.heartbeatItem.useful")}
             </Button>
             <Button
               variant="ghost"
@@ -146,7 +152,7 @@ export function HeartbeatItemCard({
               aria-pressed={item.feedback === "down"}
               onClick={() => act({ op: "feedback", feedback: item.feedback === "down" ? null : "down" })}
             >
-              Not useful
+              {t("center.heartbeatItem.notUseful")}
             </Button>
           </div>
         </>
@@ -157,7 +163,7 @@ export function HeartbeatItemCard({
             <>
               {" "}
               <Button variant="link" onClick={() => act({ op: "unsnooze" })}>
-                Undo
+                {t("center.heartbeatItem.undo")}
               </Button>
             </>
           ) : null}
@@ -165,7 +171,7 @@ export function HeartbeatItemCard({
             <>
               {" "}
               <Button variant="link" onClick={() => act({ op: "unmute" })}>
-                Undo
+                {t("center.heartbeatItem.undo")}
               </Button>
             </>
           ) : null}

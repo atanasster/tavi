@@ -1,6 +1,8 @@
 import type { ScheduleSpec } from "@tavi/contracts";
 
 import { Button } from "../../ui/Button.js";
+import { useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import type { RoutineStart } from "../routines/RoutineForms.js";
 import type { ScheduleDraft } from "./PlainSchedules.js";
 import type { ReminderStart } from "./Reminders.js";
@@ -8,8 +10,11 @@ import type { ReminderStart } from "./Reminders.js";
 /** A schedule template: the new schedule's settings, its cadence without a zone (it runs in the workspace's). */
 type ScheduleStart = Omit<ScheduleDraft, "spec"> & { readonly cadence: Omit<ScheduleSpec, "timezone"> };
 
-/** Something to start from when nothing is scheduled: which form it opens, filled with what. */
-export type ScheduleTemplate = { readonly id: string; readonly title: string } & (
+/**
+ * Something to start from when nothing is scheduled: which form it opens, filled with what. Its button reads in the
+ * page's language; what it fills in is written to the owner, so it stays as it is.
+ */
+export type ScheduleTemplate = { readonly id: string; readonly title: UiKey } & (
   | { readonly kind: "schedule"; readonly schedule: ScheduleStart }
   | { readonly kind: "routine"; readonly routine: RoutineStart }
   | { readonly kind: "reminder"; readonly reminder: ReminderStart }
@@ -20,7 +25,7 @@ const WEEKDAYS = [1, 2, 3, 4, 5];
 const SCHEDULE_TEMPLATES: readonly ScheduleTemplate[] = [
   {
     id: "morning-inbox-brief",
-    title: "Morning inbox brief",
+    title: "center.templates.morningInbox",
     kind: "schedule",
     schedule: {
       name: "Morning inbox brief",
@@ -34,7 +39,7 @@ const SCHEDULE_TEMPLATES: readonly ScheduleTemplate[] = [
   },
   {
     id: "weekly-research-digest",
-    title: "Weekly research digest",
+    title: "center.templates.weeklyDigest",
     kind: "routine",
     routine: {
       name: "Weekly research digest",
@@ -45,13 +50,13 @@ const SCHEDULE_TEMPLATES: readonly ScheduleTemplate[] = [
   },
   {
     id: "daily-stretch",
-    title: "Daily stretch reminder",
+    title: "center.templates.dailyStretch",
     kind: "reminder",
     reminder: { text: "Stand up and stretch", repeat: { at: "15:00" } },
   },
   {
     id: "end-of-day-wrap-up",
-    title: "End-of-day wrap-up",
+    title: "center.templates.endOfDay",
     kind: "schedule",
     schedule: {
       name: "End-of-day wrap-up",
@@ -82,11 +87,12 @@ export function ScheduleTemplates({
   readonly reminders: boolean;
   readonly onPick: (template: ScheduleTemplate) => void;
 }) {
+  const t = useT();
   return (
-    <div className="center-chips" role="group" aria-label="Start from a template">
+    <div className="center-chips" role="group" aria-label={t("center.templates.label")}>
       {SCHEDULE_TEMPLATES.filter((template) => template.kind !== "reminder" || reminders).map((template) => (
         <Button key={template.id} size="sm" onClick={() => onPick(template)}>
-          {template.title}
+          {t(template.title)}
         </Button>
       ))}
     </div>

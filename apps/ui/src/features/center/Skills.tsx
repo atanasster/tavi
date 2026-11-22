@@ -19,6 +19,7 @@ import {
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { useLoaded } from "../../hooks/use-loaded.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import { instantLabel, todayIn } from "../../lib/time.js";
 import { Button } from "../../ui/Button.js";
 import { Confirm } from "../../ui/Confirm.js";
@@ -41,6 +42,7 @@ import {
   type SkillEntry,
 } from "./skills-api.js";
 import { Field } from "../../ui/Field.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * The workspace's skills: what waits for review first, then every skill with
@@ -56,6 +58,7 @@ import { Field } from "../../ui/Field.js";
  * *Review* opens its proposal here (`requestSkillFocus`).
  */
 export function SkillsPane({ revision }: { readonly revision: number }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const listed = useLoaded(() => listSkills(client, workspaceId), [workspaceId, revision]);
   // A chat card's *Review* names the proposal to open: taken once, as the page first shows.
@@ -74,20 +77,20 @@ export function SkillsPane({ revision }: { readonly revision: number }) {
 
   return (
     <section className="soul-skills" aria-labelledby="soul-skills-title">
-      <h2 id="soul-skills-title">Skills</h2>
-      <p className="settings-description">
-        Procedures the agent loads when they apply (skills.read). Only an approved, active version is offered; a skill grants no permission.
-      </p>
-      {listed.error === undefined ? null : <LoadError error={`Skills could not be listed: ${listed.error}`} reload={listed.reload} />}
+      <h2 id="soul-skills-title">{t("center.skills.title")}</h2>
+      <p className="settings-description">{t("center.skills.description")}</p>
+      {listed.error === undefined ? null : (
+        <LoadError error={t("center.skills.listFailed", { error: listed.error })} reload={listed.reload} />
+      )}
       {listed.data === undefined ? (
         <Pending error={listed.error} />
       ) : entries.length === 0 ? (
-        <Empty>No skills yet. Import one with `tavi skills import`.</Empty>
+        <Empty>{t("center.skills.empty")}</Empty>
       ) : (
         <>
           {proposed.length === 0 ? null : (
             <section aria-labelledby="soul-skills-proposed">
-              <h3 id="soul-skills-proposed">Waiting for review</h3>
+              <h3 id="soul-skills-proposed">{t("center.skills.waiting")}</h3>
               <ul className="list-reset">
                 {proposed.map((version) => (
                   <li key={`${version.skillId}@${version.version}`}>
@@ -135,9 +138,9 @@ export function SkillsPane({ revision }: { readonly revision: number }) {
 
 /** Where a version came from, in words: an agent's proposal, another author's archive, or the operator's own import. */
 function provenanceText(provenance: string): string {
-  if (provenance.startsWith("chat:")) return "proposed by Tavi in a chat";
-  if (provenance.startsWith("archive:")) return `imported from ${provenance.slice("archive:".length)}, another author's`;
-  return `from ${provenance}`;
+  if (provenance.startsWith("chat:")) return translateNow("center.skills.fromChat");
+  if (provenance.startsWith("archive:")) return translateNow("center.skills.fromArchive", { source: provenance.slice("archive:".length) });
+  return translateNow("center.skills.fromSource", { source: provenance });
 }
 
 /**
@@ -153,6 +156,7 @@ function VersionLine({
   readonly onOpen: () => void;
   readonly review?: boolean;
 }) {
+  const t = useT();
   const id = `${version.skillId}@${version.version}`;
   return (
     <span className="soul-skill-version">
@@ -164,7 +168,8 @@ function VersionLine({
       <Button variant={review ? "secondary" : "ghost"} size="sm" onClick={onOpen}>
         {review ? (
           <>
-            Review<span className="visually-hidden"> {id}</span>
+            {t("center.skills.review")}
+            <span className="visually-hidden"> {id}</span>
           </>
         ) : (
           <>
@@ -178,7 +183,7 @@ function VersionLine({
         {review ? "" : `${version.reviewState} · `}
         {/* An agent's proposal waiting past 30 days: still yours to review, no longer counted against its cap. */}
         {provenanceText(version.provenance)}
-        {skillProposalExpired(version, new Date().toISOString()) ? " (expired)" : ""}
+        {skillProposalExpired(version, new Date().toISOString()) ? t("center.skills.expired") : ""}
       </span>
     </span>
   );
@@ -193,18 +198,23 @@ function SkillRow({
   readonly onOpen: (version: string) => void;
   readonly onDecide: (decision: SkillDecision, activeVersion: string | undefined) => Promise<void>;
 }) {
+  const t = useT();
   // A proposal is listed once, under *Waiting for review*, not again here.
   const decided = entry.versions.filter((version) => version.reviewState !== "proposed");
   return (
     <article className="soul-skill card-flat" aria-label={entry.name}>
       <header>
         <strong>{entry.name}</strong> {entry.skillId === entry.name ? null : <span className="muted">{entry.skillId}</span>}{" "}
-        {entry.active === undefined ? <span className="muted">· not active</span> : <span>· active {entry.active}</span>}{" "}
+        {entry.active === undefined ? (
+          <span className="muted">{t("center.skills.notActive")}</span>
+        ) : (
+          <span>{t("center.skills.active", { version: entry.active })}</span>
+        )}{" "}
         <span className="muted">· {skillUsageText(entry)}</span>
-        {entry.unused ? <strong> · unused {SKILL_UNUSED_DAYS}+ days</strong> : null}
+        {entry.unused ? <strong>{t("center.skills.unused", { count: SKILL_UNUSED_DAYS })}</strong> : null}
         {entry.active === undefined ? null : (
           <Button variant="ghost" size="sm" onClick={() => void onDecide({ action: "disable", skillId: entry.skillId }, entry.active)}>
-            Disable
+            {t("center.skills.disable")}
           </Button>
         )}
       </header>
@@ -239,6 +249,7 @@ function SkillVersionViewer({
   readonly onOpen: (version: string) => void;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const timeZone = useTimeZone();
   const today = todayIn(timeZone);
@@ -296,7 +307,7 @@ function SkillVersionViewer({
           {skillId}@{version}
         </h3>
         <Button variant="ghost" size="sm" onClick={onClose}>
-          Close
+          {t("center.skills.close")}
         </Button>
       </header>
       {answer === undefined || stored === undefined ? (
@@ -304,12 +315,20 @@ function SkillVersionViewer({
       ) : (
         <>
           <p className="muted">
-            {stored.reviewState} · sha256 <span className="soul-skill-hash">{stored.contentHash}</span> · from {stored.provenance}
-            {foreignProvenance(stored.provenance) ? " — written by another author: read it before approving" : ""}
+            {withParts(
+              t(foreignProvenance(stored.provenance) ? "center.skills.metaForeign" : "center.skills.meta", { source: stored.provenance }),
+              {
+                state: stored.reviewState,
+                hash: <span className="soul-skill-hash">{stored.contentHash}</span>,
+              },
+            )}
           </p>
           {proposal === undefined ? null : (
             <p className="muted">
-              Proposed by the agent{proposal.requested ? " when you asked" : " on its own"}, from task {proposal.taskId}: {proposal.note}
+              {t(proposal.requested ? "center.skills.proposedAsked" : "center.skills.proposedOwn", {
+                task: proposal.taskId,
+                note: proposal.note,
+              })}
             </p>
           )}
           {/* Tavi cannot tell which words came from what the turn read, so the whole text is flagged with what it read. */}
@@ -320,26 +339,30 @@ function SkillVersionViewer({
           )}
           {editedInto === undefined ? null : (
             <p className="muted">
-              Set aside by your edit:{" "}
-              <Button variant="ghost" size="sm" onClick={() => onOpen(editedInto)}>
-                open {skillId}@{editedInto}
-              </Button>
+              {withParts(t("center.skills.setAside"), {
+                link: (
+                  <Button variant="ghost" size="sm" onClick={() => onOpen(editedInto)}>
+                    {t("center.skills.openVersion", { version: `${skillId}@${editedInto}` })}
+                  </Button>
+                ),
+              })}
             </p>
           )}
           {stored.manifest.compatibility === undefined ? null : (
-            <p className="muted">Compatibility (as the package states it): {stored.manifest.compatibility}</p>
+            <p className="muted">{t("center.skills.compatibility", { value: stored.manifest.compatibility })}</p>
           )}
           {stored.manifest.allowedTools === undefined ? null : (
             <p className="muted">
-              Declares the tools it uses (a ceiling, never a grant):{" "}
-              {stored.manifest.allowedTools
-                .map((name) => (taviToolForSkillName(name) === undefined ? `${name} (declared but not enforceable here)` : name))
-                .join(", ")}
+              {t("center.skills.tools", {
+                tools: stored.manifest.allowedTools
+                  .map((name) => (taviToolForSkillName(name) === undefined ? t("center.skills.toolNotEnforceable", { name }) : name))
+                  .join(", "),
+              })}
             </p>
           )}
           {escalation === undefined ? null : (
             <p role="alert" className="skill-escalation">
-              <strong>{escalation}</strong> (since {since})
+              {withParts(t("center.skills.escalation", { since: since ?? "" }), { escalation: <strong>{escalation}</strong> })}
             </p>
           )}
           <div className="soul-skill-actions">
@@ -352,33 +375,37 @@ function SkillVersionViewer({
                       : void onDecide({ action: "approve", skillId, version }, active)
                   }
                 >
-                  Approve
+                  {t("center.skills.approve")}
                 </Button>
                 <Button variant="ghost" onClick={() => void onDecide({ action: "reject", skillId, version }, active)}>
-                  Reject
+                  {t("center.skills.reject")}
                 </Button>
                 {proposal !== undefined && stored.manifest.files === undefined && answer.text !== undefined ? (
                   <Button variant="ghost" disabled={busy} onClick={() => setEditing(answer.text)}>
-                    Edit
+                    {t("center.skills.edit")}
                   </Button>
                 ) : null}
                 {proposal !== undefined ? (
                   <Button variant="ghost" disabled={busy} onClick={() => setFeedback("")}>
-                    Regenerate with feedback
+                    {t("center.skills.regenerate")}
                   </Button>
                 ) : null}
               </>
             ) : null}
             {stored.reviewState === "approved" && active !== version ? (
               everActive.has(version) ? (
-                <Button onClick={() => void onDecide({ action: "rollback", skillId, version }, active)}>Roll back to this</Button>
+                <Button onClick={() => void onDecide({ action: "rollback", skillId, version }, active)}>
+                  {t("center.skills.rollBack")}
+                </Button>
               ) : (
-                <Button onClick={() => void onDecide({ action: "activate", skillId, version }, active)}>Activate</Button>
+                <Button onClick={() => void onDecide({ action: "activate", skillId, version }, active)}>
+                  {t("center.skills.activate")}
+                </Button>
               )
             ) : null}
             {answer.parentVersion === undefined || parentText === undefined ? null : (
               <Button variant="ghost" size="sm" onClick={() => setDiffed((value) => !value)}>
-                {diffed ? "Show the whole text" : `Show changes from ${answer.parentVersion}`}
+                {diffed ? t("center.skills.showWhole") : t("center.skills.showChanges", { version: answer.parentVersion })}
               </Button>
             )}
           </div>
@@ -404,15 +431,15 @@ function SkillVersionViewer({
                 });
               }}
             >
-              <Field id={`${formId}-edit`} label="Edit the proposed text: saved as a new version to review, following this one">
+              <Field id={`${formId}-edit`} label={t("center.skills.editLabel")}>
                 <textarea rows={16} value={editing} onChange={(event) => setEditing(event.target.value)} />
               </Field>
               <div className="soul-skill-actions">
                 <Button type="submit" disabled={busy || editing.trim() === "" || editing === answer.text}>
-                  Save as a new version
+                  {t("center.skills.saveVersion")}
                 </Button>
                 <Button variant="ghost" onClick={() => setEditing(undefined)}>
-                  Cancel
+                  {t("ui.confirm.cancel")}
                 </Button>
               </div>
             </form>
@@ -426,18 +453,18 @@ function SkillVersionViewer({
                 void sendSkillFeedback(client, workspaceId, stored, feedback).then((outcome) => {
                   setBusy(false);
                   if (!outcome.ok) {
-                    setSaid({ text: `The feedback was not sent: ${outcome.message}`, failed: true });
+                    setSaid({ text: t("center.skills.feedbackFailed", { reason: outcome.message }), failed: true });
                     return;
                   }
                   setFeedback(undefined);
                   setSaid({
-                    text: `Sent to chat ${outcome.value.taskId} as your message: the agent proposes it again there. This version still waits until you reject it.`,
+                    text: t("center.skills.feedbackSent", { task: outcome.value.taskId }),
                     failed: false,
                   });
                 });
               }}
             >
-              <Field id={`${formId}-feedback`} label="What should change? Sent to the chat it came from, for the agent to propose it again">
+              <Field id={`${formId}-feedback`} label={t("center.skills.feedbackLabel")}>
                 <textarea
                   rows={4}
                   maxLength={SKILL_FEEDBACK_MAX_CHARS}
@@ -447,21 +474,21 @@ function SkillVersionViewer({
               </Field>
               <div className="soul-skill-actions">
                 <Button type="submit" disabled={busy || feedback.trim() === ""}>
-                  Send feedback
+                  {t("center.skills.sendFeedback")}
                 </Button>
                 <Button variant="ghost" onClick={() => setFeedback(undefined)}>
-                  Cancel
+                  {t("ui.confirm.cancel")}
                 </Button>
               </div>
             </form>
           )}
           {proposal === undefined ? null : <SkillTrace trace={trace.data} error={trace.error} />}
           {answer.text === undefined ? (
-            <Empty>This version is not readable text.</Empty>
+            <Empty>{t("center.skills.unreadable")}</Empty>
           ) : diff === undefined ? (
             <SkillText text={answer.text} />
           ) : (
-            <pre className="soul-skill-body soul-skill-diff" {...textPanel("SKILL.md changes")}>
+            <pre className="soul-skill-body soul-skill-diff" {...textPanel(t("center.skills.changesPanel"))}>
               {diff.map((line, index) => (
                 <span key={index} className={`diff-${line.kind}`}>
                   {line.kind === "added" ? "+ " : line.kind === "removed" ? "- " : "  "}
@@ -475,16 +502,20 @@ function SkillVersionViewer({
       )}
       {confirmingApprove && stored !== undefined ? (
         <Confirm
-          title={`Approve ${skillId}@${version}?`}
-          message={`${proposal === undefined ? `Another author wrote it (${stored.provenance})` : `Tavi proposed it in chat ${proposal.taskId}`}, not you. Read it above before approving: once active, any chat can load it when the job comes up. This is tavi skills approve --yes.`}
-          action="Yes, approve"
+          title={t("center.skills.approveTitle", { version: `${skillId}@${version}` })}
+          message={
+            proposal === undefined
+              ? t("center.skills.approveForeign", { source: stored.provenance })
+              : t("center.skills.approveProposed", { task: proposal.taskId })
+          }
+          action={t("center.skills.approveAction")}
           onClose={() => setConfirmingApprove(false)}
           onConfirm={() => onDecide({ action: "approve", skillId, version }, active)}
         />
       ) : null}
       {shown.data === undefined || shown.data.history.length === 0 ? null : (
-        <section aria-label="Activation history">
-          <h4>History</h4>
+        <section aria-label={t("center.skills.historyLabel")}>
+          <h4>{t("center.skills.history")}</h4>
           <ul className="list-reset">
             {shown.data.history.map((entry) => (
               <li key={entry.historyId} className="muted">
@@ -501,15 +532,16 @@ function SkillVersionViewer({
 
 /** A proposal's source task, condensed: each tool call's name and short input, in order. */
 function SkillTrace({ trace, error }: { readonly trace: SkillsTraceAnswer | undefined; readonly error: string | undefined }) {
+  const t = useT();
   return (
     <details className="soul-skill-trace" open>
       <summary className="disclosure">
-        What the task did{trace === undefined ? "" : ` (${trace.calls.length + trace.more} tool calls)`}
+        {trace === undefined ? t("center.skills.trace") : t("center.skills.traceCount", { count: trace.calls.length + trace.more })}
       </summary>
       {trace === undefined ? (
-        <p className="muted">{error === undefined ? "Reading the task's tool calls…" : `The tool calls could not be read: ${error}`}</p>
+        <p className="muted">{error === undefined ? t("center.skills.traceReading") : t("center.skills.traceFailed", { error })}</p>
       ) : trace.calls.length === 0 ? (
-        <p className="muted">Its history keeps no tool calls.</p>
+        <p className="muted">{t("center.skills.traceNone")}</p>
       ) : (
         <>
           <ol className="soul-skill-trace-calls">
@@ -519,8 +551,8 @@ function SkillTrace({ trace, error }: { readonly trace: SkillsTraceAnswer | unde
               </li>
             ))}
           </ol>
-          {trace.more > 0 ? <p className="muted">… and {trace.more} more</p> : null}
-          {trace.partial ? <p className="muted">As far as the task's stored history keeps them.</p> : null}
+          {trace.more > 0 ? <p className="muted">{t("center.skills.traceMore", { count: trace.more })}</p> : null}
+          {trace.partial ? <p className="muted">{t("center.skills.tracePartial")}</p> : null}
         </>
       )}
     </details>
@@ -532,10 +564,11 @@ const textPanel = (label: string) => ({ tabIndex: 0, role: "region", "aria-label
 
 /** A version's text: a plain package as it is, a bundle (Agent Skills) file by file, SKILL.md first, a script as text it never runs. */
 function SkillText({ text }: { readonly text: string }) {
+  const t = useT();
   const files = skillPackageFiles(text);
   if (files === undefined || (files.length === 1 && files[0]?.path === "SKILL.md"))
     return (
-      <pre className="soul-skill-body" {...textPanel("SKILL.md text")}>
+      <pre className="soul-skill-body" {...textPanel(t("center.skills.textPanel"))}>
         {files?.[0]?.text ?? text}
       </pre>
     );
@@ -546,9 +579,11 @@ function SkillText({ text }: { readonly text: string }) {
         <section key={file.path} aria-label={file.path}>
           <h4>{file.path}</h4>
           {file.text === undefined ? (
-            <p className="muted">Not text ({skillBundleFileBytes(file)} bytes).</p>
+            <p className="muted">
+              {t("center.skills.notText", { count: skillBundleFileBytes(file), size: String(skillBundleFileBytes(file)) })}
+            </p>
           ) : (
-            <pre className="soul-skill-body" {...textPanel(`${file.path} text`)}>
+            <pre className="soul-skill-body" {...textPanel(t("center.skills.filePanel", { path: file.path }))}>
               {file.text}
             </pre>
           )}

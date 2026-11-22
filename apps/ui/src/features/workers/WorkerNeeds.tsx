@@ -5,7 +5,9 @@ import { approvalChannelLabel, type PendingHandoffRow, type PendingQuestionRow }
 
 import { Icon } from "../../ui/Icon.js";
 import { QuestionCard, answerLabels, questionNeed, sentAnswer, type QuestionNeed } from "../needs/NeedCard.js";
-import { RECONNECT_TO_ANSWER } from "../chat/store/runs.js";
+import { RECONNECT_TO_ANSWER_KEY } from "../chat/store/runs.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 import type { WorkerNeeds } from "../chat/store/types.js";
 import { openWorkerQuestions } from "../chat/store/workers.js";
 import { HandoffCard } from "../takeover/HandoffCard.js";
@@ -23,7 +25,7 @@ import { useTimeZone, useWorkspace } from "../shell/Workspace.js";
 
 /** Who asks: the worker's agent, else its task's title. */
 export const workerAsker = (row: Pick<PendingQuestionRow, "workerLabel" | "taskTitle" | "taskId">): string =>
-  row.workerLabel ?? row.taskTitle ?? `worker ${row.taskId}`;
+  row.workerLabel ?? row.taskTitle ?? translateNow("workers.needs.worker", { id: row.taskId });
 
 /** A worker's question as the card shows it. */
 export const workerQuestionNeed = (row: PendingQuestionRow, connectionName?: (connectionId: string) => string | undefined): QuestionNeed =>
@@ -77,6 +79,7 @@ export function WorkerNeedCards({
   readonly lastingChat?: boolean;
   readonly density?: "full" | "compact";
 }) {
+  const t = useT();
   const timeZone = useTimeZone();
   const channels = useChannelNames();
   const rounds = onDecide === undefined ? [] : workerRoundCards(needs?.approvals ?? [], lastingChat ? true : undefined);
@@ -93,19 +96,16 @@ export function WorkerNeedCards({
   const several = openWorkerQuestions(needs).length > 1;
   if (needs.questions.length === 0 && needs.handoffs.length === 0 && receipts.length === 0 && rounds.length === 0) return null;
   return (
-    <section className="worker-needs" aria-label="your workers ask">
+    <section className="worker-needs" aria-label={t("workers.needs.label")}>
       {receipts.map(([waitId, answer]) => (
         <p key={waitId} className={`need-receipt need-receipt-answered${density === "compact" ? " need-compact" : ""}`}>
-          <Icon name="check" size="sm" /> You answered <strong>{answerLabels(answer.text, answer.question.choices)}</strong>
-          <span className="need-receipt-meta"> · {workerAsker(answer.question)}'s question</span>
+          <Icon name="check" size="sm" />{" "}
+          {withParts(t("needs.receipt.youAnswered"), { answer: <strong>{answerLabels(answer.text, answer.question.choices)}</strong> })}
+          <span className="need-receipt-meta"> · {t("workers.needs.whose", { asker: workerAsker(answer.question) })}</span>
           <span className="visually-hidden"> — {answer.question.question}</span>
         </p>
       ))}
-      {several ? (
-        <Notice role="note">
-          More than one question is open: answer each in its card. A message typed below is sent to the chat, not as an answer.
-        </Notice>
-      ) : null}
+      {several ? <Notice role="note">{t("workers.needs.several")}</Notice> : null}
       {needs.questions.map((row) => {
         const sent = needs.answers[row.waitId];
         return (
@@ -116,7 +116,7 @@ export function WorkerNeedCards({
               timeZone={timeZone}
               need={workerQuestionNeed(row, channels.connection)}
               answer={sentAnswer(sent)}
-              blocked={connected ? undefined : { reason: RECONNECT_TO_ANSWER }}
+              blocked={connected ? undefined : { reason: t(RECONNECT_TO_ANSWER_KEY) }}
               onAnswer={(text) => onAnswer(row.waitId, text)}
             />
           </div>
@@ -124,7 +124,9 @@ export function WorkerNeedCards({
       })}
       {rounds.map((round) => (
         <div key={round.key} data-waiting="" className="worker-round">
-          <p className="need-asker">{round.taskTitle ?? `worker ${round.taskId}`} asks:</p>
+          <p className="need-asker">
+            {t("workers.needs.asks", { asker: round.taskTitle ?? t("workers.needs.worker", { id: round.taskId }) })}
+          </p>
           <ul className="center-cards list-reset">
             <WorkerRound round={round} outcome={needs.decided?.[round.key]} onDecide={(decision) => onDecide?.(round, decision)} />
           </ul>
@@ -132,7 +134,7 @@ export function WorkerNeedCards({
       ))}
       {needs.handoffs.map((row: PendingHandoffRow) => (
         <div key={row.waitId} data-waiting="" className="worker-handoff">
-          <p className="need-asker">{workerAsker(row)} asks:</p>
+          <p className="need-asker">{t("workers.needs.asks", { asker: workerAsker(row) })}</p>
           <HandoffCard taskId={row.taskId} handoff={row.handoff} deadlineAt={row.deadlineAt} />
         </div>
       ))}

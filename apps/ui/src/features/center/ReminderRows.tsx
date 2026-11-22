@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { ReminderFireView, ReminderView } from "@tavi/contracts";
 
 import { useLoaded } from "../../hooks/use-loaded.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import type { SettingsClient } from "../../lib/ipc.js";
 import { DAY_MS, dayTime, todayIn } from "../../lib/time.js";
 import { StatusBadge } from "../../ui/Parts.js";
@@ -10,6 +11,7 @@ import { AppLink } from "../shell/AppLink.js";
 import { reminderPath, taskPath } from "../shell/route.js";
 import { eventLine, whenText } from "./reminder-model.js";
 import { chatTitle } from "./reminders-api.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 import { useWorkspace } from "../shell/Workspace.js";
 
 /** A chat's name (`chatTitle`, read once per page), or undefined until it answers, when there is none, or without a chat. */
@@ -32,6 +34,7 @@ export function AddedFrom({
   /** What goes before it on a line it shares (" · "), only when it shows. */
   readonly lead?: string | undefined;
 }) {
+  const t = useT();
   const { client } = useWorkspace();
   const taskId = reminder.originTaskId;
   const title = useChatTitle(client, taskId);
@@ -40,10 +43,13 @@ export function AddedFrom({
     <>
       {lead}
       <span className="reminder-origin meta">
-        Added from{" "}
-        <AppLink href={taskPath(taskId)} onFollow={() => void onFollow(taskId)}>
-          {title ?? "a chat"}
-        </AppLink>
+        {withParts(t("center.reminderRows.addedFrom"), {
+          chat: (
+            <AppLink href={taskPath(taskId)} onFollow={() => void onFollow(taskId)}>
+              {title ?? t("center.reminderRows.aChat")}
+            </AppLink>
+          ),
+        })}
       </span>
     </>
   );
@@ -78,18 +84,21 @@ export function ReminderPerson({
   readonly show: boolean;
   readonly lead?: string;
 }) {
+  const t = useT();
   if (!show) return null;
   return (
     <span className="reminder-person meta">
-      {lead}for {people?.[principalId] ?? principalId}
+      {lead}
+      {t("center.reminderRows.forPerson", { person: people?.[principalId] ?? principalId })}
     </span>
   );
 }
 /** A reminder row's title in Schedule: its kind, its link, and its status unless it is active. */
 function ReminderTitle({ reminder, onOpen }: { readonly reminder: ReminderView; readonly onOpen: (reminderId: string) => void }) {
+  const t = useT();
   return (
     <span className="schedule-recurring-title">
-      <span className="schedule-kind eyebrow schedule-kind-reminder">Reminder</span>
+      <span className="schedule-kind eyebrow schedule-kind-reminder">{t("center.reminderRows.reminder")}</span>
       <ReminderLink className="item-title reminder-title button-link" reminderId={reminder.reminderId} onOpen={onOpen}>
         {reminder.text}
       </ReminderLink>
@@ -123,7 +132,7 @@ export function LaterReminderRow({
         )
       : reminder.nextFireAt === null
         ? whenText(when, timeZone)
-        : `Once ${dayTime(reminder.nextFireAt, timeZone, todayIn(timeZone))}`;
+        : translateNow("center.reminderRows.once", { at: dayTime(reminder.nextFireAt, timeZone, todayIn(timeZone)) });
   return (
     <li className="schedule-recurring schedule-recurring-reminder">
       <div className="schedule-recurring-main">
@@ -170,14 +179,13 @@ export function DoneReminders({
   readonly timeZone: string | undefined;
   readonly onOpen: (reminderId: string) => void;
 }) {
+  const t = useT();
   if (entries.length === 0) return null;
   return (
     <details className="reminder-done">
       <summary className="center-subhead disclosure">
-        Done / missed{" "}
-        <span>
-          {entries.length} in the last {DONE_WINDOW_DAYS} days
-        </span>
+        {t("center.reminderRows.doneMissed")}{" "}
+        <span>{t("center.reminderRows.doneCount", { count: entries.length, days: DONE_WINDOW_DAYS })}</span>
       </summary>
       <ul className="schedule-recurring-list card-flat list-reset">
         {entries.map((entry) =>
@@ -190,9 +198,9 @@ export function DoneReminders({
                 <span className="item-meta meta-sm">
                   {entry.reminder.status === "done"
                     ? entry.reminder.lastFiredAt === null
-                      ? "Done"
-                      : `Fired ${dayTime(entry.reminder.lastFiredAt, timeZone)}`
-                    : `Cancelled ${dayTime(entry.reminder.updatedAt, timeZone)}`}
+                      ? t("center.reminderRows.done")
+                      : t("center.reminderRows.fired", { at: dayTime(entry.reminder.lastFiredAt, timeZone) })
+                    : t("center.reminderRows.cancelled", { at: dayTime(entry.reminder.updatedAt, timeZone) })}
                 </span>
               </div>
               <StatusBadge status={entry.reminder.status} />
@@ -203,9 +211,9 @@ export function DoneReminders({
                 <ReminderLink className="item-title reminder-title button-link" reminderId={entry.fire.reminderId} onOpen={onOpen}>
                   {entry.fire.text}
                 </ReminderLink>
-                <span className="item-meta meta-sm">Missed {dayTime(entry.fire.fireAt, timeZone)} — the owner was not running</span>
+                <span className="item-meta meta-sm">{t("center.reminderRows.missedAt", { at: dayTime(entry.fire.fireAt, timeZone) })}</span>
               </div>
-              <span className="badge badge-bad">missed</span>
+              <span className="badge badge-bad">{t("center.reminderRows.missed")}</span>
             </li>
           ),
         )}

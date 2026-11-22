@@ -1,10 +1,10 @@
 import type { ArtifactListRow } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 
 import { listBrowserSessions } from "../center/browser-api.js";
 import { useCloseBrowser } from "../center/use-close-browser.js";
 import type { SettingsClient } from "../../lib/ipc.js";
-import { Failure, NO_CHAT_SELECTED, Pending } from "../../ui/Parts.js";
+import { Failure, Pending } from "../../ui/Parts.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import type { Session } from "../shell/shell.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { loadArtifacts } from "../chat/tasks-api.js";
@@ -38,9 +38,11 @@ export function usage(
     const metrics = recorded ?? run.run.metrics;
     if (metrics === undefined) continue;
     return {
-      scope: recorded === undefined ? "last execution" : "this chat",
+      scope: translateNow(recorded === undefined ? "chatPanel.details.scopeLast" : "chatPanel.details.scopeChat"),
       models: metrics.models,
-      tokens: `${metrics.partial ? "at least " : ""}${formatCount(metrics.totalTokens)}${metrics.partial ? " (partial)" : ""}`,
+      tokens: metrics.partial
+        ? translateNow("chatPanel.details.tokensPartial", { count: metrics.totalTokens })
+        : formatCount(metrics.totalTokens),
     };
   }
   return undefined;
@@ -72,8 +74,9 @@ export function Details({
   /** Open the Command Center's Browser section; absent when the owner does not offer it. */
   readonly onBrowser?: (() => void) | undefined;
 }) {
+  const t = useT();
   const { workspaceId } = useWorkspace();
-  if (session === undefined) return <Empty>{NO_CHAT_SELECTED}</Empty>;
+  if (session === undefined) return <Empty>{t("ui.parts.noChatSelected")}</Empty>;
   const last = session.runs.at(-1);
   /** Turns that ran: a Home a schedule started holds a place for its record, which is no turn. */
   const turns = session.runs.filter((run) => run.noTurn !== true).length;
@@ -83,52 +86,54 @@ export function Details({
   return (
     <>
       {artifact ? (
-        <section aria-label="artifact details">
+        <section aria-label={t("chatPanel.details.artifactLabel")}>
           <h4>{fileTitle(artifact)}</h4>
           {showsImage(artifact) ? <HeldFilePicture row={artifact} alt={fileTitle(artifact)} className="held-file-preview" /> : null}
           <dl className="facts">
-            <dt>Type</dt>
+            <dt>{t("chatPanel.details.type")}</dt>
             <dd>{fileKind(artifact.contentType)}</dd>
-            <dt>Size</dt>
+            <dt>{t("chatPanel.details.size")}</dt>
             <dd>{formatBytes(artifact.byteSize)}</dd>
-            <dt>Review</dt>
+            <dt>{t("chatPanel.details.review")}</dt>
             <dd>
               <ReviewBadge state={artifact.reviewState} />
             </dd>
-            <dt>ID</dt>
+            <dt>{t("chatPanel.details.id")}</dt>
             <dd className="held-file-id">{artifact.artifactId}</dd>
           </dl>
           {showsImage(artifact) ? null : (
-            <p className="muted">{artifact.reviewState === "approved" ? "Only pictures are shown here." : "Shown once it is approved."}</p>
+            <p className="muted">
+              {t(artifact.reviewState === "approved" ? "chatPanel.details.picturesOnly" : "chatPanel.details.afterApproval")}
+            </p>
           )}
         </section>
       ) : null}
       {/* What the chat ran on and how much, in words; its ids are under Technical details. */}
       <dl className="facts facts-plain">
-        <dt>Turns</dt>
+        <dt>{t("chatPanel.details.turns")}</dt>
         <dd>{turns}</dd>
-        <dt>Model</dt>
+        <dt>{t("chatPanel.details.model")}</dt>
         <dd title={modelTarget}>{modelTarget === undefined ? "—" : reduceModelName(modelTarget)}</dd>
         {models.length === 0 ? null : (
           <>
-            <dt>{models.length === 1 ? "Model used" : "Models used"}</dt>
+            <dt>{t(models.length === 1 ? "chatPanel.details.modelUsed" : "chatPanel.details.modelsUsed")}</dt>
             <dd title={models.join(", ")}>{models.map(reduceModelName).join(", ")}</dd>
           </>
         )}
         {reported === undefined ? null : (
           <>
-            <dt>{`Tokens (${reported.scope})`}</dt>
-            <dd title="Provider-reported, including tool steps and retries">{reported.tokens}</dd>
+            <dt>{t("chatPanel.details.tokens", { scope: reported.scope })}</dt>
+            <dd title={t("chatPanel.details.tokensTitle")}>{reported.tokens}</dd>
           </>
         )}
       </dl>
       {pending.length === 0 ? null : (
         <>
-          <h4>Waiting on a decision</h4>
+          <h4>{t("chatPanel.details.waitingDecision")}</h4>
           <ul>
             {pending.map((round) => (
               <li key={`${round.taskId}:${round.steps}`}>
-                Round {round.steps}: {plural(round.requests.length, "call")}
+                {t("chatPanel.details.round", { steps: round.steps, count: round.requests.length })}
               </li>
             ))}
           </ul>
@@ -141,19 +146,19 @@ export function Details({
         </>
       )}
       <details className="chat-panel-technical">
-        <summary className="disclosure">Technical details</summary>
+        <summary className="disclosure">{t("chatPanel.details.technical")}</summary>
         <dl className="facts">
-          <dt>Task</dt>
-          <dd>{session.taskId ?? "not admitted yet"}</dd>
-          <dt>Workspace</dt>
+          <dt>{t("chatPanel.details.task")}</dt>
+          <dd>{session.taskId ?? t("chatPanel.details.notAdmitted")}</dd>
+          <dt>{t("chatPanel.details.workspace")}</dt>
           <dd>{last?.run.workspaceId ?? workspaceId}</dd>
-          <dt>Thread</dt>
+          <dt>{t("chatPanel.details.thread")}</dt>
           <dd>{last?.run.threadId ?? "—"}</dd>
-          <dt>{turns > 1 ? `Operation key (turn ${turns})` : "Operation key"}</dt>
+          <dt>{turns > 1 ? t("chatPanel.details.operationKeyTurn", { turn: turns }) : t("chatPanel.details.operationKey")}</dt>
           <dd>{turns === 0 ? "—" : (last?.id ?? "—")}</dd>
           {modelTarget === undefined ? null : (
             <>
-              <dt>Model target</dt>
+              <dt>{t("chatPanel.details.modelTarget")}</dt>
               <dd>{modelTarget}</dd>
             </>
           )}
@@ -174,22 +179,25 @@ function Artifacts({
   readonly version: string;
   readonly onChanges?: (() => void) | undefined;
 }) {
+  const t = useT();
   const { workspaceId } = useWorkspace();
   const { data, error } = useLoaded(() => loadArtifacts(client, workspaceId, taskId), [version]);
   const rows = data?.rows.filter((row) => row.workspaceId === workspaceId && row.runId === taskId);
   return (
-    <section aria-label="this chat's artifacts">
-      <h4>Artifacts</h4>
+    <section aria-label={t("chatPanel.details.artifactsLabel")}>
+      <h4>{t("chatPanel.details.artifacts")}</h4>
       {error !== undefined || rows === undefined ? (
         <Pending error={error} />
       ) : (
         <p>
-          {rows.length === 0 ? "None archived." : `${rows.length}${data?.nextCursor === undefined ? "" : "+"} archived.`}
+          {rows.length === 0
+            ? t("chatPanel.details.noneArchived")
+            : t(data?.nextCursor === undefined ? "chatPanel.details.archived" : "chatPanel.details.archivedMore", { count: rows.length })}
           {onChanges === undefined || rows.length === 0 ? null : (
             <>
               {" "}
               <Button variant="ghost" size="sm" onClick={onChanges}>
-                Open in Held files
+                {t("chatPanel.details.openHeld")}
               </Button>
             </>
           )}
@@ -204,14 +212,15 @@ function Artifacts({
  * next turn, and closable here to free the browser it holds.
  */
 function EndedSession({ client, sessionId }: { readonly client: SettingsClient; readonly sessionId: string }) {
+  const t = useT();
   const { workspaceId } = useWorkspace();
   const { state, failure, close } = useCloseBrowser(client, workspaceId, sessionId);
-  if (state === "closed") return <span className="muted"> · closed</span>;
+  if (state === "closed") return <span className="muted"> · {t("chatPanel.details.closed")}</span>;
   return (
     <>
-      <span className="muted"> · Ended</span>{" "}
+      <span className="muted"> · {t("chatPanel.details.ended")}</span>{" "}
       <Button variant="ghost" size="sm" disabled={state === "closing"} onClick={() => void close()}>
-        {state === "closing" ? "Closing…" : "Close browser"}
+        {state === "closing" ? t("chatPanel.details.closing") : t("chatPanel.details.closeBrowser")}
       </Button>
       {failure === undefined ? null : <Failure as="span"> {failure}</Failure>}
     </>
@@ -234,17 +243,18 @@ function BrowserSessions({
   readonly version: string;
   readonly onBrowser?: (() => void) | undefined;
 }) {
+  const t = useT();
   const { workspaceId } = useWorkspace();
   const { data, error } = useLoaded(() => listBrowserSessions(client, workspaceId, { open: true, taskId }), [version]);
   const live = data?.items;
   const partial = data?.nextCursor !== undefined;
   return (
-    <section aria-label="this chat's browser sessions">
-      <h4>Browser</h4>
+    <section aria-label={t("chatPanel.details.browserLabel")}>
+      <h4>{t("chatPanel.details.browser")}</h4>
       {error !== undefined || live === undefined ? (
         <Pending error={error} />
       ) : live.length === 0 ? (
-        <Empty>No live session.</Empty>
+        <Empty>{t("chatPanel.details.noLive")}</Empty>
       ) : (
         <ul>
           {live.map((item) => (
@@ -256,10 +266,10 @@ function BrowserSessions({
           ))}
         </ul>
       )}
-      {partial ? <Empty>This chat has more live sessions than one list holds; some are not shown.</Empty> : null}
+      {partial ? <Empty>{t("chatPanel.details.moreLive")}</Empty> : null}
       {onBrowser === undefined ? null : (
         <Button variant="ghost" size="sm" onClick={onBrowser}>
-          Earlier sessions in the Command Center →
+          {t("chatPanel.details.earlier")}
         </Button>
       )}
     </section>

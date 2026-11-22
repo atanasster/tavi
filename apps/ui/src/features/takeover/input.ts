@@ -173,7 +173,9 @@ export function buttonOf(button: number): "left" | "middle" | "right" {
 export function formatControlled(ms: number): string {
   const seconds = Math.max(0, Math.round(ms / 1000));
   const minutes = Math.floor(seconds / 60);
-  return minutes === 0 ? `${seconds} s` : `${minutes} m ${seconds % 60} s`;
+  return minutes === 0
+    ? translateNow("takeover.controlled.seconds", { seconds: String(seconds) })
+    : translateNow("takeover.controlled.minutesSeconds", { minutes: String(minutes), seconds: String(seconds % 60) });
 }
 
 /** "14:32": time left to a deadline. */

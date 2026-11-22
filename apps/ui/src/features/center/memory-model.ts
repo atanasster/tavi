@@ -7,9 +7,11 @@ import type {
   MemoryUsageAnswer,
   SystemPromptLayer,
 } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 
-import { formatBytes, formatCount } from "../../lib/format.js";
+import { decimal, formatBytes } from "../../lib/format.js";
+import { translateNow } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
+import { saidLabels } from "./model.js";
 
 /**
  * Soul & memory's pure reads: what a layer says
@@ -19,25 +21,37 @@ import { formatBytes, formatCount } from "../../lib/format.js";
 
 /** A record's line: its title, or what stands in for one the page may not show. */
 export function recordTitle(record: Pick<MemoryItem, "redacted" | "title" | "body">): string {
-  if (record.redacted) return "Sensitive record";
-  return record.title ?? record.body?.split("\n", 1)[0] ?? "Untitled";
+  if (record.redacted) return translateNow("center.memoryModel.sensitiveRecord");
+  return record.title ?? record.body?.split("\n", 1)[0] ?? translateNow("center.memoryModel.untitled");
+}
+
+/** A group of the table, its name said in the page's language when read. */
+function group(kind: MemoryKind, key: UiKey): { readonly kind: MemoryKind; readonly label: string } {
+  return {
+    kind,
+    get label() {
+      return translateNow(key);
+    },
+  };
 }
 
 /** The order groups are shown in, and what each is called. */
 export const MEMORY_GROUPS: readonly { readonly kind: MemoryKind; readonly label: string }[] = [
-  { kind: "fact", label: "Facts" },
-  { kind: "preference", label: "Preferences" },
-  { kind: "lesson", label: "Lessons" },
-  { kind: "summary", label: "Summaries" },
+  group("fact", "center.memoryModel.group.fact"),
+  group("preference", "center.memoryModel.group.preference"),
+  group("lesson", "center.memoryModel.group.lesson"),
+  group("summary", "center.memoryModel.group.summary"),
 ];
 
-/** A kind in the singular; a record typed so every kind the contract knows has one. */
-export const KIND_LABELS: Readonly<Record<MemoryKind, string>> = {
-  fact: "Fact",
-  preference: "Preference",
-  lesson: "Lesson",
-  summary: "Summary",
+const KIND_KEYS: Readonly<Record<MemoryKind, UiKey>> = {
+  fact: "center.memoryModel.kind.fact",
+  preference: "center.memoryModel.kind.preference",
+  lesson: "center.memoryModel.kind.lesson",
+  summary: "center.memoryModel.kind.summary",
 };
+
+/** A kind in the singular, in the page's language when read; every kind the contract knows has one. */
+export const KIND_LABELS: Readonly<Record<MemoryKind, string>> = saidLabels(KIND_KEYS);
 
 /** Records under their kind, in `MEMORY_GROUPS` order, empty groups left out. */
 export function groupByKind(
@@ -52,20 +66,26 @@ export function groupByKind(
 
 /** What a scope chip says: Personal, Workspace, Shared, or the agent's name. */
 export function scopeLabel(target: MemoryScopeTarget, agentNames: Readonly<Record<string, string>>): string {
-  if (target === "personal") return "Personal";
-  if (target === "workspace") return "Workspace";
-  if (target === "shared") return "Shared";
+  if (target === "personal") return translateNow("center.memoryModel.scope.personal");
+  if (target === "workspace") return translateNow("center.memoryModel.scope.workspace");
+  if (target === "shared") return translateNow("center.memoryModel.scope.shared");
   const agentId = target.slice("agent:".length);
-  return `Agent: ${agentNames[agentId] ?? agentId}`;
+  return translateNow("center.memoryModel.scope.agent", { agent: agentNames[agentId] ?? agentId });
 }
 
 /** The shared scope is published by an explicit share: nothing here changes it. */
 export const readOnly = (record: Pick<MemoryItem, "target">): boolean => record.target === "shared";
 
-/** A limit, without a trailing ".0": "32 MiB". */
-const formatLimit = (bytes: number): string => formatBytes(bytes).replace(".0 ", " ");
+const KIB = 1024;
+const MIB = 1024 * 1024;
 
-const recordsText = (records: number): string => `${formatCount(records)} ${records === 1 ? "record" : "records"}`;
+/** A limit, a whole number written without a trailing ".0": "32 MiB", "1.5 MiB". */
+function formatLimit(bytes: number): string {
+  if (bytes < KIB) return formatBytes(bytes);
+  const [key, size]: readonly [UiKey, number] = bytes >= MIB ? ["common.bytes.mib", bytes / MIB] : ["common.bytes.kib", bytes / KIB];
+  const whole = size.toFixed(1).endsWith(".0");
+  return translateNow(key, { size: whole ? size.toFixed(0) : decimal(size) });
+}
 
 /**
  * The usage line. With the operator's quota (the one a record they write is
@@ -74,8 +94,12 @@ const recordsText = (records: number): string => `${formatCount(records)} ${reco
  */
 export function usageLine(usage: MemoryUsageAnswer): string {
   const quota = usage.quota;
-  if (quota === undefined) return `${recordsText(usage.records)} · ${formatBytes(usage.bytes)}`;
-  return `${recordsText(quota.records)} · ${formatBytes(quota.bytes)} of ${formatLimit(quota.maxBytes)}`;
+  if (quota === undefined) return translateNow("center.memoryModel.usage", { count: usage.records, used: formatBytes(usage.bytes) });
+  return translateNow("center.memoryModel.usageOfQuota", {
+    count: quota.records,
+    used: formatBytes(quota.bytes),
+    limit: formatLimit(quota.maxBytes),
+  });
 }
 
 /** "3 proposals from 2 other people wait for review (Khan 2, Bob 1).", or nothing when none wait. */
@@ -86,7 +110,9 @@ export function otherProposalsLine(
   if (others === undefined || others.length === 0) return undefined;
   const total = others.reduce((sum, person) => sum + person.count, 0);
   const who = others.map((person) => `${people[person.principalId] ?? person.principalId} ${person.count}`).join(", ");
-  return `${plural(total, "proposal")} from ${plural(others.length, "other person", "other people")} ${total === 1 ? "waits" : "wait"} for review (${who}).`;
+  return others.length === 1
+    ? translateNow("center.memoryModel.otherProposals.onePerson", { count: total, who })
+    : translateNow("center.memoryModel.otherProposals.people", { count: total, people: others.length, who });
 }
 
 /** "Also stored for 2 other people: 5 records (alice 3, bob 2)", or nothing when nobody else has memory here. */
@@ -94,22 +120,26 @@ export function otherPeopleLine(others: MemoryListAnswer["otherPeople"], people:
   if (others.length === 0) return undefined;
   const total = others.reduce((sum, person) => sum + person.count, 0);
   const who = others.map((person) => `${people[person.principalId] ?? person.principalId} ${person.count}`).join(", ");
-  return `Also stored for ${plural(others.length, "other person", "other people")}: ${plural(total, "record")} (${who})`;
+  return others.length === 1
+    ? translateNow("center.memoryModel.otherPeople.onePerson", { count: total, who })
+    : translateNow("center.memoryModel.otherPeople.people", { count: total, people: others.length, who });
 }
 
 /** Where a layer's text comes from, in a line under its label. */
 export function layerSource(layer: SystemPromptLayer): string {
-  if (layer.generated) return "Written per response";
+  if (layer.generated) return translateNow("center.memoryModel.layer.generated");
   if (!layer.active && layer.detail !== undefined) return layer.detail;
   switch (layer.kind) {
     case "base":
-      return layer.source === "workspace"
-        ? "Your prompt"
-        : layer.source === "explicit"
-          ? "An adapter's explicit prompt"
-          : "Shipped with Tavi";
+      return translateNow(
+        layer.source === "workspace"
+          ? "center.memoryModel.layer.workspace"
+          : layer.source === "explicit"
+            ? "center.memoryModel.layer.explicit"
+            : "center.memoryModel.layer.shipped",
+      );
     case "persona":
-      return "Agent definition, appended";
+      return translateNow("center.memoryModel.layer.persona");
     default:
       return layer.detail ?? "";
   }
@@ -146,14 +176,23 @@ export function refreshRecords<T extends ListedRecords>(held: T | undefined, pag
 export const revealKey = (record: Pick<MemoryItem, "currentRevisionId" | "updatedAt">): string =>
   `${record.currentRevisionId ?? ""}|${record.updatedAt}`;
 
+/** A limit's field, its label and hint said in the page's language when read. */
+function limitField(name: MemoryLimitName): { readonly name: MemoryLimitName; readonly label: string; readonly hint: string } {
+  return {
+    name,
+    get label() {
+      return translateNow(`center.memoryModel.limit.${name}.label`);
+    },
+    get hint() {
+      return translateNow(`center.memoryModel.limit.${name}.hint`);
+    },
+  };
+}
+
 /** The limits under the settings card's *More*, in order, with what each bounds. */
 export const MEMORY_LIMIT_FIELDS: readonly { readonly name: MemoryLimitName; readonly label: string; readonly hint: string }[] = [
-  {
-    name: "contextTokens",
-    label: "Context budget (tokens)",
-    hint: "The budget for a call's instructions and memory together; memory gets what the instructions leave.",
-  },
-  { name: "evidence", label: "Memories recalled per call", hint: "0 recalls none by search." },
-  { name: "proposalDays", label: "Days a proposal waits", hint: "Then it expires unreviewed." },
-  { name: "maxRecords", label: "Records per person", hint: "The storage quota follows it." },
+  limitField("contextTokens"),
+  limitField("evidence"),
+  limitField("proposalDays"),
+  limitField("maxRecords"),
 ];

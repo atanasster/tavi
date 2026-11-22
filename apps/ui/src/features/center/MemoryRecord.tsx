@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { type MemoryItem, MEMORY_PROVENANCE_KEEP_ALONE, memoryProvenanceLine } from "@tavi/contracts";
 
+import { translateNow, useT } from "../../lib/i18n.js";
 import type { SettingsClient } from "../../lib/ipc.js";
 import { localDate, shortDay } from "../../lib/time.js";
 import { getMemory } from "./memory-api.js";
@@ -19,7 +20,9 @@ export interface Context {
 /** "Until Fri 17 Oct" for a record with an end date: a fact's `validTo`, a preference's or lesson's `expiryAt`. */
 export function untilLine(item: MemoryItem, context: Context): string | undefined {
   const end = item.expiryAt ?? item.validTo;
-  return end === undefined ? undefined : `Until ${shortDay(endDay(end, context.timeZone), context.today)}`;
+  return end === undefined
+    ? undefined
+    : translateNow("center.memoryRecord.until", { day: shortDay(endDay(end, context.timeZone), context.today) });
 }
 /** The last day an end date covers, in the zone: "until Friday" ends as Saturday begins. */
 export function endDay(iso: string, timeZone: string | undefined): string {
@@ -35,11 +38,12 @@ export function RecordMeta({
   readonly context: Context;
   readonly extra?: readonly string[] | undefined;
 }) {
+  const t = useT();
   return (
     <span className="memory-meta">
       <span className="memory-scope">{scopeLabel(item.target, context.agentNames)}</span>
       <time dateTime={item.updatedAt}>{shortDay(localDate(item.updatedAt, context.timeZone), context.today)}</time>
-      {item.sensitivity === "sensitive" ? <span>Sensitive</span> : null}
+      {item.sensitivity === "sensitive" ? <span>{t("center.memoryRecord.sensitive")}</span> : null}
       {(extra ?? []).map((part) => (
         <span key={part}>{part}</span>
       ))}
@@ -58,13 +62,14 @@ export function RecordText({
   readonly masked: boolean;
   readonly truncated?: boolean;
 }) {
+  const t = useT();
   if (masked) {
     return (
       <p className="memory-text">
         <span className="memory-masked" aria-hidden="true">
           ••••••••••••••
         </span>
-        <span className="visually-hidden">Hidden sensitive record</span>
+        <span className="visually-hidden">{t("center.memoryRecord.hidden")}</span>
       </p>
     );
   }
@@ -110,6 +115,7 @@ export function useReveal(client: SettingsClient, workspaceId: string, item: Mem
 }
 /** Reveal / Hide for a redacted record. */
 export function RevealButton({ reveal, disabled }: { readonly reveal: ReturnType<typeof useReveal>; readonly disabled: boolean }) {
+  const t = useT();
   return (
     <Button
       variant="ghost"
@@ -118,7 +124,7 @@ export function RevealButton({ reveal, disabled }: { readonly reveal: ReturnType
       aria-pressed={reveal.revealed !== undefined}
       onClick={reveal.toggle}
     >
-      {reveal.revealed === undefined ? "Reveal" : "Hide"}
+      {reveal.revealed === undefined ? t("center.memoryRecord.reveal") : t("center.memoryRecord.hide")}
     </Button>
   );
 }

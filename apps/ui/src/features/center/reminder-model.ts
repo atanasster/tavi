@@ -9,7 +9,9 @@ import {
   type ReminderWhen,
 } from "@tavi/contracts";
 
+import { translateNow } from "../../lib/i18n.js";
 import { dayMonth, dayTime } from "../../lib/time.js";
+import type { UiKey } from "../../locales/en.js";
 import { weekdaysText } from "./schedule-model.js";
 
 /**
@@ -18,9 +20,25 @@ import { weekdaysText } from "./schedule-model.js";
  * free of React so each is asserted on its own.
  */
 
-/** What a reminder became after `action`: "cancelled", "paused", "resumed". */
-export function transitionWord(action: "pause" | "resume" | "cancel"): string {
-  return action === "cancel" ? "cancelled" : action === "pause" ? "paused" : "resumed";
+/** What a reminder became after `action`, as one sentence: "Reminder cancelled.", "Walk the dog paused." with its `name`. */
+export function transitionSaid(action: "pause" | "resume" | "cancel", name?: string): string {
+  if (name === undefined) {
+    return translateNow(
+      action === "cancel"
+        ? "center.reminderModel.cancelled"
+        : action === "pause"
+          ? "center.reminderModel.paused"
+          : "center.reminderModel.resumed",
+    );
+  }
+  return translateNow(
+    action === "cancel"
+      ? "center.reminderModel.namedCancelled"
+      : action === "pause"
+        ? "center.reminderModel.namedPaused"
+        : "center.reminderModel.namedResumed",
+    { name },
+  );
 }
 
 /** The notices an event gets unless the reader changes them: the evening before at 20:00, and one hour before. */
@@ -36,8 +54,13 @@ export function noticeLabel(notice: string): string {
   if (offset === undefined) return notice;
   if (offset.unit === "d" && offset.amount === 1 && offset.at !== undefined) {
     const hour = Number.parseInt(offset.at, 10);
-    const part = hour >= 17 ? "evening" : hour < 12 ? "morning" : "day";
-    return `the ${part} before at ${offset.at}`;
+    const key: UiKey =
+      hour >= 17
+        ? "center.reminderModel.eveningBefore"
+        : hour < 12
+          ? "center.reminderModel.morningBefore"
+          : "center.reminderModel.dayBefore";
+    return translateNow(key, { at: offset.at });
   }
   return describeReminderOffset(offset);
 }
@@ -51,20 +74,23 @@ export type RepeatFields = Pick<Extract<ReminderWhen, { kind: "repeat" }>, "time
  */
 export function repeatText(repeat: RepeatFields): string {
   const times = [...repeat.times].sort().join(", ");
+  const days = weekdaysText(repeat.daysOfWeek);
   const cadence =
     repeat.monthly !== undefined || repeat.yearly !== undefined
-      ? `${repeatDaysText(repeat, "label")}, ${times}`
-      : `${weekdaysText(repeat.daysOfWeek) ?? "Daily"} ${times}`;
-  return `${cadence}${repeat.until === undefined ? "" : ` · until ${dayMonth(repeat.until)}`}`;
+      ? translateNow("center.reminderModel.repeatDated", { days: repeatDaysText(repeat, "label"), times })
+      : days === undefined
+        ? translateNow("center.reminderModel.repeatDaily", { times })
+        : translateNow("center.reminderModel.repeatWeekdays", { days, times });
+  return repeat.until === undefined ? cadence : translateNow("center.reminderModel.repeatUntil", { cadence, date: dayMonth(repeat.until) });
 }
 
 /** A reminder's cadence in words: "Once", "Event Mon 5 Oct 10:00", or its repeat. */
 export function whenText(when: ReminderWhen, timeZone: string | undefined, today?: string): string {
   switch (when.kind) {
     case "once":
-      return "Once";
+      return translateNow("center.reminderModel.once");
     case "event":
-      return `Event ${dayTime(when.at, timeZone, today)}`;
+      return translateNow("center.reminderModel.eventAt", { at: dayTime(when.at, timeZone, today) });
     case "repeat":
       return repeatText(when);
   }
@@ -73,9 +99,12 @@ export function whenText(when: ReminderWhen, timeZone: string | undefined, today
 /** An agenda occurrence of a reminder, in words: "Once", "Event Mon 5 Oct 10:00 · the evening before at 20:00", or its repeat. */
 export function agendaReminderText(item: AgendaItem, timeZone: string | undefined, today?: string): string {
   const reminder = item.reminder;
-  if (reminder === undefined) return "Once";
+  if (reminder === undefined) return translateNow("center.reminderModel.once");
   if (reminder.cadence === "event") {
-    const event = reminder.eventAt === undefined ? "Event" : `Event ${dayTime(reminder.eventAt, timeZone, today)}`;
+    const event =
+      reminder.eventAt === undefined
+        ? translateNow("center.reminderModel.event")
+        : translateNow("center.reminderModel.eventAt", { at: dayTime(reminder.eventAt, timeZone, today) });
     return reminder.notice === undefined ? event : `${event} · ${noticeLabel(reminder.notice)}`;
   }
   if (reminder.cadence === "repeat") {
@@ -88,7 +117,7 @@ export function agendaReminderText(item: AgendaItem, timeZone: string | undefine
       until: reminder.until,
     });
   }
-  return "Once";
+  return translateNow("center.reminderModel.once");
 }
 
 /**
@@ -96,25 +125,32 @@ export function agendaReminderText(item: AgendaItem, timeZone: string | undefine
  * Sun 20:00, Mon 09:00". `notices` are the fires still to come.
  */
 export function eventLine(eventAt: string, notices: readonly string[], timeZone: string | undefined, today?: string): string {
-  const reminds =
-    notices.length === 0 ? "no notice still to come" : `reminds ${notices.map((at) => dayTime(at, timeZone, today)).join(", ")}`;
-  return `${dayTime(eventAt, timeZone, today)} · ${reminds}`;
+  const event = dayTime(eventAt, timeZone, today);
+  return notices.length === 0
+    ? translateNow("center.reminderModel.eventNoNotice", { event })
+    : translateNow("center.reminderModel.eventReminds", { event, notices: notices.map((at) => dayTime(at, timeZone, today)).join(", ") });
 }
 
-const OUTCOMES: Readonly<Record<ReminderFireOutcome, string>> = {
-  pending: "Due",
-  delivered: "Delivered",
-  "delivered-in-app": "Delivered in the app",
-  missed: "Missed",
-  failed: "Failed",
-  snoozed: "Snoozed",
+const OUTCOMES: Readonly<Record<ReminderFireOutcome, UiKey>> = {
+  pending: "center.reminderModel.outcome.pending",
+  delivered: "center.reminderModel.outcome.delivered",
+  "delivered-in-app": "center.reminderModel.outcome.deliveredInApp",
+  missed: "center.reminderModel.outcome.missed",
+  failed: "center.reminderModel.outcome.failed",
+  snoozed: "center.reminderModel.outcome.snoozed",
+};
+
+/** An outcome in words; one this build does not know, as the owner wrote it. */
+const outcomeWord = (outcome: ReminderFireOutcome): string => {
+  const key = OUTCOMES[outcome] as UiKey | undefined;
+  return key === undefined ? outcome : translateNow(key);
 };
 
 /** A fire's outcome as its history says it: "Delivered · late", "Snoozed", "Missed". */
 export function fireOutcomeText(fire: Pick<ReminderFire, "outcome" | "late" | "acknowledgedAt">): string {
-  const parts = [OUTCOMES[fire.outcome] ?? fire.outcome];
-  if (fire.late === true) parts.push("late");
-  if (fire.acknowledgedAt !== undefined && fire.outcome !== "snoozed") parts.push("done");
+  const parts = [outcomeWord(fire.outcome)];
+  if (fire.late === true) parts.push(translateNow("center.reminderModel.late"));
+  if (fire.acknowledgedAt !== undefined && fire.outcome !== "snoozed") parts.push(translateNow("center.reminderModel.done"));
   return parts.join(" · ");
 }
 
@@ -135,11 +171,11 @@ export function lastFireText(
   );
   const what =
     fire.outcome === "delivered-in-app"
-      ? "Shown in the app"
+      ? translateNow("center.reminderModel.shownInApp")
       : fire.outcome === "delivered"
-        ? "Delivered to the chat"
-        : (OUTCOMES[fire.outcome] ?? fire.outcome);
-  return `${what} ${at}${fire.late === true ? " · late" : ""}`;
+        ? translateNow("center.reminderModel.deliveredToChat")
+        : outcomeWord(fire.outcome);
+  return translateNow(fire.late === true ? "center.reminderModel.lastFireLate" : "center.reminderModel.lastFire", { what, at });
 }
 
 /** Each reminder's latest fire that has happened (delivered, missed, failed or snoozed), from a list of fires newest first. */

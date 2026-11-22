@@ -10,6 +10,7 @@ import {
 } from "@tavi/contracts";
 import { nowTimestamp } from "@tavi/contracts/util";
 
+import { useT } from "../../lib/i18n.js";
 import { useSearchQuery } from "../../hooks/page.js";
 import { mergeBy, useOlderPage } from "../../lib/paging.js";
 import { Empty } from "../../ui/Empty.js";
@@ -78,6 +79,7 @@ export function MemoryPane({
   /** The focus request was served (or there were no proposals to land on). */
   readonly onProposalsFocused: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [search, setSearch] = useState("");
   const query = useSearchQuery(search);
@@ -228,13 +230,13 @@ export function MemoryPane({
           <Icon name="center-soul" size="sm" />
         </span>
         <div>
-          <h2 id="memory-title">Memory</h2>
+          <h2 id="memory-title">{t("center.memory.title")}</h2>
           <p className="soul-pane-sub meta-sm soul-figure">{usage === undefined ? " " : usageLine(usage)}</p>
         </div>
         {/* Opens only: a half-filled form is closed by its own Cancel, never by a second press here. */}
         <Button size="sm" aria-expanded={remembering} aria-controls={rememberId} onClick={() => setRemembering(true)}>
           <Icon name="plus" size="sm" />
-          Remember
+          {t("center.memory.remember")}
         </Button>
       </header>
 
@@ -275,9 +277,16 @@ export function MemoryPane({
           </ul>
           <TidyUpSuggestions items={proposals.filter((item) => item.supersedes !== undefined)} context={context} onDecided={removed} />
           {proposed?.nextCursor === undefined ? null : (
-            <LoadMore busy={olderProposals.busy} onLoad={loadMoreProposals} label="Load more" className="center-more memory-proposals-more">
+            <LoadMore
+              busy={olderProposals.busy}
+              onLoad={loadMoreProposals}
+              label={t("center.memory.loadMore")}
+              className="center-more memory-proposals-more"
+            >
               <span className="muted">
-                {proposalTotal === undefined ? `Showing the first ${proposals.length}` : `Showing ${proposals.length} of ${proposalTotal}`}
+                {proposalTotal === undefined
+                  ? t("center.memory.showingFirst", { count: proposals.length })
+                  : t("center.memory.showingOf", { count: proposals.length, total: proposalTotal })}
               </span>
             </LoadMore>
           )}
@@ -287,24 +296,22 @@ export function MemoryPane({
       {othersProposing === undefined ? null : <p className="memory-others meta-sm">{othersProposing}</p>}
 
       <div className="memory-search">
-        <SearchField value={search} placeholder="Search memory" label="Search memory" onChange={setSearch} />
+        <SearchField value={search} placeholder={t("center.memory.search")} label={t("center.memory.search")} onChange={setSearch} />
       </div>
 
-      {!loaded && error === undefined ? <Pending label="Loading memory…" className="notice memory-status" status /> : null}
+      {!loaded && error === undefined ? <Pending label={t("center.memory.loading")} className="notice memory-status" status /> : null}
       {nothing ? (
         <Empty className="memory-status">
           {mode?.enabled === false
-            ? "Nothing remembered yet. Memory is paused: nothing is proposed or recalled until you turn it back on."
+            ? t("center.memory.emptyPaused")
             : mode?.capture === "off"
-              ? "Nothing remembered yet. Suggestions are off: only what you save yourself is kept."
-              : "Nothing remembered yet. The agent proposes things to remember as you work; you decide what it keeps."}
+              ? t("center.memory.emptyNoSuggestions")
+              : t("center.memory.empty")}
         </Empty>
       ) : null}
       {listed !== undefined && query !== "" && records.length === 0 ? (
         <Empty className="memory-status">
-          {listed.coverage === "unavailable"
-            ? "Search is unavailable right now; clear the search to list memory."
-            : `Nothing remembered matches “${query}”.`}
+          {listed.coverage === "unavailable" ? t("center.memory.searchUnavailable") : t("center.memory.noMatches", { query })}
         </Empty>
       ) : null}
       {listed?.match === "any" && query !== "" && records.length > 0 ? (
@@ -336,7 +343,9 @@ export function MemoryPane({
         </section>
       ))}
 
-      {listed?.nextCursor === undefined ? null : <LoadMore busy={olderRecords.busy} onLoad={loadMore} label="Load more" />}
+      {listed?.nextCursor === undefined ? null : (
+        <LoadMore busy={olderRecords.busy} onLoad={loadMore} label={t("center.memory.loadMore")} />
+      )}
       {query === "" ? <PastMemory context={context} revision={revision + attempt} onKept={refresh} /> : null}
       {others === undefined ? null : <p className="memory-others meta-sm">{others}</p>}
     </section>

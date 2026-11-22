@@ -1,5 +1,5 @@
 import type { AgentTreeNode, CenterSummaryAnswer, TaskListRow } from "@tavi/contracts";
-import { errorMessage, plural } from "@tavi/contracts/util";
+import { errorMessage } from "@tavi/contracts/util";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 import { useSearchQuery } from "../../hooks/page.js";
@@ -32,6 +32,9 @@ import { Empty, EmptyState } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
 import { ACTIVITY_BAR_MIN_PERCENT } from "../../lib/layout.js";
 import { useWorkspace } from "../shell/Workspace.js";
+import { formatCount } from "../../lib/format.js";
+import { currentLocale, useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * What the owner is asked for: the search, one person, one source (its
@@ -82,6 +85,7 @@ export function Activity({
   /** Open a delegated worker's view-only transcript beside its root chat; absent, the list only names them. */
   readonly onOpenWorker?: ((rootTaskId: string, worker: { readonly taskId: string; readonly label: string }) => Promise<void>) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const channels = useChannelNames();
   const [search, setSearch] = useState("");
@@ -179,7 +183,7 @@ export function Activity({
     // Each channel by its name, after the front ends.
     const channelKinds = [...sources]
       .filter((kind) => !(kind in SOURCE_LABELS))
-      .sort((left, right) => sourceLabel(left, channels.label).localeCompare(sourceLabel(right, channels.label)));
+      .sort((left, right) => sourceLabel(left, channels.label).localeCompare(sourceLabel(right, channels.label), currentLocale()));
     return [...frontEnds, ...channelKinds, ...named.filter((kind) => !frontEnds.includes(kind))];
   }, [sources, channels]);
   // The picked source keeps its chip while it filters, even once no loaded row carries it.
@@ -208,10 +212,15 @@ export function Activity({
       <PageHead
         className="center-head"
         id="center-activity-title"
-        title="Activity"
-        description="Every task, from every chat and channel, by the day you asked."
+        title={t("center.activity.title")}
+        description={t("center.activity.description")}
       >
-        <SearchField value={search} placeholder="Search prompts and answers" label="Search activity" onChange={setSearch} />
+        <SearchField
+          value={search}
+          placeholder={t("center.activity.searchPlaceholder")}
+          label={t("center.activity.searchLabel")}
+          onChange={setSearch}
+        />
       </PageHead>
 
       {summary?.health === undefined ? null : (
@@ -225,7 +234,7 @@ export function Activity({
       {summary === undefined ? null : <DayStrip summary={summary} loaded={new Set(days.map((day) => day.date))} onPick={pickDay} />}
       {from === undefined ? null : (
         <Notice className="center-from" role="status">
-          Showing tasks from {shortDay(from, today)} and before.{" "}
+          {t("center.activity.showingFrom", { day: shortDay(from, today) })}{" "}
           <Button
             variant="ghost"
             size="sm"
@@ -234,15 +243,15 @@ export function Activity({
               setFrom(undefined);
             }}
           >
-            Back to the newest
+            {t("center.activity.backToNewest")}
           </Button>
         </Notice>
       )}
 
       {origin !== "all" || origins.length > 1 ? (
-        <div className="center-chips" role="group" aria-label="Filter by source">
+        <div className="center-chips" role="group" aria-label={t("center.activity.filterBySource")}>
           <FilterChip pressed={origin === "all"} onPick={() => setOrigin("all")}>
-            All sources
+            {t("center.activity.allSources")}
           </FilterChip>
           {originChips.map((group) => (
             <FilterChip key={group} pressed={origin === group} onPick={() => setOrigin(group)}>
@@ -257,21 +266,21 @@ export function Activity({
         error={error}
         reload={() => setAttempt((value) => value + 1)}
         loading={loading && listed === undefined}
-        label="Loading activity…"
+        label={t("center.activity.loading")}
         status
       >
         <Failure message={openError} alert={false} />
       </LoadState>
 
       {listed !== undefined && rows.length === 0 && !filtered && from === undefined ? (
-        <EmptyState title="Nothing yet">
-          <p>Tasks you start anywhere — here, in the terminal, or in a chat on one of your channels — appear here.</p>
+        <EmptyState title={t("center.activity.emptyTitle")}>
+          <p>{t("center.activity.emptyBody")}</p>
         </EmptyState>
       ) : null}
       {listed !== undefined && days.length === 0 && filtered ? (
-        <Empty>No tasks match. Clear the search or pick another source.</Empty>
+        <Empty>{t("center.activity.noMatch")}</Empty>
       ) : listed !== undefined && days.length === 0 && from !== undefined ? (
-        <Empty>No tasks on or before {shortDay(from, today)}.</Empty>
+        <Empty>{t("center.activity.noneBefore", { day: shortDay(from, today) })}</Empty>
       ) : null}
 
       {days.map((day) => {
@@ -280,9 +289,7 @@ export function Activity({
           <section key={day.date} className="center-day" id={`center-day-${day.date}`} aria-label={`${heading.title}, ${heading.detail}`}>
             <h2 className="center-day-head">
               {heading.title}
-              <span>
-                {heading.detail} · {plural(day.items.length, "task")}
-              </span>
+              <span>{t("center.activity.dayDetail", { detail: heading.detail, count: day.items.length })}</span>
             </h2>
             <ul className="center-rows list-reset">
               {day.items.map((row) => (
@@ -291,15 +298,17 @@ export function Activity({
                   row={row}
                   timeZone={timeZone}
                   person={personName(people, row.principalId)}
-                  onOpen={() => open(`Task ${row.taskId}`, () => onOpen(row.taskId))}
+                  onOpen={() => open(t("center.activity.openTask", { id: row.taskId }), () => onOpen(row.taskId))}
                   onOpenWithPanel={
-                    onOpenWithPanel === undefined ? undefined : () => open(`Task ${row.taskId}`, () => onOpenWithPanel(row.taskId))
+                    onOpenWithPanel === undefined
+                      ? undefined
+                      : () => open(t("center.activity.openTask", { id: row.taskId }), () => onOpenWithPanel(row.taskId))
                   }
                   revision={revision}
                   onOpenWorker={
                     onOpenWorker === undefined
                       ? undefined
-                      : (worker) => open(`Worker ${worker.label}`, () => onOpenWorker(row.taskId, worker))
+                      : (worker) => open(t("center.activity.openWorker", { label: worker.label }), () => onOpenWorker(row.taskId, worker))
                   }
                 />
               ))}
@@ -328,6 +337,7 @@ function DayStrip({
   readonly loaded: ReadonlySet<string>;
   readonly onPick: (date: string) => void;
 }) {
+  const t = useT();
   const max = Math.max(1, ...summary.perDay.map((day) => day.tasks));
   const total = tasksInWindow(summary);
   const todays = tasksToday(summary);
@@ -335,21 +345,24 @@ function DayStrip({
   return (
     <div className="center-strip-card card-flat">
       <div className="center-strip-cap">
-        <span>Turns per day · last {summary.perDay.length} days</span>
+        <span>{t("center.activity.stripTitle", { count: summary.perDay.length })}</span>
         <span>
-          <b>{total}</b> {total === 1 ? "turn" : "turns"} · <b>{todays}</b> today
+          {withParts(t("center.activity.stripTotals", { count: total }), {
+            total: <b>{formatCount(total)}</b>,
+            today: <b>{formatCount(todays)}</b>,
+          })}
         </span>
       </div>
       <div className="center-strip" style={columns}>
         {summary.perDay.map((day) => {
-          const label = `${plural(day.tasks, "turn")} on ${shortDay(day.date, summary.today)}`;
+          const label = t("center.activity.stripDay", { count: day.tasks, day: shortDay(day.date, summary.today) });
           return (
             <Button
               key={day.date}
               variant="bare"
               className={[day.date === summary.today ? "today" : "", day.tasks === 0 ? "none" : ""].filter(Boolean).join(" ")}
               style={day.tasks === 0 ? undefined : { height: `${Math.max(ACTIVITY_BAR_MIN_PERCENT, (day.tasks / max) * 100)}%` }}
-              aria-label={loaded.has(day.date) ? label : `${label} (loads that day)`}
+              aria-label={loaded.has(day.date) ? label : t("center.activity.stripDayLoads", { label })}
               title={label}
               onClick={() => onPick(day.date)}
             />
@@ -382,6 +395,7 @@ function ActivityRow({
   readonly revision: number;
   readonly onOpenWorker?: ((worker: { readonly taskId: string; readonly label: string }) => void) | undefined;
 }) {
+  const t = useT();
   const channels = useChannelNames();
   const source = sourceChip(row, channels.label);
   const mark = rowMark(row);
@@ -409,7 +423,7 @@ function ActivityRow({
                 {source.text}
               </span>
               {person === undefined ? null : <span>{person}</span>}
-              {tools === null || tools === 0 ? null : <span>{plural(tools, "tool call")}</span>}
+              {tools === null || tools === 0 ? null : <span>{t("center.activity.toolCalls", { count: tools })}</span>}
             </span>
           </span>
           <span className={`center-mark center-mark-${mark}`}>
@@ -421,8 +435,8 @@ function ActivityRow({
           <IconButton
             icon="panel-right-open"
             size="sm"
-            label={`Open ${rowTitle(row)} with its panel`}
-            tooltip="Open with its panel"
+            label={t("center.activity.openWithPanelLabel", { title: rowTitle(row) })}
+            tooltip={t("center.activity.openWithPanel")}
             onClick={onOpenWithPanel}
           />
         )}
@@ -469,6 +483,7 @@ function FollowUps({
   readonly createdAt: string;
   readonly timeZone: string | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { open, loaded, error, loading, load, toggle } = useLazyLoad(() => loadTaskPrompts(client, workspaceId, taskId), count);
   const day = localDate(createdAt, timeZone);
@@ -480,7 +495,7 @@ function FollowUps({
       open={open}
       onToggle={toggle}
       loading={loading}
-      loadingLabel="Loading follow-ups…"
+      loadingLabel={t("center.activity.loadingFollowUps")}
       error={error}
       reload={load}
     >
@@ -492,7 +507,7 @@ function FollowUps({
               <span>{item.text}</span>
             </li>
           ))}
-          {loaded.truncated ? <li className="muted">Later follow-ups are in the chat.</li> : null}
+          {loaded.truncated ? <li className="muted">{t("center.activity.laterFollowUps")}</li> : null}
         </ol>
       )}
     </Disclosure>
@@ -516,6 +531,7 @@ function Delegated({
   readonly revision: number;
   readonly onOpenWorker?: ((worker: { readonly taskId: string; readonly label: string }) => void) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [open, setOpen] = useState(false);
   const [workers, setWorkers] = useState<readonly AgentTreeNode[]>();
@@ -549,11 +565,11 @@ function Delegated({
     <Disclosure
       className="center-followups center-delegated"
       id={`center-delegated-${taskId}`}
-      label={`+${count} delegated`}
+      label={t("center.activity.delegated", { count })}
       open={open}
       onToggle={() => setOpen((before) => !before)}
       loading={workers === undefined && error === undefined}
-      loadingLabel="Loading workers…"
+      loadingLabel={t("center.activity.loadingWorkers")}
       error={error}
       reload={() => setAttempt((before) => before + 1)}
     >
@@ -574,7 +590,7 @@ function Delegated({
               </li>
             );
           })}
-          {truncated ? <li className="muted">More workers are in the chat's Agents tab.</li> : null}
+          {truncated ? <li className="muted">{t("center.activity.moreWorkers")}</li> : null}
         </ul>
       )}
     </Disclosure>

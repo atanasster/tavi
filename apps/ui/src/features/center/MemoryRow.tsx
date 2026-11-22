@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from "react";
 
 import { type MemoryItem, MAX_MEMORY_TITLE_CHARS, MEMORY_FORGET_UNREACHED, memoryPendingProvidersNote } from "@tavi/contracts";
 
+import { useT } from "../../lib/i18n.js";
 import { Failure, InlineConfirm, StatusNote } from "../../ui/Parts.js";
 import { FormActions } from "../settings/FormParts.js";
 import { correctMemory, forgetMemory, forgetWaitsFor, getMemory } from "./memory-api.js";
@@ -33,6 +34,7 @@ export function MemoryRow({
   /** Whether the row is open for correction, so a refresh keeps it. Stable across renders. */
   readonly onEditing: (recordId: string, open: boolean) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [mode, setMode] = useState<RowMode>({ kind: "view" });
   const reveal = useReveal(client, workspaceId, item);
@@ -71,11 +73,11 @@ export function MemoryRow({
     const title = mode.title.trim() === "" || mode.title === (mode.base.title ?? "") ? undefined : mode.title;
     const body = mode.body === (mode.base.body ?? "") ? undefined : mode.body;
     if (title === undefined && body === undefined) {
-      setFailure("Nothing changed.");
+      setFailure(t("center.memoryRow.nothingChanged"));
       return;
     }
     if (body !== undefined && body.trim() === "") {
-      setFailure("A record needs a body.");
+      setFailure(t("center.memoryRow.needsBody"));
       return;
     }
     setBusy(true);
@@ -93,7 +95,7 @@ export function MemoryRow({
       if (outcome.code === "REVISION_CONFLICT" || outcome.code === "CONFLICT") {
         // Someone (or the agent) changed it meanwhile: show the newer version to correct instead.
         onStale();
-        startCorrect("This record changed since you opened it. The newer version is loaded; make your correction again.");
+        startCorrect(t("center.memoryRow.stale"));
         return;
       }
       setFailure(outcome.message);
@@ -122,7 +124,7 @@ export function MemoryRow({
             saveCorrection();
           }}
         >
-          <Field id={`${ids}-title`} label="Title">
+          <Field id={`${ids}-title`} label={t("center.memoryRow.title")}>
             <input
               value={mode.title}
               maxLength={MAX_MEMORY_TITLE_CHARS}
@@ -130,16 +132,16 @@ export function MemoryRow({
               onChange={(event) => setMode({ ...mode, title: event.target.value })}
             />
           </Field>
-          <Field id={`${ids}-body`} label={mode.base.kind === "preference" ? "Value" : "Text"}>
+          <Field id={`${ids}-body`} label={mode.base.kind === "preference" ? t("center.memoryRow.value") : t("center.memoryRow.text")}>
             <textarea rows={4} value={mode.body} disabled={busy} onChange={(event) => setMode({ ...mode, body: event.target.value })} />
           </Field>
-          <p className="memory-hint meta-sm">Saving keeps the old version in the record's history.</p>
+          <p className="memory-hint meta-sm">{t("center.memoryRow.historyHint")}</p>
           <FormActions
             small
             saving={busy}
             disabled={busy}
             cancelDisabled={busy}
-            label="Save correction"
+            label={t("center.memoryRow.save")}
             onCancel={() => {
               setMode({ kind: "view" });
               setFailure(undefined);
@@ -155,7 +157,11 @@ export function MemoryRow({
             masked={item.redacted && revealed === undefined}
             truncated={revealed === undefined && item.truncated}
           />
-          <RecordMeta item={item} context={context} extra={[...(until === undefined ? [] : [until]), ...(locked ? ["Read-only"] : [])]} />
+          <RecordMeta
+            item={item}
+            context={context}
+            extra={[...(until === undefined ? [] : [until]), ...(locked ? [t("center.memoryRow.readOnly")] : [])]}
+          />
         </div>
       )}
       {mode.kind === "view" ? (
@@ -164,10 +170,10 @@ export function MemoryRow({
           {locked ? null : (
             <>
               <RowAction disabled={busy} onClick={() => startCorrect()}>
-                Correct
+                {t("center.memoryRow.correct")}
               </RowAction>
               <RowAction tone="danger" disabled={busy} onClick={() => setMode({ kind: "forget" })}>
-                Forget
+                {t("center.memoryRow.forget")}
               </RowAction>
             </>
           )}
@@ -177,9 +183,9 @@ export function MemoryRow({
         <InlineConfirm
           focusCancel
           className="memory-confirm"
-          message={`Forget this? It is erased for good; only a receipt without its text is kept. ${MEMORY_FORGET_UNREACHED}`}
-          confirmLabel={busy ? "Forgetting…" : "Forget it"}
-          cancelLabel="Keep it"
+          message={t("center.memoryRow.forgetConfirm", { unreached: MEMORY_FORGET_UNREACHED })}
+          confirmLabel={busy ? t("center.memoryRow.forgetting") : t("center.memoryRow.forgetIt")}
+          cancelLabel={t("center.memoryRow.keepIt")}
           busy={busy}
           onConfirm={forget}
           onCancel={() => setMode({ kind: "view" })}

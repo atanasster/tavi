@@ -15,7 +15,10 @@ import {
 } from "@tavi/contracts";
 
 import type { PendingListRow } from "./approvals-api.js";
-import { localDate, localTime, shiftDate, shortDay, durationText } from "../../lib/time.js";
+import { saidLabels } from "./model.js";
+import { translateCore, translateNow } from "../../lib/i18n.js";
+import { dayMonth, localDate, localTime, shiftDate, durationText, weekdayShortName } from "../../lib/time.js";
+import type { UiKey } from "../../locales/en.js";
 
 /**
  * The Approvals section's pure reads: which
@@ -160,18 +163,18 @@ export function keepOrder(shown: readonly string[], listed: readonly string[], k
 }
 
 /** What a button that grants `scope` says: the chat's approval card's words. */
-export const SCOPE_BUTTONS: Readonly<Record<ApprovalScope, string>> = {
-  once: "Allow once",
-  session: "Allow for this chat",
-  always: "Always allow",
-};
+export const SCOPE_BUTTONS: Readonly<Record<ApprovalScope, string>> = saidLabels({
+  once: "center.inboxModel.scopeButton.once",
+  session: "center.inboxModel.scopeButton.session",
+  always: "center.inboxModel.scopeButton.always",
+});
 
 /** The `session` button in a chat that never ends: the grant lasts a day. */
-export const LASTING_SESSION_BUTTON = "Allow until tomorrow";
+export const lastingSessionButton = (): string => translateNow("center.inboxModel.scopeButton.lasting");
 
 /** What a card's button for `scope` says: a Home's or a messaging chat's chat grant says how long it lasts. */
 export function scopeButton(scope: ApprovalScope, lastingChat: boolean): string {
-  return scope === "session" && lastingChat ? LASTING_SESSION_BUTTON : SCOPE_BUTTONS[scope];
+  return scope === "session" && lastingChat ? lastingSessionButton() : SCOPE_BUTTONS[scope];
 }
 
 /**
@@ -181,8 +184,8 @@ export function scopeButton(scope: ApprovalScope, lastingChat: boolean): string 
 export function expiryLabel(expiresAt: string, now: number): string {
   const left = Date.parse(expiresAt) - now;
   if (!Number.isFinite(left)) return "";
-  if (left <= 0) return "expired";
-  return `expires in ${durationText(left)}`;
+  if (left <= 0) return translateNow("center.inboxModel.expired");
+  return translateNow("center.inboxModel.expiresIn", { duration: durationText(left) });
 }
 
 // ---- Times and people ------------------------------------------------------
@@ -194,15 +197,18 @@ export function expiryLabel(expiresAt: string, now: number): string {
 export function whenLabel(iso: string, timeZone: string | undefined, today: string): string {
   const date = localDate(iso, timeZone);
   if (date === today) return localTime(iso, timeZone);
-  const day = shortDay(date, today);
-  if (date >= shiftDate(today, -6) && date < today) return `${day.slice(0, 3)} ${localTime(iso, timeZone)}`;
-  return day.slice(4);
+  if (date >= shiftDate(today, -6) && date < today) {
+    const weekday = weekdayShortName(new Date(`${date}T00:00:00Z`).getUTCDay());
+    return translateNow("center.inboxModel.weekdayTime", { weekday, time: localTime(iso, timeZone) });
+  }
+  const year = date.slice(0, 4);
+  return year === today.slice(0, 4) ? dayMonth(date) : translateCore("date.withYear", { date: dayMonth(date), year });
 }
 
 /** Who decided, as the page names them: a person's name when the summary has it, the policy for an expiry. */
 export function deciderLabel(decidedBy: string | null | undefined, people: Readonly<Record<string, string>>): string | undefined {
   if (decidedBy === null || decidedBy === undefined || decidedBy === "") return undefined;
-  if (decidedBy === APPROVAL_EXPIRED_DECIDER || decidedBy.startsWith("policy:")) return "policy";
+  if (decidedBy === APPROVAL_EXPIRED_DECIDER || decidedBy.startsWith("policy:")) return translateNow("center.inboxModel.policy");
   return people[decidedBy] ?? decidedBy;
 }
 
@@ -217,15 +223,25 @@ export function settledText(
   people: Readonly<Record<string, string>>,
 ): string {
   const when = whenLabel(settled.decidedAt, timeZone, today);
-  if (settled.state === "expired") return `Already expired without a decision, ${when}`;
-  if (settled.state === "cancelled") return `Already closed with its task, ${when}`;
-  return `Already decided${throughWhom(settled.channel ?? settled.via, settled.decidedBy, people)}, ${when}`;
+  if (settled.state === "expired") return translateNow("center.inboxModel.settled.expired", { when });
+  if (settled.state === "cancelled") return translateNow("center.inboxModel.settled.cancelled", { when });
+  return translateNow("center.inboxModel.settled.decided", {
+    through: throughWhom(settled.channel ?? settled.via, settled.decidedBy, people),
+    when,
+  });
 }
 
-/** " in Telegram by Ana": where a decision came through, and who made it, each when known. */
+/**
+ * " in Telegram by Ana": where a decision came through, and who made it, each
+ * when known — a whole phrase per combination, set after the verb of the
+ * sentence it goes in; nothing when neither is known.
+ */
 function throughWhom(channel: string | undefined, decidedBy: string | null | undefined, people: Readonly<Record<string, string>>): string {
   const by = deciderLabel(decidedBy, people);
-  return `${channel === undefined ? "" : ` in ${channel}`}${by === undefined ? "" : ` by ${by}`}`;
+  if (channel === undefined) return by === undefined ? "" : translateNow("center.inboxModel.through.by", { by });
+  return by === undefined
+    ? translateNow("center.inboxModel.through.in", { channel })
+    : translateNow("center.inboxModel.through.inBy", { channel, by });
 }
 
 // ---- History ---------------------------------------------------------------
@@ -258,22 +274,23 @@ const VERDICT_STATES: Readonly<Record<VerdictFilter, readonly ApprovalHistorySta
   cancelled: ["cancelled"],
 };
 
-export const VERDICT_LABELS: Readonly<Record<VerdictFilter, string>> = {
-  approved: "Approved",
-  rejected: "Rejected",
-  answered: "Answered",
-  connected: "Connected",
-  declined: "Not now",
-  expired: "Expired",
-  cancelled: "Cancelled",
-};
+export const VERDICT_LABELS: Readonly<Record<VerdictFilter, string>> = saidLabels({
+  approved: "center.inboxModel.verdict.approved",
+  rejected: "center.inboxModel.verdict.rejected",
+  answered: "center.inboxModel.verdict.answered",
+  connected: "center.inboxModel.verdict.connected",
+  declined: "center.inboxModel.verdict.declined",
+  expired: "center.inboxModel.verdict.expired",
+  cancelled: "center.inboxModel.verdict.cancelled",
+});
 
-export const KIND_FILTERS: readonly { readonly value: ApprovalHistoryKind | "all"; readonly label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "approval", label: "Approvals" },
-  { value: "review", label: "Reviews" },
-  { value: "question", label: "Questions" },
-  { value: "connect", label: "Connect" },
+/** The history's kind chips: each label's key, said where it is shown. */
+export const KIND_FILTERS: readonly { readonly value: ApprovalHistoryKind | "all"; readonly labelKey: UiKey }[] = [
+  { value: "all", labelKey: "center.inboxModel.kind.all" },
+  { value: "approval", labelKey: "center.inboxModel.kind.approval" },
+  { value: "review", labelKey: "center.inboxModel.kind.review" },
+  { value: "question", labelKey: "center.inboxModel.kind.question" },
+  { value: "connect", labelKey: "center.inboxModel.kind.connect" },
 ];
 
 /** The owner states a verdict filter asks for, narrowed to what the kind can have. */
@@ -317,11 +334,11 @@ export function verdictOf(state: ApprovalHistoryState): VerdictFilter {
   }
 }
 
-export const SCOPE_LABELS: Readonly<Record<ApprovalScope, string>> = {
-  once: "Once",
-  session: "This chat",
-  always: "Always",
-};
+export const SCOPE_LABELS: Readonly<Record<ApprovalScope, string>> = saidLabels({
+  once: "center.inboxModel.scope.once",
+  session: "center.inboxModel.scope.session",
+  always: "center.inboxModel.scope.always",
+});
 
 /**
  * Everything waiting on the reader, as one queue:
@@ -361,13 +378,13 @@ export type InboxItem =
 
 export const INBOX_FILTERS = ["all", "question", "approval", "review", "scheduled"] as const;
 export type InboxFilter = (typeof INBOX_FILTERS)[number];
-export const INBOX_FILTER_LABELS: Readonly<Record<InboxFilter, string>> = {
-  all: "All",
-  question: "Questions",
-  approval: "Approvals",
-  review: "Reviews",
-  scheduled: "From schedules",
-};
+export const INBOX_FILTER_LABELS: Readonly<Record<InboxFilter, string>> = saidLabels({
+  all: "center.inboxModel.filter.all",
+  question: "center.inboxModel.filter.question",
+  approval: "center.inboxModel.filter.approval",
+  review: "center.inboxModel.filter.review",
+  scheduled: "center.inboxModel.filter.scheduled",
+});
 
 /** The items of one task, kept together: a task's round and its question are decided side by side. */
 export interface InboxGroup {
@@ -426,7 +443,7 @@ export function resolvedText(
   today: string,
   people: Readonly<Record<string, string>>,
 ): string {
-  if (item === undefined) return `${what} — resolved elsewhere`;
+  if (item === undefined) return translateNow("center.inboxModel.resolved.elsewhere", { what });
   const when = whenLabel(item.decidedAt, timeZone, today);
   const through = throughWhom(
     item.kind === "review" || item.kind === "connect" ? undefined : (item.channel ?? item.via),
@@ -435,18 +452,34 @@ export function resolvedText(
   );
   if (item.kind === "connect")
     return item.state === "connected"
-      ? `${what} — ${item.appName} signed in, ${when}`
+      ? translateNow("center.inboxModel.resolved.signedIn", { what, app: item.appName, when })
       : item.state === "declined"
-        ? `${what} — not now${through}, ${when}`
+        ? translateNow("center.inboxModel.resolved.notNow", { what, through, when })
         : item.state === "expired"
-          ? `${what} — nobody signed in in time, ${when}`
-          : `${what} — closed with its task, ${when}`;
+          ? translateNow("center.inboxModel.resolved.nobodySignedIn", { what, when })
+          : translateNow("center.inboxModel.resolved.closed", { what, when });
   if (item.state === "expired")
-    return item.kind === "question" ? `${what} — no answer came in time, ${when}` : `${what} — expired without a decision, ${when}`;
-  if (item.state === "cancelled") return `${what} — closed with its task, ${when}`;
-  if (item.kind === "question") return `${what} — answered${item.answer === null ? "" : ` “${item.answer}”`}${through}, ${when}`;
-  return `${what} — ${VERDICT_LABELS[verdictOf(item.state)].toLowerCase()}${through}, ${when}`;
+    return item.kind === "question"
+      ? translateNow("center.inboxModel.resolved.noAnswer", { what, when })
+      : translateNow("center.inboxModel.resolved.expired", { what, when });
+  if (item.state === "cancelled") return translateNow("center.inboxModel.resolved.closed", { what, when });
+  if (item.kind === "question")
+    return item.answer === null
+      ? translateNow("center.inboxModel.resolved.answered", { what, through, when })
+      : translateNow("center.inboxModel.resolved.answeredWith", { what, answer: item.answer, through, when });
+  return translateNow(RESOLVED_VERDICTS[verdictOf(item.state)], { what, through, when });
 }
+
+/** A decided item's line, by its verdict: "“Q?” — rejected by Ana, 14:02". */
+const RESOLVED_VERDICTS: Readonly<Record<VerdictFilter, UiKey>> = {
+  approved: "center.inboxModel.resolved.verdict.approved",
+  rejected: "center.inboxModel.resolved.verdict.rejected",
+  answered: "center.inboxModel.resolved.verdict.answered",
+  connected: "center.inboxModel.resolved.verdict.connected",
+  declined: "center.inboxModel.resolved.verdict.declined",
+  expired: "center.inboxModel.resolved.verdict.expired",
+  cancelled: "center.inboxModel.resolved.verdict.cancelled",
+};
 
 /** The round's provenance line as the canvas shows it: the channels' leading warning glyph dropped (the card styles the line). */
 function canvasProvenance(line: string | undefined): string | undefined {

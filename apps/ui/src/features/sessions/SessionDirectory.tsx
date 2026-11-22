@@ -6,10 +6,13 @@ import { directoryRows, TASK_STATUS_LABELS } from "../shell/shell.js";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { useAnnounce } from "../../hooks/use-announce.js";
 import type { TaskListFilters, TaskListRow } from "@tavi/contracts";
-import { errorMessage, plural } from "@tavi/contracts/util";
+import { errorMessage } from "@tavi/contracts/util";
+import { useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 import {
   directoryLayout,
   fetchSessionPreferences,
+  groupHeading,
   loadSessionPreferences,
   saveSessionPreferences,
   sessionFilters,
@@ -21,6 +24,7 @@ import { Failure, Pending } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
 import { useTimeZone, useWorkspace } from "../shell/Workspace.js";
 import { useChannelNames } from "../shell/ChannelNames.js";
+import { spoken } from "../chat/store/said.js";
 
 export function SessionDirectory({
   state,
@@ -54,6 +58,7 @@ export function SessionDirectory({
   readonly onHome?: (() => void) | undefined;
   readonly onCollapse?: (() => void) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const timeZone = useTimeZone();
   const [search, setSearch] = useState("");
@@ -132,7 +137,7 @@ export function SessionDirectory({
       setFound(undefined);
       return undefined;
     }
-    const timer = setTimeout(() => setFound(count === 0 ? "No matching chats." : `${plural(count, "chat")} found.`), SEARCH_SAID_AFTER_MS);
+    const timer = setTimeout(() => setFound(count === 0 ? t("sessions.noMatch") : t("sessions.found", { count })), SEARCH_SAID_AFTER_MS);
     return () => clearTimeout(timer);
   }, [searching, count, search]);
   useAnnounce(found);
@@ -161,7 +166,9 @@ export function SessionDirectory({
               {row.needs.length > 0 ? TASK_STATUS_LABELS["input-required"] : TASK_STATUS_LABELS[row.status]}
             </span>
             <ChatMarks row={row} />
-            {preferences.seen[row.taskId] !== row.updatedAt ? <span className="unread-dot" role="img" aria-label="unread" /> : null}
+            {preferences.seen[row.taskId] !== row.updatedAt ? (
+              <span className="unread-dot" role="img" aria-label={t("sessions.unread")} />
+            ) : null}
           </span>
         </Button>
         <div className="actions session-actions">
@@ -169,17 +176,19 @@ export function SessionDirectory({
             icon={preferences.pins.includes(row.taskId) ? "unpin" : "pin"}
             size="sm"
             className="button-xs"
-            label={preferences.pins.includes(row.taskId) ? "Unpin" : "Pin"}
+            label={preferences.pins.includes(row.taskId) ? t("sessions.unpin") : t("sessions.pin")}
             onClick={() => toggle("pins", row.taskId)}
             aria-pressed={preferences.pins.includes(row.taskId)}
-            aria-label={`${preferences.pins.includes(row.taskId) ? "Unpin" : "Pin"} ${rowTitle(row)}`}
+            aria-label={t(preferences.pins.includes(row.taskId) ? "sessions.unpinLabel" : "sessions.pinLabel", { title: rowTitle(row) })}
           />
           <IconButton
             icon={preferences.archived.includes(row.taskId) ? "unarchive" : "archive"}
             size="sm"
             className="button-xs"
-            label={preferences.archived.includes(row.taskId) ? "Unarchive" : "Archive"}
-            aria-label={`${preferences.archived.includes(row.taskId) ? "Unarchive" : "Archive"} ${rowTitle(row)}`}
+            label={preferences.archived.includes(row.taskId) ? t("sessions.unarchive") : t("sessions.archive")}
+            aria-label={t(preferences.archived.includes(row.taskId) ? "sessions.unarchiveLabel" : "sessions.archiveLabel", {
+              title: rowTitle(row),
+            })}
             onClick={() => toggle("archived", row.taskId)}
           />
         </div>
@@ -189,31 +198,31 @@ export function SessionDirectory({
   );
   return (
     <SidebarFrame onNew={onNew} newLabel={newLabel} onNewOwn={onNewOwn} onNewPrivate={onNewPrivate} onCollapse={onCollapse}>
-      <p className="scope meta-sm">
-        Workspace <code>{workspaceId}</code>
-      </p>
+      <p className="scope meta-sm">{withParts(t("sessions.workspace"), { id: <code>{workspaceId}</code> })}</p>
       <div className="sidebar-tools">
         <label className="field">
-          <span>Keyword search</span>
+          <span>{t("sessions.search.label")}</span>
           <input
             id="session-search"
             type="search"
             value={search}
-            placeholder="Search chats…"
+            placeholder={t("sessions.search.placeholder")}
             aria-describedby="session-search-hint"
             onChange={(event) => setSearch(event.target.value)}
           />
         </label>
         {/* Shown while the box has focus or words: the syntax is help for typing, not a fixture of the list. */}
         <p id="session-search-hint" className="search-hint meta-sm muted">
-          A keyword, or status:failed, origin:schedule
+          {t("sessions.search.hint", { example: "status:failed, origin:schedule" })}
         </p>
       </div>
-      {error || directory?.error ? <Failure alert={false}>{error ?? directory?.error}</Failure> : null}
+      {error || directory?.error ? (
+        <Failure alert={false}>{error ?? (directory?.error === undefined ? undefined : spoken(directory.error, t))}</Failure>
+      ) : null}
       {/* Only the first load says so: the background refresh keeps the rows it
         has on screen, so the list does not jump every few seconds. */}
       {directory?.loading && directory.rows.length === 0 ? (
-        <Pending label="Loading chats…" className="notice" status={!answered.current} />
+        <Pending label={t("sessions.loading")} className="notice" status={!answered.current} />
       ) : null}
       {/* Only an answer that came back says the list is empty: not before the first, nor beside a refusal, nor
         above the Home row listed below it. */}
@@ -225,23 +234,23 @@ export function SessionDirectory({
       !(homePlaceholder && rows.length === 0) ? (
         <p className="muted">
           {search.trim() !== ""
-            ? "No matching chats."
+            ? t("sessions.noMatch")
             : archived
-              ? "No archived chats."
+              ? t("sessions.noArchived")
               : rows.length > 0
                 ? directory.nextCursor
-                  ? "Every loaded chat is archived."
-                  : "Every chat is archived."
-                : "No chats yet."}
+                  ? t("sessions.allLoadedArchived")
+                  : t("sessions.allArchived")
+                : t("sessions.noChats")}
         </p>
       ) : null}
       {homePlaceholder ? (
         <section className="group home-group">
-          <h3>Home</h3>
+          <h3>{t("sessions.group.home")}</h3>
           <div className="session-item">
             <Button variant="bare" className="session" onClick={onHome}>
-              <span className="session-title truncate">Home</span>
-              <span className="session-meta muted">No messages yet</span>
+              <span className="session-title truncate">{t("sessions.group.home")}</span>
+              <span className="session-meta muted">{t("sessions.noMessages")}</span>
             </Button>
           </div>
         </section>
@@ -249,25 +258,25 @@ export function SessionDirectory({
       {layout.sections.map((section) =>
         section.kind === "pinned" ? (
           // With `chat.home` off, the reader's Home is an ordinary chat pinned on top: no heading of its own.
-          <section key={section.label} className="group pinned-group" aria-label={section.label}>
+          <section key={section.label} className="group pinned-group" aria-label={groupHeading(section.label)}>
             {section.rows.map((row) => item(row))}
           </section>
         ) : (
           <section key={section.label} className={section.kind === "home" ? "group home-group" : "group"}>
-            <h3>{section.label}</h3>
+            <h3>{groupHeading(section.label)}</h3>
             {section.rows.map((row) => item(row))}
           </section>
         ),
       )}
       {directory?.nextCursor ? (
         <Button size="sm" className="sessions-more" onClick={() => void store.loadSessions(filters.current, true)}>
-          Load older chats
+          {t("sessions.loadOlder")}
         </Button>
       ) : null}
-      {directory?.needsTruncated ? <p>Needs inbox reached its limit; more chats may need you.</p> : null}
+      {directory?.needsTruncated ? <p>{t("sessions.needsTruncated")}</p> : null}
       {/* Below the list, so Home stays first; one fixed name, whether the archive is shown is its pressed state. */}
       <Button variant="ghost" size="sm" className="archived-toggle" aria-pressed={archived} onClick={() => setArchived((value) => !value)}>
-        Archived
+        {t("sessions.archived")}
       </Button>
     </SidebarFrame>
   );
@@ -275,12 +284,14 @@ export function SessionDirectory({
 
 /** What a chat keeps of its own: its instructions, and how many notes. */
 function ChatMarks({ row }: { readonly row: TaskListRow }) {
+  const t = useT();
   // The chat app a chat came from (Telegram, Slack…), by its descriptor's label: none for the front ends,
   // a routine or a reminder, whose kinds name no installed channel.
   const channel = useChannelNames().label(row.channel?.kind ?? "");
   if (row.chatInstructions !== true && row.chatNotes === undefined && row.conversationHome === undefined && channel === undefined)
     return null;
-  const home = row.conversationHome === undefined ? undefined : row.conversationHome.kind === "group" ? "group" : "DM";
+  const kind = row.conversationHome === undefined ? undefined : row.conversationHome.kind === "group" ? "group" : "direct";
+  const home = kind === undefined ? undefined : t(kind === "group" ? "sessions.mark.group" : "sessions.mark.dm");
   return (
     <span className="session-marks">
       {/* The channel, and for a conversation's Home its kind, by the conversation's ids: "Telegram DM". */}
@@ -288,18 +299,18 @@ function ChatMarks({ row }: { readonly row: TaskListRow }) {
         <span
           className="session-mark"
           title={
-            home === undefined
-              ? `From ${channel}`
+            kind === undefined
+              ? t("sessions.mark.from", { channel: channel ?? "" })
               : channel === undefined
-                ? `${home === "group" ? "Group" : "Direct"} conversation's Home`
-                : `${channel}: ${home === "group" ? "group" : "direct"} conversation's Home`
+                ? t(kind === "group" ? "sessions.mark.groupHome" : "sessions.mark.directHome")
+                : t(kind === "group" ? "sessions.mark.channelGroupHome" : "sessions.mark.channelDirectHome", { channel: channel ?? "" })
           }
         >
           {[channel, home].filter((part) => part !== undefined).join(" ")}
         </span>
       )}
       {row.chatInstructions === true ? (
-        <span className="session-mark" role="img" aria-label="has its own instructions" title="Has its own instructions">
+        <span className="session-mark" role="img" aria-label={t("sessions.mark.instructionsLabel")} title={t("sessions.mark.instructions")}>
           <Icon name="instructions" size="sm" />
         </span>
       ) : null}
@@ -307,8 +318,8 @@ function ChatMarks({ row }: { readonly row: TaskListRow }) {
         <span
           className="session-mark"
           role="img"
-          aria-label={plural(row.chatNotes, "chat note")}
-          title={plural(row.chatNotes, "chat note")}
+          aria-label={t("sessions.mark.notes", { count: row.chatNotes })}
+          title={t("sessions.mark.notes", { count: row.chatNotes })}
         >
           <Icon name="center-soul" size="sm" />
           {row.chatNotes}

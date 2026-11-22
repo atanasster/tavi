@@ -1,5 +1,7 @@
 import { isRecord } from "@tavi/contracts/util";
 
+import { decimal } from "../../lib/format.js";
+import { translateNow } from "../../lib/i18n.js";
 import { usePreviewImage } from "./FillReview.js";
 
 /**
@@ -17,7 +19,8 @@ export interface VideoPreview {
 
 const record = (value: unknown): Record<string, unknown> | undefined => (isRecord(value) ? value : undefined);
 const list = (value: unknown): readonly unknown[] => (Array.isArray(value) ? value : []);
-const seconds = (value: unknown): string => (typeof value === "number" && Number.isFinite(value) ? `${value.toFixed(1)} s` : "");
+const seconds = (value: unknown): string =>
+  typeof value === "number" && Number.isFinite(value) ? translateNow("transcript.video.seconds", { value: decimal(value, 1) }) : "";
 
 /** The previews a `video.frames`, `video.view` or `video.pose` result names: its sheet, its stills, its overlays; at most 12. */
 export function videoPreviewsOf(output: unknown): readonly VideoPreview[] {
@@ -25,13 +28,17 @@ export function videoPreviewsOf(output: unknown): readonly VideoPreview[] {
   if (result === undefined) return [];
   const previews: VideoPreview[] = [];
   const sheet = record(result["sheet"]);
-  if (typeof sheet?.["artifactId"] === "string") previews.push({ artifactId: sheet["artifactId"], caption: "Contact sheet", wide: true });
+  if (typeof sheet?.["artifactId"] === "string")
+    previews.push({ artifactId: sheet["artifactId"], caption: translateNow("transcript.video.sheet"), wide: true });
   for (const entry of list(result["frames"])) {
     const frame = record(entry);
     if (typeof frame?.["artifactId"] === "string")
       previews.push({
         artifactId: frame["artifactId"],
-        caption: seconds(frame["timeSec"]) === "" ? "Frame" : `Frame at ${seconds(frame["timeSec"])}`,
+        caption:
+          seconds(frame["timeSec"]) === ""
+            ? translateNow("transcript.video.frame")
+            : translateNow("transcript.video.frameAt", { time: seconds(frame["timeSec"]) }),
         wide: false,
       });
   }
@@ -40,7 +47,10 @@ export function videoPreviewsOf(output: unknown): readonly VideoPreview[] {
     if (typeof rep?.["overlayArtifactId"] === "string")
       previews.push({
         artifactId: rep["overlayArtifactId"],
-        caption: `Rep ${String(index + 1)}${seconds(rep["bottomSec"]) === "" ? "" : ` at ${seconds(rep["bottomSec"])}`}`,
+        caption:
+          seconds(rep["bottomSec"]) === ""
+            ? translateNow("transcript.video.rep", { rep: String(index + 1) })
+            : translateNow("transcript.video.repAt", { rep: String(index + 1), time: seconds(rep["bottomSec"]) }),
         wide: false,
       });
   }

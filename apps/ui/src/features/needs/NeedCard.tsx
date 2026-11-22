@@ -9,11 +9,15 @@ import {
   type NeedDelivery,
   type PendingQuestionRow,
 } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 import type { SettledWait } from "@tavi/client/browser";
 
 import { instantLabel, localDate, localTime, longDay, todayIn, durationText, when as whenLabel } from "../../lib/time.js";
 import { usePoll } from "../../hooks/use-poll.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import { listed } from "../../lib/format.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
+import { said, spoken, type Said } from "../chat/store/said.js";
+import type { UiKey } from "../../locales/en.js";
 import { Icon } from "../../ui/Icon.js";
 import { isBareKeyOutsideText } from "../shell/keys.js";
 import { Failure, Notice } from "../../ui/Parts.js";
@@ -45,11 +49,12 @@ export interface QuestionNeed {
 export interface AnswerState {
   readonly status: "sending" | "recorded" | "uncertain" | "failed";
   readonly text: string;
-  readonly message?: string | undefined;
+  /** The page's own message as a key (said where it is shown), or the owner's text. */
+  readonly message?: Said | undefined;
 }
 
 /** What a refused answer says when the question had already closed. */
-export const ANSWERED_ELSEWHERE = "Answered elsewhere, or closed, before your answer reached it.";
+export const ANSWERED_ELSEWHERE_KEY: UiKey = "needs.card.answeredElsewhere";
 
 /**
  * A pending question as the card shows it. `channelOf` names each chat it was
@@ -80,13 +85,13 @@ export function answerOutcome(
 ): AnswerState {
   if (outcome.ok) return { status: "recorded", text };
   return outcome.code === "CONFLICT"
-    ? { status: "uncertain", text, message: ANSWERED_ELSEWHERE }
+    ? { status: "uncertain", text, message: said(ANSWERED_ELSEWHERE_KEY) }
     : { status: "failed", text, message: outcome.message };
 }
 
 /** An answer sent from here, as the card shows it. */
 export function sentAnswer(
-  sent: { readonly status: AnswerState["status"]; readonly text: string; readonly message?: string | undefined } | undefined,
+  sent: { readonly status: AnswerState["status"]; readonly text: string; readonly message?: Said | undefined } | undefined,
 ): AnswerState | undefined {
   return sent === undefined
     ? undefined
@@ -110,7 +115,7 @@ export function inLastMinutes(deadlineAt: string, now: number): boolean {
 }
 
 /** What is said aloud when a question's last five minutes begin. */
-export const lastMinutesSentence = (question: string): string => `Five minutes or less left to answer: ${question}`;
+export const lastMinutesSentence = (question: string): string => translateNow("needs.card.lastMinutes", { question });
 
 /**
  * "Answer by 14:30 · 25 min", read against `now` in the workspace's
@@ -128,11 +133,16 @@ export function deadlineLabel(
   const when = instantLabel(deadlineAt, timeZone, today);
   const title = `${longDay(localDate(deadlineAt, timeZone), today)} ${localTime(deadlineAt, timeZone)}${timeZone === undefined ? "" : ` (${timeZone})`}`;
   const left = at - now;
-  if (left <= 0) return { text: `Was due ${when}`, urgent: false, past: true, title };
+  if (left <= 0) return { text: translateNow("needs.card.wasDue", { when }), urgent: false, past: true, title };
   const asked = askedAt === undefined ? Number.NaN : Date.parse(askedAt);
   // Without when it was asked, only the last minutes are urgent.
   const urgent = left <= URGENT_FLOOR_MS || (!Number.isNaN(asked) && left <= (at - asked) / 10);
-  return { text: `Answer by ${when} · ${durationText(left, { seconds: true, days: true })}`, urgent, past: false, title };
+  return {
+    text: translateNow("needs.card.answerBy", { when, left: durationText(left, { seconds: true, days: true }) }),
+    urgent,
+    past: false,
+    title,
+  };
 }
 
 /**
@@ -186,6 +196,7 @@ export function QuestionCard({
   /** The workspace's zone, the one the deadline is said in. */
   readonly timeZone: string | undefined;
 }) {
+  const t = useT();
   const headingId = useId();
   const contextId = useId();
   const choices = need.choices;
@@ -286,8 +297,9 @@ export function QuestionCard({
   if (answer?.status === "recorded") {
     return (
       <p className={`need-receipt need-receipt-answered${density === "compact" ? " need-compact" : ""}`} role="status">
-        <Icon name="check" size="sm" /> You answered <strong>{answerLabels(answer.text, choices)}</strong>
-        <span className="need-receipt-meta"> · waiting for the chat to go on</span>
+        <Icon name="check" size="sm" />{" "}
+        {withParts(t("needs.receipt.youAnswered"), { answer: <strong>{answerLabels(answer.text, choices)}</strong> })}
+        <span className="need-receipt-meta"> · {t("needs.card.waitingForChat")}</span>
       </p>
     );
   }
@@ -298,14 +310,10 @@ export function QuestionCard({
   const footerNotes = [
     ...(fallback === undefined
       ? []
-      : [
-          <span key="default">
-            If nobody answers: <strong>{fallback}</strong>
-          </span>,
-        ]),
+      : [<span key="default">{withParts(t("needs.card.ifNobody"), { option: <strong>{fallback}</strong> })}</span>]),
     ...(need.channels === undefined || need.channels.length === 0
       ? []
-      : [<span key="channels">Also asked in {need.channels.join(", ")}</span>]),
+      : [<span key="channels">{t("needs.card.alsoAsked", { channels: listed(need.channels) })}</span>]),
   ];
   return (
     <section
@@ -317,7 +325,7 @@ export function QuestionCard({
     >
       <div className="need-meta">
         <span className="need-kind">
-          <Icon name="question" size="sm" /> {choices?.header ?? "Question"}
+          <Icon name="question" size="sm" /> {choices?.header ?? t("needs.card.question")}
           {need.askedBy === undefined ? null : <span className="need-asker"> · {need.askedBy}</span>}
         </span>
         {deadline.text === "" ? null : (
@@ -335,12 +343,12 @@ export function QuestionCard({
       </h3>
       {need.context === undefined ? null : (
         <p className="need-context meta-base" id={contextId}>
-          Why: {need.context}
+          {t("needs.card.why", { context: need.context })}
         </p>
       )}
 
       {choices === undefined ? null : (
-        <div className="need-options" role="group" aria-label={choices.multiSelect ? "Options — choose any" : "Options"}>
+        <div className="need-options" role="group" aria-label={choices.multiSelect ? t("needs.card.optionsAny") : t("needs.card.options")}>
           {choices.options.map((option, index) => {
             const recommended = choices.recommended === index + 1;
             const descriptionId = `${headingId}-option-${index}`;
@@ -359,7 +367,7 @@ export function QuestionCard({
                 </span>
                 {recommended ? (
                   <span className="need-option-tag">
-                    <Icon name="star" size="sm" /> Recommended
+                    <Icon name="star" size="sm" /> {t("needs.card.recommended")}
                   </span>
                 ) : null}
               </>
@@ -405,14 +413,12 @@ export function QuestionCard({
 
       {pendingLabel === undefined || pending === undefined ? null : (
         <div className="need-undo" role="status">
-          <span>
-            Sending <strong>{pendingLabel}</strong>…
-          </span>
+          <span>{withParts(t("needs.card.sendingPick"), { option: <strong>{pendingLabel}</strong> })}</span>
           <Button variant="ghost" size="sm" onClick={() => undo(pending)}>
-            Undo
+            {t("needs.card.undo")}
           </Button>
           <Button variant="ghost" size="sm" disabled={disabled} onClick={() => sendNow(pending)}>
-            Send now
+            {t("needs.card.sendNow")}
           </Button>
           <span className="need-undo-bar" aria-hidden="true" style={{ animationDuration: `${undoMs}ms` }} />
         </div>
@@ -421,7 +427,7 @@ export function QuestionCard({
       {choices !== undefined && !choices.allowOther ? null : ownWords || choices === undefined ? (
         <div className="need-own">
           <label>
-            {choices === undefined ? "Your answer" : "In your own words"}
+            {choices === undefined ? t("needs.card.yourAnswer") : t("needs.card.ownWords")}
             <textarea
               ref={ownWordsArea}
               value={text}
@@ -440,7 +446,7 @@ export function QuestionCard({
         </div>
       ) : (
         <Button variant="ghost" size="sm" className="need-own-open" disabled={disabled} onClick={openOwnWords}>
-          <Icon name="plus" size="sm" /> Answer in your own words
+          <Icon name="plus" size="sm" /> {t("needs.card.answerOwnWords")}
         </Button>
       )}
 
@@ -449,7 +455,7 @@ export function QuestionCard({
           {footerNotes.length === 0 ? <span /> : <div className="need-footer-notes meta-sm">{footerNotes}</div>}
           {choices?.multiSelect === true ? (
             <Button variant="primary" size="sm" disabled={disabled || picks.length === 0} onClick={sendPicks}>
-              {picks.length === 0 ? "Pick one or more" : `Send ${plural(picks.length, "choice")}`}
+              {picks.length === 0 ? t("needs.card.pickSome") : t("needs.card.sendChoices", { count: picks.length })}
             </Button>
           ) : ownWords || choices === undefined ? (
             <Button
@@ -460,7 +466,7 @@ export function QuestionCard({
               aria-keyshortcuts={MAC ? "Meta+Enter" : "Control+Enter"}
             >
               {/* biome-ignore lint/a11y/noAriaHiddenOnFocusable: the kbd is not focusable; the button states the shortcut in aria-keyshortcuts */}
-              Send <kbd aria-hidden="true">{MAC ? "⌘⏎" : "Ctrl+Enter"}</kbd>
+              {withParts(t("needs.card.send"), { key: <kbd aria-hidden="true">{MAC ? "⌘⏎" : "Ctrl+Enter"}</kbd> })}
             </Button>
           ) : null}
         </div>
@@ -478,7 +484,7 @@ export function QuestionCard({
             <>
               {" "}
               <Button variant="ghost" size="sm" onClick={blocked.jump}>
-                Go to it ↑
+                {t("needs.card.goToIt")}
               </Button>
             </>
           )}
@@ -486,19 +492,19 @@ export function QuestionCard({
       )}
       {answer?.status === "sending" ? (
         <p className="need-status" role="status">
-          Sending your answer…
+          {t("needs.card.sendingAnswer")}
         </p>
       ) : null}
       {answer?.status === "uncertain" ? (
         <Notice role="status">
-          {answer.message ?? "The answer may have been recorded."} Keep following this chat before answering again.
+          {answer.message === undefined ? t("needs.card.mayBeRecorded") : spoken(answer.message, t)} {t("needs.card.keepFollowing")}
         </Notice>
       ) : null}
       {answer?.status === "failed" ? (
         <Failure>
-          {answer.message ?? "The answer was not sent."}{" "}
+          {answer.message === undefined ? t("needs.card.notSent") : spoken(answer.message, t)}{" "}
           <Button size="sm" disabled={blocked !== undefined} onClick={() => onAnswer(answer.text)}>
-            Retry
+            {t("ui.parts.retry")}
           </Button>
         </Failure>
       ) : null}
@@ -522,16 +528,24 @@ export function QuestionReceipt({
   readonly self?: string;
   readonly density?: "full" | "compact";
 }) {
+  const t = useT();
   const channels = useChannelNames();
   const when = whenLabel(receipt.at, timeZone);
-  const answer = receipt.answers !== undefined && receipt.answers.length > 0 ? receipt.answers.join(", ") : (receipt.replyText ?? "");
+  const answer = receipt.answers !== undefined && receipt.answers.length > 0 ? listed(receipt.answers) : (receipt.replyText ?? "");
   const compact = density === "compact" ? " need-compact" : "";
   if (receipt.outcome === "answered" || receipt.outcome === "replied") {
-    const who = receipt.via === self ? "You" : (receipt.decidedBy ?? "Someone");
-    const via = receipt.via === undefined || receipt.via === self ? "" : ` via ${approvalChannelLabel(receipt.via, channels.connection)}`;
+    const strong = { answer: <strong>{answer}</strong> };
+    const said =
+      receipt.via === self
+        ? withParts(t("needs.receipt.youAnswered"), strong)
+        : withParts(t("needs.receipt.answered", { who: receipt.decidedBy ?? t("needs.receipt.someone") }), strong);
+    const via =
+      receipt.via === undefined || receipt.via === self
+        ? ""
+        : ` ${t("needs.receipt.via", { channel: approvalChannelLabel(receipt.via, channels.connection) })}`;
     return (
       <p className={`need-receipt need-receipt-answered${compact}`}>
-        <Icon name="check" size="sm" /> {who} answered <strong>{answer}</strong>
+        <Icon name="check" size="sm" /> {said}
         <span className="need-receipt-meta">
           {via} · {when}
         </span>
@@ -542,21 +556,16 @@ export function QuestionReceipt({
   if (receipt.outcome === "wait-timeout") {
     return (
       <p className={`need-receipt need-receipt-expired${compact}`}>
-        <Icon name="hourglass" size="sm" /> No answer by {when}
-        {answer === "" || receipt.answers === undefined ? (
-          " — the chat went on without one"
-        ) : (
-          <>
-            {" "}
-            — the chat went with <strong>{receipt.answers.join(", ")}</strong>
-          </>
-        )}
+        <Icon name="hourglass" size="sm" />{" "}
+        {answer === "" || receipt.answers === undefined
+          ? t("needs.receipt.expiredNone", { when })
+          : withParts(t("needs.receipt.expiredWent", { when }), { answer: <strong>{listed(receipt.answers)}</strong> })}
       </p>
     );
   }
   return (
     <p className={`need-receipt need-receipt-withdrawn${compact}`}>
-      <Icon name="circle-x" size="sm" /> Question withdrawn · {when}
+      <Icon name="circle-x" size="sm" /> {t("needs.receipt.withdrawn", { when })}
     </p>
   );
 }

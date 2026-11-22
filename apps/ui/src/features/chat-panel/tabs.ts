@@ -1,14 +1,16 @@
+import { saidRecord } from "../shell/said.js";
+
 /** The chat panel's tabs, in the order they are shown. */
 export const CHAT_PANEL_TABS = ["activity", "schedule", "memory", "instructions", "details"] as const;
 export type ChatPanelTab = (typeof CHAT_PANEL_TABS)[number];
 
-export const CHAT_PANEL_LABELS: Readonly<Record<ChatPanelTab, string>> = {
-  activity: "Activity",
-  schedule: "Schedule",
-  memory: "Memory",
-  instructions: "Instructions",
-  details: "Details",
-};
+export const CHAT_PANEL_LABELS: Readonly<Record<ChatPanelTab, string>> = saidRecord({
+  activity: "chatPanel.tab.activity",
+  schedule: "chatPanel.tab.schedule",
+  memory: "chatPanel.tab.memory",
+  instructions: "chatPanel.tab.instructions",
+  details: "chatPanel.tab.details",
+});
 
 export function isChatPanelTab(value: unknown): value is ChatPanelTab {
   return typeof value === "string" && (CHAT_PANEL_TABS as readonly string[]).includes(value);
