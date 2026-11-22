@@ -1,50 +1,22 @@
 import type { CatalogFor } from "../i18n.js";
 import type { CORE_EN } from "./core-en.js";
+import { date } from "./bg/date.js";
+import { labels } from "./bg/labels.js";
+import { safety } from "./bg/safety.js";
+import { schedule } from "./bg/schedule.js";
+import { connect } from "./bg/connect.js";
+import { errors } from "./bg/errors.js";
+import { notices } from "./bg/notices.js";
+import { onboarding } from "./bg/onboarding.js";
 
 /** The `core` namespace in Bulgarian: weekdays and months are lowercase, and a day reads "вт, 29 сеп". */
 export const CORE_BG = {
-  "date.weekday.0": "неделя",
-  "date.weekday.1": "понеделник",
-  "date.weekday.2": "вторник",
-  "date.weekday.3": "сряда",
-  "date.weekday.4": "четвъртък",
-  "date.weekday.5": "петък",
-  "date.weekday.6": "събота",
-  "date.weekdayShort.0": "нд",
-  "date.weekdayShort.1": "пн",
-  "date.weekdayShort.2": "вт",
-  "date.weekdayShort.3": "ср",
-  "date.weekdayShort.4": "чт",
-  "date.weekdayShort.5": "пт",
-  "date.weekdayShort.6": "сб",
-  "date.month.1": "януари",
-  "date.month.2": "февруари",
-  "date.month.3": "март",
-  "date.month.4": "април",
-  "date.month.5": "май",
-  "date.month.6": "юни",
-  "date.month.7": "юли",
-  "date.month.8": "август",
-  "date.month.9": "септември",
-  "date.month.10": "октомври",
-  "date.month.11": "ноември",
-  "date.month.12": "декември",
-  "date.monthShort.1": "яну",
-  "date.monthShort.2": "фев",
-  "date.monthShort.3": "март",
-  "date.monthShort.4": "апр",
-  "date.monthShort.5": "май",
-  "date.monthShort.6": "юни",
-  "date.monthShort.7": "юли",
-  "date.monthShort.8": "авг",
-  "date.monthShort.9": "сеп",
-  "date.monthShort.10": "окт",
-  "date.monthShort.11": "ное",
-  "date.monthShort.12": "дек",
-  "date.dayMonth": "{day} {monthShort}",
-  "date.shortDay": "{weekdayShort}, {day} {monthShort}",
-  "date.longDay": "{weekday}, {day} {month}",
-  "date.withYear": "{date} {year} г.",
-  "date.dayTime": "{date}, {time}",
-  "date.monthYear": "{month} {year} г.",
+  ...date,
+  ...labels,
+  ...safety,
+  ...schedule,
+  ...connect,
+  ...errors,
+  ...notices,
+  ...onboarding,
 } as const satisfies CatalogFor<typeof CORE_EN>;

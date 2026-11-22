@@ -42,6 +42,16 @@
       "types": "./dist/locales/core-bg.d.mts",
       "import": "./dist/locales/core-bg.mjs"
     },
+    "./locales/core": {
+      "development": "./src/locales/core.ts",
+      "types": "./dist/locales/core.d.mts",
+      "import": "./dist/locales/core.mjs"
+    },
+    "./locales/core-server": {
+      "development": "./src/locales/core-server.ts",
+      "types": "./dist/locales/core-server.d.mts",
+      "import": "./dist/locales/core-server.mjs"
+    },
     "./locales/core-en": {
       "development": "./src/locales/core-en.ts",
       "types": "./dist/locales/core-en.d.mts",
@@ -106,6 +116,14 @@
       "./locales/core-bg": {
         "types": "./dist/locales/core-bg.d.mts",
         "import": "./dist/locales/core-bg.mjs"
+      },
+      "./locales/core": {
+        "types": "./dist/locales/core.d.mts",
+        "import": "./dist/locales/core.mjs"
+      },
+      "./locales/core-server": {
+        "types": "./dist/locales/core-server.d.mts",
+        "import": "./dist/locales/core-server.mjs"
       },
       "./locales/core-en": {
         "types": "./dist/locales/core-en.d.mts",
