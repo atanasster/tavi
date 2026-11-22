@@ -16,7 +16,7 @@ import {
 } from "@tavi/contracts";
 
 import { pluginActions } from "./plugins-api.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { withParts } from "../../ui/with-parts.js";
 import type { Outcome } from "../../lib/ipc.js";
 import { Failure, LoadState, Notice, PageHead, PageNote, StatusBadge } from "../../ui/Parts.js";
@@ -64,7 +64,7 @@ function reviewDeclares(version: PluginVersionView): string {
     return settings.length === 0
       ? translateNow("settings.plugins.review.declaresNone", { version: version.version })
       : translateNow("settings.plugins.review.declaresNoneSettings", { version: version.version, settings: settings.join(", ") });
-  const tools = version.tools.map(describePluginTool).join(", ");
+  const tools = version.tools.map((tool) => describePluginTool(tool, translateCore)).join(", ");
   return settings.length === 0
     ? translateNow("settings.plugins.review.declares", { version: version.version, tools })
     : translateNow("settings.plugins.review.declaresSettings", { version: version.version, tools, settings: settings.join(", ") });
@@ -256,35 +256,41 @@ export function PluginsSettings({
           </span>
           {plugin.description === "" ? null : <span className="settings-description">{withCode(plugin.description)}</span>}
           {plugin.tools.length === 0 ? null : plugin.tools.length <= PLUGIN_TOOLS_SHOWN ? (
-            <span className="muted">{t("settings.plugins.tools", { tools: plugin.tools.map(describePluginTool).join(", ") })}</span>
+            <span className="muted">
+              {t("settings.plugins.tools", { tools: plugin.tools.map((tool) => describePluginTool(tool, translateCore)).join(", ") })}
+            </span>
           ) : (
             // A long tool list is a wall of text: folded under its count, each tool on a line of its own.
             <details className="plugin-tools">
               <summary className="disclosure muted">{t("settings.plugins.toolsCount", { count: plugin.tools.length })}</summary>
               <ul className="muted">
                 {plugin.tools.map((tool) => (
-                  <li key={describePluginTool(tool)}>{describePluginTool(tool)}</li>
+                  <li key={tool.id}>{describePluginTool(tool, translateCore)}</li>
                 ))}
               </ul>
             </details>
           )}
-          {router === undefined ? null : <span className="muted">{describeRouterDeclaration(router)}</span>}
+          {router === undefined ? null : <span className="muted">{describeRouterDeclaration(router, translateCore)}</span>}
           {runningVersion === undefined
             ? null
-            : describePluginHeartbeat(runningVersion).map((line) => (
+            : describePluginHeartbeat(runningVersion, translateCore).map((line) => (
                 <span key={line} className="muted">
                   {line}
                 </span>
               ))}
-          {runningVersion?.memory === undefined ? null : <span className="muted">{describeMemoryDeclaration(runningVersion.memory)}</span>}
-          {runningVersion?.ideas === undefined ? null : <span className="muted">{describeIdeasDeclaration(runningVersion.ideas)}</span>}
+          {runningVersion?.memory === undefined ? null : (
+            <span className="muted">{describeMemoryDeclaration(runningVersion.memory, translateCore)}</span>
+          )}
+          {runningVersion?.ideas === undefined ? null : (
+            <span className="muted">{describeIdeasDeclaration(runningVersion.ideas, translateCore)}</span>
+          )}
           {runningVersion?.onboarding === undefined ? null : (
-            <span className="muted">{describeOnboardingDeclaration(runningVersion.onboarding)}</span>
+            <span className="muted">{describeOnboardingDeclaration(runningVersion.onboarding, translateCore)}</span>
           )}
           {/* Awaiting review, the version's own declaration below says it: not twice. */}
           {(awaitingReview ? [] : (plugin.ui?.contributions ?? [])).map((contribution) => (
             <span key={`ui:${contribution.id}`} className="muted">
-              {t("settings.plugins.canvasLine", { what: describePluginUiContribution(contribution) })}
+              {t("settings.plugins.canvasLine", { what: describePluginUiContribution(contribution, translateCore) })}
             </span>
           ))}
           {(plugin.mods ?? []).map((hook, index) => (
@@ -336,13 +342,13 @@ export function PluginsSettings({
                   {pkg.name}@{pkg.version} ({pkg.license}).
                 </span>
               ))}
-              {version.router === undefined ? null : <> {describeRouterDeclaration(version.router)}</>}
-              {describePluginHeartbeat(version).map((line) => (
+              {version.router === undefined ? null : <> {describeRouterDeclaration(version.router, translateCore)}</>}
+              {describePluginHeartbeat(version, translateCore).map((line) => (
                 <span key={line}> {line}</span>
               ))}
-              {version.memory === undefined ? null : <> {describeMemoryDeclaration(version.memory)}</>}
-              {version.ideas === undefined ? null : <> {describeIdeasDeclaration(version.ideas)}</>}
-              {version.onboarding === undefined ? null : <> {describeOnboardingDeclaration(version.onboarding)}</>}
+              {version.memory === undefined ? null : <> {describeMemoryDeclaration(version.memory, translateCore)}</>}
+              {version.ideas === undefined ? null : <> {describeIdeasDeclaration(version.ideas, translateCore)}</>}
+              {version.onboarding === undefined ? null : <> {describeOnboardingDeclaration(version.onboarding, translateCore)}</>}
               {(version.channels ?? []).map((channel) => (
                 <span key={channel.providerId}>
                   {" "}
@@ -355,12 +361,14 @@ export function PluginsSettings({
               {(version.ui?.contributions ?? []).map((contribution) => (
                 <span key={`ui:${contribution.id}`}>
                   {" "}
-                  {t("settings.plugins.review.canvas", { what: describePluginUiContribution(contribution).replace(/\.+$/, "") })}
+                  {t("settings.plugins.review.canvas", {
+                    what: describePluginUiContribution(contribution, translateCore).replace(/\.+$/, ""),
+                  })}
                 </span>
               ))}
               {version.apps === undefined
                 ? null
-                : describePluginApps(version.apps).map((line) => (
+                : describePluginApps(version.apps, translateCore).map((line) => (
                     <span key={`app:${line}`} data-source="author">
                       {" "}
                       {line}.

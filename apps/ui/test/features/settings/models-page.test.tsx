@@ -6,7 +6,6 @@ import { lifecycleWarningText, type LifecycleWarning } from "@tavi/contracts";
 
 import {
   lifecycleNotice,
-  lifecycleWarningWords,
   roleRows,
   rolesLifecycleNotices,
   type BrowsedModel,
@@ -16,6 +15,7 @@ import {
 import type { ModelReplacements } from "../../../src/features/settings/lifecycle-api.js";
 import type { SettingsClient } from "../../../src/lib/ipc.js";
 import { ModelBrowser } from "../../../src/features/settings/ModelBrowser.js";
+import { setLocale, translateCore } from "../../../src/lib/i18n.js";
 import { announced, freshAnnouncer } from "../../announced.js";
 import { InWorkspace } from "../../support/workspace.js";
 import { click, mount, mountSettled, settle } from "../../support/dom.js";
@@ -200,7 +200,7 @@ describe("the Models page", () => {
     expect(rolesLifecycleNotices({ models, roles }, today).map((entry) => entry.target)).toEqual(["openai/gpt-5"]);
   });
 
-  it("says every lifecycle warning in English exactly as contracts' lifecycleWarningText does", () => {
+  it("says every lifecycle warning through contracts' lifecycleWarningText, in the page's language", async () => {
     const date = "2026-12-01";
     const warnings: LifecycleWarning[] = [
       { level: "error", code: "retired" },
@@ -220,7 +220,39 @@ describe("the Models page", () => {
       { level: "info", code: "price_changes" },
       { level: "info", code: "price_changes", date, days: 10 },
     ];
-    for (const warning of warnings) expect(lifecycleWarningWords(warning)).toBe(lifecycleWarningText(warning));
+    // The badge's title is the warnings in contracts' words: English as the CLI and the doctor say them.
+    const lifecycle = {
+      status: "deprecated" as const,
+      retiresOn: "2026-11-19",
+      redirect: { to: "b", via: "router", on: "2026-11-15" },
+      catalogVersion: "v",
+      checkedAt: "2026-11-01T00:00:00.000Z",
+    };
+    const browsed: BrowsedModel = {
+      connectionId: "openai",
+      modelId: "a",
+      provenance: "live",
+      state: "available",
+      capabilities: [],
+      connectionLabel: "OpenAI",
+      stale: false,
+      lifecycle,
+    };
+    const today = "2026-11-10";
+    expect(lifecycleNotice(browsed, today)?.text).toBe(
+      "will be answered and billed as b (via router) on 2026-11-15; retires on 2026-11-19",
+    );
+    for (const warning of warnings) expect(lifecycleWarningText(warning, translateCore)).toBe(lifecycleWarningText(warning));
+    // In Bulgarian every clause comes from the core catalogue, none left in English.
+    await setLocale("bg");
+    try {
+      for (const warning of warnings) expect(lifecycleWarningText(warning, translateCore)).not.toBe(lifecycleWarningText(warning));
+      expect(lifecycleNotice(browsed, today)?.text).toBe(
+        "ще отговаря и ще се таксува като b (през router) от 2026-11-15; спира на 2026-11-19",
+      );
+    } finally {
+      await setLocale("en");
+    }
   });
 
   it("resolves each role to its own chain, the default, or nothing", () => {

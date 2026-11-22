@@ -14,7 +14,7 @@ import {
 import { clip } from "@tavi/contracts/util";
 import type { RiskLevel } from "@tavi/contracts";
 import type { UiKey } from "../../locales/en.js";
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import { Notice } from "../../ui/Parts.js";
 import { FormFillTable } from "../transcript/FormFillTable.js";
 
@@ -78,9 +78,9 @@ const ORIGIN_VALUE_CHARS = 80;
 export function Provenance({ request }: { readonly request: PendingRound["requests"][number] }) {
   const provenance = request.provenance;
   const tainted = requestTainted(request);
-  const why = whyAskedText(provenance?.gateReason, tainted, provenance?.skillCeiling, request.toolName);
+  const why = whyAskedText(provenance?.gateReason, tainted, provenance?.skillCeiling, request.toolName, translateCore);
   const sources = requestSources(request);
-  const chips = sources === undefined ? [] : provenanceChips(sources);
+  const chips = sources === undefined ? [] : provenanceChips(sources, translateCore);
   const origins = (provenance?.argOrigins ?? []).filter((origin) => tainted || origin.from !== "unmatched");
   const t = useT();
   if (why === undefined && chips.length === 0 && origins.length === 0) return null;
@@ -112,7 +112,7 @@ export function Provenance({ request }: { readonly request: PendingRound["reques
               >
                 {neutralizedText(origin.value, ORIGIN_VALUE_CHARS)}
               </mark>
-              ” {argOriginWords(origin)}
+              ” {argOriginWords(origin, translateCore)}
             </li>
           ))}
         </ul>

@@ -1,10 +1,10 @@
 import {
   ChatModelSchema,
   lifecycleWarnings,
+  lifecycleWarningText,
   MODEL_ROLES,
   worstLifecycleLevel,
   type LifecycleLevel,
-  type LifecycleWarning,
   type ModelCatalogEntry,
   type ModelConnection,
   type ModelLifecycle,
@@ -12,8 +12,7 @@ import {
 } from "@tavi/contracts";
 
 import { formatTokens } from "../../lib/format.js";
-import { currentLocale, translateNow } from "../../lib/i18n.js";
-import type { UiKey } from "../../locales/en.js";
+import { currentLocale, translateCore, translateNow } from "../../lib/i18n.js";
 import { ask, mapOutcome, read, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { restartNote } from "./common.js";
 import { loadReplacements, type ModelReplacements } from "./lifecycle-api.js";
@@ -50,41 +49,6 @@ export interface LifecycleNotice {
   readonly text: string;
 }
 
-/**
- * One warning as a clause about the model, in the page's language: "retired on
- * 2026-11-19", "will be answered and billed as b on 2026-12-01" — what follows
- * "This model" in the picker, and what the badge's title lists.
- */
-export function lifecycleWarningWords(warning: LifecycleWarning): string {
-  const date = warning.date;
-  const dated = (bare: UiKey, on: UiKey): string => (date === undefined ? translateNow(bare) : translateNow(on, { date }));
-  switch (warning.code) {
-    case "retired":
-      return dated("settings.models.warning.retired", "settings.models.warning.retiredOn");
-    case "redirected":
-    case "redirects_soon": {
-      const to = warning.via === undefined ? warning.to : translateNow("settings.models.warning.via", { to: warning.to, via: warning.via });
-      if (warning.code === "redirected")
-        return date === undefined
-          ? translateNow("settings.models.warning.redirected", { to })
-          : translateNow("settings.models.warning.redirectedSince", { to, date });
-      return date === undefined
-        ? translateNow("settings.models.warning.redirectsSoon", { to })
-        : translateNow("settings.models.warning.redirectsSoonOn", { to, date });
-    }
-    case "retires_soon":
-      return dated("settings.models.warning.retires", "settings.models.warning.retiresOn");
-    case "end_claimed":
-      return warning.days !== undefined && warning.days <= 0
-        ? dated("settings.models.warning.mayHaveRetired", "settings.models.warning.mayHaveRetiredOn")
-        : dated("settings.models.warning.mayRetire", "settings.models.warning.mayRetireOn");
-    case "deprecated":
-      return dated("settings.models.warning.deprecated", "settings.models.warning.deprecatedOn");
-    case "price_changes":
-      return dated("settings.models.warning.priceChanges", "settings.models.warning.priceChangesOn");
-  }
-}
-
 export function lifecycleNotice(
   model: Pick<BrowsedModel, "lifecycle">,
   today: string = new Date().toISOString().slice(0, 10),
@@ -105,7 +69,11 @@ export function lifecycleNotice(
             ? "settings.models.lifecycle.retiring"
             : "settings.models.lifecycle.notice",
   );
-  return { level, label, text: warnings.map(lifecycleWarningWords).join(translateNow("settings.models.warning.separator")) };
+  return {
+    level,
+    label,
+    text: warnings.map((warning) => lifecycleWarningText(warning, translateCore)).join(translateNow("settings.models.warning.separator")),
+  };
 }
 
 /**

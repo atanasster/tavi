@@ -1,8 +1,8 @@
 import { useState } from "react";
 
-import { type MemoryItem, MEMORY_PROVENANCE_KEEP_ALONE, memoryProvenanceLine } from "@tavi/contracts";
+import { type MemoryItem, memoryProvenanceLine } from "@tavi/contracts";
 
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import type { SettingsClient } from "../../lib/ipc.js";
 import { localDate, shortDay } from "../../lib/time.js";
 import { getMemory } from "./memory-api.js";
@@ -133,8 +133,8 @@ export function RevealButton({ reveal, disabled }: { readonly reveal: ReturnType
  * the hosts Tavi parsed first, a page's own title only as what it calls itself.
  */
 export function ProvenanceLine({ item }: { readonly item: MemoryItem }) {
-  const read = memoryProvenanceLine(item.provenance, { tidyUp: item.supersedes !== undefined });
+  const read = memoryProvenanceLine(item.provenance, { tidyUp: item.supersedes !== undefined }, translateCore);
   return read === undefined ? null : (
-    <p className="meta-sm memory-related memory-provenance">{`${read} · ${MEMORY_PROVENANCE_KEEP_ALONE}`}</p>
+    <p className="meta-sm memory-related memory-provenance">{`${read} · ${translateCore("memory.card.keepAllLeavesIt")}`}</p>
   );
 }

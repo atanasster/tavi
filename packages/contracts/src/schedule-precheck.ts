@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { watchablePage } from "./heartbeat.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 
 /**
  * A schedule's pre-check: one read-only, deterministic look before a fire runs,
@@ -90,11 +91,15 @@ export function schedulePrecheckText(precheck: SchedulePrecheck): string {
 }
 
 /** What a pre-check does, in words: the CLI's `show`, the tools' answers and the web page say it alike. */
-export function schedulePrecheckSentence(precheck: SchedulePrecheck | undefined): string {
-  if (precheck === undefined) return "none: every fire runs";
-  if (precheck.kind === "page-changed") return `runs only when the page ${precheck.target} has changed since the last check`;
-  if (precheck.kind === "feed-has-new") return `runs only when the feed ${precheck.target} has new items since the last check`;
-  return `runs only when the file ${precheck.target} has changed since the last check`;
+export function schedulePrecheckSentence(precheck: SchedulePrecheck | undefined, t: CoreT = coreEnglish): string {
+  if (precheck === undefined) return t("schedule.precheck.none");
+  const key =
+    precheck.kind === "page-changed"
+      ? "schedule.precheck.page"
+      : precheck.kind === "feed-has-new"
+        ? "schedule.precheck.feed"
+        : "schedule.precheck.file";
+  return t(key, { target: precheck.target });
 }
 
 /** How many of a feed's item ids a pre-check remembers, newest first. */

@@ -1,7 +1,7 @@
-import { IDEA_CATEGORY_LABELS, type Idea, type IdeaRun, type IdeasListAnswer, type IdeasRecurAnswer } from "@tavi/contracts";
+import { ideaCategoryLabel, type Idea, type IdeaRun, type IdeasListAnswer, type IdeasRecurAnswer } from "@tavi/contracts";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import { whenLocal } from "../../lib/time.js";
 import { Icon } from "../../ui/Icon.js";
 import { Failure, Notice, Pending, StatusNote } from "../../ui/Parts.js";
@@ -307,7 +307,7 @@ export function IdeasPage({ onTry, onModels, onSettings, onOpenTask, onOpenMemor
             const shown = expanded ? ideas : ideas.slice(0, IDEAS_SECTION_SHOWN);
             return (
               <section key={category} className="ideas-section" aria-labelledby={`${ids}-${category}`}>
-                <h2 id={`${ids}-${category}`}>{IDEA_CATEGORY_LABELS[category]}</h2>
+                <h2 id={`${ids}-${category}`}>{ideaCategoryLabel(category, translateCore)}</h2>
                 <div className="ideas-grid">{shown.map(card)}</div>
                 {ideas.length > IDEAS_SECTION_SHOWN ? (
                   <Button

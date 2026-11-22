@@ -18,7 +18,8 @@ import {
   type ReminderYearly,
 } from "./schedule-time.js";
 import { TimeZoneSchema, isValidTimeZone } from "./workspace-settings.js";
-import { plural } from "./util.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
+import type { CoreKey } from "./locales/core-en.js";
 
 /**
  * Reminders: a light record that says
@@ -123,10 +124,10 @@ export function formatReminderOffset(offset: ReminderOffset): string {
 }
 
 /** "15 minutes before", "1 day before at 20:00": what a read-back or a delivery says of a notice. */
-export function describeReminderOffset(offset: ReminderOffset): string {
-  const noun = { m: "minute", h: "hour", d: "day" }[offset.unit];
-  const span = `${plural(offset.amount, noun)} before`;
-  return offset.at === undefined ? span : `${span} at ${offset.at}`;
+export function describeReminderOffset(offset: ReminderOffset, t: CoreT = coreEnglish): string {
+  const key = ({ m: "reminder.offset.minutes", h: "reminder.offset.hours", d: "reminder.offset.days" } as const)[offset.unit];
+  const span = t(key, { count: offset.amount, amount: String(offset.amount) });
+  return offset.at === undefined ? span : t("reminder.offset.at", { span, time: offset.at });
 }
 
 export const ReminderOffsetSchema = z
@@ -1036,10 +1037,101 @@ export function reminderReadBack(reminder: ReminderSchedule, now: Date): string 
   }
 }
 
-const ORDINALS = ["", "first", "second", "third", "fourth", "fifth"] as const;
+/** A day of the month as an ordinal ("31st"): its form by how the number ends, 11–19 as the rest. */
+function dayOrdinal(day: number, t: CoreT): string {
+  const last = day % 100 >= 11 && day % 100 <= 19 ? 0 : day % 10;
+  const key: CoreKey =
+    last === 1
+      ? "schedule.repeat.ordinal.d1"
+      : last === 2
+        ? "schedule.repeat.ordinal.d2"
+        : last === 3
+          ? "schedule.repeat.ordinal.d3"
+          : last === 4
+            ? "schedule.repeat.ordinal.d4"
+            : last === 7 || last === 8
+              ? "schedule.repeat.ordinal.d78"
+              : "schedule.repeat.ordinal.other";
+  return t(key, { day: String(day) });
+}
 
-const dayOrdinal = (day: number): string =>
-  `${day}${day % 10 === 1 && day !== 11 ? "st" : day % 10 === 2 && day !== 12 ? "nd" : day % 10 === 3 && day !== 13 ? "rd" : "th"}`;
+/** The short weekday names' keys, 0 = Sunday. */
+const WEEKDAY_SHORT_KEYS = [
+  "date.weekdayShort.0",
+  "date.weekdayShort.1",
+  "date.weekdayShort.2",
+  "date.weekdayShort.3",
+  "date.weekdayShort.4",
+  "date.weekdayShort.5",
+  "date.weekdayShort.6",
+] as const satisfies readonly CoreKey[];
+
+/** The month names' keys, 0 = January. */
+const MONTH_KEYS = [
+  "date.month.1",
+  "date.month.2",
+  "date.month.3",
+  "date.month.4",
+  "date.month.5",
+  "date.month.6",
+  "date.month.7",
+  "date.month.8",
+  "date.month.9",
+  "date.month.10",
+  "date.month.11",
+  "date.month.12",
+] as const satisfies readonly CoreKey[];
+
+/** The short month names' keys, 0 = January. */
+const MONTH_SHORT_KEYS = [
+  "date.monthShort.1",
+  "date.monthShort.2",
+  "date.monthShort.3",
+  "date.monthShort.4",
+  "date.monthShort.5",
+  "date.monthShort.6",
+  "date.monthShort.7",
+  "date.monthShort.8",
+  "date.monthShort.9",
+  "date.monthShort.10",
+  "date.monthShort.11",
+  "date.monthShort.12",
+] as const satisfies readonly CoreKey[];
+
+/**
+ * An English short day as `en-GB` writes it ("Thu 15 Oct", "Tue 29 Sept") in
+ * `t`'s language, or `undefined` when `text` is not one.
+ */
+export function englishShortDayText(text: string, t: CoreT = coreEnglish): string | undefined {
+  const match = /^([A-Z][a-z]{2}) (\d{1,2}) ([A-Z][a-z]{2,3})$/.exec(text);
+  if (match === null) return undefined;
+  const weekday = WEEKDAY_SHORT_KEYS.findIndex((key) => coreEnglish(key) === match[1]);
+  const month = MONTH_SHORT_KEYS.findIndex((key) => coreEnglish(key) === (match[3] === "Sept" ? "Sep" : match[3]));
+  const weekdayKey = WEEKDAY_SHORT_KEYS[weekday];
+  const monthKey = MONTH_SHORT_KEYS[month];
+  if (weekdayKey === undefined || monthKey === undefined) return undefined;
+  return t("date.shortDay", { weekdayShort: t(weekdayKey), day: match[2] as string, monthShort: t(monthKey) });
+}
+
+/** A weekday's short name in `t`'s language: "Mon". */
+const weekdayShort = (day: number, t: CoreT): string => {
+  const key = WEEKDAY_SHORT_KEYS[day];
+  return key === undefined ? String(day) : t(key);
+};
+
+/**
+ * The nth weekday's ordinal, by the weekday's agreement class (`m`: Mon, Tue,
+ * Thu, Fri; `f`: Sun, Wed, Sat), for languages whose ordinal agrees with it.
+ */
+const NTH_KEYS: Readonly<Record<string, { readonly m: CoreKey; readonly f: CoreKey }>> = {
+  "1": { m: "schedule.repeat.nth.1.m", f: "schedule.repeat.nth.1.f" },
+  "2": { m: "schedule.repeat.nth.2.m", f: "schedule.repeat.nth.2.f" },
+  "3": { m: "schedule.repeat.nth.3.m", f: "schedule.repeat.nth.3.f" },
+  "4": { m: "schedule.repeat.nth.4.m", f: "schedule.repeat.nth.4.f" },
+  "5": { m: "schedule.repeat.nth.5.m", f: "schedule.repeat.nth.5.f" },
+  "-1": { m: "schedule.repeat.nth.last.m", f: "schedule.repeat.nth.last.f" },
+};
+const WEEKDAY_CLASS = ["f", "m", "m", "f", "m", "m", "f"] as const;
 
 /** The monthly or yearly pattern of a repeat: what `repeatDaysText` words. */
 export interface RepeatPattern {
@@ -1048,13 +1140,30 @@ export interface RepeatPattern {
 }
 
 /** The day a monthly or yearly repeat falls on: "on the 31st (the last day in shorter months)", "on the last Fri", "on 29 Feb". */
-function repeatDayText(pattern: RepeatPattern): string | undefined {
+function repeatDayText(pattern: RepeatPattern, t: CoreT): string | undefined {
   if (pattern.monthly !== undefined) {
     if ("dayOfMonth" in pattern.monthly)
-      return `on the ${dayOrdinal(pattern.monthly.dayOfMonth)}${pattern.monthly.dayOfMonth > 28 ? " (the last day in shorter months)" : ""}`;
-    return `on the ${pattern.monthly.nth === -1 ? "last" : ORDINALS[pattern.monthly.nth]} ${DAY_NAMES[pattern.monthly.weekday] ?? ""}`;
+      return t(pattern.monthly.dayOfMonth > 28 ? "schedule.repeat.dayOfMonthLate" : "schedule.repeat.dayOfMonth", {
+        ordinal: dayOrdinal(pattern.monthly.dayOfMonth, t),
+      });
+    const { nth, weekday } = pattern.monthly;
+    const nthKey = NTH_KEYS[String(nth)]?.[WEEKDAY_CLASS[weekday] ?? "m"];
+    return t("schedule.repeat.nthWeekday", {
+      nth: nthKey === undefined ? "" : t(nthKey),
+      weekday: WEEKDAY_SHORT_KEYS[weekday] === undefined ? "" : weekdayShort(weekday, t),
+    });
   }
-  if (pattern.yearly !== undefined) return `on ${pattern.yearly.day} ${MONTH_NAMES[pattern.yearly.month - 1] ?? ""}`;
+  if (pattern.yearly !== undefined) {
+    const month = pattern.yearly.month - 1;
+    const monthKey = MONTH_KEYS[month];
+    const monthShortKey = MONTH_SHORT_KEYS[month];
+    const date = t("date.dayMonth", {
+      day: String(pattern.yearly.day),
+      month: monthKey === undefined ? "" : t(monthKey),
+      monthShort: monthShortKey === undefined ? "" : t(monthShortKey),
+    });
+    return t("schedule.repeat.onDate", { date });
+  }
   return undefined;
 }
 
@@ -1064,16 +1173,16 @@ function repeatDayText(pattern: RepeatPattern): string | undefined {
  * label leads with it (`"label"`: "Monthly on the 1st", "Yearly on 29 Feb").
  * Neither is "every day" ("Daily").
  */
-export function repeatDaysText(pattern: RepeatPattern, style: "sentence" | "label" = "sentence"): string {
-  const day = repeatDayText(pattern);
+export function repeatDaysText(pattern: RepeatPattern, style: "sentence" | "label" = "sentence", t: CoreT = coreEnglish): string {
+  const day = repeatDayText(pattern, t);
   const [sentence, label] =
     pattern.monthly !== undefined
-      ? ["every month", "Monthly"]
+      ? (["schedule.repeat.everyMonth", "schedule.repeat.monthly"] as const)
       : pattern.yearly !== undefined
-        ? ["every year", "Yearly"]
-        : ["every day", "Daily"];
-  const lead = style === "label" ? label : sentence;
-  return day === undefined ? lead : `${lead} ${day}`;
+        ? (["schedule.repeat.everyYear", "schedule.repeat.yearly"] as const)
+        : (["schedule.spec.everyDay", "schedule.spec.daily"] as const);
+  const lead = t(style === "label" ? label : sentence);
+  return day === undefined ? lead : t("schedule.repeat.withDay", { lead, day });
 }
 
 /** The week as people read it: Monday first, Sunday last. */
@@ -1084,7 +1193,7 @@ const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0] as const;
  * day (or none given) is `undefined`, a daily cadence. Three or more days in a
  * row read as a range.
  */
-export function daysOfWeekText(days: readonly number[] | undefined): string | undefined {
+export function daysOfWeekText(days: readonly number[] | undefined, t: CoreT = coreEnglish): string | undefined {
   if (days === undefined) return undefined;
   const picked = new Set(days);
   if (WEEK_ORDER.every((day) => picked.has(day))) return undefined;
@@ -1100,7 +1209,7 @@ export function daysOfWeekText(days: readonly number[] | undefined): string | un
   });
   return runs
     .flatMap(({ days: run }) =>
-      run.length >= 3 ? [`${DAY_NAMES[run[0] ?? 0]}–${DAY_NAMES[run.at(-1) ?? 0]}`] : run.map((day) => DAY_NAMES[day] ?? String(day)),
+      run.length >= 3 ? [`${weekdayShort(run[0] ?? 0, t)}–${weekdayShort(run.at(-1) ?? 0, t)}`] : run.map((day) => weekdayShort(day, t)),
     )
     .join(", ");
 }

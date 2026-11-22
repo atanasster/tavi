@@ -10,6 +10,7 @@ import {
   AppsPayloadSchema,
   CatalogEntrySchema,
   ConnectableAppSchema,
+  describePluginApps,
   PluginAppsBlockSchema,
   PluginManifestSchema,
   worseHealth,
@@ -296,5 +297,30 @@ describe("one settings shape for every app", () => {
     const field = appSettingFromChannelField({ key: "pick", label: "Pick", type: "choice", choices, pattern });
     expect(AppSettingFieldSchema.parse(field)).toMatchObject({ pattern });
     expect(field.choices).toHaveLength(50);
+  });
+});
+
+describe("an apps block's review line", () => {
+  it("quotes every piece of the author's text, JSON-escaped", () => {
+    const block = PluginAppsBlockSchema.parse({
+      abi: APPS_ABI,
+      apps: [
+        {
+          id: "acme",
+          name: 'Acme "Pro"',
+          category: "calendar",
+          publisher: "Acme Inc",
+          summary: 'Reads your "work" calendar',
+          scopes: [{ scope: "calendar.read", access: "read", says: "Reads events" }],
+          tools: { list: { title: "List events", says: "Lists them" }, ping: { title: "Ping" } },
+          dataClass: "personal",
+        },
+        { id: "bare", name: "Bare", tools: { go: { title: "Go \u201cnow\u201d" } } },
+      ],
+    });
+    expect(describePluginApps(block)).toEqual([
+      'App acme (calendar, personal data), in its author\'s words: name "Acme \\"Pro\\""; publisher "Acme Inc"; summary "Reads your \\"work\\" calendar"; scope calendar.read (read) "Reads events"; tool list "List events" "Lists them"; tool ping "Ping"',
+      'App bare (other), in its author\'s words: name "Bare"; tool go "Go \u201cnow\u201d"',
+    ]);
   });
 });

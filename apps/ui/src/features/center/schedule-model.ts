@@ -19,7 +19,7 @@ import {
   type ScheduledWorkUsage,
 } from "@tavi/contracts";
 
-import { translateNow } from "../../lib/i18n.js";
+import { translateCore, translateNow } from "../../lib/i18n.js";
 import { dayTime, durationText, monthYear } from "../../lib/time.js";
 
 /**
@@ -34,7 +34,7 @@ import { dayTime, durationText, monthYear } from "../../lib/time.js";
  * read as a range.
  */
 export function weekdaysText(days: readonly number[] | undefined): string | undefined {
-  return daysOfWeekText(days);
+  return daysOfWeekText(days, translateCore);
 }
 
 /** A cadence in words: "Daily 21:00 · Europe/Berlin", "Mon–Fri 07:00 · Europe/Berlin", "Once". */
@@ -42,7 +42,7 @@ export function cadenceText(cadence: AgendaCadence): string {
   if (cadence.kind === "once") return translateNow("center.scheduleModel.once");
   if (cadence.kind === "repeat")
     return translateNow("center.scheduleModel.repeatCadence", {
-      days: repeatDaysText(cadence, "label"),
+      days: repeatDaysText(cadence, "label", translateCore),
       at: cadence.at,
       zone: cadence.timezone,
     });
@@ -58,7 +58,7 @@ export function cadenceText(cadence: AgendaCadence): string {
  * "Daily every 2 h 08:00–18:00 · Europe/Berlin", "Once on 2026-11-05, 09:00 · Europe/Berlin".
  */
 export function specText(spec: ScheduleSpec): string {
-  return scheduleSpecText(spec, "label");
+  return scheduleSpecText(spec, "label", translateCore);
 }
 
 /**
@@ -66,7 +66,7 @@ export function specText(spec: ScheduleSpec): string {
  * None for a schedule that is not a watcher.
  */
 export function watchText(schedule: Pick<ScheduleRecord, "watch" | "precheck" | "spec">): string | undefined {
-  const sentence = schedule.watch === true ? scheduleWatchSentence(schedule) : undefined;
+  const sentence = schedule.watch === true ? scheduleWatchSentence(schedule, translateCore) : undefined;
   return sentence === undefined ? undefined : `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}`;
 }
 
@@ -222,7 +222,7 @@ export function pausedText(row: {
   readonly pausedReason?: SchedulePausedReason;
   readonly spec?: ScheduleSpec;
 }): string {
-  const text = schedulePausedText(row) ?? translateNow("center.scheduleModel.paused");
+  const text = schedulePausedText(row, new Date(), translateCore) ?? translateNow("center.scheduleModel.paused");
   return `${text.charAt(0).toUpperCase()}${text.slice(1)}`;
 }
 
@@ -379,7 +379,7 @@ export function scheduledWorkLine(usage: ScheduledWorkUsage): { readonly text: s
   const label =
     year === undefined || month === undefined || Number.isNaN(year) || Number.isNaN(month) ? usage.month : monthYear(year, month);
   return {
-    text: translateNow("center.scheduleModel.scheduledWork", { month: label, usage: scheduledWorkText(usage) }),
+    text: translateNow("center.scheduleModel.scheduledWork", { month: label, usage: scheduledWorkText(usage, translateCore) }),
     over: usage.percent !== undefined && usage.percent >= SCHEDULED_BUDGET_NOTICE_PERCENT,
   };
 }

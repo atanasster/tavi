@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import {
-  IDEA_CATEGORY_LABELS,
+  ideaCategoryLabel,
   IdeasBriefAnswerSchema,
   IdeasIdeaAnswerSchema,
   IdeasListAnswerSchema,
@@ -152,7 +152,7 @@ export function ideasResultText(options: IdeasCommandOptions, result: unknown, c
       const muted =
         answer.mutedCategories.length === 0
           ? ""
-          : `\nMuted: ${answer.mutedCategories.map((category) => IDEA_CATEGORY_LABELS[category]).join(", ")}`;
+          : `\nMuted: ${answer.mutedCategories.map((category) => ideaCategoryLabel(category)).join(", ")}`;
       const next = answer.nextAt === undefined ? "" : `\nNext run ${minuteUtc(answer.nextAt)}`;
       const last = `${answer.lastRun === undefined ? "" : `\n${lastRunLine(answer.lastRun)}`}${next}`;
       // Off, nothing listed is offered anywhere: said first, so the list reads as what is kept, not what is shown.
@@ -162,7 +162,7 @@ export function ideasResultText(options: IdeasCommandOptions, result: unknown, c
       const body = sections
         .map(
           (category) =>
-            `${IDEA_CATEGORY_LABELS[category]}\n${answer.ideas
+            `${ideaCategoryLabel(category)}\n${answer.ideas
               .filter((idea) => idea.category === category)
               .map((idea) => ideaLine(idea, pageWidth(columns)))
               .join("\n")}`,

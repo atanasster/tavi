@@ -1,8 +1,8 @@
 import {
-  SOURCE_WORDS,
-  TAINT_DETAIL_HEAD,
-  TAINT_DETAIL_NOTES,
-  TAINT_REMEDY,
+  sourceWords,
+  taintDetailHead,
+  taintDetailNotes,
+  taintRemedy,
   provenanceChips,
   taintChipText,
   type LabelSummary,
@@ -11,7 +11,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 
 import { loadTaskLabel } from "./tasks-api.js";
 import { Button } from "../../ui/Button.js";
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import { Icon } from "../../ui/Icon.js";
 import { Popover } from "../../ui/Popover.js";
 import { useWorkspace } from "../shell/Workspace.js";
@@ -86,8 +86,8 @@ export function TaintChipView({
   readonly onFreshChat?: (() => void) | undefined;
 }) {
   const t = useT();
-  const text = taintChipText(label);
-  const chips = provenanceChips(label);
+  const text = taintChipText(label, translateCore);
+  const chips = provenanceChips(label, translateCore);
   return (
     <span className="taint-chip-wrap">
       {/* A shield in the warning colour; what it read is its name and its tooltip, and the panel says the rest. */}
@@ -112,11 +112,11 @@ export function TaintChipView({
           {...(chip === undefined ? {} : { anchor: chip, anchoring: { placement: "bottom", align: "end" } as const })}
           onClose={() => onClose()}
         >
-          <p>{TAINT_DETAIL_HEAD}</p>
+          <p>{taintDetailHead(translateCore)}</p>
           <ul className="source-chips list-reset">
             {chips.length === 0 ? (
               <li className="source-chip">
-                <span className="source-established">{SOURCE_WORDS["unknown-source"]}</span>
+                <span className="source-established">{sourceWords("unknown-source", translateCore)}</span>
               </li>
             ) : null}
             {chips.map((source) => (
@@ -126,7 +126,7 @@ export function TaintChipView({
               </li>
             ))}
           </ul>
-          {TAINT_DETAIL_NOTES.map((line) => (
+          {taintDetailNotes(translateCore).map((line) => (
             <p key={line} className="meta-sm">
               {line}
             </p>
@@ -141,7 +141,7 @@ export function TaintChipView({
                   onFreshChat();
                 }}
               >
-                {TAINT_REMEDY}
+                {taintRemedy(translateCore)}
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={onClose}>

@@ -3,6 +3,8 @@
  * matcher is tested against (`CallAssessment.subjects`).
  */
 
+import { coreEnglish } from "./locales/core.js";
+
 /** A subject no realistic allow glob can cover: what a script the splitter cannot read becomes. */
 export const UNPARSED_SUBJECT_PREFIX = "\u0000unparsed ";
 
@@ -12,12 +14,13 @@ const MAX_PARSE_DEPTH = 32;
 /**
  * What the splitter reads but no rule should be trusted to: shells disagree
  * on it (`dash` has no `$'…'`), or a line can hide a command behind it. Each
- * makes a `sandbox.run` card show every time, with this as its reason.
+ * makes a `sandbox.run` card show every time, with this as its reason. The
+ * owner words its assessment in English (`shell.reason.*` in the `core` words).
  */
-export const SHELL_QUOTING_REASON = "uses ANSI-C or locale quoting";
-export const SHELL_CONTINUATION_REASON = "continues a line with a backslash";
-export const SHELL_BRACED_EXPANSION_REASON = "uses braced parameter expansion";
-export const SHELL_PROCESS_SUBSTITUTION_REASON = "uses process substitution";
+export const SHELL_QUOTING_REASON = coreEnglish("shell.reason.quoting");
+export const SHELL_CONTINUATION_REASON = coreEnglish("shell.reason.continuation");
+export const SHELL_BRACED_EXPANSION_REASON = coreEnglish("shell.reason.bracedExpansion");
+export const SHELL_PROCESS_SUBSTITUTION_REASON = coreEnglish("shell.reason.processSubstitution");
 
 /** A script read as `/bin/sh` reads it: its simple commands, and what in it no rule should cover. */
 export interface ShellScriptReading {
@@ -328,7 +331,7 @@ export function splitShellCommands(script: string): readonly string[] {
  * Why a line is asked about every time when the grammar below and the
  * splitter above disagree: one of them finds a command the other does not.
  */
-export const SHELL_PARSE_DISAGREEMENT_REASON = "reads as different commands on a second parse";
+export const SHELL_PARSE_DISAGREEMENT_REASON = coreEnglish("shell.reason.parseDisagreement");
 
 /** A word as the grammar read it. */
 export interface ShellWord {

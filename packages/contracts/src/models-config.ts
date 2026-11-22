@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { IdSchema, SECRET_KEY_REF_PATTERN, TimestampSchema } from "./ids.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 
 /**
  * User-configured model connections, catalog and role bindings.
@@ -89,6 +90,20 @@ export interface PromptCacheCapabilities {
   /** A `prompt_cache_key` that routes a chat's calls to the same cache (OpenAI). */
   readonly promptCacheKey?: true;
 }
+/** The `core` key of each preset's note, by preset id. */
+const PRESET_NOTE_KEYS = {
+  anthropic: "model.preset.note.anthropic",
+  ollama: "model.preset.note.ollama",
+  lmstudio: "model.preset.note.lmstudio",
+  custom: "model.preset.note.custom",
+} as const;
+
+/** What a preset's setup says about it beyond its name, in the reader's language; undefined when it says nothing. */
+export function presetNote(preset: Pick<ModelProviderPreset, "id" | "note">, t: CoreT = coreEnglish): string | undefined {
+  const key = Object.hasOwn(PRESET_NOTE_KEYS, preset.id) ? PRESET_NOTE_KEYS[preset.id as keyof typeof PRESET_NOTE_KEYS] : undefined;
+  return key === undefined ? preset.note : t(key);
+}
+
 /** Where to create a key for `preset`: its keys page, or its documentation when it names none. */
 export function keyPageOf(preset: Pick<ModelProviderPreset, "docsUrl" | "keysUrl">): string {
   return preset.keysUrl ?? preset.docsUrl;
@@ -131,7 +146,7 @@ export const MODEL_PROVIDER_PRESETS: readonly ModelProviderPreset[] = [
     keysUrl: "https://platform.claude.com/settings/keys",
     pdfNever: true,
     videoNever: true,
-    note: "A new connection speaks Anthropic's own Messages API, which caches prompts and keeps thinking across tool calls. A connection added before uses the OpenAI-compatibility layer (no prompt caching) until it is removed and added again; use Custom for a compatible gateway.",
+    note: coreEnglish("model.preset.note.anthropic"),
   },
   {
     id: "gemini",
@@ -151,7 +166,7 @@ export const MODEL_PROVIDER_PRESETS: readonly ModelProviderPreset[] = [
     requiresKey: false,
     localOnly: true,
     docsUrl: "https://docs.ollama.com/api/openai-compatibility",
-    note: "Runs on this computer and needs no key. A turn with Tavi's tools is about 22K tokens: set Ollama's context length (its Settings, or OLLAMA_CONTEXT_LENGTH) to 32K or more.",
+    note: coreEnglish("model.preset.note.ollama"),
   },
   {
     id: "lmstudio",
@@ -161,7 +176,7 @@ export const MODEL_PROVIDER_PRESETS: readonly ModelProviderPreset[] = [
     requiresKey: false,
     localOnly: true,
     docsUrl: "https://lmstudio.ai/docs/developer/openai-compat",
-    note: "Enter a server token if you enabled authentication; otherwise no cloud key is needed.",
+    note: coreEnglish("model.preset.note.lmstudio"),
   },
   {
     id: "custom",
@@ -171,7 +186,7 @@ export const MODEL_PROVIDER_PRESETS: readonly ModelProviderPreset[] = [
     requiresKey: true,
     localOnly: false,
     docsUrl: "https://developers.openai.com/api/reference/overview",
-    note: "Supply an OpenAI-compatible endpoint. Local servers can be configured without a cloud key.",
+    note: coreEnglish("model.preset.note.custom"),
   },
 ];
 
@@ -230,8 +245,8 @@ export function readsVideo(capabilities: readonly string[]): boolean {
 }
 
 /** What the owner confirms before a model gets video input: the whole clip goes to the provider, each time. */
-export function videoDisclosure(provider: string, model: string): string {
-  return `With video input on, a chat that views a video sends the whole clip — every frame and its sound — to ${provider} for ${model}, each time it is viewed. Without it, Tavi sends at most three still images. ${provider}'s own retention applies.`;
+export function videoDisclosure(provider: string, model: string, t: CoreT = coreEnglish): string {
+  return t("model.video.disclosure", { provider, model });
 }
 
 /** What a connection to `baseUrl` takes unasked: its preset's PDF input, or none. */

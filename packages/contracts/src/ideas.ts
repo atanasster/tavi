@@ -5,6 +5,8 @@ import type { AsyncRepository } from "./persistence-types.js";
 
 import { IdSchema, TimestampSchema } from "./ids.js";
 import { defineProviderError } from "./util.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
+import type { CoreKey } from "./locales/core-en.js";
 
 /**
  * Ideas: things Tavi offers to do for a person,
@@ -115,16 +117,26 @@ export const IDEA_CATEGORIES = ["productivity", "work", "learning", "health-home
 export type IdeaCategory = (typeof IDEA_CATEGORIES)[number];
 export const IdeaCategorySchema = z.enum(IDEA_CATEGORIES);
 
-/** Each section's heading. */
-export const IDEA_CATEGORY_LABELS: Readonly<Record<IdeaCategory, string>> = {
-  productivity: "Productivity",
-  work: "Work & career",
-  learning: "Learning & hobbies",
-  "health-home": "Health & home",
-  travel: "Travel & errands",
-  shopping: "Shopping & style",
-  people: "People & culture",
+/** Each section's heading, as a word key. */
+const IDEA_CATEGORY_KEYS: Readonly<Record<IdeaCategory, CoreKey>> = {
+  productivity: "ideas.category.productivity",
+  work: "ideas.category.work",
+  learning: "ideas.category.learning",
+  "health-home": "ideas.category.healthHome",
+  travel: "ideas.category.travel",
+  shopping: "ideas.category.shopping",
+  people: "ideas.category.people",
 };
+
+/** A section's heading: "Travel & errands". */
+export function ideaCategoryLabel(category: IdeaCategory, t: CoreT = coreEnglish): string {
+  return t(IDEA_CATEGORY_KEYS[category]);
+}
+
+/** Each section's heading in English, for what reads them as a table (`ideaCategoryLabel` for a person). */
+export const IDEA_CATEGORY_LABELS: Readonly<Record<IdeaCategory, string>> = Object.fromEntries(
+  IDEA_CATEGORIES.map((category) => [category, ideaCategoryLabel(category)]),
+) as Record<IdeaCategory, string>;
 
 /**
  * What an idea needs Tavi to be able to do. The census resolves each
@@ -164,28 +176,33 @@ export const IdeaCapabilitySchema = z.enum(IDEA_CAPABILITIES);
 export const IDEA_PLUGIN_CAPABILITIES = ["places", "care", "jobs", "trends", "travel", "mailbox", "calendar", "home", "messaging"] as const;
 export const IdeaPluginCapabilitySchema = z.enum(IDEA_PLUGIN_CAPABILITIES);
 
-/** Each capability as a card's *Uses* line names it. */
-export const IDEA_CAPABILITY_LABELS: Readonly<Record<IdeaCapability, string>> = {
-  web: "Web",
-  browser: "Browser",
-  memory: "Memory",
-  reminders: "Reminders",
-  routines: "Routines",
-  files: "Files",
-  sandbox: "Sandbox",
-  pdf: "PDFs",
-  image: "Images",
-  video: "Video",
-  places: "Places",
-  care: "Care finder",
-  jobs: "Job finder",
-  trends: "Trends",
-  mailbox: "Mail",
-  calendar: "Calendar",
-  travel: "Travel",
-  home: "Smart home",
-  messaging: "Messaging",
+/** Each capability as a card's *Uses* line names it, as a word key. */
+const IDEA_CAPABILITY_KEYS: Readonly<Record<IdeaCapability, CoreKey>> = {
+  web: "ideas.capability.web",
+  browser: "ideas.capability.browser",
+  memory: "ideas.capability.memory",
+  reminders: "ideas.capability.reminders",
+  routines: "ideas.capability.routines",
+  files: "ideas.capability.files",
+  sandbox: "ideas.capability.sandbox",
+  pdf: "ideas.capability.pdf",
+  image: "ideas.capability.image",
+  video: "ideas.capability.video",
+  places: "ideas.capability.places",
+  care: "ideas.capability.care",
+  jobs: "ideas.capability.jobs",
+  trends: "ideas.capability.trends",
+  mailbox: "ideas.capability.mailbox",
+  calendar: "ideas.capability.calendar",
+  travel: "ideas.capability.travel",
+  home: "ideas.capability.home",
+  messaging: "ideas.capability.messaging",
 };
+
+/** A capability as a card's *Uses* line names it: "Smart home". */
+export function ideaCapabilityLabel(capability: IdeaCapability, t: CoreT = coreEnglish): string {
+  return t(IDEA_CAPABILITY_KEYS[capability]);
+}
 
 /** The icons an idea may carry: one emoji each, so a model cannot put arbitrary text in the icon slot. */
 export const IDEA_ICONS = [
@@ -618,23 +635,23 @@ export const PluginIdeasDeclarationSchema = z.strictObject({
 });
 export type PluginIdeasDeclaration = z.infer<typeof PluginIdeasDeclarationSchema>;
 
-const IDEAS_RECEIVE_DISCLOSURES: Readonly<Record<IdeasReceive, string>> = {
-  memory: "your approved, non-sensitive preferences, facts and lessons",
-  tasks: "your recent chats' titles and summaries, and prompts you edited before sending",
-  brief: "the ideas brief you write",
-  ledger: "which ideas you dismissed, snoozed, muted or asked more of",
+const IDEAS_RECEIVE_DISCLOSURES: Readonly<Record<IdeasReceive, CoreKey>> = {
+  // Every receive but the ledger has a per-workspace switch: its words say so.
+  memory: "ideas.provider.receive.memory",
+  tasks: "ideas.provider.receive.tasks",
+  brief: "ideas.provider.receive.brief",
+  ledger: "ideas.provider.receive.ledger",
 };
 
 /** What the person is shown when they review an ideas provider: what it may receive, and that it only proposes. */
-export function describeIdeasDeclaration(ideas: z.input<typeof PluginIdeasDeclarationSchema>): string {
-  // Every receive but the ledger has a per-workspace switch: said where it applies.
-  const receives =
+export function describeIdeasDeclaration(ideas: z.input<typeof PluginIdeasDeclarationSchema>, t: CoreT = coreEnglish): string {
+  return [
     ideas.receives.length === 0
-      ? "nothing of yours: only what Tavi can do here"
-      : ideas.receives
-          .map((field) => `${IDEAS_RECEIVE_DISCLOSURES[field]}${field === "ledger" ? "" : " (while its switch is on)"}`)
-          .join("; ");
-  return `Ideas provider: it may receive ${receives}. It proposes ideas only; Tavi checks each one and never lets it send or run anything.${ideas.usesTurns === true ? " It may ask your fast model, within the day's ideas budget." : ""}${ideas.disclosure === undefined ? "" : ` It says: ${ideas.disclosure}`}`;
+      ? t("ideas.provider.receivesNone")
+      : t("ideas.provider.receives", { receives: ideas.receives.map((field) => t(IDEAS_RECEIVE_DISCLOSURES[field])).join("; ") }),
+    ...(ideas.usesTurns === true ? [t("ideas.provider.usesTurns")] : []),
+    ...(ideas.disclosure === undefined ? [] : [t("ideas.provider.disclosure", { disclosure: ideas.disclosure })]),
+  ].join(" ");
 }
 
 // ------------------------------------------------------------------ settings

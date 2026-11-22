@@ -7,6 +7,7 @@ import { ApprovalScopeSchema, RiskLevelSchema } from "./tool-policy.js";
 import { LabelSummarySchema } from "./content-label.js";
 import { TaskOriginSchema } from "./task-origins.js";
 import type { PendingWaitsAnswer, PendingWaitsInput } from "./needs.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 
 /**
  * The approvals inbox and its history: every
@@ -81,19 +82,23 @@ const SummarySchema = z.string().max(80);
  * `connectionName` when the owner knows it (Telegram, email), and is shown as
  * the id otherwise.
  */
-export function approvalChannelLabel(via: string, connectionName?: (connectionId: string) => string | undefined): string {
+export function approvalChannelLabel(
+  via: string,
+  connectionName?: (connectionId: string) => string | undefined,
+  t: CoreT = coreEnglish,
+): string {
   switch (via) {
     case "cli":
     case "ipc":
-      return "terminal";
+      return t("approval.channel.terminal");
     case "bridge":
-      return "web";
+      return t("approval.channel.web");
     case "link":
-      return "email link";
+      return t("approval.channel.emailLink");
     case "policy":
-      return "policy";
+      return t("approval.channel.policy");
     case "standing-answer":
-      return "standing answer";
+      return t("approval.channel.standingAnswer");
     default:
       return connectionName?.(via) ?? via;
   }

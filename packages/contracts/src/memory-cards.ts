@@ -3,6 +3,9 @@ import { z } from "zod";
 import { IdSchema, TimestampSchema } from "./ids.js";
 import { MAX_MEMORY_TITLE_CHARS, MEMORY_KINDS, MemoryProvenanceSchema, memoryProvenanceLine, memoryProvenanceUntrusted } from "./memory.js";
 import { MemoryRelatedSchema, MemoryScopeTargetSchema } from "./memory-ipc.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
+import { englishShortDayText } from "./reminders.js";
+import type { CoreKey } from "./locales/core-en.js";
 
 /**
  * Memory cards: the *Proposed ·
@@ -107,14 +110,19 @@ export function memoryDigestKey(localDate: string): string {
  * or "10 of 14 things …" when more wait than are listed. The number it starts
  * with is the listed count, as every card's is.
  */
-export function memoryDigestNoticeText(input: { readonly listed: number; readonly waiting: number; readonly oldestExpires: string }): {
+export function memoryDigestNoticeText(
+  input: { readonly listed: number; readonly waiting: number; readonly oldestExpires: string },
+  t: CoreT = coreEnglish,
+): {
   readonly title: string;
   readonly summary: string;
 } {
   const waiting = Math.max(input.listed, input.waiting);
-  const count = waiting > input.listed ? `${input.listed} of ${waiting}` : String(input.listed);
   return {
-    title: `${count} ${waiting === 1 ? "thing" : "things"} waiting to be remembered — the oldest expires ${input.oldestExpires}`,
+    title:
+      waiting > input.listed
+        ? t("memory.digest.titleOf", { listed: String(input.listed), count: waiting, n: String(waiting), date: input.oldestExpires })
+        : t("memory.digest.title", { count: input.listed, n: String(input.listed), date: input.oldestExpires }),
     summary: "",
   };
 }
@@ -256,24 +264,24 @@ export function memoryCardItemIsPlain(
 }
 
 /** What a card says of an item proposed after its chat read untrusted content; undefined for any other. */
-export function memoryCardProvenanceLine(item: Pick<MemoryCardItem, "provenance" | "tidyUp">): string | undefined {
-  return memoryProvenanceLine(item.provenance, { tidyUp: item.tidyUp === true });
+export function memoryCardProvenanceLine(item: Pick<MemoryCardItem, "provenance" | "tidyUp">, t: CoreT = coreEnglish): string | undefined {
+  return memoryProvenanceLine(item.provenance, { tidyUp: item.tidyUp === true }, t);
 }
 
 /** What a waiting tidy-up says on a card, a channel message, the terminal and `/memory review`. */
-export const MEMORY_TIDY_UP_LOOK = "tidy-up, open Tavi to compare";
+export const MEMORY_TIDY_UP_LOOK = coreEnglish("memory.card.tidyUpLook");
 
 /** What a single *Keep* of a tidy-up answers on a card, a channel or a command: it is kept in the Center. */
-export const MEMORY_TIDY_UP_NEEDS_LOOK = "This tidy-up needs a look — open Tavi to compare it with what it replaces, and keep it there.";
+export const MEMORY_TIDY_UP_NEEDS_LOOK = coreEnglish("memory.card.tidyUpNeedsLook");
 
 /** What an update says it replaces: "updates: Reply in Spanish". */
-export function memoryUpdatesLine(updates: { readonly title: string | null }): string {
-  return `updates: ${updates.title ?? "a kept memory"}`;
+export function memoryUpdatesLine(updates: { readonly title: string | null }, t: CoreT = coreEnglish): string {
+  return t("memory.card.updates", { title: updates.title ?? t("memory.card.aKeptMemory") });
 }
 
 /** What a near-matched fact says it may replace: "may update: Lives in Lisbon". */
-export function memoryMayUpdateLine(mayUpdate: { readonly title: string | null }): string {
-  return `may update: ${mayUpdate.title ?? "a kept memory"}`;
+export function memoryMayUpdateLine(mayUpdate: { readonly title: string | null }, t: CoreT = coreEnglish): string {
+  return t("memory.card.mayUpdate", { title: mayUpdate.title ?? t("memory.card.aKeptMemory") });
 }
 
 /** `memory {action: "card", noticeId}`: the card rendered now from the canonical rows. */
@@ -294,12 +302,41 @@ export type MemoryCardAnswer = z.infer<typeof MemoryCardAnswerSchema>;
 const plural = (count: number, one: string, many: string): string => `${count} ${count === 1 ? one : many}`;
 
 /** A card notice's stored words: how many things it holds, never what they are (invariant 22). */
-export function memoryCardNoticeText(input: { readonly count: number; readonly flush: boolean }): {
+export function memoryCardNoticeText(
+  input: { readonly count: number; readonly flush: boolean },
+  t: CoreT = coreEnglish,
+): {
   readonly title: string;
   readonly summary: string;
 } {
-  const things = plural(input.count, "thing to remember", "things to remember");
-  return { title: input.flush ? `${things} from before this chat rolled over` : things, summary: "" };
+  return {
+    title: t(input.flush ? "memory.card.thingsFlush" : "memory.card.things", { count: input.count, n: String(input.count) }),
+    summary: "",
+  };
+}
+
+/**
+ * A card's stored English title (`memoryCardNoticeText`,
+ * `memoryDigestNoticeText`) in `t`'s language: read back from its counts and date, and
+ * left as stored when it is not one of those.
+ */
+export function memoryCardTitleText(title: string, t: CoreT = coreEnglish): string {
+  if (t === coreEnglish) return title;
+  const digest = /^(\d+)(?: of (\d+))? things? waiting to be remembered — the oldest expires (.+)$/.exec(title);
+  if (digest !== null) {
+    const listed = Number.parseInt(digest[1] as string, 10);
+    return memoryDigestNoticeText(
+      {
+        listed,
+        waiting: Number.parseInt(digest[2] ?? (digest[1] as string), 10),
+        oldestExpires: englishShortDayText(digest[3] as string, t) ?? (digest[3] as string),
+      },
+      t,
+    ).title;
+  }
+  const card = /^(\d+) things? to remember( from before this chat rolled over)?$/.exec(title);
+  if (card === null) return title;
+  return memoryCardNoticeText({ count: Number.parseInt(card[1] as string, 10), flush: card[2] !== undefined }, t).title;
 }
 
 /** How many records a card was posted with: the count its title starts with (`memoryCardNoticeText`). */
@@ -318,49 +355,60 @@ export function memoryCardTitleOf(revision: { readonly title?: string | undefine
 }
 
 /** Where a kept record applies, as a card's heading says it. */
-export function memoryCardScopeLabel(target: string | undefined): string {
-  return target?.startsWith("chat:") === true ? "this chat only" : "remember everywhere";
+export function memoryCardScopeLabel(target: string | undefined, t: CoreT = coreEnglish): string {
+  return t(target?.startsWith("chat:") === true ? "memory.card.scope.chat" : "memory.card.scope.everywhere");
 }
 
-const STATE_LABELS: Readonly<Record<MemoryCardState, string>> = {
-  proposed: "Proposed",
-  saved: "Saved",
-  discarded: "Discarded",
-  expired: "Expired",
-  revoked: "Revoked",
-  replaced: "Replaced",
-  forgotten: "Forgotten",
-  hidden: "Waiting for its person",
+const STATE_LABELS: Readonly<Record<MemoryCardState, CoreKey>> = {
+  proposed: "memory.card.state.proposed",
+  saved: "memory.card.state.saved",
+  discarded: "memory.card.state.discarded",
+  expired: "memory.card.state.expired",
+  revoked: "memory.card.state.revoked",
+  replaced: "memory.card.state.replaced",
+  forgotten: "memory.card.state.forgotten",
+  hidden: "memory.card.state.hidden",
 };
 
 /** A state's word on a card. */
-export function memoryCardStateLabel(state: MemoryCardState): string {
-  return STATE_LABELS[state];
+export function memoryCardStateLabel(state: MemoryCardState, t: CoreT = coreEnglish): string {
+  return t(STATE_LABELS[state]);
 }
 
 /** What a card item is called: its title, or what stands in for text the card never shows. */
-export function memoryCardItemName(item: Pick<MemoryCardItem, "title" | "sensitive" | "state">): string {
-  if (item.state === "forgotten") return "Forgotten";
-  if (item.state === "hidden") return "Another person's memory";
-  if (item.sensitive) return "Sensitive item";
-  return item.title ?? "Untitled memory";
+export function memoryCardItemName(item: Pick<MemoryCardItem, "title" | "sensitive" | "state">, t: CoreT = coreEnglish): string {
+  if (item.state === "forgotten") return t("memory.card.state.forgotten");
+  if (item.state === "hidden") return t("memory.card.item.hidden");
+  if (item.sensitive) return t("memory.card.item.sensitive");
+  return item.title ?? t("memory.card.item.untitled");
 }
 
 /** A card's heading: "Proposed · remember everywhere", "Saved", "2 things to remember", or its receipt once decided. */
-export function memoryCardHeading(card: Pick<MemoryCardAnswer, "title" | "items" | "forgotten" | "digest">): string {
+export function memoryCardHeading(
+  card: Pick<MemoryCardAnswer, "title" | "items" | "forgotten" | "digest">,
+  t: CoreT = coreEnglish,
+): string {
   const items = card.items;
   // A digest says what it said when it was sent while anything on it still waits.
-  if (card.digest !== undefined && items.some((item) => item.state === "proposed")) return card.title;
+  if (card.digest !== undefined && items.some((item) => item.state === "proposed")) return memoryCardTitleText(card.title, t);
   if (items.length === 0)
-    return card.forgotten > 0 ? (card.forgotten === 1 ? "Forgotten" : `Forgotten · ${card.forgotten}`) : `${card.title} · decided`;
+    return card.forgotten > 0
+      ? card.forgotten === 1
+        ? t("memory.card.state.forgotten")
+        : t("memory.card.heading.forgottenCount", { count: String(card.forgotten) })
+      : t("memory.card.heading.titleDecided", { title: memoryCardTitleText(card.title, t) });
   const [only] = items;
   if (items.length === 1 && card.forgotten === 0 && only !== undefined)
-    return only.state === "proposed" ? `Proposed · ${memoryCardScopeLabel(only.target)}` : STATE_LABELS[only.state];
+    return only.state === "proposed"
+      ? t("memory.card.heading.proposed", { scope: memoryCardScopeLabel(only.target, t) })
+      : t(STATE_LABELS[only.state]);
   const waiting = items.filter((item) => item.state === "proposed").length;
-  if (waiting > 0) return plural(waiting, "thing to remember", "things to remember");
+  if (waiting > 0) return t("memory.card.things", { count: waiting, n: String(waiting) });
   const states = new Set([...items.map((item) => item.state), ...(card.forgotten > 0 ? ["forgotten" as const] : [])]);
   const [state] = [...states];
-  return states.size === 1 && state !== undefined ? `${STATE_LABELS[state]} · ${items.length + card.forgotten}` : "Decided";
+  return states.size === 1 && state !== undefined
+    ? t("memory.card.heading.stateCount", { state: t(STATE_LABELS[state]), count: String(items.length + card.forgotten) })
+    : t("memory.card.heading.decided");
 }
 
 /** Records a saved turn names, and those counted past them. */
@@ -384,21 +432,25 @@ export function memorySeenCount(used: (MemoryCounted & { readonly listed?: Memor
 }
 
 /** The heading over what a listing showed: "Looked through 6 memories", or "Looked through 5 more" beside those used. */
-export function memoryListedHeading(listed: number, used: number): string {
-  return `Looked through ${used > 0 ? `${listed} more` : plural(listed, "memory", "memories")}`;
+export function memoryListedHeading(listed: number, used: number, t: CoreT = coreEnglish): string {
+  return t(used > 0 ? "memory.used.lookedThroughMore" : "memory.used.lookedThrough", { count: listed, n: String(listed) });
 }
 
 /** The canvas chip under an answer: "Used 3 memories", "Looked through 6 memories", "Used 1 memory · looked through 5 more". */
-export function memoryUsedLabel(count: number, listed = 0): string {
-  if (count === 0 && listed > 0) return memoryListedHeading(listed, 0);
-  const used = `Used ${plural(count, "memory", "memories")}`;
-  return listed === 0 ? used : `${used} · looked through ${listed} more`;
+export function memoryUsedLabel(count: number, listed = 0, t: CoreT = coreEnglish): string {
+  if (count === 0 && listed > 0) return memoryListedHeading(listed, 0, t);
+  return listed === 0
+    ? t("memory.used.used", { count, n: String(count) })
+    : t("memory.used.usedAndLooked", { count, n: String(count), listed: String(listed) });
 }
 
 /** The terminal's dim line after an answer: "memory: 3 used · /why", "memory: 6 looked through · /why". */
-export function memoryUsedLine(count: number, listed = 0): string {
-  const parts = [...(count > 0 || listed === 0 ? [`${count} used`] : []), ...(listed > 0 ? [`${listed} looked through`] : [])];
-  return `memory: ${parts.join(", ")} · /why`;
+export function memoryUsedLine(count: number, listed = 0, t: CoreT = coreEnglish): string {
+  const parts = [
+    ...(count > 0 || listed === 0 ? [t("memory.usedLine.used", { count, n: String(count) })] : []),
+    ...(listed > 0 ? [t("memory.usedLine.looked", { count: listed, n: String(listed) })] : []),
+  ];
+  return t("memory.usedLine", { parts: parts.join(", ") });
 }
 
 /**
@@ -408,18 +460,19 @@ export function memoryUsedLine(count: number, listed = 0): string {
  * proposal, the app for a sensitive one. A card of more than one item puts
  * each item's number before its name, so `/memory keep 2` decides one.
  */
-export function memoryCardLine(card: Pick<MemoryCardAnswer, "title" | "items" | "forgotten" | "digest">): string {
-  if (card.items.length === 0 && card.forgotten === 0) return `◆ ${card.title} — decided`;
+export function memoryCardLine(card: Pick<MemoryCardAnswer, "title" | "items" | "forgotten" | "digest">, t: CoreT = coreEnglish): string {
+  const title = memoryCardTitleText(card.title, t);
+  if (card.items.length === 0 && card.forgotten === 0) return `◆ ${t("memory.line.decided", { title })}`;
   // A digest is always numbered, and says first what it is while anything on it waits.
   const digest = card.digest !== undefined;
   const numbered = card.items.length > 1 || digest;
-  const parts: string[] = digest && card.items.some((item) => item.state === "proposed") ? [card.title] : [];
+  const parts: string[] = digest && card.items.some((item) => item.state === "proposed") ? [title] : [];
   for (const state of MEMORY_CARD_STATES) {
     const items = card.items.filter((item) => item.state === state);
     const count = items.length + (state === "forgotten" ? card.forgotten : 0);
     if (count === 0) continue;
     if (state === "forgotten" || state === "hidden") {
-      parts.push(`${STATE_LABELS[state]}: ${plural(count, "item", "items")}`);
+      parts.push(`${t(STATE_LABELS[state])}: ${t("memory.line.items", { count, n: String(count) })}`);
       continue;
     }
     // A waiting tidy-up is marked: it is compared in the app. One proposed after the chat read
@@ -427,20 +480,20 @@ export function memoryCardLine(card: Pick<MemoryCardAnswer, "title" | "items" | 
     const tidy = (item: MemoryCardItem): string => {
       if (state !== "proposed") return "";
       const read = item.sensitive ? undefined : memoryCardProvenanceLine(item);
-      return `${item.tidyUp === true ? " (tidy-up)" : ""}${read === undefined ? "" : ` (${read})`}`;
+      return `${item.tidyUp === true ? ` ${t("memory.line.tidyUp")}` : ""}${read === undefined ? "" : ` (${read})`}`;
     };
     if (numbered) {
       parts.push(
-        `${STATE_LABELS[state]}: ${items.map((item) => `${item.number}. ${item.sensitive ? "sensitive item" : (item.title ?? "Untitled memory")}${tidy(item)}`).join("; ")}`,
+        `${t(STATE_LABELS[state])}: ${items.map((item) => `${item.number}. ${item.sensitive ? t("memory.line.sensitiveItem") : (item.title ?? t("memory.card.item.untitled"))}${tidy(item)}`).join("; ")}`,
       );
       continue;
     }
     const sensitive = items.filter((item) => item.sensitive).length;
     const names = [
-      ...items.filter((item) => !item.sensitive).map((item) => `${item.title ?? "Untitled memory"}${tidy(item)}`),
-      ...(sensitive > 0 ? [plural(sensitive, "sensitive item", "sensitive items")] : []),
+      ...items.filter((item) => !item.sensitive).map((item) => `${item.title ?? t("memory.card.item.untitled")}${tidy(item)}`),
+      ...(sensitive > 0 ? [t("memory.line.sensitiveItems", { count: sensitive, n: String(sensitive) })] : []),
     ];
-    parts.push(`${STATE_LABELS[state]}: ${names.join("; ")}`);
+    parts.push(`${t(STATE_LABELS[state])}: ${names.join("; ")}`);
   }
   const keepable = card.items.filter(memoryCardItemKeepable);
   const plain = card.items.filter(memoryCardItemIsPlain);
@@ -456,10 +509,10 @@ export function memoryCardLine(card: Pick<MemoryCardAnswer, "title" | "items" | 
   const commands = memoryCardCommands(keepable, plain.length, digest);
   const looks = [
     ...(sensitiveWaiting
-      ? [keepable.length === 0 && !updateWaiting && !tidyWaiting ? "open Tavi to review" : "open Tavi for the sensitive one"]
+      ? [t(keepable.length === 0 && !updateWaiting && !tidyWaiting ? "memory.line.openToReview" : "memory.line.openForSensitive")]
       : []),
-    ...(updateWaiting ? ["open Tavi to replace the update"] : []),
-    ...(tidyWaiting ? ["open Tavi to compare the tidy-up"] : []),
+    ...(updateWaiting ? [t("memory.line.openToReplace")] : []),
+    ...(tidyWaiting ? [t("memory.line.openToCompare")] : []),
   ];
   const hint = [...commands, ...looks].join(" · ");
   return `◆ ${parts.join(" · ")}${hint === "" ? "" : ` — ${hint}`}`;
@@ -478,7 +531,7 @@ function memoryCardCommands(keepable: readonly MemoryCardItem[], plain: number, 
 }
 
 /** What a listed item proposed after its chat read untrusted content adds: *Keep all* leaves it waiting. */
-export const MEMORY_PROVENANCE_KEEP_ALONE = "Keep all leaves it waiting";
+export const MEMORY_PROVENANCE_KEEP_ALONE = coreEnglish("memory.card.keepAllLeavesIt");
 
 /**
  * A channel card's button press: `y:<token>:<op>`, at most 36
@@ -564,7 +617,7 @@ export function memoryCardChannelMessage(
                   : item.tidyUp === true
                     ? ` — ${MEMORY_TIDY_UP_LOOK}`
                     : "") + (read === undefined ? "" : ` — ${read}; ${MEMORY_PROVENANCE_KEEP_ALONE}`)
-          : ` — ${STATE_LABELS[item.state].toLowerCase()}`;
+          : ` — ${memoryCardStateLabel(item.state).toLowerCase()}`;
       lines.push(`${item.number}. ${item.state === "proposed" && item.sensitive ? "Sensitive item" : memoryCardItemName(item)}${suffix}`);
     }
     if (card.forgotten > 0 && items.length > 0) lines.push(`Forgotten: ${plural(card.forgotten, "item", "items")}`);
@@ -663,6 +716,8 @@ export const MemoryCardAllAnswerSchema = z.strictObject({
 export type MemoryCardAllAnswer = z.infer<typeof MemoryCardAllAnswerSchema>;
 
 /** What a *Keep all* says: "Kept 4", or "Kept 4 · 1 needs a look — open Tavi to review". */
-export function memoryKeptAllText(kept: number, needsLook: number): string {
-  return `Kept ${kept}${needsLook === 0 ? "" : ` · ${needsLook} needs a look — open Tavi to review`}`;
+export function memoryKeptAllText(kept: number, needsLook: number, t: CoreT = coreEnglish): string {
+  return needsLook === 0
+    ? t("memory.card.keptAll", { count: String(kept) })
+    : t("memory.card.keptAllNeedsLook", { kept: String(kept), count: needsLook, n: String(needsLook) });
 }

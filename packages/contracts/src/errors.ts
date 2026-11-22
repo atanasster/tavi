@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { errorMessage } from "./util.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 
 /**
  * Typed errors.
@@ -60,7 +61,12 @@ export const TAVI_ERROR_CODES = [
 ] as const;
 
 /** What a stopped turn says, in the transcript and the chats list's words. Its code stays in the trajectory. */
-export const TURN_STOPPED_MESSAGE = "You stopped this.";
+export function turnStoppedMessage(t: CoreT = coreEnglish): string {
+  return t("turn.stopped.message");
+}
+
+/** `turnStoppedMessage` in English: what a stopped turn records (its final text and error), which the model reads too. */
+export const TURN_STOPPED_MESSAGE = turnStoppedMessage();
 
 export const TaviErrorCodeSchema = z.enum(TAVI_ERROR_CODES);
 export type TaviErrorCode = z.infer<typeof TaviErrorCodeSchema>;

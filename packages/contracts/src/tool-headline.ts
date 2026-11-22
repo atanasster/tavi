@@ -10,6 +10,9 @@
  * the contract rather than an oversight: the caller shows the tool id alone.
  */
 
+import { coreEnglish, type CoreT } from "./locales/core.js";
+import type { CoreKey } from "./locales/core-en.js";
+
 /** What the collectors and the report tools are scoped by. */
 const PROJECT_FIELDS = ["projectId", "metricKey"] as const;
 
@@ -73,18 +76,18 @@ export function toolCallHeadline(toolId: string, input: unknown): string | undef
 }
 
 /** What a call does, in a word or two, for the tools a person is asked about most; others go by their tool id. */
-const TOOL_CALL_VERBS: Readonly<Record<string, string>> = {
-  "browser.navigate": "Open",
-  "fs.delete": "Delete",
-  "fs.edit": "Edit",
-  "fs.list": "List",
-  "fs.read": "Read",
-  "fs.write": "Write",
-  "http.request": "Request",
-  "pdf.fill": "Fill in",
-  "sandbox.run": "Run",
-  web_fetch: "Fetch",
-  web_search: "Search the web for",
+const TOOL_CALL_VERBS: Readonly<Record<string, CoreKey>> = {
+  "browser.navigate": "tool.title.browserNavigate",
+  "fs.delete": "tool.title.fsDelete",
+  "fs.edit": "tool.title.fsEdit",
+  "fs.list": "tool.title.fsList",
+  "fs.read": "tool.title.fsRead",
+  "fs.write": "tool.title.fsWrite",
+  "http.request": "tool.title.httpRequest",
+  "pdf.fill": "tool.title.pdfFill",
+  "sandbox.run": "tool.title.sandboxRun",
+  web_fetch: "tool.title.webFetch",
+  web_search: "tool.title.webSearch",
 };
 
 /**
@@ -92,10 +95,10 @@ const TOOL_CALL_VERBS: Readonly<Record<string, string>> = {
  * the call a headline, else its tool id with the headline, else the tool id —
  * never the tool id twice.
  */
-export function toolCallTitle(toolId: string, summary: string | undefined): string {
+export function toolCallTitle(toolId: string, summary: string | undefined, t: CoreT = coreEnglish): string {
   if (summary === undefined || summary === "") return toolId;
   const verb = Object.hasOwn(TOOL_CALL_VERBS, toolId) ? TOOL_CALL_VERBS[toolId] : undefined;
-  return `${verb ?? toolId} ${summary}`;
+  return verb === undefined ? `${toolId} ${summary}` : t(verb, { subject: summary });
 }
 
 /** Whether a card's detail is a file change's unified diff (`--- path` then `+++ path`), not free text that starts like one. */

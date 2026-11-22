@@ -19,7 +19,7 @@ import {
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { useLoaded } from "../../hooks/use-loaded.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { instantLabel, todayIn } from "../../lib/time.js";
 import { Button } from "../../ui/Button.js";
 import { Confirm } from "../../ui/Confirm.js";
@@ -210,7 +210,7 @@ function SkillRow({
         ) : (
           <span>{t("center.skills.active", { version: entry.active })}</span>
         )}{" "}
-        <span className="muted">· {skillUsageText(entry)}</span>
+        <span className="muted">· {skillUsageText(entry, translateCore)}</span>
         {entry.unused ? <strong>{t("center.skills.unused", { count: SKILL_UNUSED_DAYS })}</strong> : null}
         {entry.active === undefined ? null : (
           <Button variant="ghost" size="sm" onClick={() => void onDecide({ action: "disable", skillId: entry.skillId }, entry.active)}>
@@ -276,7 +276,7 @@ function SkillVersionViewer({
       proposal === undefined ? { ok: true as const, value: undefined } : await skillTrace(client, workspaceId, skillId, version),
     [workspaceId, skillId, version, proposal === undefined],
   );
-  const untrusted = stored === undefined ? undefined : skillProposalUntrustedLine(stored);
+  const untrusted = stored === undefined ? undefined : skillProposalUntrustedLine(stored, translateCore);
   const editedInto = stored === undefined ? undefined : skillProposalEditedInto(stored, shown.data?.versions ?? []);
   // A version this workspace activated before can be rolled back to; the history says which.
   const everActive = new Set((shown.data?.history ?? []).flatMap((entry) => (entry.newVersion === undefined ? [] : [entry.newVersion])));
@@ -295,7 +295,7 @@ function SkillVersionViewer({
   const escalation =
     against === undefined || stored === undefined
       ? undefined
-      : skillToolsEscalationText(against.manifest.allowedTools, stored.manifest.allowedTools);
+      : skillToolsEscalationText(against.manifest.allowedTools, stored.manifest.allowedTools, translateCore);
   const diff = useMemo(
     () => (answer?.text === undefined || parentText === undefined || !diffed ? undefined : lineDiff(parentText, answer.text)),
     [answer?.text, parentText, diffed],
@@ -519,8 +519,8 @@ function SkillVersionViewer({
           <ul className="list-reset">
             {shown.data.history.map((entry) => (
               <li key={entry.historyId} className="muted">
-                <time dateTime={entry.at}>{instantLabel(entry.at, timeZone, today)}</time> · {skillActivationHistoryText(entry)} ·{" "}
-                {entry.actor}
+                <time dateTime={entry.at}>{instantLabel(entry.at, timeZone, today)}</time> ·{" "}
+                {skillActivationHistoryText(entry, translateCore)} · {entry.actor}
               </li>
             ))}
           </ul>
@@ -547,7 +547,7 @@ function SkillTrace({ trace, error }: { readonly trace: SkillsTraceAnswer | unde
           <ol className="soul-skill-trace-calls">
             {trace.calls.map((call, index) => (
               <li key={index} data-status={call.status}>
-                <code>{skillTraceLine(call)}</code>
+                <code>{skillTraceLine(call, translateCore)}</code>
               </li>
             ))}
           </ol>

@@ -9,6 +9,7 @@ import {
   ChatFolderModeSchema,
 } from "./chat-folders.js";
 import { IdSchema, TimestampSchema } from "./ids.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 
 /**
  * A chat's working folder over IPC: the
@@ -173,7 +174,12 @@ export const FolderViewSchema = z.strictObject({
 export type FolderView = z.infer<typeof FolderViewSchema>;
 
 /** The label a chat's own managed folder is shown by. */
-export const MANAGED_FOLDER_LABEL = "Chat files";
+export function managedFolderLabel(t: CoreT = coreEnglish): string {
+  return t("folder.managed.label");
+}
+
+/** `managedFolderLabel` in English: the label the owner sends in a folder view (`primary.label`, the `managed` entry). */
+export const MANAGED_FOLDER_LABEL = managedFolderLabel();
 
 export const FOLDER_ENTRY_KINDS = ["file", "directory", "link", "other"] as const;
 

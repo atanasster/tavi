@@ -9,7 +9,7 @@ import {
 } from "@tavi/contracts";
 import { useEffect, useRef } from "react";
 import { useLoaded } from "../../hooks/use-loaded.js";
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import { dayTime, todayIn } from "../../lib/time.js";
 import { Button } from "../../ui/Button.js";
 import { Empty } from "../../ui/Empty.js";
@@ -231,8 +231,8 @@ function Policy({ schedule, zone }: { readonly schedule: ScheduleShowResult; rea
           schedule.maxTokens === undefined
             ? schedule.webhook === undefined && schedule.emailTrigger === undefined
               ? t("center.schedulePage.tokenCeilingNone")
-              : t("center.schedulePage.tokenCeilingEvents", { tokens: tokenCountText(SCHEDULE_EVENT_MAX_TOKENS) })
-            : t("center.schedulePage.tokenCeilingSet", { tokens: tokenCountText(schedule.maxTokens) }),
+              : t("center.schedulePage.tokenCeilingEvents", { tokens: tokenCountText(SCHEDULE_EVENT_MAX_TOKENS, translateCore) })
+            : t("center.schedulePage.tokenCeilingSet", { tokens: tokenCountText(schedule.maxTokens, translateCore) }),
         ],
         [
           t("center.schedulePage.delivers"),
@@ -240,7 +240,7 @@ function Policy({ schedule, zone }: { readonly schedule: ScheduleShowResult; rea
         ],
         [
           t("center.schedulePage.tellsYou"),
-          t("center.schedulePage.tellsYouText", { notify: capitalised(scheduleNotifyText(schedule.notify)) }),
+          t("center.schedulePage.tellsYouText", { notify: capitalised(scheduleNotifyText(schedule.notify, translateCore)) }),
         ],
         watching !== undefined && [t("center.schedulePage.watcher"), t("center.schedulePage.watcherText", { watching })],
         [
@@ -248,9 +248,9 @@ function Policy({ schedule, zone }: { readonly schedule: ScheduleShowResult; rea
           schedule.precheck === undefined
             ? t("center.schedulePage.precheckNone")
             : schedule.precheckState === undefined
-              ? t("center.schedulePage.precheckText", { check: capitalised(schedulePrecheckSentence(schedule.precheck)) })
+              ? t("center.schedulePage.precheckText", { check: capitalised(schedulePrecheckSentence(schedule.precheck, translateCore)) })
               : t("center.schedulePage.precheckTextRead", {
-                  check: capitalised(schedulePrecheckSentence(schedule.precheck)),
+                  check: capitalised(schedulePrecheckSentence(schedule.precheck, translateCore)),
                   when: dayTime(schedule.precheckState.checkedAt, zone, todayIn(zone)),
                 }),
         ],

@@ -138,7 +138,7 @@ describe("a plugin tool's untrusted output", () => {
         { name: "own", effect: "read-only", description: "Its own data", untrustedOutput: false },
       ],
     });
-    expect(pluginToolViews({ pluginId: "acme.tally", manifest }).map(describePluginTool)).toEqual([
+    expect(pluginToolViews({ pluginId: "acme.tally", manifest }).map((tool) => describePluginTool(tool))).toEqual([
       "acme.tally.page (read-only)",
       "acme.tally.own (read-only, trusted output)",
     ]);

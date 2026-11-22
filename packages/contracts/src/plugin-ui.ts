@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { coreEnglish, type CoreT } from "./locales/core.js";
 import { PLUGIN_ID_PATTERN, PluginVersionSchema } from "./plugin-ids.js";
 
 /**
@@ -33,10 +34,11 @@ export type PluginUiChannel = z.infer<typeof PluginUiChannelSchema>;
  * takeover surface is the one that drives them, so the operator is told the
  * plugin is not given them: the channel is declared, never delivered.
  */
-export function channelDisclosure(channels: readonly PluginUiChannel[], disclosure: string | undefined): string {
-  const said = disclosure ?? `It receives ${channels.join(", ")}.`;
+export function channelDisclosure(channels: readonly PluginUiChannel[], disclosure: string | undefined, t: CoreT = coreEnglish): string {
+  const said = disclosure ?? t("plugin.ui.channels.receives", { channels: channels.join(", ") });
   if (!channels.includes("browser.control")) return said;
-  return `${said} It also asks to see and type into pages you take over, sign-in pages included; Tavi draws its own takeover surface, so it is not given them.`;
+  // Two whole sentences: the plugin's own (or what it receives), then what control asks for.
+  return `${said} ${t("plugin.ui.channels.control")}`;
 }
 
 /** Exclusive roles: one plugin fills each per workspace (`uiRoles`), as the router fills its slot. */
@@ -201,11 +203,19 @@ export function pluginUiFiles(ui: PluginUi): readonly string[] {
 }
 
 /** How a contribution is listed for review: `id (role) → slots; channels; disclosure`. */
-export function describePluginUiContribution(contribution: PluginUiContribution): string {
-  const role = contribution.role === undefined ? "" : ` (role ${contribution.role})`;
+export function describePluginUiContribution(contribution: PluginUiContribution, t: CoreT = coreEnglish): string {
+  const name =
+    contribution.role === undefined
+      ? contribution.id
+      : t("plugin.ui.contribution.withRole", { id: contribution.id, role: contribution.role });
   const slots = contribution.placements.map((placement) => placement.slot).join(", ");
-  const channels = contribution.channels.length === 0 ? "no channels" : `receives ${contribution.channels.join(", ")}`;
-  return `${contribution.id}${role} → ${slots}; ${channels}${contribution.disclosure === undefined ? "" : ` — ${contribution.disclosure}`}`;
+  const channels =
+    contribution.channels.length === 0
+      ? t("plugin.ui.contribution.noChannels")
+      : t("plugin.ui.contribution.receives", { channels: contribution.channels.join(", ") });
+  return contribution.disclosure === undefined
+    ? t("plugin.ui.contribution.line", { name, slots, channels })
+    : t("plugin.ui.contribution.lineDisclosure", { name, slots, channels, disclosure: contribution.disclosure });
 }
 
 // ---------------------------------------------------------------------------

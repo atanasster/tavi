@@ -6,7 +6,7 @@ import { approvalChannelLabel, type PendingHandoffRow, type PendingQuestionRow }
 import { Icon } from "../../ui/Icon.js";
 import { QuestionCard, answerLabels, questionNeed, sentAnswer, type QuestionNeed } from "../needs/NeedCard.js";
 import { RECONNECT_TO_ANSWER_KEY } from "../chat/store/runs.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { withParts } from "../../ui/with-parts.js";
 import type { WorkerNeeds } from "../chat/store/types.js";
 import { openWorkerQuestions } from "../chat/store/workers.js";
@@ -29,7 +29,11 @@ export const workerAsker = (row: Pick<PendingQuestionRow, "workerLabel" | "taskT
 
 /** A worker's question as the card shows it. */
 export const workerQuestionNeed = (row: PendingQuestionRow, connectionName?: (connectionId: string) => string | undefined): QuestionNeed =>
-  questionNeed(row, (delivery) => delivery.channel ?? approvalChannelLabel(delivery.connectionId, connectionName), workerAsker(row));
+  questionNeed(
+    row,
+    (delivery) => delivery.channel ?? approvalChannelLabel(delivery.connectionId, connectionName, translateCore),
+    workerAsker(row),
+  );
 
 /** Decide a worker's round from the chat on screen. */
 export type WorkerRoundDecide = (round: PendingRoundCard, decision: RoundDecision) => void;

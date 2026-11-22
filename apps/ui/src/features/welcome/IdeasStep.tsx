@@ -1,6 +1,6 @@
 import {
   FAST_MODEL_FAILED,
-  IDEA_CAPABILITY_LABELS,
+  ideaCapabilityLabel,
   IDEA_PRESET_CAPABILITIES,
   type IdeaCapability,
   type IdeaChip,
@@ -10,7 +10,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 import { ideaChips, ideasSettings, refreshIdeas, tryIdea } from "../ideas/ideas-api.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import type { SettingsClient } from "../../lib/ipc.js";
 import { Notice, Pending } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
@@ -143,7 +143,7 @@ export function IdeasStep(props: IdeasStepProps) {
           {chips.map((chip) => {
             const uses = chip.uses ?? [];
             const fresh = uses.map((use) => unlocked.get(use.capability)).find((label) => label !== undefined);
-            const capabilities = uses.map((use) => IDEA_CAPABILITY_LABELS[use.capability]).join(" · ");
+            const capabilities = uses.map((use) => ideaCapabilityLabel(use.capability, translateCore)).join(" · ");
             return (
               <li key={chip.ideaId ?? chip.label} className="welcome-card">
                 <h2>

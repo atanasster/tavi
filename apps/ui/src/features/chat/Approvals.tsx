@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { PendingRound } from "@tavi/client/browser";
 import { displaySafe, toolGroupLabel, toolGroupScopeNote, type ApprovalScope } from "@tavi/contracts";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { InlineConfirm, Notice } from "../../ui/Parts.js";
 import { decidableRound } from "./store/runs.js";
 import type { CanvasRun, CanvasStore } from "./store/types.js";
@@ -29,6 +29,7 @@ export function roundGroupName(
   return toolGroupLabel(
     group,
     round.requests.flatMap((request) => (request.display?.host === undefined ? [] : [request.display.host])),
+    translateCore,
   );
 }
 
@@ -335,7 +336,7 @@ function Pending({
             <summary className="disclosure">{t("chat.approval.group.whatAllows")}</summary>
             <Notice>
               {t(session.explain, { group: roundGroupName(group, round) })}
-              {((note) => (note === undefined ? "" : ` ${note}`))(toolGroupScopeNote(group))}
+              {((note) => (note === undefined ? "" : ` ${note}`))(toolGroupScopeNote(group, translateCore))}
               {scopes.includes("always") ? ` ${t("chat.approval.group.explainAlways")}` : ""}
             </Notice>
           </details>

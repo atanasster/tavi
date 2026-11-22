@@ -16,7 +16,7 @@ import { loadScheduleTools } from "../center/schedules-api.js";
 import { CreateRoutine, type RepeatFields } from "../routines/RoutineForms.js";
 import type { Outcome, SettingsClient } from "../../lib/ipc.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import { Button } from "../../ui/Button.js";
 import { Modal } from "../../ui/Modal.js";
 import { Notice, Pending } from "../../ui/Parts.js";
@@ -145,7 +145,7 @@ export function RepeatForms({
       {data.taint.kind === "clean" ? null : (
         <p>
           {data.taint.kind === "tainted"
-            ? t("chat.repeat.tainted", { sources: provenanceSourcesPhrase(data.taint.label) })
+            ? t("chat.repeat.tainted", { sources: provenanceSourcesPhrase(data.taint.label, undefined, translateCore) })
             : t("chat.repeat.taintUnknown")}{" "}
           {t(as === "routine" ? "chat.repeat.check.routine" : "chat.repeat.check.schedule")}
         </p>

@@ -1,7 +1,7 @@
-import { BUILTIN_IDEAS_PROVIDER_ID, IDEA_CAPABILITY_LABELS, type Idea, type IdeaBasis, type IdeaCategory } from "@tavi/contracts";
+import { BUILTIN_IDEAS_PROVIDER_ID, ideaCapabilityLabel, type Idea, type IdeaBasis, type IdeaCategory } from "@tavi/contracts";
 import type { ReactNode } from "react";
 
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import { Icon, type IconName } from "../../ui/Icon.js";
 import { Button } from "../../ui/Button.js";
 
@@ -114,7 +114,8 @@ export function IdeaCard({
         ))}
       </p>
       <p className="idea-meta">
-        <strong>{t("ideas.card.usesLabel")}</strong> {idea.uses.map((use) => IDEA_CAPABILITY_LABELS[use.capability]).join(" · ")}
+        <strong>{t("ideas.card.usesLabel")}</strong>{" "}
+        {idea.uses.map((use) => ideaCapabilityLabel(use.capability, translateCore)).join(" · ")}
         {asks ? t("ideas.card.asks") : ""}
       </p>
       {idea.prepared === undefined ? null : (

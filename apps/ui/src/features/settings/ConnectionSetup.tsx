@@ -1,8 +1,8 @@
 import { useId, useState, type FormEvent } from "react";
-import { MODEL_PROVIDER_PRESETS, type ModelProviderPreset } from "@tavi/contracts";
+import { MODEL_PROVIDER_PRESETS, presetNote, type ModelProviderPreset } from "@tavi/contracts";
 
 import { hostOf } from "../../lib/format.js";
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import { withParts } from "../../ui/with-parts.js";
 import { addModelConnection, connectionProblem, isKeyProblem, modelWrite, rebindModel } from "./model-setup.js";
 import { SETTINGS_BOUNDS } from "./common.js";
@@ -146,7 +146,7 @@ function ConnectionDetails({
           <Button variant="ghost" size="sm" onClick={onBack}>
             {t("settings.connection.allProviders")}
           </Button>
-          {preset.note === undefined ? null : <span>{preset.note}</span>}{" "}
+          {preset.note === undefined ? null : <span>{presetNote(preset, translateCore)}</span>}{" "}
           <a href={preset.docsUrl} target="_blank" rel="noreferrer">
             {t("settings.connection.docs", { name: preset.name })}
           </a>

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { APP_HEALTH } from "./connected-apps.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 
 /**
  * A `connect` wait: a call in a
@@ -31,7 +32,9 @@ export const ConnectSettlementSchema = z.strictObject({ outcome: z.enum(CONNECT_
 export type ConnectSettlement = z.infer<typeof ConnectSettlementSchema>;
 
 /** A channel's words for a connect need: text only, no link, no token — a login never starts from a channel. */
-export function connectNeedText(request: Pick<ConnectRequest, "appName"> & Partial<Pick<ConnectRequest, "health">>): string {
-  const ask = request.health === "not-set-up" ? "isn't signed in yet" : "needs you to sign in again";
-  return `${request.appName} ${ask}. Open Tavi on your computer → Connected apps.`;
+export function connectNeedText(
+  request: Pick<ConnectRequest, "appName"> & Partial<Pick<ConnectRequest, "health">>,
+  t: CoreT = coreEnglish,
+): string {
+  return t(request.health === "not-set-up" ? "app.connect.need.notSetUp" : "app.connect.need.signInAgain", { app: request.appName });
 }

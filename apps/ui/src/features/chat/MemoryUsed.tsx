@@ -12,7 +12,7 @@ import {
 } from "@tavi/contracts";
 import { useCallback, useId, useState } from "react";
 
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { localDayWithYear } from "../../lib/time.js";
 import type { UiKey } from "../../locales/en.js";
 import { forgetUsedMemory, keepEditedMemory, listUsedInTurn, loadMemoryBody } from "../chat-panel/api.js";
@@ -139,14 +139,17 @@ export function MemoryUsed({
     lookedThrough === undefined ? 0 : Math.max(0, lookedThrough.count - (listed?.listed?.length ?? 0) - lookedGone - lookedHidden);
   /** One record of the list: what it says, with *Forget* and *Correct*. */
   const recordItem = (record: MemoryItem) => {
-    const name = memoryCardItemName({
-      state: "saved",
-      sensitive: record.redacted,
-      title: memoryCardTitleOf({
-        ...(record.title === null ? {} : { title: record.title }),
-        ...(record.body === null ? {} : { body: record.body }),
-      }),
-    });
+    const name = memoryCardItemName(
+      {
+        state: "saved",
+        sensitive: record.redacted,
+        title: memoryCardTitleOf({
+          ...(record.title === null ? {} : { title: record.title }),
+          ...(record.body === null ? {} : { body: record.body }),
+        }),
+      },
+      translateCore,
+    );
     const editingThis = editing?.recordId === record.recordId;
     return (
       <li key={record.recordId} className="memory-used-item">
@@ -236,8 +239,8 @@ export function MemoryUsed({
         className="memory-used-chip"
         aria-expanded={open}
         aria-controls={`${id}-list`}
-        aria-label={memoryUsedLabel(count, looked)}
-        title={memoryUsedLabel(count, looked)}
+        aria-label={memoryUsedLabel(count, looked, translateCore)}
+        title={memoryUsedLabel(count, looked, translateCore)}
         onClick={toggle}
       >
         <Icon name="memory" size="sm" />
@@ -258,7 +261,9 @@ export function MemoryUsed({
               {lookedThrough === undefined ? null : (
                 <>
                   {/* The chip already says it when there is nothing else here. */}
-                  {count === 0 ? null : <p className="memory-used-title">{memoryListedHeading(lookedThrough.count, count)}</p>}
+                  {count === 0 ? null : (
+                    <p className="memory-used-title">{memoryListedHeading(lookedThrough.count, count, translateCore)}</p>
+                  )}
                   {listed.listed === undefined || listed.listed.length === 0 ? null : (
                     <ul className="memory-used-items">{listed.listed.map(recordItem)}</ul>
                   )}

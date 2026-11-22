@@ -4,6 +4,7 @@ import {
   keyPageOf,
   MODEL_PROVIDER_PRESETS,
   ONBOARDING_ENV_KEYS,
+  presetNote,
   type ModelProviderPreset,
   type OnboardingConnectAnswer,
   type OnboardingDetectAnswer,
@@ -13,7 +14,7 @@ import {
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { delay } from "../../lib/delay.js";
 import { hostOf } from "../../lib/format.js";
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import { Icon } from "../../ui/Icon.js";
 import {
   connectDetected,
@@ -275,7 +276,7 @@ function KeyForm(
   };
   return (
     <div className="welcome-key" ref={entered}>
-      {props.preset.note === undefined ? null : <Notice>{props.preset.note}</Notice>}
+      {props.preset.note === undefined ? null : <Notice>{presetNote(props.preset, translateCore)}</Notice>}
       {props.preset.id === "openrouter" && !pasting ? (
         <div className="actions">
           <Button variant="ghost" onClick={props.onBack}>

@@ -20,7 +20,7 @@ import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import { withParts } from "../../ui/with-parts.js";
 
 /**
@@ -109,7 +109,7 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
                     </>
                   )}
                   <p className="settings-description">
-                    {room.conversationId} · {t("settings.rooms.answersWhen", { trigger: triggerInWords(room.trigger) })} ·{" "}
+                    {room.conversationId} · {t("settings.rooms.answersWhen", { trigger: triggerInWords(room.trigger, translateCore) })} ·{" "}
                     {room.members === "operator-only" ? t("settings.rooms.onlyYou") : t("settings.rooms.allowedPeople")} ·{" "}
                     {room.context === "recent" ? t("settings.rooms.readsRecent", { count: 20 }) : t("settings.rooms.readsOnly")}
                   </p>

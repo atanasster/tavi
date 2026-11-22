@@ -12,7 +12,7 @@ import {
   type ScheduleSpec,
 } from "@tavi/contracts";
 
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { Select } from "../../ui/Select.js";
 import { Modal } from "../../ui/Modal.js";
 import { FormActions, FormFailure, LoadError } from "../settings/FormParts.js";
@@ -159,7 +159,7 @@ export function CreateRoutine({
   useEffect(() => edited.current?.({ name, text: objective, spec }), [name, objective, spec]);
   const others = draft?.triggers.slice(1) ?? [];
   const [instructions, setInstructions] = useState(draft?.instructions ?? "");
-  const provenance = routineProvenanceLine(draft?.provenance);
+  const provenance = routineProvenanceLine(draft?.provenance, translateCore);
   const notCopied = [
     ...(draft !== undefined && draft.otherTargets > 0 ? [t("routines.create.otherDestinations", { count: draft.otherTargets })] : []),
     ...(draft?.window === true ? [t("routines.create.window")] : []),

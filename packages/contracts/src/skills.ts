@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { IdSchema, TimestampSchema } from "./ids.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 import { MemoryProvenanceSchema, memoryProvenanceLine } from "./memory.js";
 import { clip } from "./util.js";
 
@@ -190,8 +191,8 @@ export function skillProposedOf(output: unknown): { readonly skillId: string; re
 }
 
 /** A terminal's one line under a proposal's call: where it waits, and the command that shows it. */
-export function skillProposalNoticeLine(skillId: string, version: string): string {
-  return `A skill waits for your review: ${skillReviewCommand(skillId, version)}`;
+export function skillProposalNoticeLine(skillId: string, version: string, t: CoreT = coreEnglish): string {
+  return t("skill.proposal.notice", { command: skillReviewCommand(skillId, version) });
 }
 
 /** The command that shows a proposal for review: the one line a terminal or a channel says of it. */
@@ -205,11 +206,9 @@ export function skillReviewCommand(skillId: string, version: string): string {
  * may come from there. Tavi cannot tell which words did, so the whole text is
  * flagged, not spans of it. `undefined` for a clean turn's.
  */
-export function skillProposalUntrustedLine(version: Pick<SkillVersion, "manifest">): string | undefined {
-  const line = memoryProvenanceLine(version.manifest.proposal?.untrusted);
-  return line === undefined
-    ? undefined
-    : `${line}. Parts of this text may come from that content, not from you or the agent's own steps: read it closely before approving.`;
+export function skillProposalUntrustedLine(version: Pick<SkillVersion, "manifest">, t: CoreT = coreEnglish): string | undefined {
+  const line = memoryProvenanceLine(version.manifest.proposal?.untrusted, {}, t);
+  return line === undefined ? undefined : t("skill.proposal.untrusted", { line });
 }
 
 /**
@@ -238,7 +237,8 @@ export const SKILL_FEEDBACK_MAX_CHARS = 4_000;
  * Regenerate-with-feedback: the message sent, as the person's own, to the
  * chat a proposal came from. It asks the agent to propose again — asked for,
  * so no cap on unasked offers holds it — with the feedback; the proposal it
- * follows still waits, for the person to reject or keep.
+ * follows still waits, for the person to reject or keep. English: the agent
+ * reads it.
  */
 export function skillRegenerateMessage(version: Pick<SkillVersion, "skillId" | "version" | "manifest">, feedback: string): string {
   return [
@@ -304,8 +304,9 @@ export function condenseSkillTrace(tools: readonly SkillTraceSource[]): {
 }
 
 /** A trace call as one line: `web_fetch {"url":"…"} — failed`. */
-export function skillTraceLine(call: SkillTraceCall): string {
-  return `${call.toolName}${call.input === "" ? "" : ` ${call.input}`}${call.status === "completed" ? "" : ` — ${call.status}`}`;
+export function skillTraceLine(call: SkillTraceCall, t: CoreT = coreEnglish): string {
+  const line = `${call.toolName}${call.input === "" ? "" : ` ${call.input}`}`;
+  return call.status === "completed" ? line : t("skill.trace.ended", { call: line, status: t(`skill.trace.${call.status}`) });
 }
 
 export const SkillActivationSchema = z.object({
@@ -344,15 +345,19 @@ export type SkillActivationHistoryEntry = z.infer<typeof SkillActivationHistoryE
  * One activation-history entry in words, for the Skills viewer and `tavi skills show`: "Activated 2.0.0 (was 1.0.0)",
  * "Rolled back to 1.0.0 (was 2.0.0)", "Disabled (was 1.0.0)". When and by whom are the caller's to add.
  */
-export function skillActivationHistoryText(entry: Pick<SkillActivationHistoryEntry, "reason" | "previousVersion" | "newVersion">): string {
-  const was = entry.previousVersion === undefined ? "" : ` (was ${entry.previousVersion})`;
+export function skillActivationHistoryText(
+  entry: Pick<SkillActivationHistoryEntry, "reason" | "previousVersion" | "newVersion">,
+  t: CoreT = coreEnglish,
+): string {
+  const previous = entry.previousVersion;
+  const version = entry.newVersion ?? t("skill.history.none");
   switch (entry.reason) {
     case "activate":
-      return `Activated ${entry.newVersion ?? "none"}${was}`;
+      return previous === undefined ? t("skill.history.activated", { version }) : t("skill.history.activatedWas", { version, previous });
     case "rollback":
-      return `Rolled back to ${entry.newVersion ?? "none"}${was}`;
+      return previous === undefined ? t("skill.history.rolledBack", { version }) : t("skill.history.rolledBackWas", { version, previous });
     case "disable":
-      return `Disabled${was}`;
+      return previous === undefined ? t("skill.history.disabled") : t("skill.history.disabledWas", { previous });
   }
 }
 
@@ -448,8 +453,8 @@ export function skillUsageOf(
 }
 
 /** A skill's use in words: "never used", or "3 uses, last 2026-10-20". */
-export function skillUsageText(usage: Pick<SkillUseSummary, "uses" | "lastUsedAt">): string {
+export function skillUsageText(usage: Pick<SkillUseSummary, "uses" | "lastUsedAt">, t: CoreT = coreEnglish): string {
   return usage.lastUsedAt === undefined
-    ? "never used"
-    : `${String(usage.uses)} use${usage.uses === 1 ? "" : "s"}, last ${usage.lastUsedAt.slice(0, 10)}`;
+    ? t("skill.usage.never")
+    : t("skill.usage.count", { count: usage.uses, uses: String(usage.uses), date: usage.lastUsedAt.slice(0, 10) });
 }

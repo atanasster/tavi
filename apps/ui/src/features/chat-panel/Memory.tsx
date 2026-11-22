@@ -1,9 +1,9 @@
 import type { MemoryItem } from "@tavi/contracts";
-import { memoryPendingProvidersNote } from "@tavi/contracts";
+import { memoryTaughtPendingProvidersNote } from "@tavi/contracts";
 import { useId, useState } from "react";
 
 import { decideMemory, forgetMemory, listMemory } from "../center/memory-api.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { dayMonth, localDate, localTime } from "../../lib/time.js";
 import { listed } from "../../lib/format.js";
 import { KIND_LABELS, recordTitle, scopeLabel } from "../center/memory-model.js";
@@ -214,7 +214,8 @@ function ForgetHistory({
     // A bound person's chat keeps their memory (invariant 21), even with the box ticked.
     const kept = memoryNotYours === true ? ` ${t("chatPanel.memory.notYours")}` : "";
     // A provider that could not take a removal now is named.
-    const waiting = memoryPendingProvidersNote(memoryWaitsFor)?.replace(/^It will/, " What it taught will") ?? "";
+    const pending = memoryTaughtPendingProvidersNote(memoryWaitsFor, translateCore);
+    const waiting = pending === undefined ? "" : ` ${pending}`;
     setSaid({
       text: `${t("chatPanel.memory.forgotten", { list: listed(went) })}${kept}${waiting} ${t("chatPanel.memory.reopen")}`,
       failed: false,

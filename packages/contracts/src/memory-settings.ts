@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { TaviError } from "./errors.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 import { MEMORY_PROPOSAL_TTL_DAYS } from "./memory.js";
 import { BUILTIN_MEMORY_PROVIDER_ID } from "./memory-provider.js";
 
@@ -94,9 +95,11 @@ export const MEMORY_EMBEDDING_PERSONAL_DISCLOSURE_REASON = "memory-embedding-per
  * its own opt-in (`retrievalPersonal`, `memoryPersonalEmbeddingDisclosure`),
  * and until then it is matched by its words there.
  */
-export function memoryEmbeddingDisclosure(input: { readonly connectionId: string; readonly records: number }): string {
-  const memories = `${input.records.toLocaleString("en-US")} approved ${input.records === 1 ? "memory" : "memories"}`;
-  return `Memory text and each message's retrieval query will be sent to ${input.connectionId} to compute embeddings: ${memories} of this workspace now, and each new one as it is approved. Personal memory is not sent unless you turn on personal memory too, so it is matched by its words only.`;
+export function memoryEmbeddingDisclosure(
+  input: { readonly connectionId: string; readonly records: number },
+  t: CoreT = coreEnglish,
+): string {
+  return t("memory.disclosure.embedding", { connection: input.connectionId, count: input.records });
 }
 
 /**
@@ -106,9 +109,11 @@ export function memoryEmbeddingDisclosure(input: { readonly connectionId: string
  * approved records would be sent to `connectionId` now, each new one as
  * approved. Other people's personal memory is never sent by this opt-in.
  */
-export function memoryPersonalEmbeddingDisclosure(input: { readonly connectionId: string; readonly personal: number }): string {
-  const memories = `${input.personal.toLocaleString("en-US")} of your approved personal memories`;
-  return `Your personal memory is shared by all your workspaces: turning this on sends ${memories} (never sensitive ones) to ${input.connectionId} to compute embeddings now, and each new one as it is approved. Other people's personal memory is never sent there.`;
+export function memoryPersonalEmbeddingDisclosure(
+  input: { readonly connectionId: string; readonly personal: number },
+  t: CoreT = coreEnglish,
+): string {
+  return t("memory.disclosure.personalEmbedding", { connection: input.connectionId, count: input.personal });
 }
 
 /**
@@ -137,8 +142,8 @@ export const MEMORY_PROVIDER_DISCLOSURE_REASON = "memory-provider-disclosure";
  * is the person's own, shared by every workspace they use, and would reach
  * this workspace's provider.
  */
-export function memoryPersonalDisclosure(providerId: string): string {
-  return `Personal memory is your own and shared by all your workspaces: turning this on sends your approved personal memories (never sensitive ones) to ${providerId}, this workspace's memory provider, and keeps it up to date with them.`;
+export function memoryPersonalDisclosure(providerId: string, t: CoreT = coreEnglish): string {
+  return t("memory.disclosure.personal", { provider: providerId });
 }
 
 export const MemoryLimitsSchema = z.strictObject({

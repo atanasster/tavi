@@ -4,6 +4,7 @@ import type { ChannelField } from "./channels.js";
 import { APP_ACCESS, APP_CATEGORIES, AppScopeSchema } from "./app-basics.js";
 import { ConfidentialitySchema } from "./content-label.js";
 import { IdSchema } from "./ids.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 import { LOOPBACK_ORIGIN_PATTERN } from "./mcp-ipc.js";
 import { MCP_PRESET_IDS } from "./mcp-manifest.js";
 import type { PluginConfigField } from "./plugin-registry.js";
@@ -216,19 +217,30 @@ export type PluginAppsBlock = z.infer<typeof PluginAppsBlockSchema>;
  * sentences, and each tool's title — the label Connected apps shows — with
  * its sentence.
  */
-export function describePluginApps(block: PluginAppsBlock): string[] {
-  const quote = (text: string) => JSON.stringify(text);
+export function describePluginApps(block: PluginAppsBlock, t: CoreT = coreEnglish): string[] {
+  // The author's words, escaped as a JSON string is (no line breaks, quotes escaped), inside the language's quotes.
+  // JSON leaves typographic quotes alone, so the language's own marks (and the nested „‚‘ pair) are escaped too:
+  // the author's text can never close the quote around it.
+  const wrapper = [...t("app.plugin.word.quoted", { text: "" })].filter((mark) => mark !== '"');
+  const marks = new Set(wrapper.length === 0 ? [] : [...wrapper, "„", "“", "‚", "‘"]);
+  const escapeMarks = (text: string) =>
+    [...text].map((c) => (marks.has(c) ? `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}` : c)).join("");
+  const quote = (text: string) => t("app.plugin.word.quoted", { text: escapeMarks(JSON.stringify(text).slice(1, -1)) });
   return block.apps.map((app) => {
     const words = [
-      `name ${quote(app.name)}`,
-      ...(app.publisher === undefined ? [] : [`publisher ${quote(app.publisher)}`]),
-      ...(app.summary.length === 0 ? [] : [`summary ${quote(app.summary)}`]),
-      ...app.scopes.map((scope) => `scope ${scope.scope} (${scope.access}) ${quote(scope.says)}`),
-      ...Object.entries(app.tools).map(
-        ([name, tool]) => `tool ${name} ${quote(tool.title)}${tool.says === undefined ? "" : ` ${quote(tool.says)}`}`,
+      t("app.plugin.word.name", { value: quote(app.name) }),
+      ...(app.publisher === undefined ? [] : [t("app.plugin.word.publisher", { value: quote(app.publisher) })]),
+      ...(app.summary.length === 0 ? [] : [t("app.plugin.word.summary", { value: quote(app.summary) })]),
+      ...app.scopes.map((scope) => t("app.plugin.word.scope", { scope: scope.scope, access: scope.access, says: quote(scope.says) })),
+      ...Object.entries(app.tools).map(([name, tool]) =>
+        tool.says === undefined
+          ? t("app.plugin.word.tool", { name, title: quote(tool.title) })
+          : t("app.plugin.word.toolSays", { name, title: quote(tool.title), says: quote(tool.says) }),
       ),
-    ];
-    return `App ${app.id} (${app.category}${app.dataClass === undefined ? "" : `, ${app.dataClass} data`}), in its author's words: ${words.join("; ")}`;
+    ].join("; ");
+    return app.dataClass === undefined
+      ? t("app.plugin.describe", { id: app.id, category: app.category, words })
+      : t("app.plugin.describeData", { id: app.id, category: app.category, dataClass: app.dataClass, words });
   });
 }
 

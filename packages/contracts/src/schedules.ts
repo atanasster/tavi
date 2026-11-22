@@ -16,6 +16,7 @@ import {
 import { STALE_WEB_PATTERN_MESSAGE, isStaleWebPattern } from "./tool-policy.js";
 import type { SchedulePrecheck, SchedulePrecheckState } from "./schedule-precheck.js";
 import { definedOnly } from "./util.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 
 /**
  * Recurring schedules.
@@ -241,35 +242,56 @@ export function scheduleCatchUpLookbackMs(spec: Pick<ScheduleSpec, "monthly" | "
  * the tools' read-backs and the web app say a schedule's and a routine
  * trigger's cadence through it.
  */
-export function scheduleSpecText(spec: ScheduleSpec, style: "sentence" | "label" = "sentence"): string {
+export function scheduleSpecText(spec: ScheduleSpec, style: "sentence" | "label" = "sentence", t: CoreT = coreEnglish): string {
   const sentence = style === "sentence";
-  const weekdays = daysOfWeekText(spec.daysOfWeek);
+  const weekdays = daysOfWeekText(spec.daysOfWeek, t);
   const pattern = spec.monthly !== undefined || spec.yearly !== undefined;
   const days =
     spec.once !== undefined
-      ? `${sentence ? "once" : "Once"} on ${spec.once}`
+      ? t(sentence ? "schedule.spec.once" : "schedule.spec.onceLabel", { date: spec.once })
       : pattern
-        ? repeatDaysText({ monthly: spec.monthly, yearly: spec.yearly }, style)
+        ? repeatDaysText({ monthly: spec.monthly, yearly: spec.yearly }, style, t)
         : weekdays === undefined
-          ? sentence
-            ? "every day"
-            : "Daily"
+          ? t(sentence ? "schedule.spec.everyDay" : "schedule.spec.daily")
           : sentence
-            ? `every ${weekdays}`
+            ? t("schedule.spec.everyWeekdays", { weekdays })
             : weekdays;
   const listed = [...(spec.times ?? (spec.at === undefined ? [] : [spec.at]))].sort();
-  const step = spec.everyHours === 1 ? "every hour" : `every ${String(spec.everyHours)} hours`;
-  const window = `${spec.between?.from ?? "00:00"}${sentence ? " to " : "–"}${spec.between?.to ?? "23:59"}`;
-  const times =
-    spec.everyHours !== undefined
-      ? sentence
-        ? `, ${step} from ${window}`
-        : `${pattern || spec.once !== undefined ? "," : ""} ${spec.everyHours === 1 ? "hourly" : `every ${String(spec.everyHours)} h`} ${window}`
-      : sentence
-        ? ` at ${listed.length <= 1 ? listed.join("") : `${listed.slice(0, -1).join(", ")} and ${listed.at(-1) ?? ""}`}`
-        : `${pattern || spec.once !== undefined ? "," : ""} ${listed.join(", ")}`;
-  const until = spec.until === undefined ? "" : ` until ${spec.until}`;
-  return sentence ? `${days}${times} (${spec.timezone})${until}` : `${days}${times}${until} · ${spec.timezone}`;
+  const from = spec.between?.from ?? "00:00";
+  const to = spec.between?.to ?? "23:59";
+  const dated = pattern || spec.once !== undefined;
+  const hours = spec.everyHours;
+  if (sentence) {
+    const text =
+      hours !== undefined
+        ? t("schedule.spec.sentenceEvery", {
+            days,
+            step: t("schedule.spec.everyHours", { count: hours }),
+            from,
+            to,
+            timezone: spec.timezone,
+          })
+        : t("schedule.spec.sentenceAt", { days, times: listAnd(listed, t), timezone: spec.timezone });
+    return spec.until === undefined ? text : t("schedule.spec.until", { spec: text, date: spec.until });
+  }
+  const label =
+    hours !== undefined
+      ? t(dated ? "schedule.spec.labelEveryDated" : "schedule.spec.labelEvery", {
+          days,
+          step: t("schedule.spec.everyHoursShort", { count: hours }),
+          from,
+          to,
+        })
+      : t(dated ? "schedule.spec.labelAtDated" : "schedule.spec.labelAt", { days, times: listed.join(", ") });
+  const until = spec.until === undefined ? label : t("schedule.spec.until", { spec: label, date: spec.until });
+  return t("schedule.spec.labelZone", { spec: until, timezone: spec.timezone });
+}
+
+/** Times as a sentence lists them: "07:00, 12:00 and 19:00". */
+function listAnd(items: readonly string[], t: CoreT): string {
+  return items.length <= 1
+    ? items.join("")
+    : t("schedule.spec.listAnd", { items: items.slice(0, -1).join(", "), last: items.at(-1) ?? "" });
 }
 
 /**
@@ -346,10 +368,10 @@ export type ScheduleNotify = (typeof SCHEDULE_NOTIFY_MODES)[number];
 export const ScheduleNotifySchema = z.enum(SCHEDULE_NOTIFY_MODES);
 
 /** When a schedule's runs tell its person, in words: the CLI's `show`, the tools' answers and the web page say it alike. */
-export function scheduleNotifyText(notify: ScheduleNotify | undefined): string {
-  if (notify === "when-sent") return "only when a run has something to send; a run with nothing to tell stays quiet";
-  if (notify === "if-changed") return "after each run, but never the same result twice in a row";
-  return "after every run";
+export function scheduleNotifyText(notify: ScheduleNotify | undefined, t: CoreT = coreEnglish): string {
+  if (notify === "when-sent") return t("schedule.notify.whenSent");
+  if (notify === "if-changed") return t("schedule.notify.ifChanged");
+  return t("schedule.notify.always");
 }
 
 /**
@@ -418,8 +440,8 @@ export function scheduleFireMaxTokens(schedule: { readonly maxTokens?: number | 
 }
 
 /** A token count as people read it: "12,345 tokens". */
-export function tokenCountText(tokens: number): string {
-  return `${Math.round(tokens).toLocaleString("en-US")} ${Math.round(tokens) === 1 ? "token" : "tokens"}`;
+export function tokenCountText(tokens: number, t: CoreT = coreEnglish): string {
+  return t("schedule.tokens", { count: Math.round(tokens) });
 }
 
 /** A token count as typed (digits, with `_` or `,` between them), or `undefined` when it is not one `schema` accepts. */
@@ -431,8 +453,8 @@ export function parseTokenCount(value: string, schema: z.ZodNumber): number | un
 }
 
 /** What a schedule's token ceiling says, in words: `undefined` when it has none. */
-export function scheduleMaxTokensText(schedule: { readonly maxTokens?: number | undefined }): string | undefined {
-  return schedule.maxTokens === undefined ? undefined : `stopped once a run uses more than ${tokenCountText(schedule.maxTokens)}`;
+export function scheduleMaxTokensText(schedule: { readonly maxTokens?: number | undefined }, t: CoreT = coreEnglish): string | undefined {
+  return schedule.maxTokens === undefined ? undefined : t("schedule.maxTokens", { tokens: tokenCountText(schedule.maxTokens, t) });
 }
 
 /**
@@ -538,10 +560,12 @@ export function scheduleEmailSubjectMatches(trigger: Pick<ScheduleEmailTrigger, 
 }
 
 /** An email trigger in a line: where it listens, whom it takes mail from, and its subject filter. */
-export function scheduleEmailTriggerSentence(trigger: ScheduleEmailTrigger | undefined): string {
-  if (trigger === undefined) return "off";
-  const subject = trigger.subject === undefined ? "" : `, subject holding "${trigger.subject}"`;
-  return `on: mail on ${trigger.connectionId} from ${trigger.senders.join(", ")}${subject}, read-only run`;
+export function scheduleEmailTriggerSentence(trigger: ScheduleEmailTrigger | undefined, t: CoreT = coreEnglish): string {
+  if (trigger === undefined) return t("schedule.email.off");
+  const words = { connection: trigger.connectionId, senders: trigger.senders.join(", ") };
+  return trigger.subject === undefined
+    ? t("schedule.email.on", words)
+    : t("schedule.email.onSubject", { ...words, subject: trigger.subject });
 }
 
 /**
@@ -567,20 +591,25 @@ export const SCHEDULE_WATCH_MAX_RUNS_IN_A_ROW = 6;
 export const SCHEDULE_WATCH_DEFAULT_EVERY_HOURS = 1;
 
 /** What a watcher does, in words: "watches the page https://… every hour; runs only when it changes". */
-export function scheduleWatchSentence(schedule: { readonly precheck?: SchedulePrecheck; readonly spec: ScheduleSpec }): string | undefined {
+export function scheduleWatchSentence(
+  schedule: { readonly precheck?: SchedulePrecheck; readonly spec: ScheduleSpec },
+  t: CoreT = coreEnglish,
+): string | undefined {
   const { precheck, spec } = schedule;
   if (precheck === undefined) return undefined;
-  const what = precheck.kind === "page-changed" ? "the page" : precheck.kind === "feed-has-new" ? "the feed" : "the file";
-  const every =
+  const cadence =
     spec.everyHours === undefined
-      ? `at ${scheduleTimes(spec).join(", ")}`
-      : spec.everyHours === 1
-        ? "every hour"
-        : `every ${String(spec.everyHours)} hours`;
-  const window = spec.between === undefined ? "" : ` from ${spec.between.from} to ${spec.between.to}`;
-  const change = precheck.kind === "feed-has-new" ? "it has new items" : "it changes";
-  const promptly = precheck.kind === "file-changed" ? ", and soon after it changes while tavi serve runs" : "";
-  return `watches ${what} ${precheck.target} ${every}${window}${promptly}; runs only when ${change}`;
+      ? t("schedule.watch.at", { times: scheduleTimes(spec).join(", ") })
+      : t("schedule.spec.everyHours", { count: spec.everyHours });
+  const every =
+    spec.between === undefined ? cadence : t("schedule.watch.between", { every: cadence, from: spec.between.from, to: spec.between.to });
+  const key =
+    precheck.kind === "page-changed"
+      ? "schedule.watch.page"
+      : precheck.kind === "feed-has-new"
+        ? "schedule.watch.feed"
+        : "schedule.watch.file";
+  return t(key, { target: precheck.target, every });
 }
 
 /** A schedule's fire armed to be tried again: which retry it is, and the occurrence it retries. */
@@ -603,17 +632,17 @@ export function schedulePausedText(
     readonly spec?: ScheduleSpec;
   },
   now: Date = new Date(),
+  t: CoreT = coreEnglish,
 ): string | undefined {
   if (schedule.enabled) return undefined;
-  if (schedule.spec !== undefined && scheduleFinished(schedule.spec, now)) return SCHEDULE_FINISHED_TEXT;
+  if (schedule.spec !== undefined && scheduleFinished(schedule.spec, now)) return t("schedule.finished");
   return schedule.pausedReason === "failures"
-    ? `paused after ${SCHEDULE_PAUSE_AFTER_FAILURES} failed runs in a row; resume it to run again`
-    : "paused";
+    ? t("schedule.paused.failures", { count: SCHEDULE_PAUSE_AFTER_FAILURES })
+    : t("schedule.paused.plain");
 }
 
-/** What a schedule that ended says of itself. */
-export const SCHEDULE_FINISHED_TEXT =
-  "finished: its last run is past; move its once or until date later, or drop the until, to run it again";
+/** What a schedule that ended says of itself, in English. */
+export const SCHEDULE_FINISHED_TEXT = coreEnglish("schedule.finished");
 
 /** Whether a spec that ends (`once`, `until`) has no occurrence left after `now`: a schedule of it is finished, not paused. */
 export function scheduleFinished(spec: ScheduleSpec, now: Date): boolean {
@@ -1136,11 +1165,12 @@ export function scheduledWorkUsage(
 }
 
 /** A month's scheduled work in words: "12,345 tokens (about $0.42) of a 1,000,000-token budget (1%)". */
-export function scheduledWorkText(usage: ScheduledWorkUsage): string {
-  const cost = usage.usd === null ? "" : ` (about $${usage.usd.toFixed(2)})`;
-  const budget =
-    usage.budget === undefined
-      ? ""
-      : ` of a ${Math.round(usage.budget).toLocaleString("en-US")}-token monthly budget (${String(usage.percent ?? 0)}%)`;
-  return `${tokenCountText(usage.tokens)}${cost}${budget}`;
+export function scheduledWorkText(usage: ScheduledWorkUsage, t: CoreT = coreEnglish): string {
+  const tokens = tokenCountText(usage.tokens, t);
+  const budget = usage.budget === undefined ? undefined : { budget: Math.round(usage.budget), percent: String(usage.percent ?? 0) };
+  if (usage.usd === null) return budget === undefined ? tokens : t("schedule.work.withBudget", { tokens, ...budget });
+  const [dollars = "0", cents = "00"] = usage.usd.toFixed(2).split(".");
+  return budget === undefined
+    ? t("schedule.work.withCost", { tokens, dollars, cents })
+    : t("schedule.work.withCostAndBudget", { tokens, dollars, cents, ...budget });
 }

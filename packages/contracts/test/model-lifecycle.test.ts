@@ -37,7 +37,9 @@ describe("model lifecycle warnings", () => {
     const routed = lifecycle({ redirect: { on: "2026-12-01", to: "gemini-3.8-flash", via: "gemini" } });
     const warnings = lifecycleWarnings(routed, TODAY);
     expect(warnings).toMatchObject([{ level: "warning", code: "redirects_soon", via: "gemini" }]);
-    expect(warnings.map(lifecycleWarningText)).toEqual(["will be answered and billed as gemini-3.8-flash (via gemini) on 2026-12-01"]);
+    expect(warnings.map((warning) => lifecycleWarningText(warning))).toEqual([
+      "will be answered and billed as gemini-3.8-flash (via gemini) on 2026-12-01",
+    ]);
   });
 
   it("calls a redirect already in force a warning", () => {
@@ -78,7 +80,9 @@ describe("model lifecycle warnings", () => {
     ]);
     const past = lifecycleWarnings(lifecycle({ endClaimedOn: "2026-11-01" }), TODAY);
     expect(past).toEqual([{ level: "info", code: "end_claimed", date: "2026-11-01", days: -19 }]);
-    expect(past.map(lifecycleWarningText)).toEqual(["may have retired on 2026-11-01 (not confirmed by the provider)"]);
+    expect(past.map((warning) => lifecycleWarningText(warning))).toEqual([
+      "may have retired on 2026-11-01 (not confirmed by the provider)",
+    ]);
     // A claimed end, passed or coming, stands for "deprecated": the model is said once.
     expect(lifecycleWarnings(lifecycle({ status: "deprecated", endClaimedOn: "2026-11-01" }), TODAY).map((w) => w.code)).toEqual([
       "end_claimed",
@@ -100,7 +104,7 @@ describe("model lifecycle warnings", () => {
       { level: "info", code: "deprecated" },
       { level: "info", code: "price_changes", date: "2026-12-15" },
     ];
-    expect(warnings.map(lifecycleWarningText)).toEqual([
+    expect(warnings.map((warning) => lifecycleWarningText(warning))).toEqual([
       "retired on 2026-11-01",
       "retired",
       "answered and billed as next since 2026-11-01",

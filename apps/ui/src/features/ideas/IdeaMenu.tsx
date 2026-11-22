@@ -1,8 +1,8 @@
-import { IDEA_CATEGORY_LABELS, type Idea, type IdeasRecurAnswer } from "@tavi/contracts";
+import { ideaCategoryLabel, type Idea, type IdeasRecurAnswer } from "@tavi/contracts";
 import { useId, useRef, useState } from "react";
 
 import { useDismiss } from "../../hooks/use-dismiss.js";
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import { Icon } from "../../ui/Icon.js";
 import { ideaFeedback, pinIdea, recurIdea } from "./ideas-api.js";
 import { Button } from "../../ui/Button.js";
@@ -58,7 +58,7 @@ export function IdeaMenu({
     },
     { inside: [panel, toggle] },
   );
-  const section = IDEA_CATEGORY_LABELS[idea.category];
+  const section = ideaCategoryLabel(idea.category, translateCore);
   const act = async (work: () => ReturnType<typeof ideaFeedback>, note: string): Promise<void> => {
     setBusy(true);
     const outcome = await work();

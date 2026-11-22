@@ -1,12 +1,12 @@
 import { memo, type ReactNode, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { turnEnded, type TranscriptEntry } from "@tavi/client/browser";
-import type { PlanItem } from "@tavi/contracts";
+import { TURN_STOPPED_MESSAGE, turnStoppedMessage, type PlanItem } from "@tavi/contracts";
 
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
 import { useScrollIntoView } from "../../hooks/scroll.js";
 import { useAnnounce } from "../../hooks/use-announce.js";
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import { Icon } from "../../ui/Icon.js";
 import { Markdown } from "../../ui/Markdown.js";
 import { Modal } from "../../ui/Modal.js";
@@ -360,7 +360,8 @@ export const RunView = memo(function RunView({
       ) : outcome?.kind === "failed" ? (
         <Failure alert={false}>{t("chat.run.failed", { code: outcome.errorCode, message: outcome.message })}</Failure>
       ) : outcome?.kind === "stopped" ? (
-        <Notice>{outcome.message}</Notice>
+        // The owner records the English sentence; said in the reader's language here.
+        <Notice>{outcome.message === TURN_STOPPED_MESSAGE ? turnStoppedMessage(translateCore) : outcome.message}</Notice>
       ) : null}
       {run.queued === true ? (
         run.steering !== undefined ? (

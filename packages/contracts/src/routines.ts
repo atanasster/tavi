@@ -13,6 +13,7 @@ import {
 import { SCHEDULE_TIME_PATTERN, instantForLocalTime, isValidTimeZone, localDateTime } from "./schedule-time.js";
 import { RoutineNetworkModeSchema } from "./routine-egress.js";
 import { ContentLabelSchema } from "./content-label.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 import { memoryProvenanceLine, type MemoryProvenance } from "./memory.js";
 
 const id = z.string().min(1).max(128);
@@ -147,8 +148,11 @@ export function routineTemplateIdOf(snapshot: {
     : snapshot.report.templateVersion;
 }
 /** A report's title: its plugin template's, "LLM news" for model releases, else the routine's name. */
-export function routineReportTitle(snapshot: Pick<RoutineSnapshot, "report" | "agent">, name: string): string {
-  return snapshot.report.template?.title ?? (routineTemplateIdOf(snapshot) === LLM_RELEASES_ROUTINE_TEMPLATE_ID ? "LLM news" : name);
+export function routineReportTitle(snapshot: Pick<RoutineSnapshot, "report" | "agent">, name: string, t: CoreT = coreEnglish): string {
+  return (
+    snapshot.report.template?.title ??
+    (routineTemplateIdOf(snapshot) === LLM_RELEASES_ROUTINE_TEMPLATE_ID ? t("routine.report.llmNews") : name)
+  );
 }
 /** A delivered report's file name, without its extension: its plugin template's, `llm-news` for model releases, else a slug of the routine's name. */
 export function routineReportFileName(snapshot: Pick<RoutineSnapshot, "report" | "agent">, name: string): string {
@@ -461,8 +465,8 @@ export interface RoutineRevision {
   readonly provenance?: RoutineProvenance;
 }
 /** What the routine page and `routines.inspect` say of a revision's provenance; undefined when there is none. */
-export function routineProvenanceLine(provenance: RoutineProvenance | undefined): string | undefined {
-  return memoryProvenanceLine(provenance, { lead: "Changed by Tavi after its chat read" });
+export function routineProvenanceLine(provenance: RoutineProvenance | undefined, t: CoreT = coreEnglish): string | undefined {
+  return memoryProvenanceLine(provenance, { routine: true }, t);
 }
 export type RoutineRevisionSummary = Omit<RoutineRevision, "snapshot">;
 export interface RoutineRevisionPage {

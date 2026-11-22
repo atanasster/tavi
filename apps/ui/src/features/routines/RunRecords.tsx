@@ -5,7 +5,7 @@ import { approvalChannelLabel, type RoutineLedgerEvent, type RoutineNewsSource }
 import { useAction } from "../../hooks/use-action.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { mergeBy } from "../../lib/paging.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
 import { when } from "../../lib/time.js";
 import { Modal } from "../../ui/Modal.js";
@@ -254,6 +254,9 @@ export function checkpointLine(
           : translateNow("routines.checkpoint.standingQuestion", { answer, question: checkpoint.question });
       return checkpoint.via === undefined
         ? translateNow("routines.checkpoint.answered", { answer })
-        : translateNow("routines.checkpoint.answeredVia", { answer, channel: approvalChannelLabel(checkpoint.via, connectionName) });
+        : translateNow("routines.checkpoint.answeredVia", {
+            answer,
+            channel: approvalChannelLabel(checkpoint.via, connectionName, translateCore),
+          });
   }
 }

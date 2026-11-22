@@ -5,7 +5,7 @@ import {
   MEMORY_USED_RETRY_MS,
   type TranscriptEntry as SavedTurn,
   savedTurnAfter,
-  TURN_STOPPED_MESSAGE,
+  turnStoppedMessage,
   type TranscriptPage,
 } from "@tavi/contracts";
 import { definedOnly, errorMessage } from "@tavi/contracts/util";
@@ -15,6 +15,7 @@ import type { StoreContext } from "./context.js";
 import { cancelledEntry, savedAttemptId, savedEntries, without } from "./runs.js";
 import { refusedAs, said } from "./said.js";
 import type { CanvasRun, CanvasStore, EndedTurn } from "./types.js";
+import { translateCore } from "../../../lib/i18n.js";
 
 /** The prompts of a task's turns that ran, in order: a queued or refused admission has no turn yet. */
 export function promptsOf(record: RecordedTask): string[] {
@@ -57,7 +58,7 @@ export function installRecord(ctx: StoreContext): void {
         : outcome.status === "failed"
           ? { outcome: { kind: "failed" as const, errorCode: outcome.errorCode ?? "FAILED", message: outcome.message ?? "" } }
           : outcome.status === "stopped"
-            ? { outcome: { kind: "stopped" as const, message: outcome.message ?? TURN_STOPPED_MESSAGE } }
+            ? { outcome: { kind: "stopped" as const, message: outcome.message ?? turnStoppedMessage(translateCore) } }
             : {}),
       // Its links are drawn as they streamed: a novel one in a tainted turn names its host and asks.
       ...savedTaint(saved),

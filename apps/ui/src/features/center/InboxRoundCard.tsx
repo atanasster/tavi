@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { TAINTED_CALL_WORDS, approvalChannelLabel, toolCallTitle, type ApprovalScope } from "@tavi/contracts";
+import { approvalChannelLabel, taintedCallWords, toolCallTitle, type ApprovalScope } from "@tavi/contracts";
 
 import { Failure, InlineConfirm, Pending } from "../../ui/Parts.js";
 import { confirmCallsText, REJECT_REASON_MAX } from "../chat/Approvals.js";
@@ -10,7 +10,7 @@ import { taskPath } from "../shell/route.js";
 import type { loadRoundCalls } from "./approvals-api.js";
 import { expiryLabel, scopeButton, type PendingRoundCard } from "./inbox-model.js";
 import { Button } from "../../ui/Button.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { withParts } from "../../ui/with-parts.js";
 import { spoken, type Said } from "../chat/store/said.js";
 
@@ -83,7 +83,9 @@ export function RoundCard({
     if (rejecting !== undefined) reasonBox.current?.focus();
   }, [rejecting !== undefined]);
   const what =
-    single === undefined ? t("center.roundCard.toolCalls", { count: card.calls.length }) : toolCallTitle(single.toolId, single.summary);
+    single === undefined
+      ? t("center.roundCard.toolCalls", { count: card.calls.length })
+      : toolCallTitle(single.toolId, single.summary, translateCore);
   if (outcome?.kind === "done" || outcome?.kind === "settled") {
     const verdict =
       outcome.kind === "settled"
@@ -174,7 +176,7 @@ export function RoundCard({
         {card.announcedIn === undefined ? null : (
           <span className="center-card-note meta">
             {t("center.roundCard.askedIn", {
-              channel: card.announcedIn.channel ?? approvalChannelLabel(card.announcedIn.connectionId, channels.connection),
+              channel: card.announcedIn.channel ?? approvalChannelLabel(card.announcedIn.connectionId, channels.connection, translateCore),
             })}
           </span>
         )}
@@ -188,7 +190,7 @@ export function RoundCard({
       {card.provenance === undefined ? null : (
         <p className="center-card-provenance meta">
           {/[.!?]$/.test(card.provenance) ? card.provenance : `${card.provenance}.`}
-          <span className="center-card-why"> {TAINTED_CALL_WORDS}</span>
+          <span className="center-card-why"> {taintedCallWords(translateCore)}</span>
         </p>
       )}
       {single === undefined ? (

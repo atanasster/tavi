@@ -10,8 +10,9 @@ import {
   type ContentLabel,
 } from "./content-label.js";
 import { IdSchema, TimestampSchema, WorkspaceIdSchema } from "./ids.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 // Acyclic: provenance-display.ts has only type imports besides content-label.ts.
-import { DESKTOP_SOURCE_WORDS, desktopAppOf, neutralizedText, PROVENANCE_TITLE_CHARS, SOURCE_WORDS } from "./provenance-display.js";
+import { desktopAppOf, desktopSourceWords, neutralizedText, PROVENANCE_TITLE_CHARS, sourceWords } from "./provenance-display.js";
 
 /**
  * Personal memory, evidence and approved skills.
@@ -534,8 +535,17 @@ export function memoryProvenanceUntrusted(provenance: MemoryProvenance | undefin
 /** The hosts a provenance line names before "and N more". */
 const PROVENANCE_HOSTS_SHOWN = 3;
 
-const listed = (parts: readonly string[]): string =>
-  parts.length <= 1 ? (parts[0] ?? "") : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1] ?? ""}`;
+const listed = (parts: readonly string[], t: CoreT): string =>
+  parts.length <= 1
+    ? (parts[0] ?? "")
+    : t("provenance.sources.last", { sources: parts.slice(0, -1).join(", "), last: parts[parts.length - 1] ?? "" });
+
+/** Which sentence a provenance line is: a routine revision's, a tidy-up's, or a proposal's. */
+function provenanceLineKey(options: { readonly tidyUp?: boolean; readonly routine?: boolean }) {
+  if (options.routine === true) return "routine.provenance.changed" as const;
+  if (options.tidyUp === true) return "memory.provenance.tidyUp" as const;
+  return "memory.provenance.proposed" as const;
+}
 
 /**
  * What a review surface says of an untrusted provenance: "Proposed
@@ -543,13 +553,14 @@ const listed = (parts: readonly string[]): string =>
  * established comes first — the kinds of source and the hosts it parsed —
  * and a page's own title only after, as "the page calls itself “…”",
  * clipped and stripped of anything that could break the line. `tidyUp`: a
- * tidy-up's line, of the memories it merges. `lead`: another surface's
- * opening words (a routine revision's). Undefined for a trusted or
- * absent provenance: there is nothing to say.
+ * tidy-up's line, of the memories it merges. `routine`: a routine
+ * revision's line. Undefined for a trusted or absent provenance: there is
+ * nothing to say.
  */
 export function memoryProvenanceLine(
   provenance: MemoryProvenance | undefined,
-  options: { readonly tidyUp?: boolean; readonly lead?: string } = {},
+  options: { readonly tidyUp?: boolean; readonly routine?: boolean } = {},
+  t: CoreT = coreEnglish,
 ): string | undefined {
   if (provenance === undefined || provenance.integrity !== "untrusted") return undefined;
   // What a desktop tool read keeps the `web` source, but is said as an app's screen, naming the app (QA 1893).
@@ -557,10 +568,10 @@ export function memoryProvenanceLine(
   const pages = provenance.refs.some((ref) => ref.source === "web" && desktopAppOf(ref) === undefined);
   const words = provenance.sources.flatMap((source) =>
     source !== "web" || screens.length === 0
-      ? [SOURCE_WORDS[source]]
+      ? [sourceWords(source, t)]
       : pages
-        ? [SOURCE_WORDS.web, DESKTOP_SOURCE_WORDS]
-        : [DESKTOP_SOURCE_WORDS],
+        ? [sourceWords("web", t), desktopSourceWords(t)]
+        : [desktopSourceWords(t)],
   );
   const hosts = [
     ...new Set(
@@ -571,12 +582,16 @@ export function memoryProvenanceLine(
   ];
   const shownHosts = hosts.slice(0, PROVENANCE_HOSTS_SHOWN);
   const moreHosts = hosts.length - shownHosts.length;
-  const where = shownHosts.length === 0 ? "" : ` (${shownHosts.join(", ")}${moreHosts > 0 ? ` and ${moreHosts} more` : ""})`;
-  const what = words.length === 0 ? "untrusted content" : listed(words);
+  const hostList = shownHosts.join(", ");
+  const where =
+    shownHosts.length === 0
+      ? ""
+      : ` (${moreHosts > 0 ? t("provenance.sources.more", { sources: hostList, more: String(moreHosts) }) : hostList})`;
+  const what = words.length === 0 ? sourceWords("unknown-source", t) : listed(words, t);
   const titled = provenance.refs.find((ref) => ref.title !== undefined && neutralizedText(ref.title, PROVENANCE_TITLE_CHARS) !== "");
-  const title = titled?.title === undefined ? "" : ` — the page calls itself “${neutralizedText(titled.title, PROVENANCE_TITLE_CHARS)}”`;
-  const lead = options.lead ?? (options.tidyUp === true ? "Merges memories proposed after a chat read" : "Proposed after this chat read");
-  return `${lead} ${what}${where}${title}`;
+  const title =
+    titled?.title === undefined ? "" : ` — ${t("provenance.claim.page", { title: neutralizedText(titled.title, PROVENANCE_TITLE_CHARS) })}`;
+  return t(provenanceLineKey(options), { what, where, title });
 }
 
 /** One immutable revision of a record; edits create a new revision. */
@@ -714,7 +729,7 @@ export type MemoryDeletion = z.infer<typeof MemoryDeletionSchema>;
  * that quoted the record, and the model
  * requests kept for turns and heartbeat ticks whose prompt carried it.
  */
-export const MEMORY_FORGET_UNREACHED = "Chats that quoted or used it keep their copy until the chat is forgotten.";
+export const MEMORY_FORGET_UNREACHED = coreEnglish("memory.forget.unreached");
 
 /**
  * What a forget's receipt says of the memory providers its removal waits for
@@ -722,9 +737,15 @@ export const MEMORY_FORGET_UNREACHED = "Chats that quoted or used it keep their 
  * `/forget`, the Center, a card's *Undo* and a chat forgotten with its
  * memory. Undefined when it waits for none.
  */
-export function memoryPendingProvidersNote(providers: readonly string[] | undefined): string | undefined {
+export function memoryPendingProvidersNote(providers: readonly string[] | undefined, t: CoreT = coreEnglish): string | undefined {
   if (providers === undefined || providers.length === 0) return undefined;
-  return `It will be removed from ${providers.join(", ")} when ${providers.length === 1 ? "it next runs" : "each next runs"}.`;
+  return t("memory.provider.pending", { count: providers.length, providers: providers.join(", ") });
+}
+
+/** The same note for a forgotten chat: what the chat taught is what the providers still hold. */
+export function memoryTaughtPendingProvidersNote(providers: readonly string[] | undefined, t: CoreT = coreEnglish): string | undefined {
+  if (providers === undefined || providers.length === 0) return undefined;
+  return t("memory.provider.pendingTaught", { count: providers.length, providers: providers.join(", ") });
 }
 
 /** The deletion reason of a waiting tidy-up forgotten because a record it merges was forgotten. */

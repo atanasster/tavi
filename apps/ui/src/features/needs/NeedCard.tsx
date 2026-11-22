@@ -13,7 +13,7 @@ import type { SettledWait } from "@tavi/client/browser";
 
 import { instantLabel, localDate, localTime, longDay, todayIn, durationText, when as whenLabel } from "../../lib/time.js";
 import { usePoll } from "../../hooks/use-poll.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { listed } from "../../lib/format.js";
 import { withParts } from "../../ui/with-parts.js";
 import { said, spoken, type Said } from "../chat/store/said.js";
@@ -542,7 +542,7 @@ export function QuestionReceipt({
     const via =
       receipt.via === undefined || receipt.via === self
         ? ""
-        : ` ${t("needs.receipt.via", { channel: approvalChannelLabel(receipt.via, channels.connection) })}`;
+        : ` ${t("needs.receipt.via", { channel: approvalChannelLabel(receipt.via, channels.connection, translateCore) })}`;
     return (
       <p className={`need-receipt need-receipt-answered${compact}`}>
         <Icon name="check" size="sm" /> {said}

@@ -1,13 +1,7 @@
-import {
-  BUILTIN_IDEAS_PROVIDER_ID,
-  IDEA_CATEGORY_LABELS,
-  type IdeaBasisKind,
-  type IdeasListAnswer,
-  type IdeaSettings,
-} from "@tavi/contracts";
+import { BUILTIN_IDEAS_PROVIDER_ID, ideaCategoryLabel, type IdeaBasisKind, type IdeasListAnswer, type IdeaSettings } from "@tavi/contracts";
 import { useEffect, useId, useState } from "react";
 
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { weekdayName, whenLocal } from "../../lib/time.js";
 import { PageHead, PageNote, Pending } from "../../ui/Parts.js";
 import { mapOutcome, type Outcome, type SettingsClient } from "../../lib/ipc.js";
@@ -271,17 +265,17 @@ export function IdeasSettings() {
         ) : (
           list.mutedCategories.map((category) => (
             <div key={category} className="item-row">
-              <span>{IDEA_CATEGORY_LABELS[category]}</span>
+              <span>{ideaCategoryLabel(category, translateCore)}</span>
               <RowAction
                 disabled={busy !== undefined}
                 onClick={() =>
                   void run(`unmute-${category}`, () =>
-                    said(t("ideas.settings.unmuted", { section: IDEA_CATEGORY_LABELS[category] }))(
+                    said(t("ideas.settings.unmuted", { section: ideaCategoryLabel(category, translateCore) }))(
                       ideaFeedback(client, workspaceId, { signal: "unmute-category", category }),
                     ),
                   )
                 }
-                aria-label={t("ideas.settings.unmuteLabel", { section: IDEA_CATEGORY_LABELS[category] })}
+                aria-label={t("ideas.settings.unmuteLabel", { section: ideaCategoryLabel(category, translateCore) })}
               >
                 {t("ideas.settings.unmute")}
               </RowAction>

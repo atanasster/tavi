@@ -94,7 +94,7 @@ export function workerRoundCards(rows: readonly PendingApprovalRow[], lastingCha
         steps: row.steps,
         createdAt: row.createdAt,
       },
-      provenance: row.label === undefined ? undefined : approvalProvenanceLine(row.label, row.allowedScopes.length === 1),
+      provenance: row.label === undefined ? undefined : approvalProvenanceLine(row.label, row.allowedScopes.length === 1, translateCore),
     })),
   );
 }

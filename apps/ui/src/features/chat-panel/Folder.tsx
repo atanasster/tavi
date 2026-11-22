@@ -1,6 +1,6 @@
 import {
   CHAT_FOLDER_ATTACHMENTS_MAX,
-  MANAGED_FOLDER_LABEL,
+  managedFolderLabel,
   type BrowseEntry,
   type ChatFolderMode,
   type FolderFilesAnswer,
@@ -9,7 +9,7 @@ import {
 import { useRef, useState } from "react";
 
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { saidRecord } from "../shell/said.js";
 import { formatBytes } from "../../lib/format.js";
 import { usePhone } from "../../hooks/page.js";
@@ -51,7 +51,9 @@ const MODE_LABELS: Readonly<Record<ChatFolderMode, string>> = saidRecord({
 /** The folder button's name: what the chat works in. */
 function folderChipLabel(view: FolderView): string {
   if (view.unavailable !== undefined || view.primary === undefined) return translateNow("chatPanel.folder.chipUnavailable");
-  return view.primary.kind === "managed" ? MANAGED_FOLDER_LABEL : translateNow("chatPanel.folder.chip", { label: view.primary.label });
+  return view.primary.kind === "managed"
+    ? managedFolderLabel(translateCore)
+    : translateNow("chatPanel.folder.chip", { label: view.primary.label });
 }
 
 /** The chip's tooltip: where the chat works, and what unavailable means for it. */
@@ -59,7 +61,7 @@ function folderChipTitle(view: FolderView): string {
   if (view.unavailable !== undefined || view.primary === undefined)
     return translateNow("chatPanel.folder.chipTitleUnavailable", {
       reason: view.unavailable ?? translateNow("chatPanel.folder.unavailable"),
-      folder: MANAGED_FOLDER_LABEL,
+      folder: managedFolderLabel(translateCore),
     });
   return translateNow("chatPanel.folder.chipTitle", { path: view.primary.path });
 }
@@ -116,7 +118,11 @@ export function FolderChip({
     }
   };
   const reset = () =>
-    change("reset", () => resetFolder(client, workspaceId, taskId), t("chatPanel.folder.resetDone", { folder: MANAGED_FOLDER_LABEL }));
+    change(
+      "reset",
+      () => resetFolder(client, workspaceId, taskId),
+      t("chatPanel.folder.resetDone", { folder: managedFolderLabel(translateCore) }),
+    );
   return (
     <span className="folder-chip-wrap">
       {/* A folder icon in the header's tools: what it holds is its name, and the full path its tooltip. */}
@@ -227,7 +233,9 @@ export function DraftFolderChip({
           setOpen(!open);
         }}
       >
-        <span className="truncate">{draft.length === 0 ? MANAGED_FOLDER_LABEL : `${MANAGED_FOLDER_LABEL} +${draft.length}`}</span>
+        <span className="truncate">
+          {draft.length === 0 ? managedFolderLabel(translateCore) : `${managedFolderLabel(translateCore)} +${draft.length}`}
+        </span>
       </Button>
       {open ? (
         <Popover
@@ -348,17 +356,17 @@ function FolderPanel({
                 void onChange(
                   "set:managed",
                   () => setFolder(client, workspaceId, taskId, { managed: true }),
-                  t("chatPanel.folder.nowManaged", { folder: MANAGED_FOLDER_LABEL }),
+                  t("chatPanel.folder.nowManaged", { folder: managedFolderLabel(translateCore) }),
                 )
               }
             >
-              {t("chatPanel.folder.workInManaged", { folder: MANAGED_FOLDER_LABEL })}
+              {t("chatPanel.folder.workInManaged", { folder: managedFolderLabel(translateCore) })}
             </Button>
           ) : null}
           {unavailable ? null : confirmReset ? (
             <InlineConfirm
               inline
-              message={t("chatPanel.folder.resetConfirm", { folder: MANAGED_FOLDER_LABEL })}
+              message={t("chatPanel.folder.resetConfirm", { folder: managedFolderLabel(translateCore) })}
               confirmLabel={busy === "reset" ? t("chatPanel.folder.resetting") : t("chatPanel.folder.reset")}
               cancelLabel={t("ui.confirm.cancel")}
               busy={working}

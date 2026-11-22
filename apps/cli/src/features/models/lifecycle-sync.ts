@@ -278,7 +278,7 @@ function warningInWords(
     model: target.model,
     level,
     usedBy: target.usedBy,
-    says: warnings.map(lifecycleWarningText),
+    says: warnings.map((warning) => lifecycleWarningText(warning)),
     ...(isReplacedLevel(level)
       ? {
           replacements: knownReplacements(cache, {

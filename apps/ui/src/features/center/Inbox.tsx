@@ -40,7 +40,7 @@ import { QuestionNeedCard, ReviewNeedCard } from "./InboxNeedCards.js";
 import { type CardOutcome, type RoundDecision, RoundCard } from "./InboxRoundCard.js";
 import { personName } from "./model.js";
 import { useWorkspace } from "../shell/Workspace.js";
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import { withParts } from "../../ui/with-parts.js";
 
 /**
@@ -208,7 +208,7 @@ export function ApprovalsInbox({
                   card.calls.length === 1
                     ? card.calls[0] === undefined
                       ? t("center.inbox.aToolCall")
-                      : toolCallTitle(card.calls[0].toolId, card.calls[0].summary)
+                      : toolCallTitle(card.calls[0].toolId, card.calls[0].summary, translateCore)
                     : t("center.roundCard.toolCalls", { count: card.calls.length }),
                   items.find((item) => item.kind === "approval" && card.calls.some((call) => call.approvalId === item.approvalId)),
                   timeZone,

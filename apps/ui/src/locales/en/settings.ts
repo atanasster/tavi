@@ -533,23 +533,6 @@ export const settings = {
   "settings.instances.add": "Add provider instance",
 
   /** Clauses about a model: they follow "This model" ("This model retired on 2026-11-19."). */
-  "settings.models.warning.retired": "retired",
-  "settings.models.warning.retiredOn": "retired on {date}",
-  "settings.models.warning.via": "{to} (via {via})",
-  "settings.models.warning.redirected": "answered and billed as {to}",
-  "settings.models.warning.redirectedSince": "answered and billed as {to} since {date}",
-  "settings.models.warning.redirectsSoon": "will be answered and billed as {to}",
-  "settings.models.warning.redirectsSoonOn": "will be answered and billed as {to} on {date}",
-  "settings.models.warning.retires": "retires",
-  "settings.models.warning.retiresOn": "retires on {date}",
-  "settings.models.warning.mayHaveRetired": "may have retired (not confirmed by the provider)",
-  "settings.models.warning.mayHaveRetiredOn": "may have retired on {date} (not confirmed by the provider)",
-  "settings.models.warning.mayRetire": "may retire (not confirmed by the provider)",
-  "settings.models.warning.mayRetireOn": "may retire on {date} (not confirmed by the provider)",
-  "settings.models.warning.deprecated": "deprecated",
-  "settings.models.warning.deprecatedOn": "deprecated on {date}",
-  "settings.models.warning.priceChanges": "price changes",
-  "settings.models.warning.priceChangesOn": "price changes on {date}",
   "settings.models.warning.separator": "; ",
 
   "settings.badge.tools": "tools",

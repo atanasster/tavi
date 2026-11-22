@@ -10,6 +10,7 @@ import type { AsyncRepository } from "./persistence-types.js";
 import { z } from "zod";
 
 import { SECRET_KEY_REF_PATTERN, TimestampSchema } from "./ids.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 import { ToolEffectSchema } from "./tools.js";
 import { RouterFeatureSchema } from "./router.js";
 import { PluginContentHashSchema, PluginUiSchema, snapshotPath, type PluginUi } from "./plugin-ui.js";
@@ -185,31 +186,47 @@ export function pluginToolOutputTrust(tool: Pick<PluginToolDeclaration, "untrust
 }
 
 /** What a listing adds after a tool's effect for its output: nothing for the default (untrusted). */
-export function pluginToolOutputNote(output: PluginToolOutputTrust | undefined): string {
-  return output === "trusted" ? ", trusted output" : "";
+export function pluginToolOutputNote(output: PluginToolOutputTrust | undefined, t: CoreT = coreEnglish): string {
+  return output === "trusted" ? t("plugin.tool.note", { note: t("plugin.tool.note.trustedOutput") }) : "";
 }
 
 /** What a tool's declaration asks of the gate, as a review says it: its sink, a person deciding every call, its card's rows. */
-export function pluginToolDeclarationNote(tool: {
-  readonly sink?: string | undefined;
-  readonly attendedOnly?: boolean | undefined;
-  readonly cardFields?: readonly string[] | undefined;
-  readonly browserWorker?: boolean | undefined;
-}): string {
-  return `${tool.sink === undefined ? "" : `, sends to ${tool.sink}`}${tool.attendedOnly === true ? ", a person decides every call" : ""}${tool.cardFields === undefined ? "" : `, its card shows ${tool.cardFields.join(" ")}`}${tool.browserWorker === true ? ", the browser worker may call it" : ""}`;
+export function pluginToolDeclarationNote(
+  tool: {
+    readonly sink?: string | undefined;
+    readonly attendedOnly?: boolean | undefined;
+    readonly cardFields?: readonly string[] | undefined;
+    readonly browserWorker?: boolean | undefined;
+  },
+  t: CoreT = coreEnglish,
+): string {
+  const notes = [
+    ...(tool.sink === undefined ? [] : [t("plugin.tool.note.sink", { sink: tool.sink })]),
+    ...(tool.attendedOnly === true ? [t("plugin.tool.note.attended")] : []),
+    ...(tool.cardFields === undefined ? [] : [t("plugin.tool.note.card", { fields: tool.cardFields.join(" ") })]),
+    ...(tool.browserWorker === true ? [t("plugin.tool.note.browserWorker")] : []),
+  ];
+  return notes.map((note) => t("plugin.tool.note", { note })).join("");
 }
 
 /** A tool as a review lists it: `acme.weather.forecast (read-only)`, with its output's trust when that is not the default, and what it asks of the gate. */
-export function describePluginTool(tool: {
-  readonly id: string;
-  readonly effect: string;
-  readonly output?: PluginToolOutputTrust | undefined;
-  readonly sink?: string | undefined;
-  readonly attendedOnly?: boolean | undefined;
-  readonly cardFields?: readonly string[] | undefined;
-  readonly browserWorker?: boolean | undefined;
-}): string {
-  return `${tool.id} (${tool.effect}${pluginToolOutputNote(tool.output)}${pluginToolDeclarationNote(tool)})`;
+export function describePluginTool(
+  tool: {
+    readonly id: string;
+    readonly effect: string;
+    readonly output?: PluginToolOutputTrust | undefined;
+    readonly sink?: string | undefined;
+    readonly attendedOnly?: boolean | undefined;
+    readonly cardFields?: readonly string[] | undefined;
+    readonly browserWorker?: boolean | undefined;
+  },
+  t: CoreT = coreEnglish,
+): string {
+  return t("plugin.tool.line", {
+    id: tool.id,
+    effect: tool.effect,
+    notes: `${pluginToolOutputNote(tool.output, t)}${pluginToolDeclarationNote(tool, t)}`,
+  });
 }
 
 /** The most characters an approval card's `detail` shows (`ApprovalDisplaySchema`). */
@@ -288,7 +305,11 @@ export const PluginRouterDeclarationSchema = z.strictObject({
 export type PluginRouterDeclaration = z.infer<typeof PluginRouterDeclarationSchema>;
 
 /** The data each non-model feature discloses beyond the task text. */
-const ROUTER_FEATURE_DISCLOSURES = { tools: "tool descriptions", memory: "memory excerpts", skills: "skill metadata" } as const;
+const ROUTER_FEATURE_DISCLOSURES = {
+  tools: "plugin.router.feature.tools",
+  memory: "plugin.router.feature.memory",
+  skills: "plugin.router.feature.skills",
+} as const;
 
 /** The version a plugin runs (or would run next): the active one, else the newest installed. */
 export function pluginRunningVersion(plugin: PluginView): PluginView["versions"][number] | undefined {
@@ -296,10 +317,16 @@ export function pluginRunningVersion(plugin: PluginView): PluginView["versions"]
 }
 
 /** What approving a routing provider means, in the words the CLI and the canvas both show. */
-export function describeRouterDeclaration(router: PluginRouterDeclaration): string {
-  const receives = router.features.flatMap((feature) => (feature === "model" ? [] : [ROUTER_FEATURE_DISCLOSURES[feature]]));
-  const decides = router.features.includes("model") ? `; it can choose between the main and fast models` : "";
-  return `Routing provider: receives task text${receives.length === 0 ? "" : ` and ${receives.join(", ")}`} when router egress allows it${decides}. ${router.batch ? "Batched calls" : "One call per feature"}, priced as ${router.pricing.connectionId} / ${router.pricing.model}. Its settings and credentials are shared across every workspace that selects it.`;
+export function describeRouterDeclaration(router: PluginRouterDeclaration, t: CoreT = coreEnglish): string {
+  const extra = router.features.flatMap((feature) => (feature === "model" ? [] : [t(ROUTER_FEATURE_DISCLOSURES[feature])]));
+  const receives = extra.length === 0 ? t("plugin.router.receives") : t("plugin.router.receivesAnd", { extra: extra.join(", ") });
+  const words = {
+    receives,
+    calls: t(router.batch ? "plugin.router.calls.batched" : "plugin.router.calls.perFeature"),
+    connection: router.pricing.connectionId,
+    model: router.pricing.model,
+  };
+  return t(router.features.includes("model") ? "plugin.router.describeChooses" : "plugin.router.describe", words);
 }
 
 /**
@@ -343,24 +370,18 @@ export interface PluginChannelDisclosure {
 }
 
 /** What a channel asks for beyond carrying messages, as its review says it: each is granted by this approval or a later choice. */
-function grantsOf(descriptor: ChannelDescriptor): string {
+function grantsOf(descriptor: ChannelDescriptor, t: CoreT): string[] {
   const app = descriptor.app;
   return [
-    ...(app?.mailbox === true
-      ? [". Its accounts are mailboxes the agent may search, read and send from, each only once you turn it on"]
-      : []),
+    ...(app?.mailbox === true ? [t("plugin.channel.mailbox")] : []),
     ...(app?.provider === undefined
       ? []
-      : [
-          `. It asks to sign in with the OAuth client your ${app.provider} apps share, whose secret then goes to its token address: only once you bind this version to it (\`tavi channels share-client ${app.provider} <plugin>\`), and only while it signs in at ${app.provider}'s own addresses`,
-        ]),
-    ...(app?.dataClass === "public"
-      ? [". It asks for its accounts to start Public, which a plugin is never granted: they start Personal"]
-      : []),
-  ].join("");
+      : [t("plugin.channel.sharedClient", { provider: app.provider, command: `tavi channels share-client ${app.provider} <plugin>` })]),
+    ...(app?.dataClass === "public" ? [t("plugin.channel.startsPublic")] : []),
+  ];
 }
 
-export function channelDisclosureOf(descriptor: ChannelDescriptor): PluginChannelDisclosure {
+export function channelDisclosureOf(descriptor: ChannelDescriptor, t: CoreT = coreEnglish): PluginChannelDisclosure {
   const oauth = descriptor.auth.kind === "oauth2" ? descriptor.auth.oauth : undefined;
   const endpoints = [
     ...(oauth === undefined
@@ -382,12 +403,16 @@ export function channelDisclosureOf(descriptor: ChannelDescriptor): PluginChanne
     ...(descriptor.hosts ?? []).map((host) => `host ${host}`),
   ];
   const retention = descriptor.retention ?? "keep";
-  const erases = retention === "purge-on-remove" ? ". Removing one of its connections erases what it brought in after 24 hours" : "";
+  const sentences = [
+    t("plugin.channel.receives", { label: descriptor.label }),
+    ...(retention === "purge-on-remove" ? [t("plugin.channel.erases")] : []),
+    ...grantsOf(descriptor, t),
+  ];
   return {
     providerId: descriptor.providerId,
     label: descriptor.label,
     kind: descriptor.kind,
-    disclosure: `Receives messages from outside and can send as you on ${descriptor.label}${erases}${grantsOf(descriptor)}`,
+    disclosure: sentences.join(". "),
     endpoints,
     retention,
   };

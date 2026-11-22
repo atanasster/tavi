@@ -3,7 +3,7 @@ import { useState } from "react";
 import { approvalChannelLabel, type NeedRow, type RoutineCheckpoint } from "@tavi/contracts";
 
 import { useLoaded } from "../../hooks/use-loaded.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { when } from "../../lib/time.js";
 import { Failure, LoadError, Notice, Section } from "../../ui/Parts.js";
 import { answerNeed, listNeeds } from "../center/approvals-api.js";
@@ -84,7 +84,11 @@ function checkpointReceipt(
       if (checkpoint.via === "standing-answer") return translateNow("routines.receipt.standing", { answer, at });
       return checkpoint.via === undefined
         ? translateNow("routines.receipt.answered", { answer, at })
-        : translateNow("routines.receipt.answeredVia", { answer, channel: approvalChannelLabel(checkpoint.via, connectionName), at });
+        : translateNow("routines.receipt.answeredVia", {
+            answer,
+            channel: approvalChannelLabel(checkpoint.via, connectionName, translateCore),
+            at,
+          });
     case "defaulted":
       return answer === ""
         ? translateNow("routines.receipt.defaultedNone", { at })

@@ -28,6 +28,7 @@ import {
   type SkillCeiling,
   type SkillCeilingSummary,
 } from "./skill-ceiling.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 
 /**
  * Tool policy.
@@ -74,23 +75,28 @@ export function isStaleWebPattern(pattern: string): boolean {
  * approval card: `browser.*` is "browser" ("use the browser"), or "browser on
  * example.com" given the hosts its round opens; `web_search` "web search".
  */
-export function toolGroupLabel(group: string, hosts: readonly string[] = []): string {
+export function toolGroupLabel(group: string, hosts: readonly string[] = [], t: CoreT = coreEnglish): string {
   // The browser is allowed on the hosts its round opens (`display.host`), never on every site: the card names them.
-  if (group === "browser.*") return hosts.length === 0 ? "browser" : `browser on ${[...new Set(hosts)].join(", ")}`;
-  if (group === "web_search") return "web search";
-  if (group === "web_*") return "web tools";
-  if (group === "travel.*") return "travel search";
-  return `${group} tools`;
+  if (group === "browser.*")
+    return hosts.length === 0 ? t("tool.group.browser") : t("tool.group.browserOn", { hosts: [...new Set(hosts)].join(", ") });
+  if (group === "web_search") return t("tool.group.webSearch");
+  if (group === "web_*") return t("tool.group.webTools");
+  if (group === "travel.*") return t("tool.group.travelSearch");
+  return t("tool.group.other", { group });
 }
 
 /** What a grouped card adds after what it allows: for the browser, that another site is asked about again. */
-export function toolGroupScopeNote(group: string): string | undefined {
-  return group === "browser.*"
-    ? "Opening another site asks again, and no approval opens this machine or a private network address."
-    : undefined;
+export function toolGroupScopeNote(group: string, t: CoreT = coreEnglish): string | undefined {
+  return group === "browser.*" ? t("tool.group.scopeNote.browser") : undefined;
 }
 
-export const STALE_WEB_PATTERN_MESSAGE = 'dotted "web." patterns match no tool: use web_search, web_fetch, or web_* for both';
+/** Why a dotted `web.` pattern is refused. */
+export function staleWebPatternMessage(t: CoreT = coreEnglish): string {
+  return t("tool.pattern.staleWeb");
+}
+
+/** `staleWebPatternMessage` in English: a schema's refinement message. */
+export const STALE_WEB_PATTERN_MESSAGE = staleWebPatternMessage();
 
 /** A tool id, or a dotted glob whose `*` segments match one segment each (`browser.*`). `*` alone matches every tool. */
 export const ToolPatternSchema = z

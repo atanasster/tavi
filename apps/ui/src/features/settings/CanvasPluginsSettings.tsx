@@ -24,7 +24,7 @@ import { useLoaded } from "../../hooks/use-loaded.js";
 import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
 import { withParts } from "../../ui/with-parts.js";
 
@@ -140,7 +140,7 @@ export function CanvasPluginsSettings({ workspaceId }: { readonly workspaceId: s
       ?.ui.contributions.find((candidate) => candidate.role === "browser-view");
     // The built-in is trusted; another plugin that receives the browser's pages is asked about first.
     if (pluginId !== builtin && pluginId !== "off" && contribution !== undefined && contribution.channels.length > 0) {
-      setPending({ pluginId, disclosure: channelDisclosure(contribution.channels, contribution.disclosure) });
+      setPending({ pluginId, disclosure: channelDisclosure(contribution.channels, contribution.disclosure, translateCore) });
       return;
     }
     setRole(pluginId);

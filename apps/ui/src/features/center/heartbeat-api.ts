@@ -6,6 +6,7 @@ import {
   HeartbeatLogAnswerSchema,
   HeartbeatRecentAnswerSchema,
   HeartbeatRunNowAnswerSchema,
+  heartbeatHookDecisionText,
   heartbeatHookDecisions,
   heartbeatTickContext,
   type HeartbeatForgetAnswer,
@@ -21,7 +22,7 @@ import {
 
 import { z } from "zod";
 
-import { translateNow } from "../../lib/i18n.js";
+import { translateCore, translateNow } from "../../lib/i18n.js";
 import { mapOutcome, read, type Outcome, type Readable, type SettingsClient } from "../../lib/ipc.js";
 
 /**
@@ -210,10 +211,8 @@ export function logFilter(filter: LogFilter): (tick: HeartbeatTickRecord) => boo
 export function logLine(tick: HeartbeatTickRecord): string {
   const decisions = heartbeatHookDecisions(tick.hookDecisions);
   const decided =
-    decisions.length === 0
-      ? ""
-      : ` · ${decisions.map((decision) => `${decision.by} ${decision.action}${decision.reason === undefined ? "" : ` (${decision.reason})`}`).join("; ")}`;
-  const context = heartbeatTickContext(tick)
+    decisions.length === 0 ? "" : ` · ${decisions.map((decision) => heartbeatHookDecisionText(decision, translateCore)).join("; ")}`;
+  const context = heartbeatTickContext(tick, translateCore)
     .map((part) => ` · ${part}`)
     .join("");
   return `${tickLine(tick)}${context}${decided}`;

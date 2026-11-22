@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { coreEnglish, type CoreT } from "./locales/core.js";
 import { ToolIdSchema } from "./tools.js";
 
 /**
@@ -13,7 +14,7 @@ import { ToolIdSchema } from "./tools.js";
  * declares nothing lifts the ceiling. A skill written for Claude Code's grant
  * semantics so fails safe: its tools just follow normal approval.
  *
- * Pure. Imports only zod, so `tool-policy.ts` can read it.
+ * Pure. Imports only zod and the `core` words, so `tool-policy.ts` can read it.
  */
 
 /** Agent Skills (Claude Code) tool names, and the Tavi tool each stands for. `Bash(…)` is any form of `Bash`. */
@@ -138,13 +139,18 @@ function declaredText(ceiling: SkillCeilingSummary): string {
 }
 
 /** "Why am I asked?" for a call outside the ceiling, naming the skill and what it declared. */
-export function skillCeilingWords(ceiling: SkillCeilingSummary): string {
-  const unenforceable =
-    ceiling.unenforceable.length === 0 ? "" : ` Declared but not enforceable here: ${ceiling.unenforceable.join(", ")}.`;
-  return `This chat loaded ${skillsNamed(ceiling)}, which lists the tools it uses (allowed-tools: ${declaredText(ceiling)}), and this call is not one of them. Approve it only if you expect the skill to need it.${unenforceable}`;
+export function skillCeilingWords(ceiling: SkillCeilingSummary, t: CoreT = coreEnglish): string {
+  const why = t("skill.ceiling.why", {
+    count: ceiling.skillIds.length,
+    skills: ceiling.skillIds.map((id) => t("skill.ceiling.name", { id })).join(", "),
+    declared: ceiling.declared.length === 0 ? t("skill.ceiling.noTools") : ceiling.declared.join(", "),
+  });
+  return ceiling.unenforceable.length === 0
+    ? why
+    : `${why} ${t("skill.ceiling.unenforceable", { names: ceiling.unenforceable.join(", ") })}`;
 }
 
-/** What the model is told when a run nobody attends refuses a call outside the ceiling. */
+/** What the model is told when a run nobody attends refuses a call outside the ceiling: English, as the model reads it. */
 export function skillCeilingRefusal(ceiling: SkillCeilingSummary | undefined): string {
   return ceiling === undefined
     ? "This call is outside the allowed-tools of a skill loaded this turn."
@@ -169,10 +175,14 @@ export function skillToolsEscalation(
 }
 
 /** The escalation line a review shows, or `undefined` when the version widens nothing. */
-export function skillToolsEscalationText(parent: readonly string[] | undefined, next: readonly string[] | undefined): string | undefined {
+export function skillToolsEscalationText(
+  parent: readonly string[] | undefined,
+  next: readonly string[] | undefined,
+  t: CoreT = coreEnglish,
+): string | undefined {
   const escalation = skillToolsEscalation(parent, next);
   if (escalation === undefined) return undefined;
   return escalation.removedCeiling
-    ? `Escalation: this version drops allowed-tools (${parent?.join(", ") ?? ""}), so no ceiling holds it once loaded`
-    : `Escalation: this version widens allowed-tools, adding ${escalation.added.join(", ")}`;
+    ? t("skill.escalation.dropped", { tools: parent?.join(", ") ?? "" })
+    : t("skill.escalation.widened", { tools: escalation.added.join(", ") });
 }

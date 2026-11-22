@@ -1,6 +1,4 @@
 import {
-  MEMORY_PROVENANCE_KEEP_ALONE,
-  MEMORY_TIDY_UP_LOOK,
   memoryCardHeading,
   memoryCardItemIsPlain,
   memoryCardItemName,
@@ -16,7 +14,7 @@ import { useCallback, useEffect, useId, useState } from "react";
 
 import { replaceMemory } from "../center/memory-api.js";
 import { decideMemory, decideMemoryCard, keepEditedMemory, loadMemoryBody, loadMemoryCard, undoMemory } from "../chat-panel/api.js";
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import { Failure, StatusNote } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
@@ -107,7 +105,7 @@ export function MemoryCard({
     });
   };
   const disabled = busy || !connected;
-  const heading = memoryCardHeading(card);
+  const heading = memoryCardHeading(card, translateCore);
   const waiting = card.items.filter((item) => item.state === "proposed");
   const plainWaiting = waiting.filter(memoryCardItemIsPlain).length;
   /** A digest's proposals past the ten it lists. */
@@ -120,7 +118,7 @@ export function MemoryCard({
       {card.items.length === 0 ? null : (
         <ul className="memory-card-items">
           {card.items.map((item) => {
-            const name = memoryCardItemName(item);
+            const name = memoryCardItemName(item, translateCore);
             const editingThis = editing?.recordId === item.recordId;
             return (
               <li key={item.token} className="memory-card-item" data-state={item.state}>
@@ -128,14 +126,14 @@ export function MemoryCard({
                   {card.items.length > 1 ? <span className="memory-card-number">{item.number}. </span> : null}
                   {name}
                   {item.state !== "proposed" && card.items.length > 1 ? (
-                    <span className="meta-sm"> · {memoryCardStateLabel(item.state)}</span>
+                    <span className="meta-sm"> · {memoryCardStateLabel(item.state, translateCore)}</span>
                   ) : null}
                 </p>
                 {item.excerpt === null || editingThis ? null : <p className="memory-card-excerpt">{item.excerpt}</p>}
                 {item.state === "proposed" && item.updates !== undefined ? (
-                  <p className="meta-sm memory-card-related">{memoryUpdatesLine(item.updates)}</p>
+                  <p className="meta-sm memory-card-related">{memoryUpdatesLine(item.updates, translateCore)}</p>
                 ) : item.state === "proposed" && item.mayUpdate !== undefined ? (
-                  <p className="meta-sm memory-card-related">{memoryMayUpdateLine(item.mayUpdate)}</p>
+                  <p className="meta-sm memory-card-related">{memoryMayUpdateLine(item.mayUpdate, translateCore)}</p>
                 ) : null}
                 {item.state === "proposed" && item.similarTo !== undefined ? (
                   <p className="meta-sm memory-card-related">
@@ -143,12 +141,12 @@ export function MemoryCard({
                   </p>
                 ) : null}
                 {item.state === "proposed" && item.tidyUp === true && item.updates === undefined && item.mayUpdate === undefined ? (
-                  <p className="meta-sm memory-card-related">{MEMORY_TIDY_UP_LOOK}</p>
+                  <p className="meta-sm memory-card-related">{translateCore("memory.card.tidyUpLook")}</p>
                 ) : null}
-                {item.state === "proposed" && memoryCardProvenanceLine(item) !== undefined ? (
+                {item.state === "proposed" && memoryCardProvenanceLine(item, translateCore) !== undefined ? (
                   <p className="meta-sm memory-card-related memory-card-provenance">
-                    {memoryCardProvenanceLine(item)}
-                    {waiting.length > 1 ? ` · ${MEMORY_PROVENANCE_KEEP_ALONE}` : ""}
+                    {memoryCardProvenanceLine(item, translateCore)}
+                    {waiting.length > 1 ? ` · ${translateCore("memory.card.keepAllLeavesIt")}` : ""}
                   </p>
                 ) : null}
                 {editingThis ? (
@@ -293,7 +291,7 @@ export function MemoryCard({
               onClick={() =>
                 act(async () => {
                   const outcome = await decideMemoryCard(client, workspaceId, card.noticeId, "keep");
-                  if (outcome.ok) setNote(`${memoryKeptAllText(outcome.value.kept, outcome.value.needsLook)}.`);
+                  if (outcome.ok) setNote(`${memoryKeptAllText(outcome.value.kept, outcome.value.needsLook, translateCore)}.`);
                   return outcome;
                 })
               }

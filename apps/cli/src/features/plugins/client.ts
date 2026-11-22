@@ -239,7 +239,7 @@ export function pluginDetail(plugin: PluginView, columns: number | undefined = u
       // Each version's own declarations: a review decides on these, not the running version's.
       if (version !== pluginRunningVersion(plugin)) {
         lines.push(
-          `    declares tools: ${version.tools.map(describePluginTool).join(", ") || "none"}; settings: ${Object.keys(version.configFields).join(", ") || "none"}`,
+          `    declares tools: ${version.tools.map((tool) => describePluginTool(tool)).join(", ") || "none"}; settings: ${Object.keys(version.configFields).join(", ") || "none"}`,
         );
         for (const hook of version.mods ?? []) lines.push(`    hook ${describeModHook(hook)}`);
         for (const command of version.commands ?? []) lines.push(`    command /${command.name}: ${command.description}`);

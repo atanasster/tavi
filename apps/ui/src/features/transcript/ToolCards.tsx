@@ -23,7 +23,7 @@ import { taskPath } from "../shell/route.js";
 import { ErrorBoundary } from "../../ui/ViewBoundary.js";
 import { Failure } from "../../ui/Parts.js";
 import { render } from "./Receipts.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
 import { saidRecord } from "../shell/said.js";
 
@@ -192,15 +192,15 @@ const TOOL_ID_RENDERERS: Record<string, ToolRenderer> = {
   [SESSIONS_SEARCH_TOOL_ID]: {
     label: (card) => {
       if (card.status === "running") return translateNow("transcript.pastChats.searching");
-      const cited = card.status === "completed" ? pastChatSearchCitations(card.output) : undefined;
-      return cited === undefined ? undefined : pastChatSearchSummary(cited.found);
+      const cited = card.status === "completed" ? pastChatSearchCitations(card.output, translateCore) : undefined;
+      return cited === undefined ? undefined : pastChatSearchSummary(cited.found, translateCore);
     },
     headline: (card) => {
       const query = typeof card.input === "object" && card.input !== null ? (card.input as { readonly query?: unknown }).query : undefined;
       return typeof query === "string" && query !== "" ? query : undefined;
     },
     body: (card) => {
-      const cited = card.status === "completed" ? pastChatSearchCitations(card.output) : undefined;
+      const cited = card.status === "completed" ? pastChatSearchCitations(card.output, translateCore) : undefined;
       return cited === undefined ? undefined : <PastChatLinks found={cited.found} chats={cited.chats} />;
     },
   },

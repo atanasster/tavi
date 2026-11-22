@@ -2,14 +2,13 @@ import { useId, useState } from "react";
 
 import {
   type MemoryItem,
-  MEMORY_FORGET_UNREACHED,
   memoryMayUpdateLine,
   memoryPendingProvidersNote,
   memoryProvenanceUntrusted,
   memoryUpdatesLine,
 } from "@tavi/contracts";
 
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { localDate, shortDay } from "../../lib/time.js";
 import { Failure, InlineConfirm, StatusNote } from "../../ui/Parts.js";
 import { decideAllMemory, decideMemory, forgetMemory, forgetWaitsFor, replaceMemory } from "./memory-api.js";
@@ -70,9 +69,9 @@ export function Proposal({
           ]}
         />
         {item.updates !== undefined ? (
-          <p className="meta-sm memory-related">{memoryUpdatesLine(item.updates)}</p>
+          <p className="meta-sm memory-related">{memoryUpdatesLine(item.updates, translateCore)}</p>
         ) : item.mayUpdate !== undefined ? (
-          <p className="meta-sm memory-related">{memoryMayUpdateLine(item.mayUpdate)}</p>
+          <p className="meta-sm memory-related">{memoryMayUpdateLine(item.mayUpdate, translateCore)}</p>
         ) : null}
         {item.similarTo === undefined ? null : (
           <p className="meta-sm memory-related">
@@ -201,11 +200,11 @@ export function MemoryBulkDecide({ items, onDone }: { readonly items: readonly M
       }
       setBusy(false);
       setSaved(undefined);
-      const providers = memoryPendingProvidersNote([...waiting].sort());
+      const providers = memoryPendingProvidersNote([...waiting].sort(), translateCore);
       setNote(
         providers === undefined
-          ? t("center.proposals.forgotten", { count: forgotten, unreached: MEMORY_FORGET_UNREACHED })
-          : t("center.proposals.forgottenWaiting", { count: forgotten, unreached: MEMORY_FORGET_UNREACHED, providers }),
+          ? t("center.proposals.forgotten", { count: forgotten, unreached: translateCore("memory.forget.unreached") })
+          : t("center.proposals.forgottenWaiting", { count: forgotten, unreached: translateCore("memory.forget.unreached"), providers }),
       );
       setFailure(refused);
       onDone();

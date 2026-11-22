@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 import { TimestampSchema } from "./ids.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
+import type { CoreKey } from "./locales/core-en.js";
 
 /**
  * A model's lifecycle on one provider, as Rhumb (https://rhumbdata.com) last
@@ -160,27 +162,34 @@ export function worstLifecycleLevel(warnings: readonly LifecycleWarning[]): Life
   return LIFECYCLE_LEVELS.find((level) => warnings.some((warning) => warning.level === level));
 }
 
-/** One line for a warning, for a log, a doctor report or a badge's title. */
-export function lifecycleWarningText(warning: LifecycleWarning): string {
-  const when = warning.date === undefined ? "" : ` on ${warning.date}`;
-  const via = (redirect: RedirectWarning) => (redirect.via === undefined ? "" : ` (via ${redirect.via})`);
+/**
+ * One line for a warning, for a log, a doctor report or a badge's title: a
+ * clause about the model ("retired on 2026-11-19"), what follows "This model"
+ * in the canvas's picker.
+ */
+export function lifecycleWarningText(warning: LifecycleWarning, t: CoreT = coreEnglish): string {
+  const date = warning.date;
+  const dated = (bare: CoreKey, on: CoreKey): string => (date === undefined ? t(bare) : t(on, { date }));
   switch (warning.code) {
     case "retired":
-      return warning.date === undefined ? "retired" : `retired on ${warning.date}`;
+      return dated("model.lifecycle.retired", "model.lifecycle.retiredOn");
     case "redirected":
-      return `answered and billed as ${warning.to}${via(warning)}${warning.date === undefined ? "" : ` since ${warning.date}`}`;
-    case "redirects_soon":
-      return `will be answered and billed as ${warning.to}${via(warning)}${when}`;
+    case "redirects_soon": {
+      const to = warning.via === undefined ? warning.to : t("model.lifecycle.via", { to: warning.to, via: warning.via });
+      if (warning.code === "redirected")
+        return date === undefined ? t("model.lifecycle.redirected", { to }) : t("model.lifecycle.redirectedSince", { to, date });
+      return date === undefined ? t("model.lifecycle.redirectsSoon", { to }) : t("model.lifecycle.redirectsSoonOn", { to, date });
+    }
     case "retires_soon":
-      return `retires${when}`;
+      return dated("model.lifecycle.retires", "model.lifecycle.retiresOn");
     case "end_claimed":
       return warning.days !== undefined && warning.days <= 0
-        ? `may have retired${when} (not confirmed by the provider)`
-        : `may retire${when} (not confirmed by the provider)`;
+        ? dated("model.lifecycle.mayHaveRetired", "model.lifecycle.mayHaveRetiredOn")
+        : dated("model.lifecycle.mayRetire", "model.lifecycle.mayRetireOn");
     case "deprecated":
-      return `deprecated${when}`;
+      return dated("model.lifecycle.deprecated", "model.lifecycle.deprecatedOn");
     case "price_changes":
-      return `price changes${when}`;
+      return dated("model.lifecycle.priceChanges", "model.lifecycle.priceChangesOn");
   }
 }
 

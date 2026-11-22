@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { coreEnglish, type CoreT } from "./locales/core.js";
+
 /**
  * The group-chat seam: what a
  * channel that serves group chats reports and implements, so the host's room
@@ -175,18 +177,20 @@ export const ROOM_DROP_REASONS = [
 export type RoomDropReason = (typeof ROOM_DROP_REASONS)[number];
 
 /** What each address kind is, in a room's introduction's words. */
-const TRIGGER_WORDS: Readonly<Record<AddressKind, string>> = {
-  mention: "mention me",
-  reply: "reply to one of my messages",
-  thread: "write in a thread I started",
-  command: "use one of my commands",
-  picked: "pick a message for me",
-};
+const TRIGGER_WORDS = {
+  mention: "channel.trigger.mention",
+  reply: "channel.trigger.reply",
+  thread: "channel.trigger.thread",
+  command: "channel.trigger.command",
+  picked: "channel.trigger.picked",
+} as const satisfies Readonly<Record<AddressKind, string>>;
 
 /** A trigger in words: "mention me or reply to one of my messages". */
-export function triggerInWords(trigger: RoomTrigger): string {
-  const words = trigger.map((kind) => TRIGGER_WORDS[kind]);
-  return words.length <= 1 ? (words[0] ?? "") : `${words.slice(0, -1).join(", ")} or ${words[words.length - 1] ?? ""}`;
+export function triggerInWords(trigger: RoomTrigger, t: CoreT = coreEnglish): string {
+  const words = trigger.map((kind) => t(TRIGGER_WORDS[kind]));
+  return words.length <= 1
+    ? (words[0] ?? "")
+    : t("channel.trigger.or", { list: words.slice(0, -1).join(", "), last: words[words.length - 1] ?? "" });
 }
 
 /** Whether a trigger takes in a message addressed in these ways: the kinds must meet. */

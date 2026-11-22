@@ -9,7 +9,7 @@ import {
   type ReminderWhen,
 } from "@tavi/contracts";
 
-import { translateNow } from "../../lib/i18n.js";
+import { translateCore, translateNow } from "../../lib/i18n.js";
 import { dayMonth, dayTime } from "../../lib/time.js";
 import type { UiKey } from "../../locales/en.js";
 import { weekdaysText } from "./schedule-model.js";
@@ -62,7 +62,7 @@ export function noticeLabel(notice: string): string {
           : "center.reminderModel.dayBefore";
     return translateNow(key, { at: offset.at });
   }
-  return describeReminderOffset(offset);
+  return describeReminderOffset(offset, translateCore);
 }
 
 /** What `repeatText` reads of a repeat: its times, and its weekdays or its monthly or yearly day. */
@@ -77,7 +77,7 @@ export function repeatText(repeat: RepeatFields): string {
   const days = weekdaysText(repeat.daysOfWeek);
   const cadence =
     repeat.monthly !== undefined || repeat.yearly !== undefined
-      ? translateNow("center.reminderModel.repeatDated", { days: repeatDaysText(repeat, "label"), times })
+      ? translateNow("center.reminderModel.repeatDated", { days: repeatDaysText(repeat, "label", translateCore), times })
       : days === undefined
         ? translateNow("center.reminderModel.repeatDaily", { times })
         : translateNow("center.reminderModel.repeatWeekdays", { days, times });

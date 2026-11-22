@@ -18,7 +18,7 @@ import {
 } from "./api.js";
 import { mergeBy } from "../../lib/paging.js";
 import { ActionNote, DetailHead, LoadState, Notice, Section, StatusBadge, Summary } from "../../ui/Parts.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { when } from "../../lib/time.js";
 import { EditRoutine } from "./RoutineForms.js";
 import { RunInspector } from "./RunInspector.js";
@@ -328,9 +328,9 @@ export function RoutineOverview({
         </div>
       ) : null}
       {/* A model's change made after its chat read untrusted content, until the person edits the routine's words. */}
-      {value !== undefined && routineProvenanceLine(value.revision.provenance) !== undefined ? (
+      {value !== undefined && routineProvenanceLine(value.revision.provenance, translateCore) !== undefined ? (
         <Notice className="routine-provenance">
-          {t("routines.overview.provenance", { provenance: routineProvenanceLine(value.revision.provenance) ?? "" })}
+          {t("routines.overview.provenance", { provenance: routineProvenanceLine(value.revision.provenance, translateCore) ?? "" })}
         </Notice>
       ) : null}
       <LoadState

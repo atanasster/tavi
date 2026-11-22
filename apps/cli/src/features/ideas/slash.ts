@@ -1,5 +1,5 @@
 import {
-  IDEA_CATEGORY_LABELS,
+  ideaCategoryLabel,
   IDEA_FOR_YOU_MAX,
   type IdeaCapability,
   type ModCommandDeclaration,
@@ -68,7 +68,7 @@ export function ideasSlashCommand(
     if (answer.result.enabled === false) return { text: "Ideas are off. Turn them on in Settings → Ideas, or with tavi ideas on." };
     const top = answer.result.ideas.filter((idea) => idea.status === "active").slice(0, IDEA_FOR_YOU_MAX);
     if (top.length === 0) return { text: "No ideas yet. /ideas refresh looks for some." };
-    const lines = top.map((idea, index) => `${index + 1}. ${idea.title} (${IDEA_CATEGORY_LABELS[idea.category]})\n   Try: ${idea.prompt}`);
+    const lines = top.map((idea, index) => `${index + 1}. ${idea.title} (${ideaCategoryLabel(idea.category)})\n   Try: ${idea.prompt}`);
     return { text: ["Ideas for you:", ...lines, "More in the Ideas tab."].join("\n") };
   };
 }

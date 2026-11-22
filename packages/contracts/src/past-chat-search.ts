@@ -1,3 +1,5 @@
+import { coreEnglish, type CoreT } from "./locales/core.js";
+
 /**
  * Past-chat search, `sessions.search`:
  * the shape of its answer, declared here so the tool, the terminal chat and
@@ -39,10 +41,10 @@ const CITED_TASK_ID = /^[\w.:-]{1,128}$/;
 /** The longest title a card shows. */
 const CITED_TITLE_MAX_CHARS = 120;
 
-function citation(taskId: unknown, title: unknown): PastChatCitation | undefined {
+function citation(taskId: unknown, title: unknown, t: CoreT): PastChatCitation | undefined {
   if (typeof taskId !== "string" || !CITED_TASK_ID.test(taskId) || typeof title !== "string") return undefined;
   const line = title.replace(/\s+/g, " ").trim().slice(0, CITED_TITLE_MAX_CHARS);
-  return { taskId, title: line === "" ? "Untitled chat" : line };
+  return { taskId, title: line === "" ? t("pastChats.search.untitled") : line };
 }
 
 /** A JSON string literal's value, or undefined when it is not one. */
@@ -64,6 +66,7 @@ function stringLiteral(literal: string): string | undefined {
  */
 export function pastChatSearchCitations(
   output: unknown,
+  t: CoreT = coreEnglish,
 ): { readonly found: number; readonly chats: readonly PastChatCitation[] } | undefined {
   if (typeof output !== "object" || output === null) return undefined;
   const record = output as {
@@ -83,7 +86,7 @@ export function pastChatSearchCitations(
     for (const match of record.matches as unknown[]) {
       if (typeof match !== "object" || match === null) continue;
       const hit = match as { readonly taskId?: unknown; readonly title?: unknown };
-      add(citation(hit.taskId, hit.title));
+      add(citation(hit.taskId, hit.title, t));
     }
     const found =
       typeof record.found === "number" && Number.isSafeInteger(record.found) && record.found >= 0 ? record.found : record.matches.length;
@@ -93,12 +96,12 @@ export function pastChatSearchCitations(
   const found = /^\{"found":(\d{1,4})[,}]/.exec(record.preview);
   if (found === null) return undefined;
   for (const match of record.preview.matchAll(/\{"taskId":("(?:[^"\\]|\\.)*"),"title":("(?:[^"\\]|\\.)*")/g)) {
-    add(citation(stringLiteral(match[1]!), stringLiteral(match[2]!)));
+    add(citation(stringLiteral(match[1]!), stringLiteral(match[2]!), t));
   }
   return { found: Number(found[1]), chats };
 }
 
 /** A search card's line: "Searched earlier chats · 3 found". */
-export function pastChatSearchSummary(found: number): string {
-  return `Searched earlier chats · ${found} found`;
+export function pastChatSearchSummary(found: number, t: CoreT = coreEnglish): string {
+  return t("pastChats.search.summary", { count: found, found: String(found) });
 }

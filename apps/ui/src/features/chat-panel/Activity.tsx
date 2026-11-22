@@ -4,7 +4,7 @@ import type { RecordedTask } from "@tavi/client/browser";
 import { APPROVAL_HISTORY_MAX_LIMIT, toolCallTitle, type ApprovalHistoryItem } from "@tavi/contracts";
 type AdmissionRecord = NonNullable<RecordedTask["admissions"]>[number];
 
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { saidRecord } from "../shell/said.js";
 import { dayHeading, groupByDay, localTime, todayIn } from "../../lib/time.js";
 import type { Outcome, SettingsClient } from "../../lib/ipc.js";
@@ -116,7 +116,7 @@ function recordedItem(decision: RecordedDecision): ActivityItem {
   return {
     key: `decision:${decision.approvalId}`,
     at: decision.decidedAt,
-    title: toolCallTitle(decision.toolId, decision.summary),
+    title: toolCallTitle(decision.toolId, decision.summary, translateCore),
     detail,
     verdict,
     tool: decision.toolId,

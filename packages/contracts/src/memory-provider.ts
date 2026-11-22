@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { IdSchema } from "./ids.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 import { MAX_MEMORY_KEYWORDS, MAX_MEMORY_KEYWORD_CHARS, MAX_PREFERENCE_KEY_CHARS, MEMORY_SEARCH_MAX, type MemoryKind } from "./memory.js";
 import type { ModelUsage } from "./model.js";
 import { defineProviderError } from "./util.js";
@@ -430,27 +431,26 @@ export const PluginMemoryDeclarationSchema = z.strictObject({
 });
 export type PluginMemoryDeclaration = z.infer<typeof PluginMemoryDeclarationSchema>;
 
-const RECEIVE_DISCLOSURES: Record<MemoryProviderReceive, string> = {
-  records: "your approved memories (never sensitive ones, and personal ones only with a third switch)",
-  conversation: "what you say: each recall's query and the chat spans it drafts proposals from",
-};
+const RECEIVE_DISCLOSURES = {
+  records: "memory.provider.receives.records",
+  conversation: "memory.provider.receives.conversation",
+} as const satisfies Record<MemoryProviderReceive, string>;
 
-const CAPABILITY_DISCLOSURES: Record<MemoryProviderCapability, string> = {
-  recall: "ranks what memory recalls",
-  capture: "drafts proposals from your chats",
-  consolidate: "drafts tidy-ups of what is kept",
-};
+const CAPABILITY_DISCLOSURES = {
+  recall: "memory.provider.does.recall",
+  capture: "memory.provider.does.capture",
+  consolidate: "memory.provider.does.consolidate",
+} as const satisfies Record<MemoryProviderCapability, string>;
 
 /** What approving a memory provider means, derived from what it does and what it asks to receive. */
-export function describeMemoryDeclaration(memory: PluginMemoryDeclaration): string {
-  const does = memory.capabilities.map((capability) => CAPABILITY_DISCLOSURES[capability]).join(", ");
+export function describeMemoryDeclaration(memory: PluginMemoryDeclaration, t: CoreT = coreEnglish): string {
+  const does = memory.capabilities.map((capability) => t(CAPABILITY_DISCLOSURES[capability])).join(", ");
+  const fields = memory.receives.map((field) => t(RECEIVE_DISCLOSURES[field]));
   const receives =
-    memory.receives.length === 0
-      ? "nothing of yours: the host's own search answers for it"
-      : memory.receives.map((field) => RECEIVE_DISCLOSURES[field]).join("; and ");
-  const index =
-    memory.index === "own" ? " It keeps an index of its own, which Tavi tells it to drop a record from when you forget it." : "";
-  return `Memory provider: ${does}. It may receive ${receives}, each only when you switch it on for the workspace.${index} It answers ids only, never text, and proposes only: you decide what is kept.`;
+    fields.length === 0
+      ? t("memory.provider.receives.nothing")
+      : fields.reduce((first, second) => t("memory.provider.receives.both", { first, second }));
+  return t(memory.index === "own" ? "memory.provider.describeOwnIndex" : "memory.provider.describe", { does, receives });
 }
 
 /**

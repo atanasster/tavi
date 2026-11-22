@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { coreEnglish, type CoreT } from "./locales/core.js";
 import { ONBOARDING_ABI } from "./onboarding.js";
 
 /**
@@ -25,7 +26,14 @@ export const PluginOnboardingDeclarationSchema = z.strictObject({
 export type PluginOnboardingDeclaration = z.infer<typeof PluginOnboardingDeclarationSchema>;
 
 /** What the person is shown when they review an onboarding flow: what it receives, and that it only chooses steps. */
-export function describeOnboardingDeclaration(onboarding: z.input<typeof PluginOnboardingDeclarationSchema>): string {
-  const detail = onboarding.receives?.includes("status-detail") === true;
-  return `Onboarding flow: it receives which setup steps are done (${detail ? "with their details: the provider and model names, account labels and rows each step shows" : "never their details"}), what Tavi can do here and the ids of the providers, channels and apps available, nothing of yours. It chooses the steps and their words; Tavi checks the flow and makes every change itself.${onboarding.disclosure === undefined ? "" : ` It says: ${onboarding.disclosure}`}`;
+export function describeOnboardingDeclaration(
+  onboarding: z.input<typeof PluginOnboardingDeclarationSchema>,
+  t: CoreT = coreEnglish,
+): string {
+  const details = t(
+    onboarding.receives?.includes("status-detail") === true ? "plugin.onboarding.withDetails" : "plugin.onboarding.noDetails",
+  );
+  return onboarding.disclosure === undefined
+    ? t("plugin.onboarding.describe", { details })
+    : t("plugin.onboarding.describeSays", { details, disclosure: onboarding.disclosure });
 }

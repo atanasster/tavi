@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { TimestampSchema } from "./ids.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 import { MemoryProvenanceSchema } from "./memory.js";
 import type { AsyncRepository } from "./persistence-types.js";
 import type { ModelUsage } from "./model.js";
@@ -658,28 +659,41 @@ export const HeartbeatHookDecisionSchema = z.object({
 export type HeartbeatHookDecision = z.infer<typeof HeartbeatHookDecisionSchema>;
 
 /** Why a check ran, in words, for the log; nothing for an ordinary interval check or a closed-hours row. */
-function wakeWords(tick: Pick<HeartbeatTickRecord, "kind" | "wakeReason">): string | undefined {
+function wakeWords(tick: Pick<HeartbeatTickRecord, "kind" | "wakeReason">, t: CoreT): string | undefined {
   if (tick.kind === "window") return undefined;
   switch (tick.wakeReason) {
     case "event":
-      return "woken by an event";
+      return t("heartbeat.tick.wake.event");
     case "manual":
-      return "you asked";
+      return t("heartbeat.tick.wake.manual");
     case "catch-up":
-      return "catch-up after the owner was away";
+      return t("heartbeat.tick.wake.catchUp");
     case "signal":
-      return "woken by a signal";
+      return t("heartbeat.tick.wake.signal");
     default:
       return undefined;
   }
 }
 
 /** What a log row adds about a check, read without trusting the row: why it ran, and how many memories it used. */
-export function heartbeatTickContext(tick: Pick<HeartbeatTickRecord, "kind" | "wakeReason" | "inputs">): readonly string[] {
+export function heartbeatTickContext(
+  tick: Pick<HeartbeatTickRecord, "kind" | "wakeReason" | "inputs">,
+  t: CoreT = coreEnglish,
+): readonly string[] {
   const memory = tick.inputs !== null && typeof tick.inputs === "object" ? (tick.inputs as { memory?: unknown }).memory : undefined;
   const memories = Array.isArray(memory) ? memory.length : 0;
-  const why = wakeWords(tick);
-  return [...(why === undefined ? [] : [why]), ...(memories === 0 ? [] : [`used ${memories} ${memories === 1 ? "memory" : "memories"}`])];
+  const why = wakeWords(tick, t);
+  return [
+    ...(why === undefined ? [] : [why]),
+    ...(memories === 0 ? [] : [t("heartbeat.tick.memories", { count: memories, n: String(memories) })]),
+  ];
+}
+
+/** What a mod decided about one item, as a log row says it: "acme.quiet held back (a reason)". */
+export function heartbeatHookDecisionText(decision: HeartbeatHookDecision, t: CoreT = coreEnglish): string {
+  const heldBack = decision.action === "held back";
+  if (decision.reason === undefined) return t(heldBack ? "heartbeat.hook.heldBack" : "heartbeat.hook.waited", { by: decision.by });
+  return t(heldBack ? "heartbeat.hook.heldBackBecause" : "heartbeat.hook.waitedBecause", { by: decision.by, reason: decision.reason });
 }
 
 /** A record's mod decisions, read without trusting the row: anything else is none. */
@@ -849,49 +863,62 @@ export const PluginHeartbeatSignalsDeclarationSchema = z
   });
 export type PluginHeartbeatSignalsDeclaration = z.infer<typeof PluginHeartbeatSignalsDeclarationSchema>;
 
-const RECEIVE_DISCLOSURES: Record<HeartbeatReceive, string> = {
-  instructions: "your heartbeat instructions",
-  signals: "new signals (titles and metadata of what is waiting)",
-  ledger: "what the heartbeat told you lately and your feedback",
-  memory: "memory records relevant to each check",
-};
+const RECEIVE_DISCLOSURES = {
+  instructions: "heartbeat.plugin.receive.instructions",
+  signals: "heartbeat.plugin.receive.signals",
+  ledger: "heartbeat.plugin.receive.ledger",
+  memory: "heartbeat.plugin.receive.memory",
+} as const satisfies Record<HeartbeatReceive, string>;
 
 /** What approving a heartbeat provider means, in the words the CLI and the canvas both show. */
-export function describeHeartbeatDeclaration(heartbeat: PluginHeartbeatDeclaration): string {
-  const receives = heartbeat.receives.map((field) => RECEIVE_DISCLOSURES[field]);
-  const what = receives.length === 0 ? "no heartbeat data beyond the time of each check" : receives.join(", ");
-  const turns = heartbeat.usesTurns ? "; it can run short, metered, read-only model turns" : "";
-  return `Heartbeat provider: decides what the heartbeat tells you. It may receive ${what}, each only when you switch it on${turns}. It never sends anything itself; Tavi delivers. Each check is limited to ${heartbeat.maxTickSeconds} s.`;
+export function describeHeartbeatDeclaration(heartbeat: PluginHeartbeatDeclaration, t: CoreT = coreEnglish): string {
+  const receives = heartbeat.receives.map((field) => t(RECEIVE_DISCLOSURES[field]));
+  const what = receives.length === 0 ? t("heartbeat.plugin.receive.none") : receives.join(", ");
+  return t(heartbeat.usesTurns ? "heartbeat.plugin.describeTurns" : "heartbeat.plugin.describe", {
+    what,
+    seconds: String(heartbeat.maxTickSeconds),
+  });
 }
 
 /** What a plugin version's heartbeat declarations mean, one line each: what its review and its details show. */
-export function describePluginHeartbeat(version: {
-  readonly heartbeat?: PluginHeartbeatDeclaration | undefined;
-  readonly heartbeatSignals?: PluginHeartbeatSignalsDeclaration | undefined;
-}): readonly string[] {
+export function describePluginHeartbeat(
+  version: {
+    readonly heartbeat?: PluginHeartbeatDeclaration | undefined;
+    readonly heartbeatSignals?: PluginHeartbeatSignalsDeclaration | undefined;
+  },
+  t: CoreT = coreEnglish,
+): readonly string[] {
   return [
-    ...(version.heartbeat === undefined ? [] : [describeHeartbeatDeclaration(version.heartbeat)]),
-    ...(version.heartbeatSignals === undefined ? [] : [describeHeartbeatSignalsDeclaration(version.heartbeatSignals)]),
+    ...(version.heartbeat === undefined ? [] : [describeHeartbeatDeclaration(version.heartbeat, t)]),
+    ...(version.heartbeatSignals === undefined ? [] : [describeHeartbeatSignalsDeclaration(version.heartbeatSignals, t)]),
   ];
 }
 
 /** What approving heartbeat signal sources means. */
-export function describeHeartbeatSignalsDeclaration(signals: PluginHeartbeatSignalsDeclaration): string {
+export function describeHeartbeatSignalsDeclaration(signals: PluginHeartbeatSignalsDeclaration, t: CoreT = coreEnglish): string {
   const offers = Object.entries(signals.offers ?? {});
-  const offered =
-    offers.length === 0 ? "" : ` The heartbeat's first-run offer may suggest: ${offers.map(([, line]) => `"${line}"`).join(", ")}.`;
-  return `Heartbeat signal sources (${signals.sources.join(", ")}): add things for the heartbeat to watch. They run without a model, and what they return is treated as untrusted text.${offered}`;
+  const sources = signals.sources.join(", ");
+  if (offers.length === 0) return t("heartbeat.plugin.signals", { sources });
+  return t("heartbeat.plugin.signalsOffers", {
+    sources,
+    offers: offers.map(([, line]) => t("heartbeat.plugin.offer", { line })).join(", "),
+  });
 }
 
 /**
  * A plugin's signal source in words, for *Signal sources*: its declared offer line, else its id in sentence case
  * ("new_posts" is "New posts"), and the plugin's name, never the raw `<plugin>.<source>` id.
  */
-export function pluginSignalSourceLabel(pluginName: string, sourceId: string, signals: PluginHeartbeatSignalsDeclaration): string {
+export function pluginSignalSourceLabel(
+  pluginName: string,
+  sourceId: string,
+  signals: PluginHeartbeatSignalsDeclaration,
+  t: CoreT = coreEnglish,
+): string {
   const offer = signals.offers?.[sourceId];
-  if (offer !== undefined) return `${offer}, from ${pluginName}`;
+  if (offer !== undefined) return t("heartbeat.plugin.sourceOffer", { offer, plugin: pluginName });
   const words = sourceId.replace(/[-_]+/g, " ");
-  return `${words.charAt(0).toUpperCase()}${words.slice(1)} from ${pluginName}`;
+  return t("heartbeat.plugin.sourceNamed", { source: `${words.charAt(0).toUpperCase()}${words.slice(1)}`, plugin: pluginName });
 }
 
 // Local rather than `utf8ByteLength` from ipc-codec.ts, which imports ipc.ts: the IPC schemas import this module.

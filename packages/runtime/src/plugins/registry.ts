@@ -878,7 +878,9 @@ export class PluginRegistry {
           provenance: record.manifest.provenance,
           configFields: record.manifest.config,
           ...definedOnly({ router: record.manifest.router, ui: record.manifest.ui, apps: record.manifest.apps }),
-          ...(record.manifest.channels.length === 0 ? {} : { channels: record.manifest.channels.map(channelDisclosureOf) }),
+          ...(record.manifest.channels.length === 0
+            ? {}
+            : { channels: record.manifest.channels.map((descriptor) => channelDisclosureOf(descriptor)) }),
           ...ownerCodeFacts(record.manifest),
           ...isolationFacts(record),
           ...(record.manifest.mods === undefined || record.manifest.mods.hooks.length === 0

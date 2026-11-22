@@ -1,8 +1,8 @@
 import { useEffect, useId, useState } from "react";
 
-import { type MemoryItem, MAX_MEMORY_TITLE_CHARS, MEMORY_FORGET_UNREACHED, memoryPendingProvidersNote } from "@tavi/contracts";
+import { type MemoryItem, MAX_MEMORY_TITLE_CHARS, memoryPendingProvidersNote } from "@tavi/contracts";
 
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import { Failure, InlineConfirm, StatusNote } from "../../ui/Parts.js";
 import { FormActions } from "../settings/FormParts.js";
 import { correctMemory, forgetMemory, forgetWaitsFor, getMemory } from "./memory-api.js";
@@ -107,7 +107,7 @@ export function MemoryRow({
     setFailure(undefined);
     void forgetMemory(client, workspaceId, item.recordId).then((outcome) => {
       setBusy(false);
-      if (outcome.ok) onRemoved(item.recordId, memoryPendingProvidersNote(forgetWaitsFor(outcome.value)));
+      if (outcome.ok) onRemoved(item.recordId, memoryPendingProvidersNote(forgetWaitsFor(outcome.value), translateCore));
       else if (outcome.code === "NOT_FOUND") onRemoved(item.recordId);
       else setFailure(outcome.message);
     });
@@ -183,7 +183,7 @@ export function MemoryRow({
         <InlineConfirm
           focusCancel
           className="memory-confirm"
-          message={t("center.memoryRow.forgetConfirm", { unreached: MEMORY_FORGET_UNREACHED })}
+          message={t("center.memoryRow.forgetConfirm", { unreached: translateCore("memory.forget.unreached") })}
           confirmLabel={busy ? t("center.memoryRow.forgetting") : t("center.memoryRow.forgetIt")}
           cancelLabel={t("center.memoryRow.keepIt")}
           busy={busy}
