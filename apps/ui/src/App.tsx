@@ -49,6 +49,7 @@ import { WorkerTranscript } from "./features/workers/WorkerView.js";
 import { isPhone, usePhone } from "./hooks/page.js";
 import { loadWidth } from "./hooks/resizable.js";
 import { usePoll } from "./hooks/use-poll.js";
+import { setLocale } from "./lib/i18n.js";
 import type { SettingsClient } from "./lib/ipc.js";
 import { Failure } from "./ui/Parts.js";
 import { ViewBoundary } from "./ui/ViewBoundary.js";
@@ -182,6 +183,12 @@ export function App({
     page.section,
   );
   const feed = useCenterFeed(client, workspaceId, centered);
+  // The workspace's language, as the owner names it with each summary: a change made in
+  // Settings, the terminal or onboarding reaches the page with the next one.
+  const locale = feed.summary?.locale;
+  useEffect(() => {
+    if (locale !== undefined) void setLocale(locale);
+  }, [locale]);
   /** What moves the agent tree and a worker's view: the feed's task and decision changes; absent with no feed to follow. */
   const workerWatch =
     centered && feed.error === undefined

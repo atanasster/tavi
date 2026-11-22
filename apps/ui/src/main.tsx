@@ -13,6 +13,7 @@ import { createCanvasStore } from "./features/chat/store/store.js";
 import type { RememberedTask, TaskMemory } from "./features/chat/store/types.js";
 import type { PageNavigation } from "./features/shell/route.js";
 import { startPage, watchForNewLink } from "./features/startup/start.js";
+import { setLocale, storedLocale } from "./lib/i18n.js";
 import { readStoredJson, writeStoredJson } from "./lib/storage.js";
 import { ViewBoundary } from "./ui/ViewBoundary.js";
 import "./styles/index.css";
@@ -67,36 +68,40 @@ if (root !== null) {
     addEventListener: (type, listener) => window.addEventListener(type, listener),
     reload: () => window.location.reload(),
   });
-  void startPage({
-    ...(tabStorage === undefined ? {} : { storage: tabStorage }),
-    location: window.location,
-    history: window.history,
-    fetch: (url, init) => window.fetch(url, init),
-    connect: (secret) => connectThroughBridge({ origin: window.location.origin, secret }),
-    message: (text) =>
-      view.render(
-        <main className="message">
-          <p>{text}</p>
-        </main>,
-      ),
-    render: (client) =>
-      view.render(
-        <StrictMode>
-          <ViewBoundary resetKey="canvas" what="canvas">
-            <App
-              store={createCanvasStore(client, {
-                workspaceId: WORKSPACE,
-                principal: PRINCIPAL,
-                mintKey: () => `ui-${crypto.randomUUID()}`,
-                memory,
-              })}
-              client={client}
-              workspaceId={WORKSPACE}
-              principal={PRINCIPAL}
-              navigation={navigation}
-            />
-          </ViewBoundary>
-        </StrictMode>,
-      ),
-  });
+  // The language the page last showed, its catalogue loaded before the first render so a
+  // Bulgarian page does not open in English; the workspace's own arrives with the center summary.
+  void setLocale(storedLocale()).finally(() =>
+    startPage({
+      ...(tabStorage === undefined ? {} : { storage: tabStorage }),
+      location: window.location,
+      history: window.history,
+      fetch: (url, init) => window.fetch(url, init),
+      connect: (secret) => connectThroughBridge({ origin: window.location.origin, secret }),
+      message: (text) =>
+        view.render(
+          <main className="message">
+            <p>{text}</p>
+          </main>,
+        ),
+      render: (client) =>
+        view.render(
+          <StrictMode>
+            <ViewBoundary resetKey="canvas" what="canvas">
+              <App
+                store={createCanvasStore(client, {
+                  workspaceId: WORKSPACE,
+                  principal: PRINCIPAL,
+                  mintKey: () => `ui-${crypto.randomUUID()}`,
+                  memory,
+                })}
+                client={client}
+                workspaceId={WORKSPACE}
+                principal={PRINCIPAL}
+                navigation={navigation}
+              />
+            </ViewBoundary>
+          </StrictMode>,
+        ),
+    }),
+  );
 }
