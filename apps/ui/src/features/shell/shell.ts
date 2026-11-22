@@ -1,9 +1,10 @@
 import type { TaskListRow } from "@tavi/contracts";
 import type { ToolCard } from "@tavi/client/browser";
 import { firstLine } from "../../lib/format.js";
-import { UNTITLED_CHAT } from "../center/model.js";
 import { isCancelled } from "../chat/store/runs.js";
 import type { CanvasRun, CanvasState } from "../chat/store/types.js";
+import { translateNow } from "../../lib/i18n.js";
+import { saidRecord } from "./said.js";
 
 /**
  * The shell's pure parts: the status vocabulary every zone
@@ -20,19 +21,18 @@ import type { CanvasRun, CanvasState } from "../chat/store/types.js";
  */
 export type SessionStatus = "submitted" | "working" | "input-required" | "completed" | "stopped" | "canceled" | "failed" | "unknown";
 
-const SESSION_STATUS_LABELS: Readonly<Record<SessionStatus, string>> = {
-  submitted: "submitted",
-  working: "working",
-  "input-required": "needs you",
-  completed: "completed",
-  stopped: "stopped",
-  canceled: "cancelled",
-  failed: "failed",
-  unknown: "unknown",
-};
-
-/** A listed chat's status in the same words, with a Home's `idle` between turns: ready for the next prompt. */
-export const TASK_STATUS_LABELS: Readonly<Record<TaskListRow["status"], string>> = { ...SESSION_STATUS_LABELS, idle: "ready" };
+/** A listed chat's status in the same words as a session's, with a Home's `idle` between turns: ready for the next prompt. */
+export const TASK_STATUS_LABELS: Readonly<Record<TaskListRow["status"], string>> = saidRecord({
+  submitted: "shell.status.submitted",
+  working: "shell.status.working",
+  "input-required": "shell.status.inputRequired",
+  completed: "shell.status.completed",
+  stopped: "shell.status.stopped",
+  canceled: "shell.status.canceled",
+  failed: "shell.status.failed",
+  unknown: "shell.status.unknown",
+  idle: "shell.status.idle",
+});
 
 /** The word for a chat's status in its header: Home between turns is ready, as the chats list says, never done. */
 export function headerStatusLabel(status: SessionStatus, home: boolean): string {
@@ -94,7 +94,7 @@ function titleOf(runs: readonly CanvasRun[]): string {
     if (first !== "") return first;
   }
   // Never a task or operation id: they say nothing to a person.
-  return runs.some((run) => run.restored === true) ? "Earlier chat" : UNTITLED_CHAT;
+  return translateNow(runs.some((run) => run.restored === true) ? "shell.session.earlier" : "shell.session.untitled");
 }
 
 /**
@@ -346,7 +346,7 @@ function ownerTitle(state: CanvasState, taskId: string | undefined): string | un
   if (taskId === undefined) return undefined;
   const listed = [...(state.directory?.rows ?? []), ...(state.directory?.needs ?? [])].find((row) => row.taskId === taskId)?.title;
   if (listed !== undefined && listed.trim() !== "") return listed;
-  return taskId === state.home ? "Home" : undefined;
+  return taskId === state.home ? translateNow("shell.session.home") : undefined;
 }
 
 export function shellState(state: CanvasState, selected: string | undefined, workspaceId = "default"): ShellState {

@@ -26,7 +26,8 @@ import type { useChatNavigation, ChatPane } from "./use-chat-navigation.js";
 import type { useOwnerFeatures } from "./use-owner-features.js";
 import { WorkerNeedCards, type WorkerRoundDecide } from "../workers/WorkerNeeds.js";
 import { workerLabel } from "../workers/WorkerView.js";
-import { CHAT_NOT_STARTED, NO_CHAT_SELECTED, Pending } from "../../ui/Parts.js";
+import { Pending } from "../../ui/Parts.js";
+import { useT } from "../../lib/i18n.js";
 import { lazyModule } from "../../ui/lazy-module.js";
 import { Tabs } from "../../ui/Tabs.js";
 import { usePhone } from "../../hooks/page.js";
@@ -138,6 +139,7 @@ export function ChatMain({
   readonly onInspect: (row: ArtifactListRow) => void;
   readonly navigate: ReturnType<typeof usePageRoute>["navigate"];
 }) {
+  const t = useT();
   const { workspaceId } = useWorkspace();
   const timeZone = useTimeZone();
   const {
@@ -184,13 +186,13 @@ export function ChatMain({
     <>
       <div className="main-head">
         <Tabs
-          label="chat views"
+          label={t("shell.chat.views")}
           className="subviews"
           items={[
-            { value: "transcript" as const, label: "Transcript" },
-            { value: "trajectory" as const, label: "Trajectory" },
-            { value: "changes" as const, label: "Held files" },
-            { value: "agents" as const, label: "Agents" },
+            { value: "transcript" as const, label: t("shell.chat.transcript") },
+            { value: "trajectory" as const, label: t("shell.chat.trajectory") },
+            { value: "changes" as const, label: t("shell.chat.changes") },
+            { value: "agents" as const, label: t("shell.chat.agents") },
           ]}
           current={pane}
           onPick={setPane}
@@ -239,7 +241,7 @@ export function ChatMain({
         }
         content={
           pane === "transcript" ? undefined : current === undefined ? (
-            <p>{NO_CHAT_SELECTED}</p>
+            <p>{t("ui.parts.noChatSelected")}</p>
           ) : (
             <ViewBoundary resetKey={`${current.key}:${pane}`} what="panel" onRetry={retryChatParts}>
               <Suspense fallback={<Pending />}>
@@ -274,7 +276,7 @@ export function ChatMain({
                       }
                     />
                   ) : (
-                    <p>{CHAT_NOT_STARTED}</p>
+                    <p>{t("ui.parts.chatNotStarted")}</p>
                   )
                 ) : (
                   <Changes key={current.key} taskId={current.taskId} onInspect={onInspect} />

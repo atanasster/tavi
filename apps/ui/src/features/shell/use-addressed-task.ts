@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { errorMessage } from "@tavi/contracts/util";
 
 import type { CanvasStore } from "../chat/store/types.js";
+import { translateNow } from "../../lib/i18n.js";
 import type { Navigate, PageRoute } from "./route.js";
 
 /**
@@ -40,7 +41,7 @@ export function useAddressedTask(page: PageRoute, store: CanvasStore, navigate: 
     void store
       .openTask(taskId)
       .catch((error: unknown) => {
-        setRouteError(`Chat ${taskId} could not be opened: ${errorMessage(error)}. Showing this page's chats instead.`);
+        setRouteError(translateNow("shell.chat.openFailed", { taskId, reason: errorMessage(error) }));
         // The address bar must not keep naming a session this page cannot show.
         correcting.current = true;
         navigate((current) => ({ ...current, taskId: undefined }), { replace: true });

@@ -25,7 +25,7 @@ export function SettingsNav({
   useCurrentNavInView(view);
   const label = (value: SettingsView): string => SETTINGS_VIEWS.find((item) => item.value === value)?.label ?? value;
   return (
-    <SidebarFrame title="Settings" label="settings" className="center-nav settings-nav" onCollapse={onCollapse}>
+    <SidebarFrame panel="settings" className="center-nav settings-nav" onCollapse={onCollapse}>
       {SETTINGS_GROUPS.map((group) => {
         const views = group.views.filter((value) => ideas || value !== "ideas");
         return views.length === 0 ? null : (

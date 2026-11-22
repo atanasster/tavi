@@ -3,6 +3,7 @@ import { Fragment, useEffect, useId, useRef } from "react";
 import { Modal } from "../../ui/Modal.js";
 import { KEY_MAP, matches, type KeyBinding } from "./keys.js";
 import { Button } from "../../ui/Button.js";
+import { useT } from "../../lib/i18n.js";
 
 /**
  * The `Cmd+/` sheet: what the page binds, and what it only offers.
@@ -19,6 +20,7 @@ export function KeySheet({
   /** A binding's words where the page says them otherwise ("New side chat" while Home is on). */
   readonly labels?: Partial<Record<KeyBinding["action"], string>>;
 }) {
+  const t = useT();
   const bound = KEY_MAP.filter((binding) => binding.tier !== "sheet");
   const heading = useId();
   const offered = KEY_MAP.filter((binding) => binding.tier === "sheet").flatMap((binding) => {
@@ -48,7 +50,7 @@ export function KeySheet({
     return () => dialog.removeEventListener("keydown", onKeyDown);
   }, []);
   return (
-    <Modal title="Keyboard" onClose={onClose}>
+    <Modal title={t("shell.keys.title")} onClose={onClose}>
       <div className="sheet" ref={sheet}>
         <dl className="sheet-keys">
           {bound.map((binding) => (
@@ -56,14 +58,14 @@ export function KeySheet({
               <dt>
                 <Chord chord={binding.chord} />
               </dt>
-              <dd>{binding.label}</dd>
+              <dd>{t(binding.labelKey)}</dd>
             </Fragment>
           ))}
         </dl>
         {offered.length === 0 ? null : (
           <section className="sheet-offered" aria-labelledby={`${heading}-offered`}>
-            <h3 id={`${heading}-offered`}>From here</h3>
-            <p className="meta-base">The browser keeps these keys for itself, so they are buttons rather than shortcuts.</p>
+            <h3 id={`${heading}-offered`}>{t("shell.keys.offered")}</h3>
+            <p className="meta-base">{t("shell.keys.offeredWhy")}</p>
             <div className="sheet-offered-actions">
               {offered.map(({ binding, act }) => (
                 <Button
@@ -74,7 +76,7 @@ export function KeySheet({
                     onClose();
                   }}
                 >
-                  {labels[binding.action] ?? binding.label}
+                  {labels[binding.action] ?? t(binding.labelKey)}
                 </Button>
               ))}
             </div>

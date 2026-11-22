@@ -77,13 +77,13 @@ export function ShellSidebar({
         sidebar || phone ? (
           <CenterNav section={section} summary={summary} sections={sections} onSection={openSection} onCollapse={() => setSidebar(false)} />
         ) : (
-          <SidebarRail title="Command Center" onExpand={() => setSidebar(true)} />
+          <SidebarRail panel="center" onExpand={() => setSidebar(true)} />
         )
       ) : route === "settings" ? (
         sidebar || phone ? (
           <SettingsNav view={settingsView} ideas={ideas} onView={onSettingsView} onCollapse={() => setSidebar(false)} />
         ) : (
-          <SidebarRail title="Settings" onExpand={() => setSidebar(true)} />
+          <SidebarRail panel="settings" onExpand={() => setSidebar(true)} />
         )
       ) : sidebar ? (
         <SessionDirectory

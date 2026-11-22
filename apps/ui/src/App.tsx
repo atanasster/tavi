@@ -107,10 +107,15 @@ export function App({
   const [browserExpanded, setBrowserExpanded] = useState(false);
   const [pane, setPane] = useState<ChatPane>("transcript");
   const [artifact, setArtifact] = useState<ArtifactListRow>();
-  // `state` is a fresh object per publish, so the memo is exact: once per repaint.
-  const shell = useMemo(() => shellState(state, selected, workspaceId), [state, selected, workspaceId]);
+  // Every view drawn again in a new language, its dates and counts included: the views are
+  // remounted under a key, while the shell's own state (the store, the route) stays.
+  const shown = useLocale();
+  // `state` is a fresh object per publish, so the memo is exact: once per repaint. The shell's
+  // words ("Untitled chat", "Home") are said in the page's language, so a switch redraws it too.
+  const shell = useMemo(() => shellState(state, selected, workspaceId), [state, selected, workspaceId, shown]);
   const homeChat = useHomeChat(client, workspaceId, store);
-  const newLabel = t(homeChat ? "app.shell.newSideChat" : "app.shell.newChat");
+  // The sidebar's own words, which it tells apart to explain a side chat in its tooltip.
+  const newLabel = t(homeChat ? "shell.sidebar.newSideChat" : "shell.sidebar.newChat");
   /**
    * A new chat, asked for and not yet started: the entries the page held
    * when the reader asked. The canvas shows nothing until the prompt that
@@ -190,9 +195,6 @@ export function App({
   useEffect(() => {
     if (locale !== undefined) void setLocale(locale);
   }, [locale]);
-  // Every view drawn again in a new language, its dates and counts included: the views are
-  // remounted under a key, while the shell's own state (the store, the route) stays.
-  const shown = useLocale();
   /** What moves the agent tree and a worker's view: the feed's task and decision changes; absent with no feed to follow. */
   const workerWatch =
     centered && feed.error === undefined

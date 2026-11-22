@@ -1,7 +1,5 @@
 /** The words of App.tsx, main.tsx and features/startup, in English. */
 export const app = {
-  "app.shell.newSideChat": "New side chat",
-  "app.shell.newChat": "New chat",
   "app.shell.openChatToDownload": "Open the chat this form was filled in to download it.",
   "app.tab.setup": "Setup",
   "app.skip.content": "Skip to content",

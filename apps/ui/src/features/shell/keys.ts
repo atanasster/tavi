@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 
-import { CHAT_PANEL_LABELS, CHAT_PANEL_TABS, type ChatPanelTab } from "../chat-panel/tabs.js";
+import { CHAT_PANEL_TABS, type ChatPanelTab } from "../chat-panel/tabs.js";
+import type { UiKey } from "../../locales/en.js";
 
 /**
  * The keyboard map, and why it is layered.
@@ -26,7 +27,8 @@ type KeyTier = "primary" | "bound" | "sheet";
 export interface KeyBinding {
   /** What this does; the name of the action in the sheet. */
   readonly action: KeyAction;
-  readonly label: string;
+  /** Its name in the catalogue; the sheet says it in the page's language. */
+  readonly labelKey: UiKey;
   /** How it is written for a reader; `Cmd` is shown as `⌘` on Apple platforms by the sheet. */
   readonly chord: string;
   readonly tier: KeyTier;
@@ -57,28 +59,37 @@ export type KeyAction =
   | "models"
   | "search";
 
+/** Each chat panel tab's chord, by its whole phrase. */
+const PANEL_TAB_KEYS: Readonly<Record<ChatPanelTab, UiKey>> = {
+  activity: "shell.keys.panelActivity",
+  schedule: "shell.keys.panelSchedule",
+  memory: "shell.keys.panelMemory",
+  instructions: "shell.keys.panelInstructions",
+  details: "shell.keys.panelDetails",
+};
+
 export const KEY_MAP: readonly KeyBinding[] = [
-  { action: "search", label: "Search chats", chord: "Cmd+K", tier: "bound", match: { key: "k", meta: true } },
-  { action: "stop", label: "Stop the running turn", chord: "Esc", tier: "primary", match: { key: "Escape" } },
+  { action: "search", labelKey: "shell.keys.search", chord: "Cmd+K", tier: "bound", match: { key: "k", meta: true } },
+  { action: "stop", labelKey: "shell.keys.stop", chord: "Esc", tier: "primary", match: { key: "Escape" } },
   {
     action: "approve",
-    label: "Allow the waiting round (its first button)",
+    labelKey: "shell.keys.approve",
     chord: "Cmd+Alt+Enter",
     tier: "primary",
     match: { key: "Enter", meta: true, alt: true },
   },
   {
     action: "reject",
-    label: "Deny the waiting round",
+    labelKey: "shell.keys.reject",
     chord: "Cmd+Alt+Backspace",
     tier: "primary",
     match: { key: "Backspace", meta: true, alt: true },
   },
-  { action: "help", label: "Show this sheet", chord: "Cmd+/", tier: "bound", match: { key: "/", meta: true } },
-  { action: "sidebar", label: "Show or hide the chats", chord: "Cmd+Shift+S", tier: "bound", match: { key: "s", meta: true, shift: true } },
+  { action: "help", labelKey: "shell.keys.help", chord: "Cmd+/", tier: "bound", match: { key: "/", meta: true } },
+  { action: "sidebar", labelKey: "shell.keys.sidebar", chord: "Cmd+Shift+S", tier: "bound", match: { key: "s", meta: true, shift: true } },
   {
     action: "panel",
-    label: "Show or hide this chat's panel",
+    labelKey: "shell.keys.panel",
     chord: "Cmd+Shift+.",
     tier: "bound",
     match: { key: ".", code: "Period", meta: true, shift: true },
@@ -87,15 +98,15 @@ export const KEY_MAP: readonly KeyBinding[] = [
   ...CHAT_PANEL_TABS.map(
     (tab, index): KeyBinding => ({
       action: `panel-${tab}`,
-      label: `This chat's ${CHAT_PANEL_LABELS[tab].toLowerCase()}`,
+      labelKey: PANEL_TAB_KEYS[tab],
       chord: `Cmd+Alt+${index + 1}`,
       tier: "bound",
       match: { key: String(index + 1), code: `Digit${index + 1}`, meta: true, alt: true },
     }),
   ),
-  { action: "newTask", label: "Start a new chat", chord: "Cmd+Shift+O", tier: "sheet" },
-  { action: "settings", label: "Open settings", chord: "Cmd+.", tier: "sheet" },
-  { action: "models", label: "Open the model picker", chord: "Cmd+Shift+M", tier: "sheet" },
+  { action: "newTask", labelKey: "shell.keys.newTask", chord: "Cmd+Shift+O", tier: "sheet" },
+  { action: "settings", labelKey: "shell.keys.settings", chord: "Cmd+.", tier: "sheet" },
+  { action: "models", labelKey: "shell.keys.models", chord: "Cmd+Shift+M", tier: "sheet" },
 ];
 
 /** Whether `event` is `binding`'s chord — every modifier it names, and none it does not. */

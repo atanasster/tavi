@@ -24,7 +24,7 @@ import { HeartbeatItemCard } from "../../../src/features/center/HeartbeatItem.js
 import { MemoryCard } from "../../../src/features/chat/MemoryCard.js";
 import { MemoryUsed } from "../../../src/features/chat/MemoryUsed.js";
 import { MemoryModeToggle, memoryModeLabel } from "../../../src/features/chat/MemoryMode.js";
-import { NEW_PRIVATE_CHAT_LABEL, SidebarFrame } from "../../../src/features/shell/SidebarFrame.js";
+import { SidebarFrame } from "../../../src/features/shell/SidebarFrame.js";
 import { NoticeCards } from "../../../src/features/chat/Notices.js";
 import { settingsPath } from "../../../src/features/shell/route.js";
 import type { SettingsClient } from "../../../src/lib/ipc.js";
@@ -1867,8 +1867,7 @@ describe("a chat's memory in its header", () => {
       </SidebarFrame>,
     );
     const button = [...page.querySelectorAll("button")].find(
-      (candidate) =>
-        candidate.getAttribute("aria-label") === NEW_PRIVATE_CHAT_LABEL || candidate.textContent?.includes(NEW_PRIVATE_CHAT_LABEL),
+      (candidate) => candidate.getAttribute("aria-label") === "New private chat" || candidate.textContent?.includes("New private chat"),
     );
     expect(button).toBeDefined();
     await act(async () => button?.click());

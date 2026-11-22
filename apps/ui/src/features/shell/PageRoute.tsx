@@ -11,6 +11,7 @@ import { reloadAfterReset } from "../startup/reset.js";
 import type { SettingsClient } from "../../lib/ipc.js";
 import { lazyModule } from "../../ui/lazy-module.js";
 import { Notice, Pending } from "../../ui/Parts.js";
+import { useT } from "../../lib/i18n.js";
 
 import { useWorkspace } from "./Workspace.js";
 
@@ -103,6 +104,7 @@ export function PageRoute({
   readonly client: Parameters<typeof reloadAfterReset>[0] & SettingsClient;
   readonly store: CanvasStore;
 }) {
+  const t = useT();
   const { workspaceId } = useWorkspace();
   const {
     tryIdeaPrompt,
@@ -132,9 +134,7 @@ export function PageRoute({
             onOpenMemory={sections.includes("identity") ? () => openSection("identity") : undefined}
           />
         ) : (
-          <Notice className="center-unavailable">
-            {connected ? "This owner does not offer Ideas. Restart `tavi serve` with this build to use them." : "Waiting for the owner…"}
-          </Notice>
+          <Notice className="center-unavailable">{connected ? t("shell.page.noIdeas") : t("shell.page.waiting")}</Notice>
         )
       ) : route === "welcome" ? (
         offersOnboarding ? (
@@ -157,11 +157,7 @@ export function PageRoute({
             memory={features.includes("memory")}
           />
         ) : (
-          <Notice className="center-unavailable">
-            {connected
-              ? "This owner does not offer setup here. Run `tavi onboard` in a terminal, or restart `tavi serve` with this build."
-              : "Waiting for the owner…"}
-          </Notice>
+          <Notice className="center-unavailable">{connected ? t("shell.page.noSetup") : t("shell.page.waiting")}</Notice>
         )
       ) : route === "center" ? (
         centered ? (
@@ -215,11 +211,7 @@ export function PageRoute({
             </div>
           </div>
         ) : (
-          <Notice className="center-unavailable">
-            {connected
-              ? "This owner does not offer the Command Center. Restart `tavi serve` with this build to use it."
-              : "Waiting for the owner…"}
-          </Notice>
+          <Notice className="center-unavailable">{connected ? t("shell.page.noCenter") : t("shell.page.waiting")}</Notice>
         )
       ) : (
         <Settings

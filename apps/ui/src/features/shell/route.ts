@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { isChatPanelTab, isPluginPanelTab, type PanelTab } from "../chat-panel/tabs.js";
+import { said, saidEntry } from "./said.js";
 
 /**
  * The page's address: which route the URL names, so a refresh, a
@@ -48,10 +49,10 @@ export type Route = "chat" | "ideas" | "center" | "settings" | "welcome";
  * `ideas`; the shell filters them out otherwise.
  */
 export const ROUTES: readonly { readonly value: Route; readonly label: string }[] = [
-  { value: "chat", label: "Chat" },
-  { value: "ideas", label: "Ideas" },
-  { value: "center", label: "Center" },
-  { value: "settings", label: "Settings" },
+  saidEntry("chat", "shell.route.chat"),
+  saidEntry("ideas", "shell.route.ideas"),
+  saidEntry("center", "shell.route.center"),
+  saidEntry("settings", "shell.route.settings"),
 ];
 
 /** The views inside Settings; one URL segment each. */
@@ -69,37 +70,37 @@ export type SettingsView =
   | "ideas";
 
 export const SETTINGS_VIEWS: readonly { readonly value: SettingsView; readonly label: string }[] = [
-  { value: "general", label: "General" },
-  { value: "apps", label: "Connected apps" },
-  { value: "models", label: "Models" },
-  { value: "search", label: "Web search" },
-  { value: "system-prompt", label: "System prompt" },
-  { value: "credentials", label: "Credentials" },
-  { value: "messaging", label: "Channels" },
-  { value: "people", label: "Allowed people" },
-  { value: "plugins", label: "Plugins" },
-  { value: "permissions", label: "Permissions" },
+  saidEntry("general", "shell.route.settingsView.general"),
+  saidEntry("apps", "shell.route.settingsView.apps"),
+  saidEntry("models", "shell.route.settingsView.models"),
+  saidEntry("search", "shell.route.settingsView.search"),
+  saidEntry("system-prompt", "shell.route.settingsView.systemPrompt"),
+  saidEntry("credentials", "shell.route.settingsView.credentials"),
+  saidEntry("messaging", "shell.route.settingsView.messaging"),
+  saidEntry("people", "shell.route.settingsView.people"),
+  saidEntry("plugins", "shell.route.settingsView.plugins"),
+  saidEntry("permissions", "shell.route.settingsView.permissions"),
   // Offered only by an owner that advertises `ideas`.
-  { value: "ideas", label: "Ideas" },
+  saidEntry("ideas", "shell.route.settingsView.ideas"),
 ];
 
 /** Settings' views in the nav's groups: what the workspace runs, what it reaches, and what it is allowed. */
 export const SETTINGS_GROUPS: readonly { readonly label: string; readonly views: readonly SettingsView[] }[] = [
-  { label: "Workspace", views: ["general", "models", "search", "system-prompt"] },
-  { label: "Connections", views: ["apps", "credentials", "messaging", "people"] },
-  { label: "Control", views: ["plugins", "permissions", "ideas"] },
+  said("shell.route.settingsGroup.workspace", { views: ["general", "models", "search", "system-prompt"] }),
+  said("shell.route.settingsGroup.connections", { views: ["apps", "credentials", "messaging", "people"] }),
+  said("shell.route.settingsGroup.control", { views: ["plugins", "permissions", "ideas"] }),
 ];
 
 /** The Command Center's sections; one URL segment each. */
 export type CenterSection = "activity" | "approvals" | "schedule" | "heartbeat" | "identity" | "browser";
 
 export const CENTER_SECTIONS: readonly { readonly value: CenterSection; readonly label: string }[] = [
-  { value: "activity", label: "Activity" },
-  { value: "approvals", label: "Approvals" },
-  { value: "schedule", label: "Schedule" },
-  { value: "heartbeat", label: "Heartbeat" },
-  { value: "identity", label: "Soul & memory" },
-  { value: "browser", label: "Browser" },
+  saidEntry("activity", "shell.route.centerSection.activity"),
+  saidEntry("approvals", "shell.route.centerSection.approvals"),
+  saidEntry("schedule", "shell.route.centerSection.schedule"),
+  saidEntry("heartbeat", "shell.route.centerSection.heartbeat"),
+  saidEntry("identity", "shell.route.centerSection.identity"),
+  saidEntry("browser", "shell.route.centerSection.browser"),
 ];
 
 /** The section a bare `/center` names: what happened, the landing view. */

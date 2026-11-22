@@ -9,6 +9,9 @@ import { useWorkspace } from "./Workspace.js";
 import { Command } from "../../ui/Command.js";
 import { Button } from "../../ui/Button.js";
 import { Icon } from "../../ui/Icon.js";
+import { useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
+import type { UiKey } from "../../locales/en.js";
 
 /**
  * The header: the routes, what needs the reader, the way to the keyboard
@@ -46,7 +49,9 @@ export function Bar({
   /** Opens the `Cmd+/` sheet: its chord is the browser's to overrule, so it is reachable without it. */
   readonly onKeys?: () => void;
 }) {
+  const t = useT();
   const { workspaceId } = useWorkspace();
+  const connection = t(CONNECTION_KEYS[state.connection]);
   const routes = ROUTES.filter(
     (item) => (item.value !== "center" || center !== undefined || scheduleOnly) && (item.value !== "ideas" || ideas),
   ).map((item) =>
@@ -56,7 +61,7 @@ export function Bar({
           badge: (
             <span className="view-count">
               <span aria-hidden="true">{center.waiting}</span>
-              <span className="visually-hidden">, {center.waiting} waiting</span>
+              <span className="visually-hidden">, {t("shell.bar.centerWaiting", { count: center.waiting })}</span>
             </span>
           ),
         }
@@ -65,25 +70,27 @@ export function Bar({
   return (
     <>
       <header className="bar">
-        <span className={`brand brand-${state.connection}`} title={`Tavi: ${CONNECTION_LABELS[state.connection]}`}>
+        <span className={`brand brand-${state.connection}`} title={t("shell.bar.brandTitle", { connection })}>
           <TaviMark />
           <Wordmark />
           {/* Not a live region: the page has one, in `index.html`, and `announcementOf` puts the connection through it. */}
-          <span className="visually-hidden">, {CONNECTION_LABELS[state.connection]}</span>
+          <span className="visually-hidden">, {connection}</span>
         </span>
         {focused ? (
-          <span className="bar-context">Setup</span>
+          <span className="bar-context">{t("shell.bar.setup")}</span>
         ) : (
-          <Tabs label="pages" className="views" items={routes} current={route} onPick={onRoute} />
+          <Tabs label={t("shell.bar.pages")} className="views" items={routes} current={route} onPick={onRoute} />
         )}
         <span className="bar-spacer" />
         {/* Seen, not announced here: the page has one live region
             (`index.html`), and `announcementOf` carries this count through it. */}
         {center === undefined && needs > 0 ? (
           <span className="needs-count">
-            {needs}
-            {state.directory?.needsTruncated ? "+" : ""} {needs === 1 ? "chat needs" : "chats need"} you
-            {workspaceId ? ` in workspace ${workspaceId}` : " on this page"}
+            {t(workspaceId ? "shell.bar.needsInWorkspace" : "shell.bar.needsOnPage", {
+              count: needs,
+              more: state.directory?.needsTruncated ? "+" : "",
+              workspace: workspaceId,
+            })}
           </span>
         ) : null}
         {onKeys === undefined ? null : (
@@ -91,9 +98,9 @@ export function Bar({
             variant="ghost"
             size={["icon", "sm"]}
             className="bar-keys"
-            aria-label="Keyboard shortcuts"
+            aria-label={t("shell.bar.keys")}
             aria-keyshortcuts="Meta+/"
-            title="Keyboard shortcuts (Cmd+/)"
+            title={t("shell.bar.keysTitle")}
             onClick={onKeys}
           >
             <Icon name="keyboard" size="sm" />
@@ -103,17 +110,17 @@ export function Bar({
       {state.failure !== undefined ? (
         <Failure alert={false} className="bar-failure">
           {/* The owner's reason is a clause ("no tavi owner is serving: …"): a full stop ends it before the advice. */}
-          {/[.!?]$/.test(state.failure) ? state.failure : `${state.failure}.`} Press Enter where <Command>tavi ui</Command> runs for a new
-          link.
+          {/[.!?]$/.test(state.failure) ? state.failure : `${state.failure}.`}{" "}
+          {withParts(t("shell.bar.newLink"), { command: <Command>tavi ui</Command> })}
         </Failure>
       ) : null}
     </>
   );
 }
-const CONNECTION_LABELS: Readonly<Record<ClientState, string>> = {
-  idle: "not connected",
-  connecting: "connecting…",
-  ready: "connected",
-  reconnecting: "reconnecting…",
-  closed: "disconnected",
+const CONNECTION_KEYS: Readonly<Record<ClientState, UiKey>> = {
+  idle: "shell.bar.connection.idle",
+  connecting: "shell.bar.connection.connecting",
+  ready: "shell.bar.connection.ready",
+  reconnecting: "shell.bar.connection.reconnecting",
+  closed: "shell.bar.connection.closed",
 };

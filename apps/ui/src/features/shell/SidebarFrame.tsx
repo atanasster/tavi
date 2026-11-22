@@ -3,6 +3,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { IconButton } from "../../ui/IconButton.js";
 import { type PanelBounds, loadWidth, saveWidth, useResizablePanel } from "../../hooks/resizable.js";
 import { DEFAULT_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH, SIDEBAR_RESERVE_WIDTH } from "../../lib/layout.js";
+import { useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 
 export const SIDEBAR_WIDTH_KEY = "tavi.sidebar.width";
 
@@ -13,6 +15,33 @@ const SIDEBAR_BOUNDS: PanelBounds = {
   max: MAX_SIDEBAR_WIDTH,
   initial: DEFAULT_SIDEBAR_WIDTH,
   reserve: SIDEBAR_RESERVE_WIDTH,
+};
+
+/** Which panel the frame holds: the chats, the Command Center's sections, or Settings' views. */
+export type SidebarPanel = "chats" | "center" | "settings";
+
+/** Each panel's words, whole: its heading, its nav's name, and its hide and show controls. */
+const PANEL_WORDS: Readonly<
+  Record<SidebarPanel, { readonly title: UiKey; readonly label: UiKey; readonly hide: UiKey; readonly show: UiKey }>
+> = {
+  chats: {
+    title: "shell.sidebar.chats.title",
+    label: "shell.sidebar.chats.label",
+    hide: "shell.sidebar.chats.hide",
+    show: "shell.sidebar.chats.show",
+  },
+  center: {
+    title: "shell.sidebar.center.title",
+    label: "shell.sidebar.center.label",
+    hide: "shell.sidebar.center.hide",
+    show: "shell.sidebar.center.show",
+  },
+  settings: {
+    title: "shell.sidebar.settings.title",
+    label: "shell.sidebar.settings.label",
+    hide: "shell.sidebar.settings.hide",
+    show: "shell.sidebar.settings.show",
+  },
 };
 
 export function loadSidebarWidth(storage?: Pick<Storage, "getItem">): number {
@@ -26,17 +55,16 @@ export function saveSidebarWidth(width: number, storage?: Pick<Storage, "setItem
 /**
  * The sessions panel's frame: its heading, its own collapse control, and the
  * scrolling body. The Command Center puts its section nav in the same frame
- * (`title` and `label` name it), so the column keeps its width key. The control lives here rather than in the header because
+ * (`panel` names it), so the column keeps its width key. The control lives here rather than in the header because
  * it acts on this panel — a reader closes what they are looking at — and the
  * `Cmd+Shift+S` chord is the browser's to overrule, so the panel is
  * never without a button.
  */
 export function SidebarFrame({
-  title = "Chats",
-  label = "chats",
+  panel = "chats",
   className,
   onNew,
-  newLabel = "New chat",
+  newLabel,
   onNewOwn,
   onNewPrivate,
   onCollapse,
@@ -44,10 +72,8 @@ export function SidebarFrame({
   onWidthChange,
   children,
 }: {
-  /** The panel's heading, and what its collapse control names. */
-  readonly title?: string;
-  /** The nav's accessible name. */
-  readonly label?: string;
+  /** The panel held: its heading, its nav's name and what its collapse control says. */
+  readonly panel?: SidebarPanel;
   readonly className?: string | undefined;
   readonly onNew?: (() => void) | undefined;
   /** What `onNew` starts: "New side chat" while Home is on, else "New chat". */
@@ -61,24 +87,27 @@ export function SidebarFrame({
   readonly onWidthChange?: ((width: number) => void) | undefined;
   readonly children: ReactNode;
 }) {
+  const t = useT();
+  const words = PANEL_WORDS[panel];
   const { width, dragging, separator } = useResizablePanel(SIDEBAR_BOUNDS, { initialWidth, onWidthChange });
+  const newWords = newLabel ?? t("shell.sidebar.newChat");
 
   return (
     <nav
       className={className === undefined ? "side-panel sidebar" : `side-panel sidebar ${className}`}
       style={{ "--sidebar-width": `${width}px` } as CSSProperties}
-      aria-label={label}
+      aria-label={t(words.label)}
     >
       <div className="sidebar-head">
-        <h2>{title}</h2>
+        <h2>{t(words.title)}</h2>
         <div className="sidebar-head-actions">
           {onNewOwn === undefined ? null : (
             <IconButton
               icon="square-pen"
               size="sm"
               className="new-own-session button-sm button-xs"
-              label={NEW_OWN_CHAT_LABEL}
-              tooltip={NEW_OWN_CHAT_TOOLTIP}
+              label={t("shell.sidebar.newChat")}
+              tooltip={t("shell.sidebar.newChatTooltip")}
               onClick={onNewOwn}
             />
           )}
@@ -87,8 +116,8 @@ export function SidebarFrame({
               icon="plus"
               size="sm"
               className="new-session button-sm button-xs"
-              label={newLabel}
-              tooltip={newTooltip(newLabel)}
+              label={newWords}
+              tooltip={newTooltip(t, newWords)}
               onClick={onNew}
             />
           )}
@@ -97,8 +126,8 @@ export function SidebarFrame({
               icon="ghost"
               size="sm"
               className="new-private-session button-sm button-xs"
-              label={NEW_PRIVATE_CHAT_LABEL}
-              tooltip="New private chat: memory off, not searched later, forgotten a day after its last message"
+              label={t("shell.sidebar.newPrivateChat")}
+              tooltip={t("shell.sidebar.newPrivateChatTooltip")}
               onClick={onNewPrivate}
             />
           )}
@@ -107,8 +136,8 @@ export function SidebarFrame({
               icon="panel-close"
               size="sm"
               className="sidebar-toggle button-sm button-xs"
-              label={`Hide ${title.toLowerCase()}`}
-              tooltip={`Hide ${title.toLowerCase()} (Cmd+Shift+S)`}
+              label={t(words.hide)}
+              tooltip={`${t(words.hide)} (Cmd+Shift+S)`}
               aria-expanded={true}
               onClick={onCollapse}
             />
@@ -120,7 +149,7 @@ export function SidebarFrame({
         className={`panel-resizer sidebar-resizer${dragging ? " active" : ""}`}
         role="separator"
         aria-orientation="vertical"
-        aria-label="Resize sidebar"
+        aria-label={t("shell.sidebar.resize")}
         aria-valuenow={width}
         aria-valuemin={MIN_SIDEBAR_WIDTH}
         aria-valuemax={MAX_SIDEBAR_WIDTH}
@@ -131,42 +160,36 @@ export function SidebarFrame({
   );
 }
 
-/** What a chat of its own is called while Home is on, beside *New side chat*. */
-const NEW_OWN_CHAT_LABEL = "New chat";
-const NEW_OWN_CHAT_TOOLTIP = "New chat: a chat of its own, with nothing of the chat on screen";
-
 /** The + control's tooltip: a side chat says it carries on from the chat on screen, its untrusted content included. */
-function newTooltip(label: string | undefined): string {
-  return label === "New side chat"
-    ? "New side chat: carries on from the chat on screen, with what it read; for a clean start use New chat"
-    : (label ?? "New chat");
+function newTooltip(t: ReturnType<typeof useT>, label: string): string {
+  return label === t("shell.sidebar.newSideChat") ? t("shell.sidebar.newSideChatTooltip") : label;
 }
-
-/** What *New private chat* is called wherever it is offered. */
-export const NEW_PRIVATE_CHAT_LABEL = "New private chat";
 
 /** The panel, collapsed: a rail that keeps the way back one click away. */
 export function SidebarRail({
-  title = "Chats",
+  panel = "chats",
   onExpand,
   onNew,
-  newLabel = "New chat",
+  newLabel,
   onNewOwn,
 }: {
-  readonly title?: string;
+  readonly panel?: SidebarPanel;
   readonly onExpand: () => void;
   readonly onNew?: (() => void) | undefined;
   readonly newLabel?: string;
   /** *New chat* while Home is on, beside + (*New side chat*), as in the open panel. */
   readonly onNewOwn?: (() => void) | undefined;
 }) {
+  const t = useT();
+  const words = PANEL_WORDS[panel];
+  const newWords = newLabel ?? t("shell.sidebar.newChat");
   return (
     <aside className="panel-rail sidebar-rail">
       <IconButton
         icon="panel-open"
         className="sidebar-toggle button-sm"
-        label={`Show ${title.toLowerCase()}`}
-        tooltip={`Show ${title.toLowerCase()} (Cmd+Shift+S)`}
+        label={t(words.show)}
+        tooltip={`${t(words.show)} (Cmd+Shift+S)`}
         aria-expanded={false}
         onClick={onExpand}
       />
@@ -174,13 +197,13 @@ export function SidebarRail({
         <IconButton
           icon="square-pen"
           className="new-own-session button-sm"
-          label={NEW_OWN_CHAT_LABEL}
-          tooltip={NEW_OWN_CHAT_TOOLTIP}
+          label={t("shell.sidebar.newChat")}
+          tooltip={t("shell.sidebar.newChatTooltip")}
           onClick={onNewOwn}
         />
       )}
       {onNew === undefined ? null : (
-        <IconButton icon="plus" className="new-session button-sm" label={newLabel} tooltip={newTooltip(newLabel)} onClick={onNew} />
+        <IconButton icon="plus" className="new-session button-sm" label={newWords} tooltip={newTooltip(t, newWords)} onClick={onNew} />
       )}
     </aside>
   );

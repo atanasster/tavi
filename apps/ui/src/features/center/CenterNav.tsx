@@ -98,7 +98,7 @@ export function CenterNav({
   const { workspaceId } = useWorkspace();
   useCurrentNavInView(section);
   return (
-    <SidebarFrame title="Command Center" label="Command Center sections" className="center-nav" onCollapse={onCollapse}>
+    <SidebarFrame panel="center" className="center-nav" onCollapse={onCollapse}>
       <ul className="center-nav-list list-reset">
         {CENTER_SECTIONS.filter((item) => sections === undefined || sections.includes(item.value)).map((item) => {
           const count = sectionCount(item.value, summary);

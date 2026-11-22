@@ -1,4 +1,3 @@
-import { plural } from "@tavi/contracts/util";
 import { useEffect, useRef } from "react";
 
 import { ANNOUNCER_ID, say } from "../../hooks/use-announce.js";
@@ -6,6 +5,7 @@ import { inLastMinutes, lastMinutesSentence } from "../needs/NeedCard.js";
 import { runStatus, type Session } from "./shell.js";
 import { cancelledWords } from "../chat/store/runs.js";
 import type { CanvasState } from "../chat/store/types.js";
+import { translateNow } from "../../lib/i18n.js";
 
 /**
  * What the page says out loud.
@@ -65,28 +65,28 @@ export interface AnnouncementInput {
 export function announcementOf({ state, current, needs, notice, center, now }: AnnouncementInput): string | undefined {
   const parts = [
     notice === undefined || notice === "" ? undefined : notice,
-    ...(center?.reminders ?? []).map((text) => `Reminder: ${text}.`),
+    ...(center?.reminders ?? []).map((text) => translateNow("shell.announcer.reminder", { text })),
     statusSentence(state, current, now),
     center !== undefined
       ? center.waiting > 0
-        ? `${plural(center.waiting, "thing is", "things are")} waiting on you.`
+        ? translateNow("shell.announcer.centerWaiting", { count: center.waiting })
         : undefined
       : needs > 0
-        ? `${state.directory?.needsTruncated ? "At least " : ""}${plural(needs, "chat needs", "chats need")} you.`
+        ? translateNow(state.directory?.needsTruncated ? "shell.announcer.chatsNeedAtLeast" : "shell.announcer.chatsNeed", { count: needs })
         : undefined,
   ].filter((part): part is string => part !== undefined);
   return parts.length === 0 ? undefined : parts.join(" ");
 }
 
 function statusSentence(state: CanvasState, session: Session | undefined, now?: number): string | undefined {
-  if (state.failure !== undefined) return `Disconnected: ${state.failure}`;
-  if (state.connection === "reconnecting") return "Reconnecting to the owner.";
-  if (state.connection === "closed") return "Disconnected from the owner.";
+  if (state.failure !== undefined) return translateNow("shell.announcer.disconnectedBecause", { reason: state.failure });
+  if (state.connection === "reconnecting") return translateNow("shell.announcer.reconnecting");
+  if (state.connection === "closed") return translateNow("shell.announcer.disconnected");
   const last = session?.runs.at(-1);
   if (last === undefined) return undefined;
   // Where a prompt just sent went: said until its turn speaks.
-  if (last.queued === true) return "Queued after the current turn.";
-  if (last.toHome === true && last.error === undefined && last.run.status === "idle") return "Sent to Home.";
+  if (last.queued === true) return translateNow("shell.announcer.queued");
+  if (last.toHome === true && last.error === undefined && last.run.status === "idle") return translateNow("shell.announcer.sentHome");
   const { waiting, review, pending } = last.run;
   switch (runStatus(last)) {
     case "input-required": {
@@ -95,27 +95,29 @@ function statusSentence(state: CanvasState, session: Session | undefined, now?: 
         // only with a clock: where no clock is given, another surface says it.
         return now !== undefined && inLastMinutes(waiting.deadlineAt, now)
           ? lastMinutesSentence(waiting.question)
-          : `A question is waiting: ${waiting.question}`;
+          : translateNow("shell.announcer.question", { question: waiting.question });
       }
-      if (waiting !== undefined) return `Waiting on ${waiting.on}.`;
-      if (review !== undefined) return `${plural(review.requests.length, "archived output waits", "archived outputs wait")} for review.`;
+      if (waiting !== undefined) return translateNow("shell.announcer.waitingOn", { who: waiting.on });
+      if (review !== undefined) return translateNow("shell.announcer.review", { count: review.requests.length });
       const calls = pending[0]?.requests.length ?? 0;
-      return `Permission required for ${plural(calls, "tool call")}.`;
+      return translateNow("shell.announcer.permission", { count: calls });
     }
     case "working":
-      return "Responding.";
+      return translateNow("shell.announcer.responding");
     case "submitted":
-      return "Sent; waiting for the owner.";
+      return translateNow("shell.announcer.submitted");
     case "completed":
-      return "Complete.";
+      return translateNow("shell.announcer.completed");
     case "stopped":
-      return "Stopped.";
+      return translateNow("shell.announcer.stopped");
     case "canceled":
-      return last.run.outcome?.kind === "failed" ? cancelledWords(last.run.outcome.message) : "Cancelled.";
-    case "failed":
-      return `Failed: ${last.error ?? (last.run.outcome?.kind === "failed" ? last.run.outcome.message : "the turn did not finish")}`;
+      return last.run.outcome?.kind === "failed" ? cancelledWords(last.run.outcome.message) : translateNow("shell.announcer.cancelled");
+    case "failed": {
+      const reason = last.error ?? (last.run.outcome?.kind === "failed" ? last.run.outcome.message : undefined);
+      return reason === undefined ? translateNow("shell.announcer.failedUnfinished") : translateNow("shell.announcer.failed", { reason });
+    }
     case "unknown":
-      return "Where this chat stands is not known here.";
+      return translateNow("shell.announcer.unknown");
   }
 }
 

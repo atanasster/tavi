@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { CHAT_PANEL_TABS } from "../../../src/features/chat-panel/tabs.js";
 import {
@@ -11,11 +11,14 @@ import {
   ROUTES,
   schedulePath,
   settingsPath,
+  SETTINGS_GROUPS,
   SETTINGS_VIEWS,
   type CenterSection,
   type PageRoute,
 } from "../../../src/features/shell/route.js";
 import { mcpReviewPath } from "../../../src/features/settings/McpServers.js";
+import { TASK_STATUS_LABELS } from "../../../src/features/shell/shell.js";
+import { setLocale } from "../../../src/lib/i18n.js";
 
 /**
  * The page's address. Pure, so the grammar is asserted without a DOM:
@@ -207,5 +210,18 @@ describe("Connected apps' routes", () => {
 
   it("sends an old MCP review link to Connected apps, naming the server in the query", () => {
     expect(mcpReviewPath("mcp.gcal")).toBe("/settings/apps?review=mcp.gcal");
+  });
+
+  describe("in another language", () => {
+    afterEach(async () => {
+      await setLocale("en");
+    });
+
+    it("says the tables' words in the page's language when they are read", async () => {
+      await setLocale("bg");
+      expect(ROUTES.map((route) => route.label)).toEqual(["Чат", "Идеи", "Център", "Настройки"]);
+      expect(SETTINGS_GROUPS[0]?.label).toBe("Работно пространство");
+      expect(TASK_STATUS_LABELS.idle).toBe("готов");
+    });
   });
 });
