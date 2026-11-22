@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from "react";
 
 import { WEB_SEARCH_KINDS, type WebSearchKind } from "@tavi/contracts";
 
+import { useT } from "../../lib/i18n.js";
 import { addSearchProvider } from "./onboarding-api.js";
 import { type StepProps, Working } from "./WelcomeStepParts.js";
 import { Failure } from "../../ui/Parts.js";
@@ -12,6 +13,7 @@ import { SEARCH_KIND_LABELS, keyToStore, searchKindNeeds } from "../settings/sea
 import { WebSearchProviderFields } from "../settings/WebSearchProviderFields.js";
 
 export function SearchStep(props: StepProps) {
+  const t = useT();
   // Tavily first: it starts without a key, so the step works before you have one.
   const [kind, setKind] = useState<WebSearchKind>("tavily");
   const [key, setKey] = useState("");
@@ -25,7 +27,8 @@ export function SearchStep(props: StepProps) {
   const stored = keyToStore({ kind, apiKey: key });
   const submit = async (event: FormEvent): Promise<void> => {
     event.preventDefault();
-    if (searchKindNeeds(kind).key === "required" && stored === "") return setKeyError(`${SEARCH_KIND_LABELS[kind]} needs an API key`);
+    if (searchKindNeeds(kind).key === "required" && stored === "")
+      return setKeyError(t("welcome.search.needsKey", { provider: SEARCH_KIND_LABELS[kind] }));
     setWorking(true);
     setProblem(undefined);
     const added = await addSearchProvider(
@@ -41,7 +44,7 @@ export function SearchStep(props: StepProps) {
   };
   return (
     <form className="welcome-search" onSubmit={(event) => void submit(event)}>
-      <Field label="Search provider">
+      <Field label={t("welcome.search.provider")}>
         <Select
           value={kind}
           onChange={(event) => {
@@ -69,10 +72,10 @@ export function SearchStep(props: StepProps) {
       />
       <div className="actions">
         <Button variant="primary" type="submit" disabled={working}>
-          {working ? "Testing…" : "Add and test"}
+          {working ? t("welcome.search.testing") : t("welcome.search.add")}
         </Button>
       </div>
-      {working ? <Working>Adding {SEARCH_KIND_LABELS[kind]} and running one search…</Working> : null}
+      {working ? <Working>{t("welcome.search.adding", { provider: SEARCH_KIND_LABELS[kind] })}</Working> : null}
       {problem === undefined ? null : <Failure>{problem}</Failure>}
     </form>
   );

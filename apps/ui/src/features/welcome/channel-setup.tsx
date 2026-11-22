@@ -9,12 +9,14 @@ import type {
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { usePoll } from "../../hooks/use-poll.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import { ask, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { Notice, StatusNote, Failure } from "../../ui/Parts.js";
 import { ChannelNotRunning, notRunningChannel } from "../settings/ChannelNotRunning.js";
 import { PairingLinkBox, claimedSenderLabel, shownPairingCode } from "../../ui/QrCode.js";
 import { Button } from "../../ui/Button.js";
 import { Field } from "../../ui/Field.js";
+import { withParts } from "./WelcomeStepParts.js";
 
 /**
  * Adding a channel set up with keys, and pairing its operator: the pieces Welcome's channels step and Connected
@@ -45,7 +47,7 @@ export function useLatest<T>(read: () => Promise<T>): { readonly value: T | unde
 }
 
 export function channels<T>(client: SettingsClient, payload: Record<string, unknown>): Promise<Outcome<T>> {
-  return ask<T>(client, "channels", payload, { refused: "The channel change was refused." });
+  return ask<T>(client, "channels", payload, { refused: translateNow("welcome.channel.refused") });
 }
 
 /** A descriptor added with its secrets alone: nothing else it requires lacks a default. */
@@ -102,6 +104,7 @@ export function ChannelForm(props: {
   readonly backLabel?: string;
   readonly onAdded: (added: Added) => void;
 }) {
+  const t = useT();
   const fieldId = useId();
   const fields = props.descriptor.auth.kind === "none" ? [] : (props.descriptor.auth.fields ?? []);
   const [values, setValues] = useState<Readonly<Record<string, string>>>({});
@@ -111,7 +114,7 @@ export function ChannelForm(props: {
   /** Undo a connection this form made; what is left when that fails is said. */
   const undo = async (connectionId: string, why: string): Promise<string> => {
     const removed = await channels(client, { action: "delete", workspaceId, connectionId });
-    return removed.ok ? why : `${why} It could not be removed (${removed.message}): remove it in Settings → Channels.`;
+    return removed.ok ? why : t("welcome.channel.notRemoved", { reason: why, message: removed.message });
   };
   const submit = async (event: FormEvent): Promise<void> => {
     event.preventDefault();
@@ -136,7 +139,8 @@ export function ChannelForm(props: {
     const connectionId = saved.value.connectionId;
     if (props.onboardingStep !== undefined) {
       const created = await ask(client, "onboarding", { action: "created", workspaceId, step: props.onboardingStep, ref: connectionId });
-      if (!created.ok) return failed(await undo(connectionId, `${descriptor.label} was not set up: ${created.message}.`));
+      if (!created.ok)
+        return failed(await undo(connectionId, t("welcome.channel.notSetUp", { channel: descriptor.label, message: created.message })));
     }
     const probed =
       saved.value.notApplied !== undefined
@@ -150,7 +154,10 @@ export function ChannelForm(props: {
       return failed(
         await undo(
           connectionId,
-          `${descriptor.label} failed its check: ${probed.ok ? (probed.value.detail ?? "no reason given") : probed.message}. Check it and try again.`,
+          t("welcome.channel.checkFailed", {
+            channel: descriptor.label,
+            detail: probed.ok ? (probed.value.detail ?? t("welcome.channel.noReason")) : probed.message,
+          }),
         ),
       );
     }
@@ -187,13 +194,13 @@ export function ChannelForm(props: {
       <div className="actions">
         {/* Its words, not only its accessible name, say where it goes: Welcome's own Back is on the same card. */}
         <Button variant="ghost" disabled={busy} onClick={props.onBack}>
-          {props.backLabel ?? "Back"}
+          {props.backLabel ?? t("welcome.action.back")}
         </Button>
         <Button variant="primary" type="submit" disabled={busy || !ready}>
-          {busy ? "Testing…" : "Test and add"}
+          {busy ? t("welcome.channel.testing") : t("welcome.channel.testAndAdd")}
         </Button>
       </div>
-      <StatusNote note={busy ? `Saving ${descriptor.label} and checking it answers…` : undefined} className="" />
+      <StatusNote note={busy ? t("welcome.channel.saving", { channel: descriptor.label }) : undefined} className="" />
       {problem === undefined ? null : <Failure>{problem}</Failure>}
     </form>
   );
@@ -222,6 +229,7 @@ export function PairOperator(props: {
   readonly onPaired: () => void;
 }) {
   const { client, workspaceId } = props;
+  const t = useT();
   const [pairing, setPairing] = useState<ChannelsPairAnswer>();
   const [state, setState] = useState<ChannelsPairingAnswer>({ state: "waiting" });
   const [now, setNow] = useState(() => Date.now());
@@ -262,7 +270,7 @@ export function PairOperator(props: {
         if (asking.current === alive) asking.current = undefined;
         // Another code, or the panel gone: this answer is for neither.
         if (!alive()) return;
-        if (!answer.ok) return setProblem(`Could not check for your message: ${answer.message}`);
+        if (!answer.ok) return setProblem(t("welcome.pairing.checkFailed", { message: answer.message }));
         setProblem(undefined);
         setState(answer.value);
       });
@@ -284,15 +292,15 @@ export function PairOperator(props: {
     if (confirm) props.onPaired();
     else {
       setPairing(undefined);
-      setProblem("Not paired. Nobody else's messages are answered.");
+      setProblem(t("welcome.pairing.notPaired"));
     }
   };
   const link = props.channel.setup?.link;
   const code = pairing === undefined ? "" : shownPairingCode(pairing.code);
   const claimedWho = claimedSenderLabel(state);
   return (
-    <section className="welcome-pairing" aria-label="Pairing">
-      <h2>Pair yourself on {props.channel.label}</h2>
+    <section className="welcome-pairing" aria-label={t("welcome.pairing.label")}>
+      <h2>{t("welcome.pairing.title", { channel: props.channel.label })}</h2>
       {props.channel.setup?.lines.map((line) => (
         <p key={line} className="settings-description">
           {line}
@@ -301,50 +309,52 @@ export function PairOperator(props: {
       {pairing === undefined ? (
         <div className="actions">
           <Button variant="primary" disabled={busy} onClick={() => void start()}>
-            Get a code
+            {t("welcome.pairing.getCode")}
           </Button>
         </div>
       ) : state.state === "claimed" ? (
         <>
           <p ref={question} tabIndex={-1}>
-            A message from <strong>{claimedWho}</strong> carried the code. Is this you?
+            {withParts(t("welcome.pairing.claimed"), { who: <strong>{claimedWho}</strong> })}
           </p>
           <div className="actions">
             <Button variant="ghost" disabled={busy} onClick={() => void finish(false)}>
-              Not me
+              {t("welcome.pairing.notMe")}
             </Button>
             <Button variant="primary" disabled={busy} onClick={() => void finish(true)}>
-              Yes, it's me
+              {t("welcome.pairing.itsMe")}
             </Button>
           </div>
         </>
       ) : state.state === "waiting" ? (
         <>
           <p>
-            Send <code data-pairing-code="">{code}</code> to{" "}
-            {link === undefined ? (
-              "the bot"
-            ) : (
-              <a href={link.url} target="_blank" rel="noopener noreferrer">
-                {link.label}
-              </a>
-            )}{" "}
-            within {mmss(Date.parse(pairing.expiresAt) - now)}.
+            {withParts(t("welcome.pairing.send", { time: mmss(Date.parse(pairing.expiresAt) - now) }), {
+              code: <code data-pairing-code="">{code}</code>,
+              target:
+                link === undefined ? (
+                  t("welcome.pairing.theBot")
+                ) : (
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    {link.label}
+                  </a>
+                ),
+            })}
           </p>
           <PairingLinkBox pairing={pairing} channelLabel={props.channel.label} />
-          <StatusNote note="Waiting for your message…" className="" />
+          <StatusNote note={t("welcome.pairing.waiting")} className="" />
           <div className="actions">
             <Button variant="ghost" disabled={busy} onClick={() => void finish(false)}>
-              Cancel
+              {t("welcome.pairing.cancel")}
             </Button>
           </div>
         </>
       ) : (
         <>
-          <StatusNote note="The code is no longer valid." className="" />
+          <StatusNote note={t("welcome.pairing.expired")} className="" />
           <div className="actions">
             <Button variant="primary" disabled={busy} onClick={() => void start()}>
-              Get a new code
+              {t("welcome.pairing.newCode")}
             </Button>
           </div>
         </>

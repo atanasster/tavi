@@ -10,6 +10,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 import { ideaChips, ideasSettings, refreshIdeas, tryIdea } from "../ideas/ideas-api.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import type { SettingsClient } from "../../lib/ipc.js";
 import { Notice, Pending } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
@@ -72,6 +73,7 @@ export interface IdeasStepProps {
 
 export function IdeasStep(props: IdeasStepProps) {
   const { client, workspaceId } = props;
+  const t = useT();
   const [chips, setChips] = useState<readonly IdeaChip[]>();
   const [announce, setAnnounce] = useState<string>();
   const [picking, setPicking] = useState(false);
@@ -108,7 +110,7 @@ export function IdeasStep(props: IdeasStepProps) {
         const next = again.ok ? again.value.chips.filter((chip) => chip.taskId === undefined).slice(0, SHOWN) : [];
         if (next.length > 0 && !sameChips(next, shown)) {
           setChips(next);
-          setAnnounce("New ideas");
+          setAnnounce(translateNow("welcome.ideas.newIdeas"));
           return;
         }
         if (Date.now() < until) timer = setTimeout(() => void reread(), CHIPS_REREAD_MS);
@@ -121,7 +123,7 @@ export function IdeasStep(props: IdeasStepProps) {
     };
     // The fallback is the flow's, read once with it; the fast model's state is read once on arrival.
   }, [client, workspaceId]);
-  if (chips === undefined) return <Pending label="Finding what Tavi can do here…" className="notice" status />;
+  if (chips === undefined) return <Pending label={t("welcome.ideas.loading")} className="notice" status />;
   const unlocked = newCapabilities(props.status, props.connectedBefore);
   const pick = async (chip: IdeaChip): Promise<void> => {
     if (picking) return;
@@ -135,28 +137,34 @@ export function IdeasStep(props: IdeasStepProps) {
   return (
     <div className="welcome-ideas">
       {chips.length === 0 ? (
-        <Notice>No ideas yet: ask Tavi anything from the chat.</Notice>
+        <Notice>{t("welcome.ideas.none")}</Notice>
       ) : (
         <ul className="welcome-cards">
           {chips.map((chip) => {
             const uses = chip.uses ?? [];
             const fresh = uses.map((use) => unlocked.get(use.capability)).find((label) => label !== undefined);
+            const capabilities = uses.map((use) => IDEA_CAPABILITY_LABELS[use.capability]).join(" · ");
             return (
               <li key={chip.ideaId ?? chip.label} className="welcome-card">
                 <h2>
                   {chip.label}
-                  {fresh === undefined ? null : <span className="badge">New with {fresh}</span>}
+                  {fresh === undefined ? null : <span className="badge">{t("welcome.ideas.newWith", { app: fresh })}</span>}
                 </h2>
                 <p className="settings-description">{chip.prompt}</p>
                 {uses.length === 0 ? null : (
                   <p className="settings-description">
-                    <strong>Uses:</strong> {uses.map((use) => IDEA_CAPABILITY_LABELS[use.capability]).join(" · ")}
-                    {uses.some((use) => use.approval) ? " — asks before acting" : ""}
+                    <strong>{t("welcome.ideas.uses")}</strong>{" "}
+                    {uses.some((use) => use.approval) ? t("welcome.ideas.usesAsking", { capabilities }) : capabilities}
                   </p>
                 )}
                 <div className="actions">
-                  <Button size="sm" disabled={picking} aria-label={`Try it: ${chip.label}`} onClick={() => void pick(chip)}>
-                    Try it
+                  <Button
+                    size="sm"
+                    disabled={picking}
+                    aria-label={t("welcome.ideas.tryLabel", { idea: chip.label })}
+                    onClick={() => void pick(chip)}
+                  >
+                    {t("welcome.ideas.try")}
                   </Button>
                 </div>
               </li>

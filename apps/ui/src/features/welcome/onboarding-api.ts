@@ -24,6 +24,7 @@ import {
   VoiceSetupStatusSchema,
 } from "@tavi/contracts";
 
+import { translateNow } from "../../lib/i18n.js";
 import { ask, mapOutcome, read, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 
 /**
@@ -132,13 +133,13 @@ export async function setRole(
         client,
         "models",
         { action: "set-default", workspaceId, connectionId, model },
-        { refused: "The default model was not set." },
+        { refused: translateNow("welcome.roles.defaultRefused") },
       )
     : await ask(
         client,
         "models",
         { action: "set-role", workspaceId, role: "fast", connectionId, model },
-        { refused: "The fast model was not set." },
+        { refused: translateNow("welcome.roles.fastRefused") },
       );
 }
 
@@ -187,13 +188,13 @@ async function rememberPreference(
         client,
         "memory",
         { action: "remember", workspaceId, kind: "preference", scope: "personal", title, body, preferenceKey: key, preferenceValue: value },
-        { refused: "Memory did not take it." },
+        { refused: translateNow("welcome.about.memoryRefused") },
       )
     : await ask(
         client,
         "memory",
         { action: "correct", workspaceId, recordId: held.recordId, preferenceValue: value, body },
-        { refused: "Memory did not take it." },
+        { refused: translateNow("welcome.about.memoryRefused") },
       );
 }
 
@@ -215,7 +216,7 @@ export async function saveAbout(
       client,
       "workspace-settings",
       { action: "set", workspaceId, key: "operatorName", value: values.name },
-      { refused: "Your name was not saved." },
+      { refused: translateNow("welcome.about.nameRefused") },
     );
     if (!saved.ok) return saved;
   }
@@ -224,7 +225,7 @@ export async function saveAbout(
       client,
       "workspace-settings",
       { action: "set", workspaceId, key: "timezone", value: values.timezone },
-      { refused: "The time zone was not saved." },
+      { refused: translateNow("welcome.about.zoneRefused") },
     );
     if (!saved.ok) return saved;
   }
@@ -235,7 +236,7 @@ export async function saveAbout(
         client,
         "heartbeat",
         { action: "set", workspaceId, revision: heartbeat.value.revision, changes: { activeHours: values.activeHours } },
-        { refused: "The active hours were not saved." },
+        { refused: translateNow("welcome.about.hoursRefused") },
       );
       if (!saved.ok) return saved;
     }
@@ -248,7 +249,7 @@ export async function saveAbout(
     ] as const) {
       if (value === undefined) continue;
       const remembered = await rememberPreference(client, workspaceId, key, title, value);
-      if (!remembered.ok) note = `Memory did not take them (${remembered.message}); they are saved in this workspace's settings.`;
+      if (!remembered.ok) note = translateNow("welcome.about.memoryNote", { message: remembered.message });
     }
   }
   const done = await completeStep(client, workspaceId, "about");
@@ -283,15 +284,14 @@ export async function addSearchProvider(
   );
   if (!listed.ok) return listed;
   const exists = [...listed.value.providers.map((provider) => provider.providerId), ...(listed.value.unreadable ?? [])].includes(kind);
-  if (exists && !madeHere.added)
-    return { ok: false, message: `A ${kind} search provider is set up already: test or change it in Settings → Search.` };
+  if (exists && !madeHere.added) return { ok: false, message: translateNow("welcome.search.exists", { kind }) };
   let present = exists;
   if (present && madeHere.keyed !== (credentialRef !== undefined)) {
     const removed = await ask(
       client,
       "search",
       { action: "remove", providerId: kind },
-      { refused: "The search provider was not changed." },
+      { refused: translateNow("welcome.search.notChanged") },
     );
     if (!removed.ok) return removed;
     madeHere.added = false;
@@ -304,7 +304,7 @@ export async function addSearchProvider(
       if (stored.value.credentials.includes(credentialRef))
         return {
           ok: false,
-          message: `The credential ${credentialRef} is already in use: add the provider in Settings → Search under another name.`,
+          message: translateNow("welcome.search.credentialTaken", { credential: credentialRef }),
         };
     }
     const added = await ask(
@@ -317,7 +317,7 @@ export async function addSearchProvider(
         ...(credentialRef === undefined ? {} : { credentialRef }),
         ...(baseUrl === undefined ? {} : { baseUrl }),
       },
-      { refused: "The search provider was not added." },
+      { refused: translateNow("welcome.search.notAdded") },
     );
     if (!added.ok) return added;
     madeHere.added = true;
@@ -328,7 +328,7 @@ export async function addSearchProvider(
       client,
       "credentials",
       { action: "set", reference: credentialRef, value: key },
-      { refused: "The key was not stored." },
+      { refused: translateNow("welcome.search.keyNotStored") },
     );
     if (!stored.ok) return stored;
     madeHere.keyStored = true;
@@ -337,14 +337,14 @@ export async function addSearchProvider(
     client,
     "search",
     { action: "enable", providerId: kind },
-    { refused: "The search provider was not turned on." },
+    { refused: translateNow("welcome.search.notEnabled") },
   );
   if (!enabled.ok) return enabled;
   return await ask(
     client,
     "search",
     { action: "test", providerId: kind },
-    { refused: "The search provider did not answer.", timeoutMs: 30_000 },
+    { refused: translateNow("welcome.search.noAnswer"), timeoutMs: 30_000 },
   );
 }
 

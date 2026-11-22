@@ -3,11 +3,12 @@ import { useCallback, useState } from "react";
 import { DEFAULT_TASKS_HOME, MCP_PLUGIN_PREFIX, TasksHomeSchema, type ConnectableApp, type TasksHome } from "@tavi/contracts";
 
 import { useLoaded } from "../../hooks/use-loaded.js";
+import { useT } from "../../lib/i18n.js";
 import { ConnectSheet } from "../apps/ConnectSheet.js";
 import { appActions } from "../apps/apps-api.js";
 import { workspaceSettingsActions } from "../settings/workspace-api.js";
 import { completeStep, loadStatus } from "./onboarding-api.js";
-import { type StepProps, Working } from "./WelcomeStepParts.js";
+import { type StepProps, withParts, Working } from "./WelcomeStepParts.js";
 import { Icon } from "../../ui/Icon.js";
 import { Failure } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
@@ -33,6 +34,7 @@ export function homeOfAccount(accountId: string): TasksHome | undefined {
 
 export function TasksStep(props: StepProps) {
   const { client, workspaceId } = props;
+  const t = useT();
   const [working, setWorking] = useState<string>();
   const [problem, setProblem] = useState<string>();
   const [connecting, setConnecting] = useState<ConnectableApp>();
@@ -50,8 +52,8 @@ export function TasksStep(props: StepProps) {
     if (read.ok) props.onStatus(read.value);
   };
   /** `home` saved (Tavi's own list clears the key), and Tavi's own marked done: nothing else says it was chosen. */
-  const choose = async (home: TasksHome, label: string): Promise<void> => {
-    setWorking(`Saving ${label} as where your to-dos go…`);
+  const choose = async (home: TasksHome, saving: string): Promise<void> => {
+    setWorking(saving);
     setProblem(undefined);
     const settings = await workspaceSettingsActions.load(client, workspaceId);
     if (!settings.ok) {
@@ -82,15 +84,15 @@ export function TasksStep(props: StepProps) {
     setProblem(undefined);
     let app = todoist ?? (await readApps());
     if (app === undefined) {
-      setWorking("Adding Todoist…");
+      setWorking(t("welcome.tasks.adding"));
       const added = await appActions.add(client, workspaceId, { kind: "preset", id: TODOIST });
       if (!added.ok) {
         setWorking(undefined);
-        return setProblem(`Todoist was not added: ${added.message}`);
+        return setProblem(t("welcome.tasks.notAdded", { message: added.message }));
       }
       app = await readApps();
       setWorking(undefined);
-      if (app === undefined) return setProblem("Todoist was added but is not listed yet: open Settings → Connected apps.");
+      if (app === undefined) return setProblem(t("welcome.tasks.notListed"));
     }
     setTodoist(app);
     setConnecting(app);
@@ -100,43 +102,48 @@ export function TasksStep(props: StepProps) {
     <div className="welcome-connect">
       <ul className="welcome-cards">
         <li className="welcome-card">
-          <h2>Tavi&rsquo;s own list</h2>
-          <p>Works in every chat and channel with nothing to set up: ask Tavi to add, list or tick off a to-do.</p>
-          <Button size="sm" disabled={working !== undefined} onClick={() => void choose(DEFAULT_TASKS_HOME, "Tavi's own list")}>
-            Use Tavi&rsquo;s list
+          <h2>{t("welcome.tasks.ownTitle")}</h2>
+          <p>{t("welcome.tasks.ownBody")}</p>
+          <Button size="sm" disabled={working !== undefined} onClick={() => void choose(DEFAULT_TASKS_HOME, t("welcome.tasks.savingOwn"))}>
+            {t("welcome.tasks.useOwn")}
           </Button>
         </li>
         {connected.map((item) => (
           <li key={item.id} className="welcome-card">
             <h2>{item.label}</h2>
             <p className="welcome-state">
-              <Icon name="check" size="sm" /> Connected
+              <Icon name="check" size="sm" /> {t("welcome.tasks.connected")}
             </p>
             <Button
               size="sm"
-              aria-label={`Use ${item.label}`}
+              aria-label={t("welcome.tasks.use", { app: item.label })}
               disabled={working !== undefined}
               onClick={() => {
                 const parsed = TasksHomeSchema.safeParse(item.id);
-                if (parsed.success) void choose(parsed.data, item.label);
+                if (parsed.success) void choose(parsed.data, t("welcome.tasks.saving", { app: item.label }));
               }}
             >
-              Use {item.label}
+              {t("welcome.tasks.use", { app: item.label })}
             </Button>
           </li>
         ))}
         {todoistConnected ? null : (
           <li className="welcome-card">
             <h2>Todoist</h2>
-            <p>Keep your to-dos in Todoist: Tavi adds, finds and completes tasks there, and asks before anything is deleted.</p>
-            <Button size="sm" aria-label="Connect Todoist" disabled={working !== undefined} onClick={() => void connectTodoist()}>
-              Connect
+            <p>{t("welcome.tasks.todoistBody")}</p>
+            <Button
+              size="sm"
+              aria-label={t("welcome.tasks.connectTodoist")}
+              disabled={working !== undefined}
+              onClick={() => void connectTodoist()}
+            >
+              {t("welcome.action.connect")}
             </Button>
           </li>
         )}
       </ul>
       <p className="settings-description">
-        Nothing is copied between the two. Change it later in Settings → General, or with <Command>tavi config set tasks.home</Command>.
+        {withParts(t("welcome.tasks.later"), { command: <Command>tavi config set tasks.home</Command> })}
       </p>
       {working === undefined ? null : <Working>{working}</Working>}
       {problem === undefined ? null : <Failure>{problem}</Failure>}
@@ -153,7 +160,7 @@ export function TasksStep(props: StepProps) {
             setConnecting(undefined);
             const home = homeOfAccount(accountId);
             if (home === undefined) return void refresh();
-            void choose(home, connecting.name);
+            void choose(home, t("welcome.tasks.saving", { app: connecting.name }));
           }}
         />
       )}

@@ -13,6 +13,7 @@ import { ConnectSheet } from "../apps/ConnectSheet.js";
 import { toolsByAccess } from "../apps/model.js";
 import type { SettingsView } from "../shell/route.js";
 import { appActions } from "../apps/apps-api.js";
+import { useT, translateNow } from "../../lib/i18n.js";
 import { mapOutcome, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { loadStatus } from "./onboarding-api.js";
 import { Icon } from "../../ui/Icon.js";
@@ -54,11 +55,9 @@ export function scopeSentence(app: ConnectableApp): string {
   const may =
     scopes.length > 0
       ? scopes.map((scope) => scope.says).join("; ")
-      : accesses.includes("read")
-        ? `Read what ${app.name} holds`
-        : `Work with ${app.name}`;
+      : translateNow(accesses.includes("read") ? "welcome.apps.mayRead" : "welcome.apps.mayWork", { app: app.name });
   const asks = accesses.some((access) => access !== "read") || scopes.some((scope) => scope.access !== "read");
-  return `${may}. ${asks ? "Anything that changes or sends something asks you first." : "It cannot change or send anything."}`;
+  return translateNow("welcome.apps.scope", { may, asks: translateNow(asks ? "welcome.apps.asksFirst" : "welcome.apps.readOnly") });
 }
 
 /** The account the app is connected with in this workspace, when it is. */
@@ -67,6 +66,7 @@ const connectedHere = (app: ConnectableApp, workspaceId: string) =>
 
 export function AppsStep(props: ConnectStepProps) {
   const { client, workspaceId } = props;
+  const t = useT();
   const read = useCallback(async (): Promise<Outcome<readonly ConnectableApp[]>> => {
     const listed = await appActions.list(client, workspaceId);
     return mapOutcome(listed, (value) => value.apps);
@@ -87,7 +87,7 @@ export function AppsStep(props: ConnectStepProps) {
   return (
     <div className="welcome-connect">
       {featured.length === 0 ? (
-        <Notice>None of the suggested apps is installed here.</Notice>
+        <Notice>{t("welcome.apps.none")}</Notice>
       ) : (
         <ul className="welcome-cards">
           {featured.map((app) => {
@@ -99,11 +99,11 @@ export function AppsStep(props: ConnectStepProps) {
                 <p className="settings-description">{scopeSentence(app)}</p>
                 {account !== undefined ? (
                   <p className="welcome-state">
-                    <Icon name="check" size="sm" /> Connected as {account.identity ?? account.label}
+                    <Icon name="check" size="sm" /> {t("welcome.apps.connectedAs", { account: account.identity ?? account.label })}
                   </p>
                 ) : (
-                  <Button size="sm" aria-label={`Connect ${app.name}`} onClick={() => setConnecting(app)}>
-                    Connect
+                  <Button size="sm" aria-label={t("welcome.apps.connect", { app: app.name })} onClick={() => setConnecting(app)}>
+                    {t("welcome.action.connect")}
                   </Button>
                 )}
               </li>
@@ -113,7 +113,7 @@ export function AppsStep(props: ConnectStepProps) {
       )}
       <p>
         <Button variant="link" onClick={() => props.onSettings("apps")}>
-          See all apps
+          {t("welcome.apps.seeAll")}
         </Button>
       </p>
       {connecting === undefined ? null : (
@@ -131,9 +131,6 @@ export function AppsStep(props: ConnectStepProps) {
 
 // ------------------------------------------------------------------ channels
 
-/** What choosing a channel does; the step's own text already says strangers are never answered. */
-const CHANNEL_SCOPE = "Pick the chat app you use. Only people you pair can message Tavi there.";
-
 interface ChannelsLoaded {
   readonly catalog: readonly ChannelDescriptor[];
   readonly list: ChannelsListAnswer;
@@ -142,6 +139,7 @@ interface ChannelsLoaded {
 
 export function ChannelsStep(props: ConnectStepProps) {
   const { client, workspaceId } = props;
+  const t = useT();
   const read = useCallback(async (): Promise<Outcome<ChannelsLoaded>> => {
     const [catalog, list, people] = await Promise.all([
       channels<ChannelsCatalogAnswer>(client, { action: "catalog" }),
@@ -174,7 +172,7 @@ export function ChannelsStep(props: ConnectStepProps) {
   const seeAll = (
     <p>
       <Button variant="link" onClick={() => props.onSettings("messaging")}>
-        See all channels
+        {t("welcome.channels.seeAll")}
       </Button>
     </p>
   );
@@ -182,7 +180,7 @@ export function ChannelsStep(props: ConnectStepProps) {
     return (
       <div className="welcome-connect">
         <p className="welcome-state" role="status">
-          <Icon name="check" size="sm" /> Paired on {paired}: your messages there reach Tavi.
+          <Icon name="check" size="sm" /> {t("welcome.channels.paired", { channel: paired })}
         </p>
         {seeAll}
       </div>
@@ -195,7 +193,7 @@ export function ChannelsStep(props: ConnectStepProps) {
   return (
     <div className="welcome-connect">
       {operator === undefined ? (
-        <Notice>Pairing needs a workspace operator; add one in Settings first.</Notice>
+        <Notice>{t("welcome.channels.noOperator")}</Notice>
       ) : pairingOn !== undefined ? (
         <PairOperator
           client={client}
@@ -210,11 +208,12 @@ export function ChannelsStep(props: ConnectStepProps) {
         />
       ) : descriptor === undefined ? (
         featured.length === 0 ? (
-          <Notice>None of the suggested channels is installed here.</Notice>
+          <Notice>{t("welcome.channels.none")}</Notice>
         ) : (
           <>
-            <p className="settings-description">{CHANNEL_SCOPE}</p>
-            <div className="welcome-choices" role="group" aria-label="Channels">
+            {/* What choosing a channel does; the step's own text already says strangers are never answered. */}
+            <p className="settings-description">{t("welcome.channels.scope")}</p>
+            <div className="welcome-choices" role="group" aria-label={t("welcome.channels.group")}>
               {featured.map((candidate) =>
                 simple(candidate) ? (
                   <Button key={candidate.providerId} className="welcome-choice" onClick={() => setChosen(candidate.providerId)}>
@@ -222,7 +221,7 @@ export function ChannelsStep(props: ConnectStepProps) {
                   </Button>
                 ) : (
                   <Button key={candidate.providerId} className="welcome-choice" onClick={() => props.onSettings("messaging")}>
-                    {candidate.label} (in Settings)
+                    {t("welcome.channels.inSettings", { channel: candidate.label })}
                   </Button>
                 ),
               )}
@@ -236,7 +235,7 @@ export function ChannelsStep(props: ConnectStepProps) {
           descriptor={descriptor}
           onboardingStep="channels"
           onBack={() => setChosen(undefined)}
-          backLabel="Back to channels"
+          backLabel={t("welcome.channels.back")}
           onAdded={(connection) => {
             setAdded(connection);
             void reload();

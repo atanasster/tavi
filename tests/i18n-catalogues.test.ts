@@ -86,7 +86,8 @@ const PROPER_NOUNS: ReadonlySet<string> = new Set(["България", "Софи
 
 /** Capitalised Cyrillic words past a sentence's start: Bulgarian writes sentence case, never Title Case. */
 function titleCased(text: string): boolean {
-  const body = text.replace(PARAMETER, "x");
+  // A menu path is written as on screen, each item capitalised: "Настройки → Модели".
+  const body = text.replace(PARAMETER, "x").replace(/\p{Lu}\p{Ll}*(?:\s+\p{Ll}+)*(?:\s*→\s*\p{Lu}\p{Ll}*(?:\s+\p{Ll}+)*)+/gu, "x");
   const words = [...body.matchAll(/(^|[.!?:„(…]\s*|\n\s*|\s)(\p{Lu}[\p{Ll}]+)/gu)].filter(
     (match) =>
       /\p{Script=Cyrillic}/u.test(match[2] ?? "") && !PROPER_NOUNS.has(match[2] ?? "") && !/^$|[.!?:„(…]\s*$|\n\s*$/.test(match[1] ?? ""),
@@ -147,6 +148,8 @@ describe("language packs", () => {
     expect(titleCased("Готово… Да")).toBe(false);
     expect(titleCased("Първи ред\nВтори ред")).toBe(false);
     expect(titleCased("Пише в България")).toBe(false);
+    expect(titleCased("Отвори Настройки → Свързани приложения.")).toBe(false);
+    expect(titleCased("Отвори Настройки и Модели")).toBe(true);
     expect(FOREIGN_QUOTES.test("Отвори «Настройки»")).toBe(true);
     expect(FOREIGN_QUOTES.test("Отвори “Настройки”")).toBe(true);
     expect(FOREIGN_QUOTES.test("Отвори „Настройки“")).toBe(false);

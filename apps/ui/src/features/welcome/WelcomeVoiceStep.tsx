@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { VoiceSetupStatus } from "@tavi/contracts";
 
+import { translateNow, useT } from "../../lib/i18n.js";
 import { loadVoice, startVoiceSetup } from "./onboarding-api.js";
 import { type StepProps, Working } from "./WelcomeStepParts.js";
 import { Failure, Notice, Pending } from "../../ui/Parts.js";
@@ -15,7 +16,7 @@ const POLL_MS = 1_000;
 /** The job's line: its own words, and the download's share once its size is known. */
 function progressLine(job: NonNullable<VoiceSetupStatus["job"]>): string {
   if (job.phase !== "download" || job.total === undefined || job.total <= 0) return job.message;
-  return `${job.message} ${String(Math.floor(((job.received ?? 0) / job.total) * 100))}%`;
+  return translateNow("welcome.voice.progress", { message: job.message, percent: Math.floor(((job.received ?? 0) / job.total) * 100) });
 }
 
 /**
@@ -27,6 +28,7 @@ function progressLine(job: NonNullable<VoiceSetupStatus["job"]>): string {
  */
 export function VoiceStep(props: StepProps) {
   const { client, onDone } = props;
+  const t = useT();
   const [voice, setVoice] = useState<VoiceSetupStatus>();
   const [problem, setProblem] = useState<string>();
   const [starting, setStarting] = useState(false);
@@ -58,15 +60,14 @@ export function VoiceStep(props: StepProps) {
     setVoice(answer.value);
   };
 
-  if (voice === undefined)
-    return <Pending label="Checking what voice messages need here…" error={problem} reload={() => void refresh()} status />;
+  if (voice === undefined) return <Pending label={t("welcome.voice.checking")} error={problem} reload={() => void refresh()} status />;
   if (voice.ready)
     return (
       <div className="welcome-voice">
-        <Notice>Voice messages are transcribed on this computer.</Notice>
+        <Notice>{t("welcome.voice.ready")}</Notice>
         <div className="actions">
           <Button variant="primary" onClick={onDone}>
-            Continue
+            {t("welcome.action.continue")}
           </Button>
         </div>
       </div>
@@ -74,7 +75,7 @@ export function VoiceStep(props: StepProps) {
   const parts: readonly (readonly [string, boolean])[] = [
     ["FFmpeg", voice.ffmpeg],
     ["whisper.cpp", voice.whisper],
-    [`Whisper's base model (${String(voice.modelInfo.megabytes)} MB, ${voice.modelInfo.licence})`, voice.model],
+    [t("welcome.voice.model", { megabytes: voice.modelInfo.megabytes, licence: voice.modelInfo.licence }), voice.model],
   ];
   const failed = voice.job?.state === "failed" ? voice.job.message : undefined;
   return (
@@ -82,20 +83,19 @@ export function VoiceStep(props: StepProps) {
       <ul className="welcome-voice-parts">
         {parts.map(([label, here]) => (
           <li key={label}>
-            {here ? <Icon name="check" size="sm" /> : "–"} {label}
-            {here ? "" : " — not here yet"}
+            {here ? <Icon name="check" size="sm" /> : "–"} {here ? label : t("welcome.voice.missing", { part: label })}
           </li>
         ))}
       </ul>
       {voice.automatic ? (
         <div className="actions">
           <Button variant="primary" disabled={running || starting} onClick={() => void start()}>
-            {running ? "Setting up…" : failed === undefined ? "Set up voice messages" : "Try again"}
+            {running ? t("welcome.voice.settingUp") : failed === undefined ? t("welcome.voice.setUp") : t("welcome.voice.tryAgain")}
           </Button>
         </div>
       ) : (
         <>
-          <Notice>Tavi cannot install these itself here. Run these in a terminal, then check again:</Notice>
+          <Notice>{t("welcome.voice.manual")}</Notice>
           <ul className="welcome-voice-commands">
             {voice.commands.map((command) => (
               <li key={command}>
@@ -105,7 +105,7 @@ export function VoiceStep(props: StepProps) {
           </ul>
           <div className="actions">
             <Button variant="primary" onClick={() => void refresh()}>
-              Check again
+              {t("welcome.voice.checkAgain")}
             </Button>
           </div>
         </>

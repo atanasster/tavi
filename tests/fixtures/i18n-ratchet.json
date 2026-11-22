@@ -12,7 +12,7 @@
   "features/shell": 16,
   "features/takeover": 26,
   "features/transcript": 23,
-  "features/welcome": 112,
+  "features/welcome": 7,
   "features/workers": 31,
   "ui": 2
 }

@@ -2,6 +2,7 @@ import { useEffect, useId, useState, type FormEvent } from "react";
 
 import { HeartbeatGetAnswerSchema, MemoryListAnswerSchema, WorkspaceSettingsAnswerSchema } from "@tavi/contracts";
 
+import { useT } from "../../lib/i18n.js";
 import { read } from "../../lib/ipc.js";
 import { saveAbout } from "./onboarding-api.js";
 import { Notice, StatusNote } from "../../ui/Parts.js";
@@ -10,6 +11,7 @@ import { Button } from "../../ui/Button.js";
 import { Field } from "../../ui/Field.js";
 
 export function AboutStep(props: StepProps) {
+  const t = useT();
   const nameId = useId();
   const zoneId = useId();
   const hoursId = useId();
@@ -68,7 +70,7 @@ export function AboutStep(props: StepProps) {
       live = false;
     };
   }, [props.client, props.workspaceId, props.browserTimeZone, props.memory]);
-  if (current === undefined) return <Working>Loading…</Working>;
+  if (current === undefined) return <Working>{t("welcome.about.loading")}</Working>;
   const range = /^((?:[01]\d|2[0-3]):[0-5]\d)-((?:[01]\d|2[0-3]):[0-5]\d)$/u.exec(hours);
   const hoursWrong =
     fields.includes("activeHours") && current.heartbeatHours !== undefined && hours !== current.heartbeatHours && range === null;
@@ -95,8 +97,8 @@ export function AboutStep(props: StepProps) {
     props.onDone();
   };
   const remembered = [
-    name.trim() === "" ? undefined : `your name is ${name.trim()}`,
-    zone.trim() === "" ? undefined : `you're in ${zone.trim()}`,
+    name.trim() === "" ? undefined : t("welcome.about.yourName", { name: name.trim() }),
+    zone.trim() === "" ? undefined : t("welcome.about.yourZone", { zone: zone.trim() }),
   ]
     .filter(Boolean)
     .join(" · ");
@@ -104,14 +106,14 @@ export function AboutStep(props: StepProps) {
     <form className="welcome-about" onSubmit={(event) => void submit(event)}>
       {fields.includes("name") ? (
         <p>
-          <Field id={nameId} label="Your name">
+          <Field id={nameId} label={t("welcome.about.name")}>
             <input value={name} maxLength={80} autoComplete="name" onChange={(event) => setName(event.target.value)} />
           </Field>
         </p>
       ) : null}
       {fields.includes("timezone") ? (
         <p>
-          <Field id={zoneId} label="Your time zone">
+          <Field id={zoneId} label={t("welcome.about.zone")}>
             <input value={zone} onChange={(event) => setZone(event.target.value)} />
           </Field>
         </p>
@@ -120,10 +122,10 @@ export function AboutStep(props: StepProps) {
         <p>
           <Field
             id={hoursId}
-            label="Hours the heartbeat may check in"
+            label={t("welcome.about.hours")}
             hintAs="span"
             hintClassName="hint"
-            hint={hoursWrong ? "Use HH:MM-HH:MM, such as 08:00-22:00." : undefined}
+            hint={hoursWrong ? t("welcome.about.hoursHint") : undefined}
           >
             <input
               value={hours}
@@ -138,17 +140,17 @@ export function AboutStep(props: StepProps) {
         remembered === "" ? null : (
           <p>
             <label>
-              <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} /> Tavi will remember:{" "}
-              {remembered}
+              <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} />{" "}
+              {t("welcome.about.remember", { what: remembered })}
             </label>
           </p>
         )
       ) : (
-        <Notice>Memory is paused: these are kept in this workspace's settings only.</Notice>
+        <Notice>{t("welcome.about.memoryPaused")}</Notice>
       )}
       <div className="actions">
         <Button variant="primary" type="submit" disabled={saving || hoursWrong}>
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("welcome.about.saving") : t("welcome.about.save")}
         </Button>
       </div>
       <StatusNote note={note} />

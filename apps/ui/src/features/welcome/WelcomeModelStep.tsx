@@ -13,6 +13,7 @@ import {
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { delay } from "../../lib/delay.js";
 import { hostOf } from "../../lib/format.js";
+import { useT } from "../../lib/i18n.js";
 import { Icon } from "../../ui/Icon.js";
 import {
   connectDetected,
@@ -25,7 +26,7 @@ import {
   startSignIn,
   verifyTarget,
 } from "./onboarding-api.js";
-import { type StepProps, useFocusOnEnter, Working } from "./WelcomeStepParts.js";
+import { type StepProps, useFocusOnEnter, withParts, Working } from "./WelcomeStepParts.js";
 import { Failure, Notice } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
 import { Field } from "../../ui/Field.js";
@@ -49,6 +50,7 @@ const CHATGPT_TILE: ModelProviderPreset = {
 };
 export function ModelStep(props: StepProps) {
   const { client, workspaceId } = props;
+  const t = useT();
   const { data: detected } = useLoaded(() => detectProviders(client, workspaceId), [client, workspaceId]);
   const [chosen, setChosen] = useState<ModelProviderPreset>();
   const [more, setMore] = useState(false);
@@ -96,13 +98,15 @@ export function ModelStep(props: StepProps) {
           detected={detected}
           onUse={(presetId, variable) => {
             setChosen(preset(presetId));
-            void run(`Connecting ${preset(presetId)?.name ?? presetId}…`, () => connectDetected(client, workspaceId, presetId, variable));
+            void run(t("welcome.model.connecting", { provider: preset(presetId)?.name ?? presetId }), () =>
+              connectDetected(client, workspaceId, presetId, variable),
+            );
           }}
         />
       )}
       {chosen === undefined ? (
         <>
-          <ul className="provider-grid list-reset" aria-label="Model providers">
+          <ul className="provider-grid list-reset" aria-label={t("welcome.model.providers")}>
             {tiles.map((candidate) => (
               <li key={candidate.id}>
                 <Button
@@ -111,35 +115,37 @@ export function ModelStep(props: StepProps) {
                 >
                   <span className="provider-tile-name">
                     {candidate.name}
-                    {props.step.recommended === candidate.id ? <span className="badge">Recommended</span> : null}
+                    {props.step.recommended === candidate.id ? <span className="badge">{t("welcome.model.recommended")}</span> : null}
                   </span>
-                  <span className="provider-tile-meta">{candidate.baseUrl === "" ? "Your endpoint" : hostOf(candidate.baseUrl)}</span>
+                  <span className="provider-tile-meta">
+                    {candidate.baseUrl === "" ? t("welcome.model.yourEndpoint") : hostOf(candidate.baseUrl)}
+                  </span>
                   <span className="provider-tile-meta">
                     {candidate.localOnly
-                      ? "On this computer: free and private; small models do agent work less well"
+                      ? t("welcome.model.local")
                       : candidate.id === "custom"
-                        ? "Any OpenAI-compatible server"
-                        : "Billed per use with your key"}
+                        ? t("welcome.model.custom")
+                        : t("welcome.model.billed")}
                   </span>
                 </Button>
               </li>
             ))}
           </ul>
           {props.status.chatGptSignIn === true ? (
-            <ul className="provider-grid list-reset" aria-label="Sign in with a plan">
+            <ul className="provider-grid list-reset" aria-label={t("welcome.model.withPlan")}>
               <li>
                 <Button className="provider-tile" onClick={() => setChosen(CHATGPT_TILE)}>
                   <span className="provider-tile-name">
-                    ChatGPT<span className="badge">Preview</span>
+                    ChatGPT<span className="badge">{t("welcome.model.preview")}</span>
                   </span>
-                  <span className="provider-tile-meta">Sign in; uses your ChatGPT plan's allowance</span>
+                  <span className="provider-tile-meta">{t("welcome.model.chatGptMeta")}</span>
                 </Button>
               </li>
             </ul>
           ) : null}
           {more ? null : (
             <Button variant="link" onClick={() => setMore(true)}>
-              Show all providers
+              {t("welcome.model.showAll")}
             </Button>
           )}
         </>
@@ -154,7 +160,9 @@ export function ModelStep(props: StepProps) {
           onBack={() => setChosen(undefined)}
           onKey={(key, baseUrl) => {
             setLastBaseUrl(baseUrl);
-            void run(`Connecting ${chosen.name}…`, () => connectKey(client, workspaceId, chosen.id, key, baseUrl));
+            void run(t("welcome.model.connecting", { provider: chosen.name }), () =>
+              connectKey(client, workspaceId, chosen.id, key, baseUrl),
+            );
           }}
           onSignedIn={(answer) => connected(answer)}
           onProblem={setProblem}
@@ -172,6 +180,7 @@ function DetectedChoices({
   readonly detected: OnboardingDetectAnswer;
   readonly onUse: (preset: string, variable?: (typeof detected.env)[number]) => void;
 }) {
+  const t = useT();
   const local = detected.local.filter((server) => server.models > 0);
   const empty = detected.local.filter((server) => server.toolCapableModels === 0);
   return (
@@ -180,7 +189,7 @@ function DetectedChoices({
         const presetId = Object.entries(ONBOARDING_ENV_KEYS).find(([, names]) => (names as readonly string[]).includes(variable))?.[0];
         return presetId === undefined ? null : (
           <Button size="sm" key={variable} onClick={() => onUse(presetId, variable)}>
-            Use the {variable} found in the owner's environment
+            {t("welcome.detected.env", { variable })}
           </Button>
         );
       })}
@@ -188,19 +197,18 @@ function DetectedChoices({
         .filter((server) => server.toolCapableModels > 0)
         .map((server) => (
           <Button size="sm" key={server.preset} onClick={() => onUse(server.preset)}>
-            {preset(server.preset)?.name ?? server.preset} is running with {server.models} model{server.models === 1 ? "" : "s"}
+            {t("welcome.detected.running", { name: preset(server.preset)?.name ?? server.preset, count: server.models })}
           </Button>
         ))}
       {empty.map((server) => (
         <Notice key={server.preset}>
-          {preset(server.preset)?.name ?? server.preset} is running but has no model that can use tools: <code>ollama pull qwen3</code>
+          {withParts(t("welcome.detected.noTools", { name: preset(server.preset)?.name ?? server.preset }), {
+            command: <code>ollama pull qwen3</code>,
+          })}
         </Notice>
       ))}
       {detected.service === true && detected.env.length === 0 ? (
-        <Notice>
-          Keys in your shell aren't visible to the service. Paste the key, or run <Command>tavi onboard</Command> in a terminal to import
-          it.
-        </Notice>
+        <Notice>{withParts(t("welcome.detected.shellKeys"), { command: <Command>tavi onboard</Command> })}</Notice>
       ) : null}
     </div>
   );
@@ -226,6 +234,7 @@ function KeyForm(
     readonly onProblem: (message: string | undefined) => void;
   },
 ) {
+  const t = useT();
   const keyId = useId();
   const urlId = useId();
   const [key, setKey] = useState("");
@@ -253,14 +262,14 @@ function KeyForm(
       if (!state.ok || state.value.state === "waiting") continue;
       setSigningIn(undefined);
       if (state.value.state === "done" && state.value.connection !== undefined) return props.onSignedIn(state.value.connection);
-      return props.onProblem(state.value.message ?? "The sign-in did not finish.");
+      return props.onProblem(state.value.message ?? t("welcome.signIn.notFinished"));
     }
     setSigningIn(undefined);
-    props.onProblem("The sign-in took too long. Start it again.");
+    props.onProblem(t("welcome.signIn.tooLong"));
   };
   const submit = (event: FormEvent): void => {
     event.preventDefault();
-    if (!keyless && key.trim() === "") return props.onProblem("Paste the key.");
+    if (!keyless && key.trim() === "") return props.onProblem(t("welcome.key.paste"));
     props.onKey(keyless ? "local-no-key" : key.trim(), custom ? baseUrl.trim() : undefined);
   };
   return (
@@ -269,21 +278,23 @@ function KeyForm(
       {props.preset.id === "openrouter" && !pasting ? (
         <div className="actions">
           <Button variant="ghost" onClick={props.onBack}>
-            Back
+            {t("welcome.action.back")}
           </Button>
           <Button variant="primary" disabled={signingIn !== undefined} onClick={() => void signIn()}>
-            {signingIn !== undefined ? "Waiting for OpenRouter…" : "Sign in with OpenRouter"}
+            {signingIn !== undefined ? t("welcome.key.waitingOpenRouter") : t("welcome.key.signInOpenRouter")}
           </Button>
           <Button variant="ghost" onClick={() => setPasting(true)}>
-            Paste a key instead
+            {t("welcome.key.pasteInstead")}
           </Button>
           {signingIn === undefined ? null : (
             <Working>
-              Finish signing in in the tab that opened (
-              <a href={signingIn} target="_blank" rel="noopener noreferrer">
-                open OpenRouter
-              </a>{" "}
-              if none did); this page continues on its own.
+              {withParts(t("welcome.signIn.finish"), {
+                link: (
+                  <a href={signingIn} target="_blank" rel="noopener noreferrer">
+                    {t("welcome.signIn.open", { name: "OpenRouter" })}
+                  </a>
+                ),
+              })}
             </Working>
           )}
         </div>
@@ -291,7 +302,7 @@ function KeyForm(
         <form onSubmit={submit}>
           {custom ? (
             <p>
-              <Field id={urlId} label="Its OpenAI-compatible endpoint">
+              <Field id={urlId} label={t("welcome.key.endpoint")}>
                 <input
                   type="url"
                   required
@@ -303,19 +314,19 @@ function KeyForm(
             </p>
           ) : null}
           {keyless ? (
-            <p>No key is needed: Tavi stores a placeholder the local server ignores.</p>
+            <p>{t("welcome.key.noKey")}</p>
           ) : (
             <p>
               <Field
                 id={keyId}
-                label={`${props.preset.name} key`}
+                label={t("welcome.key.label", { provider: props.preset.name })}
                 hintAs="span"
                 hintClassName="hint"
                 hint={
                   <>
-                    Never shown again once stored.{" "}
+                    {t("welcome.key.neverShown")}{" "}
                     <a href={keyPageOf(props.preset)} target="_blank" rel="noreferrer">
-                      Create a key
+                      {t("welcome.key.create")}
                     </a>
                   </>
                 }
@@ -333,10 +344,10 @@ function KeyForm(
           )}
           <div className="actions">
             <Button variant="ghost" onClick={props.onBack}>
-              Back
+              {t("welcome.action.back")}
             </Button>
             <Button variant="primary" type="submit" disabled={props.busy}>
-              {props.busy ? "Connecting…" : "Connect"}
+              {props.busy ? t("welcome.key.connecting") : t("welcome.action.connect")}
             </Button>
           </div>
         </form>
@@ -357,6 +368,7 @@ function ChatGptSignIn(
     readonly onProblem: (message: string | undefined) => void;
   },
 ) {
+  const t = useT();
   const entered = useFocusOnEnter();
   const [waiting, setWaiting] = useState<string>();
   const left = useLeftSignal();
@@ -375,32 +387,31 @@ function ChatGptSignIn(
       if (!state.ok || state.value.state === "waiting") continue;
       setWaiting(undefined);
       if (state.value.state === "done" && state.value.connection !== undefined) return props.onSignedIn(state.value.connection);
-      return props.onProblem(state.value.message ?? "The sign-in did not finish.");
+      return props.onProblem(state.value.message ?? t("welcome.signIn.notFinished"));
     }
     setWaiting(undefined);
-    props.onProblem("The sign-in took too long. Start it again.");
+    props.onProblem(t("welcome.signIn.tooLong"));
   };
   return (
     <div className="welcome-key" ref={entered}>
-      <Notice>
-        A preview of OpenAI's: answers use your ChatGPT plan's allowance, which ChatGPT Settings → Usage shows and limits. This computer's
-        browser must be the one that signs in.
-      </Notice>
+      <Notice>{t("welcome.chatGpt.notice")}</Notice>
       <div className="actions">
         <Button variant="ghost" onClick={props.onBack}>
-          Back
+          {t("welcome.action.back")}
         </Button>
         <Button variant="primary" disabled={waiting !== undefined} onClick={() => void signIn()}>
-          {waiting !== undefined ? "Waiting for ChatGPT…" : "Continue with ChatGPT"}
+          {waiting !== undefined ? t("welcome.chatGpt.waiting") : t("welcome.chatGpt.continue")}
         </Button>
       </div>
       {waiting === undefined ? null : (
         <Working>
-          Finish signing in in the tab that opened (
-          <a href={waiting} target="_blank" rel="noopener noreferrer">
-            open ChatGPT
-          </a>{" "}
-          if none did); this page continues on its own.
+          {withParts(t("welcome.signIn.finish"), {
+            link: (
+              <a href={waiting} target="_blank" rel="noopener noreferrer">
+                {t("welcome.signIn.open", { name: "ChatGPT" })}
+              </a>
+            ),
+          })}
         </Working>
       )}
     </div>
@@ -419,6 +430,7 @@ function RolePicker(
     readonly onChangeKey?: () => void;
   },
 ) {
+  const t = useT();
   const entered = useFocusOnEnter();
   const mainId = useId();
   const fastId = useId();
@@ -431,7 +443,7 @@ function RolePicker(
   const verify = async (): Promise<void> => {
     setProblem(undefined);
     setResults(undefined);
-    setWorking(`Checking ${main} with one short request…`);
+    setWorking(t("welcome.roles.checking", { model: main }));
     const done: OnboardingVerifyResult[] = [];
     const mainVerified = await verifyTarget(props.client, props.workspaceId, "main", props.connection.connectionId, main);
     if (!mainVerified.ok) {
@@ -446,18 +458,16 @@ function RolePicker(
       if (!set.ok) {
         // It answered, but it is not the default: nothing to continue with.
         setWorking(undefined);
-        return setProblem(`${main} answered, but it was not made the default: ${set.message}`);
+        return setProblem(t("welcome.roles.notDefault", { model: main, message: set.message }));
       }
       if (fast !== "" && fast !== main) {
         const fastVerified = await verifyTarget(props.client, props.workspaceId, "fast", props.connection.connectionId, fast);
         const fastResult = fastVerified.ok ? fastVerified.value.results[0] : undefined;
-        if (!fastVerified.ok) setProblem(`The fast model was not checked: ${fastVerified.message}`);
+        if (!fastVerified.ok) setProblem(t("welcome.roles.fastNotChecked", { message: fastVerified.message }));
         if (fastResult?.ok === true) {
           const setFast = await setRole(props.client, props.workspaceId, "fast", props.connection.connectionId, fast);
           done.push(
-            setFast.ok
-              ? fastResult
-              : { ...fastResult, ok: false, advice: `It answered, but it was not made the fast model: ${setFast.message}` },
+            setFast.ok ? fastResult : { ...fastResult, ok: false, advice: t("welcome.roles.fastNotSet", { message: setFast.message }) },
           );
         } else if (fastResult !== undefined) done.push(fastResult);
       }
@@ -473,7 +483,7 @@ function RolePicker(
   return (
     <div className="welcome-roles" ref={entered}>
       <p>
-        <Field id={mainId} label="Main model">
+        <Field id={mainId} label={t("welcome.roles.main")}>
           <Select value={main} onChange={(event) => setMain(event.target.value)}>
             {models.map((model) => (
               <option key={model} value={model}>
@@ -484,9 +494,9 @@ function RolePicker(
         </Field>
       </p>
       <p>
-        <Field id={fastId} label="Fast model (summaries and ideas)">
+        <Field id={fastId} label={t("welcome.roles.fast")}>
           <Select value={fast} onChange={(event) => setFast(event.target.value)}>
-            <option value="">The main model</option>
+            <option value="">{t("welcome.roles.sameAsMain")}</option>
             {models.map((model) => (
               <option key={model} value={model}>
                 {model}
@@ -497,15 +507,15 @@ function RolePicker(
       </p>
       <div className="actions">
         <Button variant="ghost" onClick={props.onAnother}>
-          Choose another provider
+          {t("welcome.roles.another")}
         </Button>
         {keyRefused && props.onChangeKey !== undefined ? (
           <Button variant="ghost" onClick={props.onChangeKey}>
-            Change the key
+            {t("welcome.roles.changeKey")}
           </Button>
         ) : null}
         <Button variant="primary" disabled={working !== undefined || main === ""} onClick={() => void verify()}>
-          {mainResult === undefined ? "Verify" : "Retry"}
+          {mainResult === undefined ? t("welcome.roles.verify") : t("welcome.roles.retry")}
         </Button>
       </div>
       {working === undefined ? null : <Working>{working}</Working>}
@@ -513,12 +523,16 @@ function RolePicker(
         <p key={result.role} className={result.ok ? "success" : "failure"} role={result.ok ? "status" : "alert"}>
           {result.ok ? (
             <>
-              <Icon name="check" size="sm" /> {`${result.role === "main" ? "Inference ready" : "Fast model ready"}: ${result.model}`}
+              <Icon name="check" size="sm" />{" "}
+              {t(result.role === "main" ? "welcome.roles.mainReady" : "welcome.roles.fastReady", { model: result.model })}
             </>
           ) : (
             <>
-              <Icon name="close" size="sm" /> <span className="visually-hidden">Failed: </span>
-              {`${result.model}: ${result.advice ?? result.errorCode ?? "it failed"}`}
+              <Icon name="close" size="sm" /> <span className="visually-hidden">{`${t("welcome.roles.failed")} `}</span>
+              {t("welcome.roles.failedLine", {
+                model: result.model,
+                reason: result.advice ?? result.errorCode ?? t("welcome.roles.itFailed"),
+              })}
             </>
           )}
           {result.ok && result.advice !== undefined ? ` — ${result.advice}` : ""}

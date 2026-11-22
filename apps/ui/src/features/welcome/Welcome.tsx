@@ -8,6 +8,7 @@ import {
   type OnboardingStatus,
 } from "@tavi/contracts";
 
+import { useT } from "../../lib/i18n.js";
 import { Icon } from "../../ui/Icon.js";
 import { PluginFrame } from "../plugin-host/PluginFrame.js";
 import { AppsStep, ChannelsStep } from "./ConnectSteps.js";
@@ -18,7 +19,7 @@ import { ModelStep } from "./WelcomeModelStep.js";
 import { SearchStep } from "./WelcomeSearchStep.js";
 import { TasksStep } from "./WelcomeTasksStep.js";
 import { VoiceStep } from "./WelcomeVoiceStep.js";
-import type { WelcomeProps, StepProps } from "./WelcomeStepParts.js";
+import { type WelcomeProps, type StepProps, withParts } from "./WelcomeStepParts.js";
 import { Failure, Notice, Pending } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
 import { Command } from "../../ui/Command.js";
@@ -38,6 +39,7 @@ const TERMINAL_COMMANDS: Partial<Record<OnboardingFlowStep["kind"], string>> = {
 
 export function Welcome(props: WelcomeProps) {
   const { client, workspaceId } = props;
+  const t = useT();
   const [flow, setFlow] = useState<OnboardingFlowAnswer>();
   const [status, setStatus] = useState<OnboardingStatus>();
   const [failure, setFailure] = useState<string>();
@@ -108,11 +110,11 @@ export function Welcome(props: WelcomeProps) {
   }, [props.stepId, step, onStep]);
 
   if (failure !== undefined && flow === undefined) return <Failure>{failure}</Failure>;
-  if (flow === undefined || status === undefined) return <Pending label="Loading setup…" className="notice" status />;
+  if (flow === undefined || status === undefined) return <Pending label={t("welcome.page.loading")} className="notice" status />;
   const leave = (): void => props.onLeave();
   const neverAgain = async (): Promise<void> => {
     const dismissed = await dismissOnboarding(client, workspaceId);
-    if (!dismissed.ok) return setFailure(`Setup was not turned off: ${dismissed.message}`);
+    if (!dismissed.ok) return setFailure(t("welcome.page.notTurnedOff", { message: dismissed.message }));
     leave();
   };
   const refused = failure === undefined ? null : <Failure>{failure}</Failure>;
@@ -122,15 +124,12 @@ export function Welcome(props: WelcomeProps) {
       <div className="welcome-page">
         <section className="welcome welcome-solo" aria-labelledby="welcome-off">
           <h1 id="welcome-off" ref={heading} tabIndex={-1}>
-            Guided setup is turned off
+            {t("welcome.off.title")}
           </h1>
-          <p>
-            No setup flow is installed here. Run <Command>tavi onboard</Command> in a terminal: it lists what is open, with the command for
-            each.
-          </p>
+          <p>{withParts(t("welcome.off.body"), { command: <Command>tavi onboard</Command> })}</p>
           <div className="actions">
             <Button variant="primary" onClick={leave}>
-              Go to Home
+              {t("welcome.action.home")}
             </Button>
           </div>
         </section>
@@ -150,7 +149,7 @@ export function Welcome(props: WelcomeProps) {
               variant="primary"
               onClick={() => void completeOnboarding(client, workspaceId).then((done) => (done.ok ? leave() : setFailure(done.message)))}
             >
-              Go to Home
+              {t("welcome.action.home")}
             </Button>
           </div>
           {refused}
@@ -168,7 +167,7 @@ export function Welcome(props: WelcomeProps) {
   };
   const skip = async (): Promise<void> => {
     const skipped = await skipStep(client, workspaceId, step.kind);
-    if (!skipped.ok) return setFailure(`The step was not skipped: ${skipped.message}`);
+    if (!skipped.ok) return setFailure(t("welcome.page.notSkipped", { message: skipped.message }));
     setFailure(undefined);
     setStatus(skipped.value);
     props.onStep(onward());
@@ -186,9 +185,9 @@ export function Welcome(props: WelcomeProps) {
         <header className="welcome-rail">
           <p className="welcome-title">{flow.flow.title}</p>
           <p className="welcome-progress meta-sm">
-            {steps.filter(isDone).length} of {steps.length} done
+            {t("welcome.rail.progress", { done: steps.filter(isDone).length, total: steps.length })}
           </p>
-          <ol className="welcome-stepper list-reset" aria-label="Setup steps">
+          <ol className="welcome-stepper list-reset" aria-label={t("welcome.rail.steps")}>
             {steps.map((candidate, at) => (
               <li key={candidate.id} aria-current={at === index ? "step" : undefined} className={at === index ? "current" : undefined}>
                 <Button
@@ -200,7 +199,7 @@ export function Welcome(props: WelcomeProps) {
                     {isDone(candidate) ? <Icon name="check" size="sm" /> : String(at + 1)}
                   </span>{" "}
                   <span className="welcome-step-label">{candidate.title}</span>
-                  {isDone(candidate) ? <span className="visually-hidden"> (done)</span> : null}
+                  {isDone(candidate) ? <span className="visually-hidden"> {t("welcome.rail.done")}</span> : null}
                 </Button>
               </li>
             ))}
@@ -209,13 +208,12 @@ export function Welcome(props: WelcomeProps) {
         <div className="welcome-main">
           {fallback === undefined ? null : (
             <Notice className="welcome-fallback" role="status">
-              Setup is showing Tavi's own steps: {fallback}
+              {t("welcome.panel.fallback", { reason: fallback })}
             </Notice>
           )}
           <div className="welcome-panel">
             <p className="eyebrow">
-              Step {index + 1} of {steps.length}
-              {step.optional ? " · optional" : ""}
+              {t(step.optional ? "welcome.panel.stepOptional" : "welcome.panel.step", { step: index + 1, total: steps.length })}
             </p>
             <h1 id="welcome-step" ref={heading} tabIndex={-1}>
               {step.title}
@@ -238,7 +236,7 @@ export function Welcome(props: WelcomeProps) {
             {stepStatus?.elsewhere === "cli" ? (
               // Only a terminal can do it (installing the service): listed and counted here, with where it is done.
               <p className="welcome-body">
-                Do this in a terminal: <code>{TERMINAL_COMMANDS[step.kind] ?? "tavi onboard"}</code>
+                {withParts(t("welcome.panel.terminal"), { command: <code>{TERMINAL_COMMANDS[step.kind] ?? "tavi onboard"}</code> })}
               </p>
             ) : (
               <StepBody
@@ -255,18 +253,18 @@ export function Welcome(props: WelcomeProps) {
               <div className="welcome-nav">
                 {canBack ? (
                   <Button variant="ghost" onClick={() => props.onStep(steps[index - 1]?.id)}>
-                    Back
+                    {t("welcome.action.back")}
                   </Button>
                 ) : null}
                 <span className="welcome-nav-spacer" />
                 {canSkip ? (
                   <Button variant="ghost" onClick={() => void skip()}>
-                    Skip
+                    {t("welcome.nav.skip")}
                   </Button>
                 ) : null}
                 {canContinue ? (
                   <Button variant="primary" onClick={next}>
-                    Continue
+                    {t("welcome.action.continue")}
                   </Button>
                 ) : null}
               </div>
@@ -275,10 +273,10 @@ export function Welcome(props: WelcomeProps) {
           {refused}
           <div className="welcome-later">
             <Button variant="link" onClick={leave}>
-              Do this later
+              {t("welcome.later.later")}
             </Button>
             <Button variant="link" onClick={() => void neverAgain()}>
-              Don't show again
+              {t("welcome.later.never")}
             </Button>
           </div>
         </div>
@@ -319,6 +317,7 @@ function StepBody(props: StepProps) {
  * which marks the step seen. Another plugin's contribution is never shown.
  */
 function InfoStep(props: StepProps) {
+  const t = useT();
   const [problem, setProblem] = useState<string>();
   // The flow's own plugin's, and one that receives nothing, whatever a placement said.
   const item =
@@ -358,7 +357,7 @@ function InfoStep(props: StepProps) {
       {seen ? null : (
         <div className="actions">
           <Button variant="primary" onClick={() => void read()}>
-            Got it
+            {t("welcome.info.gotIt")}
           </Button>
         </div>
       )}
