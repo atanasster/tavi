@@ -15,7 +15,7 @@ import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
 import { useT } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /** One kind of thing waiting on the reader, and the section that holds it; its words by key, said where shown. */
 const WAITING: readonly {

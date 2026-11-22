@@ -26,7 +26,8 @@ import {
   startSignIn,
   verifyTarget,
 } from "./onboarding-api.js";
-import { type StepProps, useFocusOnEnter, withParts, Working } from "./WelcomeStepParts.js";
+import { type StepProps, useFocusOnEnter, Working } from "./WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import { Failure, Notice } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
 import { Field } from "../../ui/Field.js";

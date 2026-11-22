@@ -22,7 +22,7 @@ import { useScheduleActions } from "./PlainSchedules.js";
 import { loadAgents, scheduleHistory, showSchedule } from "./schedules-api.js";
 import { fireState, outcomeSentence, pausedText, scheduleState, specText, watchText } from "./schedule-model.js";
 import { Webhook, EmailTrigger } from "./ScheduleTriggers.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /** How many fires the page lists: the ledger keeps more, `tavi schedules history` reads them. */
 const FIRES_SHOWN = 30;

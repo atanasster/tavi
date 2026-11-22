@@ -13,7 +13,7 @@ import { useTimeZone } from "../shell/Workspace.js";
 import { tunnelCommand } from "./model.js";
 import { Button } from "../../ui/Button.js";
 import { Command } from "../../ui/Command.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /** How often a waiting sign-in is asked after; the owner's flow lives 10 minutes. */
 const SIGN_IN_POLL_MS = 2_000;

@@ -19,7 +19,7 @@ import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { translateNow, useT } from "../../lib/i18n.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /**
  * An MCP server's own pieces, which Connected apps embeds: adding one by

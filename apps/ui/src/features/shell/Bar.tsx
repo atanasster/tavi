@@ -10,7 +10,7 @@ import { Command } from "../../ui/Command.js";
 import { Button } from "../../ui/Button.js";
 import { Icon } from "../../ui/Icon.js";
 import { useT } from "../../lib/i18n.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import type { UiKey } from "../../locales/en.js";
 
 /**

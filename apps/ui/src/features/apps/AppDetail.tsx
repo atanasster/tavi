@@ -25,7 +25,7 @@ import { SettingsForm } from "./SettingsForm.js";
 import { ToolDecisions } from "./ToolDecisions.js";
 import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import { useWorkspace } from "../shell/Workspace.js";
 
 /**

@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { listSchedules } from "../center/schedules-api.js";
 import { translateNow, useT } from "../../lib/i18n.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import { dayTime, todayIn } from "../../lib/time.js";
 import { whenText } from "../center/reminder-model.js";
 import { NewReminderForm } from "../center/Reminders.js";

@@ -1,6 +1,6 @@
 import { useT } from "../../lib/i18n.js";
 import { AppLink } from "../shell/AppLink.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /**
  * The channel a pairing was refused for because it isn't running, from the

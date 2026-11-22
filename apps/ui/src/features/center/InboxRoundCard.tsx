@@ -11,7 +11,7 @@ import type { loadRoundCalls } from "./approvals-api.js";
 import { expiryLabel, scopeButton, type PendingRoundCard } from "./inbox-model.js";
 import { Button } from "../../ui/Button.js";
 import { translateNow, useT } from "../../lib/i18n.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import { spoken, type Said } from "../chat/store/said.js";
 
 /** Where a card stands after the reader acted on it. */

@@ -42,7 +42,7 @@ import {
   type SkillEntry,
 } from "./skills-api.js";
 import { Field } from "../../ui/Field.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /**
  * The workspace's skills: what waits for review first, then every skill with

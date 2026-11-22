@@ -12,7 +12,7 @@ import {
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { useT } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import { Failure, InlineConfirm, StatusNote } from "../../ui/Parts.js";
 import { Select } from "../../ui/Select.js";
 import { LoadError } from "../settings/FormParts.js";

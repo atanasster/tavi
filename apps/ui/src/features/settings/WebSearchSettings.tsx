@@ -14,7 +14,7 @@ import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /** The owner's web search providers. One is used automatically; several need a selection or fallback chain in web-providers.json. */
 export function WebSearchSettings() {

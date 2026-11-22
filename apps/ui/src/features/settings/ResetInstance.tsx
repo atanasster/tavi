@@ -9,7 +9,7 @@ import { Failure } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /**
  * Reset instance: delete everything the owner keeps, as if tavi had

@@ -29,7 +29,7 @@ import {
 import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
 import { Command } from "../../ui/Command.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /**
  * Settings → Connected apps: the

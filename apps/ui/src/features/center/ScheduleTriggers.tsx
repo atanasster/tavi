@@ -20,7 +20,7 @@ import { useWorkspace } from "../shell/Workspace.js";
 import { emailTriggerConnections, setScheduleEmailTrigger, setScheduleWebhook } from "./schedules-api.js";
 import { Command } from "../../ui/Command.js";
 import { useT } from "../../lib/i18n.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import type { UiKey } from "../../locales/en.js";
 
 /**

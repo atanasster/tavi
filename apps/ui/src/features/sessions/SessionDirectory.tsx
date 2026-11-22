@@ -8,7 +8,7 @@ import { useAnnounce } from "../../hooks/use-announce.js";
 import type { TaskListFilters, TaskListRow } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 import { useT } from "../../lib/i18n.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import {
   directoryLayout,
   fetchSessionPreferences,

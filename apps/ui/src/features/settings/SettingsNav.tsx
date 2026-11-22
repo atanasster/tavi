@@ -4,7 +4,7 @@ import { SETTINGS_GROUPS, SETTINGS_VIEWS, type SettingsView } from "../shell/rou
 import { SidebarFrame } from "../shell/SidebarFrame.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { useCurrentNavInView } from "../../ui/useCurrentNavInView.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /**
  * Settings' own nav, in the left column the chats list holds elsewhere: the

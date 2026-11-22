@@ -26,7 +26,7 @@ import { useWorkspace } from "../shell/Workspace.js";
 import { AppLink } from "../shell/AppLink.js";
 import { taskPath } from "../shell/route.js";
 import { Command } from "../../ui/Command.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /**
  * Where a rule came from, as a tag beside it — only where its list does not

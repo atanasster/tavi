@@ -17,7 +17,7 @@ import {
 
 import { pluginActions } from "./plugins-api.js";
 import { translateNow, useT } from "../../lib/i18n.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import type { Outcome } from "../../lib/ipc.js";
 import { Failure, LoadState, Notice, PageHead, PageNote, StatusBadge } from "../../ui/Parts.js";
 import { CanvasPluginsSettings } from "./CanvasPluginsSettings.js";

@@ -6,7 +6,7 @@ import { Card } from "../../ui/Card.js";
 import { Command } from "../../ui/Command.js";
 import { RHUMB_SIGN_UP_URL } from "./lifecycle-api.js";
 import { KeyField } from "./PasswordInput.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /**
  * Model retirements: with a Rhumb key the owner checks daily whether a model

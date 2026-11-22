@@ -15,7 +15,7 @@ import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
 import { useT } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /** How many of the week's days Coming up shows before the rest is asked for. */
 const DAYS_SHOWN = 2;

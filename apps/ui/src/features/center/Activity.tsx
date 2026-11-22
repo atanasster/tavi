@@ -34,7 +34,7 @@ import { ACTIVITY_BAR_MIN_PERCENT } from "../../lib/layout.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { formatCount } from "../../lib/format.js";
 import { currentLocale, useT } from "../../lib/i18n.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /**
  * What the owner is asked for: the search, one person, one source (its

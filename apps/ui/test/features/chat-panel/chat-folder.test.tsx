@@ -9,7 +9,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Canvas } from "../../../src/features/chat/Canvas.js";
 import { DraftFolderChip, FolderChip, type DraftFolder } from "../../../src/features/chat-panel/Folder.js";
 import { readFolderFile } from "../../../src/features/chat-panel/folder-api.js";
-import { REWIND_FOLDER_NOTE } from "../../../src/features/chat/MessageActions.js";
 import { NoticeCards } from "../../../src/features/chat/Notices.js";
 import type { SettingsClient } from "../../../src/lib/ipc.js";
 import type { CanvasRun } from "../../../src/features/chat/store/types.js";
@@ -555,7 +554,6 @@ describe("the folder's notices and wording", () => {
       />,
     );
     await click(page.querySelector('button[aria-label="Rewind to here"]'));
-    expect(page.querySelector(".rewind-confirm")?.textContent).toContain(REWIND_FOLDER_NOTE);
-    expect(REWIND_FOLDER_NOTE).toBe("Files in the chat's folder were not changed.");
+    expect(page.querySelector(".rewind-confirm")?.textContent).toContain("Files in the chat's folder were not changed.");
   });
 });

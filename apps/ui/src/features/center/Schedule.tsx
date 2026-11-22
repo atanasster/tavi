@@ -35,7 +35,7 @@ import { UndoToast, useUndoDelete, type UndoDelete } from "./UndoDelete.js";
 import { Todos } from "./Todos.js";
 import { Command } from "../../ui/Command.js";
 import { useT } from "../../lib/i18n.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /** Reminders in the order they run: a paused one, with no next run, comes last. */
 const byNextFire = (a: { readonly nextFireAt: string | null }, b: { readonly nextFireAt: string | null }): number =>

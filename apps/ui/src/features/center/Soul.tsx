@@ -6,7 +6,7 @@ import { copyDraft } from "../../lib/clipboard.js";
 import { Icon } from "../../ui/Icon.js";
 import { formatCount } from "../../lib/format.js";
 import { translateNow, useT } from "../../lib/i18n.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import { useUnsavedGuard } from "../../hooks/page.js";
 import { useOpenError } from "../../hooks/use-action.js";
 import { SETTINGS_BOUNDS } from "../settings/common.js";

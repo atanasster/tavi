@@ -41,7 +41,7 @@ import { type CardOutcome, type RoundDecision, RoundCard } from "./InboxRoundCar
 import { personName } from "./model.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { useT } from "../../lib/i18n.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /**
  * Approvals: what

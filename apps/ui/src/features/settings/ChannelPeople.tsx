@@ -23,7 +23,7 @@ import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { ChannelNotRunning, notRunningChannel } from "./ChannelNotRunning.js";
 import { translateNow, useT } from "../../lib/i18n.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /** How long the pairing panel waits between asking whether the code has been sent. */
 const PAIRING_POLL_MS = 2000;

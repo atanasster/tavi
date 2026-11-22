@@ -8,7 +8,7 @@ import type { CanvasRun, CanvasStore } from "./store/types.js";
 import type { UiKey } from "../../locales/en.js";
 import { Button } from "../../ui/Button.js";
 import { CallLine, describeRequest } from "./ApprovalParts.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 type Decision = { readonly callId: string; readonly approved: boolean; readonly note?: string };
 

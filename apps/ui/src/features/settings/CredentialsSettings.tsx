@@ -21,7 +21,7 @@ import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /** Whether the store is encrypted at rest, and where its key is: read-only, as `tavi credentials key` says it. */
 function EncryptionStatus({ status }: { readonly status: CredentialEncryptionStatus }) {

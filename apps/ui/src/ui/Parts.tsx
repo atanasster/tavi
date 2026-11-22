@@ -440,12 +440,6 @@ export function Disclosure({
   );
 }
 
-/** What the chat views say with no chat to show. */
-export const NO_CHAT_SELECTED = "No chat selected.";
-
-/** What the chat views say of a chat whose first message is not sent yet. */
-export const CHAT_NOT_STARTED = "This chat has not started yet.";
-
 /**
  * A destructive step's inline second question: what happens, the step, and a
  * way back. With `focusCancel` the way back takes focus as it opens, so a

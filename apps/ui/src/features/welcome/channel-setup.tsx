@@ -16,7 +16,7 @@ import { ChannelNotRunning, notRunningChannel } from "../settings/ChannelNotRunn
 import { PairingLinkBox, claimedSenderLabel, shownPairingCode } from "../../ui/QrCode.js";
 import { Button } from "../../ui/Button.js";
 import { Field } from "../../ui/Field.js";
-import { withParts } from "./WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /**
  * Adding a channel set up with keys, and pairing its operator: the pieces Welcome's channels step and Connected

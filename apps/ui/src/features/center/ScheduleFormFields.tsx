@@ -14,7 +14,7 @@ import { Select } from "../../ui/Select.js";
 import { Button } from "../../ui/Button.js";
 import { useT } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /** The form's words for each pre-check, and what its field asks for. */
 const PRECHECK_LABELS: Readonly<Record<SchedulePrecheckKind, { readonly label: UiKey; readonly target: string }>> = {

@@ -15,7 +15,7 @@ import { loadFlow, loadStatus, ONBOARDING_CHANGED_EVENT } from "../welcome/onboa
 import { Button } from "../../ui/Button.js";
 import { lazyModule } from "../../ui/lazy-module.js";
 import { ViewBoundary } from "../../ui/ViewBoundary.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /** The connect sheet (sign-in and its steps) is its own chunk, fetched the first time a card opens it. */
 const connectSheet = lazyModule(() => import("./ConnectSheet.js").then((module) => module.ConnectSheet));

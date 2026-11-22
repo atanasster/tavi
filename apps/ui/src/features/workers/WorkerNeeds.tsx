@@ -7,7 +7,7 @@ import { Icon } from "../../ui/Icon.js";
 import { QuestionCard, answerLabels, questionNeed, sentAnswer, type QuestionNeed } from "../needs/NeedCard.js";
 import { RECONNECT_TO_ANSWER_KEY } from "../chat/store/runs.js";
 import { translateNow, useT } from "../../lib/i18n.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import type { WorkerNeeds } from "../chat/store/types.js";
 import { openWorkerQuestions } from "../chat/store/workers.js";
 import { HandoffCard } from "../takeover/HandoffCard.js";

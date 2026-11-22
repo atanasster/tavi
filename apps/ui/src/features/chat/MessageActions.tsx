@@ -10,9 +10,6 @@ const COPY_KEYS = { prompt: "chat.actions.copyPrompt", response: "chat.actions.c
 
 let activeSpeech: SpeechSynthesisUtterance | undefined;
 
-/** Rewind never touches files, and its confirmation says so (`chat.rewind.confirm`): its English words. */
-export const REWIND_FOLDER_NOTE = "Files in the chat's folder were not changed.";
-
 /** Rewind offered on a person's message: how many later turns go with it, and the call that takes them back (answers why it did not). */
 export interface RewindOffer {
   readonly later: number;

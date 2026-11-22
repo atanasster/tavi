@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
 
-import { withParts } from "../../../src/features/welcome/WelcomeStepParts.js";
-import { translateNow } from "../../../src/lib/i18n.js";
-import { mount, unmountAll } from "../../support/dom.js";
+import { withParts } from "../../src/ui/with-parts.js";
+import { translateNow } from "../../src/lib/i18n.js";
+import { mount, unmountAll } from "../support/dom.js";
 
 /**
  * `withParts`: a translated sentence whose `{name}`s are elements, each put

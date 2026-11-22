@@ -3,7 +3,7 @@ import type { AgentTreeNode, AgentTreeResult } from "@tavi/contracts";
 import { errorMessage, nowTimestamp } from "@tavi/contracts/util";
 import { translateNow, useT } from "../../lib/i18n.js";
 import { listed } from "../../lib/format.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import { instantLabel, todayIn, formatElapsed } from "../../lib/time.js";
 import { useSerialRead } from "../../hooks/use-loaded.js";
 import { usePoll } from "../../hooks/use-poll.js";

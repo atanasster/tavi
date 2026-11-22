@@ -39,9 +39,8 @@ export function cancelledWords(message: string): string {
   return reason === "" ? translateNow("chat.store.cancelled") : translateNow("chat.store.cancelledWhy", { reason });
 }
 
-/** Why an answer cannot be sent while the owner is out of reach: its key, and its English words for views that show them as they are. */
+/** Why an answer cannot be sent while the owner is out of reach: its key. */
 export const RECONNECT_TO_ANSWER_KEY = "chat.question.reconnect";
-export const RECONNECT_TO_ANSWER = "Reconnect to the owner to answer.";
 
 /**
  * Why a run's question cannot be answered yet, from any surface that shows it

@@ -3,7 +3,7 @@ import { MODEL_PROVIDER_PRESETS, type ModelProviderPreset } from "@tavi/contract
 
 import { hostOf } from "../../lib/format.js";
 import { useT } from "../../lib/i18n.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import { addModelConnection, connectionProblem, isKeyProblem, modelWrite, rebindModel } from "./model-setup.js";
 import { SETTINGS_BOUNDS } from "./common.js";
 import type { ConnectionSummary } from "./models-api.js";

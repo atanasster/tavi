@@ -36,7 +36,7 @@ import { spoken } from "./store/said.js";
 import { Failure, Notice } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
 import { Command } from "../../ui/Command.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /**
  * Whether a run is a turn of a chat that never ends — the person's Home, or a

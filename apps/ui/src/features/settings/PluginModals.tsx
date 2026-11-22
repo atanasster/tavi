@@ -9,7 +9,7 @@ import {
 } from "@tavi/contracts";
 import { useT } from "../../lib/i18n.js";
 import type { Outcome } from "../../lib/ipc.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import { Notice } from "../../ui/Parts.js";
 import { ProviderInstancesEditor } from "./ProviderInstancesEditor.js";
 import { Modal } from "../../ui/Modal.js";

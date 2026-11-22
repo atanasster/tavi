@@ -11,7 +11,7 @@ import { AppLink } from "../shell/AppLink.js";
 import { reminderPath, taskPath } from "../shell/route.js";
 import { eventLine, whenText } from "./reminder-model.js";
 import { chatTitle } from "./reminders-api.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import { useWorkspace } from "../shell/Workspace.js";
 
 /** A chat's name (`chatTitle`, read once per page), or undefined until it answers, when there is none, or without a chat. */

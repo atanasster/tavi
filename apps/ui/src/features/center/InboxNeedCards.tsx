@@ -5,7 +5,7 @@ import { AppLink } from "../shell/AppLink.js";
 import { taskPath } from "../shell/route.js";
 import { Button } from "../../ui/Button.js";
 import { useT } from "../../lib/i18n.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /**
  * A question waiting on the reader, answered right here: the same card

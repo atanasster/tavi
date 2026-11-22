@@ -17,7 +17,7 @@ import { Field } from "../../ui/Field.js";
 import { WebSearchProviderFields } from "./WebSearchProviderFields.js";
 import { useFormSubmit } from "../../hooks/use-action.js";
 import { Notice } from "../../ui/Parts.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /**
  * Meggy's `WebSearchFormModal`, ported to tavi's providers:

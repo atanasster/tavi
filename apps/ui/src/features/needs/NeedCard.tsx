@@ -15,7 +15,7 @@ import { instantLabel, localDate, localTime, longDay, todayIn, durationText, whe
 import { usePoll } from "../../hooks/use-poll.js";
 import { translateNow, useT } from "../../lib/i18n.js";
 import { listed } from "../../lib/format.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 import { said, spoken, type Said } from "../chat/store/said.js";
 import type { UiKey } from "../../locales/en.js";
 import { Icon } from "../../ui/Icon.js";

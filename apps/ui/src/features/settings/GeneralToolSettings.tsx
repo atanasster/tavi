@@ -27,7 +27,7 @@ import { Command } from "../../ui/Command.js";
 import { mapOutcome } from "../../lib/ipc.js";
 import { credentialActions } from "./credentials-api.js";
 import { KeyField } from "./PasswordInput.js";
-import { withParts } from "../welcome/WelcomeStepParts.js";
+import { withParts } from "../../ui/with-parts.js";
 
 /**
  * The video tools: on by default, with the
