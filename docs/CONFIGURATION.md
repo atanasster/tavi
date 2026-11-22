@@ -453,7 +453,7 @@ tavi config unset <key>         # back to the default
 | :--- | :--- | :--- | :--- |
 | `workspace.timezone` | IANA zone, e.g. `Europe/Berlin` | the owner host's zone | The zone the agent states the local time in, and that "today" and relative times resolve in. |
 | `operator.name` | one line, up to 80 characters | unset | What you are called; onboarding's about step sets it. |
-| `workspace.locale` | `en`, `bg` | `en` | The language Tavi speaks to you in. Chat replies, channel messages and the screens follow it as each is translated; CLI help stays in English. |
+| `workspace.locale` | `en`, `bg` | `en` | The language Tavi speaks to you in. Chat replies, channel messages and the screens follow it as each is translated; CLI help stays in English. See [LANGUAGES.md](LANGUAGES.md). |
 | `activity.summaries` | `on`, `off` | `on` | Whether a finished task gets a generated title and one-line summary. |
 | `activity.summaryModel` | `<connection>/<model>` | the workspace's `fast` role when bound, else the task's own model | The model that writes summaries; never used for a task on a local connection when it is remote. |
 | `chat.home` | `on`, `off` | `on` | Whether the workspace has a Home chat that `tavi chat` and the canvas open on. Off, `/new` starts separate chats. |

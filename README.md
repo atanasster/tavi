@@ -257,6 +257,7 @@ Every guide, grouped by what you came to do, is in
 | [CONCEPTS](docs/CONCEPTS.md) | The owner, chats, workspaces, memory, tools and the glossary |
 | [WEB-UI](docs/WEB-UI.md) / [TERMINAL-UI](docs/TERMINAL-UI.md) | The web canvas and the terminal chat |
 | [CHANNELS](docs/CHANNELS.md) | Telegram, Gmail, Mailgun email and Discord |
+| [LANGUAGES](docs/LANGUAGES.md) | Tavi in English or Bulgarian, and adding a language |
 | [AUTOMATION](docs/AUTOMATION.md) | Schedules, reminders, to-dos, routines and agents |
 | [SECURITY-MODEL](docs/SECURITY-MODEL.md) / [PRIVACY](docs/PRIVACY.md) | How tool calls are decided, and what leaves your machine |
 | [PLUGINS](docs/PLUGINS.md) | Extending Tavi with tools, channels, providers and pages |
