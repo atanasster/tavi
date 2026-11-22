@@ -22,6 +22,8 @@ import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { ChannelNotRunning, notRunningChannel } from "./ChannelNotRunning.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /** How long the pairing panel waits between asking whether the code has been sent. */
 const PAIRING_POLL_MS = 2000;
@@ -43,6 +45,7 @@ function PairingPanel({
   onDone: (note: string | undefined) => void;
   onRetry: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [status, setStatus] = useState<ChannelsPairingAnswer>({ state: "waiting" });
   const [busy, setBusy] = useState(false);
@@ -97,9 +100,7 @@ function PairingPanel({
       setFailure(answer.message);
       return;
     }
-    const allowed = pairing.me
-      ? "You're paired: your messages on this channel now reach Tavi."
-      : `${who} is paired: their messages on this channel now reach Tavi.`;
+    const allowed = pairing.me ? translateNow("settings.people.pairedMe") : translateNow("settings.people.paired", { who });
     onDone(action === "confirm-pair" ? allowed : undefined);
   };
   const code = shownPairingCode(pairing.code);
@@ -109,15 +110,17 @@ function PairingPanel({
     body = (
       <>
         <p ref={question} tabIndex={-1}>
-          A message from <strong>{sender}</strong> on {channel} carried the code. {pairing.me ? "Is this you?" : `Allow them as ${who}?`}
+          {withParts(t(pairing.me ? "settings.people.claimedMe" : "settings.people.claimed", { channel, who }), {
+            sender: <strong>{sender}</strong>,
+          })}
         </p>
         {/* Pairing yourself is asked as Welcome asks it (QA 1832). */}
         <div className="actions">
           <Button variant="ghost" disabled={busy} onClick={() => void finish("cancel-pair")}>
-            {pairing.me ? "Not me" : "Not them"}
+            {pairing.me ? t("settings.people.notMe") : t("settings.people.notThem")}
           </Button>
           <Button variant="primary" disabled={busy} onClick={() => void finish("confirm-pair")}>
-            {pairing.me ? "Yes, it's me" : "Allow them"}
+            {pairing.me ? t("settings.people.yesMe") : t("settings.people.allowThem")}
           </Button>
         </div>
       </>
@@ -126,28 +129,30 @@ function PairingPanel({
     body = (
       <>
         <p>
-          {pairing.me ? "Send this code to the agent on " : `Ask ${who} to send this code to the agent on `}
-          {channel}
-          {pairing.me ? " from your own account" : ""}: <code data-pairing-code="">{code}</code> — valid until{" "}
-          {when(pairing.expiresAt, undefined)}, once.
+          {withParts(
+            t(pairing.me ? "settings.people.sendCodeMe" : "settings.people.sendCode", {
+              who,
+              channel,
+              until: when(pairing.expiresAt, undefined),
+            }),
+            { code: <code data-pairing-code="">{code}</code> },
+          )}
         </p>
         <PairingLinkBox pairing={pairing} channelLabel={channel} />
         {/* Only what changes is announced: the check's time is shown beside it, outside the live region. */}
         <p className="settings-description" role="status">
-          {checkedAt === undefined ? "Checking for the code…" : "No message with the code yet."}
+          {checkedAt === undefined ? t("settings.people.checking") : t("settings.people.noCodeYet")}
         </p>
         <p className="settings-description">
-          {checkedAt === undefined ? null : `Last checked ${checkedAt}.`}
-          {linked
-            ? ` Someone already allowed on ${channel} is already linked, so their message is not read as a code: pair a different account.`
-            : null}
+          {checkedAt === undefined ? null : t("settings.people.lastChecked", { at: checkedAt })}
+          {linked ? ` ${t("settings.people.linked", { channel })}` : null}
         </p>
         <div className="actions">
           <Button variant="ghost" disabled={busy} onClick={() => void finish("cancel-pair")}>
-            Cancel
+            {t("ui.confirm.cancel")}
           </Button>
           <Button variant="ghost" disabled={busy} onClick={() => void check()}>
-            Check now
+            {t("settings.people.checkNow")}
           </Button>
         </div>
       </>
@@ -155,22 +160,26 @@ function PairingPanel({
   } else {
     body = (
       <>
-        <p>The code {status.state === "expired" ? "expired before anyone sent it" : "is no longer waiting"}. Pair again for a new one.</p>
+        <p>{status.state === "expired" ? t("settings.people.codeExpired") : t("settings.people.codeGone")}</p>
         <div className="actions">
           <Button variant="ghost" disabled={busy} onClick={() => void finish("cancel-pair")}>
-            Close
+            {t("settings.action.close")}
           </Button>
           <Button variant="primary" disabled={busy} onClick={onRetry}>
-            Get a new code
+            {t("settings.people.newCode")}
           </Button>
         </div>
       </>
     );
   }
   return (
-    <section className="settings-panel" aria-label="Pairing" ref={panel}>
+    <section className="settings-panel" aria-label={t("settings.people.pairing")} ref={panel}>
       <h2 className="settings-section-title">
-        {pairing.me ? `Pair yourself${pairing.name === undefined ? "" : ` (${pairing.name})`}` : `Pair ${who}`}
+        {pairing.me
+          ? pairing.name === undefined
+            ? t("settings.people.pairYourself")
+            : t("settings.people.pairYourselfAs", { name: pairing.name })
+          : t("settings.people.pairWho", { who })}
       </h2>
       {body}
       <Failure message={failure} />
@@ -209,6 +218,7 @@ export function PersonFields({
   onChange: (value: PersonInput) => void;
   operator?: string | undefined;
 }) {
+  const t = useT();
   // Your own sender is you, under this workspace's principal: its chats are yours in Tavi and its approvals are decided where it asks.
   const me = operator !== undefined && value.me === true;
   return (
@@ -217,70 +227,60 @@ export function PersonFields({
         <label>
           <input
             type="checkbox"
-            aria-label="This is me"
+            aria-label={t("settings.people.thisIsMe")}
             checked={me}
             onChange={(event) => onChange({ ...value, me: event.target.checked, principal: event.target.checked ? operator : "" })}
           />{" "}
-          This is me
-          <span className="settings-description">
-            Your own account on this channel: its chats join yours in Tavi, and you approve its actions right in the chat.
-          </span>
+          {t("settings.people.thisIsMe")}
+          <span className="settings-description">{t("settings.people.thisIsMeHelp")}</span>
         </label>
       )}
       {me ? null : (
         <label>
-          Person ID
+          {t("settings.people.personId")}
           <input
-            aria-label="Person ID"
+            aria-label={t("settings.people.personId")}
             required
             maxLength={128}
             value={value.principal}
-            placeholder="e.g. sam"
+            placeholder={t("settings.people.personIdPlaceholder")}
             onChange={(event) => onChange({ ...value, principal: event.target.value })}
           />
-          <span className="settings-description">
-            Someone else gets an ID of their own: they use this workspace's tools and models and keep their own memory, and only you decide
-            their approvals.
-          </span>
+          <span className="settings-description">{t("settings.people.personIdHelp")}</span>
         </label>
       )}
       <label>
-        Display name (optional)
+        {t("settings.people.displayNameOptional")}
         <input
-          aria-label="Display name"
+          aria-label={t("settings.people.displayName")}
           maxLength={MESSAGING_DISPLAY_NAME_MAX}
           value={value.name}
-          placeholder="e.g. Sam"
+          placeholder={t("settings.people.displayNamePlaceholder")}
           onChange={(event) => onChange({ ...value, name: event.target.value })}
         />
         {/* Said under the field, as the fields above say theirs: a phone's field cut this short as a placeholder. */}
-        <span className="settings-description">Shown in Center; the person ID otherwise.</span>
+        <span className="settings-description">{t("settings.people.displayNameHelp")}</span>
       </label>
       {descriptor?.sender.authentication === "per-message" ? (
         <label>
           <input
             type="checkbox"
-            aria-label="Trust this person's unverified messages"
+            aria-label={t("settings.people.trust")}
             checked={value.trustUnverified}
             onChange={(event) => onChange({ ...value, trustUnverified: event.target.checked })}
           />{" "}
-          Trust this person's unverified messages
-          <span className="settings-description">
-            Only for a sender whose messages fail the channel's authenticity checks (for email, SPF/DKIM). Anyone can then send a message
-            that claims to be from this sender and start a conversation as this person. An unverified message never decides an approval.
-          </span>
+          {t("settings.people.trust")}
+          <span className="settings-description">{t("settings.people.trustHelp")}</span>
         </label>
       ) : null}
     </>
   );
 }
 export function People({ data, reload }: { data: Loaded; reload: () => void }) {
+  const t = useT();
   return (
     <>
-      <Notice>
-        Only explicitly allowed identities can start conversations. Give the same person the same person ID across channels to share their
-        identity and private memory. Different people need different IDs. This does not grant settings access.
-      </Notice>
+      <Notice>{t("settings.people.intro")}</Notice>
       <PeopleEditor data={data} reload={reload} />
     </>
   );
@@ -298,6 +298,7 @@ export function PeopleEditor({
   /** A dialog's way out: called with the note once a person is allowed or paired, so it can close and leave the note on its page. */
   onAllowed?: (note: string) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const connections = data.list.connections;
   const [picked, setConnectionId] = useState(connections[0]?.connectionId ?? "");
@@ -364,7 +365,7 @@ export function PeopleEditor({
       if (!answer.ok) return answer;
       setSender("");
       setPerson(NO_PERSON);
-      const allowed = "Person allowed: their messages on this channel now reach Tavi.";
+      const allowed = t("settings.people.allowed");
       onAllowed?.(allowed);
       return { ok: true, value: allowed };
     });
@@ -379,11 +380,7 @@ export function PeopleEditor({
         <ActionNote tone={tone} note={note || undefined} className="" />
       )}
       {!shown.length ? (
-        <Empty>
-          {only === undefined
-            ? "No people are allowed in this workspace yet."
-            : `No one is allowed on ${only.label} yet: it answers no one until you allow a person.`}
-        </Empty>
+        <Empty>{only === undefined ? t("settings.people.empty") : t("settings.people.emptyOn", { label: only.label })}</Empty>
       ) : (
         <ul className="rows">
           {shown.map((person) => (
@@ -393,12 +390,12 @@ export function PeopleEditor({
                 {person.principalId === data.operator ? (
                   <>
                     {" "}
-                    <span className="badge">you</span>
+                    <span className="badge">{t("settings.people.you")}</span>
                   </>
                 ) : null}
                 <p className="settings-description">
                   {person.externalSenderId} · {connectionLabel(person.connectionId)}
-                  {person.trustUnverified === undefined ? "" : ` · trusts unverified messages (set by ${person.trustUnverified.setBy})`}
+                  {person.trustUnverified === undefined ? "" : ` · ${t("settings.people.trusts", { setBy: person.trustUnverified.setBy })}`}
                 </p>
               </div>
               <div className="actions">
@@ -414,15 +411,15 @@ export function PeopleEditor({
                           principalId: person.principalId,
                           trustUnverified: false,
                         });
-                        return mapOutcome(answer, () => "Their unverified messages are held again.");
+                        return mapOutcome(answer, () => t("settings.people.untrusted"));
                       })
                     }
                   >
-                    Stop trusting unverified
+                    {t("settings.people.stopTrusting")}
                   </RowAction>
                 )}
                 <RowAction tone="danger" onClick={() => setRemove(person)}>
-                  Revoke access
+                  {t("settings.people.revoke")}
                 </RowAction>
               </div>
             </li>
@@ -430,7 +427,7 @@ export function PeopleEditor({
         </ul>
       )}
       {!connections.length ? (
-        <Empty>Connect a channel in Channels before allowing people on it.</Empty>
+        <Empty>{t("settings.people.noConnections")}</Empty>
       ) : (
         <form
           className="settings-panel"
@@ -439,13 +436,13 @@ export function PeopleEditor({
             void allow();
           }}
         >
-          <h2 className="settings-section-title">Allow a person</h2>
+          <h2 className="settings-section-title">{t("settings.people.allowTitle")}</h2>
           <BusyFieldset busy={busy !== undefined} className="settings-fields">
             {only !== undefined ? null : (
               <label>
-                Connection
+                {t("settings.people.connection")}
                 <Select
-                  aria-label="Person connection"
+                  aria-label={t("settings.people.connectionLabel")}
                   value={connectionId}
                   onChange={(event) => {
                     setConnectionId(event.target.value);
@@ -462,9 +459,9 @@ export function PeopleEditor({
               </label>
             )}
             <label>
-              {descriptor?.sender.label ?? "Sender"}
+              {descriptor?.sender.label ?? t("settings.people.sender")}
               <input
-                aria-label={descriptor?.sender.label ?? "Sender"}
+                aria-label={descriptor?.sender.label ?? t("settings.people.sender")}
                 required
                 maxLength={320}
                 value={sender}
@@ -479,10 +476,10 @@ export function PeopleEditor({
                 disabled={person.principal.trim() === "" || pairing !== undefined || pairingBusy}
                 onClick={() => void pair()}
               >
-                Pair with a code
+                {t("settings.people.pairWithCode")}
               </Button>
               <Button variant="primary" type="submit">
-                {busy === "allow" ? "Saving…" : "Allow person"}
+                {busy === "allow" ? t("ui.parts.saving") : t("settings.testSend.allow")}
               </Button>
             </div>
             {notRunning === undefined ? null : (
@@ -491,10 +488,9 @@ export function PeopleEditor({
               </Failure>
             )}
             <span className="settings-description">
-              Don't know what to enter as {descriptor?.sender.label ?? "Sender"}? Pair with a code: they send it to the agent on this
-              channel, and you confirm it was them.
+              {t("settings.people.pairHint", { sender: descriptor?.sender.label ?? t("settings.people.sender") })}
               {/* The button waits on whom the code is for (Mac mini tests): say so rather than leave it grey. */}
-              {person.principal.trim() === "" ? " Tick This is me, or fill in Person ID, to get a code." : null}
+              {person.principal.trim() === "" ? ` ${t("settings.people.pairNeedsWho")}` : null}
             </span>
           </BusyFieldset>
         </form>
@@ -520,9 +516,13 @@ export function PeopleEditor({
       )}
       {remove ? (
         <Confirm
-          title="Revoke access?"
-          message={`Block new incoming messages from ${remove.displayName ?? remove.principalId} (${remove.externalSenderId}) on ${connectionLabel(remove.connectionId)}. Turns already running are not cancelled.`}
-          action="Revoke access"
+          title={t("settings.people.revokeTitle")}
+          message={t("settings.people.revokeMessage", {
+            name: remove.displayName ?? remove.principalId,
+            sender: remove.externalSenderId,
+            connection: connectionLabel(remove.connectionId),
+          })}
+          action={t("settings.people.revoke")}
           onClose={() => setRemove(undefined)}
           onConfirm={() =>
             run("revoke", async () => {
@@ -534,7 +534,7 @@ export function PeopleEditor({
               });
               if (!answer.ok) return answer;
               setRemove(undefined);
-              return { ok: true, value: "Access revoked for new incoming messages." };
+              return { ok: true, value: t("settings.people.revoked") };
             })
           }
         />

@@ -1,8 +1,9 @@
 import { RHUMB_CREDENTIAL_REF } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 import { useState } from "react";
 
 import { hostOf } from "../../lib/format.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import { modelWrite } from "./model-setup.js";
 import {
   describeTarget,
@@ -46,12 +47,12 @@ import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 
 /** What each role is for, in the words the table shows under its name. */
-const ROLE_PURPOSE: Readonly<Record<ModelRole, string>> = {
-  main: "Chat and agent work",
-  extraction: "Pulls facts and structure out of text",
-  compaction: "Summarises long conversations",
-  fast: "Quick, cheaper work that does not need the main model",
-  embedding: "Turns text into vectors for search",
+const ROLE_PURPOSE: Readonly<Record<ModelRole, UiKey>> = {
+  main: "settings.modelsPage.purpose.main",
+  extraction: "settings.modelsPage.purpose.extraction",
+  compaction: "settings.modelsPage.purpose.compaction",
+  fast: "settings.modelsPage.purpose.fast",
+  embedding: "settings.modelsPage.purpose.embedding",
 };
 
 const roleName = (role: ModelRole): string => role.replaceAll("_", " ");
@@ -67,6 +68,7 @@ type Picking = { readonly slot: "default"; readonly connectionId?: string } | { 
  * the workspace has none.
  */
 export function ModelBrowser() {
+  const t = useT();
   const { workspaceId } = useWorkspace();
   const { client } = useWorkspace();
   const { data, error, loading, reload } = useLoaded(() => loadModels(client, workspaceId, { replacements: true }));
@@ -101,8 +103,14 @@ export function ModelBrowser() {
         // Nothing to move: said on the page, with no dialog that could only cancel.
         if (uses.length === 0)
           return unread.length === 0
-            ? { ok: true, value: `${from.connectionId}/${from.model} is not used anywhere now: nothing to replace.` }
-            : { ok: false, message: `${from.connectionId}/${from.model}'s uses could not be read: ${unread.join("; ")}` };
+            ? { ok: true, value: translateNow("settings.modelsPage.notUsed", { model: `${from.connectionId}/${from.model}` }) }
+            : {
+                ok: false,
+                message: translateNow("settings.modelsPage.usesUnread", {
+                  model: `${from.connectionId}/${from.model}`,
+                  sources: unread.join("; "),
+                }),
+              };
         setReplacing({ from, to, uses, unread });
         return { ok: true, value: undefined };
       },
@@ -131,7 +139,7 @@ export function ModelBrowser() {
   const act = (key: string, work: () => Promise<Outcome<string | undefined>>): void => void run(key, work);
   /** A dialog's write went through: say so on the page and read the models again. */
   const settle = (message: string | undefined): void => {
-    say(message ?? "Saved.");
+    say(message ?? translateNow("settings.setup.saved"));
     reload();
   };
   const saveThen = async (work: Promise<Outcome<string | undefined>>): Promise<Outcome<string | undefined>> => {
@@ -143,14 +151,10 @@ export function ModelBrowser() {
   const hasConnections = data !== undefined && data.connections.length > 0;
   return (
     <section className="settings models-page">
-      <PageHead
-        className="settings-head"
-        title="Models"
-        description="Choose which model each part of Tavi uses, and connect the providers they come from."
-      >
+      <PageHead className="settings-head" title={t("settings.modelsPage.title")} description={t("settings.modelsPage.description")}>
         {hasConnections ? (
           <Button variant="primary" disabled={busy !== undefined} onClick={() => setAdding(true)}>
-            Add connection
+            {t("settings.modelsPage.addConnection")}
           </Button>
         ) : null}
       </PageHead>
@@ -158,18 +162,16 @@ export function ModelBrowser() {
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         {(data?.failures ?? []).map((failure) => (
           <Failure key={failure.connectionId} alert={false}>
-            {failure.connectionId}'s models could not be read: {failure.message}
+            {t("settings.modelsPage.failure", { connection: failure.connectionId, message: failure.message })}
           </Failure>
         ))}
       </LoadState>
 
       {data !== undefined && !hasConnections ? (
-        <EmptyState title="Connect a model provider">
-          <p>
-            Tavi needs at least one model to chat and run tasks. Add OpenRouter, OpenAI, a local server, or any OpenAI-compatible endpoint.
-          </p>
+        <EmptyState title={t("settings.modelsPage.emptyTitle")}>
+          <p>{t("settings.modelsPage.emptyBody")}</p>
           <Button variant="primary" onClick={() => setAdding(true)}>
-            Add connection
+            {t("settings.modelsPage.addConnection")}
           </Button>
         </EmptyState>
       ) : null}
@@ -184,7 +186,7 @@ export function ModelBrowser() {
             onReset={(role) => act(`clear-role:${role}`, () => modelWrite(client, { action: "clear-role", workspaceId, role }))}
             onClearDefault={() => act("clear-default", () => modelWrite(client, { action: "clear-default", workspaceId }))}
           />
-          <Card title="Connections" titleId="connections-title" level={2} bare>
+          <Card title={t("settings.modelsPage.connections")} titleId="connections-title" level={2} bare>
             <ul className="connection-list">
               {data.connections.map((connection) => (
                 <ConnectionRow
@@ -225,9 +227,9 @@ export function ModelBrowser() {
 
       {replacing !== undefined ? (
         <Confirm
-          title={`Replace ${replacing.from.model} with ${replacing.to.model}?`}
-          message={`Every place below moves to ${replacing.to.connectionId}/${replacing.to.model}, chats and routines included; a routine runs the new model once its quality check passes. Nothing else changes.`}
-          action="Replace"
+          title={t("settings.modelsPage.replaceTitle", { from: replacing.from.model, to: replacing.to.model })}
+          message={t("settings.modelsPage.replaceMessage", { to: `${replacing.to.connectionId}/${replacing.to.model}` })}
+          action={t("settings.credentials.replace")}
           onClose={() => setReplacing(undefined)}
           onConfirm={async () => {
             const { from, to } = replacing;
@@ -239,15 +241,17 @@ export function ModelBrowser() {
               <li key={use}>{use}</li>
             ))}
           </ul>
-          {replacing.unread.length === 0 ? null : <Notice>Not read, so not replaced there: {replacing.unread.join("; ")}</Notice>}
+          {replacing.unread.length === 0 ? null : (
+            <Notice>{t("settings.modelsPage.notRead", { sources: replacing.unread.join("; ") })}</Notice>
+          )}
         </Confirm>
       ) : null}
 
       {disclosing !== undefined ? (
         <Confirm
-          title={`Send whole videos to ${disclosing.model}?`}
+          title={t("settings.modelsPage.videoTitle", { model: disclosing.model })}
           message={disclosing.disclosure}
-          action="Turn on"
+          action={t("settings.modelsPage.turnOn")}
           onClose={() => setDisclosing(undefined)}
           onConfirm={async () => {
             const { connectionId, model } = disclosing;
@@ -327,11 +331,12 @@ function RolePicker({
   readonly onSave: (primary: TargetRef, fallback: readonly TargetRef[]) => Promise<Outcome<string | undefined>>;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   if (picking.slot === "default") {
     return (
       <TargetPicker
-        title="Default model"
-        intro="Every role without a model of its own uses this one."
+        title={t("settings.modelsPage.defaultTitle")}
+        intro={t("settings.modelsPage.defaultIntro")}
         data={data}
         loading={loading}
         initial={{ primary: data.roles.workspaceDefault?.target, fallback: [] }}
@@ -346,8 +351,8 @@ function RolePicker({
   const binding = data.roles.roles?.find((row) => row.role === picking.role);
   return (
     <TargetPicker
-      title={`Model for ${roleName(picking.role)}`}
-      intro={`${ROLE_PURPOSE[picking.role]}. Saving gives this role its own model instead of the default.`}
+      title={t("settings.modelsPage.roleTitle", { role: roleName(picking.role) })}
+      intro={t("settings.modelsPage.roleIntro", { purpose: t(ROLE_PURPOSE[picking.role]) })}
       data={data}
       loading={loading}
       initial={{ primary: binding?.target, fallback: binding?.fallback ?? [] }}
@@ -373,41 +378,46 @@ function RolesTable({
   readonly onReset: (role: ModelRole) => void;
   readonly onClearDefault: () => void;
 }) {
+  const t = useT();
   const fallback = data.roles.workspaceDefault?.target;
   const rows = roleRows(data.roles);
   // An unbound embedding role is a choice, not a gap: memory search then matches words alone.
   const unset = rows.filter((row) => row.source === "unset" && row.role !== "embedding").length;
   return (
     <Card
-      title="Roles"
+      title={t("settings.modelsPage.roles")}
       titleId="roles-title"
       level={2}
-      badge={unset > 0 ? <span className="badge badge-warning">{unset} not set</span> : null}
+      badge={unset > 0 ? <span className="badge badge-warning">{t("settings.modelsPage.unsetCount", { count: unset })}</span> : null}
       bare
     >
       <ul className="role-list">
         <li className="role-row role-row-workspace">
           <div className="role-label">
-            <span className="role-name">Default</span>
-            <span className="role-purpose meta-sm">Used by every role without its own model, except Embedding</span>
+            <span className="role-name">{t("settings.modelsPage.default")}</span>
+            <span className="role-purpose meta-sm">{t("settings.modelsPage.defaultPurpose")}</span>
           </div>
           <div className="role-target">
-            {fallback === undefined ? <span className="badge badge-warning">Not set</span> : <TargetName target={fallback} data={data} />}
+            {fallback === undefined ? (
+              <span className="badge badge-warning">{t("settings.modelsPage.notSet")}</span>
+            ) : (
+              <TargetName target={fallback} data={data} />
+            )}
           </div>
           <div className="role-actions">
             {fallback !== undefined ? (
-              <RowAction disabled={busy !== undefined} aria-label="Clear the default model" onClick={onClearDefault}>
-                Clear
+              <RowAction disabled={busy !== undefined} aria-label={t("settings.modelsPage.clearDefault")} onClick={onClearDefault}>
+                {t("settings.modelsPage.clear")}
               </RowAction>
             ) : null}
             <RowAction
               // No default yet: setting one is what the row waits on.
               tone={fallback === undefined ? "awaited" : "plain"}
               disabled={busy !== undefined}
-              aria-label="Set the default model"
+              aria-label={t("settings.modelsPage.setDefault")}
               onClick={() => onPick({ slot: "default" })}
             >
-              Set
+              {t("settings.modelsPage.set")}
             </RowAction>
           </div>
         </li>
@@ -439,26 +449,27 @@ function RoleLine({
   readonly onPick: () => void;
   readonly onReset: () => void;
 }) {
+  const t = useT();
   const name = roleName(row.role);
   return (
     <li className={`role-row role-source-${row.source}`}>
       <div className="role-label">
         <span className="role-name">{name}</span>
-        <span className="role-purpose meta-sm">{ROLE_PURPOSE[row.role]}</span>
+        <span className="role-purpose meta-sm">{t(ROLE_PURPOSE[row.role])}</span>
       </div>
       <div className="role-target">
         {row.source === "unset" && row.role === "embedding" ? (
-          <span className="muted">Not set · memory search matches words only</span>
+          <span className="muted">{t("settings.modelsPage.embeddingUnset")}</span>
         ) : row.source === "unset" || row.target === undefined ? (
-          <span className="badge badge-warning">Not set</span>
+          <span className="badge badge-warning">{t("settings.modelsPage.notSet")}</span>
         ) : row.source === "default" ? (
-          <span className="muted">Uses default · {describeTarget(row.target, data).name}</span>
+          <span className="muted">{t("settings.modelsPage.usesDefault", { name: describeTarget(row.target, data).name })}</span>
         ) : (
           <>
             <TargetName target={row.target} data={data} />
             {row.fallback.length > 0 ? (
               <span className="role-fallbacks meta-sm">
-                then{" "}
+                {t("settings.modelsPage.then")}{" "}
                 {row.fallback.map((entry, index) => (
                   <span key={`${entry.connectionId}/${entry.model ?? ""}`}>
                     {index > 0 ? ", " : ""}
@@ -477,14 +488,18 @@ function RoleLine({
             disabled={busy !== undefined}
             // Embedding never falls back to the default: resetting it unbinds its model.
             // Said as what it does: back to the default, or, for Embedding, no model at all.
-            aria-label={row.role === "embedding" ? `Clear: unbind the model for ${name}` : `Use default for ${name}`}
+            aria-label={
+              row.role === "embedding"
+                ? t("settings.modelsPage.unbindLabel", { role: name })
+                : t("settings.modelsPage.useDefaultLabel", { role: name })
+            }
             onClick={onReset}
           >
-            {row.role === "embedding" ? "Clear" : "Use default"}
+            {row.role === "embedding" ? t("settings.modelsPage.clear") : t("settings.modelsPage.useDefault")}
           </RowAction>
         ) : null}
-        <RowAction disabled={busy !== undefined} aria-label={`Set the model for ${name}`} onClick={onPick}>
-          Set
+        <RowAction disabled={busy !== undefined} aria-label={t("settings.modelsPage.setRoleLabel", { role: name })} onClick={onPick}>
+          {t("settings.modelsPage.set")}
         </RowAction>
       </div>
     </li>
@@ -510,6 +525,7 @@ function ConnectionRow({
   readonly onVideo: (model: string, on: boolean) => void;
   readonly onProbeVideo: (model: string) => void;
 }) {
+  const t = useT();
   const models = data.models.filter((model) => model.connectionId === connection.connectionId);
   const failed = data.failures.some((failure) => failure.connectionId === connection.connectionId);
   const stale = models.some((model) => model.stale);
@@ -525,23 +541,35 @@ function ConnectionRow({
       <div className="connection-info">
         <span className="connection-title">
           {connection.label}
-          {connection.localOnly ? <span className="badge">local</span> : null}
-          {connection.providerBinding !== undefined ? <span className="badge">plugin</span> : null}
+          {connection.localOnly ? <span className="badge">{t("settings.badge.local")}</span> : null}
+          {connection.providerBinding !== undefined ? <span className="badge">{t("settings.badge.plugin")}</span> : null}
         </span>
         <span className="muted">
           {hostOf(connection.baseUrl)} ·{" "}
-          {failed ? "models could not be read" : models.length === 0 ? "no models discovered" : plural(models.length, "model")}
-          {stale ? " · list is stale" : ""}
-          {warning > 0 ? ` · ${plural(warning, "model")} retired, retiring or redirected` : ""}
+          {failed
+            ? t("settings.modelsPage.unreadable")
+            : models.length === 0
+              ? t("settings.modelsPage.noneDiscovered")
+              : t("settings.modelsPage.modelCount", { count: models.length })}
+          {stale ? ` · ${t("settings.modelsPage.stale")}` : ""}
+          {warning > 0 ? ` · ${t("settings.modelsPage.warningCount", { count: warning })}` : ""}
         </span>
         {videoOff ? null : <VideoModels connection={connection} models={models} busy={busy} onSwitch={onVideo} onProbe={onProbeVideo} />}
       </div>
       <div className="connection-actions">
-        <RowAction aria-label={`Rediscover ${connection.label}'s models`} disabled={busy !== undefined} onClick={onRediscover}>
-          {discovering ? "Discovering…" : "Rediscover"}
+        <RowAction
+          aria-label={t("settings.modelsPage.rediscoverLabel", { connection: connection.label })}
+          disabled={busy !== undefined}
+          onClick={onRediscover}
+        >
+          {discovering ? t("settings.modelsPage.discovering") : t("settings.modelsPage.rediscover")}
         </RowAction>
-        <RowAction aria-label={`Manage ${connection.label}`} disabled={busy !== undefined} onClick={onManage}>
-          Manage
+        <RowAction
+          aria-label={t("settings.modelsPage.manageLabel", { connection: connection.label })}
+          disabled={busy !== undefined}
+          onClick={onManage}
+        >
+          {t("settings.modelsPage.manage")}
         </RowAction>
       </div>
     </li>
@@ -563,6 +591,7 @@ function LifecycleBanner({
   readonly busy: boolean;
   readonly onReplace: (from: ModelRef, to: ModelRef) => void;
 }) {
+  const t = useT();
   const notices = rolesLifecycleNotices(data);
   if (notices.length === 0) return null;
   const retired = notices.some(({ notice }) => notice.level === "error");
@@ -571,12 +600,10 @@ function LifecycleBanner({
   return (
     <section className="lifecycle-banner" aria-labelledby="lifecycle-banner-title">
       <h2 id="lifecycle-banner-title" className="visually-hidden">
-        Models in use that retire
+        {t("settings.modelsPage.bannerTitle")}
       </h2>
       <Line {...(retired ? { alert: false } : {})}>
-        {retired
-          ? "A model in use is retired: replace it everywhere it is used, or pick another with Set."
-          : "A model in use retires or is redirected, now or soon. Tavi never switches it for you: replace it when ready, or pick another with Set."}
+        {retired ? t("settings.modelsPage.bannerRetired") : t("settings.modelsPage.bannerRetiring")}
       </Line>
       <ul className="list-reset">
         {notices.map(({ target, notice, replacements }) => {
@@ -612,6 +639,7 @@ function ReplaceButtons({
   readonly busy: boolean;
   readonly onReplace: (from: ModelRef, to: ModelRef) => void;
 }) {
+  const t = useT();
   const slash = target.indexOf("/");
   const from = { connectionId: target.slice(0, slash), model: target.slice(slash + 1) };
   const choices = replacementChoices(replacements, from.model);
@@ -625,10 +653,10 @@ function ReplaceButtons({
           size="sm"
           disabled={busy}
           // The visible words first, then which model it replaces: a voice command matches what is shown.
-          aria-label={`Replace with ${model} (${why}), for ${target}`}
+          aria-label={t("settings.modelsPage.replaceWithLabel", { model, why, target })}
           onClick={() => onReplace(from, { connectionId: from.connectionId, model })}
         >
-          Replace with {model} ({why})
+          {t("settings.modelsPage.replaceWith", { model, why })}
         </Button>
       ))}
     </div>

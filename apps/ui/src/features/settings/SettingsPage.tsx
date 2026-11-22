@@ -12,6 +12,7 @@ import { PermissionsSettings } from "./PermissionsSettings.js";
 import { PluginsSettings } from "./PluginsSettings.js";
 import { SystemPromptSettings } from "./SystemPromptSettings.js";
 import { WebSearchSettings } from "./WebSearchSettings.js";
+import { useT } from "../../lib/i18n.js";
 import { Notice } from "../../ui/Parts.js";
 
 /** Settings' views, under the one route they belong to; the nav between them is in the left column (`SettingsNav`). */
@@ -53,6 +54,7 @@ export function Settings({
   /** The owner offers Ideas: Settings → Ideas is shown. */
   readonly ideas?: boolean;
 }) {
+  const t = useT();
   const { workspaceId } = useWorkspace();
   const wasModels = useRef(view === "models");
   useEffect(() => {
@@ -62,7 +64,7 @@ export function Settings({
   }, [view, onModelsChanged]);
   return (
     <>
-      {view === "ideas" ? ideas ? <IdeasSettings key={workspaceId} /> : <Notice>This owner does not offer Ideas.</Notice> : null}
+      {view === "ideas" ? ideas ? <IdeasSettings key={workspaceId} /> : <Notice>{t("settings.page.noIdeas")}</Notice> : null}
       {view === "general" ? <GeneralSettings key={workspaceId} onReset={onReset} onRunSetup={onRunSetup} /> : null}
       {view === "apps" ? (
         <ConnectedApps key={workspaceId} revision={pluginRevision} where={apps} onWhere={onApps} onOpenTask={onOpenTask} />

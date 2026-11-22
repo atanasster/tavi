@@ -1,5 +1,6 @@
 import type { ProviderDeclaration, ProviderInstanceConfig } from "@tavi/contracts";
 import { useRowKeys } from "../../hooks/use-row-keys.js";
+import { useT } from "../../lib/i18n.js";
 import { Select } from "../../ui/Select.js";
 import { Button } from "../../ui/Button.js";
 
@@ -14,15 +15,14 @@ export function ProviderInstancesEditor({
   readonly onChange: (instances: ProviderInstanceConfig[]) => void;
 }) {
   // The ID is typed into, so it cannot be the key: each row's is carried to its edited copy.
+  const t = useT();
   const { keyOf, carry } = useRowKeys<ProviderInstanceConfig>();
   const update = (index: number, patch: Partial<ProviderInstanceConfig>) =>
     onChange(instances.map((instance, at) => (at === index ? carry(instance, { ...instance, ...patch }) : instance)));
   return (
     <section>
-      <h3>Provider instances</h3>
-      <p>
-        Each instance has its own workspace, account, settings and credential references. Save and restart the owner to activate changes.
-      </p>
+      <h3>{t("settings.instances.title")}</h3>
+      <p>{t("settings.instances.hint")}</p>
       {instances.map((instance, index) => {
         const declaration = declarations.find((item) => item.id === instance.factory);
         const setting = (key: string, value: ProviderInstanceConfig["settings"][string] | undefined) => {
@@ -31,13 +31,14 @@ export function ProviderInstancesEditor({
           else settings[key] = value;
           update(index, { settings });
         };
+        const number = index + 1;
         return (
           <fieldset key={keyOf(instance)} className="settings-fields">
-            <legend>Instance {index + 1}</legend>
+            <legend>{t("settings.instances.legend", { number })}</legend>
             <label>
-              Instance ID
+              {t("settings.instances.id")}
               <input
-                aria-label={`Instance ${index + 1} ID`}
+                aria-label={t("settings.instances.idLabel", { number })}
                 required
                 maxLength={64}
                 value={instance.id}
@@ -45,13 +46,15 @@ export function ProviderInstancesEditor({
               />
             </label>
             <label>
-              Factory
+              {t("settings.instances.factory")}
               <Select
-                aria-label={`Instance ${index + 1} factory`}
+                aria-label={t("settings.instances.factoryLabel", { number })}
                 value={instance.factory}
                 onChange={(event) => update(index, { factory: event.target.value, settings: {}, credentials: {} })}
               >
-                {declaration === undefined ? <option value={instance.factory}>{instance.factory} (unavailable)</option> : null}
+                {declaration === undefined ? (
+                  <option value={instance.factory}>{t("settings.instances.unavailable", { factory: instance.factory })}</option>
+                ) : null}
                 {declarations.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.id} ({item.kind})
@@ -61,9 +64,9 @@ export function ProviderInstancesEditor({
             </label>
             <p>{declaration?.disclosure}</p>
             <label>
-              Workspace
+              {t("settings.instances.workspace")}
               <input
-                aria-label={`Instance ${index + 1} workspace`}
+                aria-label={t("settings.instances.workspaceLabel", { number })}
                 required
                 maxLength={128}
                 value={instance.workspaceId}
@@ -71,9 +74,9 @@ export function ProviderInstancesEditor({
               />
             </label>
             <label>
-              Account ID
+              {t("settings.instances.account")}
               <input
-                aria-label={`Instance ${index + 1} account`}
+                aria-label={t("settings.instances.accountLabel", { number })}
                 required
                 maxLength={64}
                 value={instance.accountId}
@@ -82,21 +85,20 @@ export function ProviderInstancesEditor({
             </label>
             {Object.entries(declaration?.settings ?? {}).map(([key, field]) => {
               const value = instance.settings[key];
-              const label = `Instance ${index + 1} ${key}`;
+              const label = t("settings.instances.settingLabel", { number, key });
               return (
                 // biome-ignore lint/a11y/noLabelWithoutControl: every branch of the ternary below renders the control (Select, textarea or input)
                 <label key={key}>
-                  {key}
-                  {field.required ? " (required)" : ""}
+                  {field.required ? t("settings.instances.required", { key }) : key}
                   {field.type === "boolean" ? (
                     <Select
                       aria-label={label}
                       value={value === undefined ? "" : String(value)}
                       onChange={(event) => setting(key, event.target.value === "" ? undefined : event.target.value === "true")}
                     >
-                      <option value="">Default</option>
-                      <option value="true">Yes</option>
-                      <option value="false">No</option>
+                      <option value="">{t("settings.instances.default")}</option>
+                      <option value="true">{t("settings.instances.yes")}</option>
+                      <option value="false">{t("settings.instances.no")}</option>
                     </Select>
                   ) : field.type === "strings" ? (
                     <textarea
@@ -122,17 +124,17 @@ export function ProviderInstancesEditor({
                   )}
                   <span className="muted">
                     {field.description}
-                    {field.type === "strings" ? " Enter one value per line." : ""}
-                    {field.choices === undefined ? "" : ` Choices: ${field.choices.join(", ")}.`}
+                    {field.type === "strings" ? ` ${t("settings.instances.perLine")}` : ""}
+                    {field.choices === undefined ? "" : ` ${t("settings.instances.choices", { choices: field.choices.join(", ") })}`}
                   </span>
                 </label>
               );
             })}
             {(declaration?.credentials ?? []).map((key) => (
               <label key={key}>
-                {key} credential reference
+                {t("settings.instances.credential", { key })}
                 <input
-                  aria-label={`Instance ${index + 1} ${key} reference`}
+                  aria-label={t("settings.instances.credentialLabel", { number, key })}
                   required
                   maxLength={128}
                   value={instance.credentials[key] ?? ""}
@@ -140,8 +142,10 @@ export function ProviderInstancesEditor({
                 />
               </label>
             ))}
-            {(declaration?.credentials.length ?? 0) > 0 ? <p>Store secrets in Credentials. Enter only their references here.</p> : null}
-            <Button onClick={() => onChange(instances.filter((_item, at) => at !== index))}>Remove instance {index + 1}</Button>
+            {(declaration?.credentials.length ?? 0) > 0 ? <p>{t("settings.instances.secrets")}</p> : null}
+            <Button onClick={() => onChange(instances.filter((_item, at) => at !== index))}>
+              {t("settings.instances.remove", { number })}
+            </Button>
           </fieldset>
         );
       })}
@@ -153,7 +157,7 @@ export function ProviderInstancesEditor({
             onChange([...instances, { id: "", factory: first.id, workspaceId: "default", accountId: "", settings: {}, credentials: {} }]);
         }}
       >
-        Add provider instance
+        {t("settings.instances.add")}
       </Button>
     </section>
   );

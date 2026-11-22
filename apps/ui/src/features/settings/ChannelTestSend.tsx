@@ -16,6 +16,7 @@ import { request } from "./channels-api.js";
 import { readStoredJson, writeStoredJson } from "../../lib/storage.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
+import { useT } from "../../lib/i18n.js";
 
 /** The test recipient last used on a connection, kept in this browser only (a convenience; a missing one just starts blank). */
 interface LastRecipient {
@@ -47,6 +48,7 @@ export function TestSend({
   descriptor: ChannelDescriptor | undefined;
   onClose: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [people, setPeople] = useState<ChannelsPeopleAnswer["people"]>();
   const [operator, setOperator] = useState<string>();
@@ -101,41 +103,46 @@ export function TestSend({
     }
     writeLastRecipient(workspaceId, connection.connectionId, { to: recipient, direct });
     if (answer.value.status === "accepted") {
-      setResult(`Sent through ${connection.label}.`);
+      setResult(t("settings.testSend.sent", { label: connection.label }));
       if (!direct) setSent(recipient);
-    } else setFailure(`The test was ${answer.value.status}${answer.value.detail === undefined ? "." : `: ${answer.value.detail}`}`);
+    } else
+      setFailure(
+        answer.value.detail === undefined
+          ? t("settings.testSend.failed", { status: answer.value.status })
+          : t("settings.testSend.failedDetail", { status: answer.value.status, detail: answer.value.detail }),
+      );
   };
   // A target that is also a sender id, and not allowed yet, can be allowed as a person from here.
   const allowable = sent === undefined || descriptor === undefined ? undefined : channelIdentity(sent, descriptor.sender);
   const offerAllow =
     allowable !== undefined && people !== undefined && !people.some((candidate) => candidate.externalSenderId === allowable);
-  const targetLabel = descriptor?.target.label ?? "Send to";
+  const targetLabel = descriptor?.target.label ?? t("settings.testSend.sendTo");
   // The form is drawn once the people are known, so the recipient never changes under the operator.
   if (!peopleLoaded)
     return (
-      <Modal title={`Test ${connection.label}`} busy={false} onClose={onClose}>
-        <Pending label={`Loading the people allowed on ${connection.label}…`} className="notice settings-description" status />
+      <Modal title={t("settings.testSend.title", { label: connection.label })} busy={false} onClose={onClose}>
+        <Pending label={t("settings.testSend.loading", { label: connection.label })} className="notice settings-description" status />
       </Modal>
     );
   return (
-    <Modal title={`Test ${connection.label}`} busy={sending} onClose={onClose}>
+    <Modal title={t("settings.testSend.title", { label: connection.label })} busy={sending} onClose={onClose}>
       <form
         onSubmit={(event) => {
           event.preventDefault();
           void send();
         }}
       >
-        <BusyFieldset busy={sending} label="Sending…" className="settings-fields">
+        <BusyFieldset busy={sending} label={t("settings.testSend.sending")} className="settings-fields">
           {people !== undefined && people.length > 0 ? (
             <label>
-              Send to
-              <Select aria-label="Test person" value={person} onChange={(event) => setPerson(event.target.value)}>
+              {t("settings.testSend.sendTo")}
+              <Select aria-label={t("settings.testSend.personLabel")} value={person} onChange={(event) => setPerson(event.target.value)}>
                 {people.map((candidate) => (
                   <option key={candidate.externalSenderId} value={candidate.externalSenderId}>
                     {candidate.displayName ?? candidate.principalId} · {candidate.externalSenderId}
                   </option>
                 ))}
-                <option value={OTHER_RECIPIENT}>Another {targetLabel.toLowerCase()}…</option>
+                <option value={OTHER_RECIPIENT}>{t("settings.testSend.another", { target: targetLabel.toLowerCase() })}</option>
               </Select>
             </label>
           ) : null}
@@ -143,7 +150,7 @@ export function TestSend({
             <label>
               {targetLabel}
               <input
-                aria-label="Test recipient"
+                aria-label={t("settings.testSend.recipientLabel")}
                 required
                 maxLength={320}
                 value={to}
@@ -158,10 +165,10 @@ export function TestSend({
           <Failure message={failure} />
           <div className="actions">
             <Button variant="ghost" onClick={onClose}>
-              Close
+              {t("settings.action.close")}
             </Button>
             <Button variant="primary" type="submit">
-              {sending ? "Sending…" : "Send test message"}
+              {sending ? t("settings.testSend.sending") : t("settings.testSend.send")}
             </Button>
           </div>
         </BusyFieldset>
@@ -196,6 +203,7 @@ function AllowFromTest({
   operator: string | undefined;
   onAllowed: (note: string) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [person, setPerson] = useState(NO_PERSON);
   const [busy, setBusy] = useState(false);
@@ -210,7 +218,7 @@ function AllowFromTest({
       setFailure(answer.message);
       return;
     }
-    onAllowed(`${person.principal.trim()} is allowed: messages from ${descriptor.sender.label} ${sender} now reach Tavi.`);
+    onAllowed(t("settings.testSend.allowed", { principal: person.principal.trim(), senderLabel: descriptor.sender.label, sender }));
   };
   return (
     <form
@@ -221,13 +229,11 @@ function AllowFromTest({
       }}
     >
       <BusyFieldset busy={busy} className="settings-fields">
-        <p className="settings-description">
-          {sender} is a {descriptor.sender.label} too. Allow this person to chat with the agent through this connection?
-        </p>
+        <p className="settings-description">{t("settings.testSend.allowPrompt", { sender, senderLabel: descriptor.sender.label })}</p>
         <PersonFields descriptor={descriptor} value={person} onChange={setPerson} operator={operator} />
         <div className="actions">
           <Button variant="primary" type="submit">
-            {busy ? "Saving…" : "Allow person"}
+            {busy ? t("ui.parts.saving") : t("settings.testSend.allow")}
           </Button>
         </div>
         <Failure message={failure} />

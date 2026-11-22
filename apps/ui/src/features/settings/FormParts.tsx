@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useT } from "../../lib/i18n.js";
 import { Button } from "../../ui/Button.js";
 
 // The canvas's general pieces, under the names the settings pages know them by.
@@ -13,11 +14,11 @@ export { LoadError, Failure as FormFailure } from "../../ui/Parts.js";
 export function FormActions({
   saving,
   label,
-  busyLabel = "Saving…",
+  busyLabel,
   onCancel,
   disabled,
   cancelDisabled,
-  cancelLabel = "Cancel",
+  cancelLabel,
   small = false,
   children,
 }: {
@@ -31,14 +32,15 @@ export function FormActions({
   readonly small?: boolean;
   readonly children?: ReactNode;
 }) {
+  const t = useT();
   const cancel = (
     <Button variant="ghost" size={small ? "sm" : undefined} disabled={cancelDisabled} onClick={onCancel}>
-      {cancelLabel}
+      {cancelLabel ?? t("ui.confirm.cancel")}
     </Button>
   );
   const submit = (
     <Button variant="primary" size={small ? "sm" : undefined} type="submit" disabled={disabled}>
-      {saving ? busyLabel : label}
+      {saving ? (busyLabel ?? t("ui.parts.saving")) : label}
     </Button>
   );
   return (

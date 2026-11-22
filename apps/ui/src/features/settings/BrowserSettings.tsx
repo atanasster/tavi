@@ -1,9 +1,8 @@
 import { useEffect, useId, useState } from "react";
 
 import { DEFAULT_BROWSER_NO_THUMBNAIL_HOSTS, parseNoThumbnailHosts } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
-
 import { useLoaded } from "../../hooks/use-loaded.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import { Confirm } from "../../ui/Confirm.js";
 import { browserRecipes, clearBrowserProfile, proposeSiteNote } from "../center/browser-api.js";
 import { LoadError } from "./FormParts.js";
@@ -14,6 +13,7 @@ import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
 import { shortDay } from "../../lib/time.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /** The list as the field shows it: comma-separated, `none` for an empty one. */
 const hostsText = (hosts: readonly string[]): string => (hosts.length === 0 ? "none" : hosts.join(", "));
@@ -23,34 +23,37 @@ const hostsText = (hosts: readonly string[]): string => (hosts.length === 0 ? "n
  * closes the workspace's open browser sessions first.
  */
 export function BrowserProfile({ busy, run }: SettingActionProps) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [confirming, setConfirming] = useState(false);
   return (
     <>
-      <h2>Browser profile</h2>
-      <p>
-        The agent&rsquo;s browser keeps a profile for this workspace: cookies, the choices you made on consent banners, and the sites you
-        signed in to when it handed you the browser. Clearing it signs the agent out everywhere and closes its open browser sessions. Or use{" "}
-        <Command>tavi browser clear-profile</Command>.
-      </p>
+      <h2>{t("settings.browser.profile.title")}</h2>
+      <p>{withParts(t("settings.browser.profile.body"), { command: <Command>tavi browser clear-profile</Command> })}</p>
       <div className="actions">
         <Button variant="danger-ghost" disabled={busy !== undefined} onClick={() => setConfirming(true)}>
-          {busy === "browser-profile" ? "Clearing…" : "Clear browser profile…"}
+          {busy === "browser-profile" ? t("settings.browser.profile.clearing") : t("settings.browser.profile.clear")}
         </Button>
       </div>
       <SiteRecipes />
       {confirming ? (
         <Confirm
-          title="Clear the browser profile?"
-          message="Cookies, consent choices and sign-ins are forgotten, and the agent's open browser sessions in this workspace close."
-          action="Clear profile"
+          title={t("settings.browser.profile.confirmTitle")}
+          message={t("settings.browser.profile.confirmMessage")}
+          action={t("settings.browser.profile.confirmAction")}
           onClose={() => setConfirming(false)}
           onConfirm={() =>
             run("browser-profile", async () => {
               const outcome = await clearBrowserProfile(client, workspaceId);
               if (!outcome.ok) return outcome;
               const { closed } = outcome.value;
-              return { ok: true, value: `Browser profile cleared${closed === 0 ? "" : `; ${plural(closed, "browser session")} closed`}.` };
+              return {
+                ok: true,
+                value:
+                  closed === 0
+                    ? translateNow("settings.browser.profile.cleared")
+                    : translateNow("settings.browser.profile.clearedClosed", { count: closed }),
+              };
             })
           }
         />
@@ -73,11 +76,12 @@ function recipeStepText(step: {
 }): string {
   const target =
     step.role === undefined && step.label === undefined
-      ? "the page"
-      : `${step.role ?? "element"}${step.label === undefined ? "" : ` “${step.label}”`}`;
+      ? translateNow("settings.browser.recipes.page")
+      : `${step.role ?? translateNow("settings.browser.recipes.element")}${step.label === undefined ? "" : ` “${step.label}”`}`;
   return `${step.kind} ${target}${step.value === undefined ? "" : ` (${step.value})`}`;
 }
 function SiteRecipes() {
+  const t = useT();
   const { workspaceId } = useWorkspace();
   const { client } = useWorkspace();
   const { data, error, reload } = useLoaded(() => browserRecipes(client, workspaceId));
@@ -107,42 +111,48 @@ function SiteRecipes() {
   const busy = forgetting !== undefined || saving !== undefined;
   return (
     <>
-      <h2>Site recipes</h2>
-      <p>
-        The steps that last led to results on a site, shown to the agent the next time it gets there; never what was typed. Or use{" "}
-        <Command>tavi browser recipes</Command>.
-      </p>
+      <h2>{t("settings.browser.recipes.title")}</h2>
+      <p>{withParts(t("settings.browser.recipes.body"), { command: <Command>tavi browser recipes</Command> })}</p>
       <ul className="site-recipes">
         {data.recipes.map((recipe) => (
           <li key={recipe.host}>
             <strong>{recipe.host}</strong>{" "}
             <span className="muted">
-              {recipe.steps.length} step{recipe.steps.length === 1 ? "" : "s"}, used {recipe.uses} time{recipe.uses === 1 ? "" : "s"}, last{" "}
-              {shortDay(recipe.updatedAt.slice(0, 10))}
+              {t("settings.browser.recipes.meta", {
+                steps: t("settings.browser.recipes.steps", { count: recipe.steps.length }),
+                uses: t("settings.browser.recipes.uses", { count: recipe.uses }),
+                day: shortDay(recipe.updatedAt.slice(0, 10)),
+              })}
             </span>{" "}
             <Button
               variant="ghost"
               size="sm"
               // The words it shows, then which site's: a name that holds its visible text (WCAG 2.5.3).
-              aria-label={`${saving === recipe.host ? "Saving…" : "Save as a site note"}: ${recipe.host}`}
+              aria-label={t("settings.browser.recipes.saveLabel", {
+                action: saving === recipe.host ? t("ui.parts.saving") : t("settings.browser.recipes.save"),
+                host: recipe.host,
+              })}
               disabled={busy || saved[recipe.host] !== undefined}
               onClick={() => saveAsNote(recipe.host)}
             >
-              {saving === recipe.host ? "Saving…" : "Save as a site note"}
+              {saving === recipe.host ? t("ui.parts.saving") : t("settings.browser.recipes.save")}
             </Button>{" "}
             <Button variant="ghost" size="sm" disabled={busy} onClick={() => forget(recipe.host)}>
-              {forgetting === recipe.host ? "Forgetting…" : "Forget"}
+              {forgetting === recipe.host ? t("settings.browser.recipes.forgetting") : t("settings.browser.recipes.forget")}
             </Button>
             {saved[recipe.host] === undefined ? null : (
               <Notice role="status">
-                Saved as the site note <strong>{saved[recipe.host]?.id}</strong>, <strong>off</strong>: the agent is not shown it yet.
-                Review and edit <code>site-notes/{saved[recipe.host]?.file}</code> in Tavi&rsquo;s data directory, then turn it on with{" "}
-                <Command>{`tavi browser site-notes --on ${saved[recipe.host]?.id ?? ""}`}</Command> (with <Command>tavi serve</Command>{" "}
-                stopped).
+                {withParts(t("settings.browser.recipes.saved"), {
+                  id: <strong>{saved[recipe.host]?.id}</strong>,
+                  off: <strong>{t("settings.browser.recipes.off")}</strong>,
+                  file: <code>site-notes/{saved[recipe.host]?.file}</code>,
+                  command: <Command>{`tavi browser site-notes --on ${saved[recipe.host]?.id ?? ""}`}</Command>,
+                  serve: <Command>tavi serve</Command>,
+                })}
               </Notice>
             )}
             <details>
-              <summary className="disclosure">Steps</summary>
+              <summary className="disclosure">{t("settings.browser.recipes.stepsTitle")}</summary>
               <ol>
                 {recipe.steps.map((step, index) => (
                   <li key={index}>{recipeStepText(step)}</li>
@@ -154,7 +164,7 @@ function SiteRecipes() {
       </ul>
       <div className="actions">
         <Button variant="ghost" disabled={busy} onClick={() => forget(true)}>
-          {forgetting === "*" ? "Forgetting…" : "Forget all recipes"}
+          {forgetting === "*" ? t("settings.browser.recipes.forgetting") : t("settings.browser.recipes.forgetAll")}
         </Button>
       </div>
       {failure === undefined ? null : <Failure>{failure}</Failure>}
@@ -176,6 +186,7 @@ export function NoThumbnailHosts({
   /** The list in effect. */
   readonly hosts: readonly string[];
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [draft, setDraft] = useState(() => hostsText(hosts));
   const [problem, setProblem] = useState<string>();
@@ -186,20 +197,25 @@ export function NoThumbnailHosts({
   const custom = answer.settings.browserNoThumbnailHosts !== undefined;
   return (
     <>
-      <h2>Browser thumbnails</h2>
+      <h2>{t("settings.browser.thumbnails.title")}</h2>
       <p>
-        After the agent opens a page, the Command Center&rsquo;s Browser section keeps a small picture of it. Pages on these hosts never get
-        one; <code>*.example.com</code> covers a domain and its subdomains, and a page with a password, payment or one-time-code field gets
-        none anywhere. Or use <Command>tavi config set browser.noThumbnailHosts</Command>.
+        {withParts(t("settings.browser.thumbnails.body"), {
+          pattern: <code>*.example.com</code>,
+          command: <Command>tavi config set browser.noThumbnailHosts</Command>,
+        })}
       </p>
-      <p className="muted">{custom ? "Your list." : `The defaults: ${hostsText(DEFAULT_BROWSER_NO_THUMBNAIL_HOSTS)}.`}</p>
+      <p className="muted">
+        {custom
+          ? t("settings.browser.thumbnails.yours")
+          : t("settings.browser.thumbnails.defaults", { hosts: hostsText(DEFAULT_BROWSER_NO_THUMBNAIL_HOSTS) })}
+      </p>
       <form
         className="actions"
         onSubmit={(event) => {
           event.preventDefault();
           const parsed = parseNoThumbnailHosts(draft);
           if ("invalid" in parsed) {
-            setProblem(`${parsed.invalid} is not a host or *.domain. List hosts separated by commas, or write none.`);
+            setProblem(t("settings.browser.thumbnails.invalid", { host: parsed.invalid }));
             return;
           }
           setProblem(undefined);
@@ -208,7 +224,7 @@ export function NoThumbnailHosts({
       >
         <input
           className="thumbnail-hosts"
-          aria-label="hosts without thumbnails"
+          aria-label={t("settings.browser.thumbnails.label")}
           aria-describedby={problem === undefined ? undefined : problemId}
           value={draft}
           disabled={busy !== undefined}
@@ -218,7 +234,7 @@ export function NoThumbnailHosts({
           }}
         />
         <Button variant="primary" type="submit" disabled={busy !== undefined || draft.trim() === "" || draft === shown}>
-          {busy === "thumbnail-hosts" ? "Saving…" : "Save"}
+          {busy === "thumbnail-hosts" ? t("ui.parts.saving") : t("settings.action.save")}
         </Button>
         <Button
           variant="ghost"
@@ -228,7 +244,7 @@ export function NoThumbnailHosts({
             void run("thumbnail-defaults", () => workspaceSettingsActions.resetNoThumbnailHosts(client, workspaceId, answer.revision));
           }}
         >
-          Reset to defaults
+          {t("settings.browser.thumbnails.reset")}
         </Button>
       </form>
       {problem === undefined ? null : <Failure id={problemId}>{problem}</Failure>}

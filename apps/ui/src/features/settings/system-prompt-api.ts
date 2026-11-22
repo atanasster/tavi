@@ -1,6 +1,6 @@
 import type { SystemPromptAnswer } from "@tavi/contracts";
 
-import { formatCount } from "../../lib/format.js";
+import { translateNow } from "../../lib/i18n.js";
 import { ask, type SettingsClient } from "../../lib/ipc.js";
 import { SETTINGS_BOUNDS } from "./common.js";
 
@@ -45,15 +45,15 @@ export function systemPromptProblem(mode: SystemPromptMode, text: string): strin
   // The shipped default is not the operator's to mistype: a `default` draft is a
   // staged reset and its text is shown read-only.
   if (mode === "default") return undefined;
-  if (text.length === 0) return "A system prompt cannot be empty";
-  if (text.trim().length === 0) return "A system prompt cannot be whitespace only";
+  if (text.length === 0) return translateNow("settings.systemPrompt.empty");
+  if (text.trim().length === 0) return translateNow("settings.systemPrompt.whitespace");
   return systemPromptLengthProblem(text);
 }
 
 /** Why instructions are too long to save — a system prompt's or a persona's, bounded alike — or `undefined`. */
 export function systemPromptLengthProblem(text: string): string | undefined {
   return text.length > SETTINGS_BOUNDS.systemPrompt
-    ? `At most ${formatCount(SETTINGS_BOUNDS.systemPrompt)} characters (this is ${formatCount(text.length)})`
+    ? translateNow("settings.systemPrompt.tooLong", { max: SETTINGS_BOUNDS.systemPrompt, length: text.length })
     : undefined;
 }
 

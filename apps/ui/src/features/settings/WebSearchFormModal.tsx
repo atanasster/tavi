@@ -10,12 +10,14 @@ import {
   validateWebSearchForm,
   type WebSearchFormValues,
 } from "./search-api.js";
+import { useT } from "../../lib/i18n.js";
 import { Modal } from "../../ui/Modal.js";
 import { FormActions, FormFailure } from "./FormParts.js";
 import { Field } from "../../ui/Field.js";
 import { WebSearchProviderFields } from "./WebSearchProviderFields.js";
 import { useFormSubmit } from "../../hooks/use-action.js";
 import { Notice } from "../../ui/Parts.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * Meggy's `WebSearchFormModal`, ported to tavi's providers:
@@ -34,6 +36,7 @@ export function WebSearchFormModal({
   readonly onSave: (values: WebSearchFormValues) => Promise<string | undefined>;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   const [values, setValues] = useState<WebSearchFormValues>({
     kind: "tavily",
     providerId: freeId("tavily", taken),
@@ -41,7 +44,7 @@ export function WebSearchFormModal({
     apiKey: "",
   });
   const errors = validateWebSearchForm(values);
-  const clash = taken.includes(values.providerId) ? "A provider of this name exists" : undefined;
+  const clash = taken.includes(values.providerId) ? t("settings.search.nameTaken") : undefined;
   const valid = Object.keys(errors).length === 0 && clash === undefined;
   const { touched, saving, failure, submit } = useFormSubmit(valid, () => onSave(values), onClose);
   const set = (change: Partial<WebSearchFormValues>): void => setValues({ ...values, ...change });
@@ -57,7 +60,7 @@ export function WebSearchFormModal({
     });
 
   return (
-    <Modal title="Add a web search provider" busy={saving} onClose={onClose}>
+    <Modal title={t("settings.search.addTitle")} busy={saving} onClose={onClose}>
       <form
         className="form"
         autoComplete="off"
@@ -67,7 +70,7 @@ export function WebSearchFormModal({
         }}
       >
         <fieldset className="kinds">
-          <legend>Provider</legend>
+          <legend>{t("settings.search.provider")}</legend>
           {WEB_SEARCH_KINDS.map((kind: WebSearchKind) => (
             <label key={kind} className={values.kind === kind ? "kind active" : "kind"}>
               <input type="radio" name="kind" value={kind} checked={values.kind === kind} onChange={() => choose(kind)} />
@@ -75,7 +78,7 @@ export function WebSearchFormModal({
             </label>
           ))}
         </fieldset>
-        <Field label="Name" error={nameError}>
+        <Field label={t("settings.search.name")} error={nameError}>
           <input autoComplete="off" value={values.providerId} onChange={(event) => set({ providerId: event.target.value })} />
         </Field>
         <WebSearchProviderFields
@@ -87,12 +90,16 @@ export function WebSearchFormModal({
           onApiKey={(apiKey) => set({ apiKey })}
         />
         {keyToStore(values) !== "" ? (
-          <Notice>
-            Stored as the credential <code>{searchKeyReference(values.providerId)}</code>.
-          </Notice>
+          <Notice>{withParts(t("settings.search.storedAs"), { reference: <code>{searchKeyReference(values.providerId)}</code> })}</Notice>
         ) : null}
         <FormFailure message={failure} />
-        <FormActions saving={saving} disabled={saving || (touched && !valid)} cancelDisabled={saving} label="Save" onCancel={onClose} />
+        <FormActions
+          saving={saving}
+          disabled={saving || (touched && !valid)}
+          cancelDisabled={saving}
+          label={t("settings.action.save")}
+          onCancel={onClose}
+        />
       </form>
     </Modal>
   );

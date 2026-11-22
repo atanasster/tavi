@@ -1,4 +1,3 @@
-import { plural } from "@tavi/contracts/util";
 import { useCallback, useEffect, useState } from "react";
 
 import type { ChannelConnectionView, ChannelDescriptor, ChannelField, ChannelsRemovePreviewAnswer } from "@tavi/contracts";
@@ -24,6 +23,8 @@ import { Button } from "../../ui/Button.js";
 import { RowAction, ROW_LINK_CLASS } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * Settings → Channels and Allowed people:
@@ -35,6 +36,7 @@ import { Command } from "../../ui/Command.js";
 const CHANNELS_REFRESH_MS = 15_000;
 
 export function ChannelsSettings({ people = false }: { people?: boolean }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const loaded = useLoaded(() => load(client, workspaceId, people));
   // A connection's state and its last message in or out change while the page is open: read again quietly
@@ -44,12 +46,8 @@ export function ChannelsSettings({ people = false }: { people?: boolean }) {
     <section className="settings">
       <PageHead
         className="settings-head"
-        title={people ? "Allowed people" : "Channels"}
-        description={
-          people
-            ? "Choose who can chat with the agent through its channels."
-            : "Connect the channels the agent can be reached on and send through."
-        }
+        title={people ? t("settings.channelsPage.peopleTitle") : t("settings.channelsPage.title")}
+        description={people ? t("settings.channelsPage.peopleDescription") : t("settings.channelsPage.description")}
       />
       <LoadState error={loaded.error || undefined} reload={loaded.reload} loading={loaded.loading && loaded.data === undefined} />
       {loaded.data ? (
@@ -64,6 +62,7 @@ export function ChannelsSettings({ people = false }: { people?: boolean }) {
 }
 
 function Channels({ data, reload: reloadPage }: { data: Loaded; reload: () => void }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   // A connection added or removed is named across the page from now on.
   const { refresh } = useChannelNames();
@@ -82,14 +81,11 @@ function Channels({ data, reload: reloadPage }: { data: Loaded; reload: () => vo
     data.catalog.find((descriptor) => descriptor.providerId === providerId);
   return (
     <>
-      <Notice>
-        Saving a connection applies at once. Secrets are kept in the credential store and never returned to this page; leave a saved one
-        blank to keep it.
-      </Notice>
+      <Notice>{t("settings.channelsPage.intro")}</Notice>
       <section className="settings-panel">
-        <h2 className="settings-section-title">Connections</h2>
+        <h2 className="settings-section-title">{t("settings.channelsPage.connections")}</h2>
         {!data.list.connections.length ? (
-          <Empty>No channels are connected in this workspace yet.</Empty>
+          <Empty>{t("settings.channelsPage.empty")}</Empty>
         ) : (
           <ul className="rows">
             {data.list.connections.map((connection) => {
@@ -112,32 +108,42 @@ function Channels({ data, reload: reloadPage }: { data: Loaded; reload: () => vo
                   <div className="actions">
                     {/* Its app's page in Connected apps: signing in, who may use it, and what it did. A channel's app is named by its provider. */}
                     <AppLink href={appsPath({ appId: connection.providerId })} className={ROW_LINK_CLASS} onFollow={undefined}>
-                      Open app
+                      {t("settings.channelsPage.openApp")}
                     </AppLink>
-                    <RowAction aria-label={`People on ${connection.label}`} onClick={() => setPeopleOf(connection.connectionId)}>
-                      People
+                    <RowAction
+                      aria-label={t("settings.channelsPage.peopleLabel", { label: connection.label })}
+                      onClick={() => setPeopleOf(connection.connectionId)}
+                    >
+                      {t("settings.channelsPage.people")}
                     </RowAction>
                     <RowAction
-                      aria-label={`Test ${connection.label}`}
+                      aria-label={t("settings.testSend.title", { label: connection.label })}
                       disabled={connection.status.state !== "running"}
                       onClick={() => setTesting(connection)}
                     >
-                      Test
+                      {t("settings.action.test")}
                     </RowAction>
                     {/* A group channel's rooms: whether each reads its recent messages, and the room and contact grants. */}
                     {descriptor?.groups !== undefined ? (
-                      <RowAction aria-label={`Rooms of ${connection.label}`} onClick={() => setRooms(connection)}>
-                        Rooms
+                      <RowAction aria-label={t("settings.rooms.title", { label: connection.label })} onClick={() => setRooms(connection)}>
+                        {t("settings.rooms.rooms")}
                       </RowAction>
                     ) : null}
                     {descriptor !== undefined ? (
-                      <RowAction aria-label={`Edit ${connection.label}`} onClick={() => setEditing({ descriptor, connection })}>
-                        Edit
+                      <RowAction
+                        aria-label={t("settings.connectionForm.editTitle", { label: connection.label })}
+                        onClick={() => setEditing({ descriptor, connection })}
+                      >
+                        {t("settings.channelsPage.edit")}
                       </RowAction>
                     ) : null}
                     {/* Removable with its channel gone too (an uninstalled plugin's): removing needs nothing of the channel. */}
-                    <RowAction tone="danger" aria-label={`Remove ${connection.label}`} onClick={() => setRemove(connection)}>
-                      Remove
+                    <RowAction
+                      tone="danger"
+                      aria-label={t("settings.search.removeLabel", { id: connection.label })}
+                      onClick={() => setRemove(connection)}
+                    >
+                      {t("settings.action.remove")}
                     </RowAction>
                   </div>
                 </li>
@@ -148,8 +154,12 @@ function Channels({ data, reload: reloadPage }: { data: Loaded; reload: () => vo
         {data.catalog.length ? (
           <div className="actions">
             <label>
-              Channel
-              <Select aria-label="New connection channel" value={adding} onChange={(event) => setAdding(event.target.value)}>
+              {t("settings.channelsPage.channel")}
+              <Select
+                aria-label={t("settings.channelsPage.channelLabel")}
+                value={adding}
+                onChange={(event) => setAdding(event.target.value)}
+              >
                 {data.catalog.map((descriptor) => (
                   <option key={descriptor.providerId} value={descriptor.providerId}>
                     {descriptor.label}
@@ -164,11 +174,11 @@ function Channels({ data, reload: reloadPage }: { data: Loaded; reload: () => vo
                 if (descriptor !== undefined) setEditing({ descriptor });
               }}
             >
-              Add connection
+              {t("settings.channelsPage.add")}
             </Button>
           </div>
         ) : (
-          <Empty>No channel is installed.</Empty>
+          <Empty>{t("settings.channelsPage.noneInstalled")}</Empty>
         )}
       </section>
       <PageNote tone={tone} note={note || undefined} />
@@ -217,8 +227,8 @@ function Channels({ data, reload: reloadPage }: { data: Loaded; reload: () => vo
               return {
                 ok: true,
                 value: purging
-                  ? `${remove.label} removed. What it brought in is erased in 24 hours; adding the same account back before then cancels it.`
-                  : `${remove.label} removed.`,
+                  ? t("settings.channelsPage.removedPurge", { label: remove.label })
+                  : t("settings.channelsPage.removed", { label: remove.label }),
               };
             })
           }
@@ -242,6 +252,7 @@ function RemoveConnection({
   onClose: () => void;
   onConfirm: (purging: boolean) => Promise<void>;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [preview, setPreview] = useState<ChannelsRemovePreviewAnswer>();
   const [failure, setFailure] = useState<string>();
@@ -257,32 +268,41 @@ function RemoveConnection({
   }, [client, workspaceId, connection.connectionId]);
   if (preview === undefined)
     return (
-      <Modal title="Remove connection?" onClose={onClose}>
-        {failure === undefined ? <Empty>Loading what it would erase…</Empty> : <Failure message={failure} />}
+      <Modal title={t("settings.channelsPage.removeTitle")} onClose={onClose}>
+        {failure === undefined ? <Empty>{t("settings.channelsPage.removeLoading")}</Empty> : <Failure message={failure} />}
       </Modal>
     );
   if (preview.retention !== "purge-on-remove")
     return (
       <Confirm
-        title="Remove connection?"
-        message={`Close ${connection.label} and delete its saved secrets. Its conversations stay in history; people allowed on it can no longer reach the agent through it.`}
-        action="Remove connection"
+        title={t("settings.channelsPage.removeTitle")}
+        message={t("settings.channelsPage.removeMessage", { label: connection.label })}
+        action={t("settings.channelsPage.removeAction")}
         onClose={onClose}
         onConfirm={() => onConfirm(false)}
       />
     );
-  const notes = preview.notes === undefined ? "the chat notes its chats taught" : `${plural(preview.notes, "chat note")} its chats taught`;
+  const notes =
+    preview.notes === undefined
+      ? t("settings.channelsPage.erase.notesUnknown")
+      : t("settings.channelsPage.erase.notes", { count: preview.notes });
   return (
     <Confirm
-      title="Remove and erase?"
-      message={`Close ${connection.label}, delete its saved secrets and stop the people allowed on it. In 24 hours Tavi erases what it brought in, as its channel's terms require: ${plural(preview.conversations, "conversation")}, ${plural(preview.messages, "message")}, ${plural(preview.files, "file")} and ${notes}. Adding the same account back before then cancels it; to keep everything, disable it instead.`}
-      action="Remove and erase"
+      title={t("settings.channelsPage.eraseTitle")}
+      message={t("settings.channelsPage.eraseMessage", {
+        label: connection.label,
+        conversations: t("settings.channelsPage.erase.conversations", { count: preview.conversations }),
+        messages: t("settings.channelsPage.erase.messages", { count: preview.messages }),
+        files: t("settings.channelsPage.erase.files", { count: preview.files }),
+        notes,
+      })}
+      action={t("settings.channelsPage.eraseAction")}
       onClose={onClose}
       onConfirm={() => onConfirm(true)}
     >
       {preview.tasks.length ? (
         <>
-          <p className="settings-description">To keep a copy, export each conversation first:</p>
+          <p className="settings-description">{t("settings.channelsPage.exportFirst")}</p>
           <ul>
             {preview.tasks.map((taskId) => (
               <li key={taskId}>
@@ -292,19 +312,31 @@ function RemoveConnection({
           </ul>
           {preview.moreTasks > 0 ? (
             <p className="settings-description">
-              …and {preview.moreTasks} more: <Command>tavi tasks</Command> lists them.
+              {withParts(t("settings.channelsPage.moreTasks", { count: String(preview.moreTasks) }), {
+                command: <Command>tavi tasks</Command>,
+              })}
             </p>
           ) : null}
         </>
       ) : null}
       {preview.routineTargets.length || preview.heartbeats ? (
         <p className="settings-description">
-          Delivery targets on it go too:
-          {preview.routineTargets.length
-            ? ` ${preview.routineTargets.length === 1 ? "routine target" : "routine targets"} ${preview.routineTargets.join(", ")}`
-            : ""}
-          {preview.routineTargets.length && preview.heartbeats ? " and" : ""}
-          {preview.heartbeats ? ` ${plural(preview.heartbeats, "heartbeat target")}` : ""}.
+          {preview.routineTargets.length && preview.heartbeats
+            ? t("settings.channelsPage.targets.both", {
+                routines: t("settings.channelsPage.targets.routines", {
+                  count: preview.routineTargets.length,
+                  names: preview.routineTargets.join(", "),
+                }),
+                heartbeats: t("settings.channelsPage.targets.heartbeats", { count: preview.heartbeats }),
+              })
+            : t("settings.channelsPage.targets.one", {
+                targets: preview.routineTargets.length
+                  ? t("settings.channelsPage.targets.routines", {
+                      count: preview.routineTargets.length,
+                      names: preview.routineTargets.join(", "),
+                    })
+                  : t("settings.channelsPage.targets.heartbeats", { count: preview.heartbeats }),
+              })}
         </p>
       ) : null}
     </Confirm>
@@ -313,15 +345,18 @@ function RemoveConnection({
 
 /** Who may start a conversation on a connection; until someone is allowed, it answers no one. */
 function AllowedLine({ people }: { people: Loaded["people"] }) {
+  const t = useT();
   if (people.length === 0)
     return (
       <p className="settings-description">
-        <span className="badge badge-warning">No one allowed</span> It answers no one until you allow a person on it.
+        <span className="badge badge-warning">{t("settings.channelsPage.noOneAllowed")}</span> {t("settings.channelsPage.answersNoOne")}
       </p>
     );
   return (
     <p className="settings-description">
-      Allowed: {people.map((person) => `${person.displayName ?? person.principalId} (${person.externalSenderId})`).join(", ")}
+      {t("settings.channelsPage.allowed", {
+        people: people.map((person) => `${person.displayName ?? person.principalId} (${person.externalSenderId})`).join(", "),
+      })}
     </p>
   );
 }
@@ -341,11 +376,12 @@ function ConnectionPeople({
   /** Someone was allowed: the dialog's job is done, and its note goes to the page. */
   onAllowed: (note: string) => void;
 }) {
+  const t = useT();
   const connection = data.list.connections.find((candidate) => candidate.connectionId === connectionId);
   return (
-    <Modal title={`People on ${connection?.label ?? connectionId}`} onClose={onClose}>
+    <Modal title={t("settings.channelsPage.peopleLabel", { label: connection?.label ?? connectionId })} onClose={onClose}>
       {connection === undefined ? (
-        <Empty>Loading the connection…</Empty>
+        <Empty>{t("settings.channelsPage.loadingConnection")}</Empty>
       ) : (
         <PeopleEditor data={data} reload={reload} only={connection} onAllowed={onAllowed} />
       )}
@@ -372,10 +408,11 @@ export function distinctParts(name: string, parts: readonly (string | undefined)
 
 /** "last message received 14:02 · last sent 14:05", and why the last send failed. */
 function ActivityLine({ status }: { status: ChannelConnectionView["status"] }) {
+  const t = useT();
   const parts = [
-    status.lastInboundAt === undefined ? undefined : `last message received ${when(status.lastInboundAt, undefined)}`,
-    status.lastSendAt === undefined ? undefined : `last sent ${when(status.lastSendAt, undefined)}`,
-    status.lastError === undefined ? undefined : `last send failed: ${status.lastError}`,
+    status.lastInboundAt === undefined ? undefined : t("settings.channelsPage.lastReceived", { at: when(status.lastInboundAt, undefined) }),
+    status.lastSendAt === undefined ? undefined : t("settings.channelsPage.lastSent", { at: when(status.lastSendAt, undefined) }),
+    status.lastError === undefined ? undefined : t("settings.channelsPage.lastFailed", { error: status.lastError }),
   ].filter((part): part is string => part !== undefined);
   return parts.length === 0 ? null : <p className="settings-description">{parts.join(" · ")}</p>;
 }
@@ -383,7 +420,8 @@ function ActivityLine({ status }: { status: ChannelConnectionView["status"] }) {
 /** A setting's value as the connection keeps it, in words. */
 function settingWords(field: ChannelField, value: unknown): string | undefined {
   if (value === undefined || value === "") return undefined;
-  if (field.type === "boolean") return value === true ? "on" : "off";
+  if (field.type === "boolean")
+    return value === true ? translateNow("settings.channelsPage.on") : translateNow("settings.channelsPage.off");
   return typeof value === "string" || typeof value === "number" ? String(value) : undefined;
 }
 
@@ -394,6 +432,7 @@ function settingWords(field: ChannelField, value: unknown): string | undefined {
  * same forms.
  */
 export function ChannelAppConnections({ providerId }: { providerId: string }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const loaded = useLoaded(() => load(client, workspaceId, false));
   const { refresh } = useChannelNames();
@@ -411,7 +450,7 @@ export function ChannelAppConnections({ providerId }: { providerId: string }) {
     <>
       <LoadState error={loaded.error || undefined} reload={loaded.reload} loading={loaded.loading} />
       {data === undefined ? null : !connections.length ? (
-        <Empty>No connection of {descriptor?.label ?? providerId} in this workspace yet: add one in Channels.</Empty>
+        <Empty>{t("settings.channelsPage.appEmpty", { label: descriptor?.label ?? providerId })}</Empty>
       ) : (
         <ul className="rows">
           {connections.map((connection) => {
@@ -423,7 +462,8 @@ export function ChannelAppConnections({ providerId }: { providerId: string }) {
               descriptor === undefined || descriptor.auth.kind === "none"
                 ? []
                 : (descriptor.auth.fields ?? []).map(
-                    (field) => `${field.label}: ${connection.secretsStored[field.key] ? "saved" : "not set"}`,
+                    (field) =>
+                      `${field.label}: ${connection.secretsStored[field.key] ? t("settings.channelsPage.secretSaved") : t("settings.channelsPage.secretNotSet")}`,
                   );
             return (
               <li className="row" key={connection.connectionId}>
@@ -442,12 +482,18 @@ export function ChannelAppConnections({ providerId }: { providerId: string }) {
                   ) : null}
                 </div>
                 <div className="actions">
-                  <RowAction aria-label={`People on ${connection.label}`} onClick={() => setPeopleOf(connection.connectionId)}>
-                    People
+                  <RowAction
+                    aria-label={t("settings.channelsPage.peopleLabel", { label: connection.label })}
+                    onClick={() => setPeopleOf(connection.connectionId)}
+                  >
+                    {t("settings.channelsPage.people")}
                   </RowAction>
                   {descriptor !== undefined ? (
-                    <RowAction aria-label={`Edit ${connection.label}`} onClick={() => setEditing(connection)}>
-                      Edit
+                    <RowAction
+                      aria-label={t("settings.connectionForm.editTitle", { label: connection.label })}
+                      onClick={() => setEditing(connection)}
+                    >
+                      {t("settings.channelsPage.edit")}
                     </RowAction>
                   ) : null}
                 </div>

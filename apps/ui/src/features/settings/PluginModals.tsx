@@ -7,7 +7,9 @@ import {
   type PluginView,
   type ProviderInstanceConfig,
 } from "@tavi/contracts";
+import { useT } from "../../lib/i18n.js";
 import type { Outcome } from "../../lib/ipc.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 import { Notice } from "../../ui/Parts.js";
 import { ProviderInstancesEditor } from "./ProviderInstancesEditor.js";
 import { Modal } from "../../ui/Modal.js";
@@ -22,13 +24,10 @@ export function InstallPluginModal({
   readonly install: (path: string) => Promise<Outcome<string | undefined>>;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   const [path, setPath] = useState("");
   const problem =
-    path.trim() === ""
-      ? "Enter the plugin directory's path."
-      : !path.startsWith("/")
-        ? "Use an absolute path on the owner's machine."
-        : undefined;
+    path.trim() === "" ? t("settings.pluginModals.needsPath") : !path.startsWith("/") ? t("settings.pluginModals.absolutePath") : undefined;
   const { touched, saving, failure, submit } = useFormSubmit(
     problem === undefined,
     async () => {
@@ -38,7 +37,7 @@ export function InstallPluginModal({
     onClose,
   );
   return (
-    <Modal title="Install a plugin" busy={saving} onClose={onClose}>
+    <Modal title={t("settings.pluginModals.installTitle")} busy={saving} onClose={onClose}>
       <form
         className="form"
         autoComplete="off"
@@ -49,25 +48,21 @@ export function InstallPluginModal({
       >
         {/* What the folder holds is its hint, not its placeholder: a phone's field cut the placeholder short. */}
         <Field
-          label="Plugin directory"
-          hint={
-            <>
-              The folder that holds its <code className="file-name">tavi-plugin.json</code>.
-            </>
-          }
+          label={t("settings.pluginModals.directory")}
+          hint={withParts(t("settings.pluginModals.directoryHint"), { file: <code className="file-name">tavi-plugin.json</code> })}
           hintClassName="muted"
           error={touched ? problem : undefined}
         >
-          <input value={path} placeholder="/path/to/plugin" onChange={(event) => setPath(event.target.value)} />
+          <input value={path} placeholder={t("settings.pluginModals.pathPlaceholder")} onChange={(event) => setPath(event.target.value)} />
         </Field>
-        <Notice>The directory is copied and pinned by its hash. It does not run until you approve and enable it.</Notice>
+        <Notice>{t("settings.pluginModals.pinned")}</Notice>
         <FormFailure message={failure} />
         <FormActions
           saving={saving}
           disabled={saving || (touched && problem !== undefined)}
           cancelDisabled={saving}
-          label="Install"
-          busyLabel="Installing…"
+          label={t("settings.pluginModals.install")}
+          busyLabel={t("settings.pluginModals.installing")}
           onCancel={onClose}
         />
       </form>
@@ -88,6 +83,7 @@ export function PluginSettingsModal({
   ) => Promise<Outcome<string | undefined>>;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   const fields = Object.entries(plugin.configFields);
   const declarations = pluginRunningVersion(plugin)?.capabilities ?? [];
   const hasProviders = declarations.length > 0 || (plugin.instances?.length ?? 0) > 0;
@@ -121,7 +117,7 @@ export function PluginSettingsModal({
     onClose,
   );
   return (
-    <Modal title={`${plugin.name} settings`} busy={saving} onClose={onClose}>
+    <Modal title={t("settings.pluginModals.settingsTitle", { name: plugin.name })} busy={saving} onClose={onClose}>
       <form
         className="form"
         autoComplete="off"
@@ -136,12 +132,7 @@ export function PluginSettingsModal({
           // Its own name where the manifest gives one ("Adzuna app id"), else its key.
           const name = field.label ?? key;
           // What it is for, then for a key what goes in it: one hint, under its own field and read with it.
-          const hint = [
-            field.description,
-            field.type === "credential"
-              ? "A credential reference, never the secret: store the value under it in the Credentials view."
-              : undefined,
-          ]
+          const hint = [field.description, field.type === "credential" ? t("settings.pluginModals.credentialHint") : undefined]
             .filter((part) => part !== undefined)
             .join(" ");
           return (
@@ -156,8 +147,7 @@ export function PluginSettingsModal({
                       aria-describedby={hint === "" ? undefined : `${id}-hint`}
                       onChange={(event) => setValues({ ...values, [key]: event.target.checked ? "true" : "false" })}
                     />{" "}
-                    {name}
-                    {field.required === true ? " (required)" : ""}
+                    {field.required === true ? t("settings.instances.required", { key: name }) : name}
                   </label>
                   {hint === "" ? null : (
                     <p id={`${id}-hint`} className="muted">
@@ -168,12 +158,7 @@ export function PluginSettingsModal({
               ) : (
                 <Field
                   id={id}
-                  label={
-                    <>
-                      {name}
-                      {field.required === true ? " (required)" : ""}
-                    </>
-                  }
+                  label={field.required === true ? t("settings.instances.required", { key: name }) : name}
                   {...(hint === "" ? {} : { hint, hintClassName: "muted" })}
                 >
                   <input
@@ -188,7 +173,7 @@ export function PluginSettingsModal({
           );
         })}
         <FormFailure message={failure} />
-        <FormActions saving={saving} disabled={saving} cancelDisabled={saving} label="Save" onCancel={onClose} />
+        <FormActions saving={saving} disabled={saving} cancelDisabled={saving} label={t("settings.action.save")} onCancel={onClose} />
       </form>
     </Modal>
   );

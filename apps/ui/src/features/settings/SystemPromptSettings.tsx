@@ -1,3 +1,4 @@
+import { useT } from "../../lib/i18n.js";
 import { Failure, PageHead, Pending } from "../../ui/Parts.js";
 import { LoadError } from "./FormParts.js";
 import { SystemPromptEditor, useSystemPromptEditor } from "./SystemPromptEditor.js";
@@ -23,6 +24,7 @@ import { workspaceWords } from "./common.js";
  * editor can actually prevent from inside a page.
  */
 export function SystemPromptSettings() {
+  const t = useT();
   const { workspaceId } = useWorkspace();
   const { client } = useWorkspace();
   const editor = useSystemPromptEditor(client, workspaceId);
@@ -31,13 +33,8 @@ export function SystemPromptSettings() {
   const heading = (
     <PageHead
       className="settings-head"
-      title="System prompt"
-      description={
-        <>
-          The base instructions for chats in {workspaceWords(workspaceId)}. A new chat, and each existing chat's next message, run under it.
-          A persona is appended after this text, and a routine's own pinned instructions always win.
-        </>
-      }
+      title={t("settings.systemPrompt.title")}
+      description={t("settings.systemPrompt.description", { workspace: workspaceWords(workspaceId) })}
     />
   );
 
@@ -53,7 +50,7 @@ export function SystemPromptSettings() {
     return (
       <section className="settings">
         {heading}
-        <Pending label="Loading system prompt…" className="notice" status />
+        <Pending label={t("settings.systemPrompt.loading")} className="notice" status />
       </section>
     );
   }
@@ -65,37 +62,30 @@ export function SystemPromptSettings() {
           paths: otherwise a failed refresh leaves the form showing state the
           owner has moved past. */}
       {error === undefined ? null : <LoadError error={error} reload={editor.reloadSaved} />}
-      {loading ? <p>Refreshing…</p> : null}
+      {loading ? <p>{t("settings.systemPrompt.refreshing")}</p> : null}
 
-      {saved.explicitAdapterShadowing ? (
-        <Failure>
-          This owner runs a prompt configured outside the workspace settings, which outranks this one: messages run under it, not what you
-          save here. This is unusual — no ordinary workspace task selects a prompt this way today — and a save here still changes what a
-          task without such a prompt would use.
-        </Failure>
-      ) : null}
+      {saved.explicitAdapterShadowing ? <Failure>{t("settings.systemPrompt.shadowed")}</Failure> : null}
 
       <p>
-        <strong>{saved.mode === "default" ? "Built-in default" : "Custom"}</strong> · revision {saved.revision} · applies from the next
-        message{workspaceId === DEFAULT_WORKSPACE_ID ? "" : ` in ${workspaceId}`}
+        <strong>{saved.mode === "default" ? t("settings.systemPrompt.builtIn") : t("settings.systemPrompt.custom")}</strong>
+        {" · "}
+        {workspaceId === DEFAULT_WORKSPACE_ID
+          ? t("settings.systemPrompt.applies", { revision: String(saved.revision) })
+          : t("settings.systemPrompt.appliesIn", { revision: String(saved.revision), workspaceId })}
       </p>
 
       <SystemPromptEditor editor={editor} />
 
       <details className="settings-panel">
-        <summary className="disclosure">The shipped default ({saved.shipped.templateVersion})</summary>
+        <summary className="disclosure">{t("settings.systemPrompt.shipped", { version: saved.shipped.templateVersion })}</summary>
         {/* Rendered as text, never as markup: an operator's prompt is data. */}
-        <pre role="region" aria-label="Shipped default system prompt">
+        <pre role="region" aria-label={t("settings.systemPrompt.shippedLabel")}>
           {saved.shipped.text}
         </pre>
       </details>
       <details className="settings-panel">
-        <summary className="disclosure">What gets added to this text</summary>
-        <p>
-          A named agent's persona is appended after this text, and resolved memory, approved skills and retrieved context are added
-          separately on every model call. The compaction summary call uses its own dedicated prompt and is unaffected. Personas are looked
-          up live, so this release does not snapshot them.
-        </p>
+        <summary className="disclosure">{t("settings.systemPrompt.added")}</summary>
+        <p>{t("settings.systemPrompt.addedBody")}</p>
       </details>
     </section>
   );

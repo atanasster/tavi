@@ -7,8 +7,7 @@ import {
   type WebSearchResult,
 } from "@tavi/contracts";
 
-import { plural } from "@tavi/contracts/util";
-
+import { translateNow } from "../../lib/i18n.js";
 import { ask, mapOutcome, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { SETTINGS_BOUNDS, restartNote, type FormErrors } from "./common.js";
 import { credentialActions } from "./credentials-api.js";
@@ -46,15 +45,16 @@ export function validateWebSearchForm(values: WebSearchFormValues): FormErrors<W
   const errors: { -readonly [K in keyof WebSearchFormValues]?: string } = {};
   const needs = searchKindNeeds(values.kind);
   if (!SEARCH_PROVIDER_ID_PATTERN.test(values.providerId) || values.providerId.length > SETTINGS_BOUNDS.providerId) {
-    errors.providerId = "A lower-case name: letters and digits, joined by . _ or -";
+    errors.providerId = translateNow("settings.searchApi.badName");
   }
   const baseUrl = values.baseUrl.trim();
   if (needs.baseUrl && (!/^https?:\/\/[^/@\s?#]+(?:\/[^\s?#]*)?$/i.test(baseUrl) || baseUrl.length > SETTINGS_BOUNDS.baseUrl)) {
-    errors.baseUrl = "The instance's http(s) address, with no credentials, query or fragment";
+    errors.baseUrl = translateNow("settings.searchApi.badBaseUrl");
   }
   const key = keyToStore(values);
-  if (needs.key === "required" && key === "") errors.apiKey = `${SEARCH_KIND_LABELS[values.kind]} needs an API key`;
-  else if (key.length > SETTINGS_BOUNDS.value) errors.apiKey = "At most 16 KiB";
+  if (needs.key === "required" && key === "")
+    errors.apiKey = translateNow("settings.searchApi.needsKey", { label: SEARCH_KIND_LABELS[values.kind] });
+  else if (key.length > SETTINGS_BOUNDS.value) errors.apiKey = translateNow("settings.credentials.tooLong");
   return errors;
 }
 
@@ -79,10 +79,11 @@ export async function saveWebSearchProvider(client: SettingsClient, values: WebS
   if (!providers.ok) return providers;
   const taken = [...providers.value.providers.map((provider) => provider.providerId), ...(providers.value.unreadable ?? [])];
   if (taken.includes(values.providerId))
-    return { ok: false, message: `A search provider named ${values.providerId} exists: pick another name.` };
+    return { ok: false, message: translateNow("settings.searchApi.nameTaken", { id: values.providerId }) };
   if (key !== "") {
     // Guards a later change to either pattern: an id the form accepts always names a usable reference today.
-    if (!SECRET_KEY_REF_PATTERN.test(reference)) return { ok: false, message: `${reference} is not a usable credential name` };
+    if (!SECRET_KEY_REF_PATTERN.test(reference))
+      return { ok: false, message: translateNow("settings.searchApi.badReference", { reference }) };
     const [stored, connections] = await Promise.all([
       credentialActions.list(client),
       ask<readonly ConnectionSummary[]>(client, "models", { action: "list" }),
@@ -92,7 +93,7 @@ export async function saveWebSearchProvider(client: SettingsClient, values: WebS
     if (stored.value.credentials.includes(reference) || connections.value.some((connection) => connection.credentialRef === reference)) {
       return {
         ok: false,
-        message: `The credential ${reference} is already in use: pick another name, or replace it on the Credentials view.`,
+        message: translateNow("settings.searchApi.referenceTaken", { reference }),
       };
     }
     const written = await ask<unknown>(client, "credentials", { action: "set", reference, value: key });
@@ -106,10 +107,8 @@ export async function saveWebSearchProvider(client: SettingsClient, values: WebS
     ...(searchKindNeeds(values.kind).baseUrl ? { baseUrl: values.baseUrl.trim() } : {}),
   });
   if (!added.ok)
-    return key === ""
-      ? added
-      : { ok: false, message: `${added.message} (the key was stored as ${reference}; the Credentials view deletes it)` };
-  return { ok: true, value: restartNote(added.value, "search") ?? `${values.providerId} added.` };
+    return key === "" ? added : { ok: false, message: translateNow("settings.searchApi.notAdded", { message: added.message, reference }) };
+  return { ok: true, value: restartNote(added.value, "search") ?? translateNow("settings.searchApi.added", { id: values.providerId }) };
 }
 
 export const searchActions = {
@@ -123,7 +122,12 @@ export const searchActions = {
     ),
   async setEnabled(client: SettingsClient, providerId: string, enabled: boolean): Promise<Outcome<string | undefined>> {
     const written = await ask<unknown>(client, "search", { action: enabled ? "enable" : "disable", providerId });
-    return mapOutcome(written, (value) => restartNote(value, "search") ?? `${providerId} ${enabled ? "enabled" : "disabled"}.`);
+    return mapOutcome(
+      written,
+      (value) =>
+        restartNote(value, "search") ??
+        translateNow(enabled ? "settings.searchApi.enabled" : "settings.searchApi.disabled", { id: providerId }),
+    );
   },
   async remove(
     client: SettingsClient,
@@ -132,13 +136,17 @@ export const searchActions = {
     const removed = await ask<unknown>(client, "search", { action: "remove", providerId: provider.providerId });
     if (!removed.ok) return removed;
     // Its key is not deleted with it: another provider, or a later one of the same name, may use it.
-    const kept =
-      provider.credentialRef === undefined ? "" : ` Its key ${provider.credentialRef} stays stored; the Credentials view deletes it.`;
-    return { ok: true, value: `${provider.providerId} removed.${kept}` };
+    return {
+      ok: true,
+      value:
+        provider.credentialRef === undefined
+          ? translateNow("settings.searchApi.removed", { id: provider.providerId })
+          : translateNow("settings.searchApi.removedKeyKept", { id: provider.providerId, reference: provider.credentialRef }),
+    };
   },
   async test(client: SettingsClient, providerId: string): Promise<Outcome<string | undefined>> {
     // The owner's search test answers what a search answers.
     const tested = await ask<WebSearchResult>(client, "search", { action: "test", providerId });
-    return mapOutcome(tested, (value) => `${providerId} answered with ${plural(value.sources.length, "result")}.`);
+    return mapOutcome(tested, (value) => translateNow("settings.searchApi.tested", { id: providerId, count: value.sources.length }));
   },
 };

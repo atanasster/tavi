@@ -20,6 +20,8 @@ import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
+import { useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * A group channel's rooms and grants: whether each room reads its recent
@@ -30,6 +32,7 @@ import { Command } from "../../ui/Command.js";
  * the operator gave it, the platform's names only in the picker.
  */
 export function RoomsAndGrants({ connection, onClose }: { connection: ChannelConnectionView; onClose: () => void }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const connectionId = connection.connectionId;
   const [rooms, setRooms] = useState<ChannelsRoomsAnswer>();
@@ -79,21 +82,17 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
   const unlisted = rooms?.candidates?.filter((candidate) => !rooms.rooms.some((room) => room.conversationId === candidate.id)) ?? [];
   const dropped = Object.entries(rooms?.drops ?? {}).filter(([, count]) => count !== undefined && count > 0);
   return (
-    <Modal title={`Rooms of ${connection.label}`} busy={busy} onClose={onClose}>
-      <h3>Rooms</h3>
+    <Modal title={t("settings.rooms.title", { label: connection.label })} busy={busy} onClose={onClose}>
+      <h3>{t("settings.rooms.rooms")}</h3>
       {rooms === undefined ? (
-        <Empty>Loading…</Empty>
+        <Empty>{t("settings.rooms.loading")}</Empty>
       ) : !rooms.rooms.length ? (
         <Empty>
-          No rooms yet
-          {unlisted.length ? (
-            ": pick one below"
-          ) : (
-            <>
-              : add one with <Command>{`tavi channels rooms ${connectionId} add <id>`}</Command>
-            </>
-          )}
-          .
+          {unlisted.length
+            ? t("settings.rooms.emptyPick")
+            : withParts(t("settings.rooms.emptyAdd"), {
+                command: <Command>{`tavi channels rooms ${connectionId} add <id>`}</Command>,
+              })}
         </Empty>
       ) : (
         <ul className="rows">
@@ -110,25 +109,25 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
                     </>
                   )}
                   <p className="settings-description">
-                    {room.conversationId} · {`answers when they ${triggerInWords(room.trigger)}`} ·{" "}
-                    {room.members === "operator-only" ? "only you" : "people you allowed"} ·{" "}
-                    {room.context === "recent"
-                      ? "reads up to 20 messages before one that addresses Tavi"
-                      : "reads only the message that addresses Tavi"}
+                    {room.conversationId} · {t("settings.rooms.answersWhen", { trigger: triggerInWords(room.trigger) })} ·{" "}
+                    {room.members === "operator-only" ? t("settings.rooms.onlyYou") : t("settings.rooms.allowedPeople")} ·{" "}
+                    {room.context === "recent" ? t("settings.rooms.readsRecent", { count: 20 }) : t("settings.rooms.readsOnly")}
                   </p>
-                  {refused === undefined ? null : <p className="settings-description">Its last message was refused: {refused}</p>}
+                  {refused === undefined ? null : (
+                    <p className="settings-description">{t("settings.rooms.refused", { reason: refused })}</p>
+                  )}
                   {room.introState === "pending" ? (
-                    <p className="settings-description">
-                      Its introduction was not sent: Tavi tries again the next time the room is listed with the connection open.
-                    </p>
+                    <p className="settings-description">{t("settings.rooms.introPending")}</p>
                   ) : room.introState === "uncertain" ? (
-                    <p className="settings-description">Its introduction may not have been sent, so it is not sent again.</p>
+                    <p className="settings-description">{t("settings.rooms.introUncertain")}</p>
                   ) : null}
                 </div>
                 <div className="actions">
                   <RowAction
                     disabled={busy}
-                    aria-label={`${room.context === "recent" ? "Stop reading" : "Read"} recent messages in ${room.label}`}
+                    aria-label={t(room.context === "recent" ? "settings.rooms.stopReadingLabel" : "settings.rooms.readLabel", {
+                      label: room.label,
+                    })}
                     onClick={() =>
                       void act(
                         {
@@ -140,25 +139,25 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
                           context: room.context === "recent" ? "off" : "recent",
                         },
                         room.context === "recent"
-                          ? `${room.label} reads only what addresses Tavi.`
-                          : `${room.label} reads its recent messages.`,
+                          ? t("settings.rooms.nowReadsOnly", { label: room.label })
+                          : t("settings.rooms.nowReadsRecent", { label: room.label }),
                       )
                     }
                   >
-                    {room.context === "recent" ? "Read only the message" : "Read recent messages"}
+                    {room.context === "recent" ? t("settings.rooms.readOnlyAction") : t("settings.rooms.readRecentAction")}
                   </RowAction>
                   <RowAction
                     tone="danger"
                     disabled={busy}
-                    aria-label={`Remove room ${room.label}`}
+                    aria-label={t("settings.rooms.removeLabel", { label: room.label })}
                     onClick={() =>
                       void act(
                         { action: "rooms", workspaceId, connectionId, op: "remove", conversationId: room.conversationId },
-                        `${room.label} is no longer listened to.`,
+                        t("settings.rooms.removed", { label: room.label }),
                       )
                     }
                   >
-                    Remove
+                    {t("settings.action.remove")}
                   </RowAction>
                 </div>
               </li>
@@ -172,18 +171,15 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
             event.preventDefault();
             if (picked !== "") {
               setPicked("");
-              void act(
-                { action: "rooms", workspaceId, connectionId, op: "add", conversationId: picked },
-                "Room added; it is told whose agent this is.",
-              );
+              void act({ action: "rooms", workspaceId, connectionId, op: "add", conversationId: picked }, t("settings.rooms.added"));
             }
           }}
         >
-          <BusyFieldset busy={busy} label="Adding the room…" className="settings-fields">
+          <BusyFieldset busy={busy} label={t("settings.rooms.adding")} className="settings-fields">
             <label>
-              Add a room
-              <Select aria-label="Room to add" value={picked} onChange={(event) => setPicked(event.target.value)}>
-                <option value="">Choose a room…</option>
+              {t("settings.rooms.addTitle")}
+              <Select aria-label={t("settings.rooms.addLabel")} value={picked} onChange={(event) => setPicked(event.target.value)}>
+                <option value="">{t("settings.rooms.choose")}</option>
                 {unlisted.map((candidate) => (
                   <option key={candidate.id} value={candidate.id}>
                     {candidate.place === undefined ? candidate.name : `${candidate.name} (${candidate.place})`}
@@ -193,7 +189,7 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
             </label>
             <div className="actions">
               <Button variant="primary" type="submit" disabled={picked === ""}>
-                Add room
+                {t("settings.rooms.add")}
               </Button>
             </div>
           </BusyFieldset>
@@ -201,42 +197,43 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
       ) : null}
       {rooms?.waiting.length ? (
         <>
-          <h3>Waiting for you</h3>
+          <h3>{t("settings.rooms.waiting")}</h3>
           <ul className="rows">
             {rooms.waiting.map((waiting) => (
               <li className="row" key={waiting.conversationId}>
                 <div>
                   <strong>{waiting.roomName ?? waiting.conversationId}</strong>
                   <p className="settings-description">
-                    {waiting.conversationId} · {waiting.how === "added" ? `the bot was added by ${waiting.by}` : "spoke while unlisted"}
+                    {waiting.conversationId} ·{" "}
+                    {waiting.how === "added" ? t("settings.rooms.addedBy", { by: waiting.by }) : t("settings.rooms.spoke")}
                   </p>
                 </div>
                 <div className="actions">
                   <RowAction
                     disabled={busy}
-                    aria-label={`Add ${waiting.roomName ?? waiting.conversationId} as a room`}
+                    aria-label={t("settings.rooms.addAsLabel", { name: waiting.roomName ?? waiting.conversationId })}
                     onClick={() =>
                       void act(
                         { action: "rooms", workspaceId, connectionId, op: "add", conversationId: waiting.conversationId },
-                        "Room added; it is told whose agent this is.",
+                        t("settings.rooms.added"),
                       )
                     }
                   >
-                    Add as room
+                    {t("settings.rooms.addAs")}
                   </RowAction>
                   {/* The bot leaves where its channel can; elsewhere the refusal says to remove it in the room itself. */}
                   <RowAction
                     tone="danger"
                     disabled={busy}
-                    aria-label={`Leave ${waiting.roomName ?? waiting.conversationId}`}
+                    aria-label={t("settings.rooms.leaveLabel", { name: waiting.roomName ?? waiting.conversationId })}
                     onClick={() =>
                       void act(
                         { action: "rooms", workspaceId, connectionId, op: "leave", conversationId: waiting.conversationId },
-                        "The bot left that room.",
+                        t("settings.rooms.left"),
                       )
                     }
                   >
-                    Leave
+                    {t("settings.rooms.leave")}
                   </RowAction>
                 </div>
               </li>
@@ -246,24 +243,21 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
       ) : null}
       {dropped.length ? (
         <p className="settings-description">
-          Not taken in since Tavi started: {dropped.map(([reason, count]) => `${String(count)} ${reason}`).join(", ")}. Nothing of these is
-          kept.
+          {t("settings.rooms.dropped", { list: dropped.map(([reason, count]) => `${String(count)} ${reason}`).join(", ") })}
         </p>
       ) : null}
-      <h3>Grants</h3>
+      <h3>{t("settings.rooms.grants")}</h3>
       {grants === undefined ? null : !grants.grants.length ? (
-        <Empty>No grants.</Empty>
+        <Empty>{t("settings.rooms.noGrants")}</Empty>
       ) : (
         <ul className="rows">
           {grants.grants.map((grant) => (
             <li className="row" key={grant.grantId}>
               <div>
-                <strong>
-                  {grant.mode === "deny" ? "Deny" : "Allow"} {grant.toolId}
-                </strong>
+                <strong>{t(grant.mode === "deny" ? "settings.rooms.denyTool" : "settings.rooms.allowTool", { tool: grant.toolId })}</strong>
                 <p className="settings-description">
-                  {grant.scopeKind === "room" ? "room" : "one-to-one chat with"} {grant.scopeId}
-                  {grant.inForce ? "" : grant.revokedAt !== undefined ? " · revoked" : " · expired"}
+                  {t(grant.scopeKind === "room" ? "settings.rooms.scopeRoom" : "settings.rooms.scopeContact", { id: grant.scopeId })}
+                  {grant.inForce ? "" : ` · ${grant.revokedAt !== undefined ? t("settings.rooms.revoked") : t("settings.rooms.expired")}`}
                 </p>
               </div>
               {grant.inForce ? (
@@ -271,15 +265,15 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
                   <RowAction
                     tone="danger"
                     disabled={busy}
-                    aria-label={`Revoke ${grant.grantId}`}
+                    aria-label={t("settings.rooms.revokeLabel", { id: grant.grantId })}
                     onClick={() =>
                       void act(
                         { action: "grants", workspaceId, connectionId, op: "revoke", grantId: grant.grantId },
-                        "Revoked, from the chat's next turn.",
+                        t("settings.rooms.revokedNote"),
                       )
                     }
                   >
-                    Revoke
+                    {t("settings.rooms.revoke")}
                   </RowAction>
                 </div>
               ) : null}
@@ -292,15 +286,15 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
           event.preventDefault();
           void act(
             { action: "grants", workspaceId, connectionId, op: "add", scopeKind, scopeId: scopeId.trim(), toolId: toolId.trim(), mode },
-            "Granted.",
+            t("settings.rooms.granted"),
           );
         }}
       >
-        <BusyFieldset busy={busy} label="Saving the grant…" className="settings-fields">
+        <BusyFieldset busy={busy} label={t("settings.rooms.savingGrant")} className="settings-fields">
           <label>
-            Where
+            {t("settings.rooms.where")}
             <Select
-              aria-label="Grant scope"
+              aria-label={t("settings.rooms.scopeLabel")}
               value={scopeKind}
               onChange={(event) => {
                 const next = event.target.value === "room" ? "room" : "contact";
@@ -308,14 +302,14 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
                 if (next === "room") setMode("deny");
               }}
             >
-              <option value="contact">One person's one-to-one chat</option>
-              <option value="room">A room</option>
+              <option value="contact">{t("settings.rooms.scopeContactOption")}</option>
+              <option value="room">{t("settings.rooms.scopeRoomOption")}</option>
             </Select>
           </label>
           <label>
-            {scopeKind === "room" ? "Room id" : "Their sender id"}
+            {scopeKind === "room" ? t("settings.rooms.roomId") : t("settings.rooms.senderId")}
             <input
-              aria-label="Grant scope id"
+              aria-label={t("settings.rooms.scopeIdLabel")}
               required
               maxLength={256}
               value={scopeId}
@@ -323,9 +317,9 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
             />
           </label>
           <label>
-            Tool
+            {t("settings.mcp.review.tool")}
             <input
-              aria-label="Grant tool"
+              aria-label={t("settings.rooms.toolLabel")}
               required
               maxLength={200}
               value={toolId}
@@ -334,10 +328,14 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
             />
           </label>
           <label>
-            Grant
-            <Select aria-label="Grant mode" value={mode} onChange={(event) => setMode(event.target.value === "allow" ? "allow" : "deny")}>
-              <option value="deny">Deny</option>
-              {scopeKind === "contact" ? <option value="allow">Allow (asked, as anywhere)</option> : null}
+            {t("settings.rooms.grant")}
+            <Select
+              aria-label={t("settings.rooms.modeLabel")}
+              value={mode}
+              onChange={(event) => setMode(event.target.value === "allow" ? "allow" : "deny")}
+            >
+              <option value="deny">{t("settings.rooms.deny")}</option>
+              {scopeKind === "contact" ? <option value="allow">{t("settings.rooms.allowAsked")}</option> : null}
             </Select>
           </label>
           {/* What the last grant or revoke said, over the footer it answers rather than under it. */}
@@ -345,10 +343,10 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
           <Failure message={failure} />
           <div className="actions">
             <Button variant="ghost" onClick={onClose}>
-              Close
+              {t("settings.action.close")}
             </Button>
             <Button variant="primary" type="submit">
-              Save grant
+              {t("settings.rooms.saveGrant")}
             </Button>
           </div>
         </BusyFieldset>
@@ -357,6 +355,7 @@ export function RoomsAndGrants({ connection, onClose }: { connection: ChannelCon
   );
 }
 export function Ingress({ data, reload }: { data: ChannelsListAnswer; reload: () => void }) {
+  const t = useT();
   const { client } = useWorkspace();
   const [port, setPort] = useState(data.ingress.port);
   const [publicUrl, setPublicUrl] = useState(data.ingress.publicUrl ?? "");
@@ -366,8 +365,8 @@ export function Ingress({ data, reload }: { data: ChannelsListAnswer; reload: ()
       const answer = await request<ChannelsIngressAnswer>(client, { action: "ingress", port, publicUrl: publicUrl.trim() });
       if (!answer.ok) return answer;
       if (answer.value.notApplied !== undefined)
-        return { ok: true, value: `Saved, but the listener could not move: ${answer.value.notApplied}` };
-      return { ok: true, value: "Saved and applied." };
+        return { ok: true, value: t("settings.ingress.notApplied", { reason: answer.value.notApplied }) };
+      return { ok: true, value: t("settings.ingress.saved") };
     });
   return (
     <form
@@ -377,16 +376,13 @@ export function Ingress({ data, reload }: { data: ChannelsListAnswer; reload: ()
         void save();
       }}
     >
-      <h2 className="settings-section-title">Webhooks</h2>
+      <h2 className="settings-section-title">{t("settings.ingress.title")}</h2>
       <BusyFieldset busy={busy !== undefined} className="settings-fields">
-        <p className="settings-description">
-          Channels that receive webhooks share one listener on 127.0.0.1. Put it behind your HTTPS proxy and enter the proxy’s address; each
-          connection’s webhook is under its <code>/hooks/</code> path.
-        </p>
+        <p className="settings-description">{withParts(t("settings.ingress.help"), { path: <code>/hooks/</code> })}</p>
         <label>
-          Local webhook port
+          {t("settings.ingress.port")}
           <input
-            aria-label="Local webhook port"
+            aria-label={t("settings.ingress.port")}
             type="number"
             min={1024}
             max={65535}
@@ -396,9 +392,9 @@ export function Ingress({ data, reload }: { data: ChannelsListAnswer; reload: ()
           />
         </label>
         <label>
-          Public address (optional)
+          {t("settings.ingress.publicOptional")}
           <input
-            aria-label="Public address"
+            aria-label={t("settings.ingress.public")}
             type="url"
             placeholder="https://hooks.example.com/tavi"
             maxLength={2048}
@@ -413,7 +409,7 @@ export function Ingress({ data, reload }: { data: ChannelsListAnswer; reload: ()
             type="submit"
             disabled={port === data.ingress.port && publicUrl.trim() === (data.ingress.publicUrl ?? "")}
           >
-            {busy === "ingress" ? "Saving…" : "Save webhooks"}
+            {busy === "ingress" ? t("ui.parts.saving") : t("settings.ingress.save")}
           </Button>
         </div>
       </BusyFieldset>

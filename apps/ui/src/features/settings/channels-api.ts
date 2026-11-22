@@ -1,5 +1,6 @@
 import type { ChannelDescriptor, ChannelsCatalogAnswer, ChannelsListAnswer, ChannelsPayload, ChannelsPeopleAnswer } from "@tavi/contracts";
 
+import { translateNow } from "../../lib/i18n.js";
 import { ask, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 
 export type SettingValue = string | number | boolean;
@@ -10,8 +11,8 @@ export function request<T>(client: SettingsClient, payload: ChannelsPayload): Pr
     { ...payload },
     {
       timeoutMs: null,
-      refused: "The channel change was refused.",
-      unreachable: "The service could not be reached. Reconnect and try again.",
+      refused: translateNow("settings.channels.refused"),
+      unreachable: translateNow("settings.channels.unreachable"),
     },
   );
 }

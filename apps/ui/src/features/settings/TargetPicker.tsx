@@ -5,6 +5,7 @@ import { readsVideo } from "@tavi/contracts";
 import { IconButton } from "../../ui/IconButton.js";
 import { Select } from "../../ui/Select.js";
 import { browse, capacityLabel, describeTarget, sameTarget, type BrowsedModel, type ModelsData, type TargetRef } from "./models-api.js";
+import { useT } from "../../lib/i18n.js";
 import type { Outcome } from "../../lib/ipc.js";
 import { Modal } from "../../ui/Modal.js";
 import { FormActions } from "./FormParts.js";
@@ -48,6 +49,7 @@ export function TargetPicker({
   readonly onSave: (primary: TargetRef, fallback: readonly TargetRef[]) => Promise<Outcome<string | undefined>>;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
   const [connectionId, setConnectionId] = useState(initialConnection);
@@ -81,7 +83,7 @@ export function TargetPicker({
     setWorking("test");
     const outcome = await onTest(primary);
     setWorking(undefined);
-    setResult(outcome.ok ? { ok: true, message: outcome.value ?? "Answered." } : { ok: false, message: outcome.message });
+    setResult(outcome.ok ? { ok: true, message: outcome.value ?? t("settings.picker.answered") } : { ok: false, message: outcome.message });
   };
   const submit = (event: FormEvent): void => {
     event.preventDefault();
@@ -98,16 +100,20 @@ export function TargetPicker({
     <Modal title={title} wide busy={working === "save"} onClose={onClose}>
       <form className="picker" onSubmit={submit}>
         <p className="picker-intro">{intro}</p>
-        <section className="picker-chain" aria-label="Chosen models">
+        <section className="picker-chain" aria-label={t("settings.picker.chosen")}>
           <div className="picker-slot">
-            <span className="picker-slot-label">Primary</span>
-            {primary === undefined ? <span className="muted">Pick a model below</span> : <TargetName target={primary} data={data} />}
+            <span className="picker-slot-label">{t("settings.picker.primary")}</span>
+            {primary === undefined ? (
+              <span className="muted">{t("settings.picker.pickBelow")}</span>
+            ) : (
+              <TargetName target={primary} data={data} />
+            )}
           </div>
           {allowFallbacks ? (
             <div className="picker-slot">
-              <span className="picker-slot-label">Fallbacks</span>
+              <span className="picker-slot-label">{t("settings.picker.fallbacks")}</span>
               {fallback.length === 0 ? (
-                <span className="muted">None: add up to {MAX_FALLBACKS}, tried in order if the primary fails</span>
+                <span className="muted">{t("settings.picker.noFallbacks", { max: MAX_FALLBACKS })}</span>
               ) : (
                 <ol className="picker-fallbacks">
                   {fallback.map((entry, index) => {
@@ -119,21 +125,21 @@ export function TargetPicker({
                           <IconButton
                             icon="chevron-up"
                             size="sm"
-                            label={`Move ${name} earlier`}
+                            label={t("settings.picker.earlier", { name })}
                             disabled={index === 0}
                             onClick={() => move(index, -1)}
                           />
                           <IconButton
                             icon="chevron-down"
                             size="sm"
-                            label={`Move ${name} later`}
+                            label={t("settings.picker.later", { name })}
                             disabled={index === fallback.length - 1}
                             onClick={() => move(index, 1)}
                           />
                           <IconButton
                             icon="close"
                             size="sm"
-                            label={`Remove ${name} from fallbacks`}
+                            label={t("settings.picker.removeFallback", { name })}
                             onClick={() => setFallback((chain) => chain.filter((_, slot) => slot !== index))}
                           />
                         </span>
@@ -148,15 +154,19 @@ export function TargetPicker({
 
         <div className="picker-filters" role="search">
           <input
-            aria-label="Search models"
-            placeholder={`Search ${data.models.length} models`}
+            aria-label={t("settings.picker.search")}
+            placeholder={t("settings.picker.searchCount", { count: String(data.models.length) })}
             value={search}
             autoComplete="off"
             onChange={(event) => setSearch(event.target.value)}
           />
           {data.connections.length > 1 ? (
-            <Select aria-label="Connection" value={connectionId} onChange={(event) => setConnectionId(event.target.value)}>
-              <option value="">All connections</option>
+            <Select
+              aria-label={t("settings.picker.connection")}
+              value={connectionId}
+              onChange={(event) => setConnectionId(event.target.value)}
+            >
+              <option value="">{t("settings.picker.allConnections")}</option>
               {data.connections.map((connection) => (
                 <option key={connection.connectionId} value={connection.connectionId}>
                   {connection.label}
@@ -165,21 +175,22 @@ export function TargetPicker({
             </Select>
           ) : null}
           <label className="toggle">
-            <input type="checkbox" checked={toolsOnly} onChange={(event) => setToolsOnly(event.target.checked)} /> Tool calling only
+            <input type="checkbox" checked={toolsOnly} onChange={(event) => setToolsOnly(event.target.checked)} />{" "}
+            {t("settings.picker.toolsOnly")}
           </label>
         </div>
 
         {matching.length === 0 ? (
           <Empty>
             {loading
-              ? "Loading models…"
+              ? t("settings.picker.loading")
               : data.models.length === 0
-                ? "No model is discovered yet. Rediscover the connection, then try again."
-                : "No model matches."}
+                ? t("settings.picker.noneDiscovered")
+                : t("settings.picker.noMatch")}
           </Empty>
         ) : (
           // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: the list is the radio group; each row in it is a radio
-          <ul className="picker-list list-reset" id={listId} role="radiogroup" aria-label="Models">
+          <ul className="picker-list list-reset" id={listId} role="radiogroup" aria-label={t("settings.picker.models")}>
             {shown.map((model) => {
               const target = refOf(model);
               const isPrimary = sameTarget(target, primary);
@@ -201,21 +212,21 @@ export function TargetPicker({
                       </span>
                     </span>
                     <span className="picker-badges">
-                      {model.capabilities.includes("tools") ? <span className="badge">tools</span> : null}
-                      {readsVideo(model.capabilities) ? <span className="badge">video</span> : null}
-                      {model.state === "unavailable" ? <span className="badge badge-bad">unavailable</span> : null}
-                      {model.stale ? <span className="badge badge-stale">stale</span> : null}
+                      {model.capabilities.includes("tools") ? <span className="badge">{t("settings.badge.tools")}</span> : null}
+                      {readsVideo(model.capabilities) ? <span className="badge">{t("settings.badge.video")}</span> : null}
+                      {model.state === "unavailable" ? <span className="badge badge-bad">{t("settings.badge.unavailable")}</span> : null}
+                      {model.stale ? <span className="badge badge-stale">{t("settings.badge.stale")}</span> : null}
                     </span>
                   </label>
                   {allowFallbacks ? (
                     <Button
                       variant="ghost"
                       size="sm"
-                      aria-label={`Add ${name} as a fallback`}
+                      aria-label={t("settings.picker.addFallbackLabel", { name })}
                       disabled={isPrimary || inChain || fallback.length >= MAX_FALLBACKS}
                       onClick={() => addFallback(model)}
                     >
-                      {inChain ? "Fallback" : "+ Fallback"}
+                      {inChain ? t("settings.picker.fallback") : t("settings.picker.addFallback")}
                     </Button>
                   ) : null}
                 </li>
@@ -224,9 +235,7 @@ export function TargetPicker({
           </ul>
         )}
         {matching.length > SHOWN ? (
-          <p className="muted picker-more">
-            Showing {SHOWN} of {matching.length}. Search to narrow the list.
-          </p>
+          <p className="muted picker-more">{t("settings.picker.more", { shown: String(SHOWN), total: String(matching.length) })}</p>
         ) : null}
         {result !== undefined ? (
           <p className={result.ok ? "notice" : "failure"} role="status">
@@ -238,16 +247,16 @@ export function TargetPicker({
           saving={working === "save"}
           disabled={primary === undefined || working !== undefined}
           cancelDisabled={working === "save"}
-          label="Save"
+          label={t("settings.action.save")}
           onCancel={onClose}
         >
           <Button
             className="picker-test"
             disabled={primary === undefined || working !== undefined || primaryModel?.providerManaged === true}
-            title={primaryModel?.providerManaged === true ? "Use an approved task to test a plugin model." : undefined}
+            title={primaryModel?.providerManaged === true ? t("settings.picker.pluginModel") : undefined}
             onClick={() => void test()}
           >
-            {working === "test" ? "Testing…" : "Test primary"}
+            {working === "test" ? t("settings.action.testing") : t("settings.picker.testPrimary")}
           </Button>
         </FormActions>
       </form>

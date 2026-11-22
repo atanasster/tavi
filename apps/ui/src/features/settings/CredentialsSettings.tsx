@@ -7,6 +7,7 @@ import {
   type CredentialFormValues,
 } from "./credentials-api.js";
 import { Command } from "../../ui/Command.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import type { Outcome } from "../../lib/ipc.js";
 import { Failure, LoadState, Notice, PageHead, PageNote } from "../../ui/Parts.js";
 import { Confirm } from "../../ui/Confirm.js";
@@ -20,21 +21,21 @@ import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /** Whether the store is encrypted at rest, and where its key is: read-only, as `tavi credentials key` says it. */
 function EncryptionStatus({ status }: { readonly status: CredentialEncryptionStatus }) {
+  const t = useT();
   return (
     // Unencrypted is a warning, not a note: said in the warning colour.
     <p className={status.kept === "none" ? "credential-encryption credential-encryption-off" : "credential-encryption muted"}>
-      {status.kept === "none" ? (
-        <>
-          Not encrypted: run <Command>tavi credentials encrypt</Command>
-        </>
-      ) : status.kept === "keychain" ? (
-        `Encrypted; key in ${status.keychain ?? "the OS keychain"}`
-      ) : (
-        "Encrypted; key in credentials.key in the data directory"
-      )}
+      {status.kept === "none"
+        ? withParts(t("settings.credentials.notEncrypted"), { command: <Command>tavi credentials encrypt</Command> })
+        : status.kept === "keychain"
+          ? status.keychain === undefined
+            ? t("settings.credentials.encryptedOsKeychain")
+            : t("settings.credentials.encryptedKeychain", { keychain: status.keychain })
+          : t("settings.credentials.encryptedFile")}
     </p>
   );
 }
@@ -47,11 +48,11 @@ function EncryptionStatus({ status }: { readonly status: CredentialEncryptionSta
  */
 export function credentialLabel(reference: string): string | undefined {
   const pluginClient = /^channels\.plugin-client\.([^.]+)\.secret$/.exec(reference);
-  if (pluginClient !== null) return `${pluginClient[1]} sign-in secret`;
+  if (pluginClient !== null) return translateNow("settings.credentials.label.signIn", { plugin: pluginClient[1] ?? "" });
   const channel = /^channels\.[^.]+\.([^.]+)$/.exec(reference);
-  if (channel !== null) return `Channel ${channel[1]}`;
+  if (channel !== null) return translateNow("settings.credentials.label.channel", { secret: channel[1] ?? "" });
   const apiKey = /^(.+?)\.apiKey(?:\.[^.]+)?$/.exec(reference);
-  if (apiKey !== null) return `${apiKey[1]} API key`;
+  if (apiKey !== null) return translateNow("settings.credentials.label.apiKey", { connection: apiKey[1] ?? "" });
   return undefined;
 }
 
@@ -74,6 +75,7 @@ function CredentialName({ reference }: { readonly reference: string }) {
  * read back — the list names what is stored, never what it holds.
  */
 export function CredentialsSettings() {
+  const t = useT();
   const { client } = useWorkspace();
   const { data, error, loading, reload } = useLoaded(() => credentialActions.list(client));
   const { busy, note, tone, run, say } = useAction(reload);
@@ -83,48 +85,48 @@ export function CredentialsSettings() {
   const stored = data?.credentials ?? [];
   return (
     <section className="settings">
-      <PageHead
-        className="settings-head"
-        title="Credentials"
-        description="Values are stored by the owner and never shown here. Model connections and search providers name them by reference."
-      >
+      <PageHead className="settings-head" title={t("settings.credentials.title")} description={t("settings.credentials.description")}>
         <Button variant="primary" disabled={busy !== undefined} onClick={() => setSetting("")}>
-          Set a credential
+          {t("settings.credentials.set")}
         </Button>
       </PageHead>
       {data?.encryption === undefined ? null : <EncryptionStatus status={data.encryption} />}
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         <PageNote tone={tone} note={note} />
       </LoadState>
-      {data !== undefined && stored.length === 0 ? <Empty>No credential is stored.</Empty> : null}
+      {data !== undefined && stored.length === 0 ? <Empty>{t("settings.credentials.empty")}</Empty> : null}
       <ul className="rows">
         {stored.map((reference) => (
           <li key={reference} className="row">
             <CredentialName reference={reference} />
             <span className="actions">
-              <RowAction aria-label={`Replace ${reference}`} disabled={busy !== undefined} onClick={() => setSetting(reference)}>
-                Replace
+              <RowAction
+                aria-label={t("settings.credentials.replaceLabel", { reference })}
+                disabled={busy !== undefined}
+                onClick={() => setSetting(reference)}
+              >
+                {t("settings.credentials.replace")}
               </RowAction>
               <RowAction
                 tone="danger"
-                aria-label={`Delete ${reference}`}
+                aria-label={t("settings.credentials.deleteLabel", { reference })}
                 disabled={busy !== undefined}
                 onClick={() => setDeleting(reference)}
               >
-                Delete
+                {t("settings.action.delete")}
               </RowAction>
             </span>
           </li>
         ))}
       </ul>
       {data !== undefined && data.unusable.length > 0 ? (
-        <Failure alert={false}>Files that are not usable credentials: {data.unusable.join(", ")}.</Failure>
+        <Failure alert={false}>{t("settings.credentials.unusable", { files: data.unusable.join(", ") })}</Failure>
       ) : null}
       {deleting !== undefined ? (
         <Confirm
-          title={`Delete ${deleting}?`}
-          message={`The value is gone for good, and a model connection or search provider that names ${deleting} stops working until it is set again.`}
-          action="Delete"
+          title={t("settings.credentials.deleteTitle", { reference: deleting })}
+          message={t("settings.credentials.deleteMessage", { reference: deleting })}
+          action={t("settings.action.delete")}
           onClose={() => setDeleting(undefined)}
           onConfirm={() => run(`delete:${deleting}`, () => credentialActions.remove(client, deleting))}
         />
@@ -159,6 +161,7 @@ function CredentialForm({
   readonly save: (values: CredentialFormValues) => Promise<Outcome<string | undefined>>;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   const [values, setValues] = useState<CredentialFormValues>({ reference, value: "" });
   const errors = validateCredentialForm(values);
   const valid = Object.keys(errors).length === 0;
@@ -173,7 +176,11 @@ function CredentialForm({
   // A new reference that is already stored: said, since storing it replaces its value.
   const replaces = reference === "" && stored.includes(values.reference);
   return (
-    <Modal title={reference === "" ? "Set a credential" : `Replace ${reference}`} busy={saving} onClose={onClose}>
+    <Modal
+      title={reference === "" ? t("settings.credentials.set") : t("settings.credentials.replaceLabel", { reference })}
+      busy={saving}
+      onClose={onClose}
+    >
       <form
         className="form"
         autoComplete="off"
@@ -182,22 +189,22 @@ function CredentialForm({
           submit();
         }}
       >
-        <Field label="Reference" error={touched ? errors.reference : undefined}>
+        <Field label={t("settings.credentials.reference")} error={touched ? errors.reference : undefined}>
           <input
             autoComplete="off"
             value={values.reference}
             readOnly={reference !== ""}
-            placeholder="e.g. openai.apiKey"
+            placeholder={t("settings.credentials.referencePlaceholder")}
             onChange={(event) => setValues({ ...values, reference: event.target.value })}
           />
         </Field>
-        {replaces ? <Notice>{values.reference} is stored: this replaces its value.</Notice> : null}
-        <Field label="Value" error={touched ? errors.value : undefined}>
+        {replaces ? <Notice>{t("settings.credentials.replaces", { reference: values.reference })}</Notice> : null}
+        <Field label={t("settings.credentials.value")} error={touched ? errors.value : undefined}>
           {(control) => (
             <PasswordInput
               id={control.id}
               value={values.value}
-              placeholder="Paste the secret"
+              placeholder={t("settings.credentials.valuePlaceholder")}
               invalid={control["aria-invalid"] === true}
               describedBy={control["aria-describedby"]}
               onChange={(value) => setValues({ ...values, value })}
@@ -209,8 +216,8 @@ function CredentialForm({
           saving={saving}
           disabled={saving || (touched && !valid)}
           cancelDisabled={saving}
-          label="Store"
-          busyLabel="Storing…"
+          label={t("settings.credentials.store")}
+          busyLabel={t("settings.rhumb.storing")}
           onCancel={onClose}
         />
       </form>

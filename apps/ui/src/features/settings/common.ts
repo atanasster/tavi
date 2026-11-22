@@ -1,5 +1,7 @@
 import { DEFAULT_WORKSPACE_ID, MAX_SYSTEM_PROMPT_CODE_UNITS } from "@tavi/contracts";
 
+import { translateNow } from "../../lib/i18n.js";
+
 /**
  * The canvas's settings: the owner's model connections and
  * their catalogs, its web search providers, and its credential references —
@@ -28,14 +30,14 @@ export const SETTINGS_BOUNDS = {
 /** A write's note, when the running owner offers what it wrote only after a restart. */
 export function restartNote(result: unknown, family: "models" | "search"): string | undefined {
   if ((result as { readonly restartRequired?: boolean } | undefined)?.restartRequired !== true) return undefined;
-  return family === "models"
-    ? "Saved. The running owner keeps its startup target: restart `tavi serve` for this to take effect."
-    : "Saved. Restart `tavi serve` for the model to be offered web search.";
+  return translateNow(family === "models" ? "settings.common.restartModels" : "settings.common.restartSearch");
 }
 
 export type FormErrors<T> = Partial<Record<keyof T, string>>;
 
 /** A workspace as a page names it: "this workspace" for the one most people have, its id for any other. */
 export function workspaceWords(workspaceId: string): string {
-  return workspaceId === DEFAULT_WORKSPACE_ID ? "this workspace" : `workspace ${workspaceId}`;
+  return workspaceId === DEFAULT_WORKSPACE_ID
+    ? translateNow("settings.common.thisWorkspace")
+    : translateNow("settings.common.namedWorkspace", { workspaceId });
 }

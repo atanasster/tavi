@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 
 import type { SystemPromptAnswer } from "@tavi/contracts";
 
-import { formatCount } from "../../lib/format.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import { SETTINGS_BOUNDS } from "./common.js";
 import {
   systemPromptActions,
@@ -168,11 +169,7 @@ export function useSystemPromptEditor(
       // The acknowledgement is the authoritative saved state, so the draft and
       // the baseline move together and the form is no longer dirty.
       adopt(systemPromptState(outcome.value));
-      setNote(
-        draft.mode === "custom"
-          ? "Saved. Changes apply from the next message in this workspace."
-          : "Cleared. From the next message, this workspace follows the shipped default again.",
-      );
+      setNote(draft.mode === "custom" ? translateNow("settings.editor.saved") : translateNow("settings.editor.cleared"));
       onSaved?.();
       return;
     }
@@ -237,6 +234,12 @@ export function useSystemPromptEditor(
  * reload the saved text or copy the draft first. Shared by the system prompt
  * and the persona editors.
  */
+const CONFLICT_KEYS: { readonly [What in "prompt" | "persona" | "instructions"]: UiKey } = {
+  prompt: "settings.editor.conflict.prompt",
+  persona: "settings.editor.conflict.persona",
+  instructions: "settings.editor.conflict.instructions",
+};
+
 export function ConflictNotice({
   message,
   what,
@@ -245,22 +248,23 @@ export function ConflictNotice({
   onCopy,
 }: {
   readonly message: string;
-  /** "prompt", "persona": what the reload brings back. */
-  readonly what: string;
+  /** What the reload brings back. */
+  readonly what: "prompt" | "persona" | "instructions";
   readonly disabled: boolean;
   readonly onReload: () => void;
   readonly onCopy: () => void;
 }) {
+  const t = useT();
   return (
     <Failure as="div">
       <p>
-        {message} Your draft is kept. Reload the saved {what} to compare, or copy the draft before saving against the newer revision.
+        {message} {t(CONFLICT_KEYS[what])}
       </p>
       <div className="actions">
         <Button disabled={disabled} onClick={onReload}>
-          Reload saved
+          {t("settings.editor.reloadSaved")}
         </Button>
-        <Button onClick={onCopy}>Copy draft</Button>
+        <Button onClick={onCopy}>{t("settings.editor.copyDraft")}</Button>
       </div>
     </Failure>
   );
@@ -275,7 +279,7 @@ export function SystemPromptEditor({
   editor,
   id = "system-prompt",
   rows = 14,
-  defaultLabel = "Restore default",
+  defaultLabel,
   className,
 }: {
   readonly editor: SystemPromptEditorState;
@@ -286,8 +290,10 @@ export function SystemPromptEditor({
   readonly defaultLabel?: string;
   readonly className?: string;
 }) {
+  const t = useT();
   const { saved, draft, dirty, saving, conflict, refusal, unknownOutcome, note } = editor;
   if (saved === undefined || draft === undefined) return null;
+  const restore = defaultLabel ?? t("settings.editor.restore");
   const problem = systemPromptProblem(draft.mode, draft.text);
   const canSave = dirty && problem === undefined && !saving && conflict === undefined;
   return (
@@ -298,11 +304,11 @@ export function SystemPromptEditor({
           void editor.submit();
         }}
       >
-        <label htmlFor={`${id}-text`}>System prompt</label>
+        <label htmlFor={`${id}-text`}>{t("settings.systemPrompt.title")}</label>
         <textarea
           id={`${id}-text`}
           className="prompt-text"
-          aria-label="System prompt"
+          aria-label={t("settings.systemPrompt.title")}
           aria-describedby={`${id}-count ${id}-problem`}
           rows={rows}
           // The bound is in string code units, matching the owner's schema and
@@ -316,7 +322,7 @@ export function SystemPromptEditor({
         {/* Described by, not announced on every keystroke: a live region here
             would queue speech against the typing it is counting. */}
         <p id={`${id}-count`} className="editor-count">
-          {formatCount(draft.text.length)} of {formatCount(SETTINGS_BOUNDS.systemPrompt)} characters
+          {t("settings.editor.count", { length: draft.text.length, max: SETTINGS_BOUNDS.systemPrompt })}
         </p>
         <Failure alert={false} id={`${id}-problem`}>
           {problem ?? ""}
@@ -325,31 +331,30 @@ export function SystemPromptEditor({
         <div className="actions">
           <Button variant="primary" type="submit" disabled={!canSave}>
             {/* Said only when it is the change: going back to the shipped prompt from a custom one. */}
-            {saving ? "Saving…" : draft.mode === "default" && dirty ? "Save (use the shipped default)" : "Save"}
+            {saving
+              ? t("ui.parts.saving")
+              : draft.mode === "default" && dirty
+                ? t("settings.editor.saveDefault")
+                : t("settings.action.save")}
           </Button>
           {/* Offered for an edit only: with nothing changed there is nothing to discard. */}
           {dirty ? (
             <Button disabled={saving} onClick={editor.discard}>
-              Discard changes
+              {t("settings.editor.discard")}
             </Button>
           ) : null}
           {draft.mode === "custom" ? (
             <Button disabled={saving} onClick={editor.stageDefault}>
-              {defaultLabel}
+              {restore}
             </Button>
           ) : (
             <Button disabled={saving} onClick={editor.stageCustom}>
-              Write a custom prompt
+              {t("settings.editor.writeCustom")}
             </Button>
           )}
         </div>
         {/* How going back works, where a saved custom prompt is there to go back from: not while a first one is being written. */}
-        {saved.mode === "custom" ? (
-          <p>
-            {defaultLabel} only stages the change: the shipped text is shown, and Save clears the override. Merely looking at the built-in
-            prompt never stores it as a custom one.
-          </p>
-        ) : null}
+        {saved.mode === "custom" ? <p>{t("settings.editor.restoreHint", { restore })}</p> : null}
       </form>
 
       {/* Boxed and held in view a moment, as every settings page's saved note is. */}
@@ -361,16 +366,20 @@ export function SystemPromptEditor({
 
       {refusal === undefined ? null : (
         <Failure as="div">
-          <p>{refusal} Nothing was saved, and your draft is kept.</p>
+          <p>
+            {refusal} {t("settings.editor.refused")}
+          </p>
         </Failure>
       )}
 
       {unknownOutcome === undefined ? null : (
         <Failure as="div">
-          <p>{unknownOutcome} The write may still have been applied — check the saved prompt before retrying.</p>
+          <p>
+            {unknownOutcome} {t("settings.editor.unknown")}
+          </p>
           <div className="actions">
             <Button disabled={saving} onClick={editor.reloadSaved}>
-              Reload saved
+              {t("settings.editor.reloadSaved")}
             </Button>
           </div>
         </Failure>

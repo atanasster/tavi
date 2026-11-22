@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useT } from "../../lib/i18n.js";
 import { Field } from "../../ui/Field.js";
 import { IconButton } from "../../ui/IconButton.js";
 
@@ -43,6 +44,7 @@ export function PasswordInput({
   readonly describedBy?: string | undefined;
   readonly onChange: (value: string) => void;
 }) {
+  const t = useT();
   const [shown, setShown] = useState(false);
   return (
     <span className="password">
@@ -59,7 +61,7 @@ export function PasswordInput({
       <IconButton
         icon={shown ? "eye-off" : "eye"}
         size="sm"
-        label={shown ? "Hide the value" : "Show the value"}
+        label={shown ? t("settings.secret.hide") : t("settings.secret.show")}
         onClick={() => setShown(!shown)}
       />
     </span>
@@ -78,13 +80,14 @@ export function KeyField({
   readonly value: string;
   readonly onChange: (value: string) => void;
 }) {
+  const t = useT();
   return (
     <Field label={label} id={id}>
       {(control) => (
         <PasswordInput
           id={control.id}
           value={value}
-          placeholder="Paste the key"
+          placeholder={t("settings.secret.paste")}
           invalid={false}
           {...(control["aria-describedby"] === undefined ? {} : { describedBy: control["aria-describedby"] })}
           onChange={onChange}

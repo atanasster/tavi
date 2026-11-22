@@ -1,4 +1,6 @@
+import { useT } from "../../lib/i18n.js";
 import { AppLink } from "../shell/AppLink.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * The channel a pairing was refused for because it isn't running, from the
@@ -13,13 +15,16 @@ export function notRunningChannel(refusal: { readonly details?: Readonly<Record<
 
 /** Why a code cannot be handed out, and where to fix it: Settings → Channels, which says what went wrong. */
 export function ChannelNotRunning({ label }: { readonly label: string }) {
+  const t = useT();
   return (
     <>
-      {label} isn't running, so a code sent to it could not arrive. Fix it in{" "}
-      <AppLink href="/settings/messaging" onFollow={undefined}>
-        Settings → Channels
-      </AppLink>
-      , which says why.
+      {withParts(t("settings.channels.notRunning", { label }), {
+        link: (
+          <AppLink href="/settings/messaging" onFollow={undefined}>
+            {t("settings.channels.notRunningLink")}
+          </AppLink>
+        ),
+      })}
     </>
   );
 }

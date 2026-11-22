@@ -24,6 +24,9 @@ import { useLoaded } from "../../hooks/use-loaded.js";
 import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * Settings → Plugins → Canvas:
@@ -53,25 +56,25 @@ async function loadCanvas(client: SettingsClient, workspaceId: string): Promise<
   if (!settings.ok) return settings;
   const entries = PluginUiAnswerSchema.safeParse(ui.value);
   const document = WorkspaceSettingsAnswerSchema.safeParse(settings.value);
-  if (!entries.success || !document.success) return { ok: false, message: "the owner's answer about UI plugins could not be read" };
+  if (!entries.success || !document.success) return { ok: false, message: translateNow("settings.canvas.unreadable") };
   return { ok: true, value: { entries: entries.data.entries, settings: document.data } };
 }
 
 /** The places a contribution can be put, as the picker offers them. */
 const PLACES: readonly {
   readonly value: string;
-  readonly label: string;
+  readonly label: UiKey;
   readonly slots: readonly PluginUiSlot[] | "hidden" | undefined;
 }[] = [
-  { value: "manifest", label: "Where the plugin puts it", slots: undefined },
-  { value: "top", label: "Top of the chat panel", slots: ["chat.panel.top"] },
-  { value: "tab", label: "A chat panel tab", slots: ["chat.panel.tab"] },
-  { value: "both", label: "Top and tab", slots: ["chat.panel.top", "chat.panel.tab"] },
+  { value: "manifest", label: "settings.canvas.place.manifest", slots: undefined },
+  { value: "top", label: "settings.canvas.place.top", slots: ["chat.panel.top"] },
+  { value: "tab", label: "settings.canvas.place.tab", slots: ["chat.panel.tab"] },
+  { value: "both", label: "settings.canvas.place.both", slots: ["chat.panel.top", "chat.panel.tab"] },
   // The Center's and Welcome's own slots: every place a person may assign. The takeover overlay is never one.
-  { value: "browser", label: "The Center's Browser", slots: ["center.browser"] },
-  { value: "heartbeat", label: "The Center's heartbeat", slots: ["center.heartbeat"] },
-  { value: "welcome", label: "A Welcome step", slots: ["onboarding.step"] },
-  { value: "hidden", label: "Hidden", slots: "hidden" },
+  { value: "browser", label: "settings.canvas.place.browser", slots: ["center.browser"] },
+  { value: "heartbeat", label: "settings.canvas.place.heartbeat", slots: ["center.heartbeat"] },
+  { value: "welcome", label: "settings.canvas.place.welcome", slots: ["onboarding.step"] },
+  { value: "hidden", label: "settings.canvas.place.hidden", slots: "hidden" },
 ];
 
 /** The picker's value for an override; `custom` for one these choices do not express (set with `tavi plugins ui place`). */
@@ -87,6 +90,7 @@ function placeOf(override: UiPlacementsSetting[string] | undefined): string {
 
 /** Keyed by its caller on the workspace and the plugins' states, so it reads again when either changes. */
 export function CanvasPluginsSettings({ workspaceId }: { readonly workspaceId: string }) {
+  const t = useT();
   const { client } = useWorkspace();
   const { data, error, reload } = useLoaded(() => loadCanvas(client, workspaceId));
   const flooded = useFloodedPlugins();
@@ -116,13 +120,7 @@ export function CanvasPluginsSettings({ workspaceId }: { readonly workspaceId: s
         : { action: "set", workspaceId, key, value: JSON.stringify(value), expectedRevision: settings.revision },
     );
     setBusy(false);
-    setNote(
-      outcome.ok
-        ? said
-        : outcome.code === "CONFLICT"
-          ? "These settings changed elsewhere meanwhile; they were read again. Choose again."
-          : outcome.message,
-    );
+    setNote(outcome.ok ? said : outcome.code === "CONFLICT" ? t("settings.canvas.conflict") : outcome.message);
     reload();
   };
   const setRole = (pluginId: string): void => {
@@ -132,7 +130,7 @@ export function CanvasPluginsSettings({ workspaceId }: { readonly workspaceId: s
     void write(
       "uiRoles",
       Object.keys(roles).length === 0 ? undefined : (roles as UiRolesSetting),
-      pluginId === "off" ? "The browser view is off." : `The browser view is now ${pluginId}.`,
+      pluginId === "off" ? t("settings.canvas.roleOff") : t("settings.canvas.roleSet", { pluginId }),
     );
   };
   const choose = (pluginId: string): void => {
@@ -157,7 +155,7 @@ export function CanvasPluginsSettings({ workspaceId }: { readonly workspaceId: s
     void write(
       "uiPlacements",
       Object.keys(placements).length === 0 ? undefined : (placements as UiPlacementsSetting),
-      `${contribution.title} placed.`,
+      t("settings.canvas.placed", { title: contribution.title }),
     );
   };
 
@@ -165,18 +163,18 @@ export function CanvasPluginsSettings({ workspaceId }: { readonly workspaceId: s
     <div className="canvas-plugins">
       <div className="settings-fields">
         <label>
-          Browser view
+          {t("settings.canvas.browserView")}
           <Select
             id={`${id}-role`}
-            aria-label="Browser view"
+            aria-label={t("settings.canvas.browserView")}
             value={chosen}
             disabled={busy || pending !== undefined}
             onChange={(event) => choose(event.target.value)}
           >
             {candidates.some((entry) => entry.pluginId === builtin) ? (
-              <option value={builtin}>Built-in</option>
+              <option value={builtin}>{t("settings.canvas.builtIn")}</option>
             ) : chosen === builtin ? (
-              <option value={builtin}>Built-in (unavailable)</option>
+              <option value={builtin}>{t("settings.canvas.builtInUnavailable")}</option>
             ) : null}
             {candidates
               .filter((entry) => entry.pluginId !== builtin)
@@ -187,22 +185,25 @@ export function CanvasPluginsSettings({ workspaceId }: { readonly workspaceId: s
               ))}
             {/* A chosen plugin that can no longer fill the role still shows as chosen. */}
             {chosen !== builtin && chosen !== "off" && !candidates.some((entry) => entry.pluginId === chosen) ? (
-              <option value={chosen}>{chosen} (unavailable)</option>
+              <option value={chosen}>{t("settings.canvas.unavailable", { pluginId: chosen })}</option>
             ) : null}
-            <option value="off">Off</option>
+            <option value="off">{t("settings.canvas.off")}</option>
           </Select>
         </label>
       </div>
       {fallbacks.map((fallback) => (
         <Failure key={fallback.role} role="status">
-          {fallback.wanted} can no longer be the browser view (it is not enabled and approved, or no longer offers one);{" "}
-          {fallback.using === undefined ? "none is shown" : "the built-in is used meanwhile"}.
+          {t(fallback.using === undefined ? "settings.canvas.fallbackNone" : "settings.canvas.fallbackBuiltIn", {
+            pluginId: fallback.wanted,
+          })}
         </Failure>
       ))}
       {pending !== undefined ? (
         <Notice as="div" role="alertdialog" aria-labelledby={`${id}-confirm`}>
           <p id={`${id}-confirm`}>
-            <strong>{pending.pluginId}</strong> would see the agent's browser: {pending.disclosure}
+            {withParts(t("settings.canvas.wouldSee", { disclosure: pending.disclosure }), {
+              plugin: <strong>{pending.pluginId}</strong>,
+            })}
           </p>
           <Button
             variant="primary"
@@ -213,16 +214,16 @@ export function CanvasPluginsSettings({ workspaceId }: { readonly workspaceId: s
               setRole(chosenPlugin);
             }}
           >
-            Use {pending.pluginId}
+            {t("settings.canvas.use", { pluginId: pending.pluginId })}
           </Button>{" "}
           <Button disabled={busy} onClick={() => setPending(undefined)}>
-            Cancel
+            {t("ui.confirm.cancel")}
           </Button>
         </Notice>
       ) : null}
       <StatusNote note={note} />
       {entries.length === 0 ? (
-        <Empty>No enabled plugin adds to the canvas.</Empty>
+        <Empty>{t("settings.canvas.empty")}</Empty>
       ) : (
         <ul className="rows">
           {entries.flatMap((entry) =>
@@ -233,18 +234,19 @@ export function CanvasPluginsSettings({ workspaceId }: { readonly workspaceId: s
                   <span className="plugin-info">
                     <strong>{contribution.title}</strong> <span className="muted">{key}</span>
                     <span className="muted">
-                      {contribution.channels.length === 0 ? "Receives nothing" : `Receives ${contribution.channels.join(", ")}`}
+                      {contribution.channels.length === 0
+                        ? t("settings.canvas.receivesNothing")
+                        : t("settings.canvas.receives", { channels: contribution.channels.join(", ") })}
                     </span>
                     {flooded.has(key) ? (
                       <Failure as="span" role="status">
-                        Paused on this page: it sent more than {PLUGIN_UI_MAX_MESSAGES_PER_SECOND} messages a second. Reload to try it
-                        again.
+                        {t("settings.canvas.flooded", { max: String(PLUGIN_UI_MAX_MESSAGES_PER_SECOND) })}
                       </Failure>
                     ) : null}
                   </span>
                   <span className="actions">
                     <Select
-                      aria-label={`Where ${contribution.title} (${entry.pluginId}) is shown`}
+                      aria-label={t("settings.canvas.whereLabel", { title: contribution.title, pluginId: entry.pluginId })}
                       value={placeOf(settings.settings.uiPlacements?.[key])}
                       disabled={busy}
                       onChange={(event) => place(entry, contribution, event.target.value)}
@@ -254,12 +256,12 @@ export function CanvasPluginsSettings({ workspaceId }: { readonly workspaceId: s
                         (option) => option.value !== "welcome" || contribution.channels.length === 0,
                       ).map((option) => (
                         <option key={option.value} value={option.value}>
-                          {option.label}
+                          {t(option.label)}
                         </option>
                       ))}
                       {placeOf(settings.settings.uiPlacements?.[key]) === "custom" ? (
                         <option value="custom" disabled>
-                          Chosen elsewhere
+                          {t("settings.canvas.chosenElsewhere")}
                         </option>
                       ) : null}
                     </Select>

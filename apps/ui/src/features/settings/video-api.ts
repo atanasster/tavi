@@ -1,5 +1,6 @@
 import { definedOnly } from "@tavi/contracts/util";
 
+import { translateNow } from "../../lib/i18n.js";
 import { ask, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 
 /** What `doctor` says of video: the FFmpeg found, how runs are confined, and each capability's analyser chain. */
@@ -31,14 +32,14 @@ export async function loadVideoStatus(client: SettingsClient): Promise<Outcome<V
   const confinement = text(video["confinement"]);
   const fix = text(video["fix"]);
   const detail = text(video["detail"]);
-  const broken = video["works"] === false ? (text(video["note"]) ?? "the sandbox does not work here, so video calls fail") : undefined;
+  const broken = video["works"] === false ? (text(video["note"]) ?? translateNow("settings.video.sandboxBroken")) : undefined;
   const offIn = Array.isArray(video["offIn"])
     ? (video["offIn"] as unknown[]).filter((entry): entry is string => typeof entry === "string")
     : [];
   return {
     ok: true,
     value: {
-      ffmpeg: text(video["ffmpeg"]) ?? "unknown",
+      ffmpeg: text(video["ffmpeg"]) ?? translateNow("settings.video.unknown"),
       ...(typeof video["enabled"] === "boolean" ? { enabled: video["enabled"] } : {}),
       ...(offIn.length === 0 ? {} : { offIn }),
       ...definedOnly({ confinement, detail, broken, fix, configError: analyzers.configError }),

@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { SearchProviderConfig } from "@tavi/contracts";
 
 import { SEARCH_KIND_LABELS, saveWebSearchProvider, searchActions } from "./search-api.js";
+import { useT } from "../../lib/i18n.js";
 import { Confirm } from "../../ui/Confirm.js";
 import { Command } from "../../ui/Command.js";
 import { Failure, LoadState, Notice, PageHead, PageNote, StatusBadge } from "../../ui/Parts.js";
@@ -13,9 +14,11 @@ import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /** The owner's web search providers. One is used automatically; several need a selection or fallback chain in web-providers.json. */
 export function WebSearchSettings() {
+  const t = useT();
   const { client } = useWorkspace();
   const { data, error, loading, reload } = useLoaded(() => searchActions.list(client));
   const { busy, note, tone, run, say } = useAction(reload);
@@ -25,20 +28,21 @@ export function WebSearchSettings() {
   const unreadable = data?.unreadable ?? [];
   return (
     <section className="settings">
-      <PageHead className="settings-head" title="Web search">
+      <PageHead className="settings-head" title={t("settings.search.title")}>
         <Button variant="primary" disabled={busy !== undefined} onClick={() => setAdding(true)}>
-          Add provider
+          {t("settings.search.add")}
         </Button>
       </PageHead>
       <Notice>
-        An enabled provider answers the agent&rsquo;s web searches. Adding or enabling one applies from the next message, with no restart;
-        disabling one stops new searches at once. With several, their order is set in <code className="file-name">web-providers.json</code>{" "}
-        in the data directory, read when <Command>tavi serve</Command> starts.
+        {withParts(t("settings.search.intro"), {
+          file: <code className="file-name">web-providers.json</code>,
+          command: <Command>tavi serve</Command>,
+        })}
       </Notice>
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         <PageNote tone={tone} note={note} />
       </LoadState>
-      {data !== undefined && providers.length === 0 ? <Empty>No provider is configured.</Empty> : null}
+      {data !== undefined && providers.length === 0 ? <Empty>{t("settings.search.empty")}</Empty> : null}
       <ul className="rows">
         {providers.map((provider) => (
           <li key={provider.providerId} className="row">
@@ -51,8 +55,8 @@ export function WebSearchSettings() {
               <span className="muted">
                 {provider.baseUrl === undefined
                   ? provider.credentialRef === undefined
-                    ? "· no key needed"
-                    : `· key ${provider.credentialRef}`
+                    ? t("settings.search.noKey")
+                    : t("settings.search.key", { reference: provider.credentialRef })
                   : `· ${provider.baseUrl}`}
               </span>
               {provider.enabled ? null : (
@@ -64,48 +68,52 @@ export function WebSearchSettings() {
             </span>
             <span className="actions">
               <RowAction
-                aria-label={`Test ${provider.providerId}`}
+                aria-label={t("settings.search.testLabel", { id: provider.providerId })}
                 disabled={busy !== undefined}
                 onClick={() => void run(`test:${provider.providerId}`, () => searchActions.test(client, provider.providerId))}
               >
-                {busy === `test:${provider.providerId}` ? "Testing…" : "Test"}
+                {busy === `test:${provider.providerId}` ? t("settings.action.testing") : t("settings.action.test")}
               </RowAction>
               <RowAction
-                aria-label={`${provider.enabled ? "Disable" : "Enable"} ${provider.providerId}`}
+                aria-label={t(provider.enabled ? "settings.search.disableLabel" : "settings.search.enableLabel", {
+                  id: provider.providerId,
+                })}
                 disabled={busy !== undefined}
                 onClick={() =>
                   void run(`enable:${provider.providerId}`, () => searchActions.setEnabled(client, provider.providerId, !provider.enabled))
                 }
               >
-                {provider.enabled ? "Disable" : "Enable"}
+                {provider.enabled ? t("settings.action.disable") : t("settings.action.enable")}
               </RowAction>
               <RowAction
                 tone="danger"
-                aria-label={`Remove ${provider.providerId}`}
+                aria-label={t("settings.search.removeLabel", { id: provider.providerId })}
                 disabled={busy !== undefined}
                 onClick={() => setRemoving(provider)}
               >
-                Remove
+                {t("settings.action.remove")}
               </RowAction>
             </span>
           </li>
         ))}
       </ul>
       {data?.truncated === true ? (
-        <Notice>
-          More providers exist than are listed here: <Command>tavi search list</Command> shows them all.
-        </Notice>
+        <Notice>{withParts(t("settings.search.truncated"), { command: <Command>tavi search list</Command> })}</Notice>
       ) : null}
       {unreadable.length > 0 ? (
         <Failure alert={false}>
-          Unreadable providers, left out: {unreadable.join(", ")}. Remove them with <Command>tavi search remove</Command>.
+          {withParts(t("settings.search.unreadable", { ids: unreadable.join(", ") }), { command: <Command>tavi search remove</Command> })}
         </Failure>
       ) : null}
       {removing !== undefined ? (
         <Confirm
-          title={`Remove ${removing.providerId}?`}
-          message={`The agent's web searches stop going to ${removing.providerId}.${removing.credentialRef === undefined ? "" : ` Its key ${removing.credentialRef} stays stored.`}`}
-          action="Remove"
+          title={t("settings.search.removeTitle", { id: removing.providerId })}
+          message={
+            removing.credentialRef === undefined
+              ? t("settings.search.removeMessage", { id: removing.providerId })
+              : t("settings.search.removeMessageKey", { id: removing.providerId, reference: removing.credentialRef })
+          }
+          action={t("settings.action.remove")}
           onClose={() => setRemoving(undefined)}
           onConfirm={() => run(`remove:${removing.providerId}`, () => searchActions.remove(client, removing))}
         />

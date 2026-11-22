@@ -2,12 +2,14 @@ import { useState } from "react";
 
 import { RESET_INSTANCE_CONFIRMATION } from "@tavi/contracts";
 
+import { useT } from "../../lib/i18n.js";
 import { Modal } from "../../ui/Modal.js";
 import { resetInstance } from "./workspace-api.js";
 import { Failure } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * Reset instance: delete everything the owner keeps, as if tavi had
@@ -16,6 +18,7 @@ import { Command } from "../../ui/Command.js";
  * directory, and the page starts over once it is back.
  */
 export function ResetInstance({ onReset }: { readonly onReset?: (() => void) | undefined }) {
+  const t = useT();
   const { client } = useWorkspace();
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
@@ -29,28 +32,28 @@ export function ResetInstance({ onReset }: { readonly onReset?: (() => void) | u
   };
   return (
     <>
-      <section className="danger-zone" aria-label="reset instance">
-        <h2>Reset instance</h2>
+      <section className="danger-zone" aria-label={t("settings.reset.region")}>
+        <h2>{t("settings.reset.title")}</h2>
         <p>
-          Deletes everything this instance keeps, in every workspace: chats, tasks, memory, schedules, reminders, settings, artifacts, every
-          chat's working folder, saved credentials and API keys, installed plugins and logs, as if tavi had just been installed. Folders on
-          your computer that a chat works in or attaches are not touched. Nothing is kept; run <Command>tavi backup</Command> first for a
-          copy. Or use <Command>tavi reset --yes</Command>.
+          {withParts(t("settings.reset.body"), {
+            backup: <Command>tavi backup</Command>,
+            command: <Command>tavi reset --yes</Command>,
+          })}
         </p>
         {resetting ? (
           <p className="muted" role="status">
-            Resetting. The owner is restarting on an empty data directory, and this page reloads when it is back.
+            {t("settings.reset.resetting")}
           </p>
         ) : (
           <div className="danger-zone-actions">
             <Button variant="danger-ghost" onClick={() => setOpen(true)}>
-              Reset instance…
+              {t("settings.reset.open")}
             </Button>
           </div>
         )}
       </section>
       {open ? (
-        <Modal title="Reset this instance?" busy={working} onClose={close}>
+        <Modal title={t("settings.reset.confirmTitle")} busy={working} onClose={close}>
           <form
             className="settings-fields"
             onSubmit={(event) => {
@@ -70,15 +73,11 @@ export function ResetInstance({ onReset }: { readonly onReset?: (() => void) | u
               });
             }}
           >
-            <p>
-              Every chat, setting, credential and plugin is deleted, and the owner restarts as if newly installed. This cannot be undone.
-            </p>
+            <p>{t("settings.reset.confirmBody")}</p>
             <label>
-              <span>
-                Type <code>{RESET_INSTANCE_CONFIRMATION}</code> to confirm
-              </span>
+              <span>{withParts(t("settings.reset.type"), { word: <code>{RESET_INSTANCE_CONFIRMATION}</code> })}</span>
               <input
-                aria-label="type reset to confirm"
+                aria-label={t("settings.reset.typeLabel")}
                 value={typed}
                 autoComplete="off"
                 spellCheck={false}
@@ -89,10 +88,10 @@ export function ResetInstance({ onReset }: { readonly onReset?: (() => void) | u
             {failure === undefined ? null : <Failure>{failure}</Failure>}
             <div className="actions">
               <Button variant="ghost" disabled={working} onClick={close}>
-                Cancel
+                {t("ui.confirm.cancel")}
               </Button>
               <Button variant="destructive" type="submit" disabled={working || typed !== RESET_INSTANCE_CONFIRMATION}>
-                {working ? "Resetting…" : "Reset instance"}
+                {working ? t("settings.reset.working") : t("settings.reset.title")}
               </Button>
             </div>
           </form>

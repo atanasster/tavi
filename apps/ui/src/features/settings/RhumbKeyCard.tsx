@@ -1,10 +1,12 @@
 import { useState } from "react";
 
+import { useT } from "../../lib/i18n.js";
 import { Button } from "../../ui/Button.js";
 import { Card } from "../../ui/Card.js";
 import { Command } from "../../ui/Command.js";
 import { RHUMB_SIGN_UP_URL } from "./lifecycle-api.js";
 import { KeyField } from "./PasswordInput.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * Model retirements: with a Rhumb key the owner checks daily whether a model
@@ -23,26 +25,24 @@ export function RhumbKeyCard({
   readonly onStore: (key: string) => void;
   readonly onCheck: () => void;
 }) {
+  const t = useT();
   const [key, setKey] = useState("");
   if (stored === undefined) return null;
   return (
     <Card
-      title="Model retirements"
+      title={t("settings.rhumb.title")}
       titleId="rhumb-title"
       level={2}
       actions={
         stored ? (
           <Button variant="ghost" size="sm" disabled={busy !== undefined} onClick={onCheck}>
-            {busy === "lifecycle-sync" ? "Checking…" : "Check now"}
+            {busy === "lifecycle-sync" ? t("settings.rhumb.checking") : t("settings.rhumb.check")}
           </Button>
         ) : null
       }
     >
       {stored ? (
-        <p className="muted">
-          A Rhumb key is stored. Tavi checks daily which models it uses retire, are redirected or change price, and says so here and in{" "}
-          <Command>tavi doctor</Command>. It never changes a model for you.
-        </p>
+        <p className="muted">{withParts(t("settings.rhumb.stored"), { command: <Command>tavi doctor</Command> })}</p>
       ) : (
         <form
           className="rhumb-key"
@@ -54,15 +54,17 @@ export function RhumbKeyCard({
           }}
         >
           <p className="muted">
-            Providers retire models, sometimes with weeks' notice. With a free key from{" "}
-            <a href={RHUMB_SIGN_UP_URL} target="_blank" rel="noreferrer">
-              Rhumb
-            </a>
-            , Tavi checks daily and says before one you use goes. Only provider names are sent, never a model id you use.
+            {withParts(t("settings.rhumb.pitch"), {
+              rhumb: (
+                <a href={RHUMB_SIGN_UP_URL} target="_blank" rel="noreferrer">
+                  Rhumb
+                </a>
+              ),
+            })}
           </p>
-          <KeyField label="Rhumb key" id="rhumb-key" value={key} onChange={setKey} />
+          <KeyField label={t("settings.rhumb.key")} id="rhumb-key" value={key} onChange={setKey} />
           <Button type="submit" variant="primary" size="sm" disabled={busy !== undefined || key.trim() === ""}>
-            {busy === "rhumb-key" ? "Storing…" : "Store key"}
+            {busy === "rhumb-key" ? t("settings.rhumb.storing") : t("settings.rhumb.store")}
           </Button>
         </form>
       )}

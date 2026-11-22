@@ -14,9 +14,10 @@ import {
   pluginRunningVersion,
   type PluginView,
 } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 
 import { pluginActions } from "./plugins-api.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 import type { Outcome } from "../../lib/ipc.js";
 import { Failure, LoadState, Notice, PageHead, PageNote, StatusBadge } from "../../ui/Parts.js";
 import { CanvasPluginsSettings } from "./CanvasPluginsSettings.js";
@@ -45,13 +46,28 @@ function isolationReview(version: PluginVersionView): string {
   if (!version.runsOwnerCode || version.mcp !== undefined) return "";
   const where =
     version.workerRefusal === undefined
-      ? `Approved, it runs as a confined worker, reaching ${version.networkDomains === undefined || version.networkDomains.length === 0 ? "no network" : `only ${version.networkDomains.join(", ")}`}.`
-      : `It cannot run as a confined worker: ${version.workerRefusal}. Approving it runs it UNSANDBOXED in the owner's process, with its privileges.`;
+      ? version.networkDomains === undefined || version.networkDomains.length === 0
+        ? translateNow("settings.plugins.review.workerNoNetwork")
+        : translateNow("settings.plugins.review.worker", { domains: version.networkDomains.join(", ") })
+      : translateNow("settings.plugins.review.inProcess", { reason: version.workerRefusal });
   const raw =
     version.rawSecrets === undefined || version.rawSecrets.length === 0
       ? ""
-      : ` It holds the real values of ${version.rawSecrets.join(", ")} (raw secrets), not placeholders.`;
+      : ` ${translateNow("settings.plugins.review.rawSecrets", { secrets: version.rawSecrets.join(", ") })}`;
   return ` ${where}${raw}`;
+}
+
+/** What a version itself declares, a whole sentence for each case: tools or none, with its settings or without. */
+function reviewDeclares(version: PluginVersionView): string {
+  const settings = Object.keys(version.configFields);
+  if (version.tools.length === 0)
+    return settings.length === 0
+      ? translateNow("settings.plugins.review.declaresNone", { version: version.version })
+      : translateNow("settings.plugins.review.declaresNoneSettings", { version: version.version, settings: settings.join(", ") });
+  const tools = version.tools.map(describePluginTool).join(", ");
+  return settings.length === 0
+    ? translateNow("settings.plugins.review.declares", { version: version.version, tools })
+    : translateNow("settings.plugins.review.declaresSettings", { version: version.version, tools, settings: settings.join(", ") });
 }
 
 /** A version only `tavi plugins approve --in-process` can approve: owner code that cannot be a confined worker. */
@@ -84,6 +100,7 @@ function isolationBadge(plugin: PluginView): "worker" | "UNSANDBOXED" | undefine
  * plugin with none.
  */
 function HookActivity({ pluginId }: { readonly pluginId: string }) {
+  const t = useT();
   const { client } = useWorkspace();
   const timeZone = useTimeZone();
   const { data, error } = useLoaded(() => pluginActions.show(client, pluginId));
@@ -102,25 +119,31 @@ function HookActivity({ pluginId }: { readonly pluginId: string }) {
     <>
       {activity === undefined ? null : (
         <span className="muted">
-          Hook activity: {activity.decisions} {activity.decisions === 1 ? "decision" : "decisions"}, {activity.failures}{" "}
-          {activity.failures === 1 ? "failure" : "failures"}.
+          {t("settings.plugins.hooks.activity", {
+            decisions: t("settings.plugins.hooks.decisions", { count: activity.decisions }),
+            failures: t("settings.plugins.hooks.failures", { count: activity.failures }),
+          })}
           {activity.pruned === true
-            ? ` Older rows were pruned: only the newest ${MAX_PLUGIN_HOOK_DECISIONS} decisions and ${MAX_PLUGIN_HOOK_FAILURES} failures are kept, and counted.`
+            ? ` ${t("settings.plugins.hooks.pruned", { decisions: String(MAX_PLUGIN_HOOK_DECISIONS), failures: String(MAX_PLUGIN_HOOK_FAILURES) })}`
             : null}
         </span>
       )}
       {latency.length === 0 ? null : (
-        <span className="plugin-info" role="list" aria-label={`Hook time for ${pluginId}`}>
+        <span className="plugin-info" role="list" aria-label={t("settings.plugins.hooks.timeLabel", { pluginId })}>
           {latency.map((row) => (
             <span key={row.event} role="listitem" className="muted">
-              {row.event}: median {row.medianMs} ms, worst {row.worstMs} ms over its last{" "}
-              {row.samples === 1 ? "call" : plural(row.samples, "call")}
+              {t("settings.plugins.hooks.time", {
+                event: row.event,
+                median: String(row.medianMs),
+                worst: String(row.worstMs),
+                count: row.samples,
+              })}
             </span>
           ))}
         </span>
       )}
       {activity === undefined || activity.recent.length === 0 ? null : (
-        <span className="plugin-info" role="list" aria-label={`Recent hook activity for ${pluginId}`}>
+        <span className="plugin-info" role="list" aria-label={t("settings.plugins.hooks.recentLabel", { pluginId })}>
           {activity.recent.map((row, index) => (
             <span key={`${row.at}:${index}`} role="listitem" className="muted">
               {when(row.at, timeZone)} {row.kind} {row.event}
@@ -140,7 +163,8 @@ function HookActivity({ pluginId }: { readonly pluginId: string }) {
  */
 function phaseBadge(plugin: PluginView): string | undefined {
   if (plugin.phase === undefined || plugin.phase === "ready") return undefined;
-  if (plugin.phase === "not_composed") return plugin.enabled && !canvasOnly(plugin) ? "loads at next start" : undefined;
+  if (plugin.phase === "not_composed")
+    return plugin.enabled && !canvasOnly(plugin) ? translateNow("settings.plugins.loadsNext") : undefined;
   return plugin.phase.replace("_", " ");
 }
 
@@ -163,6 +187,7 @@ export function PluginsSettings({
    */
   readonly onPluginOff?: ((pluginId: string) => void) | undefined;
 }) {
+  const t = useT();
   const { client } = useWorkspace();
   const { data, error, loading, reload } = useLoaded(() => pluginActions.list(client));
   const { busy, note, tone, run, say } = useAction(reload);
@@ -211,10 +236,10 @@ export function PluginsSettings({
           <span>
             <strong>{plugin.name}</strong> {plugin.name === plugin.id ? null : <span className="muted">{plugin.id}</span>}{" "}
             {plugin.activeVersion === undefined ? null : <span className="muted">{plugin.activeVersion} </span>}
-            {plugin.core ? <span className="badge">core</span> : null}
+            {plugin.core ? <span className="badge">{t("settings.plugins.core")}</span> : null}
             {/* One badge says where it stands: a plugin nobody has approved yet awaits review, not "disabled". */}
             {awaitingReview ? (
-              <span className="badge badge-warning">awaits review</span>
+              <span className="badge badge-warning">{t("settings.plugins.awaitsReview")}</span>
             ) : plugin.enabled ? null : (
               <StatusBadge status="disabled" />
             )}
@@ -223,9 +248,7 @@ export function PluginsSettings({
             {isolationBadge(plugin) === undefined ? null : (
               <span
                 className="badge"
-                title={
-                  isolationBadge(plugin) === "worker" ? "Runs as a confined worker" : "Runs in the owner's process, with its privileges"
-                }
+                title={isolationBadge(plugin) === "worker" ? t("settings.plugins.workerTitle") : t("settings.plugins.inProcessTitle")}
               >
                 {isolationBadge(plugin)}
               </span>
@@ -233,11 +256,11 @@ export function PluginsSettings({
           </span>
           {plugin.description === "" ? null : <span className="settings-description">{withCode(plugin.description)}</span>}
           {plugin.tools.length === 0 ? null : plugin.tools.length <= PLUGIN_TOOLS_SHOWN ? (
-            <span className="muted">Tools: {plugin.tools.map(describePluginTool).join(", ")}</span>
+            <span className="muted">{t("settings.plugins.tools", { tools: plugin.tools.map(describePluginTool).join(", ") })}</span>
           ) : (
             // A long tool list is a wall of text: folded under its count, each tool on a line of its own.
             <details className="plugin-tools">
-              <summary className="disclosure muted">Tools · {plugin.tools.length}</summary>
+              <summary className="disclosure muted">{t("settings.plugins.toolsCount", { count: plugin.tools.length })}</summary>
               <ul className="muted">
                 {plugin.tools.map((tool) => (
                   <li key={describePluginTool(tool)}>{describePluginTool(tool)}</li>
@@ -261,19 +284,21 @@ export function PluginsSettings({
           {/* Awaiting review, the version's own declaration below says it: not twice. */}
           {(awaitingReview ? [] : (plugin.ui?.contributions ?? [])).map((contribution) => (
             <span key={`ui:${contribution.id}`} className="muted">
-              Canvas: {describePluginUiContribution(contribution)}
+              {t("settings.plugins.canvasLine", { what: describePluginUiContribution(contribution) })}
             </span>
           ))}
           {(plugin.mods ?? []).map((hook, index) => (
             <span key={`hook:${index}`} className="muted">
-              Hook {hook.event}
-              {hook.contextTrusted === true ? " (trusted context)" : ""} (fails: {hook.onFailure}): {withCode(hook.disclosure)}{" "}
-              {withCode(hook.reads)}
+              {t(hook.contextTrusted === true ? "settings.plugins.hookTrusted" : "settings.plugins.hook", {
+                event: hook.event,
+                onFailure: hook.onFailure,
+              })}{" "}
+              {withCode(hook.disclosure)} {withCode(hook.reads)}
             </span>
           ))}
           {(plugin.commands ?? []).map((command) => (
             <span key={`command:${command.name}`} className="muted">
-              Command /{command.name}: {command.description}
+              {t("settings.plugins.command", { name: command.name, description: command.description })}
             </span>
           ))}
           {plugin.mods === undefined && plugin.commands === undefined ? null : (
@@ -282,10 +307,10 @@ export function PluginsSettings({
                 variant="bare"
                 className="disclosure muted"
                 aria-expanded={expanded.has(plugin.id)}
-                aria-label={`Hook activity for ${plugin.id}`}
+                aria-label={t("settings.plugins.hookActivityLabel", { pluginId: plugin.id })}
                 onClick={() => toggleActivity(plugin.id)}
               >
-                Hook activity
+                {t("settings.plugins.hookActivity")}
               </Button>
             </span>
           )}
@@ -298,13 +323,11 @@ export function PluginsSettings({
           {proposed.map((version) => (
             // What this version itself declares: the review decides on it, not on the version that runs.
             <Notice as="span" key={`review:${version.version}`}>
-              {version.version} awaits review. It declares{" "}
-              {version.tools.length === 0 ? "no tools" : version.tools.map(describePluginTool).join(", ")}
-              {Object.keys(version.configFields).length === 0 ? "" : `, settings ${Object.keys(version.configFields).join(", ")}`}.
+              {reviewDeclares(version)}
               {(version.capabilities ?? []).map((capability) => (
                 <span key={capability.id}>
                   {" "}
-                  Provider {capability.id} ({capability.kind}): {capability.disclosure}
+                  {t("settings.plugins.review.provider", { id: capability.id, kind: capability.kind, disclosure: capability.disclosure })}
                 </span>
               ))}
               {(version.provenance?.packages ?? []).map((pkg) => (
@@ -323,12 +346,17 @@ export function PluginsSettings({
               {(version.channels ?? []).map((channel) => (
                 <span key={channel.providerId}>
                   {" "}
-                  Channel {channel.label} ({channel.kind}): {channel.disclosure}.
-                  {channel.endpoints.length === 0 ? "" : ` Reaches ${channel.endpoints.join("; ")}.`}
+                  {t("settings.plugins.review.channel", { label: channel.label, kind: channel.kind, disclosure: channel.disclosure })}
+                  {channel.endpoints.length === 0
+                    ? ""
+                    : ` ${t("settings.plugins.review.reaches", { endpoints: channel.endpoints.join("; ") })}`}
                 </span>
               ))}
               {(version.ui?.contributions ?? []).map((contribution) => (
-                <span key={`ui:${contribution.id}`}> Canvas {describePluginUiContribution(contribution).replace(/\.+$/, "")}.</span>
+                <span key={`ui:${contribution.id}`}>
+                  {" "}
+                  {t("settings.plugins.review.canvas", { what: describePluginUiContribution(contribution).replace(/\.+$/, "") })}
+                </span>
               ))}
               {version.apps === undefined
                 ? null
@@ -341,26 +369,30 @@ export function PluginsSettings({
               {(version.mods ?? []).map((hook, index) => (
                 <span key={`hook:${index}`}>
                   {" "}
-                  Hook {hook.event}
-                  {hook.contextTrusted === true ? " (trusted context)" : ""} (fails: {hook.onFailure}):{" "}
+                  {t(hook.contextTrusted === true ? "settings.plugins.hookTrusted" : "settings.plugins.hook", {
+                    event: hook.event,
+                    onFailure: hook.onFailure,
+                  })}{" "}
                   {withCode(hook.disclosure.replace(/\.+$/, ""))}. {withCode(hook.reads)}
                 </span>
               ))}
               {(version.commands ?? []).map((command) => (
                 <span key={`command:${command.name}`}>
                   {" "}
-                  Command /{command.name}: {command.description.replace(/\.+$/, "")}.
+                  {t("settings.plugins.command", { name: command.name, description: command.description.replace(/\.+$/, "") })}.
                 </span>
               ))}
               {isolationReview(version)}
               {plugin.directory === undefined ? null : (
                 <>
                   {" "}
-                  Its files are in{" "}
-                  <code>
-                    {plugin.directory}/{version.version}
-                  </code>
-                  .
+                  {withParts(t("settings.plugins.review.files"), {
+                    path: (
+                      <code>
+                        {plugin.directory}/{version.version}
+                      </code>
+                    ),
+                  })}
                 </>
               )}
             </Notice>
@@ -371,7 +403,9 @@ export function PluginsSettings({
             ? proposed.map((version) => (
                 // An MCP server's approval decides each of its tools: the generic card cannot show them.
                 <span key={version.version} className="note">
-                  Review {version.version} with <Command>{`tavi mcp show ${plugin.id}`}</Command>
+                  {withParts(t("settings.plugins.reviewWith", { version: version.version }), {
+                    command: <Command>{`tavi mcp show ${plugin.id}`}</Command>,
+                  })}
                 </span>
               ))
             : proposed.map((version) => (
@@ -382,33 +416,34 @@ export function PluginsSettings({
                     <RowAction
                       tone="awaited"
                       // The visible words first, so a voice-control user saying them reaches it (WCAG 2.5.3).
-                      aria-label={`Approve ${version.version} of ${plugin.id}`}
+                      aria-label={t("settings.plugins.approveLabel", { version: version.version, pluginId: plugin.id })}
                       disabled={busy !== undefined}
                       onClick={() => void run(`approve:${plugin.id}`, () => pluginActions.decide(client, plugin.id, version.version, true))}
                     >
-                      Approve {version.version}
+                      {t("settings.plugins.approve", { version: version.version })}
                     </RowAction>
                   ) : null}
                   {needsTerminal(version) ? (
                     // In-process (unsandboxed) is approved from the terminal only, as MCP's weaker sandbox is: the owner refuses it from a page.
                     <span className="note">
-                      Approve {version.version} in-process with{" "}
-                      <Command>{`tavi plugins approve ${plugin.id} ${version.version} --in-process`}</Command>
+                      {withParts(t("settings.plugins.approveInProcess", { version: version.version }), {
+                        command: <Command>{`tavi plugins approve ${plugin.id} ${version.version} --in-process`}</Command>,
+                      })}
                     </span>
                   ) : null}
                   <RowAction
                     tone="danger"
-                    aria-label={`Reject ${plugin.id} ${version.version}`}
+                    aria-label={t("settings.plugins.rejectLabel", { pluginId: plugin.id, version: version.version })}
                     disabled={busy !== undefined}
                     onClick={() => void run(`reject:${plugin.id}`, () => pluginActions.decide(client, plugin.id, version.version, false))}
                   >
-                    Reject
+                    {t("settings.plugins.reject")}
                   </RowAction>
                 </span>
               ))}
           {plugin.core ? null : (
             <RowAction
-              aria-label={`${plugin.enabled ? "Disable" : "Enable"} ${plugin.id}`}
+              aria-label={t(plugin.enabled ? "settings.search.disableLabel" : "settings.search.enableLabel", { id: plugin.id })}
               disabled={busy !== undefined || (plugin.kind !== "builtin" && !plugin.enabled && !approved)}
               onClick={() =>
                 void run(
@@ -419,26 +454,30 @@ export function PluginsSettings({
                 )
               }
             >
-              {plugin.enabled ? "Disable" : "Enable"}
+              {plugin.enabled ? t("settings.action.disable") : t("settings.action.enable")}
             </RowAction>
           )}
           {Object.keys(plugin.configFields).length === 0 &&
           (pluginRunningVersion(plugin)?.capabilities?.length ?? 0) === 0 &&
           (plugin.instances?.length ?? 0) === 0 ? null : (
-            <RowAction aria-label={`Settings for ${plugin.id}`} disabled={busy !== undefined} onClick={() => setConfiguring(plugin)}>
-              Settings
+            <RowAction
+              aria-label={t("settings.plugins.settingsLabel", { pluginId: plugin.id })}
+              disabled={busy !== undefined}
+              onClick={() => setConfiguring(plugin)}
+            >
+              {t("settings.plugins.settings")}
             </RowAction>
           )}
           {plugin.kind !== "builtin" ? (
             <RowAction
               tone="danger"
-              aria-label={`Remove ${plugin.id}`}
+              aria-label={t("settings.search.removeLabel", { id: plugin.id })}
               disabled={busy !== undefined || plugin.enabled}
               // Why it cannot be pressed: an enabled plugin is turned off before it is removed.
-              title={plugin.enabled ? "Disable it first to remove it" : undefined}
+              title={plugin.enabled ? t("settings.plugins.disableFirst") : undefined}
               onClick={() => setRemoving(plugin)}
             >
-              Remove
+              {t("settings.action.remove")}
             </RowAction>
           ) : null}
         </span>
@@ -448,31 +487,28 @@ export function PluginsSettings({
 
   return (
     <section className="settings">
-      <PageHead className="settings-head" title="Plugins">
+      <PageHead className="settings-head" title={t("settings.plugins.title")}>
         <Button variant="primary" disabled={busy !== undefined} onClick={() => setInstalling(true)}>
-          Install plugin
+          {t("settings.plugins.install")}
         </Button>
       </PageHead>
 
-      <Notice>
-        An installed plugin runs once you approve and enable it, as a confined worker that reaches only its own folder and the network
-        domains its manifest names; only one you approve to run in the owner's process gets the owner's privileges. Either way, approve only
-        code you trust. Enable and settings changes take effect when the owner next starts, except for a plugin that only adds to the
-        canvas, which applies at once. Disabling a loaded external plugin stops its calls immediately.
-      </Notice>
+      <Notice>{t("settings.plugins.intro")}</Notice>
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         <PageNote tone={tone} note={note} />
       </LoadState>
-      <h2 className="settings-section-title">Installed</h2>
-      {data !== undefined && external.length === 0 ? <Empty>No plugin is installed.</Empty> : null}
+      <h2 className="settings-section-title">{t("settings.plugins.installed")}</h2>
+      {data !== undefined && external.length === 0 ? <Empty>{t("settings.plugins.empty")}</Empty> : null}
       <ul className="rows">{external.map(row)}</ul>
       {/* MCP servers are apps: Settings → Connected apps. */}
       <p className="muted">
-        MCP servers and the accounts Tavi connects to are in{" "}
-        <AppLink href={appsPath()} onFollow={undefined}>
-          Connected apps
-        </AppLink>
-        .
+        {withParts(t("settings.plugins.mcpElsewhere"), {
+          link: (
+            <AppLink href={appsPath()} onFollow={undefined}>
+              {t("settings.plugins.connectedApps")}
+            </AppLink>
+          ),
+        })}
       </p>
       {/* Tavi's own plugins are folded under their count: what you installed is what the page leads with. One you turned
           off, or one not ready, opens the fold, so its row is seen. */}
@@ -480,19 +516,19 @@ export function PluginsSettings({
         className="plugins-builtin"
         open={optional.some((plugin) => !plugin.enabled || (plugin.phase !== undefined && plugin.phase !== "ready"))}
       >
-        <summary className="disclosure settings-section-title">Built in · {optional.length}</summary>
+        <summary className="disclosure settings-section-title">{t("settings.plugins.builtIn", { count: optional.length })}</summary>
         <ul className="rows">{optional.map(row)}</ul>
       </details>
       {core.length === 0 ? null : (
         // Opened while a core plugin is not ready: its phase badge is in its row, which a closed fold would hide.
         <details className="plugins-core" open={core.some((plugin) => plugin.phase !== undefined && plugin.phase !== "ready")}>
-          <summary className="disclosure">Core (always on) · {core.length}</summary>
+          <summary className="disclosure">{t("settings.plugins.coreCount", { count: core.length })}</summary>
           <ul className="rows">{core.map(row)}</ul>
         </details>
       )}
       {workspaceId === undefined || data === undefined ? null : (
         <>
-          <h2 className="settings-section-title">Canvas</h2>
+          <h2 className="settings-section-title">{t("settings.plugins.canvas")}</h2>
           {/* Read again whenever a plugin is enabled, disabled, approved or rejected. */}
           <CanvasPluginsSettings
             key={`${workspaceId}:${plugins.map((plugin) => `${plugin.id}@${plugin.activeVersion ?? ""}:${plugin.enabled ? 1 : 0}:${plugin.versions.map((v) => v.reviewState).join(",")}`).join("|")}`}
@@ -530,13 +566,13 @@ export function PluginsSettings({
       ) : null}
       {removing !== undefined ? (
         <Confirm
-          title={`Remove ${removing.name}?`}
+          title={t("settings.search.removeTitle", { id: removing.name })}
           message={
             removing.versions.some((version) => (version.channels ?? []).some((channel) => channel.retention === "purge-on-remove"))
-              ? `Every installed version of ${removing.id} and its settings are deleted. Its channel's connections are closed, and in 24 hours what they brought in is erased — conversations, messages, files and the chat notes they taught — as the channel's terms require. Installing it again before then cancels that; disable it instead to keep everything.`
-              : `Every installed version of ${removing.id} and its settings are deleted.`
+              ? t("settings.plugins.removePurge", { pluginId: removing.id })
+              : t("settings.plugins.removeMessage", { pluginId: removing.id })
           }
-          action="Remove"
+          action={t("settings.action.remove")}
           onClose={() => setRemoving(undefined)}
           onConfirm={() => run(`remove:${removing.id}`, () => pluginActions.remove(client, removing.id))}
         />

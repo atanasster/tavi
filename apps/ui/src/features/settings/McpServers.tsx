@@ -18,6 +18,8 @@ import { Empty } from "../../ui/Empty.js";
 import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
 import { useWorkspace } from "../shell/Workspace.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * An MCP server's own pieces, which Connected apps embeds: adding one by
@@ -40,16 +42,18 @@ const OVERLAP = "the model may pick either";
 
 /** A changed tool's definition, field by field: what was approved, and what the server lists now. */
 function DefinitionChanges({ changes }: { readonly changes: NonNullable<McpReviewTool["changedFields"]> }) {
+  const t = useT();
   return (
     <details open className="mcp-definition-changes">
-      <summary className="disclosure">What changed since it was approved</summary>
+      <summary className="disclosure">{t("settings.mcp.changes.title")}</summary>
       <ul>
         {changes.fields.map((change) => (
           <li key={change.field}>
-            <code>{change.field}</code>: <del>{change.before ?? "(none)"}</del> → <ins>{change.after ?? "(none)"}</ins>
+            <code>{change.field}</code>: <del>{change.before ?? t("settings.mcp.changes.none")}</del> →{" "}
+            <ins>{change.after ?? t("settings.mcp.changes.none")}</ins>
           </li>
         ))}
-        {changes.more > 0 ? <li className="muted">… and {String(changes.more)} more</li> : null}
+        {changes.more > 0 ? <li className="muted">{t("settings.mcp.changes.more", { count: String(changes.more) })}</li> : null}
       </ul>
     </details>
   );
@@ -57,8 +61,8 @@ function DefinitionChanges({ changes }: { readonly changes: NonNullable<McpRevie
 
 /** Why a tool is flagged: where its definition reads like instructions, by JSON pointer, past its description alone. */
 function flaggedMark(at: readonly string[]): string {
-  if (at.length === 0 || (at.length === 1 && at[0] === "/description")) return "FLAGGED: its description reads like instructions";
-  return `FLAGGED: reads like instructions at ${at.slice(0, 5).join(", ")}${at.length > 5 ? ", …" : ""}`;
+  if (at.length === 0 || (at.length === 1 && at[0] === "/description")) return translateNow("settings.mcp.mark.flaggedDescription");
+  return translateNow("settings.mcp.mark.flaggedAt", { at: `${at.slice(0, 5).join(", ")}${at.length > 5 ? ", …" : ""}` });
 }
 
 /** A tool that needs an explicit choice before approval: doubtful or flagged, with nothing decided before. */
@@ -101,6 +105,7 @@ export function AddServerForm({
   /** Adds it; true when the owner did, so the form clears only then. */
   readonly onAdd: (slug: string, form: Parameters<typeof mcpActions.add>[2]) => Promise<boolean>;
 }) {
+  const t = useT();
   const id = useId();
   const [slug, setSlug] = useState("");
   const [source, setSource] = useState<"url" | "npm">("url");
@@ -124,16 +129,16 @@ export function AddServerForm({
   return (
     <form
       className="settings-panel"
-      aria-label="Add an MCP server"
+      aria-label={t("settings.mcp.add.label")}
       onSubmit={(event) => {
         event.preventDefault();
         submit();
       }}
     >
-      <h3 className="settings-section-title">Add a server</h3>
-      <BusyFieldset busy={busy} label="Adding the server…" className="settings-fields">
+      <h3 className="settings-section-title">{t("settings.mcp.add.title")}</h3>
+      <BusyFieldset busy={busy} label={t("settings.mcp.add.busy")} className="settings-fields">
         <label htmlFor={`${id}-slug`}>
-          Name
+          {t("settings.mcp.name")}
           <input
             id={`${id}-slug`}
             value={slug}
@@ -144,10 +149,14 @@ export function AddServerForm({
           />
         </label>
         <label>
-          Server
-          <Select aria-label="Server" value={source} onChange={(event) => setSource(event.target.value as typeof source)}>
-            <option value="url">Remote (URL)</option>
-            <option value="npm">npm package</option>
+          {t("settings.mcp.add.server")}
+          <Select
+            aria-label={t("settings.mcp.add.server")}
+            value={source}
+            onChange={(event) => setSource(event.target.value as typeof source)}
+          >
+            <option value="url">{t("settings.mcp.add.remote")}</option>
+            <option value="npm">{t("settings.mcp.add.npm")}</option>
           </Select>
         </label>
         {source === "url" ? (
@@ -163,17 +172,15 @@ export function AddServerForm({
               />
             </label>
             <label>
-              <input type="checkbox" checked={token} onChange={(event) => setToken(event.target.checked)} /> Sends a token (Authorization:
-              Bearer)
+              <input type="checkbox" checked={token} onChange={(event) => setToken(event.target.checked)} /> {t("settings.mcp.add.token")}
             </label>
             <label>
-              <input type="checkbox" checked={lan} onChange={(event) => setLan(event.target.checked)} /> On my network (a private address,
-              plain http there)
+              <input type="checkbox" checked={lan} onChange={(event) => setLan(event.target.checked)} /> {t("settings.mcp.add.lan")}
             </label>
           </>
         ) : (
           <label htmlFor={`${id}-spec`} className="mcp-add-wide">
-            Package
+            {t("settings.mcp.add.package")}
             <input
               id={`${id}-spec`}
               value={spec}
@@ -185,7 +192,7 @@ export function AddServerForm({
         )}
         <div className="actions">
           <Button variant="primary" type="submit" disabled={slug.trim() === ""}>
-            Add server
+            {t("settings.mcp.add.submit")}
           </Button>
         </div>
       </BusyFieldset>
@@ -206,6 +213,7 @@ export function DiscoverPanel({
   readonly busy: boolean;
   readonly onAdd: (slug: string, form: Parameters<typeof mcpActions.add>[2]) => Promise<boolean>;
 }) {
+  const t = useT();
   const { client } = useWorkspace();
   const id = useId();
   const [query, setQuery] = useState("");
@@ -227,11 +235,11 @@ export function DiscoverPanel({
   };
   return (
     <details className="settings-panel">
-      <summary className="disclosure">Discover servers in the MCP Registry</summary>
+      <summary className="disclosure">{t("settings.mcp.discover.title")}</summary>
       <form
         className="actions mcp-search"
         role="search"
-        aria-label="Search the MCP Registry"
+        aria-label={t("settings.mcp.discover.searchLabel")}
         onSubmit={(event) => {
           event.preventDefault();
           void search(query.trim());
@@ -239,25 +247,22 @@ export function DiscoverPanel({
       >
         <input
           id={`${id}-query`}
-          aria-label="Search"
+          aria-label={t("settings.mcp.discover.search")}
           value={query}
-          placeholder="notes, calendar, github…"
+          placeholder={t("settings.mcp.discover.placeholder")}
           maxLength={200}
           onChange={(event) => setQuery(event.target.value)}
         />
         <Button type="submit" disabled={searching}>
-          {searching ? "Searching…" : "Search"}
+          {searching ? t("settings.mcp.discover.searching") : t("settings.mcp.discover.search")}
         </Button>
       </form>
-      <p className="muted">
-        Listings are their publishers&apos; words, not a reason to trust a server: each one you add is probed in its sandbox and reviewed
-        first.
-      </p>
+      <p className="muted">{t("settings.mcp.discover.trust")}</p>
       {failure === undefined ? null : <Failure>{failure}</Failure>}
       {page === undefined ? null : page.entries.length === 0 ? (
-        <Empty>No server found in {page.registry}.</Empty>
+        <Empty>{t("settings.mcp.discover.empty", { registry: page.registry })}</Empty>
       ) : (
-        <ul className="rows" aria-label="Registry results">
+        <ul className="rows" aria-label={t("settings.mcp.discover.results")}>
           {page.entries.map((entry) => (
             <DiscoverEntry key={`${entry.name}@${entry.version}`} entry={entry} busy={busy} onAdd={onAdd} />
           ))}
@@ -265,7 +270,7 @@ export function DiscoverPanel({
       )}
       {page?.next === undefined ? null : (
         <Button disabled={searching} onClick={() => void search(page.query, page.next)}>
-          More
+          {t("settings.mcp.discover.more")}
         </Button>
       )}
     </details>
@@ -281,6 +286,7 @@ function DiscoverEntry({
   readonly busy: boolean;
   readonly onAdd: (slug: string, form: Parameters<typeof mcpActions.add>[2]) => Promise<boolean>;
 }) {
+  const t = useT();
   const id = useId();
   const [slug, setSlug] = useState(entry.slug);
   return (
@@ -293,7 +299,7 @@ function DiscoverEntry({
             {entry.title === undefined || entry.title === entry.name ? entry.version : `${entry.name} ${entry.version}`}
           </span>{" "}
           {entry.labels.length === 0 ? (
-            <span className="badge">not installable</span>
+            <span className="badge">{t("settings.mcp.discover.notInstallable")}</span>
           ) : (
             entry.labels.map((label) => (
               <span key={label} className="badge">
@@ -305,7 +311,7 @@ function DiscoverEntry({
         {entry.description === "" ? null : <span className="muted">{entry.description}</span>}
         {entry.unsupported.map((why) => (
           <span key={why} className="muted">
-            Not added: {why}
+            {t("settings.mcp.discover.notAdded", { why })}
           </span>
         ))}
       </span>
@@ -313,7 +319,7 @@ function DiscoverEntry({
         <span className="actions">
           {/* The name it is added under, said beside its field: a bare box of letters reads as nothing. */}
           <label className="mcp-slug-label meta-sm" htmlFor={`${id}-slug`}>
-            Name
+            {t("settings.mcp.name")}
           </label>
           <input
             id={`${id}-slug`}
@@ -327,11 +333,24 @@ function DiscoverEntry({
             <RowAction
               key={option.key}
               disabled={busy || !/^[a-z][a-z0-9]{0,18}$/.test(slug)}
-              title={`${option.summary}${option.settings.length + option.credentials.length === 0 ? "" : `; then set ${[...option.settings, ...option.credentials].join(", ")}`}`}
-              aria-label={`Add ${entry.name} as ${option.kind === "remote" ? "a remote server" : `its ${option.kind} package`}`}
+              title={
+                option.settings.length + option.credentials.length === 0
+                  ? option.summary
+                  : t("settings.mcp.discover.thenSet", {
+                      summary: option.summary,
+                      names: [...option.settings, ...option.credentials].join(", "),
+                    })
+              }
+              aria-label={
+                option.kind === "remote"
+                  ? t("settings.mcp.discover.addRemoteLabel", { name: entry.name })
+                  : t("settings.mcp.discover.addPackageLabel", { name: entry.name, kind: option.kind })
+              }
               onClick={() => void onAdd(slug, { kind: "registry", name: entry.name, version: entry.version, option: option.key })}
             >
-              Add ({option.kind === "remote" ? "remote" : option.kind})
+              {option.kind === "remote"
+                ? t("settings.mcp.discover.addRemote")
+                : t("settings.mcp.discover.addPackage", { kind: option.kind })}
             </RowAction>
           ))}
         </span>
@@ -350,6 +369,7 @@ export function McpReviewModal({
   readonly onClose: () => void;
   readonly onDone: (outcome: Awaited<ReturnType<typeof mcpActions.approve>>) => void;
 }) {
+  const t = useT();
   const { client } = useWorkspace();
   const { data, error, loading, reload } = useLoaded(() => mcpActions.show(client, pluginId));
   const [choices, setChoices] = useState<Readonly<Record<string, McpToolChoice>>>({});
@@ -391,7 +411,12 @@ export function McpReviewModal({
   // A version probed unsandboxed or nested is approved with `tavi mcp approve … --unsandboxed|--nested`, never from a page.
   const weaker = review !== undefined && review.transport === "stdio" && review.sandboxState !== "srt";
   return (
-    <Modal title={`Review ${pluginId}${review === undefined ? "" : `@${review.version}`}`} wide busy={busy} onClose={onClose}>
+    <Modal
+      title={t("settings.mcp.review.title", { name: `${pluginId}${review === undefined ? "" : `@${review.version}`}` })}
+      wide
+      busy={busy}
+      onClose={onClose}
+    >
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         {null}
       </LoadState>
@@ -403,12 +428,21 @@ export function McpReviewModal({
             </Notice>
           ))}
           <p>
-            <strong>{review.reviewState}</strong>, sandbox:{" "}
-            {review.sandboxState === "srt" ? "sandboxed" : review.sandboxState === "nested" ? "nested (weaker)" : "not sandboxed"}
+            {withParts(
+              t("settings.mcp.review.sandbox", {
+                sandbox:
+                  review.sandboxState === "srt"
+                    ? t("settings.mcp.review.sandboxed")
+                    : review.sandboxState === "nested"
+                      ? t("settings.mcp.review.nested")
+                      : t("settings.mcp.review.notSandboxed"),
+              }),
+              { state: <strong>{review.reviewState}</strong> },
+            )}
             {review.serverInfo === undefined ? null : (
               <span className="muted">
                 {" "}
-                — the server says it is {review.serverInfo.name} {review.serverInfo.version}
+                {t("settings.mcp.review.serverSays", { name: review.serverInfo.name, version: review.serverInfo.version })}
               </span>
             )}
           </p>
@@ -420,9 +454,10 @@ export function McpReviewModal({
             ))}
           </ul>
           {review.changes === undefined ? null : (
-            <Notice as="div" role="note" aria-label={`Changed since ${review.changes.since}`}>
-              Changed since {review.changes.since} (approved)
-              {review.changes.lines.length === 0 ? ": nothing in what runs or what it reaches." : ":"}
+            <Notice as="div" role="note" aria-label={t("settings.mcp.review.changedLabel", { since: review.changes.since })}>
+              {review.changes.lines.length === 0
+                ? t("settings.mcp.review.changedNothing", { since: review.changes.since })
+                : t("settings.mcp.review.changed", { since: review.changes.since })}
               {review.changes.lines.length === 0 ? null : (
                 <ul>
                   {review.changes.lines.map((line) => (
@@ -436,32 +471,29 @@ export function McpReviewModal({
           )}
           {review.instructions === undefined ? null : (
             <details>
-              <summary className="disclosure">Its instructions (shown to you, never to the model)</summary>
+              <summary className="disclosure">{t("settings.mcp.review.instructions")}</summary>
               <pre>{review.instructions}</pre>
             </details>
           )}
           {(review.warnings ?? []).length === 0 ? null : (
-            <Notice as="div" role="note" aria-label="Warnings">
-              Before you approve:
+            <Notice as="div" role="note" aria-label={t("settings.mcp.review.warnings")}>
+              {t("settings.mcp.review.beforeApprove")}
               <ul>
                 {(review.warnings ?? []).map((warning) => (
                   // An overlap's remedy is this page's own control, not the terminal's `--disable`.
-                  <li key={warning}>
-                    {warning}
-                    {warning.endsWith(OVERLAP) ? "; leave out the ones you do not need" : ""}
-                  </li>
+                  <li key={warning}>{warning.endsWith(OVERLAP) ? t("settings.mcp.review.overlapWarning", { warning }) : warning}</li>
                 ))}
               </ul>
             </Notice>
           )}
-          {review.probedAt === undefined ? <Notice>Not probed yet: probe it to list its tools.</Notice> : null}
+          {review.probedAt === undefined ? <Notice>{t("settings.mcp.review.notProbed")}</Notice> : null}
           <table className="mcp-tools">
             <thead>
               <tr>
-                <th>Tool</th>
-                <th>Effect</th>
-                <th>Floor</th>
-                <th>Leave out</th>
+                <th>{t("settings.mcp.review.tool")}</th>
+                <th>{t("settings.mcp.review.effect")}</th>
+                <th>{t("settings.mcp.review.floor")}</th>
+                <th>{t("settings.mcp.review.leaveOut")}</th>
               </tr>
             </thead>
             <tbody>
@@ -469,11 +501,11 @@ export function McpReviewModal({
                 const choice = choices[tool.name] ?? {};
                 const current = shownEffect(tool, choice);
                 const marks = [
-                  tool.doubtful ? "DOUBTFUL: claims read-only but has a write name" : undefined,
+                  tool.doubtful ? t("settings.mcp.mark.doubtful") : undefined,
                   tool.flagged ? flaggedMark(tool.flaggedAt ?? []) : undefined,
-                  "problem" in tool.schema ? `SCHEMA: ${tool.schema.problem}` : undefined,
-                  tool.state === "withheld" ? "CHANGED since it was approved" : undefined,
-                  tool.state === "pending" && review.reviewState === "approved" ? "NEW" : undefined,
+                  "problem" in tool.schema ? t("settings.mcp.mark.schema", { problem: tool.schema.problem }) : undefined,
+                  tool.state === "withheld" ? t("settings.mcp.mark.changed") : undefined,
+                  tool.state === "pending" && review.reviewState === "approved" ? t("settings.mcp.mark.new") : undefined,
                 ].filter((mark): mark is string => mark !== undefined);
                 return (
                   <Fragment key={tool.name}>
@@ -492,7 +524,7 @@ export function McpReviewModal({
                       </td>
                       <td>
                         <Select
-                          aria-label={`Effect of ${tool.shown.name}`}
+                          aria-label={t("settings.mcp.review.effectLabel", { name: tool.shown.name })}
                           value={current ?? ""}
                           disabled={choice.disabled === true}
                           onChange={(event) => {
@@ -500,18 +532,17 @@ export function McpReviewModal({
                             if (effect !== undefined) choose(tool.name, { effect });
                           }}
                         >
-                          {current === undefined ? <option value="">Choose…</option> : null}
+                          {current === undefined ? <option value="">{t("settings.mcp.review.choose")}</option> : null}
                           {EFFECTS.map((effect) => (
                             <option key={effect} value={effect}>
-                              {effect}
-                              {effect === tool.suggestedEffect ? " (suggested)" : ""}
+                              {effect === tool.suggestedEffect ? t("settings.mcp.review.suggested", { effect }) : effect}
                             </option>
                           ))}
                         </Select>
                       </td>
                       <td>
                         <Select
-                          aria-label={`Floor of ${tool.shown.name}`}
+                          aria-label={t("settings.mcp.review.floorLabel", { name: tool.shown.name })}
                           value={shownFloor(tool, choice)}
                           disabled={choice.disabled === true}
                           onChange={(event) => {
@@ -521,7 +552,7 @@ export function McpReviewModal({
                         >
                           {FLOORS.map((floor) => (
                             <option key={floor} value={floor}>
-                              {floor === "low" ? "none (low)" : floor}
+                              {floor === "low" ? t("settings.mcp.review.floorNone") : floor}
                             </option>
                           ))}
                         </Select>
@@ -529,7 +560,7 @@ export function McpReviewModal({
                       <td>
                         <input
                           type="checkbox"
-                          aria-label={`Leave out ${tool.shown.name}`}
+                          aria-label={t("settings.mcp.review.leaveOutLabel", { name: tool.shown.name })}
                           checked={choice.disabled ?? tool.state === "disabled"}
                           onChange={(event) => choose(tool.name, { disabled: event.target.checked })}
                         />
@@ -548,21 +579,23 @@ export function McpReviewModal({
               })}
             </tbody>
           </table>
-          {blocked ? <Notice>Choose an effect, or leave out, every DOUBTFUL or FLAGGED tool before approving.</Notice> : null}
+          {blocked ? <Notice>{t("settings.mcp.review.blocked")}</Notice> : null}
           {weaker ? (
             <Notice>
-              It was probed {review.sandboxState === "none" ? "unsandboxed" : "in the weaker nested sandbox"}: approve it with{" "}
-              <code>
-                tavi mcp approve {review.pluginId} {review.version} --{review.sandboxState === "none" ? "unsandboxed" : "nested"}
-              </code>
-              .
+              {withParts(t(review.sandboxState === "none" ? "settings.mcp.review.probedUnsandboxed" : "settings.mcp.review.probedNested"), {
+                command: (
+                  <code>
+                    tavi mcp approve {review.pluginId} {review.version} --{review.sandboxState === "none" ? "unsandboxed" : "nested"}
+                  </code>
+                ),
+              })}
             </Notice>
           ) : null}
           {failure === undefined ? null : <Failure>{failure}</Failure>}
           <div className="actions">
             {review.reviewState === "proposed" ? (
               <Button variant="danger" disabled={busy} onClick={() => void decide(false)}>
-                Reject {review.version}
+                {t("settings.mcp.review.reject", { version: review.version })}
               </Button>
             ) : null}
             <Button
@@ -570,7 +603,7 @@ export function McpReviewModal({
               disabled={busy || blocked || weaker || review.probedAt === undefined}
               onClick={() => void decide(true)}
             >
-              Approve {review.version}
+              {t("settings.plugins.approve", { version: review.version })}
             </Button>
           </div>
         </div>
@@ -580,15 +613,16 @@ export function McpReviewModal({
 }
 
 export function McpLogsModal({ pluginId, onClose }: { readonly pluginId: string; readonly onClose: () => void }) {
+  const t = useT();
   const { client } = useWorkspace();
   const { data, error, loading, reload } = useLoaded(() => mcpActions.logs(client, pluginId));
   return (
-    <Modal title={`Log of ${pluginId}`} wide onClose={onClose}>
+    <Modal title={t("settings.mcp.logs.title", { pluginId })} wide onClose={onClose}>
       <LoadState error={error} reload={reload} loading={loading && data === undefined}>
         {null}
       </LoadState>
       {data === undefined ? null : data.logs.lines.length === 0 ? (
-        <Empty>Nothing logged yet.</Empty>
+        <Empty>{t("settings.mcp.logs.empty")}</Empty>
       ) : (
         <pre className="mcp-log">{data.logs.lines.join("\n")}</pre>
       )}

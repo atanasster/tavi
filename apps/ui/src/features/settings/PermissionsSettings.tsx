@@ -11,6 +11,8 @@ import {
   type WorkspaceSettingsAnswer,
 } from "@tavi/contracts";
 
+import { useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import { workspaceSettingsActions } from "./workspace-api.js";
 import { permissionActions } from "./plugins-api.js";
 import { Notice, PageHead, PageNote, Pending } from "../../ui/Parts.js";
@@ -24,6 +26,7 @@ import { useWorkspace } from "../shell/Workspace.js";
 import { AppLink } from "../shell/AppLink.js";
 import { taskPath } from "../shell/route.js";
 import { Command } from "../../ui/Command.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * Where a rule came from, as a tag beside it — only where its list does not
@@ -43,16 +46,16 @@ function sentence(note: string): string {
  * The tasks a rule scoped to an origin applies to. A rule scoped to `ipc`
  * also covers the canvas's `web` tasks: the canvas is an attached client too.
  */
-const RULE_ORIGINS: Readonly<Record<NonNullable<ToolRule["origin"]>, string>> = {
-  cli: "tasks started with tavi run",
-  ipc: "tasks started in a terminal or on the web",
-  web: "tasks started on the web",
-  messaging: "tasks started from a chat",
-  schedule: "scheduled tasks",
-  agent: "delegated tasks",
-  reminder: "tasks a reminder started",
-  heartbeat: "heartbeat checks",
-  ideas: "ideas' prepared first steps",
+const RULE_ORIGINS: Readonly<Record<NonNullable<ToolRule["origin"]>, UiKey>> = {
+  cli: "settings.permissions.origin.cli",
+  ipc: "settings.permissions.origin.ipc",
+  web: "settings.permissions.origin.web",
+  messaging: "settings.permissions.origin.messaging",
+  schedule: "settings.permissions.origin.schedule",
+  agent: "settings.permissions.origin.agent",
+  reminder: "settings.permissions.origin.reminder",
+  heartbeat: "settings.permissions.origin.heartbeat",
+  ideas: "settings.permissions.origin.ideas",
 };
 
 /**
@@ -79,6 +82,7 @@ export function PermissionsSettings({
   /** A rule to point out: the one an approval's "Always" row linked to. Absent, the address's `#rule-<id>`. */
   readonly highlight?: string | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [pointed] = useState(() => highlight ?? (typeof window === "undefined" ? undefined : ruleFromHash(window.location.hash)));
   const rules = useLoaded(() => permissionActions.rules(client, workspaceId));
@@ -100,7 +104,7 @@ export function PermissionsSettings({
   const { busy, note, tone, run } = useAction(reload);
   // A matcher came from a call's subjects: what it would hide is marked.
   const describe = (entry: { readonly argMatcher?: string | undefined }) =>
-    entry.argMatcher === undefined ? "any call" : <code className="file-name">{displaySafe(entry.argMatcher)}</code>;
+    entry.argMatcher === undefined ? t("settings.permissions.anyCall") : <code className="file-name">{displaySafe(entry.argMatcher)}</code>;
   const ruleRow = (rule: ToolRule) => (
     <li
       key={rule.ruleId}
@@ -116,7 +120,7 @@ export function PermissionsSettings({
           {rule.workspaceId === "*" && rule.source !== "shipped" ? (
             <>
               {" "}
-              <span className="badge badge-muted">All workspaces</span>
+              <span className="badge badge-muted">{t("settings.permissions.allWorkspaces")}</span>
             </>
           ) : null}
           {RULE_SOURCE_TAGS[rule.source] === undefined ? null : (
@@ -131,7 +135,14 @@ export function PermissionsSettings({
             {rule.note === undefined ? "" : sentence(rule.note)}
             {rule.origin === undefined ? null : (
               <span className="rule-origin">
-                {rule.note === undefined ? "Only" : " · only"} {RULE_ORIGINS[rule.origin]}
+                {rule.note === undefined ? (
+                  t("settings.permissions.onlyFirst", { who: t(RULE_ORIGINS[rule.origin]) })
+                ) : (
+                  <>
+                    {" · "}
+                    {t("settings.permissions.only", { who: t(RULE_ORIGINS[rule.origin]) })}
+                  </>
+                )}
               </span>
             )}
           </span>
@@ -145,7 +156,7 @@ export function PermissionsSettings({
             disabled={busy !== undefined}
             onClick={() => void run(`rule:${rule.ruleId}`, () => permissionActions.remove(client, workspaceId, rule.ruleId))}
           >
-            Remove
+            {t("settings.action.remove")}
           </RowAction>
         </span>
       ) : null}
@@ -171,16 +182,29 @@ export function PermissionsSettings({
                 <code>{entry.toolId}</code>
               </Fragment>
             ))}
-            {grant.argMatcher === undefined ? " — any call" : null}
+            {grant.argMatcher === undefined ? ` — ${t("settings.permissions.anyCall")}` : null}
           </span>
           <span className="muted">
             {/* The chat as the reader knows it: its title, a link to it, with its id beside it. */}
-            in{" "}
-            <AppLink href={taskPath(grant.taskId)} onFollow={undefined}>
-              {grant.taskTitle ?? grant.taskId}
-            </AppLink>
-            {grant.taskTitle === undefined ? "" : ` (${grant.taskId})`}, by {grant.createdBy}
-            {grant.expiresAt === undefined ? "" : `, until ${grant.expiresAt.slice(0, 16).replace("T", " ")} UTC or the chat's next epoch`}
+            {withParts(
+              grant.expiresAt === undefined
+                ? t("settings.permissions.grantBy", {
+                    id: grant.taskTitle === undefined ? "" : ` (${grant.taskId})`,
+                    by: grant.createdBy,
+                  })
+                : t("settings.permissions.grantByUntil", {
+                    id: grant.taskTitle === undefined ? "" : ` (${grant.taskId})`,
+                    by: grant.createdBy,
+                    until: grant.expiresAt.slice(0, 16).replace("T", " "),
+                  }),
+              {
+                chat: (
+                  <AppLink href={taskPath(grant.taskId)} onFollow={undefined}>
+                    {grant.taskTitle ?? grant.taskId}
+                  </AppLink>
+                ),
+              },
+            )}
           </span>
         </span>
         <span className="actions">
@@ -189,7 +213,7 @@ export function PermissionsSettings({
             disabled={busy !== undefined}
             onClick={() => void run(`grant:${grant.grantId}`, () => permissionActions.revoke(client, workspaceId, grant.grantId))}
           >
-            Revoke
+            {t("settings.permissions.revoke")}
           </RowAction>
         </span>
       </li>
@@ -197,31 +221,26 @@ export function PermissionsSettings({
   const taint = settings.data?.effective?.securityTaint === undefined ? undefined : settings.data;
   const detector = settings.data?.effective?.securityInjectionDetector === undefined ? undefined : settings.data;
   return (
-    <section className="settings" aria-label="permissions">
-      <PageHead
-        className="settings-head"
-        title="Permissions"
-        description={
-          <>
-            Each tool call is checked when the model makes it: a built-in list refuses a few destructive commands outright, then deny, ask
-            and allow rules apply (deny wins), then what approvals allowed for the rest of a task. Anything else that changes something or
-            reaches outside waits for your approval.
-          </>
-        }
-      />
+    <section className="settings" aria-label={t("settings.permissions.region")}>
+      <PageHead className="settings-head" title={t("settings.permissions.title")} description={t("settings.permissions.description")} />
       <Notice>
-        Add a rule with <Command>tavi permissions add</Command>, or by approving a call with <em>Always allow</em>. This page removes only
-        allow rules; remove a deny or ask rule with <Command>tavi permissions rm</Command>, since dropping one widens what runs unasked.
+        {withParts(t("settings.permissions.howToAdd"), {
+          add: <Command>tavi permissions add</Command>,
+          always: <em>{t("settings.permissions.alwaysAllow")}</em>,
+          rm: <Command>tavi permissions rm</Command>,
+        })}
       </Notice>
       <PageNote tone={tone} note={note} />
       {taint === undefined && detector === undefined ? null : (
-        <section className="settings-panel" aria-label="untrusted content">
-          <h2 className="settings-section-title">Untrusted content</h2>
+        <section className="settings-panel" aria-label={t("settings.permissions.untrustedRegion")}>
+          <h2 className="settings-section-title">{t("settings.permissions.untrusted")}</h2>
           <p className="settings-description">
-            After a web page, an email or a search result enters a chat, a call that could send data out, use a credential or save something
-            can be held for your approval, whatever rules or grants allow. <em>Record only</em> decides as before and records each call it
-            would have asked, which <Command>tavi doctor</Command> counts; <em>Ask</em> holds them. This page can only make it stricter;
-            lower it with <Command>{"tavi permissions taint <mode>"}</Command>.
+            {withParts(t("settings.permissions.untrustedBody"), {
+              record: <em>{t("settings.permissions.recordOnly")}</em>,
+              doctor: <Command>tavi doctor</Command>,
+              ask: <em>{t("settings.permissions.ask")}</em>,
+              command: <Command>{"tavi permissions taint <mode>"}</Command>,
+            })}
           </p>
           <div className="settings-fields">
             {taint === undefined ? null : (
@@ -242,39 +261,43 @@ export function PermissionsSettings({
             )}
             {taint?.taintPolicy === undefined ? null : (
               <p>
-                The owner was started with <code>serve --taint-policy {taint.taintPolicy}</code>, which applies instead until it restarts
-                without it ({TAINT_MODE_LABELS[taint.effective.securityTaint ?? taint.settings.securityTaint ?? DEFAULT_TAINT_MODE]}).
+                {withParts(
+                  t("settings.permissions.taintPolicy", {
+                    mode: t(TAINT_MODE_LABELS[taint.effective.securityTaint ?? taint.settings.securityTaint ?? DEFAULT_TAINT_MODE]),
+                  }),
+                  { flag: <code>serve --taint-policy {taint.taintPolicy}</code> },
+                )}
               </p>
             )}
           </div>
         </section>
       )}
-      <h2 className="settings-section-title">Rules</h2>
+      <h2 className="settings-section-title">{t("settings.permissions.rules")}</h2>
       {rules.error === undefined ? null : <LoadError error={rules.error} reload={reload} />}
       {rules.loading && rules.data === undefined ? (
-        <Pending label="Loading rules…" className="notice" status />
+        <Pending label={t("settings.permissions.loadingRules")} className="notice" status />
       ) : (
         <>
           {/* Your rules lead; the ones Tavi ships are folded under their count, opened when an approval points at one. */}
-          {ownRules.length === 0 ? <p className="muted">None of your own yet: Always allow on an approval adds one.</p> : null}
+          {ownRules.length === 0 ? <p className="muted">{t("settings.permissions.noneOwn")}</p> : null}
           <ul className="rows">{ownRules.map(ruleRow)}</ul>
           {shippedRules.length === 0 ? null : (
             <details className="rules-shipped" open={shippedRules.some((rule) => rule.ruleId === pointed)}>
-              <summary className="disclosure">Shipped with Tavi · {shippedRules.length}</summary>
+              <summary className="disclosure">{t("settings.permissions.shipped", { count: shippedRules.length })}</summary>
               <ul className="rows">{shippedRules.map(ruleRow)}</ul>
             </details>
           )}
         </>
       )}
       {pointed !== undefined && rules.data !== undefined && !pointedListed ? (
-        <p className="muted">The rule that approval saved is no longer listed: it was removed.</p>
+        <p className="muted">{t("settings.permissions.pointedGone")}</p>
       ) : null}
-      <h2 className="settings-section-title">Chat grants</h2>
+      <h2 className="settings-section-title">{t("settings.permissions.grants")}</h2>
       {grants.error === undefined ? null : <LoadError error={grants.error} reload={reload} />}
       {grants.loading && grants.data === undefined ? (
-        <Pending label="Loading chat grants…" className="notice" status />
+        <Pending label={t("settings.permissions.loadingGrants")} className="notice" status />
       ) : (grants.data?.grants.length ?? 0) === 0 ? (
-        <Empty>No chat grants.</Empty>
+        <Empty>{t("settings.permissions.noGrants")}</Empty>
       ) : (
         <ul className="rows">{decisions.map(grantRow)}</ul>
       )}
@@ -288,10 +311,10 @@ const RULE_TONES: Readonly<Record<ToolRule["decision"], string>> = {
   deny: "badge-bad",
 };
 
-const TAINT_MODE_LABELS: Readonly<Record<TaintMode, string>> = {
-  enforce: "Ask (enforce)",
-  observe: "Record only (observe)",
-  off: "Off",
+const TAINT_MODE_LABELS: Readonly<Record<TaintMode, UiKey>> = {
+  enforce: "settings.permissions.taint.enforce",
+  observe: "settings.permissions.taint.observe",
+  off: "settings.permissions.taint.off",
 };
 
 const TAINT_RANK: Readonly<Record<TaintMode, number>> = { off: 0, observe: 1, enforce: 2 };
@@ -312,14 +335,20 @@ function TaintSetting({
   readonly busy: boolean;
   readonly onChange: (mode: TaintMode) => void;
 }) {
+  const t = useT();
   const stored = answer.settings.securityTaint ?? DEFAULT_TAINT_MODE;
   return (
     <label>
-      Mode
-      <Select aria-label="taint mode" value={stored} disabled={busy} onChange={(event) => onChange(event.target.value as TaintMode)}>
+      {t("settings.permissions.mode")}
+      <Select
+        aria-label={t("settings.permissions.modeLabel")}
+        value={stored}
+        disabled={busy}
+        onChange={(event) => onChange(event.target.value as TaintMode)}
+      >
         {TAINT_MODES.map((mode) => (
           <option key={mode} value={mode} disabled={TAINT_RANK[mode] < TAINT_RANK[stored]}>
-            {TAINT_MODE_LABELS[mode]}
+            {t(TAINT_MODE_LABELS[mode])}
           </option>
         ))}
       </Select>
@@ -327,10 +356,10 @@ function TaintSetting({
   );
 }
 
-const DETECTOR_MODE_LABELS: Readonly<Record<InjectionDetectorMode, string>> = {
-  off: "Off",
-  patterns: "Patterns",
-  model: "Patterns, then the fast model",
+const DETECTOR_MODE_LABELS: Readonly<Record<InjectionDetectorMode, UiKey>> = {
+  off: "settings.permissions.detector.off",
+  patterns: "settings.permissions.detector.patterns",
+  model: "settings.permissions.detector.model",
 };
 
 /**
@@ -348,12 +377,13 @@ function InjectionDetectorSetting({
   readonly busy: boolean;
   readonly onChange: (mode: InjectionDetectorMode) => void;
 }) {
+  const t = useT();
   const mode = answer.effective.securityInjectionDetector ?? "off";
   return (
     <label>
-      Injection detector
+      {t("settings.permissions.detector")}
       <Select
-        aria-label="injection detector"
+        aria-label={t("settings.permissions.detectorLabel")}
         aria-describedby="injection-detector-hint"
         value={mode}
         disabled={busy}
@@ -361,13 +391,13 @@ function InjectionDetectorSetting({
       >
         {INJECTION_DETECTOR_MODES.map((entry) => (
           <option key={entry} value={entry}>
-            {DETECTOR_MODE_LABELS[entry]}
+            {t(DETECTOR_MODE_LABELS[entry])}
           </option>
         ))}
       </Select>
       {/* What it does, under its own field rather than across both. */}
       <span id="injection-detector-hint" className="settings-description">
-        A likely injection in a page, an email or a result adds a warning to the next call's approval. It never decides for you.
+        {t("settings.permissions.detectorHint")}
       </span>
     </label>
   );

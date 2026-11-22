@@ -1,5 +1,6 @@
 import type { WebSearchKind } from "@tavi/contracts";
 
+import { useT } from "../../lib/i18n.js";
 import { Field } from "../../ui/Field.js";
 import { SEARCH_KIND_LABELS, searchKindNeeds } from "./search-api.js";
 import { PasswordInput } from "./PasswordInput.js";
@@ -27,35 +28,31 @@ export function WebSearchProviderFields({
   readonly onBaseUrl: (baseUrl: string) => void;
   readonly onApiKey: (apiKey: string) => void;
 }) {
+  const t = useT();
   const needs = searchKindNeeds(kind);
   const label = SEARCH_KIND_LABELS[kind];
   return (
     <>
       {needs.baseUrl ? (
-        <Field label="Instance address" error={errors.baseUrl}>
+        <Field label={t("settings.search.instance")} error={errors.baseUrl}>
           <input
             autoComplete="off"
             value={baseUrl}
-            placeholder="e.g. http://127.0.0.1:8888 (with json in its search.formats)"
+            placeholder={t("settings.search.instancePlaceholder")}
             onChange={(event) => onBaseUrl(event.target.value)}
           />
         </Field>
       ) : null}
       {needs.key === "none" ? null : (
         <Field
-          label={
-            <>
-              {label} API key
-              {needs.key === "optional" ? ` (optional: ${label} also runs keyless)` : ""}
-            </>
-          }
+          label={t(needs.key === "optional" ? "settings.search.apiKeyOptional" : "settings.search.apiKey", { label })}
           error={errors.apiKey}
         >
           {(control) => (
             <PasswordInput
               id={control.id}
               value={apiKey}
-              placeholder="Paste the key"
+              placeholder={t("settings.secret.paste")}
               invalid={control["aria-invalid"] === true}
               describedBy={control["aria-describedby"]}
               onChange={onApiKey}

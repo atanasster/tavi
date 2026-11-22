@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import type { Outcome, SettingsClient } from "../../lib/ipc.js";
 import {
-  CHAT_MODEL_UNAVAILABLE,
+  chatModelUnavailable,
   chosenTarget,
   loadChatModel,
   loadTarget,
@@ -50,7 +50,7 @@ export function useChatModel(client: SettingsClient, workspaceId: string, curren
   const chatModel = chatRead?.model;
   /** What the picker and the strip name: the open chat's own model — or that it is gone — a new chat's pick, else the default. */
   const chatModelLabel =
-    chatModel === undefined ? undefined : (chatModel.target ?? (chatModel.source === "chosen" ? CHAT_MODEL_UNAVAILABLE : undefined));
+    chatModel === undefined ? undefined : (chatModel.target ?? (chatModel.source === "chosen" ? chatModelUnavailable() : undefined));
   const shownModel =
     chatTaskId === undefined
       ? newChatModel === undefined

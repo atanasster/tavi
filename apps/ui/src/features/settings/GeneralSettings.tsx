@@ -4,6 +4,7 @@ import type { WorkspaceSettingsAnswer } from "@tavi/contracts";
 
 import { useAction } from "../../hooks/use-action.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
+import { useT } from "../../lib/i18n.js";
 import type { Outcome } from "../../lib/ipc.js";
 import { PageHead, PageNote, Pending } from "../../ui/Parts.js";
 import { Select } from "../../ui/Select.js";
@@ -16,6 +17,7 @@ import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
 import { workspaceWords } from "./common.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * Settings → General: the workspace timezone,
@@ -38,6 +40,7 @@ export function GeneralSettings({
   /** Setup's every step again (`/welcome?all=1`, the canvas's `tavi setup`); absent where the owner offers no setup. */
   readonly onRunSetup?: (() => void) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { data, error, loading, reload } = useLoaded<WorkspaceSettingsAnswer>(() => workspaceSettingsActions.load(client, workspaceId));
   const { busy, note, tone, run } = useAction(reload);
@@ -49,18 +52,15 @@ export function GeneralSettings({
   const heading = (
     <PageHead
       className="settings-head"
-      title="General"
-      description={
-        <>
-          How {workspaceWords(workspaceId)} works: its timezone, summaries, browser, video and the other settings below. Each also has a{" "}
-          <Command>tavi config</Command> command, named with it.
-        </>
-      }
+      title={t("settings.general.title")}
+      description={withParts(t("settings.general.description", { workspace: workspaceWords(workspaceId) }), {
+        command: <Command>tavi config</Command>,
+      })}
     />
   );
   if (data === undefined || draft === undefined) {
     return (
-      <section className="settings" aria-label="general">
+      <section className="settings" aria-label={t("settings.general.region")}>
         {heading}
         {loading || error !== undefined ? <Pending error={error} reload={reload} className="notice" status /> : null}
       </section>
@@ -71,35 +71,31 @@ export function GeneralSettings({
   // Unchanged means the zone in force: with nothing stored, choosing the host zone is not a change.
   const unchanged = draft === (stored ?? data.effective.timezone);
   return (
-    <section className="settings" aria-label="general">
+    <section className="settings" aria-label={t("settings.general.region")}>
       {heading}
       {error === undefined ? null : <LoadError error={error} reload={reload} />}
       <PageNote tone={tone} note={note} />
       {onRunSetup === undefined ? null : (
         <>
-          <h2>Setup</h2>
-          <p className="muted">
-            Go through every setup step again: the model, about you, apps, channels, search and first ideas. What is set up stays as it is
-            unless you change it.
-          </p>
+          <h2>{t("settings.general.setup")}</h2>
+          <p className="muted">{t("settings.general.setupHint")}</p>
           <p className="actions">
-            <Button onClick={onRunSetup}>Run setup again</Button>
+            <Button onClick={onRunSetup}>{t("settings.general.runSetup")}</Button>
           </p>
         </>
       )}
-      <h2>Timezone</h2>
+      <h2>{t("settings.general.timezone")}</h2>
       <p className="muted">
-        The zone the agent tells the time in, and reads &ldquo;tomorrow&rdquo; or &ldquo;next Monday at 10&rdquo; against. Or use{" "}
-        <Command>tavi config set workspace.timezone Europe/Berlin</Command>.
+        {withParts(t("settings.general.timezoneHint"), { command: <Command>tavi config set workspace.timezone Europe/Berlin</Command> })}
       </p>
       <p>
         <strong>{data.effective.timezone}</strong>{" "}
         <span className="muted">
           {stored === undefined
-            ? "(the host zone, used until you choose one)"
+            ? t("settings.general.hostZone")
             : data.hostTimezone === stored
-              ? "(set; also the host zone)"
-              : `(set; the host zone is ${data.hostTimezone})`}
+              ? t("settings.general.setAlsoHost")
+              : t("settings.general.setHostIs", { host: data.hostTimezone })}
         </span>
       </p>
       <form
@@ -111,10 +107,10 @@ export function GeneralSettings({
         }}
       >
         <Select
-          aria-label="timezone"
+          aria-label={t("settings.general.timezoneLabel")}
           value={draft}
           searchable
-          searchPlaceholder="Search zones…"
+          searchPlaceholder={t("settings.general.searchZones")}
           onChange={(event) => setDraft(event.target.value)}
           disabled={busy !== undefined}
         >
@@ -125,14 +121,14 @@ export function GeneralSettings({
           ))}
         </Select>
         <Button variant="primary" type="submit" disabled={busy !== undefined || unchanged}>
-          {busy === "set" ? "Saving…" : "Save"}
+          {busy === "set" ? t("ui.parts.saving") : t("settings.action.save")}
         </Button>
         <Button
           variant="ghost"
           disabled={busy !== undefined || stored === undefined}
           onClick={() => void run("unset", () => workspaceSettingsActions.useHostTimezone(client, workspaceId, data.revision))}
         >
-          Use host zone
+          {t("settings.general.useHostZone")}
         </Button>
       </form>
       {/* A setting only a turned-off plugin reads changes nothing: not shown while it is off. */}
@@ -167,20 +163,22 @@ function ToolResultRedaction({
   readonly busy: string | undefined;
   readonly run: (key: string, work: () => Promise<Outcome<string | undefined>>) => Promise<void>;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   return (
     <>
-      <h2>Secrets in tool results</h2>
+      <h2>{t("settings.redact.title")}</h2>
       <p>
-        Keys and tokens a tool returns &mdash; AWS keys, GitHub and Slack tokens, private keys, JWTs &mdash; are masked as{" "}
-        <code>[redacted:&lt;kind&gt;]</code> before the model, the archive or this page sees them, and a write that would put a placeholder
-        back into a file is refused. Or use <Command>tavi config set tools.redactResults off</Command>.
+        {withParts(t("settings.redact.body"), {
+          placeholder: <code>[redacted:&lt;kind&gt;]</code>,
+          command: <Command>tavi config set tools.redactResults off</Command>,
+        })}
       </p>
       <p>
         <label>
           <input
             type="checkbox"
-            aria-label="mask secrets in tool results"
+            aria-label={t("settings.redact.label")}
             checked={answer.effective.redactToolResults !== false}
             disabled={busy !== undefined}
             onChange={(event) =>
@@ -189,7 +187,7 @@ function ToolResultRedaction({
               )
             }
           />{" "}
-          Mask secrets in tool results
+          {t("settings.redact.check")}
         </label>
       </p>
     </>

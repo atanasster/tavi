@@ -11,6 +11,7 @@ import {
   tasksHomeServer,
 } from "@tavi/contracts";
 
+import { translateNow } from "../../lib/i18n.js";
 import { ask, mapOutcome, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 
 /**
@@ -42,7 +43,7 @@ export const workspaceSettingsActions = {
       value: timezone,
       expectedRevision,
     });
-    return mapOutcome(written, (value) => `Timezone set to ${value.effective.timezone}.`);
+    return mapOutcome(written, (value) => translateNow("settings.workspace.timezoneSet", { zone: value.effective.timezone }));
   },
   async useHostTimezone(client: SettingsClient, workspaceId: string, expectedRevision: number): Promise<Outcome<string | undefined>> {
     const written = await ask<WorkspaceSettingsAnswer>(client, "workspace-settings", {
@@ -51,7 +52,7 @@ export const workspaceSettingsActions = {
       key: "timezone",
       expectedRevision,
     });
-    return mapOutcome(written, (value) => `Using the host zone, ${value.hostTimezone}.`);
+    return mapOutcome(written, (value) => translateNow("settings.workspace.hostZone", { zone: value.hostTimezone }));
   },
   /** Task summaries on or off. On is the default, so turning them on clears the key. */
   async setSummaries(
@@ -67,9 +68,7 @@ export const workspaceSettingsActions = {
         ? { action: "unset", workspaceId, key: "activitySummaries", expectedRevision }
         : { action: "set", workspaceId, key: "activitySummaries", value: "off", expectedRevision },
     );
-    return mapOutcome(written, () =>
-      on ? "Task summaries are on." : "Task summaries are off; tasks keep the first line of their prompt as the title.",
-    );
+    return mapOutcome(written, () => translateNow(on ? "settings.workspace.summariesOn" : "settings.workspace.summariesOff"));
   },
   /** The model that writes summaries (`connection/model`), or `undefined` for the default (the `fast` role, else each task's own model). */
   async setSummaryModel(
@@ -87,8 +86,8 @@ export const workspaceSettingsActions = {
     );
     return mapOutcome(written, () =>
       target === undefined
-        ? "The fast role's model writes summaries when one is bound, else each task's own model."
-        : `Summaries are written by ${target}, except for tasks that ran on a local model.`,
+        ? translateNow("settings.workspace.summaryModelDefault")
+        : translateNow("settings.workspace.summaryModel", { target }),
     );
   },
   /** The hosts whose pages get no browser thumbnail: a comma-separated list, or `none`. The owner validates it. */
@@ -107,8 +106,8 @@ export const workspaceSettingsActions = {
     });
     return mapOutcome(written, (value) =>
       (value.effective.browserNoThumbnailHosts ?? []).length === 0
-        ? "Every host gets thumbnails now, except pages with a password, payment or one-time-code field."
-        : "Thumbnail hosts saved.",
+        ? translateNow("settings.workspace.thumbnailsAll")
+        : translateNow("settings.workspace.thumbnailsSaved"),
     );
   },
   /** The flight search, or its Google Flights back end, on or off. On is the default, so turning one on clears its key. */
@@ -124,8 +123,17 @@ export const workspaceSettingsActions = {
       "workspace-settings",
       on ? { action: "unset", workspaceId, key, expectedRevision } : { action: "set", workspaceId, key, value: "off", expectedRevision },
     );
-    const what = key === "travelFlightSearch" ? "Flight search" : "The Google Flights back end";
-    return mapOutcome(written, () => `${what} is ${on ? "on" : "off"}.`);
+    return mapOutcome(written, () =>
+      translateNow(
+        key === "travelFlightSearch"
+          ? on
+            ? "settings.workspace.flightsOn"
+            : "settings.workspace.flightsOff"
+          : on
+            ? "settings.workspace.googleFlightsOn"
+            : "settings.workspace.googleFlightsOff",
+      ),
+    );
   },
   /** `skills.suggestions`: whether the agent may offer, unasked, to save a procedure as a skill. On is the default, so turning it on clears the key. */
   async setSkillSuggestions(
@@ -141,11 +149,7 @@ export const workspaceSettingsActions = {
         ? { action: "unset", workspaceId, key: "skillSuggestions", expectedRevision }
         : { action: "set", workspaceId, key: "skillSuggestions", value: "off", expectedRevision },
     );
-    return mapOutcome(written, () =>
-      on
-        ? "The agent may offer to save a procedure that worked as a skill, for you to review."
-        : "The agent offers a skill only when you ask for one.",
-    );
+    return mapOutcome(written, () => translateNow(on ? "settings.workspace.skillSuggestionsOn" : "settings.workspace.skillSuggestionsOff"));
   },
   /** `models.toolDeferral`. `auto` is the default, so choosing it clears the key. */
   async setToolDeferral(
@@ -162,11 +166,13 @@ export const workspaceSettingsActions = {
         : { action: "set", workspaceId, key: "toolDeferral", value: mode, expectedRevision },
     );
     return mapOutcome(written, () =>
-      mode === "auto"
-        ? "Rarely used tools wait behind tools.search, except in a chat on a local model."
-        : mode === "on"
-          ? "Rarely used tools always wait behind tools.search."
-          : "Every chat is offered the whole tool list.",
+      translateNow(
+        mode === "auto"
+          ? "settings.workspace.deferralAuto"
+          : mode === "on"
+            ? "settings.workspace.deferralOn"
+            : "settings.workspace.deferralOff",
+      ),
     );
   },
   /** `tasks.home`: Tavi's own to-do list, or a connected MCP server's. Tavi is the default, so choosing it clears the key. */
@@ -185,7 +191,9 @@ export const workspaceSettingsActions = {
     );
     const server = tasksHomeServer(home);
     return mapOutcome(written, () =>
-      server === undefined ? "To-dos go to Tavi's own list." : `To-dos go to ${server}; Tavi's own list keeps only its follow-ups.`,
+      server === undefined
+        ? translateNow("settings.workspace.tasksHomeTavi")
+        : translateNow("settings.workspace.tasksHomeServer", { server }),
     );
   },
   /** Masking credential shapes in tool results on or off. On is the default, so turning it on clears the key. */
@@ -202,7 +210,7 @@ export const workspaceSettingsActions = {
         ? { action: "unset", workspaceId, key: "redactToolResults", expectedRevision }
         : { action: "set", workspaceId, key: "redactToolResults", value: "off", expectedRevision },
     );
-    return mapOutcome(written, () => (on ? "Secrets in tool results are masked." : "Tool results are no longer masked."));
+    return mapOutcome(written, () => translateNow(on ? "settings.workspace.redactOn" : "settings.workspace.redactOff"));
   },
   /** The video tools on or off. On is the default, so turning them on clears the key. */
   async setVideoEnabled(
@@ -218,7 +226,7 @@ export const workspaceSettingsActions = {
         ? { action: "unset", workspaceId, key: "videoEnabled", expectedRevision }
         : { action: "set", workspaceId, key: "videoEnabled", value: "off", expectedRevision },
     );
-    return mapOutcome(written, () => (on ? "The agent can read videos." : "The video tools are off."));
+    return mapOutcome(written, () => translateNow(on ? "settings.workspace.videoOn" : "settings.workspace.videoOff"));
   },
   /** How many days a video taken from outside is kept. */
   async setVideoKeepDays(
@@ -234,7 +242,7 @@ export const workspaceSettingsActions = {
       value: String(days),
       expectedRevision,
     });
-    return mapOutcome(written, () => `Videos from chats and uploads are kept ${String(days)} days.`);
+    return mapOutcome(written, () => translateNow("settings.workspace.videoKeepDays", { count: days }));
   },
   /**
    * `security.taint`. The owner refuses a page's change
@@ -254,18 +262,19 @@ export const workspaceSettingsActions = {
       expectedRevision,
     });
     if (!written.ok) return written;
-    const said =
+    const said = translateNow(
       mode === "enforce"
-        ? "Calls after untrusted content that could send data out, use a credential or save something now ask you first."
+        ? "settings.workspace.taintEnforce"
         : mode === "observe"
-          ? "The taint gate observes: decisions are as before, and what it would have asked is recorded for tavi doctor."
-          : "The taint gate is off.";
+          ? "settings.workspace.taintObserve"
+          : "settings.workspace.taintOff",
+    );
     return {
       ok: true,
       value:
         written.value.taintPolicy === undefined
           ? said
-          : `${said} The owner's serve --taint-policy ${written.value.taintPolicy} applies until it restarts without it.`,
+          : `${said} ${translateNow("settings.workspace.taintPolicy", { policy: written.value.taintPolicy })}`,
     };
   },
   /**
@@ -290,10 +299,10 @@ export const workspaceSettingsActions = {
       ok: true,
       value:
         mode === "off"
-          ? "The injection detector is off."
+          ? translateNow("settings.workspace.injectionOff")
           : mode === "patterns"
-            ? "Untrusted content is checked for likely injections by pattern; a hit adds a warning to the approval."
-            : "Untrusted content is checked by pattern, then by the fast model; a hit adds a warning to the approval.",
+            ? translateNow("settings.workspace.injectionPatterns")
+            : translateNow("settings.workspace.injectionModel"),
     };
   },
   /** Back to the shipped list: the key is cleared. */
@@ -304,7 +313,7 @@ export const workspaceSettingsActions = {
       key: "browserNoThumbnailHosts",
       expectedRevision,
     });
-    return mapOutcome(written, () => "Thumbnail hosts are back to the defaults.");
+    return mapOutcome(written, () => translateNow("settings.workspace.thumbnailsReset"));
   },
 };
 

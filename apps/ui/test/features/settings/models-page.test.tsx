@@ -2,8 +2,11 @@
 import { act } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { lifecycleWarningText, type LifecycleWarning } from "@tavi/contracts";
+
 import {
   lifecycleNotice,
+  lifecycleWarningWords,
   roleRows,
   rolesLifecycleNotices,
   type BrowsedModel,
@@ -195,6 +198,29 @@ describe("the Models page", () => {
     };
     // gpt-5 once though named twice; o3's deprecation is a notice only, not a banner.
     expect(rolesLifecycleNotices({ models, roles }, today).map((entry) => entry.target)).toEqual(["openai/gpt-5"]);
+  });
+
+  it("says every lifecycle warning in English exactly as contracts' lifecycleWarningText does", () => {
+    const date = "2026-12-01";
+    const warnings: LifecycleWarning[] = [
+      { level: "error", code: "retired" },
+      { level: "error", code: "retired", date, days: -1 },
+      { level: "warning", code: "redirected", to: "b" },
+      { level: "warning", code: "redirected", to: "b", via: "router", date, days: -1 },
+      { level: "warning", code: "redirects_soon", to: "b" },
+      { level: "warning", code: "redirects_soon", to: "b", via: "router", date, days: 10 },
+      { level: "warning", code: "retires_soon" },
+      { level: "warning", code: "retires_soon", date, days: 10 },
+      { level: "info", code: "end_claimed" },
+      { level: "info", code: "end_claimed", date, days: 10 },
+      { level: "info", code: "end_claimed", date, days: 0 },
+      { level: "info", code: "end_claimed", date, days: -3 },
+      { level: "info", code: "deprecated" },
+      { level: "info", code: "deprecated", date, days: -1 },
+      { level: "info", code: "price_changes" },
+      { level: "info", code: "price_changes", date, days: 10 },
+    ];
+    for (const warning of warnings) expect(lifecycleWarningWords(warning)).toBe(lifecycleWarningText(warning));
   });
 
   it("resolves each role to its own chain, the default, or nothing", () => {

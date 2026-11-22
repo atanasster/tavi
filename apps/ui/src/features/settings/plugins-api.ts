@@ -1,5 +1,7 @@
 import type { PermissionsGrantsResult, PermissionsRulesResult, PluginView, ProviderInstanceConfig } from "@tavi/contracts";
 
+import { translateNow } from "../../lib/i18n.js";
+import { andList } from "../apps/model.js";
 import { ask, mapOutcome, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 
 /** A plugins write: what changed, and whether it waits for the owner's next start. */
@@ -13,11 +15,13 @@ interface PluginWrite {
 const pluginNote = (written: PluginWrite, done: string): string => {
   const note =
     written.routingStopped === true
-      ? `${done} Its routing stopped now; restart the owner (tavi serve) to unload its code.`
+      ? `${done} ${translateNow("settings.pluginsApi.routingStopped")}`
       : written.restartRequired
-        ? `${done} Restart the owner (tavi serve) to load the current configuration.`
+        ? `${done} ${translateNow("settings.pluginsApi.restart")}`
         : done;
-  return written.cleanupWarning === undefined ? note : `${note} Warning: ${written.cleanupWarning}.`;
+  return written.cleanupWarning === undefined
+    ? note
+    : `${note} ${translateNow("settings.pluginsApi.warning", { warning: written.cleanupWarning })}`;
 };
 
 /** Tool rules and session grants: listed, removed and revoked here; added by approving with `always`. */
@@ -28,11 +32,11 @@ export const permissionActions = {
     ask<PermissionsGrantsResult>(client, "permissions", { action: "grants", workspaceId }),
   async remove(client: SettingsClient, workspaceId: string, ruleId: string): Promise<Outcome<string | undefined>> {
     const done = await ask<{ readonly removed: boolean }>(client, "permissions", { action: "remove", workspaceId, ruleId });
-    return mapOutcome(done, () => "Rule removed. Calls it allowed are asked again.");
+    return mapOutcome(done, () => translateNow("settings.permissionsApi.ruleRemoved"));
   },
   async revoke(client: SettingsClient, workspaceId: string, grantId: string): Promise<Outcome<string | undefined>> {
     const done = await ask<{ readonly revoked: boolean }>(client, "permissions", { action: "revoke", workspaceId, grantId });
-    return mapOutcome(done, () => "Chat grant revoked.");
+    return mapOutcome(done, () => translateNow("settings.permissionsApi.grantRevoked"));
   },
 };
 
@@ -195,13 +199,20 @@ export const mcpActions = {
       ok: true,
       value: {
         pluginId,
-        message: `${pluginId}@${version} added.${needs.length === 0 ? " Probe it to list its tools." : ` Set ${needs.join(" and ")} in its Settings${credentials.length === 0 ? "" : " (a credential is stored under Credentials first)"}, then probe it.`}`,
+        message:
+          needs.length === 0
+            ? translateNow("settings.mcpApi.added", { pluginId, version })
+            : translateNow(credentials.length === 0 ? "settings.mcpApi.addedNeeds" : "settings.mcpApi.addedNeedsCredential", {
+                pluginId,
+                version,
+                needs: andList(needs),
+              }),
       },
     };
   },
   async probe(client: SettingsClient, pluginId: string): Promise<Outcome<string | undefined>> {
     const probed = await ask<{ readonly review: McpReview }>(client, "mcp", { action: "probe", pluginId }, { timeoutMs: 180_000 });
-    return mapOutcome(probed, (value) => `${pluginId} probed: ${String(value.review.tools.length)} tools to review.`);
+    return mapOutcome(probed, (value) => translateNow("settings.mcpApi.probed", { pluginId, count: value.review.tools.length }));
   },
   async approve(
     client: SettingsClient,
@@ -226,11 +237,11 @@ export const mcpActions = {
         .map(([name]) => name),
       ...(review.sandboxState === "srt" ? {} : { sandbox: review.sandboxState }),
     });
-    return mapOutcome(approved, () => `${review.pluginId}@${review.version} approved.`);
+    return mapOutcome(approved, () => translateNow("settings.mcpApi.approved", { pluginId: review.pluginId, version: review.version }));
   },
   async reject(client: SettingsClient, pluginId: string, version: string): Promise<Outcome<string | undefined>> {
     const rejected = await ask(client, "mcp", { action: "reject", pluginId, version });
-    return mapOutcome(rejected, () => `${pluginId}@${version} rejected.`);
+    return mapOutcome(rejected, () => translateNow("settings.mcpApi.rejected", { pluginId, version }));
   },
   async setEnabled(client: SettingsClient, pluginId: string, enabled: boolean, workspaceId: string): Promise<Outcome<string | undefined>> {
     const written = await ask<PluginWrite>(client, "plugins", {
@@ -238,19 +249,21 @@ export const mcpActions = {
       pluginId,
       ...(enabled ? { workspaceId } : {}),
     });
-    return mapOutcome(written, () => `${pluginId} ${enabled ? `enabled in ${workspaceId}` : "disabled"}.`);
+    return mapOutcome(written, () =>
+      enabled
+        ? translateNow("settings.mcpApi.enabledIn", { pluginId, workspaceId })
+        : translateNow("settings.pluginsApi.disabled", { pluginId }),
+    );
   },
   async people(client: SettingsClient, pluginId: string, on: boolean, workspaceId: string): Promise<Outcome<string | undefined>> {
     const set = await ask(client, "mcp", { action: "people", pluginId, on, workspaceId });
     return mapOutcome(set, () =>
-      on
-        ? `Other people's chats in ${workspaceId} are offered ${pluginId}'s tools, with your credentials.`
-        : `Only your own chats are offered ${pluginId}'s tools.`,
+      on ? translateNow("settings.mcpApi.peopleOn", { pluginId, workspaceId }) : translateNow("settings.mcpApi.peopleOff", { pluginId }),
     );
   },
   async off(client: SettingsClient): Promise<Outcome<string | undefined>> {
     const switched = await ask(client, "mcp", { action: "switch", on: false });
-    return mapOutcome(switched, () => "MCP is off: every server stopped and its tools withdrawn.");
+    return mapOutcome(switched, () => translateNow("settings.mcpApi.off"));
   },
   logs: (client: SettingsClient, pluginId: string) =>
     ask<{ readonly logs: { readonly lines: readonly string[] } }>(client, "mcp", { action: "logs", pluginId, lines: 200 }),
@@ -265,12 +278,12 @@ export const pluginActions = {
     if (!written.ok) return written;
     const result = written.value.result as { pluginId?: string; version?: string; created?: boolean } | undefined;
     if (!result?.pluginId || !result?.version) {
-      return { ok: false, message: "The owner returned an invalid installation response." };
+      return { ok: false, message: translateNow("settings.pluginsApi.badInstall") };
     }
     const { pluginId, version, created = false } = result;
     return {
       ok: true,
-      value: `${pluginId}@${version} ${created ? "installed" : "was already installed"}. Review it, then approve it before enabling.`,
+      value: translateNow(created ? "settings.pluginsApi.installed" : "settings.pluginsApi.alreadyInstalled", { pluginId, version }),
     };
   },
   /**
@@ -281,17 +294,24 @@ export const pluginActions = {
     const written = await ask<PluginWrite>(client, "plugins", { action: approve ? "approve" : "reject", pluginId, version });
     if (!written.ok) return written;
     const isolation = (written.value.result as { isolation?: string } | undefined)?.isolation;
-    const where =
-      isolation === "process"
-        ? ", to run as a confined worker"
+    const key = approve
+      ? isolation === "process"
+        ? "settings.pluginsApi.approvedWorker"
         : isolation === "in-process"
-          ? ", to run UNSANDBOXED in the owner's process"
-          : "";
-    return { ok: true, value: pluginNote(written.value, `${pluginId}@${version} ${approve ? "approved" : "rejected"}${where}.`) };
+          ? "settings.pluginsApi.approvedInProcess"
+          : "settings.pluginsApi.approved"
+      : isolation === "process"
+        ? "settings.pluginsApi.rejectedWorker"
+        : isolation === "in-process"
+          ? "settings.pluginsApi.rejectedInProcess"
+          : "settings.pluginsApi.rejected";
+    return { ok: true, value: pluginNote(written.value, translateNow(key, { pluginId, version })) };
   },
   async setEnabled(client: SettingsClient, pluginId: string, enabled: boolean): Promise<Outcome<string | undefined>> {
     const written = await ask<PluginWrite>(client, "plugins", { action: enabled ? "enable" : "disable", pluginId });
-    return mapOutcome(written, (value) => pluginNote(value, `${pluginId} ${enabled ? "enabled" : "disabled"}.`));
+    return mapOutcome(written, (value) =>
+      pluginNote(value, translateNow(enabled ? "settings.pluginsApi.enabled" : "settings.pluginsApi.disabled", { pluginId })),
+    );
   },
   async configure(
     client: SettingsClient,
@@ -307,11 +327,11 @@ export const pluginActions = {
       unset,
       ...(instances === undefined ? {} : { instances }),
     });
-    return mapOutcome(written, (value) => pluginNote(value, `${pluginId} settings saved.`));
+    return mapOutcome(written, (value) => pluginNote(value, translateNow("settings.pluginsApi.configured", { pluginId })));
   },
   /** Confirmed in the page, which says first when a channel's purge is owed. */
   async remove(client: SettingsClient, pluginId: string): Promise<Outcome<string | undefined>> {
     const written = await ask<PluginWrite>(client, "plugins", { action: "remove", pluginId, yes: true });
-    return mapOutcome(written, (value) => pluginNote(value, `${pluginId} removed.`));
+    return mapOutcome(written, (value) => pluginNote(value, translateNow("settings.pluginsApi.removed", { pluginId })));
   },
 };

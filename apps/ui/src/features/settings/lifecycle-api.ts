@@ -1,5 +1,7 @@
 import { RHUMB_CREDENTIAL_REF, type ModelReplacements, type ModelUse, type ModelUseKind, type ReplacementKind } from "@tavi/contracts";
 
+import type { UiKey } from "../../locales/en.js";
+import { translateNow } from "../../lib/i18n.js";
 import { ask, mapOutcome, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { credentialActions } from "./credentials-api.js";
 
@@ -17,20 +19,26 @@ interface LifecycleWarningRow {
   readonly replacements?: ModelReplacements;
 }
 
-const USES: Readonly<Record<ReplacementKind, string>> = {
-  agent: "with tools",
-  cheap: "background, cheaper",
-  embedding: "embeddings",
-  video: "with video",
+const USES: Readonly<Record<ReplacementKind, UiKey>> = {
+  agent: "settings.lifecycle.use.agent",
+  cheap: "settings.lifecycle.use.cheap",
+  embedding: "settings.lifecycle.use.embedding",
+  video: "settings.lifecycle.use.video",
 };
 
 /** The replacements as the banner says them: the provider's choice, then Rhumb's picks; none when there are none. */
 export function replacementLines(replacements: ModelReplacements | undefined): readonly string[] {
   if (replacements === undefined) return [];
   return [
-    ...(replacements.provider === undefined ? [] : [`Provider's choice: ${replacements.provider.model}`]),
+    ...(replacements.provider === undefined
+      ? []
+      : [translateNow("settings.lifecycle.providerChoice", { model: replacements.provider.model })]),
     // A kind this page does not know (a newer owner) is said without its use rather than as "undefined".
-    ...replacements.rhumb.map((pick) => `Rhumb suggests ${pick.model}${pick.for in USES ? ` (${USES[pick.for]})` : ""}`),
+    ...replacements.rhumb.map((pick) =>
+      Object.hasOwn(USES, pick.for)
+        ? translateNow("settings.lifecycle.rhumbSuggestsFor", { model: pick.model, use: translateNow(USES[pick.for]) })
+        : translateNow("settings.lifecycle.rhumbSuggests", { model: pick.model }),
+    ),
   ];
 }
 
@@ -60,15 +68,17 @@ export async function syncLifecycle(client: SettingsClient): Promise<Outcome<str
   const synced = await ask<SyncAnswer>(client, "models", { action: "sync" }, { timeoutMs: 120_000 });
   return mapOutcome(synced, (answer) => {
     if ("skipped" in answer) return answer.hint;
-    if (answer.warnings.length === 0) return "Checked: no model in use is retiring or redirected.";
-    return `Checked: ${answer.warnings.map((warning) => `${warning.connectionId}/${warning.model} ${warning.says.join("; ")}`).join(" · ")}`;
+    if (answer.warnings.length === 0) return translateNow("settings.lifecycle.checkedNone");
+    return translateNow("settings.lifecycle.checked", {
+      warnings: answer.warnings.map((warning) => `${warning.connectionId}/${warning.model} ${warning.says.join("; ")}`).join(" · "),
+    });
   });
 }
 
 /** The key crosses the bridge once, to the owner's credential store, and is never sent back. */
 export async function storeRhumbKey(client: SettingsClient, key: string): Promise<Outcome<string | undefined>> {
   const stored = await credentialActions.set(client, { reference: RHUMB_CREDENTIAL_REF, value: key });
-  return mapOutcome(stored, () => "Rhumb key stored: Tavi checks your models daily.");
+  return mapOutcome(stored, () => translateNow("settings.lifecycle.keyStored"));
 }
 
 /** A model as the owner names it. */
@@ -96,27 +106,25 @@ function useInWords(use: ModelUseRow): string {
   const detail = use.detail ?? "";
   switch (use.kind) {
     case "connection-default":
-      return "The connection's default";
+      return translateNow("settings.lifecycle.where.connectionDefault");
     case "video":
-      return "Native video on its connection (turned on per model, so not moved)";
+      return translateNow("settings.lifecycle.where.video");
     case "workspace-default":
-      return "The workspace default";
+      return translateNow("settings.lifecycle.where.workspaceDefault");
     case "role":
-      return `The ${detail} role`;
+      return translateNow("settings.lifecycle.where.role", { detail });
     case "role-fallback":
-      return `A fallback of the ${detail} role`;
+      return translateNow("settings.lifecycle.where.roleFallback", { detail });
     case "routine":
-      return `The routine ${detail}`;
+      return translateNow("settings.lifecycle.where.routine", { detail });
     case "routine-fallback":
-      return `A fallback of the routine ${detail}`;
+      return translateNow("settings.lifecycle.where.routineFallback", { detail });
     case "heartbeat":
-      return "A heartbeat";
+      return translateNow("settings.lifecycle.where.heartbeat");
     case "activity-summary":
-      return "Activity summaries";
-    case "chat": {
-      const count = use.count ?? 1;
-      return `${count} chat${count === 1 ? "" : "s"} that chose it`;
-    }
+      return translateNow("settings.lifecycle.where.activitySummary");
+    case "chat":
+      return translateNow("settings.lifecycle.where.chats", { count: use.count ?? 1 });
     default:
       return use.kind;
   }
@@ -153,24 +161,28 @@ export async function replaceModel(client: SettingsClient, from: ModelRef, to: M
   const answer = done.value;
   const moved = answer.changed?.length ?? 0;
   const failed = [
-    ...(answer.failed ?? []).map(({ use, error }) => `${useInWords(use)} failed: ${error}`),
-    ...(answer.unread ?? []).map((source) => `${source} could not be read`),
+    ...(answer.failed ?? []).map(({ use, error }) => translateNow("settings.lifecycle.useFailed", { use: useInWords(use), error })),
+    ...(answer.unread ?? []).map((source) => translateNow("settings.lifecycle.unread", { source })),
   ];
   const left = (answer.skipped ?? []).map(({ use, reason }) => `${useInWords(use)}: ${reason}`);
   const message = [
-    `Replaced ${from.connectionId}/${from.model} with ${to.connectionId}/${to.model} in ${moved} place${moved === 1 ? "" : "s"}.`,
-    ...(left.length === 0 ? [] : [`Not moved: ${left.join("; ")}.`]),
-    ...(failed.length === 0 ? [] : [`Not done: ${failed.join("; ")}.`]),
+    translateNow("settings.lifecycle.replaced", {
+      from: `${from.connectionId}/${from.model}`,
+      to: `${to.connectionId}/${to.model}`,
+      count: moved,
+    }),
+    ...(left.length === 0 ? [] : [translateNow("settings.lifecycle.notMoved", { list: left.join("; ") })]),
+    ...(failed.length === 0 ? [] : [translateNow("settings.lifecycle.notDone", { list: failed.join("; ") })]),
     ...(answer.notes ?? []),
   ].join(" ");
   return failed.length === 0 ? { ok: true, value: message } : { ok: false, message };
 }
 
-const PICK_USES: Readonly<Record<string, string>> = {
-  agent: "with tools",
-  cheap: "background",
-  embedding: "embeddings",
-  video: "video",
+const PICK_USES: Readonly<Record<string, UiKey>> = {
+  agent: "settings.lifecycle.pick.agent",
+  cheap: "settings.lifecycle.pick.cheap",
+  embedding: "settings.lifecycle.pick.embedding",
+  video: "settings.lifecycle.pick.video",
 };
 
 /** Each model that may take over, with what it was suggested for: the provider's choice first, each model once. */
@@ -183,7 +195,10 @@ export function replacementChoices(
     if (model === current) return;
     choices.set(model, [...(choices.get(model) ?? []), why]);
   };
-  if (replacements?.provider !== undefined) add(replacements.provider.model, "provider's choice");
-  for (const pick of replacements?.rhumb ?? []) add(pick.model, PICK_USES[pick.for] ?? "Rhumb's pick");
+  if (replacements?.provider !== undefined) add(replacements.provider.model, translateNow("settings.lifecycle.pick.provider"));
+  for (const pick of replacements?.rhumb ?? []) {
+    const use = Object.hasOwn(PICK_USES, pick.for) ? PICK_USES[pick.for] : undefined;
+    add(pick.model, translateNow(use ?? "settings.lifecycle.pick.rhumb"));
+  }
   return [...choices].map(([model, why]) => ({ model, why: why.join(", ") }));
 }

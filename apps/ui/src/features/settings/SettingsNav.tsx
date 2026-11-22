@@ -1,8 +1,10 @@
+import { useT } from "../../lib/i18n.js";
 import { Button } from "../../ui/Button.js";
 import { SETTINGS_GROUPS, SETTINGS_VIEWS, type SettingsView } from "../shell/route.js";
 import { SidebarFrame } from "../shell/SidebarFrame.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { useCurrentNavInView } from "../../ui/useCurrentNavInView.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * Settings' own nav, in the left column the chats list holds elsewhere: the
@@ -21,6 +23,7 @@ export function SettingsNav({
   readonly onView: (view: SettingsView) => void;
   readonly onCollapse?: (() => void) | undefined;
 }) {
+  const t = useT();
   const { workspaceId } = useWorkspace();
   useCurrentNavInView(view);
   const label = (value: SettingsView): string => SETTINGS_VIEWS.find((item) => item.value === value)?.label ?? value;
@@ -48,9 +51,7 @@ export function SettingsNav({
           </section>
         );
       })}
-      <p className="scope meta-sm center-nav-foot">
-        Workspace <code>{workspaceId}</code>
-      </p>
+      <p className="scope meta-sm center-nav-foot">{withParts(t("settings.nav.workspace"), { workspaceId: <code>{workspaceId}</code> })}</p>
     </SidebarFrame>
   );
 }

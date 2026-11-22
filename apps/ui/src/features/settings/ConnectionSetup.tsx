@@ -2,7 +2,9 @@ import { useId, useState, type FormEvent } from "react";
 import { MODEL_PROVIDER_PRESETS, type ModelProviderPreset } from "@tavi/contracts";
 
 import { hostOf } from "../../lib/format.js";
-import { addModelConnection, connectionProblem, modelWrite, rebindModel } from "./model-setup.js";
+import { useT } from "../../lib/i18n.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
+import { addModelConnection, connectionProblem, isKeyProblem, modelWrite, rebindModel } from "./model-setup.js";
 import { SETTINGS_BOUNDS } from "./common.js";
 import type { ConnectionSummary } from "./models-api.js";
 import type { Outcome } from "../../lib/ipc.js";
@@ -39,9 +41,14 @@ export function AddConnectionModal({
   readonly onAdded: (connectionId: string, message: string | undefined) => void;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   const [preset, setPreset] = useState<ModelProviderPreset | undefined>();
   return (
-    <Modal title={preset === undefined ? "Add a model connection" : `Connect ${preset.name}`} busy={false} onClose={onClose}>
+    <Modal
+      title={preset === undefined ? t("settings.connection.addTitle") : t("settings.connection.connectTitle", { name: preset.name })}
+      busy={false}
+      onClose={onClose}
+    >
       {preset === undefined ? (
         <ProviderChoice onChoose={setPreset} />
       ) : (
@@ -59,18 +66,25 @@ export function AddConnectionModal({
 }
 
 function ProviderChoice({ onChoose }: { readonly onChoose: (preset: ModelProviderPreset) => void }) {
+  const t = useT();
   return (
     <>
-      <p className="picker-intro">Choose where Tavi's models come from. Any server that speaks the OpenAI API works through Custom.</p>
+      <p className="picker-intro">{t("settings.connection.choose")}</p>
       <ul className="provider-grid list-reset">
         {MODEL_PROVIDER_PRESETS.map((preset) => (
           <li key={preset.id}>
             <Button className="provider-tile" onClick={() => onChoose(preset)}>
               <span className="provider-tile-name">{preset.name}</span>
-              <span className="provider-tile-meta">{preset.baseUrl === "" ? "Your endpoint" : hostOf(preset.baseUrl)}</span>
+              <span className="provider-tile-meta">
+                {preset.baseUrl === "" ? t("settings.connection.yourEndpoint") : hostOf(preset.baseUrl)}
+              </span>
               <span className="provider-tile-tags">
-                {preset.localOnly ? <span className="badge">local</span> : null}
-                {preset.requiresKey ? <span className="badge">API key</span> : <span className="badge">no key</span>}
+                {preset.localOnly ? <span className="badge">{t("settings.badge.local")}</span> : null}
+                {preset.requiresKey ? (
+                  <span className="badge">{t("settings.badge.apiKey")}</span>
+                ) : (
+                  <span className="badge">{t("settings.badge.noKey")}</span>
+                )}
               </span>
             </Button>
           </li>
@@ -93,6 +107,7 @@ function ConnectionDetails({
   readonly onAdded: (connectionId: string, message: string | undefined) => void;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   const { client } = useWorkspace();
   const custom = preset.baseUrl === "";
   const [connectionId, setId] = useState(freeName(custom ? "" : preset.id, taken));
@@ -108,7 +123,7 @@ function ConnectionDetails({
   const form = { connectionId, label, baseUrl, localOnly, key, requiresKey };
   const problem = connectionProblem(form);
   // A problem in a folded field opens the fold, so the message points at something visible.
-  const detailsProblem = problem !== undefined && !problem.includes("key");
+  const detailsProblem = problem !== undefined && !isKeyProblem(problem);
 
   const submit = (event: FormEvent): void => {
     event.preventDefault();
@@ -126,45 +141,45 @@ function ConnectionDetails({
   return (
     // The dialog's own messages say what is missing; the browser's bubbles would not name the fold they hide in.
     <form noValidate onSubmit={submit}>
-      <BusyFieldset busy={saving} label="Connecting…" className="settings-fields connection-form">
+      <BusyFieldset busy={saving} label={t("settings.connection.connecting")} className="settings-fields connection-form">
         <p className="connection-form-lead">
           <Button variant="ghost" size="sm" onClick={onBack}>
-            ← All providers
+            {t("settings.connection.allProviders")}
           </Button>
           {preset.note === undefined ? null : <span>{preset.note}</span>}{" "}
           <a href={preset.docsUrl} target="_blank" rel="noreferrer">
-            {preset.name} documentation
+            {t("settings.connection.docs", { name: preset.name })}
           </a>
           {preset.keysUrl === undefined ? null : (
             <>
               <span aria-hidden="true"> · </span>
               <a href={preset.keysUrl} target="_blank" rel="noreferrer">
-                Create a key at {preset.name}
+                {t("settings.connection.createKey", { name: preset.name })}
               </a>
             </>
           )}
         </p>
         <label htmlFor={keyId} className="connection-key">
-          {requiresKey ? "API key" : "API key (optional)"}
+          {requiresKey ? t("settings.connection.apiKey") : t("settings.connection.apiKeyOptional")}
           <input
             id={keyId}
-            aria-label="Model API key"
+            aria-label={t("settings.connection.apiKeyLabel")}
             {...SECRET_INPUT}
             required={requiresKey}
             maxLength={SETTINGS_BOUNDS.value}
             value={key}
-            placeholder={requiresKey ? `Paste your ${preset.name} key` : "Leave empty for a keyless local server"}
-            aria-invalid={touched && problem?.includes("key") === true}
+            placeholder={requiresKey ? t("settings.connection.pasteKey", { name: preset.name }) : t("settings.connection.keyless")}
+            aria-invalid={touched && isKeyProblem(problem)}
             onChange={(event) => setKey(event.target.value)}
           />
         </label>
         <details className="connection-advanced" open={custom || (touched && detailsProblem)}>
-          <summary className="disclosure">Connection details</summary>
+          <summary className="disclosure">{t("settings.connection.details")}</summary>
           <div className="settings-fields">
             <label>
-              Endpoint
+              {t("settings.connection.endpoint")}
               <input
-                aria-label="Model endpoint"
+                aria-label={t("settings.connection.endpointLabel")}
                 required
                 type="url"
                 maxLength={SETTINGS_BOUNDS.baseUrl}
@@ -174,9 +189,9 @@ function ConnectionDetails({
               />
             </label>
             <label>
-              Label
+              {t("settings.connection.label")}
               <input
-                aria-label="Connection label"
+                aria-label={t("settings.connection.labelLabel")}
                 required
                 maxLength={120}
                 value={label}
@@ -184,9 +199,9 @@ function ConnectionDetails({
               />
             </label>
             <label>
-              Connection name
+              {t("settings.connection.name")}
               <input
-                aria-label="Connection name"
+                aria-label={t("settings.connection.name")}
                 required
                 maxLength={64}
                 value={connectionId}
@@ -196,19 +211,24 @@ function ConnectionDetails({
             </label>
             <div className="connection-flags">
               <label>
-                <input type="checkbox" checked={requiresKey} onChange={(event) => setRequiresKey(event.target.checked)} /> Server requires a
-                key
+                <input type="checkbox" checked={requiresKey} onChange={(event) => setRequiresKey(event.target.checked)} />{" "}
+                {t("settings.connection.requiresKey")}
               </label>
               <label>
-                <input type="checkbox" checked={localOnly} onChange={(event) => setLocal(event.target.checked)} /> Operator-controlled local
-                server
+                <input type="checkbox" checked={localOnly} onChange={(event) => setLocal(event.target.checked)} />{" "}
+                {t("settings.connection.localOnly")}
               </label>
             </div>
           </div>
         </details>
         {touched && problem !== undefined ? <Failure alert={false}>{problem}</Failure> : null}
         <FormFailure message={failure} />
-        <FormActions saving={saving} label="Connect and discover models" busyLabel="Connecting…" onCancel={onClose} />
+        <FormActions
+          saving={saving}
+          label={t("settings.connection.submit")}
+          busyLabel={t("settings.connection.connecting")}
+          onCancel={onClose}
+        />
       </BusyFieldset>
     </form>
   );
@@ -227,6 +247,7 @@ export function ManageConnectionModal({
   readonly onDone: (message: string | undefined) => void;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   const { client } = useWorkspace();
   const [reference, setReference] = useState(connection.credentialRef);
   const [key, setKey] = useState("");
@@ -247,10 +268,7 @@ export function ManageConnectionModal({
   if (connection.providerBinding !== undefined) {
     return (
       <Modal title={connection.label} onClose={onClose}>
-        <p>
-          Managed by plugin instance <code>{connection.providerBinding.instanceId}</code>. Configure it in Plugins and store its keys in
-          Credentials. Restart the owner after changes.
-        </p>
+        <p>{withParts(t("settings.connection.managed"), { instance: <code>{connection.providerBinding.instanceId}</code> })}</p>
       </Modal>
     );
   }
@@ -258,20 +276,20 @@ export function ManageConnectionModal({
   const keyField = (
     <>
       <label className="connection-key">
-        {connection.localOnly ? "API key" : "Replace the API key"}
+        {connection.localOnly ? t("settings.connection.apiKey") : t("settings.connection.replaceKey")}
         <input
-          aria-label={`New key for ${connection.label}`}
+          aria-label={t("settings.connection.newKeyLabel", { label: connection.label })}
           {...SECRET_INPUT}
           maxLength={SETTINGS_BOUNDS.value}
           value={key}
-          placeholder="Paste a new key"
+          placeholder={t("settings.connection.pasteNewKey")}
           onChange={(event) => setKey(event.target.value)}
         />
       </label>
       {newKey ? (
         <label>
-          <input type="checkbox" checked={replace} onChange={(event) => setReplace(event.target.checked)} /> Replace the stored value,
-          including for connections that share it
+          <input type="checkbox" checked={replace} onChange={(event) => setReplace(event.target.checked)} />{" "}
+          {t("settings.connection.replaceStored")}
         </label>
       ) : null}
     </>
@@ -292,9 +310,9 @@ export function ManageConnectionModal({
           {/* A server on this computer usually takes no key: the field is there for one that does, folded away. */}
           {connection.localOnly ? (
             <details className="connection-advanced" open={newKey}>
-              <summary className="disclosure">Set an API key</summary>
+              <summary className="disclosure">{t("settings.connection.setKey")}</summary>
               <div className="settings-fields">
-                <p>A local server usually takes none. Enter one only if you turned on its authentication.</p>
+                <p>{t("settings.connection.localKeyHint")}</p>
                 {keyField}
               </div>
             </details>
@@ -302,12 +320,12 @@ export function ManageConnectionModal({
             keyField
           )}
           <details className="connection-advanced">
-            <summary className="disclosure">Credential reference</summary>
+            <summary className="disclosure">{t("settings.connection.reference")}</summary>
             <div className="settings-fields">
               <label>
-                Stored as
+                {t("settings.connection.storedAs")}
                 <input
-                  aria-label={`Credential for ${connection.label}`}
+                  aria-label={t("settings.connection.credentialLabel", { label: connection.label })}
                   value={reference}
                   maxLength={SETTINGS_BOUNDS.reference}
                   required
@@ -315,34 +333,28 @@ export function ManageConnectionModal({
                   onChange={(event) => setReference(event.target.value)}
                 />
               </label>
-              <p>
-                A stored key may be bound to a new origin only if you set it through this owner session. If refused, enter its value here
-                again or use <Command>tavi models add</Command> in a terminal.
-              </p>
+              <p>{withParts(t("settings.connection.rebindHint"), { command: <Command>tavi models add</Command> })}</p>
             </div>
           </details>
           <section className="danger-zone">
             {removing ? (
               <>
-                <p>
-                  Remove {connection.label} and the models it found? A role or the default that uses it must be pointed at another model
-                  first. Its key stays in Credentials.
-                </p>
+                <p>{t("settings.connection.removeQuestion", { label: connection.label })}</p>
                 <div className="danger-zone-actions">
                   <Button variant="ghost" onClick={() => setRemoving(false)}>
-                    Keep it
+                    {t("settings.connection.keep")}
                   </Button>
                   <Button
                     variant="destructive"
                     onClick={() => act(() => modelWrite(client, { action: "remove", connectionId: connection.connectionId }))}
                   >
-                    Remove connection
+                    {t("settings.connection.remove")}
                   </Button>
                 </div>
               </>
             ) : (
               <Button variant="danger-ghost" onClick={() => setRemoving(true)}>
-                Remove this connection…
+                {t("settings.connection.removeOpen")}
               </Button>
             )}
           </section>
@@ -350,8 +362,8 @@ export function ManageConnectionModal({
           <FormActions
             saving={working}
             disabled={newKey ? !replace : reference === connection.credentialRef}
-            label={newKey ? "Save new key" : "Save reference"}
-            cancelLabel="Close"
+            label={newKey ? t("settings.connection.saveKey") : t("settings.connection.saveReference")}
+            cancelLabel={t("settings.action.close")}
             onCancel={onClose}
           />
         </BusyFieldset>

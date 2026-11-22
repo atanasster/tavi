@@ -18,12 +18,13 @@ import { Confirm } from "../../ui/Confirm.js";
 import { Modal } from "../../ui/Modal.js";
 import { BusyFieldset, Failure, StatusNote } from "../../ui/Parts.js";
 import { Select } from "../../ui/Select.js";
-import { keptByWords } from "../apps/model.js";
+import { andList, keptByWords } from "../apps/model.js";
 import { type SettingValue, request } from "./channels-api.js";
 import { SETTINGS_BOUNDS } from "./common.js";
 import { SECRET_INPUT } from "./PasswordInput.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 
 function initialSettings(descriptor: ChannelDescriptor, connection: ChannelConnectionView | undefined): Record<string, SettingValue> {
   const values: Record<string, SettingValue> = {};
@@ -51,6 +52,7 @@ export function ConnectionForm({
   onClose: () => void;
   onSaved: (note: string, connectionId: string) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const secretFields = descriptor.auth.kind === "none" ? [] : (descriptor.auth.fields ?? []);
   const [label, setLabel] = useState(connection?.label ?? "");
@@ -85,15 +87,15 @@ export function ConnectionForm({
     }
     onSaved(
       answer.value.notApplied === undefined
-        ? `${descriptor.label} saved and applied.`
-        : `${descriptor.label} saved, but it could not open: ${answer.value.notApplied}`,
+        ? t("settings.connectionForm.saved", { label: descriptor.label })
+        : t("settings.connectionForm.savedNotApplied", { label: descriptor.label, reason: answer.value.notApplied }),
       answer.value.connectionId,
     );
   };
   // An OAuth connection signs in once it is saved.
   let signIn: ReactNode = null;
   if (oauthClient !== undefined && connection === undefined)
-    signIn = <p className="settings-description">Save the connection, then connect it with {descriptor.label}.</p>;
+    signIn = <p className="settings-description">{t("settings.connectionForm.saveFirst", { label: descriptor.label })}</p>;
   else if (oauthClient !== undefined && connection !== undefined)
     signIn = (
       <SignIn
@@ -105,7 +107,15 @@ export function ConnectionForm({
       />
     );
   return (
-    <Modal title={connection === undefined ? `Connect ${descriptor.label}` : `Edit ${connection.label}`} busy={saving} onClose={onClose}>
+    <Modal
+      title={
+        connection === undefined
+          ? t("settings.connectionForm.connectTitle", { label: descriptor.label })
+          : t("settings.connectionForm.editTitle", { label: connection.label })
+      }
+      busy={saving}
+      onClose={onClose}
+    >
       {/* Its own section, outside the connection's form: Enter in it saves the app, not the connection. */}
       {oauthClient === undefined ? null : <OAuthApp descriptor={descriptor} status={oauthClient} onChanged={onOAuthClientChanged} />}
       {signIn}
@@ -119,12 +129,18 @@ export function ConnectionForm({
           <p className="settings-description">{descriptor.description}</p>
           {descriptor.setupHelp === undefined ? null : <p className="settings-description">{descriptor.setupHelp}</p>}
           <label>
-            <input type="checkbox" aria-label="Enabled" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} /> Enabled
+            <input
+              type="checkbox"
+              aria-label={t("settings.connectionForm.enabled")}
+              checked={enabled}
+              onChange={(event) => setEnabled(event.target.checked)}
+            />{" "}
+            {t("settings.connectionForm.enabled")}
           </label>
           <label>
-            Name (optional)
+            {t("settings.connectionForm.nameOptional")}
             <input
-              aria-label="Connection name"
+              aria-label={t("settings.connectionForm.nameLabel")}
               maxLength={80}
               value={label}
               placeholder={descriptor.label}
@@ -147,7 +163,11 @@ export function ConnectionForm({
                 {...SECRET_INPUT}
                 maxLength={SETTINGS_BOUNDS.value}
                 value={secrets[field.key] ?? ""}
-                placeholder={connection?.secretsStored[field.key] ? "Saved" : `Enter ${field.label.toLowerCase()}`}
+                placeholder={
+                  connection?.secretsStored[field.key]
+                    ? t("settings.connectionForm.savedPlaceholder")
+                    : t("settings.connectionForm.enter", { what: field.label.toLowerCase() })
+                }
                 onChange={(event) => setSecrets({ ...secrets, [field.key]: event.target.value })}
               />
               {field.help === undefined ? null : <span className="settings-description">{field.help}</span>}
@@ -157,10 +177,10 @@ export function ConnectionForm({
           <Failure message={failure} />
           <div className="actions">
             <Button variant="ghost" onClick={onClose}>
-              Cancel
+              {t("ui.confirm.cancel")}
             </Button>
             <Button variant="primary" type="submit">
-              {saving ? "Saving…" : "Save connection"}
+              {saving ? t("ui.parts.saving") : t("settings.connectionForm.save")}
             </Button>
           </div>
         </BusyFieldset>
@@ -175,6 +195,7 @@ export function ConnectionForm({
  * connects — stored once for the channel, for all its connections.
  */
 function OAuthApp({ descriptor, status, onChanged }: { descriptor: ChannelDescriptor; status: OAuthClientStatus; onChanged: () => void }) {
+  const t = useT();
   const { client } = useWorkspace();
   const [changing, setChanging] = useState(false);
   const [clientId, setClientId] = useState("");
@@ -209,28 +230,33 @@ function OAuthApp({ descriptor, status, onChanged }: { descriptor: ChannelDescri
   return (
     <form
       className="settings-panel"
-      aria-label="OAuth app"
+      aria-label={t("settings.oauthApp.title")}
       onSubmit={(event) => {
         event.preventDefault();
         saveApp();
       }}
     >
-      <h3 className="settings-section-title">OAuth app</h3>
+      <h3 className="settings-section-title">{t("settings.oauthApp.title")}</h3>
       {entering ? (
         <>
           <p className="settings-description">
             {status.source === "operator"
-              ? `${descriptor.label} connects through an OAuth app of your own: create one with the provider and enter it here, once for every ${descriptor.label} connection.`
-              : `Use your own OAuth app in place of the one ${descriptor.label} ships with.`}
+              ? t("settings.oauthApp.operator", { label: descriptor.label })
+              : t("settings.oauthApp.useOwn", { label: descriptor.label })}
           </p>
           <label>
-            Client ID
-            <input aria-label="OAuth client ID" maxLength={512} value={clientId} onChange={(event) => setClientId(event.target.value)} />
+            {t("settings.oauthApp.clientId")}
+            <input
+              aria-label={t("settings.oauthApp.clientIdLabel")}
+              maxLength={512}
+              value={clientId}
+              onChange={(event) => setClientId(event.target.value)}
+            />
           </label>
           <label>
-            Client secret (if the provider gave one)
+            {t("settings.oauthApp.clientSecret")}
             <input
-              aria-label="OAuth client secret"
+              aria-label={t("settings.oauthApp.clientSecretLabel")}
               {...SECRET_INPUT}
               maxLength={4096}
               value={clientSecret}
@@ -240,22 +266,22 @@ function OAuthApp({ descriptor, status, onChanged }: { descriptor: ChannelDescri
           <div className="actions">
             {changing ? (
               <Button variant="ghost" onClick={() => setChanging(false)}>
-                Cancel
+                {t("ui.confirm.cancel")}
               </Button>
             ) : null}
             <Button variant="primary" type="submit" disabled={busy || clientId.trim() === ""}>
-              Save OAuth app
+              {t("settings.oauthApp.save")}
             </Button>
           </div>
         </>
       ) : (
         <>
           <p className="settings-description">
-            {status.own ? "Connects through your own OAuth app." : `Connects through the OAuth app ${descriptor.label} ships with.`}
+            {status.own ? t("settings.oauthApp.connectsOwn") : t("settings.oauthApp.connectsShipped", { label: descriptor.label })}
           </p>
           <div className="actions">
             <Button variant="ghost" onClick={() => setChanging(true)}>
-              Use a different OAuth app
+              {t("settings.oauthApp.different")}
             </Button>
             {status.own ? (
               <Button
@@ -263,7 +289,7 @@ function OAuthApp({ descriptor, status, onChanged }: { descriptor: ChannelDescri
                 disabled={busy}
                 onClick={() => void act({ action: "oauth-client-clear", providerId: descriptor.providerId })}
               >
-                Forget my OAuth app
+                {t("settings.oauthApp.forget")}
               </Button>
             ) : null}
           </div>
@@ -294,6 +320,7 @@ function SignIn({
   encrypted: boolean;
   onConnected: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [flowId, setFlowId] = useState<string>();
   const [note, setNote] = useState<string>();
@@ -310,16 +337,16 @@ function SignIn({
         if (answer.value.state === "pending") return;
         setFlowId(undefined);
         if (answer.value.state === "connected") {
-          setNote(`Connected as ${answer.value.accountIdentity ?? descriptor.label}.`);
+          setNote(t("settings.signIn.connectedAs", { identity: answer.value.accountIdentity ?? descriptor.label }));
           onConnected();
         } else if (answer.value.detail !== undefined) setFailure(answer.value.detail);
-        else if (answer.value.state === "expired") setFailure("The sign-in took too long; connect again.");
-        else setFailure("The sign-in did not finish; connect again.");
+        else if (answer.value.state === "expired") setFailure(t("settings.signIn.expired"));
+        else setFailure(t("settings.signIn.failed"));
       });
     },
     SIGN_IN_POLL_MS,
     { enabled: flowId !== undefined },
-    [client, workspaceId, flowId, descriptor.label, onConnected],
+    [client, workspaceId, flowId, descriptor.label, onConnected, t],
   );
   const connect = async (): Promise<void> => {
     setFailure(undefined);
@@ -353,15 +380,17 @@ function SignIn({
     }
     const kept = answer.value.keptBy ?? [];
     setNote(
-      `Signed out of ${descriptor.label}: the connection is closed until it is connected again.${kept.length === 0 ? "" : ` ${kept.join(" and ")} keeps its sign-in.`}`,
+      `${t("settings.signIn.signedOut", { label: descriptor.label })}${kept.length === 0 ? "" : ` ${t("settings.signIn.keeps", { kept: andList(kept) })}`}`,
     );
     onConnected();
   };
   const connected = connection.authState === "connected";
   // A sign-in kept on disk — connected, needing consent, or lapsed — can always be signed out.
   const signedIn = connection.authState !== "none" && connection.authState !== "revoked";
-  let action = connected ? `Reconnect with ${descriptor.label}` : `Connect with ${descriptor.label}`;
-  if (flowId !== undefined) action = "Waiting for the sign-in…";
+  let action = connected
+    ? t("settings.signIn.reconnect", { label: descriptor.label })
+    : t("settings.signIn.connect", { label: descriptor.label });
+  if (flowId !== undefined) action = t("settings.signIn.waiting");
   const encrypt = async (): Promise<void> => {
     setFailure(undefined);
     const answer = await ask<{ readonly undecryptable?: readonly string[]; readonly unencrypted?: readonly string[] }>(
@@ -370,8 +399,8 @@ function SignIn({
       { action: "encrypt" },
       {
         timeoutMs: null,
-        refused: "The credentials could not be encrypted.",
-        unreachable: "The service could not be reached. Reconnect and try again.",
+        refused: t("settings.signIn.encryptRefused"),
+        unreachable: t("settings.channels.unreachable"),
       },
     );
     if (!answer.ok) {
@@ -381,24 +410,20 @@ function SignIn({
     // As `tavi credentials encrypt` says them: what it could not read with this key, and what it left as it was.
     const undecryptable = answer.value.undecryptable ?? [];
     const unencrypted = answer.value.unencrypted ?? [];
-    if (undecryptable.length > 0)
-      setFailure(`Some credentials do not decrypt with this data directory's key: ${undecryptable.join(", ")}. Set them again.`);
+    if (undecryptable.length > 0) setFailure(t("settings.signIn.undecryptable", { names: undecryptable.join(", ") }));
     setNote(
-      `Credentials are encrypted at rest. You can connect now.${unencrypted.length === 0 ? "" : ` Left as they were (not credentials): ${unencrypted.join(", ")}.`}`,
+      `${t("settings.signIn.encrypted")}${unencrypted.length === 0 ? "" : ` ${t("settings.signIn.leftAsIs", { names: unencrypted.join(", ") })}`}`,
     );
     onConnected();
   };
   if (!encrypted) {
     // A sign-in keeps a refresh token: only in an encrypted store.
     return (
-      <section className="settings-panel" aria-label="Sign-in">
-        <p className="settings-description">
-          Connecting {descriptor.label} keeps a sign-in token, which Tavi keeps only in an encrypted credential store. Turn on encryption
-          first: every saved credential is rewritten encrypted, with a key kept beside them in the data directory.
-        </p>
+      <section className="settings-panel" aria-label={t("settings.signIn.label")}>
+        <p className="settings-description">{t("settings.signIn.needsEncryption", { label: descriptor.label })}</p>
         <div className="actions">
           <Button variant="primary" onClick={() => void encrypt()}>
-            Encrypt credentials
+            {t("settings.signIn.encrypt")}
           </Button>
         </div>
         <StatusNote note={note} />
@@ -407,9 +432,11 @@ function SignIn({
     );
   }
   return (
-    <section className="settings-panel" aria-label="Sign-in">
+    <section className="settings-panel" aria-label={t("settings.signIn.label")}>
       <p className="settings-description">
-        {connected ? `Connected as ${connection.accountIdentity}.` : `Not connected: sign in with ${descriptor.label} to use it.`}
+        {connected
+          ? t("settings.signIn.connectedAs", { identity: connection.accountIdentity })
+          : t("settings.signIn.notConnected", { label: descriptor.label })}
       </p>
       <div className="actions">
         <Button variant="primary" disabled={!ready || flowId !== undefined} onClick={() => void connect()}>
@@ -420,23 +447,25 @@ function SignIn({
             variant="ghost"
             onClick={() => {
               setFlowId(undefined);
-              setNote("Sign-in cancelled. Connect again when you are ready.");
+              setNote(t("settings.signIn.cancelled"));
             }}
           >
-            Cancel sign-in
+            {t("settings.signIn.cancel")}
           </Button>
         ) : null}
         {signedIn ? (
           <Button variant="ghost" disabled={flowId !== undefined} onClick={() => setConfirming(true)}>
-            Disconnect
+            {t("settings.signIn.disconnect")}
           </Button>
         ) : null}
       </div>
       {confirming ? (
         <Confirm
-          title={`Disconnect ${connection.accountIdentity === "" ? connection.label : connection.accountIdentity}?`}
+          title={t("settings.signIn.disconnectTitle", {
+            name: connection.accountIdentity === "" ? connection.label : connection.accountIdentity,
+          })}
           message={disconnectWords(descriptor, connection)}
-          action="Disconnect"
+          action={t("settings.signIn.disconnect")}
           onClose={() => setConfirming(false)}
           onConfirm={disconnect}
         />
@@ -449,8 +478,8 @@ function SignIn({
 /** What a disconnect does, said before it is done, as Connected apps says it: another app keeping the sign-in holds back the provider's revoke. */
 function disconnectWords(descriptor: ChannelDescriptor, connection: ChannelConnectionView): string {
   const kept = connection.keptBy ?? [];
-  const revoke = kept.length === 0 ? "Its sign-in is revoked where the provider allows it" : keptByWords(kept, "the provider");
-  return `${descriptor.label} closes until it is connected again. ${revoke}.`;
+  const revoke = kept.length === 0 ? translateNow("apps.disconnect.revoked") : keptByWords(kept, undefined);
+  return translateNow("settings.signIn.disconnectMessage", { label: descriptor.label, revoke });
 }
 function SettingInput({
   field,
@@ -461,6 +490,7 @@ function SettingInput({
   value: SettingValue | undefined;
   onChange: (value: SettingValue) => void;
 }) {
+  const t = useT();
   const help = field.help === undefined ? null : <span className="settings-description">{field.help}</span>;
   if (field.type === "boolean")
     return (
@@ -504,7 +534,7 @@ function SettingInput({
   return (
     <label>
       {field.label}
-      {field.required === true ? "" : " (optional)"}
+      {field.required === true ? "" : ` ${t("settings.connectionForm.optional")}`}
       <input
         aria-label={field.label}
         required={field.required === true}

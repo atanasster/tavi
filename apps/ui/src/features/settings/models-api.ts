@@ -1,19 +1,19 @@
 import {
   ChatModelSchema,
   lifecycleWarnings,
-  lifecycleWarningText,
   MODEL_ROLES,
   worstLifecycleLevel,
   type LifecycleLevel,
+  type LifecycleWarning,
   type ModelCatalogEntry,
   type ModelConnection,
   type ModelLifecycle,
   type ModelRoleBinding,
 } from "@tavi/contracts";
 
-import { plural } from "@tavi/contracts/util";
-
 import { formatTokens } from "../../lib/format.js";
+import { translateNow } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import { ask, mapOutcome, read, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { restartNote } from "./common.js";
 import { loadReplacements, type ModelReplacements } from "./lifecycle-api.js";
@@ -50,6 +50,41 @@ export interface LifecycleNotice {
   readonly text: string;
 }
 
+/**
+ * One warning as a clause about the model, in the page's language: "retired on
+ * 2026-11-19", "will be answered and billed as b on 2026-12-01" — what follows
+ * "This model" in the picker, and what the badge's title lists.
+ */
+export function lifecycleWarningWords(warning: LifecycleWarning): string {
+  const date = warning.date;
+  const dated = (bare: UiKey, on: UiKey): string => (date === undefined ? translateNow(bare) : translateNow(on, { date }));
+  switch (warning.code) {
+    case "retired":
+      return dated("settings.models.warning.retired", "settings.models.warning.retiredOn");
+    case "redirected":
+    case "redirects_soon": {
+      const to = warning.via === undefined ? warning.to : translateNow("settings.models.warning.via", { to: warning.to, via: warning.via });
+      if (warning.code === "redirected")
+        return date === undefined
+          ? translateNow("settings.models.warning.redirected", { to })
+          : translateNow("settings.models.warning.redirectedSince", { to, date });
+      return date === undefined
+        ? translateNow("settings.models.warning.redirectsSoon", { to })
+        : translateNow("settings.models.warning.redirectsSoonOn", { to, date });
+    }
+    case "retires_soon":
+      return dated("settings.models.warning.retires", "settings.models.warning.retiresOn");
+    case "end_claimed":
+      return warning.days !== undefined && warning.days <= 0
+        ? dated("settings.models.warning.mayHaveRetired", "settings.models.warning.mayHaveRetiredOn")
+        : dated("settings.models.warning.mayRetire", "settings.models.warning.mayRetireOn");
+    case "deprecated":
+      return dated("settings.models.warning.deprecated", "settings.models.warning.deprecatedOn");
+    case "price_changes":
+      return dated("settings.models.warning.priceChanges", "settings.models.warning.priceChangesOn");
+  }
+}
+
 export function lifecycleNotice(
   model: Pick<BrowsedModel, "lifecycle">,
   today: string = new Date().toISOString().slice(0, 10),
@@ -59,17 +94,18 @@ export function lifecycleNotice(
   const level = worstLifecycleLevel(warnings);
   if (level === undefined) return undefined;
   const first = warnings[0]?.code;
-  const label =
+  const label = translateNow(
     first === "retired"
-      ? "Retired"
+      ? "settings.models.lifecycle.retired"
       : first === "redirected"
-        ? "Redirected"
+        ? "settings.models.lifecycle.redirected"
         : first === "redirects_soon"
-          ? "Redirecting"
+          ? "settings.models.lifecycle.redirecting"
           : first === "retires_soon"
-            ? "Retiring"
-            : "Notice";
-  return { level, label, text: warnings.map(lifecycleWarningText).join("; ") };
+            ? "settings.models.lifecycle.retiring"
+            : "settings.models.lifecycle.notice",
+  );
+  return { level, label, text: warnings.map(lifecycleWarningWords).join(translateNow("settings.models.warning.separator")) };
 }
 
 /**
@@ -145,7 +181,7 @@ export async function loadModels(
   const listed = await ask<readonly ConnectionSummary[]>(client, "models", { action: "list" });
   if (!listed.ok) return listed;
   // An owner that answers `list` with anything but a list is not one this page can read.
-  if (!Array.isArray(listed.value)) return { ok: false, message: "The owner's model connections could not be read." };
+  if (!Array.isArray(listed.value)) return { ok: false, message: translateNow("settings.models.unreadable") };
   const connections = listed.value.filter(
     (connection) => connection.providerBinding === undefined || connection.providerBinding.workspaceId === workspaceId,
   );
@@ -260,13 +296,18 @@ export function targetNotice(target: OwnerTarget | undefined): string | undefine
   if (target === undefined) return undefined;
   if (target.unconfigured) {
     return target.afterRestart === undefined
-      ? "No model is configured, so runs are refused. Choose a model below."
-      : `The owner started with no model configured, so runs are refused. Restart \`tavi serve\` to run ${target.afterRestart}.`;
+      ? translateNow("settings.models.target.unconfigured")
+      : translateNow("settings.models.target.unconfiguredUntilRestart", { next: target.afterRestart });
   }
   if (!target.restartRequired) return undefined;
-  return target.afterRestart === undefined
-    ? `The owner runs ${target.running ?? "its startup model"}; the saved model choice cannot be resolved yet. Check Settings → Models before restarting \`tavi serve\`.`
-    : `The owner runs ${target.running ?? "its startup model"} until \`tavi serve\` is restarted; then it runs ${target.afterRestart}.`;
+  const running = target.running;
+  if (target.afterRestart === undefined)
+    return running === undefined
+      ? translateNow("settings.models.target.startupUnresolved")
+      : translateNow("settings.models.target.unresolved", { running });
+  return running === undefined
+    ? translateNow("settings.models.target.startupUntilRestart", { next: target.afterRestart })
+    : translateNow("settings.models.target.untilRestart", { running, next: target.afterRestart });
 }
 
 /**
@@ -279,8 +320,12 @@ export interface ChatModel {
   readonly source: "chosen" | "default";
 }
 
-/** What the picker and the strip name for a chosen model no connection offers any more: the chat's next turn is refused until another is picked. */
-export const CHAT_MODEL_UNAVAILABLE = "chat model unavailable — pick another";
+/**
+ * What the picker and the strip name for a chosen model no connection offers
+ * any more, in the page's language: the chat's next turn is refused until
+ * another is picked.
+ */
+export const chatModelUnavailable = (): string => translateNow("settings.models.chatModelUnavailable");
 
 /**
  * The model chat `taskId` runs from its next turn, or `undefined` — the
@@ -322,7 +367,7 @@ export function planModelPick(input: {
   if (input.taskId === undefined) return input.newChat ? { kind: "new-chat" } : { kind: "default" };
   if (input.support === "supported") return { kind: "chat", taskId: input.taskId };
   if (input.support === "unsupported") return { kind: "default" };
-  return { kind: "wait", message: "This chat's model is still being read: pick again in a moment." };
+  return { kind: "wait", message: translateNow("settings.models.pick.wait") };
 }
 
 /**
@@ -338,21 +383,28 @@ export function modelPickNote(
   newChats: string | undefined,
 ): Outcome<string | undefined> {
   const { model } = picked;
-  const notDefault = made.ok ? undefined : `it could not be made the default for new chats: ${made.message}`;
-  const outranked =
-    made.ok && newChats !== undefined && newChats !== `${picked.connectionId}/${picked.model}`
-      ? `${newChats}, which role main or the owner's own flags choose`
-      : undefined;
+  const notDefault = made.ok ? undefined : made.message;
+  const outranked = made.ok && newChats !== undefined && newChats !== `${picked.connectionId}/${picked.model}` ? newChats : undefined;
   switch (pick.kind) {
     case "chat":
-      if (notDefault !== undefined) return { ok: true, value: `This chat runs ${model}; ${notDefault}` };
+      if (notDefault !== undefined)
+        return { ok: true, value: translateNow("settings.models.pick.chatNotDefault", { model, message: notDefault }) };
       // The picker already names the model: a note only for what it does not show.
-      return { ok: true, value: outranked === undefined ? undefined : `This chat runs ${model}; new chats run ${outranked}.` };
+      return {
+        ok: true,
+        value: outranked === undefined ? undefined : translateNow("settings.models.pick.chatOutranked", { model, newChats: outranked }),
+      };
     case "new-chat":
-      if (notDefault !== undefined) return { ok: true, value: `This chat runs ${model} once its first message is sent; ${notDefault}` };
-      return { ok: true, value: outranked === undefined ? undefined : `This chat runs ${model}; later new ones run ${outranked}.` };
+      if (notDefault !== undefined)
+        return { ok: true, value: translateNow("settings.models.pick.newChatNotDefault", { model, message: notDefault }) };
+      return {
+        ok: true,
+        value: outranked === undefined ? undefined : translateNow("settings.models.pick.newChatOutranked", { model, newChats: outranked }),
+      };
     case "default":
-      return outranked === undefined ? made : { ok: true, value: `${model} is the default, but new chats run ${outranked}.` };
+      return outranked === undefined
+        ? made
+        : { ok: true, value: translateNow("settings.models.pick.defaultOutranked", { model, newChats: outranked }) };
   }
 }
 
@@ -362,8 +414,10 @@ export function capacityLabel(model: {
   readonly maxTokens?: number | undefined;
 }): string | undefined {
   const parts = [
-    model.contextWindow === undefined ? undefined : `${formatTokens(model.contextWindow)} context`,
-    model.maxTokens === undefined ? undefined : `${formatTokens(model.maxTokens)} out`,
+    model.contextWindow === undefined
+      ? undefined
+      : translateNow("settings.models.capacity.context", { tokens: formatTokens(model.contextWindow) }),
+    model.maxTokens === undefined ? undefined : translateNow("settings.models.capacity.out", { tokens: formatTokens(model.maxTokens) }),
   ].filter((part): part is string => part !== undefined);
   return parts.length === 0 ? undefined : parts.join(" · ");
 }
@@ -454,7 +508,7 @@ export function describeTarget(
 ): { readonly name: string; readonly connection: string } {
   const model = data.models.find((row) => row.connectionId === target.connectionId && row.modelId === target.model);
   const connection = data.connections.find((row) => row.connectionId === target.connectionId)?.label ?? target.connectionId;
-  return { name: model?.displayName ?? target.model ?? "Connection default", connection };
+  return { name: model?.displayName ?? target.model ?? translateNow("settings.models.connectionDefault"), connection };
 }
 
 export const sameTarget = (left: TargetRef | undefined, right: TargetRef | undefined): boolean =>
@@ -482,7 +536,8 @@ export const modelActions = {
       connectionId,
       ...(enable ? { videoEnable: model, disclosureConfirmed: confirmed } : { videoDisable: model }),
     });
-    if (written.ok) return { ok: true, value: enable ? `${model} is sent whole videos.` : `${model} is sent a video's frames.` };
+    if (written.ok)
+      return { ok: true, value: translateNow(enable ? "settings.models.video.whole" : "settings.models.video.frames", { model }) };
     const disclosure = written.details?.["disclosure"];
     return typeof disclosure === "string" && enable && !confirmed ? { ok: false, disclosure, message: written.message } : written;
   },
@@ -497,13 +552,21 @@ export const modelActions = {
     if (!probed.ok) return probed;
     // A failed probe is the owner's words: a wrong reading, no answer at all, or a pass not recorded (the connection changed).
     return probed.value.ok === false
-      ? { ok: false, message: `The video probe of ${model} did not pass: ${probed.value.message ?? "no reason given"}` }
-      : { ok: true, value: `${model} read the probe clip: it can be sent whole videos.` };
+      ? {
+          ok: false,
+          message: translateNow("settings.models.video.probeFailed", {
+            model,
+            reason: probed.value.message ?? translateNow("settings.models.noReason"),
+          }),
+        }
+      : { ok: true, value: translateNow("settings.models.video.probePassed", { model }) };
   },
   async discover(client: SettingsClient, connectionId: string): Promise<Outcome<string | undefined>> {
     const found = await ask<{ readonly models?: readonly unknown[] }>(client, "models", { action: "discover", connectionId });
     return mapOutcome(found, (value) =>
-      [`Discovered ${plural(value.models?.length ?? 0, "model")}.`, restartNote(value, "models")].filter(Boolean).join(" "),
+      [translateNow("settings.models.discovered", { count: value.models?.length ?? 0 }), restartNote(value, "models")]
+        .filter(Boolean)
+        .join(" "),
     );
   },
   async test(client: SettingsClient, connectionId: string, model: string): Promise<Outcome<string | undefined>> {
@@ -514,14 +577,24 @@ export const modelActions = {
     });
     if (!tested.ok) return tested;
     // A model that failed its test is a failed outcome, so a caller can show it as one.
-    if (!tested.value.ok) return { ok: false, message: `${model} failed its test: ${tested.value.message ?? "no reason given"}` };
-    const answer = `${model} answered its test${tested.value.latencyMs === undefined ? "" : ` in ${tested.value.latencyMs} ms`}.`;
+    if (!tested.value.ok)
+      return {
+        ok: false,
+        message: translateNow("settings.models.test.failed", {
+          model,
+          reason: tested.value.message ?? translateNow("settings.models.noReason"),
+        }),
+      };
+    const answer =
+      tested.value.latencyMs === undefined
+        ? translateNow("settings.models.test.answered", { model })
+        : translateNow("settings.models.test.answeredIn", { model, latency: String(tested.value.latencyMs) });
     const note = restartNote(tested.value, "models");
     return { ok: true, value: note === undefined ? answer : `${answer} ${note}` };
   },
   async setDefault(client: SettingsClient, workspaceId: string, connectionId: string, model: string): Promise<Outcome<string | undefined>> {
     const written = await ask<unknown>(client, "models", { action: "set-default", workspaceId, connectionId, model });
-    return mapOutcome(written, (value) => restartNote(value, "models") ?? `${model} is the default.`);
+    return mapOutcome(written, (value) => restartNote(value, "models") ?? translateNow("settings.models.isDefault", { model }));
   },
   /** Chat `taskId` runs `connectionId`/`model` from its next model call. */
   async setChat(
@@ -532,7 +605,7 @@ export const modelActions = {
     model: string,
   ): Promise<Outcome<string | undefined>> {
     const written = await ask<unknown>(client, "models", { action: "set-chat", workspaceId, taskId, connectionId, model });
-    return mapOutcome(written, () => `This chat runs ${model}.`);
+    return mapOutcome(written, () => translateNow("settings.models.chatRuns", { model }));
   },
   async setRole(
     client: SettingsClient,
@@ -542,6 +615,6 @@ export const modelActions = {
     model: string,
   ): Promise<Outcome<string | undefined>> {
     const written = await ask<unknown>(client, "models", { action: "set-role", workspaceId, role, connectionId, model });
-    return mapOutcome(written, (value) => restartNote(value, "models") ?? `${model} serves ${role}.`);
+    return mapOutcome(written, (value) => restartNote(value, "models") ?? translateNow("settings.models.servesRole", { model, role }));
   },
 };
