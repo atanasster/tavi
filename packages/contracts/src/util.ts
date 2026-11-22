@@ -47,7 +47,14 @@ export function csvList(value: unknown): string[] {
     .filter((item) => item !== "");
 }
 
-/** `count` and its noun: `one` for exactly 1, otherwise `many` (`one` with an `s` unless given). */
+/**
+ * `count` and its noun: `one` for exactly 1, otherwise `many` (`one` with an `s` unless given).
+ *
+ * English only, for text that stays English (logs, CLI help, model-facing
+ * words). Text a person reads in their language is a plural message in a
+ * catalogue (`@tavi/contracts/i18n`'s `PluralMessage`), whose forms follow the
+ * language's own plural rules and nouns.
+ */
 export function plural(count: number, one: string, many = `${one}s`): string {
   return `${count} ${count === 1 ? one : many}`;
 }
