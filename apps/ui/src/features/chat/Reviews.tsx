@@ -1,9 +1,12 @@
 import { useEffect } from "react";
 import { artifactMeta } from "../../lib/format.js";
 import type { CanvasRun, CanvasStore } from "./store/types.js";
+import { spoken } from "./store/said.js";
+import { useT } from "../../lib/i18n.js";
 import { Failure } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
 import { Command } from "../../ui/Command.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 export function Reviews({
   run,
   connected,
@@ -15,6 +18,7 @@ export function Reviews({
   readonly onLoad: CanvasStore["loadArtifacts"];
   readonly onReview: CanvasStore["reviewArtifacts"];
 }) {
+  const t = useT();
   const review = run.run.review;
   useEffect(() => {
     if (review) void onLoad(run.id);
@@ -30,11 +34,14 @@ export function Reviews({
       (row) => row.reviewState === "pending" && review.requests.some((request) => request.artifactId === row.artifactId),
     ) ?? [];
   return (
-    <section className="review" aria-label="artifact review">
-      <h3>Review held files</h3>
+    <section className="review" aria-label={t("chat.review.label")}>
+      <h3>{t("chat.review.heading")}</h3>
       <p>
-        Tavi held these files back: the chat reads one only once you approve it, and a rejected one never reaches it. Their content is not
-        shown here; <Command>tavi artifacts list</Command>, <code>approve</code> and <code>reject</code> do the same from a terminal.
+        {withParts(t("chat.review.intro"), {
+          list: <Command>tavi artifacts list</Command>,
+          approve: <code>approve</code>,
+          reject: <code>reject</code>,
+        })}
       </p>
       <ul>
         {review.requests.map((request) => {
@@ -44,15 +51,15 @@ export function Reviews({
               {/* A file by its name, as the person will find it; the id after, for the terminal's commands. */}
               <span className="review-item-what">
                 {artifact?.fileName === undefined ? null : <strong>{artifact.fileName}</strong>} <code>{request.artifactId}</code> —{" "}
-                {request.toolName}: {artifact ? artifactMeta(artifact) : "metadata unavailable"}
+                {request.toolName}: {artifact ? artifactMeta(artifact) : t("chat.review.noMeta")}
               </span>
               {artifact?.reviewState === "pending" ? (
                 <>
                   <Button disabled={!ready} onClick={() => onReview(run.id, [{ artifactId: artifact.artifactId, approved: true }])}>
-                    Approve artifact
+                    {t("chat.review.approve")}
                   </Button>
                   <Button disabled={!ready} onClick={() => onReview(run.id, [{ artifactId: artifact.artifactId, approved: false }])}>
-                    Reject artifact
+                    {t("chat.review.reject")}
                   </Button>
                 </>
               ) : null}
@@ -71,7 +78,7 @@ export function Reviews({
               )
             }
           >
-            Approve all pending
+            {t("chat.review.approveAll")}
           </Button>
           <Button
             disabled={!ready}
@@ -82,7 +89,7 @@ export function Reviews({
               )
             }
           >
-            Reject all pending
+            {t("chat.review.rejectAll")}
           </Button>
         </>
       ) : (
@@ -95,14 +102,14 @@ export function Reviews({
             )
           }
         >
-          Continue the chat
+          {t("chat.review.continue")}
         </Button>
       )}
       <Button disabled={run.reviewBusy || !connected} onClick={() => void onLoad(run.id)}>
-        Refresh metadata
+        {t("chat.review.refresh")}
       </Button>
-      {run.reviewBusy ? <p>Recording review…</p> : null}
-      {run.reviewError ? <Failure alert={false}>{run.reviewError}</Failure> : null}
+      {run.reviewBusy ? <p>{t("chat.review.recording")}</p> : null}
+      {run.reviewError ? <Failure alert={false}>{spoken(run.reviewError, t)}</Failure> : null}
     </section>
   );
 }

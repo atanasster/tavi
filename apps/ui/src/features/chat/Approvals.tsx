@@ -1,11 +1,14 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { PendingRound } from "@tavi/client/browser";
 import { displaySafe, toolGroupLabel, toolGroupScopeNote, type ApprovalScope } from "@tavi/contracts";
+import { translateNow, useT } from "../../lib/i18n.js";
 import { InlineConfirm, Notice } from "../../ui/Parts.js";
 import { decidableRound } from "./store/runs.js";
 import type { CanvasRun, CanvasStore } from "./store/types.js";
+import type { UiKey } from "../../locales/en.js";
 import { Button } from "../../ui/Button.js";
 import { CallLine, describeRequest } from "./ApprovalParts.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 type Decision = { readonly callId: string; readonly approved: boolean; readonly note?: string };
 
@@ -14,8 +17,8 @@ export const REJECT_REASON_MAX = 500;
 
 /** What a round's second step says before approved calls run: a critical one (`single`: the only call) is named so. */
 export function confirmCallsText(critical: boolean, single = false): string {
-  if (!critical) return "Confirm these tool actions. Approved calls may change local data.";
-  return single ? "This call is rated critical risk. Confirm to run it." : "A call here is rated critical risk. Confirm to run it.";
+  if (!critical) return translateNow("chat.approval.confirm.calls");
+  return translateNow(single ? "chat.approval.confirm.criticalSingle" : "chat.approval.confirm.critical");
 }
 
 /** What a grouped round allows, as its card names it: the browser on the hosts its calls open. */
@@ -45,10 +48,11 @@ export function Approvals({
 }) {
   // A decided round is not drawn here: the chat panel's Activity lists it
   // (`decisionsOf`), so answered questions do not crowd the transcript.
+  const t = useT();
   return (
     <>
       {run.run.pending.map((pending) => (
-        <section className="round" aria-label="permission required" key={pending.steps}>
+        <section className="round" aria-label={t("chat.approval.required")} key={pending.steps}>
           <Pending run={run} round={pending} onDecide={onDecide} lastingChat={lastingChat} />
         </section>
       ))}
@@ -94,12 +98,12 @@ export function decisionsOf(run: CanvasRun): readonly DecidedCall[] {
  * it was is the decision itself (`approved`), since the decider's id is the same for both.
  */
 export function deciderName(decidedBy: string, approved?: boolean): string {
-  if (decidedBy === "operator") return "you";
+  if (decidedBy === "operator") return translateNow("chat.approval.decider.you");
   if (!decidedBy.startsWith("auto:")) return decidedBy;
   return approved === false
-    ? "automatic denial (--approval deny)"
+    ? translateNow("chat.approval.decider.autoDeny")
     : approved === true
-      ? "automatic approval (--approval approve)"
+      ? translateNow("chat.approval.decider.autoApprove")
       : "--approval";
 }
 
@@ -122,9 +126,10 @@ function ruleSubjects(request: {
   readonly scopeGroup?: string | undefined;
   readonly display?: { readonly host?: string | undefined } | undefined;
 }): readonly string[] {
-  if (request.scopeGroup !== undefined) return [`any ${roundGroupName(request.scopeGroup, { requests: [request] })} call`];
+  if (request.scopeGroup !== undefined)
+    return [translateNow("chat.approval.rule.any", { tool: roundGroupName(request.scopeGroup, { requests: [request] }) })];
   return request.subjects === undefined || request.subjects.length === 0
-    ? [`any ${request.toolName} call`]
+    ? [translateNow("chat.approval.rule.any", { tool: request.toolName })]
     : request.subjects.map((subject) => `${request.toolName} ${displaySafe(subject)}`);
 }
 
@@ -151,11 +156,19 @@ function needsSecondStep(request: PendingRound["requests"][number]): boolean {
   return request.effect !== "read-only" && request.effect !== "external";
 }
 
-/** What a `session` grant is called, and how long it lasts, where it is made. */
-function sessionScopeWords(lastingChat: boolean): { readonly allow: string; readonly lasts: string } {
+/** What a `session` grant's button, its explanation and its tooltip say, where it is made. */
+function sessionScopeWords(lastingChat: boolean): {
+  readonly allow: UiKey;
+  readonly explain: UiKey;
+  readonly runsWithout: UiKey;
+} {
   return lastingChat
-    ? { allow: "Allow until tomorrow", lasts: "in this chat for a day, or until it rolls over" }
-    : { allow: "Allow for this chat", lasts: "for the rest of this chat" };
+    ? {
+        allow: "chat.approval.session.allowLasting",
+        explain: "chat.approval.group.explainLasting",
+        runsWithout: "chat.approval.session.runsWithoutLasting",
+      }
+    : { allow: "chat.approval.session.allow", explain: "chat.approval.group.explain", runsWithout: "chat.approval.session.runsWithout" };
 }
 
 function Pending({
@@ -169,6 +182,7 @@ function Pending({
   readonly onDecide: CanvasStore["decide"];
   readonly lastingChat: boolean;
 }) {
+  const t = useT();
   const session = sessionScopeWords(lastingChat);
   const [rejected, setRejected] = useState<readonly string[]>([]);
   const [reason, setReason] = useState("");
@@ -221,7 +235,7 @@ function Pending({
         maxLength={REJECT_REASON_MAX}
         disabled={!ready}
         autoFocus={rejecting}
-        placeholder="Optional"
+        placeholder={t("chat.approval.reason.placeholder")}
         onChange={(event) => setReason(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === "Enter" && rejecting) {
@@ -234,14 +248,14 @@ function Pending({
   );
   const heading =
     group !== undefined
-      ? `This chat wants to use the ${roundGroupName(group, round)}`
+      ? t("chat.approval.heading.group", { group: roundGroupName(group, round) })
       : round.requests.length === 1
-        ? "Needs your approval"
-        : `${round.requests.length} calls need your approval`;
+        ? t("chat.approval.heading.one")
+        : t("chat.approval.heading.many", { count: round.requests.length });
   return (
     <>
       <p className={group === undefined ? "round-heading meta-sm" : "group-ask"}>
-        <span className="visually-hidden">permission required: </span>
+        <span className="visually-hidden">{t("chat.approval.requiredPrefix")}</span>
         {heading}
       </p>
       <ul className="round-calls list-reset">
@@ -260,23 +274,23 @@ function Pending({
                     );
                   }}
                 />
-                Allow{" "}
+                {t("chat.approval.allowCall")}{" "}
               </label>
             ) : null}
             <CallLine request={request} grouped={group !== undefined} />
           </li>
         ))}
       </ul>
-      {round.requests.length > 64 ? <p>More than 64 calls: this round must be allowed or denied together.</p> : null}
+      {round.requests.length > 64 ? <p>{t("chat.approval.tooMany")}</p> : null}
       {rejecting ? (
         <div className="reject-form" ref={rejectForm}>
-          {reasonField("Why deny? The agent reads the reason.")}
+          {reasonField(t("chat.approval.reason.deny"))}
           <div className="actions">
             <Button variant="destructive" disabled={!ready} onClick={reject}>
-              Deny
+              {t("chat.approval.deny")}
             </Button>
             <Button variant="ghost" onClick={() => setRejecting(false)}>
-              Cancel
+              {t("chat.approval.cancel")}
             </Button>
           </div>
         </div>
@@ -293,16 +307,16 @@ function Pending({
               }}
               onClick={() => act(true, "session")}
             >
-              {session.allow}
+              {t(session.allow)}
             </Button>
             {scopes.includes("once") ? (
               <Button disabled={!approvable} onClick={() => act(true, "once")}>
-                Allow once
+                {t("chat.approval.allowOnce")}
               </Button>
             ) : null}
             {scopes.includes("always") ? (
               <Button disabled={!approvable} onClick={() => act(true, "always")}>
-                Always allow
+                {t("chat.approval.alwaysAllow")}
               </Button>
             ) : null}
             <Button
@@ -313,16 +327,16 @@ function Pending({
                 setRejecting(true);
               }}
             >
-              Deny…
+              {t("chat.approval.denyMore")}
             </Button>
           </div>
           {/* The buttons first; what they allow, for whoever wants to read it, behind a disclosure. */}
           <details className="approval-explain">
-            <summary className="disclosure">What does this allow?</summary>
+            <summary className="disclosure">{t("chat.approval.group.whatAllows")}</summary>
             <Notice>
-              {session.allow} lets it use the {roundGroupName(group, round)} without asking again, {session.lasts}.
+              {t(session.explain, { group: roundGroupName(group, round) })}
               {((note) => (note === undefined ? "" : ` ${note}`))(toolGroupScopeNote(group))}
-              {scopes.includes("always") ? ` Always allow never asks again, in any chat — revoke it in Settings → Permissions.` : ""}
+              {scopes.includes("always") ? ` ${t("chat.approval.group.explainAlways")}` : ""}
             </Notice>
           </details>
         </>
@@ -338,7 +352,7 @@ function Pending({
             }}
             onClick={() => act(chosen())}
           >
-            {perCall ? "Allow selected; deny unchecked" : "Allow once"}
+            {perCall ? t("chat.approval.allowSelected") : t("chat.approval.allowOnce")}
           </Button>
           {perCall ? (
             <Button
@@ -348,25 +362,25 @@ function Pending({
               }}
               onClick={() => act(true)}
             >
-              Allow all
+              {t("chat.approval.allowAll")}
             </Button>
           ) : null}
           {scopes.includes("session") && saved.length > 0 ? (
             <Button
               disabled={!approvable}
-              title={`Runs without asking ${session.lasts}: ${saved.flatMap(ruleSubjects).join("; ")}`}
+              title={t(session.runsWithout, { rules: saved.flatMap(ruleSubjects).join("; ") })}
               onClick={() => act(chosen(), "session")}
             >
-              {session.allow}
+              {t(session.allow)}
             </Button>
           ) : null}
           {scopes.includes("always") && saved.length > 0 ? (
             <Button
               disabled={!approvable}
-              title={`Saves a workspace rule allowing exactly: ${saved.flatMap(ruleSubjects).join("; ")}`}
+              title={t("chat.approval.always.title", { rules: saved.flatMap(ruleSubjects).join("; ") })}
               onClick={() => act(chosen(), "always")}
             >
-              Always allow
+              {t("chat.approval.alwaysAllow")}
             </Button>
           ) : null}
           <Button
@@ -377,31 +391,31 @@ function Pending({
               setRejecting(true);
             }}
           >
-            Deny…
+            {t("chat.approval.denyMore")}
           </Button>
         </div>
       )}
       {!rejecting && group === undefined && scopes.includes("always") && saved.length > 0 ? (
         <Notice>
-          Always allow saves a workspace rule allowing exactly:{" "}
-          {saved
-            .flatMap((request) => ruleSubjects(request).map((subject, index) => ({ key: `${request.callId}:${index}`, subject })))
-            .map(({ key, subject }, index) => (
-              <Fragment key={key}>
-                {index === 0 ? "" : "; "}
-                <code>{subject}</code>
-              </Fragment>
-            ))}{" "}
-          — see Settings → Permissions to revoke it.
+          {withParts(t("chat.approval.always.notice"), {
+            rules: saved
+              .flatMap((request) => ruleSubjects(request).map((subject, index) => ({ key: `${request.callId}:${index}`, subject })))
+              .map(({ key, subject }, index) => (
+                <Fragment key={key}>
+                  {index === 0 ? "" : "; "}
+                  <code>{subject}</code>
+                </Fragment>
+              )),
+          })}
         </Notice>
       ) : null}
-      {!rejecting && perCall && rejected.length > 0 ? reasonField("Reason for denying the unchecked calls (the agent reads it)") : null}
+      {!rejecting && perCall && rejected.length > 0 ? reasonField(t("chat.approval.reason.unchecked")) : null}
       {armed?.signature === signature && ready ? (
         <InlineConfirm
           small={false}
           message={confirmCallsText(round.requests.some((request) => request.risk?.level === "critical"))}
-          confirmLabel="Confirm actions"
-          cancelLabel="Go back"
+          confirmLabel={t("chat.approval.confirm.button")}
+          cancelLabel={t("chat.approval.confirm.back")}
           onConfirmKeyDown={(event) => {
             if (event.key === "Enter") event.preventDefault();
           }}
@@ -412,7 +426,7 @@ function Pending({
           onCancel={() => setArmed(undefined)}
         />
       ) : null}
-      {!ready ? <Notice>{run.deciding === round.steps ? "Deciding…" : "Waiting for the rest of this round…"}</Notice> : null}
+      {!ready ? <Notice>{run.deciding === round.steps ? t("chat.approval.deciding") : t("chat.approval.waitingRound")}</Notice> : null}
     </>
   );
 }

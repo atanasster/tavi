@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
 import { setChatMemory } from "../chat-panel/api.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import { Icon } from "../../ui/Icon.js";
 import type { Outcome, SettingsClient } from "../../lib/ipc.js";
 import { Failure } from "../../ui/Parts.js";
@@ -20,16 +21,14 @@ import { Button } from "../../ui/Button.js";
 
 /** What the control says of a chat's memory. */
 export function memoryModeLabel(mode: ChatMemoryMode | undefined): string {
-  return mode === "private" ? "Private chat" : mode === "off" ? "Memory off" : "Memory on";
+  return translateNow(mode === "private" ? "chat.memoryMode.private" : mode === "off" ? "chat.memoryMode.off" : "chat.memoryMode.on");
 }
 
 /** The control's tooltip: what the mode means and what pressing it does. */
 function memoryModeTitle(mode: ChatMemoryMode | undefined): string {
-  if (mode === "private")
-    return "Private chat: memory is off for good, it is left out of past-chat search and Earlier chats, and its saved turns are forgotten about a day after its last.";
-  if (mode === "off")
-    return "Memory is off in this chat: nothing is recalled here, and nothing said here is remembered. Turn it back on from the next message.";
-  return "Memory is on in this chat. Turn it off: nothing recalled or remembered here until you turn it back on.";
+  if (mode === "private") return translateNow("chat.memoryMode.privateTitle");
+  if (mode === "off") return translateNow("chat.memoryMode.offTitle");
+  return translateNow("chat.memoryMode.onTitle");
 }
 
 /** A private chat's mark: never a toggle, its memory is off for good. Shown from before its first message. */
@@ -52,6 +51,7 @@ export function MemoryModeToggle({
   readonly mode: ChatMemoryMode | undefined;
   readonly save?: (client: SettingsClient, workspaceId: string, taskId: string, mode: "on" | "off") => Promise<Outcome<ChatContextAnswer>>;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   // What a press here answered, until the list reads the chat again.
   const [pressed, setPressed] = useState<{ readonly mode: ChatMemoryMode | undefined }>();
@@ -59,7 +59,6 @@ export function MemoryModeToggle({
   const [failure, setFailure] = useState<string>();
   useResetOnChange([mode, taskId], () => setPressed(undefined));
   const shown = pressed === undefined ? mode : pressed.mode;
-  const label = memoryModeLabel(shown);
   if (shown === "private") return <PrivateChatMark />;
   const off = shown === "off";
   const toggle = async (): Promise<void> => {
@@ -77,7 +76,7 @@ export function MemoryModeToggle({
         variant="ghost"
         size={["icon", "sm"]}
         className={`memory-mode${off ? " memory-mode-off" : " memory-mode-on"}`}
-        aria-label={`${label}: turn it ${off ? "on" : "off"} for this chat`}
+        aria-label={t(off ? "chat.memoryMode.turnOn" : "chat.memoryMode.turnOff")}
         title={memoryModeTitle(shown)}
         disabled={busy}
         onClick={() => void toggle()}

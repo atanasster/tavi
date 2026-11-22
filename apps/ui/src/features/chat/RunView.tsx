@@ -2,11 +2,11 @@ import { memo, type ReactNode, useId, useLayoutEffect, useMemo, useRef, useState
 
 import { turnEnded, type TranscriptEntry } from "@tavi/client/browser";
 import type { PlanItem } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
 import { useScrollIntoView } from "../../hooks/scroll.js";
 import { useAnnounce } from "../../hooks/use-announce.js";
+import { useT } from "../../lib/i18n.js";
 import { Icon } from "../../ui/Icon.js";
 import { Markdown } from "../../ui/Markdown.js";
 import { Modal } from "../../ui/Modal.js";
@@ -32,9 +32,11 @@ import {
   TRANSCRIPT_TAIL,
 } from "./store/runs.js";
 import type { CanvasRun, CanvasState, CanvasStore } from "./store/types.js";
+import { spoken } from "./store/said.js";
 import { Failure, Notice } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
 import { Command } from "../../ui/Command.js";
+import { withParts } from "../welcome/WelcomeStepParts.js";
 
 /**
  * Whether a run is a turn of a chat that never ends — the person's Home, or a
@@ -62,6 +64,7 @@ export function Prompt({
   readonly text: string;
   readonly fileNames?: readonly string[];
 }) {
+  const t = useT();
   const inlined = useMemo(() => inlinedFilesOf(text), [text]);
   const hasFiles = inlined.files.length > 0 || fileNames.length > 0;
   // A message of files alone says so to the owner; here its badges say it.
@@ -78,12 +81,12 @@ export function Prompt({
     <>
       {said === "" ? null : (
         <p className="prompt" id={id} ref={box} {...(scrolls ? { tabIndex: 0 } : {})}>
-          <span className="visually-hidden">you: </span>
+          <span className="visually-hidden">{t("chat.run.you")}</span>
           {said}
         </p>
       )}
       {hasFiles ? (
-        <ul className="prompt-files list-reset" aria-label="Attached files" {...(said === "" ? { id } : {})}>
+        <ul className="prompt-files list-reset" aria-label={t("chat.composer.attached")} {...(said === "" ? { id } : {})}>
           {fileNames.map((name, index) => (
             <li key={`upload-${index}`} className="prompt-file">
               <span className="prompt-file-name" title={name}>
@@ -94,7 +97,12 @@ export function Prompt({
           ))}
           {inlined.files.map((file, index) => (
             <li key={`inline-${index}`} className="prompt-file">
-              <Button variant="bare" className="prompt-file-name" title={`Show ${file.name}`} onClick={() => setViewing(index)}>
+              <Button
+                variant="bare"
+                className="prompt-file-name"
+                title={t("chat.run.showFile", { name: file.name })}
+                onClick={() => setViewing(index)}
+              >
                 <Icon name="paperclip" size="sm" />
                 <span className="truncate">{file.name}</span>
               </Button>
@@ -167,6 +175,7 @@ export const RunView = memo(function RunView({
   /** What the answer used from memory: a chip on the footer's line that opens to the records below it. */
   readonly memoryChip?: ReactNode;
 }) {
+  const t = useT();
   /** Where focus lands once the divider that held it is gone. */
   const shownHere = useRef<HTMLParagraphElement>(null);
   /** The pending round's card, brought into view whenever the ask changes. */
@@ -202,14 +211,15 @@ export const RunView = memo(function RunView({
     droppedFor !== undefined &&
     droppedFor.answers?.join(", ") !== dropped.label &&
     droppedFor.replyText !== dropped.label;
-  const droppedWhy = droppedFor?.outcome === "answered" || droppedFor?.outcome === "replied" ? "answered" : "closed";
-  useAnnounce(droppedShown ? `Your pick, ${dropped.label}, was not sent: the question was ${droppedWhy} before it went.` : undefined);
+  const droppedKey =
+    droppedFor?.outcome === "answered" || droppedFor?.outcome === "replied" ? "chat.run.dropped.answered" : "chat.run.dropped.closed";
+  useAnnounce(droppedShown ? t(droppedKey, { label: dropped.label }) : undefined);
   // Queued is said by the page's announcer; sending into the running turn is said here.
   useAnnounce(
     run.queued === true && run.steering !== undefined
       ? run.steering === "sending"
-        ? "Sending into this turn…"
-        : "Sent into this turn: shown there once the model reads it."
+        ? t("chat.run.steering.sending")
+        : t("chat.run.steering.sent")
       : undefined,
   );
   const promptId = useId();
@@ -220,13 +230,13 @@ export const RunView = memo(function RunView({
           begin is said without naming a task id. No prompt shown says only that: a worker's report wakes a turn nobody
           asked for, and a replay can't tell that from one whose prompt it lost. */}
       {earlierBegins ? (
-        <p className="continues meta-sm">Earlier in this chat{run.prompt === "" ? " (no prompt shown)" : ""}</p>
+        <p className="continues meta-sm">{t(run.prompt === "" ? "chat.run.earlierNoPrompt" : "chat.run.earlier")}</p>
       ) : run.restored === true && run.prompt === "" ? (
-        <p className="continues meta-sm">No prompt shown</p>
+        <p className="continues meta-sm">{t("chat.run.noPrompt")}</p>
       ) : null}
       {run.recordedPrompts?.length ? (
         <details>
-          <summary className="disclosure">Recorded prompts (replay may be partial)</summary>
+          <summary className="disclosure">{t("chat.run.recordedPrompts")}</summary>
           {run.recordedPrompts.map((prompt, index) => (
             <p key={index} data-turn={firstTurn + index}>
               {prompt}
@@ -257,7 +267,7 @@ export const RunView = memo(function RunView({
           Tavi
         </div>
       ) : null}
-      {truncated ? <Notice>Joined late: the start of this run is no longer held.</Notice> : null}
+      {truncated ? <Notice>{t("chat.run.joinedLate")}</Notice> : null}
       <Transcript
         entries={shown.head}
         receipts={run.run.settledWaits}
@@ -274,14 +284,14 @@ export const RunView = memo(function RunView({
               requestAnimationFrame(() => shownHere.current?.focus());
             }}
           >
-            Expand {plural(shown.hidden, "older entry", "older entries")}
+            {t("chat.run.expand", { count: shown.hidden })}
           </Button>
         </p>
       ) : run.expanded === true && transcript.length > TRANSCRIPT_HEAD + TRANSCRIPT_TAIL ? (
         // Focus moves here when the divider it replaces is activated, which
         // reads it: no live region of its own is needed.
         <p className="older" tabIndex={-1} ref={shownHere}>
-          Every earlier entry is shown. <Button onClick={() => onExpand(run.id, false)}>Collapse</Button>
+          {t("chat.run.allShown")} <Button onClick={() => onExpand(run.id, false)}>{t("chat.run.collapse")}</Button>
         </p>
       ) : null}
       <Transcript
@@ -296,11 +306,7 @@ export const RunView = memo(function RunView({
         <BrowserControlRow key={`${receipt.sessionId}@${receipt.at}`} receipt={receipt} />
       ))}
       {/* Said only when the answer recorded is not what was picked here. */}
-      {droppedShown ? (
-        <Notice>
-          Your pick, <strong>{dropped.label}</strong>, was not sent: the question was {droppedWhy} before it went.
-        </Notice>
-      ) : null}
+      {droppedShown ? <Notice>{withParts(t(droppedKey), { label: <strong>{dropped.label}</strong> })}</Notice> : null}
       {status === "running" && round === undefined && waiting === undefined && review === undefined ? (
         <Working plan={latestPlan(transcript) ?? (earlierPlan === undefined ? undefined : latestPlan(earlierPlan))} />
       ) : null}
@@ -316,7 +322,7 @@ export const RunView = memo(function RunView({
           <ConnectCard ask={{ kind: "wait", waitId: waiting.waitId, request: waiting.connect, deadlineAt: waiting.deadlineAt }} />
         </div>
       ) : waiting.question === undefined ? (
-        <Notice>Waiting on {waiting.on}.</Notice>
+        <Notice>{t("chat.run.waitingOn", { on: waiting.on })}</Notice>
       ) : (
         <div data-waiting="">
           <QuestionCard
@@ -327,8 +333,8 @@ export const RunView = memo(function RunView({
             answer={run.answer?.key === questionKey(waiting, run.questionId) ? run.answer : undefined}
             blocked={(() => {
               const reason = questionBlocker(run, connected, {
-                round: "Decide the approval above first.",
-                review: "Decide the review below first.",
+                round: t("chat.run.blocked.round"),
+                review: t("chat.run.blocked.review"),
               });
               return reason === undefined
                 ? undefined
@@ -352,30 +358,21 @@ export const RunView = memo(function RunView({
       {outcome?.kind === "failed" && isCancelled(run.run) ? (
         <Notice>{cancelledWords(outcome.message)}</Notice>
       ) : outcome?.kind === "failed" ? (
-        <Failure alert={false}>
-          Failed ({outcome.errorCode}): {outcome.message}
-        </Failure>
+        <Failure alert={false}>{t("chat.run.failed", { code: outcome.errorCode, message: outcome.message })}</Failure>
       ) : outcome?.kind === "stopped" ? (
         <Notice>{outcome.message}</Notice>
       ) : null}
       {run.queued === true ? (
         run.steering !== undefined ? (
-          <Notice className="queued">
-            {run.steering === "sending" ? "Sending into this turn…" : "Sent into this turn: shown there once the model reads it."}
-          </Notice>
+          <Notice className="queued">{run.steering === "sending" ? t("chat.run.steering.sending") : t("chat.run.steering.sent")}</Notice>
         ) : (
           <Notice className="queued">
-            {waitsOnDecision ? "Queued: sends after you decide the approval above." : "Queued: sends after this turn."}
+            {waitsOnDecision ? t("chat.run.queued.decision") : t("chat.run.queued.turn")}
             {onSteerQueued === undefined ? null : (
               <>
                 {" "}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  title="Send it into the running turn: the model reads it before its next step"
-                  onClick={() => onSteerQueued(run.id)}
-                >
-                  Send now
+                <Button variant="ghost" size="sm" title={t("chat.run.sendNowTip")} onClick={() => onSteerQueued(run.id)}>
+                  {t("chat.run.sendNow")}
                 </Button>
               </>
             )}
@@ -383,19 +380,17 @@ export const RunView = memo(function RunView({
               <>
                 {" "}
                 <Button variant="ghost" size="sm" onClick={() => onCancelQueued(run.id)}>
-                  Cancel
+                  {t("chat.run.cancel")}
                 </Button>
               </>
             )}
           </Notice>
         )
       ) : null}
-      {run.remark !== undefined ? <Notice>{run.remark}</Notice> : null}
-      {run.notice !== undefined ? <Notice>{run.notice}</Notice> : null}
+      {run.remark !== undefined ? <Notice>{run.remark.map((line) => spoken(line, t)).join(" ")}</Notice> : null}
+      {run.notice !== undefined ? <Notice>{spoken(run.notice, t)}</Notice> : null}
       {status === "unknown" && run.notice === undefined && run.error === undefined ? (
-        <Notice>
-          Where this chat stands is unknown here: <Command>tavi tasks</Command> shows it.
-        </Notice>
+        <Notice>{withParts(t("chat.run.unknown"), { command: <Command>tavi tasks</Command> })}</Notice>
       ) : null}
       {outcome?.kind === "completed" && transcript.length === 0 ? (
         outcome.finalText ? (
@@ -403,12 +398,12 @@ export const RunView = memo(function RunView({
             <Markdown text={outcome.finalText} tainted={run.run.tainted} knownUrls={run.run.knownUrls} />
           </div>
         ) : (
-          <p className="text">No recorded output is available for this chat.</p>
+          <p className="text">{t("chat.run.noOutput")}</p>
         )
       ) : null}
-      {run.error !== undefined ? <Failure alert={false}>{run.error}</Failure> : null}
+      {run.error !== undefined ? <Failure alert={false}>{spoken(run.error, t)}</Failure> : null}
       {/* Stop lives on the composer; the card only says when one is already on its way. */}
-      {run.aborting ? <Notice>Stopping…</Notice> : null}
+      {run.aborting ? <Notice>{t("chat.run.stopping")}</Notice> : null}
       {response || memoryChip ? <ReplyFooter run={run} response={response} memoryChip={memoryChip} /> : null}
     </article>
   );
@@ -420,6 +415,7 @@ export const RunView = memo(function RunView({
  * page's own announcer already says "Responding.".
  */
 function Working({ plan }: { readonly plan: readonly PlanItem[] | undefined }) {
+  const t = useT();
   const at = plan === undefined ? undefined : planStep(plan);
   return (
     <p className="run-working meta-sm">
@@ -428,13 +424,8 @@ function Working({ plan }: { readonly plan: readonly PlanItem[] | undefined }) {
         <span />
         <span />
       </span>
-      Working…
-      {at === undefined ? null : (
-        <span className="truncate">
-          {" "}
-          step {at.step} of {at.of}: {at.content}
-        </span>
-      )}
+      {t("chat.run.working")}
+      {at === undefined ? null : <span className="truncate"> {t("chat.run.step", { step: at.step, of: at.of, content: at.content })}</span>}
     </p>
   );
 }
@@ -453,8 +444,9 @@ function ReplyFooter({
   readonly response: string;
   readonly memoryChip: ReactNode;
 }) {
+  const t = useT();
   const facts = replyFacts(run);
-  const said = [facts.time, facts.model, facts.tools === undefined ? undefined : plural(facts.tools, "tool call")].filter(
+  const said = [facts.time, facts.model, facts.tools === undefined ? undefined : t("chat.run.toolCalls", { count: facts.tools })].filter(
     (fact): fact is string => fact !== undefined,
   );
   return (

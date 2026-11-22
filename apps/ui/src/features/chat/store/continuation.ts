@@ -5,6 +5,7 @@ import { loadTaskRecord } from "../tasks-api.js";
 import type { StoreContext } from "./context.js";
 import { RECORD_READ } from "./record.js";
 import { without } from "./runs.js";
+import { said, type Said } from "./said.js";
 
 /** How long a continuation's recorded prompt may go without its turn speaking before the task's record is read. */
 const CONTINUE_SETTLE_MS = 5_000;
@@ -57,18 +58,18 @@ export function installContinuation(ctx: StoreContext): void {
     ctx.publish({ ...ctx.state, runs: ctx.state.runs.filter((run) => run.id !== id) });
   };
   /** A task that will take no further turn: what was queued behind it is not sent. */
-  const dropQueued = (taskId: string, error: string): void => {
+  const dropQueued = (taskId: string, error: Said): void => {
     for (const id of queuedPrompts.get(taskId) ?? []) ctx.update(id, (run) => ({ ...without(run, "queued"), error }));
     queuedPrompts.delete(taskId);
   };
   const continueTask = (id: string, taskId: string, prompt: string, conversationId: string | undefined): void => {
     if (ctx.disposed) return;
     /** Not continued: said, and the task stays the one the next prompt continues. */
-    const stop = (error: string): void => {
+    const stop = (error: Said): void => {
       ctx.unfollow(id);
       ctx.failed(id, error);
       // What was queued after it waits on a turn that did not happen: not sent either, so the order holds.
-      dropQueued(taskId, "The prompt before this one was not sent, so this one was not either.");
+      dropQueued(taskId, said("chat.store.priorNotSent"));
       ctx.settles(id, taskId);
     };
     /**
@@ -76,9 +77,9 @@ export function installContinuation(ctx: StoreContext): void {
      * in the box, said in plain words, and the chat stays as it was — not
      * failed, since nothing of it ran — the one the next prompt continues.
      */
-    const notSent = (why: string): void => {
+    const notSent = (why: Said): void => {
       ctx.unfollow(id);
-      dropQueued(taskId, "The prompt before this one was not sent, so this one was not either.");
+      dropQueued(taskId, said("chat.store.priorNotSent"));
       const files = attachmentsOf.get(id) !== undefined;
       attachmentsOf.delete(id);
       const wasLast = ctx.state.runs.at(-1)?.id === id;
@@ -89,15 +90,15 @@ export function installContinuation(ctx: StoreContext): void {
         unsent: {
           key: id,
           text: prompt,
-          message: `Not sent: ${why}. Your message is back in the box${files ? " (attach its files again)" : ""}: send it again.`,
+          message: said(files ? "chat.store.notSentFiles" : "chat.store.notSent", { why }),
         },
       });
     };
     /** Why the owner did not take a message, in words for the reader: a timeout names no protocol command. */
     const why = (
       failure: { readonly code?: string | undefined; readonly message?: string | undefined } | undefined,
-      fallback: string,
-    ): string => (failure?.code === CLIENT_TIMEOUT ? "the owner did not answer in time" : (failure?.message ?? fallback));
+      fallback: Said,
+    ): Said => (failure?.code === CLIENT_TIMEOUT ? said("chat.store.why.timeout") : (failure?.message ?? fallback));
     // From where the chat's last followed turn stopped: a plugin's line cleared between the turns, say on its disable, is seen.
     const before = [...ctx.state.runs]
       .reverse()
@@ -115,7 +116,7 @@ export function installContinuation(ctx: StoreContext): void {
         return;
       }
       if (!opened.response.ok) {
-        notSent(why(opened.response.error, "the owner refused to follow the chat"));
+        notSent(why(opened.response.error, said("chat.store.why.follow")));
         return;
       }
       if (opened.subscription !== undefined) streams.set(id, opened.subscription);
@@ -136,7 +137,7 @@ export function installContinuation(ctx: StoreContext): void {
           return false;
         }
         if (!again.response.ok) {
-          notSent(why(again.response.error, "the owner refused to follow the chat"));
+          notSent(why(again.response.error, said("chat.store.why.follow")));
           return false;
         }
         if (again.subscription !== undefined) streams.set(id, again.subscription);
@@ -147,7 +148,7 @@ export function installContinuation(ctx: StoreContext): void {
       const read = await loadTaskRecord(client, taskId, RECORD_READ);
       if (ctx.disposed) return;
       if (!read.ok) {
-        notSent(why(read, "the chat's record could not be read"));
+        notSent(why(read, said("chat.store.why.record")));
         return;
       }
       if (!(await fromNowIfForeign())) return;
@@ -183,14 +184,14 @@ export function installContinuation(ctx: StoreContext): void {
         if (!reply.ok)
           ctx.update(id, (run) => ({
             ...run,
-            notice: "The owner did not answer: the prompt may have been recorded. Still following the chat.",
+            notice: said("chat.store.mayBeRecorded"),
           }));
         if (turnPending.has(id)) watch(id);
         return;
       }
       // A conversation the owner no longer has is forgotten: the next send names the task.
       if (reply.error?.code === "NOT_FOUND") conversations.delete(taskId);
-      notSent(why(reply.error, reply.error?.code ?? "the owner refused it"));
+      notSent(why(reply.error, reply.error?.code ?? said("chat.store.why.refused")));
       // Refused, perhaps for what that other turn left (a round to decide): the page draws it, so it can be decided here.
       if (foreign && before !== undefined && reply.error?.code !== "NOT_FOUND") ctx.catchUp(taskId, { from: before });
     })().catch((error: unknown) => stop(errorMessage(error)));
@@ -216,7 +217,7 @@ export function installContinuation(ctx: StoreContext): void {
       void loadTaskRecord(client, taskId, RECORD_READ).then((answer) => {
         if (ctx.disposed || !turnPending.has(id) || watches.get(id) !== watched) return;
         if (!answer.ok) {
-          ctx.update(id, (run) => ({ ...run, notice: `Could not read task ${taskId}'s record (${answer.message}); trying again.` }));
+          ctx.update(id, (run) => ({ ...run, notice: said("chat.store.recordRetry", { taskId, message: answer.message }) }));
           watch(id);
           return;
         }
@@ -235,7 +236,7 @@ export function installContinuation(ctx: StoreContext): void {
         gaveUp.add(id);
         ctx.update(id, (run) => ({
           ...without(run, "notice"),
-          error: `The prompt was recorded (message ${id}), but task ${taskId} has not started its turn. It shows here if it does.`,
+          error: said("chat.store.notStarted", { id, taskId }),
         }));
         ctx.settles(id, taskId);
       });

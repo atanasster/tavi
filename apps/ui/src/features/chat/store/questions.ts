@@ -1,3 +1,4 @@
+import { translateNow } from "../../../lib/i18n.js";
 import { CLIENT_TIMEOUT, type ClientResponse } from "@tavi/client/browser";
 import { IPC_MAX_PROMPT_CHARS } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
@@ -66,7 +67,11 @@ export function installQuestions(ctx: StoreContext): void {
       try {
         const { response, retried } = await ctx.sendOnceMore(send);
         if (ctx.disposed) return;
-        const { status, message } = answerStatus(response, retried && conversationId === undefined, "The reply was refused");
+        const { status, message } = answerStatus(
+          response,
+          retried && conversationId === undefined,
+          translateNow("chat.store.replyRefused"),
+        );
         finish(status, message);
       } catch (error) {
         finish("uncertain", errorMessage(error));

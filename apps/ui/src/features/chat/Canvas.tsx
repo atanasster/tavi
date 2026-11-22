@@ -5,6 +5,7 @@ import type { ChatNotice } from "@tavi/contracts";
 import { clip } from "@tavi/contracts/util";
 
 import { useAutoscroll } from "../../hooks/scroll.js";
+import { useT } from "../../lib/i18n.js";
 import { greeting } from "../../lib/time.js";
 import { Empty } from "../../ui/Empty.js";
 import { StatusNote } from "../../ui/Parts.js";
@@ -20,6 +21,7 @@ import { latestPlan } from "./plan.js";
 import { lastingChatOf, RunView } from "./RunView.js";
 import { abortableRun, chatPluginStatus } from "./store/runs.js";
 import type { CanvasRun, CanvasState, CanvasStore, WorkerNeeds } from "./store/types.js";
+import { spoken } from "./store/said.js";
 import { Button } from "../../ui/Button.js";
 
 export interface CanvasProps {
@@ -151,10 +153,10 @@ function queuedBehind(taskId: string | undefined, runs: readonly CanvasRun[]): "
   return browser ? "browser" : "turn";
 }
 const QUEUE_PLACEHOLDERS = {
-  approval: "Queue a message for after the approval…",
-  review: "Queue a message for after the review…",
-  browser: "Queue a message for after you finish in the browser…",
-  turn: "Queue a message for after this turn…",
+  approval: "chat.composer.queue.approval",
+  review: "chat.composer.queue.review",
+  browser: "chat.composer.queue.browser",
+  turn: "chat.composer.queue.turn",
 } as const;
 /** The turn sent from this page and still going: a turn read back has its message from the record, and a settled one is old news. */
 function sentTurn(runs: readonly CanvasRun[]): string | undefined {
@@ -256,6 +258,7 @@ export function Canvas({
   onComposerCleared,
   ideaChips,
 }: CanvasProps) {
+  const t = useT();
   /** The workspace's zone, the one a question's deadline and receipt are said in. */
   const timeZone = useTimeZone();
   /** The chat shown, when older turns of its saved history are still to be read. */
@@ -334,13 +337,13 @@ export function Canvas({
   const fillComposer = useCallback((text: string) => setSeed((before) => ({ text, key: (before?.key ?? 0) + 1, placeholder: true })), []);
   const rewindRun = useCallback(
     async (id: string): Promise<string | undefined> => {
-      if (onRewind === undefined) return "Rewind is unavailable here.";
+      if (onRewind === undefined) return t("chat.rewind.unavailable");
       const taken = await onRewind(id);
       if (!taken.ok) return taken.message;
       setSeed((before) => ({ text: taken.prompt, key: (before?.key ?? 0) + 1 }));
       return undefined;
     },
-    [onRewind],
+    [onRewind, t],
   );
   // Rewind is offered only while the chat is still: no turn running, waiting or queued behind.
   const still = useMemo(() => runs !== undefined && !runs.some((run) => run.queued === true || !turnEnded(run.run.status)), [runs]);
@@ -359,21 +362,21 @@ export function Canvas({
   const replying = next.kind === "new" ? state.replyingTo : undefined;
   const placeholder =
     next.kind === "answer"
-      ? "Answer the question above…"
+      ? t("chat.composer.placeholder.answer")
       : replying !== undefined
-        ? `Reply to “${clip(replying.title, 40)}” in a side chat…`
+        ? t("chat.composer.placeholder.reply", { title: clip(replying.title, 40) })
         : next.kind === "queue"
-          ? QUEUE_PLACEHOLDERS[queueBehind]
+          ? t(QUEUE_PLACEHOLDERS[queueBehind])
           : toHome || (target !== undefined && target === state.home)
-            ? "Message Home…"
+            ? t("chat.composer.placeholder.home")
             : next.kind === "continue"
               ? // The chat's title is in the header just above: the box says only what typing does.
-                "Continue this chat…"
+                t("chat.composer.placeholder.continue")
               : state.privateDraft === true
-                ? "Start a private chat: memory off, forgotten a day after its last message…"
+                ? t("chat.composer.placeholder.private")
                 : next.kind === "new" && next.side === true
-                  ? "Start a side chat…"
-                  : "Start a new chat…";
+                  ? t("chat.composer.placeholder.side")
+                  : t("chat.composer.placeholder.new");
   /** A private chat not started yet: no session, and the next message begins one with memory off for good. */
   const privateNew = session === undefined && !toHome && state.privateDraft === true;
   const pluginNotice = session?.runs.at(-1)?.run.pluginNotices.at(-1);
@@ -416,7 +419,7 @@ export function Canvas({
       ) : privateNew ? (
         // A new private chat says so before its first message, as its header will after.
         <header className="task-header">
-          <h1 className="truncate">New private chat</h1>
+          <h1 className="truncate">{t("chat.header.newPrivate")}</h1>
           <span className="task-tools">
             <PrivateChatMark />
             {folderChip}
@@ -425,7 +428,7 @@ export function Canvas({
       ) : (
         <>
           {/* No chat yet: the page still has its one top heading, for a reader moving by headings. */}
-          <h1 className="visually-hidden">{toHome ? "Home" : "New chat"}</h1>
+          <h1 className="visually-hidden">{toHome ? t("chat.header.home") : t("chat.header.new")}</h1>
           {/* The folders the first message starts the chat with. */}
           {folderChip === undefined ? null : <div className="task-header">{folderChip}</div>}
         </>
@@ -436,20 +439,14 @@ export function Canvas({
         {session === undefined ? (
           <div className="chat-greeting">
             <p className="chat-greeting-title">{greeting(timeZone)}</p>
-            <Empty>
-              {toHome
-                ? "Ask Tavi something: it goes to your Home."
-                : privateNew
-                  ? "A private chat: nothing in it is remembered, it is left out of past-chat search, and it is forgotten a day after its last message."
-                  : "Ask Tavi something to start a chat."}
-            </Empty>
+            <Empty>{toHome ? t("chat.empty.home") : privateNew ? t("chat.empty.private") : t("chat.empty.new")}</Empty>
           </div>
         ) : null}
         {session === undefined ? ideaChips?.(fillComposer, !composerEmpty) : null}
         {earlierTask !== undefined && onLoadEarlier !== undefined ? (
           <p className="earlier">
             <Button variant="ghost" size="sm" onClick={() => onLoadEarlier(earlierTask)}>
-              Load earlier turns
+              {t("chat.loadEarlier")}
             </Button>
           </p>
         ) : null}
@@ -489,7 +486,7 @@ export function Canvas({
         {content === undefined && session !== undefined ? placedAt(session.runs.length) : null}
         {/* What plugins suggest next, from the chat's latest turn: a press sends it as a prompt, even one that reads as a slash command. */}
         {content === undefined && suggestions.length > 0 ? (
-          <p className="suggestions" role="group" aria-label="Suggested next">
+          <p className="suggestions" role="group" aria-label={t("chat.suggestions")}>
             {suggestions.map((suggestion, index) => (
               <Button
                 variant="ghost"
@@ -525,20 +522,20 @@ export function Canvas({
                 if (event.detail === 0) scroller.current?.parentElement?.querySelector<HTMLElement>(".composer-box textarea")?.focus();
               }}
             >
-              Jump to latest
+              {t("chat.jumpLatest")}
             </Button>
           </p>
         ) : null}
       </div>
       <StatusNote note={modelNotice} className="notice model-notice" />
-      <StatusNote note={state.unsent?.message} className="failure unsent-note" />
+      <StatusNote note={state.unsent === undefined ? undefined : spoken(state.unsent.message, t)} className="failure unsent-note" />
       {/* A plugin's slash command answered: its text, for the person, never the model. */}
       <StatusNote
-        note={state.commandAnswer === undefined ? undefined : `/${state.commandAnswer.name}: ${state.commandAnswer.text}`}
+        note={state.commandAnswer === undefined ? undefined : `/${state.commandAnswer.name}: ${spoken(state.commandAnswer.text, t)}`}
         className={state.commandAnswer?.failed === true ? "failure command-answer" : "notice command-answer"}
       />
       {closed ? (
-        <p className="notice">This chat was cancelled, so it takes no more messages.</p>
+        <p className="notice">{t("chat.closed")}</p>
       ) : (
         <Composer
           modelTarget={modelTarget}

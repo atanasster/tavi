@@ -1,11 +1,12 @@
+import { translateNow } from "../../../lib/i18n.js";
 import { initialRunState } from "@tavi/client/browser";
 import { parsePluginCommandLine, type RunPayload } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
-import { refusal } from "../../../lib/ipc.js";
 import { loadTranscriptPage, rewindChat } from "../tasks-api.js";
 import type { StoreContext } from "./context.js";
 import { BUSY_STATUSES, without } from "./runs.js";
+import { refusedAs, said } from "./said.js";
 import type { CanvasStore, SubmitExtra } from "./types.js";
 
 /** Sending, queuing, steering and rewinding prompts, and starting new chats. */
@@ -60,7 +61,7 @@ export function installPrompts(ctx: StoreContext): void {
             ...ctx.state,
             commandAnswer:
               text === undefined
-                ? { name: command.name, text: refusal(answer, "the owner refused it"), failed: true }
+                ? { name: command.name, text: refusedAs(answer, said("chat.store.why.refused")), failed: true }
                 : { name: command.name, text },
           });
         })
@@ -239,10 +240,15 @@ export function installPrompts(ctx: StoreContext): void {
       // Not sent into the turn: it stays queued, for after it.
       ctx.update(id, (run) => ({
         ...without(run, "steering"),
-        error: `Not sent into the turn: ${reply.error?.message ?? reply.error?.code ?? "the owner refused it"}. It stays queued.`,
+        error: said("chat.store.steerFailed", {
+          why: reply.error?.message ?? reply.error?.code ?? said("chat.store.why.refused"),
+        }),
       }));
     })().catch((error: unknown) =>
-      ctx.update(id, (run) => ({ ...without(run, "steering"), error: `Not sent into the turn: ${errorMessage(error)}. It stays queued.` })),
+      ctx.update(id, (run) => ({
+        ...without(run, "steering"),
+        error: said("chat.store.steerFailed", { why: errorMessage(error) }),
+      })),
     );
   };
   const rewind: CanvasStore["rewind"] = async (id) => {
@@ -256,10 +262,10 @@ export function installPrompts(ctx: StoreContext): void {
       target.merged === true ||
       target.recordedPrompts !== undefined
     )
-      return { ok: false, message: "This message cannot be rewound." };
+      return { ok: false, message: translateNow("chat.rewind.cannot") };
     const ofTask = ctx.state.runs.filter((run) => (run.run.taskId ?? run.continues) === taskId);
     if (ofTask.some((run) => run.queued === true || BUSY_STATUSES.has(run.run.status) || run.run.status === "waiting"))
-      return { ok: false, message: "Wait for the chat's turn to end (or stop it), then rewind." };
+      return { ok: false, message: translateNow("chat.rewind.wait") };
     const from = ofTask.indexOf(target);
     // A turn sent from this page has no saved number yet: it is the one as many saved turns back as the page shows from it.
     let seq = target.seq;
@@ -268,11 +274,10 @@ export function installPrompts(ctx: StoreContext): void {
       if (!page.ok) return { ok: false, message: page.message };
       // An entry holding several recorded turns counts as one here: the count would land on the wrong turn.
       if (ofTask.slice(from).some((run) => run.merged === true || run.recordedPrompts !== undefined))
-        return { ok: false, message: "Reload the chat to rewind to this message." };
+        return { ok: false, message: translateNow("chat.rewind.reload") };
       const back = ofTask.slice(from).filter((run) => run.prompt !== "").length;
       seq = page.value.entries.filter((saved) => (saved.turn.prompt ?? "") !== "").at(-back)?.seq;
-      if (seq === undefined)
-        return { ok: false, message: "This message is not in the chat's saved history: reload the chat and rewind again." };
+      if (seq === undefined) return { ok: false, message: translateNow("chat.rewind.notSaved") };
     }
     const answer = await rewindChat(client, options.workspaceId, taskId, seq, target.prompt);
     if (!answer.ok) return { ok: false, message: answer.message };

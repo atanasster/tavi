@@ -1,9 +1,8 @@
 import { type ArtifactListRow, ArtifactsResultSchema, type ReviewResult } from "@tavi/contracts";
-import { errorMessage } from "@tavi/contracts/util";
 
-import { refusal } from "../../../lib/ipc.js";
 import type { StoreContext } from "./context.js";
 import { without } from "./runs.js";
+import { refusedAs, said, SaidError, saidOf } from "./said.js";
 import type { CanvasStore } from "./types.js";
 
 /** An artifact review's metadata and decisions. */
@@ -26,7 +25,8 @@ export function installArtifacts(ctx: StoreContext): void {
           limit: 100,
         });
         if (ctx.disposed || ctx.find(id)?.run.review !== review || artifactLoads.get(id) !== generation) return;
-        if (!answer.ok) throw new Error(`${refusal(answer, "Artifact metadata unavailable")}. Restart the owner if it predates this page.`);
+        if (!answer.ok)
+          throw new SaidError(said("chat.files.restartHint", { message: refusedAs(answer, said("chat.store.metaUnavailable")) }));
         const page = ArtifactsResultSchema.parse(answer.result);
         rows.push(
           ...page.rows.filter(
@@ -37,7 +37,7 @@ export function installArtifacts(ctx: StoreContext): void {
       ctx.update(id, (entry) => ({ ...without(entry, "reviewError"), artifacts: rows }));
     } catch (error) {
       if (!ctx.disposed && ctx.find(id)?.run.review === review && artifactLoads.get(id) === generation)
-        ctx.update(id, (entry) => ({ ...entry, reviewError: errorMessage(error) }));
+        ctx.update(id, (entry) => ({ ...entry, reviewError: saidOf(error) }));
     }
   };
   const reviewArtifacts: CanvasStore["reviewArtifacts"] = (id, decisions) => {
@@ -76,7 +76,7 @@ export function installArtifacts(ctx: StoreContext): void {
       .then((answer) => {
         if (ctx.disposed || ctx.find(id)?.run.review !== review) return;
         if (!answer.ok)
-          throw new Error(`${refusal(answer, "Review refused")}. Refresh metadata before retrying if the decision may have been recorded.`);
+          throw new SaidError(said("chat.store.reviewRefused", { message: refusedAs(answer, said("chat.store.reviewRefusedFallback")) }));
         const result = answer.result as ReviewResult;
         ctx.update(id, (entry) => ({
           ...entry,
@@ -90,7 +90,7 @@ export function installArtifacts(ctx: StoreContext): void {
       })
       .catch((error: unknown) => {
         if (!ctx.disposed && ctx.find(id)?.run.review === review)
-          ctx.update(id, (entry) => ({ ...entry, reviewBusy: false, reviewError: errorMessage(error) }));
+          ctx.update(id, (entry) => ({ ...entry, reviewBusy: false, reviewError: saidOf(error) }));
       });
   };
   Object.assign(ctx, { loadArtifacts, reviewArtifacts } satisfies Partial<StoreContext>);

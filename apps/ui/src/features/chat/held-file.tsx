@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import type { ArtifactListRow } from "@tavi/contracts";
 import { useNearViewport } from "../../hooks/use-near-viewport.js";
 import { formatBytes } from "../../lib/format.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import { readThumbnail } from "../center/browser-api.js";
 import { useWorkspace } from "../shell/Workspace.js";
 
@@ -14,32 +16,40 @@ export function showsImage(row: ArtifactListRow): boolean {
   return row.reviewState === "approved" && SHOWN_IMAGE.test(row.contentType) && row.byteSize <= SHOWN_IMAGE_MAX_BYTES;
 }
 
-const KINDS: Readonly<Record<string, string>> = {
-  "image/jpeg": "JPEG image",
-  "image/png": "PNG image",
-  "image/webp": "WebP image",
-  "image/gif": "GIF image",
-  "application/pdf": "PDF",
-  "text/plain": "Text file",
-  "text/markdown": "Markdown file",
-  "text/csv": "CSV file",
-  "application/json": "JSON file",
+/** The types a file is named by in words, and the tag on its tile. */
+const KINDS: Readonly<Record<string, { readonly key: UiKey; readonly tag: string }>> = {
+  "image/jpeg": { key: "chat.fileKind.jpeg", tag: "JPG" },
+  "image/png": { key: "chat.fileKind.png", tag: "PNG" },
+  "image/webp": { key: "chat.fileKind.webp", tag: "WEBP" },
+  "image/gif": { key: "chat.fileKind.gif", tag: "GIF" },
+  "application/pdf": { key: "chat.fileKind.pdf", tag: "PDF" },
+  "text/plain": { key: "chat.fileKind.text", tag: "TXT" },
+  "text/markdown": { key: "chat.fileKind.markdown", tag: "MD" },
+  "text/csv": { key: "chat.fileKind.csv", tag: "CSV" },
+  "application/json": { key: "chat.fileKind.json", tag: "JSON" },
 };
+
+/** A content type's own part, and its subtype as a tag would read it: "zip", "ms-excel"; "" when it names nothing. */
+function typeParts(contentType: string): { readonly type: string; readonly subtype: string } {
+  const type = contentType.split(";")[0]?.trim().toLowerCase() ?? "";
+  const subtype = type.split("/")[1]?.replace(/^(x-|vnd\.)/, "") ?? "";
+  return { type, subtype: subtype === "octet-stream" ? "" : subtype };
+}
 
 /** What a file is, in words: "JPEG image", "PDF", "ZIP file". */
 export function fileKind(contentType: string): string {
-  const type = contentType.split(";")[0]?.trim().toLowerCase() ?? "";
+  const { type, subtype } = typeParts(contentType);
   const known = KINDS[type];
-  if (known !== undefined) return known;
-  const subtype = type.split("/")[1]?.replace(/^(x-|vnd\.)/, "") ?? "";
-  return subtype === "" || subtype === "octet-stream" ? "File" : `${subtype.toUpperCase()} file`;
+  if (known !== undefined) return translateNow(known.key);
+  return subtype === "" ? translateNow("chat.fileKind.file") : translateNow("chat.fileKind.other", { type: subtype.toUpperCase() });
 }
 
 /** The short tag on a file's tile: "JPG", "PDF", "TXT". */
 export function fileTag(contentType: string): string {
-  const kind = fileKind(contentType);
-  if (kind === "File") return "FILE";
-  return (kind.split(" ")[0] ?? "FILE").replace("JPEG", "JPG").replace("Text", "TXT").replace("Markdown", "MD").slice(0, 4).toUpperCase();
+  const { type, subtype } = typeParts(contentType);
+  const known = KINDS[type];
+  if (known !== undefined) return known.tag;
+  return subtype === "" ? "FILE" : subtype.slice(0, 4).toUpperCase();
 }
 
 /** A file's name as a person calls it: its own, else what it is. */
@@ -52,16 +62,17 @@ export function fileFacts(row: ArtifactListRow): string {
   return `${formatBytes(row.byteSize)} · ${fileKind(row.contentType)}`;
 }
 
-const REVIEW: Readonly<Record<ArtifactListRow["reviewState"], { readonly label: string; readonly tone: string }>> = {
-  approved: { label: "Approved", tone: "badge-ok" },
-  pending: { label: "Waiting for review", tone: "badge-warning" },
-  rejected: { label: "Rejected", tone: "badge-bad" },
+const REVIEW: Readonly<Record<ArtifactListRow["reviewState"], { readonly label: UiKey; readonly tone: string }>> = {
+  approved: { label: "chat.fileReview.approved", tone: "badge-ok" },
+  pending: { label: "chat.fileReview.pending", tone: "badge-warning" },
+  rejected: { label: "chat.fileReview.rejected", tone: "badge-bad" },
 };
 
 /** The file's review state as a badge. */
 export function ReviewBadge({ state }: { readonly state: ArtifactListRow["reviewState"] }) {
+  const t = useT();
   const review = REVIEW[state];
-  return <span className={`badge ${review.tone}`}>{review.label}</span>;
+  return <span className={`badge ${review.tone}`}>{t(review.label)}</span>;
 }
 
 const images = new Map<string, Promise<string | undefined>>();

@@ -11,6 +11,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 
 import { loadTaskLabel } from "./tasks-api.js";
 import { Button } from "../../ui/Button.js";
+import { useT } from "../../lib/i18n.js";
 import { Icon } from "../../ui/Icon.js";
 import { Popover } from "../../ui/Popover.js";
 import { useWorkspace } from "../shell/Workspace.js";
@@ -84,6 +85,7 @@ export function TaintChipView({
   readonly onClose: () => void;
   readonly onFreshChat?: (() => void) | undefined;
 }) {
+  const t = useT();
   const text = taintChipText(label);
   const chips = provenanceChips(label);
   return (
@@ -96,8 +98,8 @@ export function TaintChipView({
         ref={chip}
         aria-expanded={open}
         aria-haspopup="dialog"
-        aria-label={`Untrusted content: ${text}`}
-        title={`${text}: this chat read content Tavi does not trust`}
+        aria-label={t("chat.taint.label", { text })}
+        title={t("chat.taint.title", { text })}
         onClick={onToggle}
       >
         <Icon name="shield-alert" size="sm" />
@@ -105,7 +107,7 @@ export function TaintChipView({
       {open ? (
         <Popover
           className={chip === undefined ? "taint-panel" : "taint-panel taint-panel-anchored"}
-          label="What this chat read"
+          label={t("chat.provenance.sources")}
           // By its chip, its right edge on the chip's and kept inside the window: the chip sits near the header's end.
           {...(chip === undefined ? {} : { anchor: chip, anchoring: { placement: "bottom", align: "end" } as const })}
           onClose={() => onClose()}
@@ -143,7 +145,7 @@ export function TaintChipView({
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={onClose}>
-              Close
+              {t("chat.taint.close")}
             </Button>
           </div>
         </Popover>

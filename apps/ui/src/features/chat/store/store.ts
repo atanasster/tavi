@@ -1,7 +1,6 @@
 import type { PluginCommandView } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
-import { refusal } from "../../../lib/ipc.js";
 import { approvePayload } from "../tasks-api.js";
 import { installArtifacts } from "./artifacts.js";
 import { createStoreContext } from "./context.js";
@@ -15,6 +14,7 @@ import { installRecord } from "./record.js";
 import { installReplay } from "./replay.js";
 import { installRouting } from "./routing.js";
 import { decidableRound, without } from "./runs.js";
+import { refusedAs, said } from "./said.js";
 import { installSessions } from "./sessions.js";
 import { installStream } from "./stream.js";
 import type { CanvasClient, CanvasOptions, CanvasStore } from "./types.js";
@@ -145,7 +145,7 @@ export function createCanvasStore(client: CanvasClient, options: CanvasOptions):
         )
         .then((response) => {
           // Settled by the stream's `approval.settled`, not by this answer.
-          if (!response.ok) ctx.failed(id, refusal(response, "the decision was refused"));
+          if (!response.ok) ctx.failed(id, refusedAs(response, said("chat.store.decisionRefused")));
         })
         .catch((error: unknown) => ctx.failed(id, errorMessage(error)));
     },
@@ -180,7 +180,7 @@ export function createCanvasStore(client: CanvasClient, options: CanvasOptions):
           if (response.ok) return;
           // Nothing running is no failure: the turn had already ended.
           if (response.error?.code === "NOT_RUNNING") ctx.update(id, (run) => ({ ...run, aborting: false }));
-          else ctx.failed(id, refusal(response, "the abort was refused"));
+          else ctx.failed(id, refusedAs(response, said("chat.store.abortRefused")));
         })
         .catch((error: unknown) => ctx.failed(id, errorMessage(error)));
     },

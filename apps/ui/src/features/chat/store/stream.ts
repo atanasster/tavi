@@ -2,9 +2,9 @@ import { CLIENT_TIMEOUT, isEventOrderError, reduceRun, resumeFrom, roundCallIds,
 import type { ApprovalsListResult, ClientEvent, RunPayload, RunResult } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
-import { refusal } from "../../../lib/ipc.js";
 import type { StoreContext } from "./context.js";
 import { BUSY_STATUSES, CANCELLED_CODES, without, workedSince } from "./runs.js";
+import { refusedAs, said, type Said } from "./said.js";
 import type { CanvasRun } from "./types.js";
 
 /** How many times a stream that lost its place is resumed before the page gives up on it. */
@@ -66,7 +66,7 @@ export function installStream(ctx: StoreContext): void {
     if (gaveUp.delete(id)) {
       ctx.update(id, (run) => ({
         ...run,
-        error: "Its turn had not started when the next prompt continued the chat: it shows there, if it does.",
+        error: said("chat.store.turnMoved"),
       }));
     }
   };
@@ -204,7 +204,7 @@ export function installStream(ctx: StoreContext): void {
           deciding,
           aborting: run.aborting && next.status === "running",
           // A resync is the only event that leaves the page not knowing where the task stands.
-          ...(event.kind === "resync.required" ? { notice: "The owner restarted; reading where this chat stands…" } : {}),
+          ...(event.kind === "resync.required" ? { notice: said("chat.store.restarted") } : {}),
         };
       },
       BLOCKING_KINDS.has(event.kind),
@@ -233,7 +233,7 @@ export function installStream(ctx: StoreContext): void {
       // A replay's turns are read together, once it is through (`restore`).
       if (ctx.find(id)?.restored !== true) ctx.attachMemoryUsed(event.runId, [{ id, at: event.at }]);
       if (event.kind !== "task.failed" || !CANCELLED_CODES.has(event.errorCode)) ctx.settles(id, event.runId);
-      else ctx.dropQueued(event.runId, "The chat was cancelled, so this prompt was not sent.");
+      else ctx.dropQueued(event.runId, said("chat.store.cancelledQueued"));
     }
   };
 
@@ -246,7 +246,7 @@ export function installStream(ctx: StoreContext): void {
     pendingRows(taskId)
       .then((answer) => {
         if (!answer.ok) {
-          ctx.failed(id, `could not list round ${steps}'s calls (${answer.error?.code ?? "?"}); decide it with \`tavi approvals\``);
+          ctx.failed(id, said("chat.store.roundFailed", { steps, code: answer.error?.code ?? "?" }));
           return;
         }
         const calls = [...roundCallIds((answer.result as ApprovalsListResult).rows, steps)];
@@ -272,19 +272,19 @@ export function installStream(ctx: StoreContext): void {
               return;
             }
             if (opened.subscription !== undefined) streams.set(id, opened.subscription);
-            else if (!opened.response.ok) ctx.failed(id, refusal(opened.response, "the owner refused to resume the stream"));
+            else if (!opened.response.ok) ctx.failed(id, refusedAs(opened.response, said("chat.store.resumeRefused")));
           })
           .catch((failure: unknown) => ctx.failed(id, errorMessage(failure)));
         return;
       }
-      ctx.failed(id, isEventOrderError(error) ? "this run's stream lost its place: reload the page" : errorMessage(error));
+      ctx.failed(id, isEventOrderError(error) ? said("chat.store.lostPlace") : errorMessage(error));
     },
   });
 
   const start = (id: string, payload: RunPayload, rejoined: boolean): void => {
     if (ctx.disposed) return;
     // A refused or failed run made no chat: the next message starts the private one *New private chat* asked for.
-    const refused = (error: string): void => {
+    const refused = (error: Said): void => {
       ctx.failed(id, error);
       if (payload.memory !== "private") return;
       ctx.freshPrivate = true;
@@ -307,10 +307,10 @@ export function installStream(ctx: StoreContext): void {
           if (run?.conversationId !== undefined) conversations.set(run.taskId, run.conversationId);
           // What the owner could not do of what the message asked: said on its entry.
           const remark = [
-            run?.modelSaved === false ? "The model picked for this chat could not be saved: it runs the default." : undefined,
+            run?.modelSaved === false ? said("chat.store.modelNotSaved") : undefined,
             payload.folderAttachments === undefined ? undefined : run?.folder?.note,
           ].filter((line) => line !== undefined);
-          if (remark.length > 0) ctx.update(id, (entry) => ({ ...entry, remark: remark.join(" ") }));
+          if (remark.length > 0) ctx.update(id, (entry) => ({ ...entry, remark }));
           if (run !== undefined && payload.target === "home") {
             // Home's earlier entries on the page follow it no more: this turn is this entry's.
             // Not one whose turn still runs: its stream is how the rest of that turn reaches it.
@@ -331,7 +331,7 @@ export function installStream(ctx: StoreContext): void {
           start(id, payload, true);
           return;
         }
-        refused(refusal(opened.response, "the owner refused the run"));
+        refused(refusedAs(opened.response, said("chat.store.runRefused")));
       })
       .catch((error: unknown) => refused(errorMessage(error)));
   };

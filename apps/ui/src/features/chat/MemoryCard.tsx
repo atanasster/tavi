@@ -16,6 +16,7 @@ import { useCallback, useEffect, useId, useState } from "react";
 
 import { replaceMemory } from "../center/memory-api.js";
 import { decideMemory, decideMemoryCard, keepEditedMemory, loadMemoryBody, loadMemoryCard, undoMemory } from "../chat-panel/api.js";
+import { useT } from "../../lib/i18n.js";
 import { Failure, StatusNote } from "../../ui/Parts.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
@@ -60,6 +61,7 @@ export function MemoryCard({
   /** Center → Soul & memory, where everything that waits is listed; absent where the Center has no such page. */
   readonly onReview?: (() => void) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const [card, setCard] = useState<MemoryCardAnswer | undefined>();
   const [failure, setFailure] = useState<string | undefined>();
@@ -111,7 +113,7 @@ export function MemoryCard({
   /** A digest's proposals past the ten it lists. */
   const digestMore = card.digest === undefined ? 0 : Math.max(0, card.digest.waiting - card.items.length - card.forgotten);
   return (
-    <article className="memory-card" aria-label={`Memory: ${heading}`} data-memory-card={card.noticeId}>
+    <article className="memory-card" aria-label={t("chat.memoryCard.label", { heading })} data-memory-card={card.noticeId}>
       <p className="memory-card-heading" role="status" aria-live="polite">
         {heading}
       </p>
@@ -136,7 +138,9 @@ export function MemoryCard({
                   <p className="meta-sm memory-card-related">{memoryMayUpdateLine(item.mayUpdate)}</p>
                 ) : null}
                 {item.state === "proposed" && item.similarTo !== undefined ? (
-                  <p className="meta-sm memory-card-related">similar to: {item.similarTo.title ?? "a kept memory"}</p>
+                  <p className="meta-sm memory-card-related">
+                    {t("chat.memoryCard.similar", { title: item.similarTo.title ?? t("chat.memoryCard.aKeptMemory") })}
+                  </p>
                 ) : null}
                 {item.state === "proposed" && item.tidyUp === true && item.updates === undefined && item.mayUpdate === undefined ? (
                   <p className="meta-sm memory-card-related">{MEMORY_TIDY_UP_LOOK}</p>
@@ -161,7 +165,7 @@ export function MemoryCard({
                       });
                     }}
                   >
-                    <Field id={`${editId}-${item.number}`} label={<>Edit: {name}</>}>
+                    <Field id={`${editId}-${item.number}`} label={t("chat.memoryCard.editName", { name })}>
                       <textarea
                         value={editing.text}
                         rows={3}
@@ -170,10 +174,10 @@ export function MemoryCard({
                     </Field>
                     <div className="memory-card-actions">
                       <Button size="sm" type="submit" disabled={disabled || editing.text.trim() === ""}>
-                        Save and keep
+                        {t("chat.memoryCard.saveKeep")}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => setEditing(undefined)}>
-                        Cancel
+                        {t("chat.memoryCard.cancel")}
                       </Button>
                     </div>
                   </form>
@@ -182,30 +186,30 @@ export function MemoryCard({
                     <Button
                       size="sm"
                       disabled={disabled}
-                      aria-label={`Replace: ${name}`}
+                      aria-label={t("chat.memoryCard.replaceName", { name })}
                       onClick={() => act(() => replaceMemory(client, workspaceId, item))}
                     >
-                      Replace
+                      {t("chat.memoryCard.replace")}
                     </Button>
                     {item.kind === "fact" ? (
                       <Button
                         variant="ghost"
                         size="sm"
                         disabled={disabled}
-                        aria-label={`Keep both: ${name}`}
+                        aria-label={t("chat.memoryCard.keepBothName", { name })}
                         onClick={() => act(() => decideMemory(client, workspaceId, item, "approve"))}
                       >
-                        Keep both
+                        {t("chat.memoryCard.keepBoth")}
                       </Button>
                     ) : null}
                     <Button
                       variant="ghost"
                       size="sm"
                       disabled={disabled}
-                      aria-label={`Discard: ${name}`}
+                      aria-label={t("chat.memoryCard.discardName", { name })}
                       onClick={() => act(() => decideMemory(client, workspaceId, item, "reject"))}
                     >
-                      Discard
+                      {t("chat.memoryCard.discard")}
                     </Button>
                   </div>
                 ) : item.state === "proposed" && item.tidyUp === true ? (
@@ -214,14 +218,14 @@ export function MemoryCard({
                       variant="ghost"
                       size="sm"
                       disabled={disabled}
-                      aria-label={`Discard: ${name}`}
+                      aria-label={t("chat.memoryCard.discardName", { name })}
                       onClick={() => act(() => decideMemory(client, workspaceId, item, "reject"))}
                     >
-                      Discard
+                      {t("chat.memoryCard.discard")}
                     </Button>
                     {onReview === undefined ? null : (
-                      <Button variant="ghost" size="sm" aria-label={`Open to compare: ${name}`} onClick={onReview}>
-                        Open
+                      <Button variant="ghost" size="sm" aria-label={t("chat.memoryCard.openName", { name })} onClick={onReview}>
+                        {t("chat.memoryCard.open")}
                       </Button>
                     )}
                   </div>
@@ -230,24 +234,30 @@ export function MemoryCard({
                     <Button
                       size="sm"
                       disabled={disabled}
-                      aria-label={`Keep: ${name}`}
+                      aria-label={t("chat.memoryCard.keepName", { name })}
                       onClick={() => act(() => decideMemory(client, workspaceId, item, "approve"))}
                     >
-                      Keep
+                      {t("chat.memoryCard.keep")}
                     </Button>
                     {item.sensitive ? null : (
-                      <Button variant="ghost" size="sm" disabled={disabled} aria-label={`Edit: ${name}`} onClick={() => startEdit(item)}>
-                        Edit
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={disabled}
+                        aria-label={t("chat.memoryCard.editName", { name })}
+                        onClick={() => startEdit(item)}
+                      >
+                        {t("chat.memoryCard.edit")}
                       </Button>
                     )}
                     <Button
                       variant="ghost"
                       size="sm"
                       disabled={disabled}
-                      aria-label={`Discard: ${name}`}
+                      aria-label={t("chat.memoryCard.discardName", { name })}
                       onClick={() => act(() => decideMemory(client, workspaceId, item, "reject"))}
                     >
-                      Discard
+                      {t("chat.memoryCard.discard")}
                     </Button>
                   </div>
                 ) : item.state === "saved" ? (
@@ -256,10 +266,10 @@ export function MemoryCard({
                       variant="ghost"
                       size="sm"
                       disabled={disabled}
-                      aria-label={`Undo: ${name}`}
+                      aria-label={t("chat.memoryCard.undoName", { name })}
                       onClick={() => act(() => undoMemory(client, workspaceId, item.recordId))}
                     >
-                      Undo
+                      {t("chat.memoryCard.undo")}
                     </Button>
                   </div>
                 ) : null}
@@ -269,9 +279,11 @@ export function MemoryCard({
         </ul>
       )}
       {card.forgotten > 0 && card.items.length > 0 ? (
-        <p className="meta-sm memory-card-forgotten">{card.forgotten === 1 ? "1 forgotten" : `${card.forgotten} forgotten`}</p>
+        <p className="meta-sm memory-card-forgotten">{t("chat.memoryCard.forgotten", { count: card.forgotten })}</p>
       ) : null}
-      {digestMore > 0 && waiting.length > 0 ? <p className="meta-sm memory-card-more">and {digestMore} more</p> : null}
+      {digestMore > 0 && waiting.length > 0 ? (
+        <p className="meta-sm memory-card-more">{t("chat.memoryCard.more", { count: digestMore })}</p>
+      ) : null}
       {card.digest !== undefined && (waiting.length > 0 || onReview !== undefined) ? (
         <div className="memory-card-actions">
           {plainWaiting > 0 ? (
@@ -286,7 +298,7 @@ export function MemoryCard({
                 })
               }
             >
-              Keep all
+              {t("chat.memoryCard.keepAll")}
             </Button>
           ) : null}
           {waiting.length > 0 ? (
@@ -297,17 +309,17 @@ export function MemoryCard({
               onClick={() =>
                 act(async () => {
                   const outcome = await decideMemoryCard(client, workspaceId, card.noticeId, "discard");
-                  if (outcome.ok) setNote(`Discarded ${outcome.value.discarded}.`);
+                  if (outcome.ok) setNote(t("chat.memoryCard.discarded", { count: outcome.value.discarded }));
                   return outcome;
                 })
               }
             >
-              Discard all
+              {t("chat.memoryCard.discardAll")}
             </Button>
           ) : null}
           {onReview === undefined ? null : (
             <Button variant="ghost" size="sm" onClick={onReview}>
-              Review
+              {t("chat.memoryCard.review")}
             </Button>
           )}
         </div>

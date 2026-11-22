@@ -4,6 +4,7 @@ import { ANNOUNCER_ID, say } from "../../hooks/use-announce.js";
 import { inLastMinutes, lastMinutesSentence } from "../needs/NeedCard.js";
 import { runStatus, type Session } from "./shell.js";
 import { cancelledWords } from "../chat/store/runs.js";
+import { spoken } from "../chat/store/said.js";
 import type { CanvasState } from "../chat/store/types.js";
 import { translateNow } from "../../lib/i18n.js";
 
@@ -113,7 +114,12 @@ function statusSentence(state: CanvasState, session: Session | undefined, now?: 
     case "canceled":
       return last.run.outcome?.kind === "failed" ? cancelledWords(last.run.outcome.message) : translateNow("shell.announcer.cancelled");
     case "failed": {
-      const reason = last.error ?? (last.run.outcome?.kind === "failed" ? last.run.outcome.message : undefined);
+      const reason =
+        last.error !== undefined
+          ? spoken(last.error, translateNow)
+          : last.run.outcome?.kind === "failed"
+            ? last.run.outcome.message
+            : undefined;
       return reason === undefined ? translateNow("shell.announcer.failedUnfinished") : translateNow("shell.announcer.failed", { reason });
     }
     case "unknown":

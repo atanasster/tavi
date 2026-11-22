@@ -13,7 +13,8 @@ import {
   type TranscriptPage,
 } from "@tavi/contracts";
 
-import { ask, read, type AskOptions, type Outcome, type SettingsClient } from "../../lib/ipc.js";
+import { translateNow } from "../../lib/i18n.js";
+import { ask, read, unreadable, type AskOptions, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 
 /**
  * The canvas's reads of one task: its record (`tasks { taskId }`) and a page
@@ -54,7 +55,7 @@ export async function readTaskRecord(
   taskId: string,
   options: AskOptions & { readonly notFound?: string } = {},
 ): Promise<Outcome<TaskRecord>> {
-  const { notFound = "Chat not found in this workspace", ...asking } = options;
+  const { notFound = translateNow("chat.record.notFound"), ...asking } = options;
   const answer = await loadTaskRecord(client, taskId, asking);
   if (!answer.ok) return answer;
   const record = answer.value;
@@ -66,7 +67,7 @@ export async function readTaskRecord(
 /** A chat's context label: the header's taint chip, read after each turn. */
 export function loadTaskLabel(client: SettingsClient, workspaceId: string, taskId: string): Promise<Outcome<TaskLabelAnswer>> {
   return read(client, "tasks", { action: "label", taskId, workspaceId }, TaskLabelAnswerSchema, {
-    refused: "Could not read what this chat read",
+    refused: translateNow("chat.record.labelRefused"),
   });
 }
 
@@ -98,21 +99,26 @@ export function rewindChat(
   return read(client, "chat-context", { action: "rewind", workspaceId, taskId, seq, prompt }, ChatContextRewindAnswerSchema);
 }
 
+/** The code `loadArtifacts` gives an answer that came back but did not parse: its message already says to restart. */
+export const ARTIFACTS_UNREADABLE = "UNREADABLE";
+
 /** One page of a task's archived artifacts, decided ones too, from `cursor` when given. */
-export function loadArtifacts(
+export async function loadArtifacts(
   client: SettingsClient,
   workspaceId: string,
   taskId: string,
   cursor?: string,
   options: AskOptions = {},
 ): Promise<Outcome<ArtifactsResult>> {
-  return read(
+  const answer = await ask<unknown>(
     client,
     "artifacts",
     { workspaceId, taskId, includeDecided: true, limit: 100, ...(cursor === undefined ? {} : { cursor }) },
-    ArtifactsResultSchema,
     options,
   );
+  if (!answer.ok) return answer;
+  const parsed = ArtifactsResultSchema.safeParse(answer.value);
+  return parsed.success ? { ok: true, value: parsed.data } : { ok: false, message: unreadable("artifacts"), code: ARTIFACTS_UNREADABLE };
 }
 
 /**

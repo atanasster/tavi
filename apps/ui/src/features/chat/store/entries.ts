@@ -3,6 +3,7 @@ import { CLIENT_TIMEOUT, type ClientResponse, initialRunState, type RunState } f
 import type { StoreContext } from "./context.js";
 import { without } from "./runs.js";
 import type { CanvasRun } from "./types.js";
+import type { Said } from "./said.js";
 
 /** The page's entries: found, changed, failed, and the task the next prompt continues. */
 export function installEntries(ctx: StoreContext): void {
@@ -28,7 +29,7 @@ export function installEntries(ctx: StoreContext): void {
   const find = (id: string): CanvasRun | undefined => ctx.state.runs.find((run) => run.id === id);
   const update = (id: string, change: (run: CanvasRun) => CanvasRun, urgent = true): void =>
     ctx.publish({ ...ctx.state, runs: ctx.state.runs.map((run) => (run.id === id ? change(run) : run)) }, urgent);
-  const failed = (id: string, error: string): void =>
+  const failed = (id: string, error: Said): void =>
     update(id, (run) => ({ ...without(run, "notice"), error, deciding: undefined, aborting: false }));
   /** The chat an entry belongs to: its task, or the one it continues. */
   const chatOf = (run: CanvasRun): string | undefined => run.run.taskId ?? run.continues;

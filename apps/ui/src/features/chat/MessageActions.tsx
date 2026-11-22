@@ -3,10 +3,14 @@ import { ANNOUNCER_ID } from "../shell/a11y.js";
 import { useCopied } from "../../hooks/page.js";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../../ui/Button.js";
+import { useT } from "../../lib/i18n.js";
+
+/** The copy button's name, by what it copies. */
+const COPY_KEYS = { prompt: "chat.actions.copyPrompt", response: "chat.actions.copyResponse" } as const;
 
 let activeSpeech: SpeechSynthesisUtterance | undefined;
 
-/** Rewind never touches files, and its confirmation says so. */
+/** Rewind never touches files, and its confirmation says so (`chat.rewind.confirm`): its English words. */
 export const REWIND_FOLDER_NOTE = "Files in the chat's folder were not changed.";
 
 /** Rewind offered on a person's message: how many later turns go with it, and the call that takes them back (answers why it did not). */
@@ -24,12 +28,14 @@ export function MessageActions({
   onRepeat,
 }: {
   readonly text: string;
-  readonly label: string;
+  /** What the text is: the person's prompt or Tavi's response. */
+  readonly label: "prompt" | "response";
   readonly readAloud?: boolean;
   readonly rewind?: RewindOffer | undefined;
   /** *Repeat this…*: open the schedule form filled from this message; `report` says what was created. */
   readonly onRepeat?: ((report: (note: string) => void) => void) | undefined;
 }) {
+  const t = useT();
   const [notice, setNotice] = useState("");
   // The check and the notice make way once they have been seen.
   const { copied, copy } = useCopied({ onReset: () => setNotice(""), failedMs: 6000 });
@@ -48,7 +54,7 @@ export function MessageActions({
     if (confirming === "ask" && !asked.current) confirmButton.current?.focus();
     // Back from the confirmation (cancelled, or the rewind refused): focus returns to the button that opened it.
     if (confirming === undefined && asked.current)
-      row.current?.querySelector<HTMLButtonElement>('button[aria-label="Rewind to here"]')?.focus();
+      row.current?.querySelector<HTMLButtonElement>(`button[aria-label="${t("chat.actions.rewind")}"]`)?.focus();
     asked.current = confirming !== undefined;
   }, [confirming]);
   const utterance = useRef<SpeechSynthesisUtterance | undefined>(undefined);
@@ -90,7 +96,7 @@ export function MessageActions({
         if (activeSpeech === next) {
           activeSpeech = undefined;
           setSpeaking(false);
-          report("Read aloud stopped or unavailable.");
+          report(t("chat.actions.speechStopped"));
         }
       };
       setSpeaking(true);
@@ -99,16 +105,13 @@ export function MessageActions({
       } catch {
         activeSpeech = undefined;
         setSpeaking(false);
-        report("Read aloud is unavailable.");
+        report(t("chat.actions.speechUnavailable"));
       }
     };
     nextChunk();
   };
   if (confirming !== undefined && rewind !== undefined) {
-    const goes =
-      rewind.later === 0
-        ? "This message and Tavi's answer are taken back"
-        : `This message, Tavi's answer and ${rewind.later} later ${rewind.later === 1 ? "turn are" : "turns are"} taken back`;
+    const goes = rewind.later === 0 ? t("chat.rewind.confirm") : t("chat.rewind.confirmLater", { count: rewind.later });
     const confirm = () => {
       setConfirming("rewinding");
       void rewind.onRewind().then(
@@ -118,20 +121,18 @@ export function MessageActions({
         },
         () => {
           setConfirming(undefined);
-          report("Rewind failed.");
+          report(t("chat.rewind.failed"));
         },
       );
     };
     return (
-      <div className="message-actions rewind-confirm" role="group" aria-label="Rewind to here" ref={row}>
-        <span className="meta-sm">
-          {goes}; the message returns to the box to edit. {REWIND_FOLDER_NOTE}
-        </span>
+      <div className="message-actions rewind-confirm" role="group" aria-label={t("chat.actions.rewind")} ref={row}>
+        <span className="meta-sm">{goes}</span>
         <Button size="sm" ref={confirmButton} disabled={confirming === "rewinding"} onClick={confirm}>
-          {confirming === "rewinding" ? "Rewinding…" : "Rewind"}
+          {confirming === "rewinding" ? t("chat.rewind.rewinding") : t("chat.rewind.button")}
         </Button>
         <Button variant="ghost" size="sm" disabled={confirming === "rewinding"} onClick={() => setConfirming(undefined)}>
-          Cancel
+          {t("chat.rewind.cancel")}
         </Button>
       </div>
     );
@@ -141,17 +142,19 @@ export function MessageActions({
     <div className="message-actions" ref={row}>
       <IconButton
         icon={copied ? "check" : "copy"}
-        label={`Copy ${label}`}
-        tooltip={copied ? "Copied" : `Copy ${label}`}
+        label={t(COPY_KEYS[label])}
+        tooltip={copied ? t("chat.actions.copied") : t(COPY_KEYS[label])}
         tooltipPlacement="bottom"
-        onClick={() => copy(text, (ok) => report(ok ? "Copied" : "Copy unavailable. Select the text to copy it."))}
+        onClick={() => copy(text, (ok) => report(ok ? t("chat.actions.copied") : t("chat.actions.copyUnavailable")))}
       />
       {readAloud ? (
         <IconButton
           icon={speaking ? "stop" : "speaker"}
-          label={speaking ? "Stop reading" : "Read aloud"}
+          label={speaking ? t("chat.actions.stopReading") : t("chat.actions.readAloud")}
           disabled={!supported}
-          tooltip={supported ? (speaking ? "Stop reading" : "Read this response aloud") : "Read aloud is unavailable in this browser"}
+          tooltip={
+            supported ? (speaking ? t("chat.actions.stopReading") : t("chat.actions.readAloudTip")) : t("chat.actions.readAloudUnsupported")
+          }
           tooltipPlacement="bottom"
           aria-pressed={speaking}
           onClick={speak}
@@ -160,8 +163,8 @@ export function MessageActions({
       {rewind === undefined ? null : (
         <IconButton
           icon="rewind"
-          label="Rewind to here"
-          tooltip="Rewind to here: take back this message and what came after, and edit it"
+          label={t("chat.actions.rewind")}
+          tooltip={t("chat.actions.rewindTip")}
           tooltipPlacement="bottom"
           onClick={() => setConfirming("ask")}
         />
@@ -169,8 +172,8 @@ export function MessageActions({
       {onRepeat === undefined ? null : (
         <IconButton
           icon="calendar"
-          label="Repeat this…"
-          tooltip="Repeat this: run it on a schedule"
+          label={t("chat.actions.repeat")}
+          tooltip={t("chat.actions.repeatTip")}
           tooltipPlacement="bottom"
           aria-haspopup="dialog"
           onClick={() => onRepeat(report)}

@@ -16,6 +16,7 @@ import type {
 import type { CardOutcome, RoundDecision } from "../../center/InboxRoundCard.js";
 import type { PendingRoundCard } from "../../center/inbox-model.js";
 import type { CallDecision } from "../tasks-api.js";
+import type { Said } from "./said.js";
 
 /** An answer sent from this page to a worker's question, and the question it answered. */
 export interface WorkerAnswer {
@@ -95,7 +96,7 @@ export interface CanvasRun {
   readonly approvalHistory?: Readonly<Record<number, PendingRound>>;
   readonly artifacts?: readonly ArtifactListRow[];
   readonly reviewBusy?: boolean;
-  readonly reviewError?: string;
+  readonly reviewError?: Said;
   readonly questionId?: string;
   readonly needsRevision?: string;
   readonly answer?: {
@@ -118,11 +119,11 @@ export interface CanvasRun {
   /** An abort is on its way, until the turn ends. */
   readonly aborting: boolean;
   /** What the stream no longer says, in words the page shows (after an owner restart, say). */
-  readonly notice?: string;
+  readonly notice?: Said;
   /** Why this entry is not what was asked of it — a continuation that started a new task — kept as the stream goes on. */
-  readonly remark?: string;
+  readonly remark?: readonly Said[];
   /** Why the run could not be started, followed or acted on. */
-  readonly error?: string;
+  readonly error?: Said;
   /** The reader asked for the whole transcript: `transcriptWindow` stops bounding it. */
   readonly expanded?: boolean;
   /**
@@ -144,9 +145,9 @@ export interface CanvasState {
   /** Plugins' slash commands, as the owner listed them when the page connected: what the composer offers after `/`. */
   readonly pluginCommands?: readonly PluginCommandView[];
   /** A message the owner never got: back in the composer (`text`), with why (`message`), until the next prompt. */
-  readonly unsent?: { readonly key: string; readonly text: string; readonly message: string };
+  readonly unsent?: { readonly key: string; readonly text: string; readonly message: Said };
   /** What a plugin's slash command answered, typed in this page: shown until the next prompt. */
-  readonly commandAnswer?: { readonly name: string; readonly text: string; readonly failed?: true };
+  readonly commandAnswer?: { readonly name: string; readonly text: Said; readonly failed?: true };
   readonly directory?: {
     readonly observedNeeds?: Readonly<Record<string, string>>;
     readonly rows: readonly TaskListRow[];

@@ -8,6 +8,7 @@ import {
   type ArtifactUploadAnswer,
 } from "@tavi/contracts";
 
+import { translateNow } from "../../lib/i18n.js";
 import { ask, type SettingsClient } from "../../lib/ipc.js";
 
 interface TextAttachment {
@@ -84,24 +85,36 @@ export async function readAttachment(file: File): Promise<Attachment> {
     if (file.size > cap)
       throw new Error(
         media === "image"
-          ? `${file.name}: a photo is at most ${String(cap / 1_000_000)} MB.`
-          : `${file.name}: ${{ pdf: "a PDF", audio: "an audio file", video: "a video or GIF", gif: "a video or GIF" }[media]} is at most ${String(cap / 1024 / 1024)} MiB.`,
+          ? translateNow("chat.attach.tooBig.image", { name: file.name, size: String(cap / 1_000_000) })
+          : translateNow(
+              media === "pdf" ? "chat.attach.tooBig.pdf" : media === "audio" ? "chat.attach.tooBig.audio" : "chat.attach.tooBig.video",
+              { name: file.name, size: String(cap / 1024 / 1024) },
+            ),
       );
     // Only its head is read now: the rest is read a slice at a time as it is sent.
     const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
     if (!headIs(media, head))
       throw new Error(
-        `${file.name}: this file is not ${{ pdf: "a PDF", gif: "a GIF", image: "a PNG or JPEG photo", video: "an MP4, MOV or WebM video", audio: "an Ogg, MP3, M4A, WAV or AAC audio file" }[media]}.`,
+        translateNow(
+          (
+            {
+              pdf: "chat.attach.notKind.pdf",
+              gif: "chat.attach.notKind.gif",
+              image: "chat.attach.notKind.image",
+              video: "chat.attach.notKind.video",
+              audio: "chat.attach.notKind.audio",
+            } as const
+          )[media],
+          { name: file.name },
+        ),
       );
     return { kind: "upload", media, name: file.name, file };
   }
   if (!TEXT_FILE_ACCEPT.split(",").includes(extension) && !file.type.startsWith("text/"))
-    throw new Error(
-      `${file.name}: the canvas takes a PDF, a photo (PNG, JPEG), a video (MP4, MOV, WebM), a GIF (read as a short clip), an audio file (Ogg, MP3, M4A, WAV, AAC), or a text or code file.`,
-    );
-  if (file.size > MAX_ATTACHMENT_BYTES) throw new Error(`${file.name}: maximum file size is 48 KB.`);
+    throw new Error(translateNow("chat.attach.unsupported", { name: file.name }));
+  if (file.size > MAX_ATTACHMENT_BYTES) throw new Error(translateNow("chat.attach.tooBig.text", { name: file.name }));
   const text = new TextDecoder("utf-8", { fatal: true }).decode(await file.arrayBuffer());
-  if (text.includes("\0")) throw new Error(`${file.name}: binary files are not supported.`);
+  if (text.includes("\0")) throw new Error(translateNow("chat.attach.binary", { name: file.name }));
   return { name: file.name, text };
 }
 
@@ -127,8 +140,7 @@ export function composePrompt(prompt: string, attachments: readonly Attachment[]
   ]
     .filter(Boolean)
     .join("\n\n");
-  if (result.length > IPC_MAX_PROMPT_CHARS)
-    throw new Error("The prompt and attachments exceed the 64K-character limit. Remove a file or shorten the prompt.");
+  if (result.length > IPC_MAX_PROMPT_CHARS) throw new Error(translateNow("chat.attach.tooLong"));
   return result;
 }
 
@@ -195,7 +207,7 @@ export async function uploadFile(client: SettingsClient, workspaceId: string, fi
       chunk = new Uint8Array(await file.file.slice(offset, offset + CHUNK_BYTES).arrayBuffer());
     } catch {
       // The file is read as it is sent: one moved, deleted or changed since it was attached cannot be.
-      throw new Error(`${file.name}: the file changed or moved after it was attached; attach it again.`);
+      throw new Error(translateNow("chat.attach.moved", { name: file.name }));
     }
     const answer = await ask<ArtifactUploadAnswer>(
       client,
@@ -206,5 +218,5 @@ export async function uploadFile(client: SettingsClient, workspaceId: string, fi
     if (!answer.ok) throw new Error(`${file.name}: ${answer.message}`);
     if (answer.value.attachment !== undefined) return answer.value.attachment.artifactId;
   }
-  throw new Error(`${file.name}: the upload did not finish; attach it again.`);
+  throw new Error(translateNow("chat.attach.unfinished", { name: file.name }));
 }

@@ -2,11 +2,11 @@ import { initialRunState, resumeFrom, turnEnded, type Subscription } from "@tavi
 import { HOME_CONVERSATION_PREFIX } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
-import { refusal } from "../../../lib/ipc.js";
 import { loadTaskRecord } from "../tasks-api.js";
 import type { StoreContext } from "./context.js";
 import { cancelReasonOf, promptsOf, RECORD_READ } from "./record.js";
 import { without } from "./runs.js";
+import { refusedAs, said, type Said } from "./said.js";
 import type { CanvasRun, EndedTurn, RestoredTask } from "./types.js";
 
 /** A chat replayed from the owner's stream: after a reload, on opening it, and to catch up with it. */
@@ -21,7 +21,7 @@ export function installReplay(ctx: StoreContext): void {
    * turn still running is followed on. A task whose stream the owner no longer
    * holds is read from its record.
    */
-  const restore = (remembered: RestoredTask, prompts?: readonly string[], resume?: CanvasRun, onLost?: (error: string) => void): void => {
+  const restore = (remembered: RestoredTask, prompts?: readonly string[], resume?: CanvasRun, onLost?: (error: Said) => void): void => {
     const { taskId } = remembered;
     if (remembered.conversationId.startsWith(HOME_CONVERSATION_PREFIX) && ctx.state.home !== taskId)
       ctx.publish({ ...ctx.state, home: taskId });
@@ -109,7 +109,7 @@ export function installReplay(ctx: StoreContext): void {
     };
     recordReleased.set(current, release);
     /** The replay went wrong: on the resumed entry itself, the caller's to say (`onLost`), so a settled turn is not shown failed. */
-    const lost = (error: string): void => {
+    const lost = (error: Said): void => {
       if (onLost !== undefined && current === resume?.id) onLost(error);
       else ctx.failed(current, error);
     };
@@ -156,7 +156,7 @@ export function installReplay(ctx: StoreContext): void {
           return;
         }
         if (!opened.response.ok) {
-          lost(`could not replay task ${taskId}: ${refusal(opened.response, "refused")}`);
+          lost(said("chat.store.replayFailed", { taskId, message: refusedAs(opened.response, said("chat.store.refused")) }));
           return;
         }
         subscription = opened.subscription;
@@ -204,7 +204,7 @@ export function installReplay(ctx: StoreContext): void {
     restore({ taskId, conversationId: conversations.get(taskId) ?? "" }, [], place, (error) => {
       // Not caught up: the next change in the list, or the next refresh, tries again.
       caughtUp.delete(taskId);
-      ctx.update(place.id, (run) => ({ ...run, notice: `Could not catch up with this chat: ${error}.` }));
+      ctx.update(place.id, (run) => ({ ...run, notice: said("chat.store.catchUp", { error }) }));
     });
   };
   Object.assign(ctx, { restore, catchUp } satisfies Partial<StoreContext>);

@@ -16,6 +16,7 @@ import { loadScheduleTools } from "../center/schedules-api.js";
 import { CreateRoutine, type RepeatFields } from "../routines/RoutineForms.js";
 import type { Outcome, SettingsClient } from "../../lib/ipc.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
+import { useT } from "../../lib/i18n.js";
 import { Button } from "../../ui/Button.js";
 import { Modal } from "../../ui/Modal.js";
 import { Notice, Pending } from "../../ui/Parts.js";
@@ -82,6 +83,7 @@ export function RepeatForms({
   /** Said once the schedule or routine exists. */
   readonly onDone: (note: string) => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const timeZone = useTimeZone();
   const zone = timeZone ?? hostTimeZone();
@@ -102,10 +104,10 @@ export function RepeatForms({
   // The form opens at once: what it is filled from is said to be on its way, or why it could not be read.
   if (data === undefined)
     return (
-      <Modal title="Repeat this" onClose={onClose}>
-        <Pending error={error} reload={reload} label="Reading this chat…" className="notice" status />
+      <Modal title={t("chat.repeat.title")} onClose={onClose}>
+        <Pending error={error} reload={reload} label={t("chat.repeat.reading")} className="notice" status />
         <div className="actions">
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{t("chat.repeat.cancel")}</Button>
         </div>
       </Modal>
     );
@@ -118,42 +120,40 @@ export function RepeatForms({
   const edit = (fields: RepeatFields) => {
     typed.current = { ...fields, text: fields.text === prompt ? (typed.current?.text ?? asked) : fields.text };
   };
-  const what = as === "routine" ? "routine" : "schedule";
   const readOnly = new Set(data.listable.readOnly);
   const notice = (
     <Notice as="div">
-      <p>Filled in from this chat. Nothing is created until you save.</p>
+      <p>{t("chat.repeat.filled")}</p>
       {prompt.length < (typed.current?.text ?? asked).length ? (
-        <p>The chat's message was shortened to fit the {as === "routine" ? "objective" : "prompt"}.</p>
+        <p>{t(as === "routine" ? "chat.repeat.shortened.routine" : "chat.repeat.shortened.schedule")}</p>
       ) : null}
-      {as === "schedule" && !data.toolsKnown && used.length > 0 ? (
-        <p>Tavi could not check which tools a schedule may list; add them yourself.</p>
-      ) : null}
+      {as === "schedule" && !data.toolsKnown && used.length > 0 ? <p>{t("chat.repeat.toolsUnknown")}</p> : null}
       {as === "schedule" && data.toolsKnown && leftOut.length > 0 ? (
         <p>
-          Not allowed, since a schedule may not list {leftOut.length === 1 ? "it" : "them"}: {leftOut.slice(0, 8).join(", ")}
-          {leftOut.length > 8 ? ` and ${leftOut.length - 8} more` : ""}.
+          {leftOut.length > 8
+            ? t("chat.repeat.leftOutMore", { tools: leftOut.slice(0, 8).join(", "), more: leftOut.length - 8 })
+            : t("chat.repeat.leftOut", { count: leftOut.length, tools: leftOut.join(", ") })}
         </p>
       ) : null}
       {memory === undefined ? null : (
         <p>
-          A {what} has no memory{memory === "read" ? ", and this chat read yours" : ""}: put what it needs in the{" "}
-          {as === "routine" ? "objective" : "prompt"}.
+          {as === "routine"
+            ? t(memory === "read" ? "chat.repeat.memory.routineRead" : "chat.repeat.memory.routine")
+            : t(memory === "read" ? "chat.repeat.memory.scheduleRead" : "chat.repeat.memory.schedule")}
         </p>
       )}
       {data.taint.kind === "clean" ? null : (
         <p>
           {data.taint.kind === "tainted"
-            ? `This chat read content Tavi does not trust (${provenanceSourcesPhrase(data.taint.label)}).`
-            : "Tavi could not read whether this chat read content it does not trust."}{" "}
-          Check the {as === "routine" ? "objective" : "prompt and the allowed tools"} before saving: the {what} runs unattended
-          {as === "routine" ? "" : " with those tools"}.
+            ? t("chat.repeat.tainted", { sources: provenanceSourcesPhrase(data.taint.label) })
+            : t("chat.repeat.taintUnknown")}{" "}
+          {t(as === "routine" ? "chat.repeat.check.routine" : "chat.repeat.check.schedule")}
         </p>
       )}
       {research ? (
         <p>
           <Button variant="link" onClick={() => setPicked(as === "routine" ? "schedule" : "routine")}>
-            {as === "routine" ? "Repeat it as a schedule instead" : "Make it a research routine instead"}
+            {as === "routine" ? t("chat.repeat.asSchedule") : t("chat.repeat.asRoutine")}
           </Button>
         </p>
       ) : null}
@@ -168,7 +168,7 @@ export function RepeatForms({
         notice={notice}
         onEdit={edit}
         onClose={onClose}
-        saved={() => onDone("Routine created; it starts once its check passes.")}
+        saved={() => onDone(t("chat.repeat.routineCreated"))}
       />
     );
   const draft: ScheduleDraft = {
@@ -191,7 +191,7 @@ export function RepeatForms({
       offered={{ tools: offered, writing: offered.filter((tool) => !readOnly.has(tool)) }}
       timeZone={timeZone}
       onClose={onClose}
-      onSaved={(saved) => onDone(`${saved} created.`)}
+      onSaved={(saved) => onDone(t("chat.repeat.created", { name: saved }))}
     />
   );
 }

@@ -12,6 +12,9 @@ import {
   whyAskedText,
 } from "@tavi/contracts";
 import { clip } from "@tavi/contracts/util";
+import type { RiskLevel } from "@tavi/contracts";
+import type { UiKey } from "../../locales/en.js";
+import { useT } from "../../lib/i18n.js";
 import { Notice } from "../../ui/Parts.js";
 import { FormFillTable } from "../transcript/FormFillTable.js";
 
@@ -79,16 +82,17 @@ export function Provenance({ request }: { readonly request: PendingRound["reques
   const sources = requestSources(request);
   const chips = sources === undefined ? [] : provenanceChips(sources);
   const origins = (provenance?.argOrigins ?? []).filter((origin) => tainted || origin.from !== "unmatched");
+  const t = useT();
   if (why === undefined && chips.length === 0 && origins.length === 0) return null;
   return (
     <div className="provenance">
       {why === undefined ? null : (
         <p className="why-asked meta-sm">
-          <strong>Why am I asked?</strong> {why}
+          <strong>{t("chat.provenance.whyAsked")}</strong> {why}
         </p>
       )}
       {chips.length === 0 ? null : (
-        <ul className="source-chips list-reset" aria-label="What this chat read">
+        <ul className="source-chips list-reset" aria-label={t("chat.provenance.sources")}>
           {chips.map((chip) => (
             <li key={chip.established} className="source-chip">
               <span className="source-established">{chip.established}</span>
@@ -98,7 +102,7 @@ export function Provenance({ request }: { readonly request: PendingRound["reques
         </ul>
       )}
       {origins.length === 0 ? null : (
-        <ul className="arg-origins list-reset meta-sm" aria-label="Where this call's values come from">
+        <ul className="arg-origins list-reset meta-sm" aria-label={t("chat.provenance.origins")}>
           {origins.map((origin) => (
             <li key={`${origin.path}:${origin.value}`}>
               {/* Quoted, as the terminal says it: the value is the call's, the words after it where it came from. */}“
@@ -143,6 +147,7 @@ export function CallLine({ request, grouped }: { readonly request: PendingRound[
           : undefined;
   const why = request.risk === undefined ? undefined : whyAsked(request.risk);
   const described = describeRequest(request);
+  const t = useT();
   return (
     <>
       <span className="call-title">
@@ -159,37 +164,37 @@ export function CallLine({ request, grouped }: { readonly request: PendingRound[
         {request.risk ? (
           <>
             {" "}
-            <span className={`badge risk risk-${request.risk.level}`}>{request.risk.level} risk</span>
+            <span className={`badge risk risk-${request.risk.level}`}>{t(RISK_KEYS[request.risk.level])}</span>
           </>
         ) : grouped ? null : (
           <>
             {" "}
-            <span className="badge">{request.effect ?? "effect unknown"}</span>
+            <span className="badge">{request.effect ?? t("chat.call.effectUnknown")}</span>
           </>
         )}
         {request.display?.destructive === true ? (
           <>
             {" "}
-            <span className="badge risk risk-high">cannot be undone</span>
+            <span className="badge risk risk-high">{t("chat.call.irreversible")}</span>
           </>
         ) : null}
       </span>
       <Provenance request={request} />
       {readBack === undefined ? null : <p className="call-readback">{readBack}</p>}
-      {why === undefined ? null : <p className="risk-why meta-sm">Flagged: {why}</p>}
+      {why === undefined ? null : <p className="risk-why meta-sm">{t("chat.call.flagged", { why })}</p>}
       {form === undefined ? null : <FormTable form={form} />}
       {request.display?.forThisChat === undefined || request.allowedScopes?.includes("session") !== true ? null : (
-        <p className="meta-sm">For this chat, approving covers: {request.display.forThisChat}</p>
+        <p className="meta-sm">{t("chat.call.forThisChat", { what: request.display.forThisChat })}</p>
       )}
       {/* What runs from standard input is part of the command: shown, never only under Details. */}
       {request.display?.stdin === undefined ? null : (
         <>
-          <p className="meta-sm">On standard input:</p>
+          <p className="meta-sm">{t("chat.call.stdin")}</p>
           <pre className="call-command">{request.display.stdin}</pre>
         </>
       )}
       <details className="call-details">
-        <summary className="disclosure">Details</summary>
+        <summary className="disclosure">{t("chat.call.details")}</summary>
         {shown === undefined || shown === request.display?.title || readBack === shown ? null : isUnifiedDiff(shown) ? (
           <DiffBlock diff={shown} />
         ) : (
@@ -227,12 +232,20 @@ export function DiffBlock({ diff }: { readonly diff: string }) {
 
 type ApprovalForm = NonNullable<NonNullable<PendingRound["requests"][number]["display"]>["form"]>;
 
+/** A risk level's badge. */
+const RISK_KEYS: Readonly<Record<RiskLevel, UiKey>> = {
+  low: "chat.call.risk.low",
+  medium: "chat.call.risk.medium",
+  high: "chat.call.risk.high",
+  critical: "chat.call.risk.critical",
+};
+
 /** How a row's check reads: a short word, and what it means. */
-const FORM_STATUS: Readonly<Record<ApprovalForm["rows"][number]["status"], { readonly mark: string; readonly words: string }>> = {
-  verified: { mark: "verified", words: "found in its source" },
-  unmatched: { mark: "not found", words: "not found in its source" },
-  document: { mark: "the form's", words: "the form's own words" },
-  choice: { mark: "a choice", words: "a choice, not a copy" },
+const FORM_STATUS: Readonly<Record<ApprovalForm["rows"][number]["status"], { readonly mark: UiKey; readonly words: UiKey }>> = {
+  verified: { mark: "chat.form.status.verified", words: "chat.form.status.verifiedWords" },
+  unmatched: { mark: "chat.form.status.unmatched", words: "chat.form.status.unmatchedWords" },
+  document: { mark: "chat.form.status.document", words: "chat.form.status.documentWords" },
+  choice: { mark: "chat.form.status.choice", words: "chat.form.status.choiceWords" },
 };
 
 /**
@@ -243,6 +256,7 @@ const FORM_STATUS: Readonly<Record<ApprovalForm["rows"][number]["status"], { rea
  */
 export function FormTable({ form }: { readonly form: ApprovalForm }) {
   const pages = [...new Set(form.rows.map((row) => row.page))];
+  const t = useT();
   return (
     <div className="form-fill">
       <p className="meta-sm">
@@ -253,7 +267,7 @@ export function FormTable({ form }: { readonly form: ApprovalForm }) {
           <tbody key={page}>
             <tr>
               <th scope="rowgroup" colSpan={4}>
-                Page {page}
+                {t("chat.form.page", { page })}
               </th>
             </tr>
             {form.rows
@@ -267,28 +281,28 @@ export function FormTable({ form }: { readonly form: ApprovalForm }) {
                       <>
                         {" "}
                         <span className="badge" title={row.sensitive.join(", ")}>
-                          sensitive
+                          {t("chat.form.sensitive")}
                         </span>
                       </>
                     )}
                   </td>
                   <td className="meta-sm">{row.source}</td>
-                  <td className="form-check meta-sm" title={FORM_STATUS[row.status].words}>
-                    {FORM_STATUS[row.status].mark}
+                  <td className="form-check meta-sm" title={t(FORM_STATUS[row.status].words)}>
+                    {t(FORM_STATUS[row.status].mark)}
                   </td>
                 </tr>
               ))}
           </tbody>
         ))}
       </FormFillTable>
-      {form.truncated === true ? <Notice>More rows than fit this card: it can only be denied. Ask for a smaller fill.</Notice> : null}
+      {form.truncated === true ? <Notice>{t("chat.form.truncated")}</Notice> : null}
       {form.leftBlank.length === 0 ? null : (
-        <p className="meta-sm">You sign or complete these yourself: {form.leftBlank.map((entry) => entry.field).join(", ")}</p>
+        <p className="meta-sm">{t("chat.form.leftBlank", { fields: form.leftBlank.map((entry) => entry.field).join(", ") })}</p>
       )}
       {form.warnings.length === 0 ? null : (
         <ul className="list-reset meta-sm">
           {form.warnings.map((warning) => (
-            <li key={warning}>Warning: {warning}</li>
+            <li key={warning}>{t("chat.form.warning", { warning })}</li>
           ))}
         </ul>
       )}

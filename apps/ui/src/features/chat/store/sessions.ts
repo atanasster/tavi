@@ -1,3 +1,4 @@
+import { translateNow } from "../../../lib/i18n.js";
 import { conversationOfRecorded, turnEnded } from "@tavi/client/browser";
 import { TASK_NEEDS, type TaskListFilters, TaskListResultSchema, type TaskListRow } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
@@ -60,11 +61,13 @@ export function installSessions(ctx: StoreContext): void {
       if (ctx.disposed || generation !== listGeneration) return;
       if (!page.ok || !inbox.ok)
         throw new Error(
-          `${page.error?.message ?? inbox.error?.message ?? "Chat list refused"}. Restart the owner if it predates this page.`,
+          translateNow("chat.files.restartHint", {
+            message: page.error?.message ?? inbox.error?.message ?? translateNow("chat.store.listRefused"),
+          }),
         );
       const list = TaskListResultSchema.safeParse(page.result);
       const needs = TaskListResultSchema.safeParse(inbox.result);
-      if (!list.success || !needs.success) throw new Error("This owner does not support chat lists. Restart the owner with this build.");
+      if (!list.success || !needs.success) throw new Error(translateNow("chat.store.listUnsupported"));
       const inWorkspace = (row: TaskListRow) => row.workspaceId === options.workspaceId;
       // A worker is no chat: its need is its root's, which counts it (`descendantNeeds`)
       // and shows it in the root's transcript, so its own inbox row is never listed.
@@ -74,7 +77,7 @@ export function installSessions(ctx: StoreContext): void {
       for (let pageIndex = 1; pageIndex < pages && nextCursor; pageIndex++) {
         const answer = await client.request("tasks", { ...query, action: "list", workspaceId: options.workspaceId, cursor: nextCursor });
         if (ctx.disposed || generation !== listGeneration) return;
-        if (!answer.ok) throw new Error(refusal(answer, "Chat list refused"));
+        if (!answer.ok) throw new Error(refusal(answer, translateNow("chat.store.listRefused")));
         const next = TaskListResultSchema.parse(answer.result);
         pageRows.push(...next.rows.filter(inWorkspace));
         nextCursor = next.nextCursor;
@@ -162,7 +165,10 @@ export function installSessions(ctx: StoreContext): void {
       }
       return;
     }
-    const answer = await readTaskRecord(client, options.workspaceId, taskId, { ...RECORD_READ, refused: "Could not open the chat" });
+    const answer = await readTaskRecord(client, options.workspaceId, taskId, {
+      ...RECORD_READ,
+      refused: translateNow("chat.store.openFailed"),
+    });
     if (ctx.disposed) return;
     if (!answer.ok && answer.code !== "NOT_FOUND") throw new Error(answer.message);
     if (ctx.state.runs.some((run) => run.run.taskId === taskId)) return;

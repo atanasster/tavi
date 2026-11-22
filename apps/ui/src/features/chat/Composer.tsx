@@ -5,6 +5,7 @@ import { errorMessage } from "@tavi/contracts/util";
 
 import { usePhone } from "../../hooks/page.js";
 import { useRowKeys } from "../../hooks/use-row-keys.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import { nextPart } from "../../lib/parts.js";
 import { Icon } from "../../ui/Icon.js";
 import { IconButton } from "../../ui/IconButton.js";
@@ -68,6 +69,7 @@ export function Composer({
   /** Plugins' slash commands: offered while the prompt is a `/` word being typed. */
   readonly commands?: readonly PluginCommandView[] | undefined;
 }) {
+  const t = useT();
   const phone = usePhone();
   const [prompt, setPrompt] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -136,7 +138,7 @@ export function Composer({
       // Uploaded first, then named by the message; a refusal keeps the prompt and its files in the box.
       if (unconfigured) return;
       if (onUpload === undefined) {
-        setFileError("PDFs, photos, videos, GIFs and audio cannot be attached here.");
+        setFileError(t("chat.composer.noUploads"));
         return;
       }
       setReading(true);
@@ -191,13 +193,13 @@ export function Composer({
           value={prompt}
           placeholder={
             disabled
-              ? "Waiting for the owner…"
+              ? t("chat.composer.waitingOwner")
               : unconfigured
-                ? "No model is running: restart `tavi serve` with one to send"
+                ? t("chat.composer.noModel")
                 : // The keys, on a second line, where there is a keyboard to press them: not on a phone.
                   phone
                   ? placeholder
-                  : `${placeholder}\n${COMPOSER_KEYS}`
+                  : `${placeholder}\n${t("chat.composer.keys")}`
           }
           onChange={(event) => setPrompt(event.target.value)}
           onKeyDown={(event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -231,7 +233,7 @@ export function Composer({
           }}
         />
         {offered.length === 0 ? null : (
-          <ul className="command-list list-reset" aria-label="Plugin commands">
+          <ul className="command-list list-reset" aria-label={t("chat.composer.commands")}>
             {offered.map((command) => (
               <li key={command.name}>
                 <Button variant="bare" title={command.pluginId} onClick={() => pickCommand(command.name)}>
@@ -242,14 +244,14 @@ export function Composer({
           </ul>
         )}
         {attachments.length > 0 ? (
-          <ul className="attachment-list list-reset" aria-label="Attached files">
+          <ul className="attachment-list list-reset" aria-label={t("chat.composer.attached")}>
             {attachments.map((file, index) => (
               <li key={attachmentKey(file)}>
                 <span title={file.name}>{file.name}</span>
                 <IconButton
                   icon="close"
                   className="button-sm"
-                  label={`Remove ${file.name}`}
+                  label={t("chat.composer.remove", { name: file.name })}
                   disabled={reading}
                   onClick={() => setAttachments((files) => files.filter((_, i) => i !== index))}
                 />
@@ -270,7 +272,7 @@ export function Composer({
               event.target.value = "";
               if (!files.length) return;
               if (attachments.length + files.length > MAX_ATTACHMENTS) {
-                setFileError("Attach up to 5 files.");
+                setFileError(t("chat.composer.tooMany", { count: MAX_ATTACHMENTS }));
                 return;
               }
               setReading(true);
@@ -287,14 +289,10 @@ export function Composer({
           />
           <IconButton
             icon="paperclip"
-            label={reading ? "Reading files…" : "Attach PDF, photo, video, GIF, audio, text and code files"}
+            label={reading ? t("chat.composer.reading") : t("chat.composer.attach")}
             aria-busy={reading}
             disabled={disabled || reading}
-            tooltip={
-              reading
-                ? "Reading files…"
-                : "Attach PDFs (up to 20 MB), photos (up to 5 MB), videos, GIFs and audio (up to 50 MB), or text and code files (up to 48 KB each)"
-            }
+            tooltip={reading ? t("chat.composer.reading") : t("chat.composer.attachTip")}
             onClick={() => fileInput.current?.click()}
           />
           {modelPicker ?? (
@@ -302,11 +300,11 @@ export function Composer({
               variant="ghost"
               size="sm"
               className="model-selector truncate"
-              title="Owner model. Open model settings; changes may require restarting the owner. Responses show the model actually used."
+              title={t("chat.composer.model.title")}
               onClick={onModels}
               disabled={!onModels}
             >
-              {modelTarget || "Configure model"}
+              {modelTarget || t("chat.composer.model.configure")}
               <Icon name="chevron-down" size="sm" />
             </Button>
           )}
@@ -325,17 +323,22 @@ export function Composer({
                 : undefined
             }
           >
-            {prompt.trim() !== "" || attachments.length > 0 ? "Send" : onStop !== undefined ? "Stop" : retryPrompt ? "Retry" : "Send"}
+            {prompt.trim() !== "" || attachments.length > 0
+              ? t("chat.composer.send")
+              : onStop !== undefined
+                ? t("chat.composer.stop")
+                : retryPrompt
+                  ? t("chat.composer.retry")
+                  : t("chat.composer.send")}
           </Button>
         </div>
       </div>
     </form>
   );
-} /** How the message box sends, said under its placeholder. */
-const COMPOSER_KEYS = "Enter to send · Shift+Enter for a new line";
+}
 
 /** The message box's accessible name: its placeholder's words without the trailing ellipsis, else "Message". */
 export function composerName(placeholder: string | undefined): string {
   const words = placeholder?.replace(/(…|\.\.\.)$/, "").trim();
-  return words === undefined || words === "" ? "Message" : words;
+  return words === undefined || words === "" ? translateNow("chat.composer.name") : words;
 }

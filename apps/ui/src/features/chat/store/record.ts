@@ -10,10 +10,10 @@ import {
 } from "@tavi/contracts";
 import { definedOnly, errorMessage } from "@tavi/contracts/util";
 
-import { refusal } from "../../../lib/ipc.js";
 import { admissionPrompt, loadTaskRecord, loadTranscriptPage, type TaskRecord } from "../tasks-api.js";
 import type { StoreContext } from "./context.js";
 import { cancelledEntry, savedAttemptId, savedEntries, without } from "./runs.js";
+import { refusedAs, said } from "./said.js";
 import type { CanvasRun, CanvasStore, EndedTurn } from "./types.js";
 
 /** The prompts of a task's turns that ran, in order: a queued or refused admission has no turn yet. */
@@ -183,7 +183,7 @@ export function installRecord(ctx: StoreContext): void {
   const cancelled = (id: string, taskId: string, reason: string): void => {
     if (ctx.settled === taskId) ctx.settled = undefined;
     ctx.update(id, (run) => cancelledEntry(run, reason));
-    ctx.dropQueued(taskId, "The chat was cancelled, so this prompt was not sent.");
+    ctx.dropQueued(taskId, said("chat.store.cancelledQueued"));
   };
   /**
    * What a resync erased from the stream, read back from the task's record (as
@@ -197,7 +197,7 @@ export function installRecord(ctx: StoreContext): void {
       const answer = await loadTaskRecord(client, taskId, RECORD_READ);
       if (ctx.disposed) return;
       if (!answer.ok) {
-        ctx.failed(id, `could not read task ${taskId}'s record: ${answer.message}`);
+        ctx.failed(id, said("chat.store.recordFailed", { taskId, message: answer.message }));
         return;
       }
       const document = answer.value;
@@ -234,7 +234,7 @@ export function installRecord(ctx: StoreContext): void {
                     activeMs: document.history.activeMs,
                   }),
                 }),
-            notice: "The owner no longer holds this chat’s earlier turns. Showing its recorded prompts and outcome.",
+            notice: said("chat.store.earlierGone"),
           });
         });
       // A Home a schedule started has no turn to show yet, only its notices.
@@ -277,7 +277,7 @@ export function installRecord(ctx: StoreContext): void {
       if (ending.kind === "approval") {
         const listedRows = await ctx.pendingRows(taskId);
         if (!listedRows.ok) {
-          ctx.failed(id, `could not list task ${taskId}'s pending calls: ${refusal(listedRows, "refused")}`);
+          ctx.failed(id, said("chat.store.pendingFailed", { taskId, message: refusedAs(listedRows, said("chat.store.refused")) }));
           return;
         }
         const { rounds } = pendingRoundsOf(taskId, (listedRows.result as ApprovalsListResult).rows);
@@ -322,8 +322,7 @@ export function installRecord(ctx: StoreContext): void {
                 ...(document.history === undefined
                   ? {
                       ...run,
-                      notice:
-                        "The chat finished while the page was away. The owner no longer holds its earlier turns; showing the recorded prompts and outcome.",
+                      notice: said("chat.store.finishedAway"),
                     }
                   : without(run, "notice")),
                 run: { ...run.run, status: "completed", outcome: { kind: "completed", finalText: document.task?.finalText ?? "" } },
@@ -331,7 +330,8 @@ export function installRecord(ctx: StoreContext): void {
             : {
                 ...run,
                 run: { ...run.run, status: "failed" },
-                error: `the chat failed${ending.reason === undefined ? "" : `: ${ending.reason}`}`,
+                error:
+                  ending.reason === undefined ? said("chat.store.chatFailed") : said("chat.store.chatFailedWhy", { reason: ending.reason }),
               },
       );
       // What the owner no longer holds of the stream, its saved history has.

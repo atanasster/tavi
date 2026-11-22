@@ -6,12 +6,15 @@ import {
   memoryUsedCount,
   memoryUsedLabel,
   type MemoryItem,
+  type MemoryKind,
   type MemoryListAnswer,
   type TranscriptMemoryUsed,
 } from "@tavi/contracts";
 import { useCallback, useId, useState } from "react";
 
+import { translateNow, useT } from "../../lib/i18n.js";
 import { localDayWithYear } from "../../lib/time.js";
+import type { UiKey } from "../../locales/en.js";
 import { forgetUsedMemory, keepEditedMemory, listUsedInTurn, loadMemoryBody } from "../chat-panel/api.js";
 import { ANNOUNCER_ID } from "../shell/a11y.js";
 import { Failure } from "../../ui/Parts.js";
@@ -22,19 +25,27 @@ import { Icon } from "../../ui/Icon.js";
 
 /** Where a record applies, in a few words. */
 function scopeWords(target: string): string {
-  if (target.startsWith("chat:")) return "this chat's notes";
-  if (target.startsWith("agent:")) return `agent ${target.slice("agent:".length)}`;
+  if (target.startsWith("chat:")) return translateNow("chat.memoryUsed.scope.chat");
+  if (target.startsWith("agent:")) return translateNow("chat.memoryUsed.scope.agent", { agent: target.slice("agent:".length) });
   switch (target) {
     case "personal":
-      return "everywhere";
+      return translateNow("chat.memoryUsed.scope.personal");
     case "workspace":
-      return "this workspace";
+      return translateNow("chat.memoryUsed.scope.workspace");
     case "shared":
-      return "shared";
+      return translateNow("chat.memoryUsed.scope.shared");
     default:
       return target;
   }
 }
+
+/** A record's kind, as the list says it. */
+const KIND_KEYS: Readonly<Record<MemoryKind, UiKey>> = {
+  preference: "chat.memoryUsed.kind.preference",
+  fact: "chat.memoryUsed.kind.fact",
+  lesson: "chat.memoryUsed.kind.lesson",
+  summary: "chat.memoryUsed.kind.summary",
+};
 
 /** Whether a memory's body only repeats its title ("Lives in Lisbon." under "Lives in Lisbon"): then it is not said twice. */
 function sameWords(title: string, body: string): boolean {
@@ -67,6 +78,7 @@ export function MemoryUsed({
   readonly used: TranscriptMemoryUsed;
   readonly connected?: boolean;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const timeZone = useTimeZone();
   const [open, setOpen] = useState(false);
@@ -143,8 +155,8 @@ export function MemoryUsed({
           <p className="memory-used-body">{record.body}</p>
         )}
         <p className="meta-sm">
-          {record.kind} · {scopeWords(record.target)} · {localDayWithYear(record.recordedAt, timeZone)}
-          {record.originTaskId === undefined ? "" : ` · from chat ${record.originTaskId}`}
+          {t(KIND_KEYS[record.kind])} · {scopeWords(record.target)} · {localDayWithYear(record.recordedAt, timeZone)}
+          {record.originTaskId === undefined ? "" : ` · ${t("chat.memoryUsed.fromChat", { id: record.originTaskId })}`}
         </p>
         {editingThis ? (
           <form
@@ -153,23 +165,26 @@ export function MemoryUsed({
               event.preventDefault();
               const text = editing.text.trim();
               if (text === "") return;
-              act(async () => {
-                const outcome = await keepEditedMemory(
-                  client,
-                  workspaceId,
-                  {
-                    recordId: record.recordId,
-                    ...(record.currentRevisionId === undefined ? {} : { currentRevisionId: record.currentRevisionId }),
-                    state: "saved",
-                  },
-                  text,
-                );
-                if (outcome.ok) setEditing(undefined);
-                return outcome;
-              }, `Corrected: ${name}`);
+              act(
+                async () => {
+                  const outcome = await keepEditedMemory(
+                    client,
+                    workspaceId,
+                    {
+                      recordId: record.recordId,
+                      ...(record.currentRevisionId === undefined ? {} : { currentRevisionId: record.currentRevisionId }),
+                      state: "saved",
+                    },
+                    text,
+                  );
+                  if (outcome.ok) setEditing(undefined);
+                  return outcome;
+                },
+                t("chat.memoryUsed.corrected", { name }),
+              );
             }}
           >
-            <Field id={`${id}-${record.recordId}`} label={<>Correct: {name}</>}>
+            <Field id={`${id}-${record.recordId}`} label={t("chat.memoryUsed.correctName", { name })}>
               <textarea
                 value={editing.text}
                 rows={3}
@@ -178,10 +193,10 @@ export function MemoryUsed({
             </Field>
             <div className="memory-card-actions">
               <Button size="sm" type="submit" disabled={disabled || editing.text.trim() === ""}>
-                Save
+                {t("chat.memoryUsed.save")}
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setEditing(undefined)}>
-                Cancel
+                {t("chat.memoryUsed.cancel")}
               </Button>
             </div>
           </form>
@@ -191,14 +206,20 @@ export function MemoryUsed({
               variant="ghost"
               size="sm"
               disabled={disabled}
-              aria-label={`Forget: ${name}`}
-              onClick={() => act(() => forgetUsedMemory(client, workspaceId, record.recordId), `Forgotten: ${name}`)}
+              aria-label={t("chat.memoryUsed.forgetName", { name })}
+              onClick={() => act(() => forgetUsedMemory(client, workspaceId, record.recordId), t("chat.memoryUsed.forgotten", { name }))}
             >
-              Forget
+              {t("chat.memoryUsed.forget")}
             </Button>
             {record.redacted ? null : (
-              <Button variant="ghost" size="sm" disabled={disabled} aria-label={`Correct: ${name}`} onClick={() => startCorrect(record)}>
-                Correct
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={disabled}
+                aria-label={t("chat.memoryUsed.correctName", { name })}
+                onClick={() => startCorrect(record)}
+              >
+                {t("chat.memoryUsed.correct")}
               </Button>
             )}
           </div>
@@ -226,16 +247,14 @@ export function MemoryUsed({
         <div id={`${id}-list`} className="memory-used-list">
           {listed === undefined ? (
             failure === undefined ? (
-              <p className="meta-sm">Reading…</p>
+              <p className="meta-sm">{t("chat.memoryUsed.reading")}</p>
             ) : null
           ) : (
             <>
               {listed.records.length === 0 ? null : <ul className="memory-used-items">{listed.records.map(recordItem)}</ul>}
-              {gone > 0 ? (
-                <p className="meta-sm">{gone === 1 ? "1 forgotten since, or not yours" : `${gone} forgotten since, or not yours`}</p>
-              ) : null}
-              {hidden > 0 ? <p className="meta-sm">{hidden === 1 ? "1 no longer current" : `${hidden} no longer current`}</p> : null}
-              {unnamed > 0 ? <p className="meta-sm">{unnamed === 1 ? "and 1 more not listed" : `and ${unnamed} more not listed`}</p> : null}
+              {gone > 0 ? <p className="meta-sm">{t("chat.memoryUsed.gone", { count: gone })}</p> : null}
+              {hidden > 0 ? <p className="meta-sm">{t("chat.memoryUsed.hidden", { count: hidden })}</p> : null}
+              {unnamed > 0 ? <p className="meta-sm">{t("chat.memoryUsed.unnamed", { count: unnamed })}</p> : null}
               {lookedThrough === undefined ? null : (
                 <>
                   {/* The chip already says it when there is nothing else here. */}
@@ -243,23 +262,13 @@ export function MemoryUsed({
                   {listed.listed === undefined || listed.listed.length === 0 ? null : (
                     <ul className="memory-used-items">{listed.listed.map(recordItem)}</ul>
                   )}
-                  {lookedGone > 0 ? (
-                    <p className="meta-sm">
-                      {lookedGone === 1 ? "1 forgotten since, or not yours" : `${lookedGone} forgotten since, or not yours`}
-                    </p>
-                  ) : null}
-                  {lookedHidden > 0 ? (
-                    <p className="meta-sm">{lookedHidden === 1 ? "1 no longer current" : `${lookedHidden} no longer current`}</p>
-                  ) : null}
-                  {lookedUnnamed > 0 ? (
-                    <p className="meta-sm">{lookedUnnamed === 1 ? "and 1 more not listed" : `and ${lookedUnnamed} more not listed`}</p>
-                  ) : null}
+                  {lookedGone > 0 ? <p className="meta-sm">{t("chat.memoryUsed.gone", { count: lookedGone })}</p> : null}
+                  {lookedHidden > 0 ? <p className="meta-sm">{t("chat.memoryUsed.hidden", { count: lookedHidden })}</p> : null}
+                  {lookedUnnamed > 0 ? <p className="meta-sm">{t("chat.memoryUsed.unnamed", { count: lookedUnnamed })}</p> : null}
                 </>
               )}
               {summary !== undefined && summary.preferences > 0 ? (
-                <p className="meta-sm">
-                  {summary.preferences === 1 ? "1 preference applied" : `${summary.preferences} preferences applied`}
-                </p>
+                <p className="meta-sm">{t("chat.memoryUsed.preferences", { count: summary.preferences })}</p>
               ) : null}
             </>
           )}

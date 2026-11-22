@@ -1,3 +1,4 @@
+import { translateNow } from "../../../lib/i18n.js";
 import { IPC_MAX_PROMPT_CHARS, NeedsAnswerSchema, type PendingQuestionRow } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
@@ -61,7 +62,7 @@ export function installWorkers(ctx: StoreContext): void {
     const answers = Object.fromEntries(
       Object.entries(previous).flatMap(([waitId, sent]): [string, WorkerAnswer][] => {
         if (sent.status === "uncertain" && listedWait(waitId))
-          return [[waitId, { ...sent, status: "failed", message: "The answer was not recorded." }]];
+          return [[waitId, { ...sent, status: "failed", message: translateNow("chat.store.answerNotRecorded") }]];
         return sent.status === "recorded" || sent.status === "sending" || listedWait(waitId) ? [[waitId, sent]] : [];
       }),
     );
@@ -106,7 +107,7 @@ export function installWorkers(ctx: StoreContext): void {
       try {
         const { response, retried } = await ctx.sendOnceMore(send);
         if (ctx.disposed) return;
-        const { status, message } = answerStatus(response, retried, "The answer was refused");
+        const { status, message } = answerStatus(response, retried, translateNow("chat.store.answerRefused"));
         settle({ text, status, question, ...(message === undefined ? {} : { message }) });
       } catch (error) {
         settle({ text, status: "uncertain", question, message: errorMessage(error) });
@@ -137,7 +138,9 @@ export function installWorkers(ctx: StoreContext): void {
       if (outcome.ok) settle({ kind: "done", approved, scope });
       else
         settle(
-          outcome.settled === undefined ? { kind: "error", message: outcome.message } : { kind: "settled", text: "Decided elsewhere." },
+          outcome.settled === undefined
+            ? { kind: "error", message: outcome.message }
+            : { kind: "settled", text: translateNow("chat.store.decidedElsewhere") },
         );
       await ctx.loadWorkerNeeds(rootTaskId);
     })();

@@ -1,3 +1,4 @@
+import { translateNow } from "../../../lib/i18n.js";
 import type { RunState, TranscriptEntry } from "@tavi/client/browser";
 import type { TranscriptEntry as SavedTurn } from "@tavi/contracts";
 import { definedOnly } from "@tavi/contracts/util";
@@ -35,10 +36,11 @@ const CANCELLED_BY = /^Task was cancelled by .*?: /u;
 /** A cancelled turn's line, from a recorded reason or a turn's end. It names nobody: a heartbeat, a routine or a parent agent can cancel too. */
 export function cancelledWords(message: string): string {
   const reason = message.replace(CANCELLED_BY, "").replace(/[\s.]+$/u, "");
-  return reason === "" ? "This was cancelled." : `This was cancelled: ${reason}.`;
+  return reason === "" ? translateNow("chat.store.cancelled") : translateNow("chat.store.cancelledWhy", { reason });
 }
 
-/** Why an answer cannot be sent while the owner is out of reach. */
+/** Why an answer cannot be sent while the owner is out of reach: its key, and its English words for views that show them as they are. */
+export const RECONNECT_TO_ANSWER_KEY = "chat.question.reconnect";
 export const RECONNECT_TO_ANSWER = "Reconnect to the owner to answer.";
 
 /**
@@ -54,7 +56,7 @@ export function questionBlocker(
 ): { readonly kind: "round" | "review" | "connection"; readonly text: string } | undefined {
   if (run.run.pending.length > 0) return { kind: "round", text: wording.round };
   if (run.run.review !== undefined) return { kind: "review", text: wording.review };
-  if (!connected) return { kind: "connection", text: RECONNECT_TO_ANSWER };
+  if (!connected) return { kind: "connection", text: translateNow(RECONNECT_TO_ANSWER_KEY) };
   return undefined;
 }
 

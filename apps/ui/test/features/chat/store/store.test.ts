@@ -23,6 +23,15 @@ import {
 import { createCanvasStore } from "../../../../src/features/chat/store/store.js";
 import { BLOCKING_KINDS } from "../../../../src/features/chat/store/stream.js";
 import type { CanvasClient, CanvasRun } from "../../../../src/features/chat/store/types.js";
+import { spoken, type Said } from "../../../../src/features/chat/store/said.js";
+import { translateNow } from "../../../../src/lib/i18n.js";
+
+/** A message the store kept, in the words the page shows for it. */
+function words(value: Said | readonly Said[] | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === "string" || "key" in value) return spoken(value, translateNow);
+  return value.map((line) => spoken(line, translateNow)).join(" ");
+}
 
 /**
  * The canvas's state: runs folded by the client's own
@@ -244,7 +253,7 @@ describe("the canvas store", () => {
     const store = createCanvasStore(client, { ...options, mintKey: () => "unsaved-1" });
     store.submit("audit the site", { model: { connectionId: "openrouter", model: "gpt-4.1" } });
     await settle();
-    expect(store.getSnapshot().runs.find((run) => run.id === "unsaved-1")?.remark).toBe(
+    expect(words(store.getSnapshot().runs.find((run) => run.id === "unsaved-1")?.remark)).toBe(
       "The model picked for this chat could not be saved: it runs the default.",
     );
   });
@@ -260,7 +269,7 @@ describe("the canvas store", () => {
     store.submit("sort my photos", { folderAttachments: picked });
     expect(fake.runs[0]?.payload).toMatchObject({ prompt: "sort my photos", folderAttachments: picked });
     await settle();
-    expect(store.getSnapshot().runs.find((run) => run.id === "draft-1")?.remark).toBe("Not attached: /home/me/photos (gone)");
+    expect(words(store.getSnapshot().runs.find((run) => run.id === "draft-1")?.remark)).toBe("Not attached: /home/me/photos (gone)");
     const home = fakeClient();
     const homeStore = createCanvasStore(home.client, { ...options, mintKey: () => "draft-home" });
     homeStore.setHome(true);
@@ -795,14 +804,14 @@ describe("the canvas store", () => {
     const onEvent = fake.runs[0]?.options.onEvent;
     onEvent?.(event("run.started", { threadId: "thread-1", workspaceId: "default" }));
     onEvent?.({ ...event("resync.required", { reason: "the owner restarted" }), epoch: "epoch-2" });
-    expect(store.getSnapshot().runs[0]?.notice).toContain("owner restarted");
+    expect(words(store.getSnapshot().runs[0]?.notice)).toContain("owner restarted");
     await settle();
     await settle();
     const run = store.getSnapshot().runs[0];
     expect(fake.requests.map((request) => request.command)).toEqual(["tasks", "approvals"]);
     expect(run?.run.status).toBe("awaiting_approval");
     expect(run?.run.pending[0]?.steps).toBe(4);
-    expect(run?.notice).toContain("no longer holds");
+    expect(words(run?.notice)).toContain("no longer holds");
     expect(run !== undefined && decidableRound(run)?.steps).toBe(4);
     store.decide(id, true);
     await settle();
@@ -829,7 +838,7 @@ describe("the canvas store", () => {
       await settle();
     }
     expect(fake.subscribes).toHaveLength(3);
-    expect(store.getSnapshot().runs[0]?.error).toContain("lost its place");
+    expect(words(store.getSnapshot().runs[0]?.error)).toContain("lost its place");
   });
 
   it("rejoins a timed-out run once under its key, and says why a run could not start", async () => {
@@ -849,7 +858,7 @@ describe("the canvas store", () => {
     fake.queueRun({ ok: false, error: { code: "NOT_CONFIGURED", message: "no model is configured" } });
     store.submit("anything");
     await settle();
-    expect(store.getSnapshot().runs[1]?.error).toBe("no model is configured");
+    expect(words(store.getSnapshot().runs[1]?.error)).toBe("no model is configured");
   });
 
   it("stops a running turn once, treats nothing running as no failure, and clears an old error when acting again", async () => {
@@ -872,7 +881,7 @@ describe("the canvas store", () => {
     expect(store.getSnapshot().runs[0]?.error).toBeUndefined();
 
     fake.runs[0]?.options.onEnd?.(new Error("the owner refused to resume the stream"));
-    expect(store.getSnapshot().runs[0]?.error).toBe("the owner refused to resume the stream");
+    expect(words(store.getSnapshot().runs[0]?.error)).toBe("the owner refused to resume the stream");
     store.abort(id);
     expect(store.getSnapshot().runs[0]?.error).toBeUndefined();
   });
@@ -1149,7 +1158,7 @@ describe("the canvas store", () => {
       store.submit("after that");
       onEvent?.(event("task.failed", { errorCode: "TASK_CANCELLED", message: "cancelled" }));
       await settle();
-      expect(store.getSnapshot().runs[1]?.error).toContain("cancelled, so this prompt was not sent");
+      expect(words(store.getSnapshot().runs[1]?.error)).toContain("cancelled, so this prompt was not sent");
       expect(store.getSnapshot().runs[1]?.queued).toBeUndefined();
       expect(fake.requests.filter((request) => request.command === "reply")).toHaveLength(0);
       store.dispose();
@@ -1310,7 +1319,7 @@ describe("the canvas store", () => {
       await settle();
       await settle();
       await settle();
-      expect(store.getSnapshot().unsent?.message).toContain("waits on its approval round 3");
+      expect(words(store.getSnapshot().unsent?.message)).toContain("waits on its approval round 3");
       // The chat is taken up again from the place, and the other turn is an entry of its own, its round decidable.
       expect(fake.subscribes).toHaveLength(3);
       expect(fake.subscribes[2]?.options).toMatchObject({ from: place });
@@ -1426,7 +1435,7 @@ describe("the canvas store", () => {
       const shown = store.getSnapshot().runs.at(-1);
       expect(shown?.run.status).toBe("completed");
       expect(shown?.error).toBeUndefined();
-      expect(shown?.notice).toContain("Could not catch up with this chat");
+      expect(words(shown?.notice)).toContain("Could not catch up with this chat");
       await store.loadSessions();
       expect(fake.subscribes.length).toBe(before + 2);
     });
@@ -1491,7 +1500,7 @@ describe("the canvas store", () => {
       await settle();
       await settle();
       expect(fake.runs).toHaveLength(1);
-      expect(store.getSnapshot().unsent?.message).toContain("Not sent: no conversation");
+      expect(words(store.getSnapshot().unsent?.message)).toContain("Not sent: no conversation");
       expect(store.getSnapshot().continuing).toBe("task-1");
       store.submit("once more");
       await settle();
@@ -1510,7 +1519,7 @@ describe("the canvas store", () => {
       await settle();
       await settle();
       await settle();
-      expect(store.getSnapshot().unsent?.message).toContain("Not sent: scripted refusal");
+      expect(words(store.getSnapshot().unsent?.message)).toContain("Not sent: scripted refusal");
       expect(store.getSnapshot().continuing).toBe("task-1");
       expect(fake.runs).toHaveLength(1);
     });
@@ -1540,7 +1549,7 @@ describe("the canvas store", () => {
         store.submit("carry on");
         await tick();
         await tick(5_000);
-        expect(store.getSnapshot().runs[1]?.error).toContain(
+        expect(words(store.getSnapshot().runs[1]?.error)).toContain(
           "The prompt was recorded (message ui-2), but task task-1 has not started its turn",
         );
         expect(store.getSnapshot().continuing).toBe("task-1");
@@ -1565,14 +1574,14 @@ describe("the canvas store", () => {
         fake.subscribes[0]?.options.onEvent({ ...event("resync.required", { reason: "the owner restarted" }), epoch: "epoch-2" });
         answer = { ok: false, error: { code: "UNAVAILABLE", message: "busy" } };
         await tick(5_000);
-        expect(store.getSnapshot().runs[1]?.notice).toContain("trying again");
+        expect(words(store.getSnapshot().runs[1]?.notice)).toContain("trying again");
         answer = { ok: true, result: recordOf(["start", "reply"], "completed") };
         await tick(5_000);
         await tick();
         const turn = store.getSnapshot().runs[1];
         // Its ending, read back — not "has not started its turn".
         expect(turn?.error).toBeUndefined();
-        expect(turn?.notice).toContain("The chat finished while the page was away.");
+        expect(words(turn?.notice)).toContain("The chat finished while the page was away.");
         expect(store.getSnapshot().continuing).toBe("task-1");
       });
 
@@ -1587,7 +1596,7 @@ describe("the canvas store", () => {
         fake.subscribes[0]?.options.onEvent({ ...event("resync.required", { reason: "the owner restarted" }), epoch: "epoch-2" });
         await tick();
         expect(fake.requests.filter((request) => request.command === "tasks")).toHaveLength(reads);
-        expect(store.getSnapshot().runs[1]?.notice ?? "").not.toContain("completed while the page was away");
+        expect(words(store.getSnapshot().runs[1]?.notice) ?? "").not.toContain("completed while the page was away");
       });
     });
 
@@ -1597,11 +1606,8 @@ describe("the canvas store", () => {
       store.submit("carry on");
       await settle();
       await settle();
-      expect(store.getSnapshot().unsent).toEqual({
-        key: expect.any(String),
-        text: "carry on",
-        message: "Not sent: no such task. Your message is back in the box: send it again.",
-      });
+      expect(store.getSnapshot().unsent).toEqual({ key: expect.any(String), text: "carry on", message: expect.anything() });
+      expect(words(store.getSnapshot().unsent?.message)).toBe("Not sent: no such task. Your message is back in the box: send it again.");
       expect(replies(fake)).toEqual([]);
       expect(store.getSnapshot().continuing).toBe("task-1");
 
@@ -1612,7 +1618,7 @@ describe("the canvas store", () => {
       await settle();
       await settle();
       await settle();
-      expect(store.getSnapshot().unsent?.message).toContain("Not sent: busy.");
+      expect(words(store.getSnapshot().unsent?.message)).toContain("Not sent: busy.");
       expect(replies(fake)).toEqual([]);
       expect(store.getSnapshot().continuing).toBe("task-1");
     });
@@ -1624,7 +1630,7 @@ describe("the canvas store", () => {
       store.submit("carry on");
       for (let index = 0; index < 5; index += 1) await settle();
       expect(replies(fake)).toHaveLength(2);
-      expect(store.getSnapshot().runs[1]?.notice).toContain("may have been recorded");
+      expect(words(store.getSnapshot().runs[1]?.notice)).toContain("may have been recorded");
       expect(store.getSnapshot().runs[1]?.error).toBeUndefined();
       expect(fake.closed).not.toContain("resume-1");
     });
@@ -1943,7 +1949,7 @@ describe("the canvas store", () => {
     it("reads a remembered task's record when the owner holds none of its stream", async () => {
       const { store, fake } = await reloaded({});
       expect(fake.closed).toEqual(["resume-1"]);
-      expect(store.getSnapshot().runs[0]?.notice).toContain("The chat finished while the page was away.");
+      expect(words(store.getSnapshot().runs[0]?.notice)).toContain("The chat finished while the page was away.");
       expect(store.getSnapshot().continuing).toBe("task-1");
     });
 
@@ -2271,7 +2277,7 @@ describe("the canvas store", () => {
       const run = store.getSnapshot().runs[0];
       expect(run?.prompt).toBe("try it");
       expect(run?.run.transcript.map((item) => item.kind)).toEqual(["text"]);
-      expect(run?.error).toContain("the chat failed");
+      expect(words(run?.error)).toContain("the chat failed");
     });
 
     it("retains saved calls while a restored approval resumes and uses current execution metrics", async () => {
@@ -2497,7 +2503,7 @@ describe("the canvas store", () => {
     onEvent?.({ ...event("text.delta", { blockId: "b", text: "after " }), epoch: "epoch-2" });
     onEvent?.({ ...event("text.delta", { blockId: "b", text: "the gap" }), epoch: "epoch-2" });
     expect(store.getSnapshot().runs[0]?.run.transcript).toEqual([]);
-    expect(store.getSnapshot().runs[0]?.notice).toContain("owner restarted");
+    expect(words(store.getSnapshot().runs[0]?.notice)).toContain("owner restarted");
     await settle();
     await settle();
     // Released in order, over the state the read left.
@@ -2541,7 +2547,7 @@ describe("the canvas store", () => {
     onEvent?.({ ...event("text.delta", { blockId: "b", text: "still here" }), epoch: "epoch-2" });
     for (let turn = 0; turn < 4; turn += 1) await settle();
     // The read failed and said so — and the held frame was not stranded in the queue.
-    expect(store.getSnapshot().runs[0]?.error).toContain("the owner is busy");
+    expect(words(store.getSnapshot().runs[0]?.error)).toContain("the owner is busy");
     expect(store.getSnapshot().runs[0]?.run.transcript).toMatchObject([{ kind: "text", text: "still here" }]);
   });
 
@@ -2557,7 +2563,7 @@ describe("the canvas store", () => {
     // Held, and out of order for the epoch the resync opened: the fold refuses it.
     onEvent?.({ ...event("text.delta", { blockId: "b", text: "lost" }), epoch: "epoch-1" });
     for (let turn = 0; turn < 4; turn += 1) await settle();
-    expect(store.getSnapshot().runs[0]?.error).toContain("without a resync");
+    expect(words(store.getSnapshot().runs[0]?.error)).toContain("without a resync");
     // The stream is let go: no later event is folded over the gap.
     expect(fake.closed).toContain("run-1");
   });
@@ -2767,7 +2773,7 @@ describe("a chat the person stopped", () => {
     await store.openTask("task-1");
     await settle();
     expect(store.getSnapshot().runs[0]?.run).toMatchObject(calm);
-    expect(store.getSnapshot().runs[0]?.notice).toContain("no longer holds");
+    expect(words(store.getSnapshot().runs[0]?.notice)).toContain("no longer holds");
   });
 });
 
@@ -2794,7 +2800,7 @@ it("opens a record-only IPC task, displays its prompt and outcome, and continues
     prompt: "recorded prompt",
     run: { status: "completed", outcome: { finalText: "recorded answer" } },
   });
-  expect(store.getSnapshot().runs[0]?.notice).toContain("no longer holds");
+  expect(words(store.getSnapshot().runs[0]?.notice)).toContain("no longer holds");
   expect(store.getSnapshot().continuing).toBe("task-1");
   store.submit("continue");
   await settle();
@@ -3086,8 +3092,8 @@ it("puts a message the owner never got back in the box, plainly, and leaves the 
   expect(snapshot.runs.some((run) => run.prompt === "and the next step?")).toBe(false);
   expect(snapshot.runs.some((run) => run.error !== undefined)).toBe(false);
   expect(snapshot.unsent?.text).toBe("and the next step?");
-  expect(snapshot.unsent?.message).toContain("did not answer in time");
-  expect(snapshot.unsent?.message).not.toContain("subscribe");
+  expect(words(snapshot.unsent?.message)).toContain("did not answer in time");
+  expect(words(snapshot.unsent?.message)).not.toContain("subscribe");
   // Sent again once the owner is back: the same chat continues, and the note goes.
   fake.subscribeResponse = { ok: true, result: {} };
   store.submit("and the next step?");

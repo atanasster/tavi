@@ -2,6 +2,7 @@ import type { ClientResponse, RunOptions, RunState, Subscription } from "@tavi/c
 import type { ClientEvent, ChatNotice, RunPayload, TranscriptEntry as SavedTurn } from "@tavi/contracts";
 
 import type { CanvasClient, CanvasOptions, CanvasRun, CanvasState, CanvasStore, EndedTurn, NextPrompt, RestoredTask } from "./types.js";
+import type { Said } from "./said.js";
 
 /** What a new entry on the page starts with beside its id and prompt. */
 interface EntryExtra {
@@ -38,7 +39,7 @@ interface StoreOps {
   settles(id: string, taskId: string): void;
   find(id: string): CanvasRun | undefined;
   update(id: string, change: (run: CanvasRun) => CanvasRun, urgent?: boolean): void;
-  failed(id: string, error: string): void;
+  failed(id: string, error: Said): void;
   /** The chat an entry belongs to: its task, or the one it continues. */
   chatOf(run: CanvasRun): string | undefined;
   /** Plugins' status lines taken off the entries `which` picks: `pluginId`'s, or every one. */
@@ -74,13 +75,13 @@ interface StoreOps {
   /** A queued prompt the turn of `taskId` took: out of the queue and off the page. */
   dropSteered(taskId: string, id: string): void;
   /** A task that will take no further turn: what was queued behind it is not sent. */
-  dropQueued(taskId: string, error: string): void;
+  dropQueued(taskId: string, error: Said): void;
   /** A prompt that continues task `taskId`, as a new turn of it. */
   continueTask(id: string, taskId: string, prompt: string, conversationId: string | undefined): void;
   /** A continuation whose turn has not spoken, watched. */
   watch(id: string): void;
   /** A task replayed from the owner's stream as its turns. */
-  restore(remembered: RestoredTask, prompts?: readonly string[], resume?: CanvasRun, onLost?: (error: string) => void): void;
+  restore(remembered: RestoredTask, prompts?: readonly string[], resume?: CanvasRun, onLost?: (error: Said) => void): void;
   /** The chat shown here, taken up again from where its last followed turn stopped. */
   catchUp(taskId: string, place?: { readonly at?: string; readonly from?: CanvasRun }): void;
   /** Merge a read of chat `taskId`'s notices into what the page holds. */

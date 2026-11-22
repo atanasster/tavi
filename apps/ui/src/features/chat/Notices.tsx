@@ -1,7 +1,8 @@
 import type { ChatNotice } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
 import { useState, type ReactNode } from "react";
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import { Button } from "../../ui/Button.js";
 import { Markdown } from "../../ui/Markdown.js";
 import { RowAction } from "../../ui/RowAction.js";
@@ -19,28 +20,28 @@ import { RowAction } from "../../ui/RowAction.js";
 /** How many of the newest notices show before the toggle. */
 const NOTICES_SHOWN = 3;
 
-const KIND_LABELS: Readonly<Record<ChatNotice["kind"], string>> = {
-  "run-result": "Run result",
-  "run-settled": "Run",
-  "side-chat-settled": "Side chat",
-  "earlier-chats": "Earlier chats",
-  reminder: "Reminder",
-  conversation: "Conversation",
-  epoch: "Epoch",
+const KIND_LABELS: Readonly<Record<ChatNotice["kind"], UiKey>> = {
+  "run-result": "chat.notice.kind.runResult",
+  "run-settled": "chat.notice.kind.run",
+  "side-chat-settled": "chat.notice.kind.sideChat",
+  "earlier-chats": "chat.notice.kind.earlierChats",
+  reminder: "chat.notice.kind.reminder",
+  conversation: "chat.notice.kind.conversation",
+  epoch: "chat.notice.kind.epoch",
   // The chat's working folder: budget warnings.
-  folder: "Folder",
+  folder: "chat.notice.kind.folder",
   // One heartbeat item.
-  heartbeat: "Heartbeat",
+  heartbeat: "chat.notice.kind.heartbeat",
   // A memory card.
-  memory: "Memory",
+  memory: "chat.notice.kind.memory",
   // An MCP server's notice: decided in Center or the CLI.
-  mcp: "Server",
+  mcp: "chat.notice.kind.mcp",
 };
 
-/** What a notice's Open button opens. */
-const OPEN_LABELS: Readonly<Partial<Record<ChatNotice["kind"], string>>> = {
-  "side-chat-settled": "side chat",
-  conversation: "conversation",
+/** What a notice's Open button says, by what it opens: a run unless named here. */
+const OPEN_LABELS: Readonly<Partial<Record<ChatNotice["kind"], UiKey>>> = {
+  "side-chat-settled": "chat.notice.openSideChat",
+  conversation: "chat.notice.openConversation",
 };
 
 export function NoticeCards({
@@ -62,6 +63,7 @@ export function NoticeCards({
   /** Reply to a notice in a side chat of this chat. */
   readonly onReply?: ((notice: ChatNotice) => void) | undefined;
 }) {
+  const t = useT();
   const [all, setAll] = useState(false);
   // An epoch's notice is a divider between the turns, not a card.
   const cards = notices?.filter((notice) => notice.kind !== "epoch") ?? [];
@@ -69,11 +71,11 @@ export function NoticeCards({
   const shown = all ? cards : cards.slice(-NOTICES_SHOWN);
   const hidden = cards.length - shown.length;
   return (
-    <section className="chat-notices" aria-label="notices">
+    <section className="chat-notices" aria-label={t("chat.notice.label")}>
       {hidden > 0 ? (
         <p className="earlier">
           <Button variant="ghost" size="sm" onClick={() => setAll(true)}>
-            Show {plural(hidden, "earlier notice")}
+            {t("chat.notice.showEarlier", { count: hidden })}
           </Button>
         </p>
       ) : null}
@@ -94,7 +96,7 @@ export function NoticeCards({
           ) : (
             <>
               <p className="chat-notice-title">
-                <span className="visually-hidden">{KIND_LABELS[notice.kind]}: </span>
+                <span className="visually-hidden">{t("chat.notice.kindPrefix", { kind: t(KIND_LABELS[notice.kind]) })}</span>
                 {notice.title}
               </p>
               {/* What a run said, drawn as its answer is (a list, bold), not as its Markdown's raw marks; its links ask first, as a worker's do. */}
@@ -113,7 +115,9 @@ export function NoticeCards({
             notice.kind === "mcp") ? null : (
             <div className="chat-notice-actions">
               {notice.sourceTaskId !== undefined && onOpen !== undefined ? (
-                <RowAction onClick={() => onOpen(notice.sourceTaskId as string)}>Open {OPEN_LABELS[notice.kind] ?? "run"}</RowAction>
+                <RowAction onClick={() => onOpen(notice.sourceTaskId as string)}>
+                  {t(OPEN_LABELS[notice.kind] ?? "chat.notice.openRun")}
+                </RowAction>
               ) : null}
               {/* A conversation's notice is metadata only, with no output to reply about; a side chat is answered in itself, by opening it; a folder notice is about this chat itself. */}
               {notice.sourceTaskId !== undefined &&
@@ -122,7 +126,7 @@ export function NoticeCards({
               notice.kind !== "side-chat-settled" &&
               notice.kind !== "folder" ? (
                 <RowAction disabled={!connected} onClick={() => onReply(notice)}>
-                  Reply in a side chat
+                  {t("chat.notice.reply")}
                 </RowAction>
               ) : null}
             </div>
@@ -208,9 +212,7 @@ export function useFreshContext(
     setState({ busy: true });
     void request().then((refused) =>
       setState(
-        refused === undefined
-          ? { busy: false, said: "Your next message starts a new epoch." }
-          : { busy: false, said: refused, failed: true },
+        refused === undefined ? { busy: false, said: translateNow("chat.epoch.freshSet") } : { busy: false, said: refused, failed: true },
       ),
     );
   };
@@ -236,30 +238,24 @@ export function EpochDivider({
   /** Ask for fresh context; answers why it was not set, or nothing when it was. */
   readonly onFreshContext?: (() => Promise<string | undefined>) | undefined;
 }) {
+  const t = useT();
   const fresh = useFreshContext(onFreshContext);
   return (
     // A group, not a separator: it holds buttons, which a separator's children may not be (WCAG 4.1.2).
     <div className="epoch-divider" role="group" aria-label={notice.title} data-notice-kind="epoch">
       <p className="epoch-divider-title">{notice.title}</p>
       <p className="epoch-divider-summary">
-        Earlier turns were summarized for the model.{" "}
-        {notice.artifactId === undefined ? "Nothing was archived." : "The full turns are kept in the archive."}
+        {t(notice.artifactId === undefined ? "chat.epoch.summaryNoArchive" : "chat.epoch.summaryArchived")}
       </p>
       <div className="epoch-divider-actions">
         {notice.artifactId !== undefined && onOpenArchive !== undefined ? (
           <Button variant="ghost" size="sm" onClick={() => onOpenArchive(notice.artifactId as string)}>
-            Open archive
+            {t("chat.epoch.openArchive")}
           </Button>
         ) : null}
         {onFreshContext !== undefined ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={!connected || fresh.busy}
-            onClick={fresh.ask}
-            title="Start the next message from a summary of this chat, whatever its length"
-          >
-            Fresh context
+          <Button variant="ghost" size="sm" disabled={!connected || fresh.busy} onClick={fresh.ask} title={t("chat.epoch.freshTip")}>
+            {t("chat.epoch.fresh")}
           </Button>
         ) : null}
       </div>

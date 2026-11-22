@@ -8,7 +8,8 @@ import { Tooltip } from "../../ui/Tooltip.js";
 import { lifecycleNotice, loadModels, type BrowsedModel } from "../settings/models-api.js";
 import type { Outcome } from "../../lib/ipc.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
-import { formatCount } from "../../lib/format.js";
+import { translateNow, useT } from "../../lib/i18n.js";
+import type { UiKey } from "../../locales/en.js";
 import { MODEL_PICKER_EDGE_PX } from "../../lib/layout.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
@@ -29,6 +30,13 @@ function formatOptionLabel(model: BrowsedModel, models: readonly BrowsedModel[])
   }
   return reduced;
 }
+
+/** A model's state, as its badge says it. */
+const STATE_KEYS: Readonly<Record<string, UiKey>> = {
+  available: "chat.model.state.available",
+  capable: "chat.model.state.capable",
+  unavailable: "chat.model.state.unavailable",
+};
 
 /** ` · Retiring` after a model whose lifecycle warns (not a mere notice); nothing otherwise. */
 function lifecycleSuffix(model: BrowsedModel): string {
@@ -53,6 +61,7 @@ export function ModelPicker({
   readonly onPick: (connectionId: string, model: string) => Promise<Outcome<string | undefined>>;
   readonly onManage: () => void;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const { data, error, reload } = useLoaded(() => loadModels(client, workspaceId));
   // A pick's note, with the model the chat had and the one picked: shown while the chat holds either (a refused
@@ -70,7 +79,8 @@ export function ModelPicker({
   // The chat's own model, when it warns: said under the picker until a pick's own note replaces it.
   const chosen = models.find((model) => `${model.connectionId}/${model.modelId}` === target);
   const chosenNotice = chosen === undefined ? undefined : lifecycleNotice(chosen);
-  const chosenLifecycle = chosenNotice === undefined || chosenNotice.level === "info" ? undefined : `This model ${chosenNotice.text}.`;
+  const chosenLifecycle =
+    chosenNotice === undefined || chosenNotice.level === "info" ? undefined : t("chat.model.lifecycle", { what: chosenNotice.text });
   const selectedModel =
     models.find((entry) => `${entry.connectionId}/${entry.modelId}` === target) ??
     (target !== undefined ? models.find((entry) => entry.modelId === target) : undefined);
@@ -83,7 +93,7 @@ export function ModelPicker({
     setSaving(false);
     // A pick of a model that warns says so with the pick's own note, announced together.
     const notice = written.ok ? lifecycleNotice(model) : undefined;
-    const warns = notice !== undefined && notice.level !== "info" ? `This model ${notice.text}.` : undefined;
+    const warns = notice !== undefined && notice.level !== "info" ? translateNow("chat.model.lifecycle", { what: notice.text }) : undefined;
     const said = written.ok ? written.value : written.message;
     setPicked({ from: target, to: value, note: said === undefined ? warns : warns === undefined ? said : `${said} ${warns}` });
     reload();
@@ -97,7 +107,7 @@ export function ModelPicker({
       variant="ghost"
       size={["icon", "sm"]}
       className={infoOpen ? "active" : undefined}
-      aria-label="Model specifications"
+      aria-label={t("chat.model.specs")}
       aria-expanded={infoOpen}
       aria-haspopup="dialog"
       aria-controls={infoOpen ? popoverId : undefined}
@@ -114,26 +124,26 @@ export function ModelPicker({
           <Button variant="ghost" size="sm" className="model-selector truncate" title={target} onClick={onManage}>
             {/* The model's own name ("gemini-3.8-flash"); the whole `connection/model` is the title. */}
             {error !== undefined
-              ? "Models unreadable"
+              ? t("chat.model.unreadable")
               : data === undefined
-                ? "Reading models…"
+                ? t("chat.model.reading")
                 : target === undefined
-                  ? "Configure model"
+                  ? t("chat.composer.model.configure")
                   : reduceModelName(target)}
             <Icon name="chevron-down" size="sm" />
           </Button>
         ) : (
           <Select
-            aria-label="Chat model"
+            aria-label={t("chat.model.label")}
             className="model-select"
             contentClassName="compact"
             side="top"
             value={known ? (target ?? "") : ""}
             disabled={saving}
             onChange={(event) => void pick(event.target.value)}
-            searchPlaceholder="Search models…"
+            searchPlaceholder={t("chat.model.search")}
           >
-            {known ? null : <option value="">{target ?? "Choose a model"}</option>}
+            {known ? null : <option value="">{target ?? t("chat.model.choose")}</option>}
             {models.map((model) => (
               <option
                 key={`${model.connectionId}/${model.modelId}`}
@@ -150,7 +160,7 @@ export function ModelPicker({
             ))}
           </Select>
         )}
-        <Tooltip text="Model specifications" suppressed={infoOpen}>
+        <Tooltip text={t("chat.model.specs")} suppressed={infoOpen}>
           {infoButton}
         </Tooltip>
       </div>
@@ -161,7 +171,7 @@ export function ModelPicker({
         <Popover
           id={popoverId}
           className="model-info-popover surface-popover"
-          label="Model specifications"
+          label={t("chat.model.specs")}
           anchor={infoButtonRef}
           anchoring={{ align: "end", edge: MODEL_PICKER_EDGE_PX }}
           deps={[target, selectedModel]}
@@ -177,10 +187,12 @@ export function ModelPicker({
               <span className="model-info-title truncate">
                 {selectedModel?.displayName ??
                   selectedModel?.modelId ??
-                  (target !== undefined ? reduceModelName(target) : "No model selected")}
+                  (target !== undefined ? reduceModelName(target) : t("chat.model.none"))}
               </span>
               {selectedModel !== undefined ? (
-                <span className={`badge ${STATE_BADGES[selectedModel.state]}`}>{selectedModel.state}</span>
+                <span className={`badge ${STATE_BADGES[selectedModel.state]}`}>
+                  {STATE_KEYS[selectedModel.state] === undefined ? selectedModel.state : t(STATE_KEYS[selectedModel.state] as UiKey)}
+                </span>
               ) : null}
             </div>
             {selectedModel?.displayName !== undefined && selectedModel.displayName !== selectedModel.modelId ? (
@@ -190,24 +202,28 @@ export function ModelPicker({
 
           <dl className="model-info-specs">
             <div className="model-info-row">
-              <dt>Connection</dt>
+              <dt>{t("chat.model.connection")}</dt>
               <dd className="truncate">{selectedModel?.connectionLabel ?? (target !== undefined ? target.split("/")[0] : "—")}</dd>
             </div>
             <div className="model-info-row">
-              <dt>Context Window</dt>
+              <dt>{t("chat.model.context")}</dt>
               <dd className="truncate">
-                {selectedModel?.contextWindow !== undefined ? `${formatCount(selectedModel.contextWindow)} tokens` : "Not disclosed"}
+                {selectedModel?.contextWindow !== undefined
+                  ? t("chat.model.tokens", { count: selectedModel.contextWindow })
+                  : t("chat.model.undisclosed")}
               </dd>
             </div>
             <div className="model-info-row">
-              <dt>Max Output</dt>
+              <dt>{t("chat.model.maxOutput")}</dt>
               <dd className="truncate">
-                {selectedModel?.maxTokens !== undefined ? `${formatCount(selectedModel.maxTokens)} tokens` : "Not disclosed"}
+                {selectedModel?.maxTokens !== undefined
+                  ? t("chat.model.tokens", { count: selectedModel.maxTokens })
+                  : t("chat.model.undisclosed")}
               </dd>
             </div>
             {selectedModel?.capabilities !== undefined && selectedModel.capabilities.length > 0 ? (
               <div className="model-info-row">
-                <dt>Capabilities</dt>
+                <dt>{t("chat.model.capabilities")}</dt>
                 <dd className="truncate">
                   <div className="model-info-chips">
                     {selectedModel.capabilities.map((cap) => (
@@ -232,7 +248,7 @@ export function ModelPicker({
               }}
             >
               <Icon name="sliders" size="sm" />
-              <span>Model settings</span>
+              <span>{t("chat.model.settings")}</span>
             </Button>
           </div>
         </Popover>

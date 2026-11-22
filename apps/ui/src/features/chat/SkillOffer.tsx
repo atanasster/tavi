@@ -8,6 +8,7 @@ import {
 import { useState } from "react";
 
 import { useLoaded } from "../../hooks/use-loaded.js";
+import { useT } from "../../lib/i18n.js";
 import { readStored, writeStored } from "../../lib/storage.js";
 import { Button } from "../../ui/Button.js";
 import { Failure } from "../../ui/Parts.js";
@@ -98,6 +99,7 @@ export function SkillOfferCard({
   /** Open Soul & memory, where the proposal opens; absent where the Center has no such page. */
   readonly onReview?: (() => void) | undefined;
 }) {
+  const t = useT();
   const { client, workspaceId } = useWorkspace();
   const listed = useLoaded(() => listSkills(client, workspaceId), [workspaceId, taskId, revision]);
   const [failure, setFailure] = useState<string | undefined>(undefined);
@@ -129,13 +131,17 @@ export function SkillOfferCard({
   };
   const heading = !waiting
     ? latest.reviewState === "approved"
-      ? `Saved as a skill: ${name}`
-      : `Not suggested again for ${SKILL_DISMISSED_TOPIC_DAYS} days: ${name}`
+      ? t("chat.skillOffer.saved", { name })
+      : t("chat.skillOffer.dismissed", { count: SKILL_DISMISSED_TOPIC_DAYS, name })
     : folded
-      ? `Waiting for your review: ${name}`
-      : "Save how I did this as a skill?";
+      ? t("chat.skillOffer.waiting", { name })
+      : t("chat.skillOffer.ask");
   return (
-    <article className="memory-card skill-offer" aria-label={`Skill: ${heading}`} data-skill-offer={`${latest.skillId}@${latest.version}`}>
+    <article
+      className="memory-card skill-offer"
+      aria-label={t("chat.skillOffer.label", { heading })}
+      data-skill-offer={`${latest.skillId}@${latest.version}`}
+    >
       <p className="memory-card-heading" role="status" aria-live="polite">
         {heading}
       </p>
@@ -149,7 +155,7 @@ export function SkillOfferCard({
         <div className="memory-card-actions">
           {review === undefined ? null : (
             <Button size="sm" onClick={review}>
-              Review
+              {t("chat.skillOffer.review")}
             </Button>
           )}
           {folded ? null : (
@@ -162,10 +168,10 @@ export function SkillOfferCard({
                   setLater((keys) => [...keys, laterKey(latest)]);
                 }}
               >
-                Not now
+                {t("chat.skillOffer.later")}
               </Button>
               <Button variant="ghost" size="sm" disabled={busy || !connected} onClick={dismiss}>
-                Don't suggest this
+                {t("chat.skillOffer.dismiss")}
               </Button>
             </>
           )}
