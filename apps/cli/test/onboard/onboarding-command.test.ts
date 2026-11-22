@@ -216,6 +216,29 @@ describe("onboarding command", () => {
     expect(ideas?.prompts).toEqual(hostFallbackFlow().steps.find((step) => step.kind === "ideas")?.prompts);
   });
 
+  it("asks a plugin's flow in the workspace's language, and says the host's own flow and the fallback in it", async () => {
+    const providers = new OnboardingProviderRegistry();
+    const asked: unknown[] = [];
+    providers.install("acme.broken", {
+      provider: {
+        flow: async (request) => {
+          asked.push(request.locale);
+          throw new Error("no");
+        },
+      },
+      kind: "plugin",
+    });
+    const { call } = await fixture({ providers, locale: async () => "bg" });
+    await call({ action: "provider", id: "acme.broken" });
+    const answer = await call({ action: "flow", surface: "web" });
+    expect(asked).toEqual(["bg"]);
+    expect(answer).toMatchObject({ providerId: "host", fallback: "не ползвам acme.broken: даде грешка" });
+    expect((answer["flow"] as OnboardingFlow).title).toBe("Настрой Tavi");
+    // The status keeps the English detail beside its key.
+    const model = (await call({ action: "status" })).steps.find((step) => step.kind === "model");
+    expect(model).toMatchObject({ detail: "No model is set up", detailText: { key: "onboarding.model.none" } });
+  });
+
   it("refuses detect, connect-detected and verify where nothing can run them", async () => {
     const { refusal } = await fixture();
     for (const payload of [{ action: "verify" }, { action: "detect" }, { action: "connect-detected", preset: "ollama" }] as const)
@@ -667,6 +690,31 @@ describe("verify", () => {
       // The funnel counts every failure, a transient one too, by its code.
       expect((await repositories.onboarding.funnel("default")).model, code).toMatchObject({ failed: 1, lastError: code });
     }
+  });
+
+  it("words a verify's advice in the workspace's language", async () => {
+    const credentials = async () => ({ ok: true as const, result: {} });
+    const noTools = await fixture(
+      { locale: async () => "bg", config: { credentials, models: tested({ ok: true, capabilities: ["chat"] }) } },
+      live(),
+    );
+    expect(((await noTools.call({ action: "verify" }))["results"] as unknown[])[0]).toMatchObject({
+      toolsOk: false,
+      advice:
+        "Този модел може да разговаря, но не извика инструмент. На Tavi му трябват инструменти за повечето задачи: ако можеш, избери друг модел.",
+    });
+    const refused = await fixture(
+      {
+        locale: async () => "bg",
+        config: { credentials, models: tested({ ok: false, capabilities: [], failureCode: "auth", message: "MODEL_FAILED: 401" }) },
+      },
+      live(),
+    );
+    expect(((await refused.call({ action: "verify" }))["results"] as unknown[])[0]).toMatchObject({
+      ok: false,
+      errorCode: "auth",
+      advice: expect.stringMatching(/^Ключът беше отказан\. Провери го или създай нов/u),
+    });
   });
 
   it("never touches the configured target, and refuses a second verify within seconds", async () => {

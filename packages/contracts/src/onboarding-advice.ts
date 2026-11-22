@@ -1,10 +1,17 @@
+import { coreEnglish, type CoreKey, type CoreT } from "./locales/core.js";
+import { clip } from "./util.js";
 import { daysBetween, LIFECYCLE_WARNING_DAYS, type ModelLifecycle } from "./model-lifecycle.js";
 import { MODEL_PROVIDER_PRESETS, keyPageOf, type ModelProviderPreset } from "./models-config.js";
+import { CORE_EN } from "./locales/core-en.js";
 import {
+  fastModelFailure,
   ONBOARDING_ABI,
+  ONBOARDING_STEP_DETAIL_MAX,
   OnboardingFlowSchema,
   type OnboardingFlow,
+  type OnboardingDetailText,
   type OnboardingFlowStep,
+  type OnboardingStepStatus,
   type OnboardingStepKind,
   type OnboardingSurface,
 } from "./onboarding.js";
@@ -58,43 +65,105 @@ export interface VerifyAdviceContext {
 const presetNamed = (id: string | undefined): ModelProviderPreset | undefined =>
   id === undefined ? undefined : MODEL_PROVIDER_PRESETS.find((preset) => preset.id === id);
 
-/** How to start each local server when it isn't running. */
-const START_LOCAL: Readonly<Record<string, string>> = {
-  ollama: "Ollama isn't running: start it with `ollama serve`.",
-  lmstudio: "LM Studio's server isn't running: start it in LM Studio (Developer → Start server), or with `lms server start`.",
+/** How to start each local server when it isn't running, by preset id. */
+const START_LOCAL: Readonly<Record<string, CoreKey>> = {
+  ollama: "onboarding.advice.startOllama",
+  lmstudio: "onboarding.advice.startLmStudio",
 };
 
-/** The advice for `code`, worded for the connection it happened on. */
-export function verifyAdvice(code: VerifyAdviceCode, context: VerifyAdviceContext = {}): string {
+/** A `core` key and its parameters: a message said in whichever language the reader's surface speaks. */
+export interface CoreText {
+  readonly key: CoreKey;
+  readonly params?: Readonly<Record<string, string>>;
+}
+
+/** The advice for `code` as a key and its parameters, worded for the connection it happened on. */
+export function verifyAdviceText(code: VerifyAdviceCode, context: VerifyAdviceContext = {}): CoreText {
   const preset = presetNamed(context.preset);
-  const provider = preset?.name ?? "The provider";
-  const model = context.model ?? "this model";
+  const provider = preset === undefined ? {} : { provider: preset.name };
+  const model = context.model === undefined ? {} : { model: context.model };
+  // Each sentence once with the provider or model named, once without: "The provider" and "this model" are words, not data.
+  const named = (key: CoreKey, any: CoreKey, params: Readonly<Record<string, string>>): CoreText =>
+    preset === undefined ? { key: any, params } : { key, params: { ...provider, ...params } };
   switch (code) {
     case "auth":
       return preset === undefined
-        ? "The key was refused. Check it, or create a new one."
-        : `The key was refused. Check it, or create a new one at ${keyPageOf(preset)}.`;
+        ? { key: "onboarding.advice.auth" }
+        : { key: "onboarding.advice.authAt", params: { page: keyPageOf(preset) } };
     case "quota_exceeded":
-      return `${provider} refused for quota or billing. Check the account's credits and limits, then try again.`;
+      return named("onboarding.advice.quota", "onboarding.advice.quotaAny", {});
     case "rate_limit":
-      return `${provider} is rate-limiting this key. Wait a minute, then try again.`;
+      return named("onboarding.advice.rateLimit", "onboarding.advice.rateLimitAny", {});
     case "model_unavailable":
-      return `This account can't use ${model}. Pick another.`;
+      return context.model === undefined
+        ? { key: "onboarding.advice.modelUnavailableAny" }
+        : { key: "onboarding.advice.modelUnavailable", params: model };
     case "model_retired":
-      return `${model} has been retired. Pick another.`;
+      return context.model === undefined
+        ? { key: "onboarding.advice.modelRetiredAny" }
+        : { key: "onboarding.advice.modelRetired", params: model };
     case "invalid_request":
-      return `${provider} refused the request for ${model}. Pick another model, or check the endpoint.`;
-    case "unreachable":
-      if (preset !== undefined && preset.localOnly)
-        return START_LOCAL[preset.id] ?? `${preset.name} isn't running. Start it, then try again.`;
-      return `Tavi couldn't reach ${preset?.name ?? "the provider"}${context.baseUrl === undefined ? "" : ` at ${context.baseUrl}`}. Check the address and your network.`;
+      return context.model === undefined
+        ? named("onboarding.advice.invalidRequestAnyModel", "onboarding.advice.invalidRequestAny", {})
+        : named("onboarding.advice.invalidRequest", "onboarding.advice.invalidRequestAnyProvider", model);
+    case "unreachable": {
+      if (preset !== undefined && preset.localOnly) {
+        const start = START_LOCAL[preset.id];
+        return start === undefined ? { key: "onboarding.advice.startLocal", params: provider } : { key: start };
+      }
+      return context.baseUrl === undefined
+        ? named("onboarding.advice.unreachable", "onboarding.advice.unreachableAny", {})
+        : named("onboarding.advice.unreachableAt", "onboarding.advice.unreachableAnyAt", { url: context.baseUrl });
+    }
     case "timeout":
-      return `${provider} didn't answer within ${String(Math.round((context.timeoutMs ?? 20_000) / 1000))} seconds. Try again, or pick a smaller model.`;
+      return named("onboarding.advice.timeout", "onboarding.advice.timeoutAny", {
+        seconds: String(Math.round((context.timeoutMs ?? 20_000) / 1000)),
+      });
     case "no-tools":
-      return "This model can chat but didn't call a tool. Tavi needs tools for most tasks: pick another model if you can.";
+      return { key: "onboarding.advice.noTools" };
     case "provider":
-      return `${provider} failed. Try again, or pick another model.`;
+      return named("onboarding.advice.failed", "onboarding.advice.failedAny", {});
   }
+}
+
+/** The advice for `code`, worded for the connection it happened on. */
+export function verifyAdvice(code: VerifyAdviceCode, context: VerifyAdviceContext = {}, t: CoreT = coreEnglish): string {
+  const { key, params } = verifyAdviceText(code, context);
+  return t(key, params);
+}
+
+const isCoreKey = (key: string): key is CoreKey => Object.hasOwn(CORE_EN, key);
+
+/** A detail message in `t`'s language, each parameter that is a message of its own said first; undefined for a key this build lacks. */
+function detailIn(text: OnboardingDetailText, t: CoreT): string | undefined {
+  if (!isCoreKey(text.key)) return undefined;
+  const params: Record<string, string | number> = {};
+  for (const [name, value] of Object.entries(text.params ?? {})) {
+    if (typeof value !== "object") params[name] = value;
+    else if (isCoreKey(value.key)) params[name] = t(value.key, value.params);
+    else return undefined;
+  }
+  return t(text.key, params);
+}
+
+/**
+ * A step's detail in `t`'s language: its `detailText` when it has one this
+ * build knows, else the owner's English `detail`; cut as the owner cuts it.
+ */
+export function onboardingStepDetail(step: Pick<OnboardingStepStatus, "detail" | "detailText">, t: CoreT = coreEnglish): string {
+  const said = step.detailText === undefined ? undefined : detailIn(step.detailText, t);
+  return said === undefined ? step.detail : clip(said, ONBOARDING_STEP_DETAIL_MAX);
+}
+
+/** `fastModelFailure` in `t`'s language: the advice after a failed fast model, from the step's `detailText` when it carries it. */
+export function fastModelFailureIn(
+  step: Pick<OnboardingStepStatus, "state" | "detail" | "detailText"> | undefined,
+  t: CoreT = coreEnglish,
+): string | undefined {
+  const english = fastModelFailure(step);
+  const fast = step?.detailText?.params?.["fast"];
+  if (english === undefined || fast === undefined || typeof fast !== "object") return english;
+  return detailIn(fast, t) ?? english;
 }
 
 /** What a failure says of itself, as far as a connection test reports it. */

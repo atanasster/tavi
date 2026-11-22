@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   ONBOARDING_DONE_STEP_ID,
+  onboardingStepDetail,
   SERVICE_SETUP_COMMAND,
   type OnboardingFlowAnswer,
   type OnboardingFlowStep,
   type OnboardingStatus,
 } from "@tavi/contracts";
 
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import { Icon } from "../../ui/Icon.js";
 import { PluginFrame } from "../plugin-host/PluginFrame.js";
 import { AppsStep, ChannelsStep } from "./ConnectSteps.js";
@@ -233,7 +234,7 @@ export function Welcome(props: WelcomeProps) {
             {stepStatus !== undefined && stepStatus.detail !== "" && stepStatus.state !== "todo" ? (
               <p className={stepStatus.state === "done" ? "welcome-state done" : "welcome-state"}>
                 {stepStatus.state === "done" ? <Icon name="check" size="sm" /> : null}
-                <span>{stepStatus.detail}</span>
+                <span>{onboardingStepDetail(stepStatus, translateCore)}</span>
               </p>
             ) : null}
             {stepStatus?.elsewhere === "cli" ? (

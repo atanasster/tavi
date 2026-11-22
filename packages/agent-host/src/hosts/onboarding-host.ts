@@ -1,6 +1,4 @@
 import {
-  FAST_MODEL_FAILED,
-  MODEL_NOT_VERIFIED,
   ONBOARDING_ABI,
   ONBOARDING_FEATURED_MAX,
   ONBOARDING_FLOW_DEADLINE_MS,
@@ -13,6 +11,7 @@ import {
   onboardingFirstRun,
   type OnboardingFlow,
   type OnboardingFlowRequest,
+  type OnboardingDetailText,
   type OnboardingFlowStep,
   type OnboardingInstall,
   type OnboardingProvider,
@@ -25,11 +24,14 @@ import {
   type IdeaCapability,
   availableFor,
   stepOnSurface,
-  verifyAdvice,
+  verifyAdviceText,
   VERIFY_ADVICE_CODES,
+  type CoreText,
   withAvailableFeatured,
   type VerifyAdviceCode,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { clip } from "@tavi/contracts/util";
 
 /**
@@ -126,7 +128,8 @@ export interface OnboardingLiveFacts {
    */
   readonly voice?: {
     readonly supported: boolean;
-    readonly unsupported?: string;
+    /** Why not, as a `core` key and its parameters (said in the workspace's language), or a sentence of its own. */
+    readonly unsupported?: string | CoreText;
     readonly ready: boolean;
     readonly missing: readonly string[];
   };
@@ -198,32 +201,71 @@ function modelVerification(
   );
 }
 
+/** A step's detail: the English text, and the key and parameters it is said with in another language. */
+type Detail = Pick<OnboardingStepStatus, "detail" | "detailText">;
+
+type DetailParams = NonNullable<OnboardingDetailText["params"]>;
+type DetailParam = DetailParams[string];
+
+/** A parameter within the schema's bounds: a long label list or endpoint is cut, as the detail is. */
+const bounded = (value: DetailParam): DetailParam =>
+  typeof value === "string"
+    ? clip(value, ONBOARDING_STEP_DETAIL_MAX)
+    : typeof value === "number" || value.params === undefined
+      ? value
+      : {
+          key: value.key,
+          params: Object.fromEntries(Object.entries(value.params).map(([name, inner]) => [name, bounded(inner) as string | number])),
+        };
+
+/** `key` said in English, kept beside its key and parameters (a parameter may be a message of its own, said first). */
+function said(key: CoreKey, params?: DetailParams): Detail {
+  if (params === undefined) return { detail: coreEnglish(key), detailText: { key } };
+  const kept = Object.fromEntries(Object.entries(params).map(([name, value]) => [name, bounded(value)]));
+  const english = Object.fromEntries(
+    Object.entries(params).map(([name, value]) => [
+      name,
+      typeof value === "object" ? coreEnglish(value.key as CoreKey, value.params) : value,
+    ]),
+  );
+  return { detail: coreEnglish(key, english), detailText: { key, params: kept } };
+}
+
 function modelStep(facts: OnboardingFacts): OnboardingStepStatus {
   const { main, fast } = facts.model;
-  if (main === undefined) return { kind: "model", state: "todo", detail: "No model is set up" };
-  const name = `${main.label} · ${main.model}`;
+  if (main === undefined) return { kind: "model", state: "todo", ...said("onboarding.model.none") };
+  const named = { connection: main.label, model: main.model };
   const current = modelVerification(facts, "main", main);
   const fastVerification = fast === undefined ? undefined : modelVerification(facts, "fast", fast);
   const fastFailed = fastVerification?.ok === false ? fastVerification : undefined;
-  const fastNote =
+  const fastAdvice =
     fastFailed === undefined || fast === undefined
-      ? ""
-      : ` · ${FAST_MODEL_FAILED}: ${verifyAdvice(adviceCode(fastFailed.errorCode), { model: fast.model, baseUrl: fast.baseUrl })}`;
+      ? undefined
+      : verifyAdviceText(adviceCode(fastFailed.errorCode), { model: fast.model, baseUrl: fast.baseUrl });
+  // The whole sentence per case, with or without the fast model's failure (`FAST_MODEL_FAILED`, which the canvas reads).
+  const withFast = (key: CoreKey, fastKey: CoreKey, params: NonNullable<OnboardingDetailText["params"]>): Detail =>
+    fastAdvice === undefined ? said(key, { ...named, ...params }) : said(fastKey, { ...named, ...params, fast: fastAdvice });
   if (current?.ok === false) {
-    return {
-      kind: "model",
-      state: "todo",
-      detail: `${name} · ${verifyAdvice(adviceCode(current.errorCode), { model: main.model, baseUrl: main.baseUrl })}`,
-    };
+    const advice = verifyAdviceText(adviceCode(current.errorCode), { model: main.model, baseUrl: main.baseUrl });
+    return { kind: "model", state: "todo", ...said("onboarding.model.failed", { ...named, advice }) };
   }
   if (current?.ok === true) {
-    const tools = current.toolsOk === false ? ` · ${verifyAdvice("no-tools")}` : "";
-    return { kind: "model", state: "done", detail: `${name} · verified${tools}${fastNote}`, verifiedAt: current.at };
+    const detail =
+      current.toolsOk === false
+        ? withFast("onboarding.model.verifiedNoTools", "onboarding.model.verifiedNoToolsFastFailed", {
+            tools: verifyAdviceText("no-tools"),
+          })
+        : withFast("onboarding.model.verified", "onboarding.model.verifiedFastFailed", {});
+    return { kind: "model", state: "done", ...detail, verifiedAt: current.at };
   }
   if (main.providedBy !== undefined)
-    return { kind: "model", state: "done", detail: `${name} · Provided by ${main.providedBy}, not verified here${fastNote}` };
+    return {
+      kind: "model",
+      state: "done",
+      ...withFast("onboarding.model.provided", "onboarding.model.providedFastFailed", { plugin: main.providedBy }),
+    };
   // Set up, and chats run on it: done, with Verify offered for the one check not made yet.
-  return { kind: "model", state: "done", detail: `${name} · ${MODEL_NOT_VERIFIED} · Verify${fastNote}` };
+  return { kind: "model", state: "done", ...withFast("onboarding.model.unverified", "onboarding.model.unverifiedFastFailed", {}) };
 }
 
 const marked = (facts: OnboardingFacts, kind: OnboardingStepKind): OnboardingStepRecord | undefined =>
@@ -238,11 +280,11 @@ function liveStep(
     case "about": {
       if (facts.about.operatorName !== undefined) return { state: "done", detail: facts.about.operatorName };
       return facts.about.namePreference || mark === "completed"
-        ? { state: "done", detail: "Done" }
-        : { state: "todo", detail: "Your name and time zone" };
+        ? { state: "done", ...said("onboarding.step.done") }
+        : { state: "todo", ...said("onboarding.about.todo") };
     }
     case "search": {
-      if (!facts.search.installed) return { state: "unavailable", detail: "No search provider is installed" };
+      if (!facts.search.installed) return { state: "unavailable", ...said("onboarding.search.none") };
       const failed = new Set(
         facts.verifications
           .filter((verification) => verification.subject === "search" && !verification.ok)
@@ -251,11 +293,11 @@ function liveStep(
       const ready = facts.search.ready.filter((provider) => !failed.has(provider.id));
       return ready.length > 0
         ? { state: "done", detail: ready.map((provider) => provider.label).join(", ") }
-        : { state: "todo", detail: "Web search is not set up" };
+        : { state: "todo", ...said("onboarding.search.todo") };
     }
     case "apps": {
       const { available, connected } = facts.apps;
-      if (available.length === 0 && connected.length === 0) return { state: "unavailable", detail: "No app can be connected here" };
+      if (available.length === 0 && connected.length === 0) return { state: "unavailable", ...said("onboarding.apps.none") };
       const items = [
         ...connected.map((app) => ({ ...app, state: "connected" as const })),
         ...available
@@ -264,12 +306,12 @@ function liveStep(
       ];
       return {
         state: connected.length > 0 ? "done" : "todo",
-        detail: connected.length > 0 ? connected.map((app) => app.label).join(", ") : "No app is connected",
+        ...(connected.length > 0 ? { detail: connected.map((app) => app.label).join(", ") } : said("onboarding.apps.todo")),
         items: items.slice(0, 32),
       };
     }
     case "channels": {
-      if (!facts.channels.available) return { state: "unavailable", detail: "No channel plugin is enabled" };
+      if (!facts.channels.available) return { state: "unavailable", ...said("onboarding.channels.none") };
       const paired = facts.channels.connections.filter((connection) => connection.paired);
       const items = facts.channels.connections.map(({ id, label, paired: isPaired }) => ({
         id,
@@ -280,17 +322,17 @@ function liveStep(
         return { state: "done", detail: paired.map((connection) => connection.label).join(", "), items: items.slice(0, 32) };
       return {
         state: "todo",
-        detail: facts.channels.connections.length > 0 ? "Pair yourself on a channel" : "No channel is connected",
+        ...said(facts.channels.connections.length > 0 ? "onboarding.channels.pair" : "onboarding.channels.todo"),
         ...(items.length === 0 ? {} : { items: items.slice(0, 32) }),
       };
     }
     case "service": {
-      if (!facts.service.supported) return { state: "unavailable", detail: "Runs as a service on macOS and Linux only" };
-      if (facts.service.running) return { state: "done", detail: "Running as a service" };
-      if (facts.service.installed) return { state: "done", detail: "Service installed" };
+      if (!facts.service.supported) return { state: "unavailable", ...said("onboarding.service.unsupported") };
+      if (facts.service.running) return { state: "done", ...said("onboarding.service.running") };
+      if (facts.service.installed) return { state: "done", ...said("onboarding.service.installed") };
       return mark === "self-managed"
-        ? { state: "done", detail: "You run it yourself" }
-        : { state: "todo", detail: "Channels and schedules stop when tavi serve stops" };
+        ? { state: "done", ...said("onboarding.service.selfManaged") }
+        : { state: "todo", ...said("onboarding.service.todo") };
     }
     case "tasks": {
       const apps = facts.tasks?.apps ?? [];
@@ -304,23 +346,36 @@ function liveStep(
       // A saved home is the answer; Tavi's own list chosen as it stands (nothing to save) is the step's mark.
       if (home !== undefined && home !== "tavi")
         return { state: "done", detail: apps.find((app) => app.id === home)?.label ?? home.slice("mcp:".length), ...withItems };
-      if (home === "tavi" || mark === "completed") return { state: "done", detail: "Tavi's own list", ...withItems };
-      return { state: "todo", detail: "Tavi's own list, or a task app you use", ...withItems };
+      if (home === "tavi" || mark === "completed") return { state: "done", ...said("onboarding.tasks.own"), ...withItems };
+      return { state: "todo", ...said("onboarding.tasks.todo"), ...withItems };
     }
     case "voice": {
       const voice = facts.voice;
-      if (voice === undefined) return { state: "todo", detail: "Checked by the running tavi serve" };
-      if (!voice.supported) return { state: "unavailable", detail: voice.unsupported ?? "Not available on this computer" };
-      if (voice.ready) return { state: "done", detail: "Transcribed on this computer" };
+      if (voice === undefined) return { state: "todo", ...said("onboarding.voice.unchecked") };
+      if (!voice.supported)
+        return {
+          state: "unavailable",
+          ...(voice.unsupported === undefined
+            ? said("onboarding.voice.unavailable")
+            : typeof voice.unsupported === "string"
+              ? { detail: voice.unsupported }
+              : said(voice.unsupported.key, voice.unsupported.params)),
+        };
+      if (voice.ready) return { state: "done", ...said("onboarding.voice.ready") };
       // Done only when it works: a voice message is transcribed or it is not; skipping is the way to put it aside.
-      return { state: "todo", detail: voice.missing.length > 0 ? `Missing: ${voice.missing.join(", ")}` : "Not set up" };
+      return {
+        state: "todo",
+        ...(voice.missing.length > 0
+          ? said("onboarding.voice.missing", { missing: voice.missing.join(", ") })
+          : said("onboarding.voice.todo")),
+      };
     }
     case "ideas":
       return facts.ideas.tried || facts.ideas.startedTurn
-        ? { state: "done", detail: "Done" }
-        : { state: "todo", detail: "Try a first idea" };
+        ? { state: "done", ...said("onboarding.step.done") }
+        : { state: "todo", ...said("onboarding.ideas.todo") };
     case "info":
-      return mark === "seen" || mark === "completed" ? { state: "done", detail: "Seen" } : { state: "todo", detail: "" };
+      return mark === "seen" || mark === "completed" ? { state: "done", ...said("onboarding.step.seen") } : { state: "todo", detail: "" };
   }
 }
 
@@ -387,13 +442,14 @@ function promptsFor(step: OnboardingFlowStep, context: FlowContext): NonNullable
   return own.filter((prompt) => prompt.uses === undefined || prompt.uses.every((capability) => context.census.includes(capability)));
 }
 
-const HOST_MODEL_STEP: OnboardingFlowStep = {
+/** The model step the host adds to a flow that has none, in `t`'s language. */
+const hostModelStep = (t: CoreT): OnboardingFlowStep => ({
   id: "model",
   kind: "model",
-  title: "Choose a model",
-  body: "Tavi needs one model to think with: a cloud service with a key, or a model running on this computer.",
+  title: t("onboarding.flow.model.title"),
+  body: t("onboarding.flow.model.body"),
   optional: false,
-};
+});
 
 /**
  * A flow as the host will run it, or a throw when it is unusable: the
@@ -402,7 +458,7 @@ const HOST_MODEL_STEP: OnboardingFlowStep = {
  * a terminal, an ideas step given prompts, and the recommendation rule
  * applied. A flow left with no step on the surface is refused.
  */
-export function validateFlow(raw: unknown, context: FlowContext): OnboardingFlow {
+export function validateFlow(raw: unknown, context: FlowContext, t: CoreT = coreEnglish): OnboardingFlow {
   const parsed = OnboardingFlowSchema.parse(raw);
   let steps = parsed.steps.map((step): OnboardingFlowStep => {
     const rest = withAvailableFeatured(step, availableFor(step.kind, context));
@@ -416,7 +472,7 @@ export function validateFlow(raw: unknown, context: FlowContext): OnboardingFlow
       ...(step.kind === "service" ? { surfaces: ["cli" as const] } : {}),
     };
   });
-  if (!steps.some((step) => step.kind === "model")) steps = [HOST_MODEL_STEP, ...steps];
+  if (!steps.some((step) => step.kind === "model")) steps = [hostModelStep(t), ...steps];
   if (context.modelOpen) {
     const model = steps.find((step) => step.kind === "model") as OnboardingFlowStep;
     // First on this surface, and shown on it whatever the provider said.
@@ -435,35 +491,39 @@ export function validateFlow(raw: unknown, context: FlowContext): OnboardingFlow
   return flow;
 }
 
-/** The flow used when no provider can answer: every kind once, with plain words. */
-export function hostFallbackFlow(): OnboardingFlow {
-  const titles: Readonly<Record<OnboardingStepKind, readonly [string, string]>> = {
-    model: [HOST_MODEL_STEP.title, HOST_MODEL_STEP.body],
-    about: ["About you", "Your name and time zone, so Tavi can address you and say times in your zone."],
-    search: ["Web search", "A search provider lets Tavi look things up on the web."],
-    apps: ["Connect an app", "Mail, calendar and other apps Tavi can read and act in, with your approval."],
-    tasks: ["Where do you keep tasks?", "Tavi's own to-do list, or a task app you already use, such as Todoist."],
-    channels: ["Message Tavi", "Reach Tavi from a chat app. Only people you pair are answered."],
-    voice: ["Voice messages", "Transcribe voice messages on this computer, so Tavi can read what you say."],
-    service: ["Keep it running", "Channels and schedules stop when tavi serve stops. Start it with your computer."],
-    ideas: ["Try something", "A first thing to ask, from what Tavi can do here."],
-    info: ["Good to know", "Tavi asks before it acts on your behalf."],
-  };
+/** The words of each step kind's title and body in the host's own flow. */
+const HOST_STEP_WORDS: Readonly<Record<OnboardingStepKind, readonly [CoreKey, CoreKey]>> = {
+  model: ["onboarding.flow.model.title", "onboarding.flow.model.body"],
+  about: ["onboarding.flow.about.title", "onboarding.flow.about.body"],
+  search: ["onboarding.flow.search.title", "onboarding.flow.search.body"],
+  apps: ["onboarding.flow.apps.title", "onboarding.flow.apps.body"],
+  tasks: ["onboarding.flow.tasks.title", "onboarding.flow.tasks.body"],
+  channels: ["onboarding.flow.channels.title", "onboarding.flow.channels.body"],
+  voice: ["onboarding.flow.voice.title", "onboarding.flow.voice.body"],
+  service: ["onboarding.flow.service.title", "onboarding.flow.service.body"],
+  ideas: ["onboarding.flow.ideas.title", "onboarding.flow.ideas.body"],
+  info: ["onboarding.flow.info.title", "onboarding.flow.info.body"],
+};
+
+/** The flow used when no provider can answer: every kind once, with plain words, in `t`'s language. */
+export function hostFallbackFlow(t: CoreT = coreEnglish): OnboardingFlow {
   return OnboardingFlowSchema.parse({
     abi: ONBOARDING_ABI,
     // Bumped when a kind is added (2: tasks, 3: voice), so a checklist dismissed on this flow comes back once with it.
     version: 3,
-    title: "Set up Tavi",
+    title: t("onboarding.flow.title"),
     steps: ONBOARDING_STEP_KINDS.filter((kind) => kind !== "info").map((kind) => ({
       id: kind,
       kind,
-      title: titles[kind][0],
-      body: titles[kind][1],
+      title: t(HOST_STEP_WORDS[kind][0]),
+      body: t(HOST_STEP_WORDS[kind][1]),
       optional: kind !== "model",
       ...(kind === "service" ? { surfaces: ["cli"] } : {}),
-      ...(kind === "ideas" ? { prompts: [{ label: "Plan my week", prompt: "Help me plan my week." }] } : {}),
+      ...(kind === "ideas"
+        ? { prompts: [{ label: t("onboarding.flow.ideas.promptLabel"), prompt: t("onboarding.flow.ideas.prompt") }] }
+        : {}),
     })),
-    done: { title: "All set", body: "Ask Tavi anything, or come back to setup with tavi onboard." },
+    done: { title: t("onboarding.flow.done.title"), body: t("onboarding.flow.done.body") },
   });
 }
 
@@ -473,6 +533,15 @@ export interface ResolvedFlow {
   readonly providerId: string;
   /** Why the selected provider's flow was not used. */
   readonly fallback?: string;
+}
+
+/** A provider past its deadline: its seconds, said in the reader's language by `failureReason`. */
+class FlowDeadline extends Error {
+  readonly seconds: number;
+  constructor(seconds: number) {
+    super(`it did not answer within ${String(seconds)} s`);
+    this.seconds = seconds;
+  }
 }
 
 const withDeadline = async <T>(work: (signal: AbortSignal) => Promise<T>, deadlineMs: number, outer?: AbortSignal): Promise<T> => {
@@ -486,7 +555,7 @@ const withDeadline = async <T>(work: (signal: AbortSignal) => Promise<T>, deadli
       new Promise<never>((_resolve, reject) => {
         timer = setTimeout(() => {
           controller.abort(new Error("deadline"));
-          reject(new Error(`it did not answer within ${String(deadlineMs / 1000)} s`));
+          reject(new FlowDeadline(deadlineMs / 1000));
         }, deadlineMs);
       }),
     ]);
@@ -497,10 +566,10 @@ const withDeadline = async <T>(work: (signal: AbortSignal) => Promise<T>, deadli
 };
 
 /** A provider's words for why it failed, never its own text: a thrown message may carry anything. */
-const failureReason = (error: unknown): string => {
-  if (error instanceof Error && /^it did not answer within/u.test(error.message)) return error.message;
-  if (error !== null && typeof error === "object" && "issues" in error) return "its flow is not valid";
-  return "it failed";
+const failureReason = (error: unknown, t: CoreT = coreEnglish): string => {
+  if (error instanceof FlowDeadline) return t("onboarding.fallback.deadline", { seconds: String(error.seconds) });
+  if (error !== null && typeof error === "object" && "issues" in error) return t("onboarding.fallback.invalid");
+  return t("onboarding.fallback.failed");
 };
 
 /**
@@ -550,6 +619,7 @@ function requestFor(
     channels: [...request.channels],
     apps: [...request.apps],
     detected: [...request.detected],
+    ...(request.locale === undefined ? {} : { locale: request.locale }),
     signal,
   });
 }
@@ -570,6 +640,8 @@ export async function resolveFlow(
   options: { readonly deadlineMs?: number; readonly signal?: AbortSignal } = {},
 ): Promise<ResolvedFlow> {
   const deadlineMs = options.deadlineMs ?? ONBOARDING_FLOW_DEADLINE_MS;
+  // The host's own words (its flow, a model step it adds, why a flow was not used) in the workspace's language.
+  const t = request.locale === undefined ? coreEnglish : coreIn(request.locale);
   const attempt = async (id: string): Promise<OnboardingFlow> => {
     const entry = registry.get(id);
     if (entry === undefined) throw new Error("it is not installed");
@@ -580,17 +652,17 @@ export async function resolveFlow(
           ? entry.signal
           : AbortSignal.any([entry.signal, options.signal]);
     const raw = await withDeadline(async (inner) => await entry.provider.flow(requestFor(entry, request, inner)), deadlineMs, signal);
-    return validateFlow(raw, context);
+    return validateFlow(raw, context, t);
   };
   const wanted = selected ?? BUILTIN_ONBOARDING_PROVIDER_ID;
   // The built-in flow disabled or not installed is a configuration, not a failure: the host's own flow, said nothing about.
   if (wanted === BUILTIN_ONBOARDING_PROVIDER_ID && registry.get(wanted) === undefined)
-    return { flow: validateFlow(hostFallbackFlow(), context), providerId: "host" };
+    return { flow: validateFlow(hostFallbackFlow(t), context, t), providerId: "host" };
   let fallback: string | undefined;
   try {
     return { flow: await attempt(wanted), providerId: wanted };
   } catch (error) {
-    fallback = `${wanted}'s flow was not used: ${failureReason(error)}`;
+    fallback = t("onboarding.fallback.notUsed", { provider: wanted, reason: failureReason(error, t) });
   }
   if (wanted !== BUILTIN_ONBOARDING_PROVIDER_ID) {
     try {
@@ -599,7 +671,7 @@ export async function resolveFlow(
       // Neither answered: the host's own flow below.
     }
   }
-  return { flow: validateFlow(hostFallbackFlow(), context), providerId: "host", fallback };
+  return { flow: validateFlow(hostFallbackFlow(t), context, t), providerId: "host", fallback };
 }
 
 /** The step kinds a flow walks on a surface, in its order. */

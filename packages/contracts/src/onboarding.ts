@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { IDEA_CAPABILITIES, IDEA_LABEL_MAX, IDEA_PROMPT_MAX, IdeaCapabilitySchema, plainTextSchema, type IdeaCapability } from "./ideas.js";
+import type { Locale } from "./i18n.js";
 import { IdSchema, TimestampSchema } from "./ids.js";
 import type { AsyncRepository } from "./persistence-types.js";
 import { ContributionIdSchema } from "./plugin-ui.js";
@@ -51,11 +52,33 @@ export const ONBOARDING_STEP_DETAIL_MAX = 300;
 const STEP_DETAIL_MAX = ONBOARDING_STEP_DETAIL_MAX;
 
 export const ONBOARDING_TITLE_MAX = 80;
+
+const DetailParamSchema = z.union([z.string().max(STEP_DETAIL_MAX), z.number()]);
+const DetailKeySchema = z.string().min(1).max(128);
+/**
+ * A step's detail as a `core` key and its parameters, for a surface that
+ * speaks another language; a parameter is data (a name, a model, joined
+ * labels) or a message of its own (a verify's advice). Derived at read time,
+ * never stored.
+ */
+export const OnboardingDetailTextSchema = z.object({
+  key: DetailKeySchema,
+  params: z
+    .record(
+      z.string().max(64),
+      z.union([DetailParamSchema, z.object({ key: DetailKeySchema, params: z.record(z.string().max(64), DetailParamSchema).optional() })]),
+    )
+    .optional(),
+});
+export type OnboardingDetailText = z.infer<typeof OnboardingDetailTextSchema>;
+
 export const OnboardingStepStatusSchema = z.object({
   kind: OnboardingStepKindSchema,
   state: z.enum(ONBOARDING_STEP_STATES),
-  /** "OpenRouter · anthropic/claude-sonnet · verified 2 min ago". */
+  /** "OpenRouter · anthropic/claude-sonnet · verified 2 min ago": English, what a plugin granted `status-detail` and an older client read. */
   detail: z.string().max(STEP_DETAIL_MAX),
+  /** `detail` as a key and its parameters, when it has words of its own: what a surface says in the workspace's language. */
+  detailText: OnboardingDetailTextSchema.optional(),
   /** The model step's last successful verify on the current default target. */
   verifiedAt: TimestampSchema.optional(),
   /** `ideas` waits for `model`. */
@@ -255,6 +278,8 @@ export interface OnboardingFlowRequest {
   readonly apps: readonly string[];
   /** Preset ids detection found, never values. */
   readonly detected: readonly string[];
+  /** The workspace's language, when the owner knows it: a flow may choose its words by it. */
+  readonly locale?: Locale;
   readonly signal: AbortSignal;
 }
 

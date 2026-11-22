@@ -33,6 +33,8 @@ import {
   type ModelLifecycle,
   verifyAdvice,
 } from "@tavi/contracts";
+import { DEFAULT_LOCALE, type Locale } from "@tavi/contracts/i18n";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { errorMessage } from "@tavi/contracts/util";
 import {
   BUILTIN_ONBOARDING_PROVIDER_ID,
@@ -73,6 +75,8 @@ export interface OnboardingCommandDependencies {
   readonly channelKinds: () => readonly string[];
   readonly appIds: (workspaceId: string) => Promise<readonly string[]>;
   readonly now: () => Date;
+  /** The workspace's language: the host's own flow and a plugin's flow are asked in it. Absent: English. */
+  readonly locale?: (workspaceId: string) => Promise<Locale>;
   /** Through the `tavi ui` bridge: `reset` and `provider` are the terminal's. */
   readonly fromBridge?: boolean;
   /** Detection in the process the flow runs in: its own environment and a fetch for the loopback probes. */
@@ -140,8 +144,13 @@ export type OnboardingAnswer = IpcAnswer<
 
 const refuse = (code: string, message: string): IpcAnswer<never> => ({ ok: false, error: { code, message } });
 
-/** The host's own flow's prompts: what an ideas step without its own falls back to, whichever provider's flow it is. */
-const fallbackPrompts = (): FlowContext["fallbackPrompts"] => hostFallbackFlow().steps.find((step) => step.kind === "ideas")?.prompts ?? [];
+/** The host's own flow's prompts, in `locale`: what an ideas step without its own falls back to, whichever provider's flow it is. */
+const fallbackPrompts = (locale: Locale): FlowContext["fallbackPrompts"] =>
+  hostFallbackFlow(coreIn(locale)).steps.find((step) => step.kind === "ideas")?.prompts ?? [];
+
+/** The workspace's language, English when the owner cannot say. */
+const localeFor = async (deps: OnboardingCommandDependencies, workspaceId: string): Promise<Locale> =>
+  (await deps.locale?.(workspaceId).catch(() => undefined)) ?? DEFAULT_LOCALE;
 
 /** Onboarding's own rows for a workspace: read once per answer. */
 interface OnboardingRecords {
@@ -199,7 +208,11 @@ async function flowFor(
   records: OnboardingRecords,
   detected?: OnboardingDetectAnswer,
 ): Promise<ResolvedFlow> {
-  const [census, apps] = await Promise.all([deps.census(workspaceId).catch(() => []), deps.appIds(workspaceId).catch(() => [])]);
+  const [census, apps, locale] = await Promise.all([
+    deps.census(workspaceId).catch(() => []),
+    deps.appIds(workspaceId).catch(() => []),
+    localeFor(deps, workspaceId),
+  ]);
   // The status a provider sees is the host's, in the host fallback's order: it chooses an order of its own.
   const status = statusOf(deps, workspaceId, facts, records, hostFallbackFlow(), surface);
   const context: FlowContext = {
@@ -210,7 +223,7 @@ async function flowFor(
     apps,
     // Only the flow a person walks probes local servers; a status read never waits on them.
     ollamaReady: detected?.local.some((server) => server.preset === "ollama" && server.toolCapableModels > 0) === true,
-    fallbackPrompts: fallbackPrompts(),
+    fallbackPrompts: fallbackPrompts(locale),
     census,
   };
   // Preset ids only, never a value: a running local server, or a preset whose key is set.
@@ -228,7 +241,7 @@ async function flowFor(
   return await resolveFlow(
     deps.providers,
     records.install.providerId,
-    { surface, status, census, presets: context.presets, channels: context.channels, apps, detected: presetsDetected },
+    { surface, status, census, presets: context.presets, channels: context.channels, apps, detected: presetsDetected, locale },
     context,
   );
 }
@@ -258,7 +271,8 @@ export async function onboardingStatus(
   const cache = statusFlows.get(deps.providers) ?? new Map<string, KeptFlow>();
   statusFlows.set(deps.providers, cache);
   const key = `${workspaceId}\u0000${surface}`;
-  const seen = JSON.stringify([facts, records]);
+  // The language too: a flow resolved in one says its fallback in it.
+  const seen = JSON.stringify([facts, records, await localeFor(deps, workspaceId)]);
   const now = deps.now().getTime();
   const kept = cache.get(key);
   const resolved =
@@ -682,7 +696,12 @@ async function verifyRole(
   if (tested.ok) {
     const toolsOk = tested.capabilities.includes("tools");
     await record(true, { toolsOk });
-    return { ...base, ok: true, toolsOk, ...(toolsOk ? {} : { advice: verifyAdvice("no-tools") }) };
+    return {
+      ...base,
+      ok: true,
+      toolsOk,
+      ...(toolsOk ? {} : { advice: verifyAdvice("no-tools", {}, coreIn(await localeFor(deps, workspaceId))) }),
+    };
   }
   const code = classifyVerifyFailure({
     ...(tested.failureCode === undefined ? {} : { modelCode: tested.failureCode }),
@@ -692,7 +711,8 @@ async function verifyRole(
   if ((LASTING_VERIFY_CODES as readonly string[]).includes(code) && tested.transient !== true) await record(false, { errorCode: code });
   // The funnel counts every failed verify, transient ones too, by its code.
   await deps.repositories.onboarding.recordEvent({ workspaceId, kind: "model", event: "failed", errorCode: code, now: at });
-  return { ...base, ok: false, errorCode: code, advice: verifyAdvice(code, context) };
+  // The advice is a person's to read: in the workspace's language.
+  return { ...base, ok: false, errorCode: code, advice: verifyAdvice(code, context, coreIn(await localeFor(deps, workspaceId))) };
 }
 
 /** `verify`: `main`, then `fast` when it is another target. It never changes the configured target (invariant 3). */

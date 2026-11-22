@@ -50,6 +50,7 @@ it is translated. Anything not yet translated stays in English.
 | Days, months and dates in the canvas | Yes: "вт, 29 сеп", "ноември 2026 г." |
 | Counts in the canvas | Yes: "20 000" in Bulgarian, "20,000" in English |
 | The canvas's own words | As each view is translated |
+| Setup's steps: each step's state, Tavi's own steps, a model check's advice, why a plugin's steps were not used | Yes, in the canvas; a setup plugin is told the language and chooses its own words |
 | The terminal chat (`tavi chat`) | As its screens are translated |
 | Chat replies, channel messages and reports | As each is translated |
 | CLI `--help`, usage errors and `--format json` | No: they stay in English, since scripts read them |

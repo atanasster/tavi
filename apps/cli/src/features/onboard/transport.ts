@@ -1,5 +1,6 @@
 import {
   HEARTBEAT_PRODUCTION_OPTIONS,
+  localeOf,
   TaviError,
   type CredentialsPayload,
   type HeartbeatPayload,
@@ -121,6 +122,7 @@ export function offlineTransport(
         facts: async (workspaceId) => await liveOnboardingFacts(sources(workspaceId), workspaceId),
         target: async (connectionId, model) => await onboardingModelTarget(sources("default"), connectionId, model),
         now,
+        locale: async (workspaceId) => localeOf((await repositories.workspaceSettings.get(workspaceId)).settings),
         config: {
           credentials: async (payload) => await credentialsCommand(config, payload),
           models: async (payload) => await modelsCommand(config, payload),

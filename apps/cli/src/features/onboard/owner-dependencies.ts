@@ -1,4 +1,4 @@
-import type { ConnectableApp } from "@tavi/contracts";
+import { localeOf, type ConnectableApp } from "@tavi/contracts";
 
 import { appsOwnerCommand, operatorActor } from "../../server/config-commands.js";
 import { channelDescriptors } from "../channels/catalog.js";
@@ -61,9 +61,16 @@ export function ownerOnboardingDependencies(
     voice: async () => {
       // Off with the video plugin: its decoder is what turns a voice message into audio a transcriber reads.
       if ((await runtime.plugins.registry.disabledBuiltins()).has(VIDEO_ENGINE_PLUGIN_ID))
-        return { supported: false, unsupported: `The video plugin (${VIDEO_ENGINE_PLUGIN_ID}) is turned off`, ready: false, missing: [] };
+        return {
+          supported: false,
+          unsupported: { key: "onboarding.voice.pluginOff", params: { plugin: VIDEO_ENGINE_PLUGIN_ID } },
+          ready: false,
+          missing: [],
+        };
       const { supported, ready, missing } = await runtime.voiceSetup.status();
-      return supported ? { supported, ready, missing } : { supported, unsupported: "Set up on macOS and Linux only", ready, missing };
+      return supported
+        ? { supported, ready, missing }
+        : { supported, unsupported: { key: "onboarding.voice.unsupportedPlatform" }, ready, missing };
     },
     now: () => new Date(runtime.clock.now()),
   });
@@ -77,6 +84,7 @@ export function ownerOnboardingDependencies(
     facts: async (workspaceId) => await liveOnboardingFacts(sources(workspaceId), workspaceId),
     target: async (connectionId, model) => await onboardingModelTarget(sources("default"), connectionId, model),
     now: () => new Date(runtime.clock.now()),
+    locale: async (workspaceId) => localeOf((await repositories.workspaceSettings.get(workspaceId)).settings),
     fromBridge: extras.fromBridge === true,
     // The owner's own environment: a service's holds only TAVI_SERVICE.
     detection: { env: process.env, fetch: globalThis.fetch, service: process.env["TAVI_SERVICE"] === "1" },

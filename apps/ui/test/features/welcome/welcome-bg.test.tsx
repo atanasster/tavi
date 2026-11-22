@@ -92,6 +92,19 @@ describe("Welcome in Bulgarian", () => {
       expect(page.textContent).not.toContain(word);
   });
 
+  it("says a step's state from its key, not the owner's English", async () => {
+    const done = status("done");
+    const answer: OnboardingStatus = {
+      ...done,
+      steps: [
+        done.steps[0] ?? { kind: "model", state: "done", detail: "" },
+        { kind: "about", state: "done", detail: "Done", detailText: { key: "onboarding.step.done" } },
+      ],
+    };
+    const page = await mount(welcome(owner({ "onboarding:flow": FLOW, "onboarding:status": answer }), "about"));
+    expect(page.querySelector(".welcome-state")?.textContent).toBe("Готово");
+  });
+
   it("says setup is turned off when no flow is installed", async () => {
     const page = await mount(welcome(owner({ "onboarding:flow": FLOW, "onboarding:status": status("todo", null) })));
     expect(page.querySelector("h1")?.textContent).toBe("Първите стъпки са изключени");

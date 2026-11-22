@@ -1,6 +1,7 @@
 import {
   IDEA_FRESH_AFTER_SETUP_MS,
-  fastModelFailure,
+  fastModelFailureIn,
+  onboardingStepDetail,
   ONBOARDING_REQUIRED_STEPS,
   type OnboardingFlowAnswer,
   type OnboardingStatus,
@@ -17,7 +18,7 @@ import { getHeartbeatOffer } from "./heartbeat-api.js";
 import { Button } from "../../ui/Button.js";
 import { useTimeZone, useWorkspace } from "../shell/Workspace.js";
 import { Command } from "../../ui/Command.js";
-import { translateNow, useT } from "../../lib/i18n.js";
+import { translateCore, translateNow, useT } from "../../lib/i18n.js";
 import { withParts } from "../../ui/with-parts.js";
 
 /**
@@ -67,12 +68,13 @@ export function promiseWords(nextAt: string, now: Date, timeZone?: string): stri
 /** A row's words: the step's own detail, and where a step this canvas cannot do is done. */
 function rowDetail(step: OnboardingStatus["steps"][number] | undefined): string {
   if (step === undefined) return "";
-  if (step.elsewhere !== "cli") return step.detail;
+  const detail = onboardingStepDetail(step, translateCore);
+  if (step.elsewhere !== "cli") return detail;
   // Installing the service is a terminal's: channels and schedules stop with `tavi serve` until it is done.
   const command = step.kind === "service" ? SERVICE_SETUP_COMMAND : "tavi onboard";
-  return step.detail === ""
+  return detail === ""
     ? translateNow("center.onboarding.inTerminal", { command })
-    : translateNow("center.onboarding.detailInTerminal", { detail: step.detail, command });
+    : translateNow("center.onboarding.detailInTerminal", { detail, command });
 }
 
 interface Loaded {
@@ -175,7 +177,13 @@ export function OnboardingChecklist({
     }))
     .filter((row) => row.step !== undefined);
   // A failed fast model leaves the model step done, but Ideas and summaries run on it.
-  const fastAdvice = status.dismissedAt === undefined ? fastModelFailure(status.steps.find((step) => step.kind === "model")) : undefined;
+  const fastAdvice =
+    status.dismissedAt === undefined
+      ? fastModelFailureIn(
+          status.steps.find((step) => step.kind === "model"),
+          translateCore,
+        )
+      : undefined;
   const fastStep = flow.flow.steps.find((step) => step.kind === "model");
   // A model set up but not checked yet: done, with one row to check it.
   const modelStatus = status.dismissedAt === undefined ? status.steps.find((step) => step.kind === "model") : undefined;

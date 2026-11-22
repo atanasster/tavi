@@ -5,7 +5,9 @@ import {
   type OnboardingStatus,
   type OnboardingStepKind,
   type OnboardingVerification,
+  onboardingStepDetail,
 } from "@tavi/contracts";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -516,5 +518,85 @@ describe("flow resolution", () => {
     expect(none.fallback).toBeUndefined();
     expect(flowOrder(none.flow, "web")).toEqual(["model", "about", "search", "apps", "tasks", "channels", "voice", "ideas"]);
     expect(flowOrder(hostFallbackFlow(), "cli")).toContain("service");
+  });
+});
+
+describe("onboarding in the workspace's language", () => {
+  const request = { surface: "web" as const, status: deriveStatus(facts()), census: [], presets: [], channels: [], apps: [], detected: [] };
+
+  it("carries each step's detail as a key and parameters beside the English text", () => {
+    const status = deriveStatus(facts({ model: { hasConnection: true, main: MAIN }, verifications: [verified({ toolsOk: false })] }));
+    const model = status.steps.find((entry) => entry.kind === "model");
+    expect(model?.detail).toBe(
+      "OpenRouter · anthropic/claude-sonnet · verified · This model can chat but didn't call a tool. Tavi needs tools for most tasks: pick another model if you can.",
+    );
+    expect(model?.detailText).toEqual({
+      key: "onboarding.model.verifiedNoTools",
+      params: { connection: "OpenRouter", model: "anthropic/claude-sonnet", tools: { key: "onboarding.advice.noTools" } },
+    });
+    expect(onboardingStepDetail(model ?? { detail: "" }, coreIn("bg"))).toBe(
+      "OpenRouter · anthropic/claude-sonnet · проверен · Този модел може да разговаря, но не извика инструмент. На Tavi му трябват инструменти за повечето задачи: ако можеш, избери друг модел.",
+    );
+    const search = status.steps.find((entry) => entry.kind === "search");
+    expect(search).toMatchObject({ detail: "Web search is not set up", detailText: { key: "onboarding.search.todo" } });
+    expect(onboardingStepDetail(search ?? { detail: "" }, coreIn("bg"))).toBe("Търсенето в мрежата не е настроено");
+  });
+
+  it("says why voice messages are unavailable from the owner's key, its English as before", () => {
+    const voiceOf = (unsupported: NonNullable<OnboardingFacts["voice"]>["unsupported"]) =>
+      deriveStatus(
+        facts({
+          order: ["model", "voice"],
+          voice: { supported: false, ready: false, missing: [], ...(unsupported === undefined ? {} : { unsupported }) },
+        }),
+      ).steps.find((entry) => entry.kind === "voice");
+    const off = voiceOf({ key: "onboarding.voice.pluginOff", params: { plugin: "tavi.video" } });
+    expect(off).toMatchObject({ state: "unavailable", detail: "The video plugin (tavi.video) is turned off" });
+    expect(onboardingStepDetail(off ?? { detail: "" }, coreIn("bg"))).toBe("Плъгинът за видео (tavi.video) е изключен");
+    const platform = voiceOf({ key: "onboarding.voice.unsupportedPlatform" });
+    expect(platform?.detail).toBe("Set up on macOS and Linux only");
+    expect(onboardingStepDetail(platform ?? { detail: "" }, coreIn("bg"))).toBe("Настройва се само на macOS и Linux");
+    expect(voiceOf("Some other reason")).toEqual({ kind: "voice", state: "unavailable", detail: "Some other reason" });
+  });
+
+  it("leaves a detail that is only data without a key", () => {
+    const status = deriveStatus(facts({ about: { operatorName: "Ада", namePreference: true } }));
+    expect(status.steps.find((entry) => entry.kind === "about")).toEqual({ kind: "about", state: "done", detail: "Ада" });
+  });
+
+  it("never hands a plugin's flow the key, only the English detail it was granted", async () => {
+    let seen: unknown;
+    const registry = new OnboardingProviderRegistry();
+    registry.install("acme.detail", {
+      provider: {
+        flow: async (asked) => {
+          seen = { step: asked.status.steps.find((entry) => entry.kind === "search"), locale: asked.locale };
+          return flow([step("model")]);
+        },
+      },
+      kind: "plugin",
+      receivesDetail: true,
+    });
+    await resolveFlow(registry, "acme.detail", { ...request, locale: "bg" }, context());
+    expect(seen).toEqual({ step: { kind: "search", state: "todo", detail: "Web search is not set up" }, locale: "bg" });
+  });
+
+  it("says the host's own flow and why a plugin's was not used in the request's language", async () => {
+    const registry = new OnboardingProviderRegistry();
+    registry.install("acme.throws", {
+      provider: {
+        flow: async () => {
+          throw new Error("boom");
+        },
+      },
+      kind: "plugin",
+    });
+    const resolved = await resolveFlow(registry, "acme.throws", { ...request, locale: "bg" }, context());
+    expect(resolved.providerId).toBe("host");
+    expect(resolved.fallback).toBe("не ползвам acme.throws: даде грешка");
+    expect(resolved.flow.title).toBe("Настрой Tavi");
+    expect(resolved.flow.steps.find((entry) => entry.kind === "model")?.title).toBe("Избери модел");
+    // English stays as it was.
+    expect(hostFallbackFlow().title).toBe("Set up Tavi");
   });
 });
