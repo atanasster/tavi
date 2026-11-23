@@ -6,7 +6,7 @@ import {
   TaviError,
   type IpcCommand,
 } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
+import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
 
 import { GLYPHS } from "./theme.js";
 
@@ -35,7 +35,8 @@ export type FormId = keyof typeof FORM_COMMANDS;
 
 export interface FormField {
   readonly key: string;
-  readonly label: string;
+  /** What the prompt row asks, in the chat's language (`fieldLabel`); a parenthesis at its end is the status row's alone. */
+  readonly label: CoreKey;
   /** Enter on nothing leaves it out. */
   readonly optional?: true;
   /** Typed masked, and never taken from the command line. */
@@ -45,67 +46,79 @@ export interface FormField {
    * The shape the owner will accept, checked here first so a refusal never
    * echoes what was typed — a key pasted into the wrong field included.
    */
-  readonly shape?: { readonly pattern: RegExp; readonly maxLength: number; readonly describe: string };
+  readonly shape?: { readonly pattern: RegExp; readonly maxLength: number; readonly describe: CoreKey };
 }
 
 /** A credential reference, as `assertSecretKeyRef` accepts it. */
 const REFERENCE = {
   pattern: SECRET_KEY_REF_PATTERN,
   maxLength: 128,
-  describe: "a reference like openai or stripe.apiKey (letters, digits, . _ -)",
-};
+  describe: "tui.form.shape.reference",
+} as const;
 /** A connection id, as `ModelConnectionSchema` accepts it. */
 const CONNECTION = {
   pattern: CONNECTION_ID_PATTERN,
   maxLength: 64,
-  describe: "a connection id like openai or local (lower-case letters, digits, . _ -)",
-};
+  describe: "tui.form.shape.connection",
+} as const;
 
 export interface FormSpec {
-  readonly title: string;
+  readonly title: CoreKey;
   readonly fields: readonly FormField[];
 }
 
 export const FORMS: Readonly<Record<FormId, FormSpec>> = {
   "credentials-set": {
-    title: "store a credential",
+    title: "tui.form.credentialsSet.title",
     fields: [
-      { key: "reference", label: "reference (the name a connection names it by, e.g. openai)", shape: REFERENCE },
-      { key: "value", label: "value (hidden)", secret: true },
+      { key: "reference", label: "tui.form.field.reference", shape: REFERENCE },
+      { key: "value", label: "tui.form.field.value", secret: true },
     ],
   },
   "models-add": {
-    title: "add a model connection",
+    title: "tui.form.modelsAdd.title",
     fields: [
-      { key: "connectionId", label: "connection id", shape: CONNECTION },
-      { key: "baseUrl", label: "base URL (e.g. https://api.openai.com/v1)" },
-      { key: "credentialRef", label: "credential reference (stored with /credentials set)", shape: REFERENCE },
-      { key: "model", label: "default model", optional: true },
+      { key: "connectionId", label: "tui.form.field.connectionId", shape: CONNECTION },
+      { key: "baseUrl", label: "tui.form.field.baseUrl" },
+      { key: "credentialRef", label: "tui.form.field.credentialRef", shape: REFERENCE },
+      { key: "model", label: "tui.form.field.defaultModel", optional: true },
     ],
   },
   "models-set-default": {
-    title: "set the workspace's default model",
+    title: "tui.form.modelsSetDefault.title",
     fields: [
-      { key: "connectionId", label: "connection id", shape: CONNECTION },
-      { key: "model", label: "model (the connection's default when left out)", optional: true },
+      { key: "connectionId", label: "tui.form.field.connectionId", shape: CONNECTION },
+      { key: "model", label: "tui.form.field.model", optional: true },
     ],
   },
   "models-set-role": {
-    title: "bind a role to a model",
+    title: "tui.form.modelsSetRole.title",
     fields: [
-      { key: "role", label: "role", choices: MODEL_ROLES },
-      { key: "connectionId", label: "connection id", shape: CONNECTION },
-      { key: "model", label: "model (the connection's default when left out)", optional: true },
+      { key: "role", label: "tui.form.field.role", choices: MODEL_ROLES },
+      { key: "connectionId", label: "tui.form.field.connectionId", shape: CONNECTION },
+      { key: "model", label: "tui.form.field.model", optional: true },
     ],
   },
   "models-test": {
-    title: "test a model connection",
+    title: "tui.form.modelsTest.title",
     fields: [
-      { key: "connectionId", label: "connection id", shape: CONNECTION },
-      { key: "model", label: "model (the connection's default when left out)", optional: true },
+      { key: "connectionId", label: "tui.form.field.connectionId", shape: CONNECTION },
+      { key: "model", label: "tui.form.field.model", optional: true },
     ],
   },
 };
+
+/** A form's title in the chat's language. */
+export const formTitle = (id: FormId, t: CoreT = coreEnglish): string => t(FORMS[id].title);
+
+/** A field's label in the chat's language. */
+export const fieldLabel = (field: FormField, t: CoreT = coreEnglish): string => t(field.label);
+
+/** A field as a refusal names it: its key in English (what a script reads), its short label in another language. */
+const fieldName = (field: FormField, t: CoreT): { readonly field: string; readonly label: string } => ({
+  field: field.key,
+  label: fieldLabel(field, t).replace(/ \(.*\)$/, ""),
+});
 
 /** A form being filled: the values so far and the field asked now. */
 export interface FormState {
@@ -121,13 +134,13 @@ export type FormStep =
   | { readonly kind: "refused"; readonly reason: string };
 
 /** Why `value` does not fit `field`, if it does not. */
-function misfit(field: FormField, value: string): string | undefined {
-  if (field.choices !== undefined && !field.choices.includes(value)) return `one of ${field.choices.join(", ")}`;
+function misfit(field: FormField, value: string, t: CoreT): string | undefined {
+  if (field.choices !== undefined && !field.choices.includes(value)) return t("tui.form.oneOf", { choices: field.choices.join(", ") });
   // A key where a name belongs — a reference, a connection id — would be
   // stored and shown as one.
-  if (field.secret !== true && looksLikeCredential(value))
-    return "a name, not a credential: a credential's value goes in /credentials set, typed hidden";
-  if (field.shape !== undefined && (value.length > field.shape.maxLength || !field.shape.pattern.test(value))) return field.shape.describe;
+  if (field.secret !== true && looksLikeCredential(value)) return t("tui.form.notCredential");
+  if (field.shape !== undefined && (value.length > field.shape.maxLength || !field.shape.pattern.test(value)))
+    return t(field.shape.describe);
   return undefined;
 }
 
@@ -148,16 +161,18 @@ function next(id: FormId, values: Readonly<Record<string, string>>, index: numbe
  * from the command line — a value there would sit on screen — so words that
  * would reach one refuse the form.
  */
-export function openForm(id: FormId, words: readonly string[]): FormStep {
+export function openForm(id: FormId, words: readonly string[], t: CoreT = coreEnglish): FormStep {
   const fields = FORMS[id].fields;
   const fillable = fields.filter((field) => field.secret !== true);
   if (words.length > fillable.length) {
     const secret = fields.some((field) => field.secret === true);
     return {
       kind: "refused",
-      reason: secret
-        ? `${FORM_COMMANDS[id]} takes at most ${plural(fillable.length, "word")}: the value is typed in the form, hidden, never on the command line`
-        : `${FORM_COMMANDS[id]} takes at most ${fillable.length} words`,
+      reason: t(secret ? "tui.form.tooManySecret" : "tui.form.tooMany", {
+        command: FORM_COMMANDS[id],
+        count: fillable.length,
+        n: String(fillable.length),
+      }),
     };
   }
   const values: Record<string, string> = {};
@@ -165,8 +180,8 @@ export function openForm(id: FormId, words: readonly string[]): FormStep {
     // Never past the last: more words than fields were refused above.
     const field = fillable[index];
     if (field === undefined) break;
-    const wrong = misfit(field, word);
-    if (wrong !== undefined) return { kind: "refused", reason: `${field.key} must be ${wrong}` };
+    const wrong = misfit(field, word, t);
+    if (wrong !== undefined) return { kind: "refused", reason: t("tui.form.mustBe", { ...fieldName(field, t), wrong }) };
     values[field.key] = word;
   }
   return next(id, values, 0, words.length === 0);
@@ -177,16 +192,20 @@ export function openForm(id: FormId, words: readonly string[]): FormStep {
  * does not do (the same field is asked again). An optional field answered with
  * nothing is left out.
  */
-export function enterField(state: FormState, typed: string): FormStep | { readonly kind: "again"; readonly reason: string } {
+export function enterField(
+  state: FormState,
+  typed: string,
+  t: CoreT = coreEnglish,
+): FormStep | { readonly kind: "again"; readonly reason: string } {
   const field = fieldOf(state);
   // A secret is kept as typed; the owner trims it, as `tavi credentials set` does.
   const value = field.secret === true ? typed : typed.trim();
   if (value.trim() === "") {
     if (field.optional === true) return next(state.id, state.values, state.index + 1, true);
-    return { kind: "again", reason: `${field.key} is needed (Esc cancels the form)` };
+    return { kind: "again", reason: t("tui.form.needed", fieldName(field, t)) };
   }
-  const wrong = misfit(field, value);
-  if (wrong !== undefined) return { kind: "again", reason: `${field.key} must be ${wrong}` };
+  const wrong = misfit(field, value, t);
+  if (wrong !== undefined) return { kind: "again", reason: t("tui.form.mustBe", { ...fieldName(field, t), wrong }) };
   return next(state.id, { ...state.values, [field.key]: value }, state.index + 1, true);
 }
 
@@ -250,32 +269,33 @@ export function formRequest(
 }
 
 /** What the form did, as the owner answered it: never the credential's value. */
-export function formOutcome(id: FormId, values: Readonly<Record<string, string>>, result: unknown): string[] {
+export function formOutcome(id: FormId, values: Readonly<Record<string, string>>, result: unknown, t: CoreT = coreEnglish): string[] {
   const written = result as { readonly result?: unknown; readonly restartRequired?: boolean } | undefined;
-  const restart = (why: string): string[] =>
-    written?.restartRequired === true ? [`  ${GLYPHS.warning} restart \`tavi serve\` for this to take effect: ${why}`] : [];
-  const target = (): string => `${values["connectionId"]}${values["model"] === undefined ? " (its default model)" : `/${values["model"]}`}`;
+  const restart = (why: CoreKey): string[] =>
+    written?.restartRequired === true ? [t("tui.form.restart", { mark: GLYPHS.warning, why: t(why) })] : [];
+  const connection = values["connectionId"] ?? "";
+  const target = (): string =>
+    values["model"] === undefined ? t("tui.form.defaultTarget", { connection }) : `${connection}/${values["model"]}`;
   switch (id) {
     case "credentials-set":
-      return [`${GLYPHS.done} credential ${values["reference"]} stored; the owner reads it on its next call, no restart needed`];
+      return [t("tui.form.stored", { mark: GLYPHS.done, reference: values["reference"] ?? "" })];
     case "models-add":
       return [
-        `${GLYPHS.done} connection ${values["connectionId"]} added: ${values["baseUrl"]}, credential ${values["credentialRef"]}`,
-        ...restart("the owner's running connection was composed with its old endpoint and credential"),
+        t("tui.form.added", {
+          mark: GLYPHS.done,
+          connection,
+          baseUrl: values["baseUrl"] ?? "",
+          credential: values["credentialRef"] ?? "",
+        }),
+        ...restart("tui.form.restart.connection"),
       ];
     case "models-set-default":
-      return [
-        `${GLYPHS.done} the workspace's default model is ${target()}`,
-        ...restart("the owner runs the target it resolved when it started"),
-      ];
+      return [t("tui.form.defaultIs", { mark: GLYPHS.done, target: target() }), ...restart("tui.form.restart.default")];
     case "models-set-role":
       // The owner's runs resolve role `main` — at startup — and ask for no other role.
       return values["role"] === "main"
-        ? [`${GLYPHS.done} role main is bound to ${target()}`, ...restart("the owner resolved role main when it started")]
-        : [
-            `${GLYPHS.done} role ${values["role"]} is bound to ${target()}`,
-            "  the owner's own runs resolve role main only; nothing it runs asks for this role yet",
-          ];
+        ? [t("tui.form.roleBound", { mark: GLYPHS.done, role: "main", target: target() }), ...restart("tui.form.restart.main")]
+        : [t("tui.form.roleBound", { mark: GLYPHS.done, role: values["role"] ?? "", target: target() }), t("tui.form.roleUnused")];
     case "models-test": {
       const tested = result as {
         readonly ok?: boolean;
@@ -287,9 +307,18 @@ export function formOutcome(id: FormId, values: Readonly<Record<string, string>>
       const name = `${values["connectionId"]}/${tested.modelId ?? values["model"] ?? "?"}`;
       return tested.ok === true
         ? [
-            `${GLYPHS.done} ${name} answered in ${tested.latencyMs ?? "?"} ms; observed: ${(tested.capabilities ?? []).join(", ") || "no capabilities"}`,
+            t("tui.form.tested", {
+              mark: GLYPHS.done,
+              name,
+              ms: String(tested.latencyMs ?? "?"),
+              capabilities: (tested.capabilities ?? []).join(", ") || t("tui.form.noCapabilities"),
+            }),
           ]
-        : [`${GLYPHS.failed} ${name} failed the test${tested.message === undefined ? "" : `: ${tested.message}`}`];
+        : [
+            tested.message === undefined
+              ? t("tui.form.testFailed", { mark: GLYPHS.failed, name })
+              : t("tui.form.testFailedWhy", { mark: GLYPHS.failed, name, message: tested.message }),
+          ];
     }
   }
 }

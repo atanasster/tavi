@@ -1,3 +1,5 @@
+import { yesNoOf } from "../shared/terminal-words.js";
+
 export interface CliIo {
   readonly stdout: (chunk: string) => void;
   readonly stderr: (chunk: string) => void;
@@ -41,12 +43,12 @@ export function printUnreadableWarning(io: CliIo, noun: string, ids: readonly st
   io.stderr(`warning: ${ids.length} ${noun} could not be read: ${ids.join(", ")}. ${repair}\n`);
 }
 
-/** A yes from the person at this terminal; anything else is no. */
+/** A yes from the person at this terminal (`y`, `yes`, `д` or `да`, in either language); anything else is no. */
 export async function confirmOnTerminal(question: string): Promise<boolean> {
   const { createInterface } = await import("node:readline/promises");
   const lines = createInterface({ input: process.stdin, output: process.stdout });
   try {
-    return /^y(es)?$/i.test((await lines.question(question)).trim());
+    return yesNoOf(await lines.question(question)) === true;
   } finally {
     lines.close();
   }

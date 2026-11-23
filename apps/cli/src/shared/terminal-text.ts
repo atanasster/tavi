@@ -48,6 +48,15 @@ export function alignedColumns(rows: readonly (readonly string[])[]): string[] {
   );
 }
 
+/**
+ * `text` padded with spaces to `width` terminal columns (`string-width`), as
+ * `padEnd` pads ASCII: Cyrillic is one column a letter, a wide character two.
+ * Text as wide as `width` or wider is left as it is.
+ */
+export function paddedCell(text: string, width: number): string {
+  return text + " ".repeat(Math.max(0, width - stringWidth(text)));
+}
+
 /** The width a CLI page is laid out to: the terminal's columns, 80 in a pipe. */
 export const pageWidth = (columns: number | undefined): number => columns ?? 80;
 

@@ -1,6 +1,9 @@
 import { Box, render, Text, useApp, useInput } from "ink";
 import { useEffect, useRef, useState } from "react";
 
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+
+import { yesNoHint, yesNoOf } from "../../shared/terminal-words.js";
 import { BLINK_CURSOR, GLYPHS, UI_TONES } from "../../tui/theme.js";
 import { OnboardCancelled, type ChoiceOption, type Prompter } from "./prompter.js";
 
@@ -121,7 +124,7 @@ function ChoiceQuestion(
   );
 }
 
-function ConfirmQuestion(props: Answered<boolean> & { readonly label: string; readonly fallback: boolean }) {
+function ConfirmQuestion(props: Answered<boolean> & { readonly label: string; readonly fallback: boolean; readonly t: CoreT }) {
   const [answer, setAnswer] = useState<boolean | undefined>(undefined);
   const { done, finish } = useQuestionEnd();
   useInput((character, key) => {
@@ -130,14 +133,14 @@ function ConfirmQuestion(props: Answered<boolean> & { readonly label: string; re
       finish(() => props.reject(new OnboardCancelled()));
       return;
     }
-    const lowered = character.toLowerCase();
-    const value = key.return ? props.fallback : lowered === "y" ? true : lowered === "n" ? false : undefined;
+    // One key answers: y or д says yes, n or н says no, in either language.
+    const value = key.return ? props.fallback : character.length === 1 ? yesNoOf(character) : undefined;
     if (value === undefined) return;
     setAnswer(value);
     finish(() => props.resolve(value));
   });
   return (
-    <Text>{`${props.label} ${props.fallback ? "[Y/n]" : "[y/N]"}${answer !== undefined ? ` ${answer ? "yes" : "no"}` : done ? "" : ` ${BLINK_CURSOR}`}`}</Text>
+    <Text>{`${props.label} ${yesNoHint(props.fallback, props.t)}${answer !== undefined ? ` ${props.t(answer ? "prompt.confirm.yes" : "prompt.confirm.no")}` : done ? "" : ` ${BLINK_CURSOR}`}`}</Text>
   );
 }
 
@@ -147,6 +150,7 @@ export interface InkPrompterStreams {
 }
 
 export function createInkPrompter(streams: InkPrompterStreams): Prompter {
+  let t: CoreT = coreEnglish;
   const ask = async <T,>(element: (answered: Answered<T>) => React.ReactElement, signal?: AbortSignal): Promise<T> => {
     let settle: Answered<T> | undefined;
     const answer = new Promise<T>((resolve, reject) => {
@@ -204,7 +208,11 @@ export function createInkPrompter(streams: InkPrompterStreams): Prompter {
         />
       )),
     confirm: async (question) =>
-      await ask<boolean>((answered) => <ConfirmQuestion {...answered} label={question.label} fallback={question.default} />),
+      await ask<boolean>((answered) => <ConfirmQuestion {...answered} label={question.label} fallback={question.default} t={t} />),
+    useWords: (words) => {
+      t = words;
+    },
+    words: () => t,
     close: () => undefined,
   };
 }

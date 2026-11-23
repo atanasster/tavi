@@ -60,22 +60,51 @@ const oneLine = (text: string): string => text.replace(/\r\n?|\n/g, " ");
 const masked = (text: string): string => GLYPHS.masked.repeat(Math.min([...text].length, MASK_MAX));
 
 /**
- * Keys typed fast arrive as one chunk: each is a key, and the first `y` or `n`
+ * What a key typed at an offer means, in every language the chat speaks: `y`
+ * or `д` (да) yes, `n` or `н` (не) no; for a round, `s` or `ч` (чат) for the
+ * rest of the chat, `a` or `в` (винаги) always, and `N` or `Н` a rejection
+ * with a reason. A Bulgarian key means exactly what its English twin does, so
+ * it never approves more than that key would; both work whatever the
+ * workspace's language, as a keyboard may be on either layout.
+ */
+const KEY_MEANINGS: Readonly<Record<string, "yes" | "no" | "session" | "always" | "reason">> = {
+  y: "yes",
+  Y: "yes",
+  д: "yes",
+  Д: "yes",
+  n: "no",
+  н: "no",
+  s: "session",
+  ч: "session",
+  a: "always",
+  в: "always",
+  N: "reason",
+  Н: "reason",
+};
+
+/** A key's meaning, from this object's own keys alone (`Object.hasOwn`, so `constructor` means nothing). */
+const meaningOf = (key: string): (typeof KEY_MEANINGS)[string] | undefined =>
+  Object.hasOwn(KEY_MEANINGS, key) ? KEY_MEANINGS[key] : undefined;
+
+/**
+ * Keys typed fast arrive as one chunk: each is a key, and the first yes or no
  * answers what is offered — read afresh before each, so the second of two
- * keys finds the offer gone.
+ * keys finds the offer gone. Either case answers (`Y`, `N`, `Д`, `Н`).
  */
 function answerWith<T>(typed: string, offered: () => T | undefined, answer: (offer: T, approved: boolean) => void): void {
   for (const key of typed.toLowerCase()) {
     const offer = offered();
     if (offer === undefined) return;
-    if (key === "y" || key === "n") answer(offer, key === "y");
+    const meaning = meaningOf(key);
+    if (meaning === "yes" || meaning === "no") answer(offer, meaning === "yes");
   }
 }
 
 /**
  * A round's keys, read case-sensitively: `y` once, `s` for the rest of
  * the task and `a` always where every call offers it, `n` rejects, and `N`
- * asks for a reason first. Like `answerWith`, the offer is read afresh per key.
+ * asks for a reason first — and their Bulgarian twins (`KEY_MEANINGS`). Like
+ * `answerWith`, the offer is read afresh per key.
  */
 function answerRound(
   typed: string,
@@ -87,11 +116,12 @@ function answerRound(
   for (const [index, key] of keys.entries()) {
     const offer = offered();
     if (offer === undefined) return;
-    if (key === "y" || key === "Y") answer(offer, { approved: true });
-    else if (key === "s" && offer.scopes.includes("session")) answer(offer, { approved: true, scope: "session" });
-    else if (key === "a" && offer.scopes.includes("always")) answer(offer, { approved: true, scope: "always" });
-    else if (key === "n") answer(offer, { approved: false });
-    else if (key === "N") {
+    const meaning = meaningOf(key);
+    if (meaning === "yes") answer(offer, { approved: true });
+    else if (meaning === "session" && offer.scopes.includes("session")) answer(offer, { approved: true, scope: "session" });
+    else if (meaning === "always" && offer.scopes.includes("always")) answer(offer, { approved: true, scope: "always" });
+    else if (meaning === "no") answer(offer, { approved: false });
+    else if (meaning === "reason") {
       // Whatever followed in the same chunk is the reason's start.
       askReason(offer, keys.slice(index + 1).join(""));
       return;
@@ -236,14 +266,14 @@ export function ChatApp({
     if (reasonFor.current !== undefined && store.decisionNow()?.steps !== reasonFor.current.steps) {
       reasonFor.current = undefined;
       set("");
-      store.note("  the round is no longer waiting here; the rejection was not sent", "notice");
+      store.note(store.t("tui.reason.stale"), "notice");
     }
     const rejecting = reasonFor.current;
     if (rejecting !== undefined && onDecide !== undefined) {
       if (key.escape) {
         reasonFor.current = undefined;
         set("");
-        store.note("  the rejection was not sent", "notice");
+        store.note(store.t("tui.reason.cancelled"), "notice");
         return;
       }
       if (erased(key) || key.ctrl || key.meta) return;
@@ -286,7 +316,7 @@ export function ChatApp({
         (decision, rest) => {
           reasonFor.current = decision;
           set("");
-          store.note(`  why reject round ${decision.steps}? Type the reason and press Enter (Esc to cancel)`, "notice");
+          store.note(store.t("tui.reason.ask", { steps: String(decision.steps) }), "notice");
           const [first, ...after] = rest.split(/\r\n?|\n/);
           if (after.length === 0) {
             set(first ?? "");
@@ -356,7 +386,7 @@ export function ChatApp({
           {view.form !== undefined
             ? `${view.form.label} ${GLYPHS.prompt} ${view.form.secret || looksLikeCredential(input) ? masked(input) : input}${exiting ? "" : BLINK_CURSOR}`
             : reasonFor.current !== undefined && view.decision?.steps === reasonFor.current.steps
-              ? `Reason ${GLYPHS.prompt} ${looksLikeCredential(input) ? masked(input) : input}${exiting ? "" : BLINK_CURSOR}`
+              ? `${store.t("tui.reason.prompt")} ${GLYPHS.prompt} ${looksLikeCredential(input) ? masked(input) : input}${exiting ? "" : BLINK_CURSOR}`
               : onSubmit === undefined
                 ? " "
                 : `${GLYPHS.prompt} ${view.running && view.answer === undefined && (view.decision !== undefined || view.review !== undefined) && !mayBecomeCommand(input, pluginCommands()) ? "" : looksLikeCredential(input) ? masked(input) : input}${exiting ? "" : BLINK_CURSOR}`}

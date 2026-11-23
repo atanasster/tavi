@@ -5,7 +5,8 @@ import {
   MODEL_PROVIDER_PRESETS,
   TaviError,
   WEB_SEARCH_KINDS,
-  fastModelFailure,
+  fastModelFailureIn,
+  onboardingStepDetail,
   normaliseBaseUrl,
   onboardingEnvPreset,
   type ChannelDescriptor,
@@ -26,7 +27,8 @@ import {
   type ModelLifecycle,
   lifecycleByModel,
 } from "@tavi/contracts";
-import { definedOnly, errorMessage, plural } from "@tavi/contracts/util";
+import { definedOnly, errorMessage } from "@tavi/contracts/util";
+import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
 import { sleep } from "@tavi/node-kit";
 
 import { detect } from "./detect.js";
@@ -127,8 +129,11 @@ class StepOpen extends Error {
 
 const preset = (id: string): ModelProviderPreset | undefined => MODEL_PROVIDER_PRESETS.find((candidate) => candidate.id === id);
 
+/** The words the prompter speaks now: the workspace's language once it is known, English until then. */
+const wordsOf = (deps: Pick<OnboardDependencies, "prompter">): CoreT => deps.prompter.words?.() ?? coreEnglish;
+
 /** One line of a step's state, as the checklist and `tavi setup` show it. */
-export function stepLine(step: OnboardingStatus["steps"][number]): string {
+export function stepLine(step: OnboardingStatus["steps"][number], t: CoreT = coreEnglish): string {
   const mark =
     step.state === "done"
       ? GLYPHS.done
@@ -139,44 +144,54 @@ export function stepLine(step: OnboardingStatus["steps"][number]): string {
           : GLYPHS.todo;
   // The flow's own title, as Welcome and the Home card name it; one done elsewhere says where, on a line of its own
   // under the step, so a row with a command still fits a 100-column terminal.
-  const label = step.title ?? STEP_LABELS[step.kind];
+  const label = step.title ?? t(STEP_LABELS[step.kind]);
   const command = STEP_COMMANDS[step.kind];
   const where =
     step.elsewhere === undefined || step.state === "done" || step.state === "unavailable"
       ? ""
       : command === ""
-        ? `\n  ${ELSEWHERE_PLACE[step.elsewhere]}`
-        : `\n  ${ELSEWHERE_WORDS[step.elsewhere]}: ${command}`;
+        ? `\n  ${t(ELSEWHERE_PLACE[step.elsewhere])}`
+        : `\n  ${t(ELSEWHERE_WORDS[step.elsewhere], { command })}`;
+  const detail = onboardingStepDetail(step, t);
   const note =
     step.state === "blocked"
-      ? "after the model"
+      ? t("cli.onboard.afterModel")
       : step.state === "skipped"
-        ? `skipped${step.detail === "" ? "" : ` · ${step.detail}`}`
-        : step.detail;
+        ? detail === ""
+          ? t("cli.onboard.skipped")
+          : t("cli.onboard.skippedDetail", { detail })
+        : detail;
   return `${mark} ${label}${note === "" ? "" : ` — ${note}`}${where}`;
 }
 
 /** Where a step this surface does not do is done. */
-const ELSEWHERE_WORDS: Readonly<Record<OnboardingSurface, string>> = { web: "in tavi ui, or now with", cli: "in a terminal" };
-const ELSEWHERE_PLACE: Readonly<Record<OnboardingSurface, string>> = { web: "in tavi ui", cli: "in a terminal" };
+const ELSEWHERE_WORDS: Readonly<Record<OnboardingSurface, CoreKey>> = {
+  web: "cli.onboard.elsewhere.webCommand",
+  cli: "cli.onboard.elsewhere.cliCommand",
+};
+const ELSEWHERE_PLACE: Readonly<Record<OnboardingSurface, CoreKey>> = {
+  web: "cli.onboard.elsewhere.web",
+  cli: "cli.onboard.elsewhere.cli",
+};
 
 /** "2 of 6 done": the steps that apply here, done ones counted the same on every surface. */
-export function checklistCount(status: OnboardingStatus): string {
+export function checklistCount(status: OnboardingStatus, t: CoreT = coreEnglish): string {
   const applying = status.steps.filter((step) => step.state !== "unavailable");
-  return `${applying.filter((step) => step.state === "done").length} of ${applying.length} done`;
+  const done = applying.filter((step) => step.state === "done").length;
+  return t("cli.onboard.count", { done: String(done), total: String(applying.length) });
 }
 
-const STEP_LABELS: Readonly<Record<OnboardingStepKind, string>> = {
-  model: "Model",
-  about: "About you",
-  search: "Web search",
-  apps: "Apps",
-  tasks: "Tasks",
-  channels: "Channels",
-  voice: "Voice messages",
-  service: "Keep it running",
-  ideas: "First idea",
-  info: "Good to know",
+const STEP_LABELS: Readonly<Record<OnboardingStepKind, CoreKey>> = {
+  model: "cli.onboard.step.model",
+  about: "cli.onboard.step.about",
+  search: "cli.onboard.step.search",
+  apps: "cli.onboard.step.apps",
+  tasks: "cli.onboard.step.tasks",
+  channels: "cli.onboard.step.channels",
+  voice: "cli.onboard.step.voice",
+  service: "cli.onboard.step.service",
+  ideas: "cli.onboard.step.ideas",
+  info: "cli.onboard.step.info",
 };
 
 /** The command that does each step by hand, for a step this terminal flow does not walk yet, or one deferred. */
@@ -212,6 +227,7 @@ async function chooseProvider(
   detected: OnboardingDetectAnswer,
   chatGptOffered: boolean,
 ): Promise<ModelChoice | "chatgpt"> {
+  const t = wordsOf(deps);
   const options: ChoiceOption[] = [];
   for (const variable of detected.env) {
     const presetId = onboardingEnvPreset(variable);
@@ -219,8 +235,8 @@ async function chooseProvider(
     if (found !== undefined)
       options.push({
         value: `env:${variable}`,
-        label: `Use the ${variable} found in your environment`,
-        hint: `${found.name}; the key is stored in Tavi's credentials, not read from the environment again`,
+        label: t("cli.onboard.ask.envKey", { variable }),
+        hint: t("cli.onboard.ask.envKeyHint", { provider: found.name }),
       });
   }
   for (const local of detected.local) {
@@ -228,8 +244,8 @@ async function chooseProvider(
     if (found !== undefined && local.toolCapableModels > 0)
       options.push({
         value: `local:${local.preset}`,
-        label: `${found.name} is running with ${plural(local.models, "model")}`,
-        hint: "free and private; small models handle agent work less well",
+        label: t("cli.onboard.ask.localRunning", { provider: found.name, n: String(local.models), count: local.models }),
+        hint: t("cli.onboard.ask.localHint"),
       });
   }
   const featured = (flowStep?.featured ?? ["openrouter", "ollama", "anthropic", "openai"]).filter(
@@ -238,22 +254,25 @@ async function chooseProvider(
   for (const id of featured) {
     const found = preset(id);
     if (found === undefined) continue;
-    const recommended = flowStep?.recommended === id ? " (recommended)" : "";
     options.push({
       value: id,
-      label: `${found.name}${recommended}`,
-      hint: found.localOnly ? "runs on this computer, no key" : "billed per use with your key",
+      label: flowStep?.recommended === id ? t("cli.onboard.ask.recommended", { provider: found.name }) : found.name,
+      hint: t(found.localOnly ? "cli.onboard.ask.localNoKey" : "cli.onboard.ask.billed"),
     });
   }
-  options.push({ value: "more", label: "Another provider…" });
+  options.push({ value: "more", label: t("cli.onboard.ask.anotherProvider") });
   // Sign in with ChatGPT, a preview: offered when the owner (or this process, offline) offers it, as the canvas is.
   // Last, so the numbers above stay.
   if (chatGptOffered && deps.signInWithChatGpt !== undefined)
-    options.push({ value: "chatgpt", label: "ChatGPT (preview)", hint: "sign in; uses your ChatGPT plan's allowance" });
+    options.push({ value: "chatgpt", label: t("cli.onboard.ask.chatGpt"), hint: t("cli.onboard.ask.chatGptHint") });
+  const recommended = flowStep?.recommended;
   const picked = await deps.prompter.choose({
-    label: "Which model provider?",
+    label: t("cli.onboard.ask.provider"),
     options,
-    default: options.find((option) => option.label.endsWith("(recommended)"))?.value ?? options[0]?.value ?? "more",
+    default:
+      (recommended !== undefined && options.some((option) => option.value === recommended) ? recommended : undefined) ??
+      options[0]?.value ??
+      "more",
   });
   if (picked.startsWith("env:")) {
     const variable = picked.slice(4) as OnboardingEnvVariable;
@@ -263,7 +282,7 @@ async function chooseProvider(
   if (picked === "chatgpt") return "chatgpt";
   if (picked !== "more") return { preset: preset(picked) as ModelProviderPreset };
   const other = await deps.prompter.choose({
-    label: "Which one?",
+    label: t("cli.onboard.ask.whichOne"),
     options: MODEL_PROVIDER_PRESETS.map((candidate) => ({
       value: candidate.id,
       label: candidate.name,
@@ -273,8 +292,8 @@ async function chooseProvider(
   const chosen = preset(other) as ModelProviderPreset;
   if (chosen.baseUrl !== "") return { preset: chosen };
   const baseUrl = await deps.prompter.text({
-    label: "Its OpenAI-compatible base URL (e.g. https://example.com/v1)",
-    check: (value) => (/^https?:\/\/\S+$/u.test(value) ? undefined : "an http(s) URL"),
+    label: t("cli.onboard.ask.baseUrl"),
+    check: (value) => (/^https?:\/\/\S+$/u.test(value) ? undefined : t("cli.onboard.ask.baseUrlWrong")),
   });
   return { preset: chosen, baseUrl };
 }
@@ -331,23 +350,20 @@ async function keyFor(deps: OnboardDependencies, choice: ModelChoice, headless: 
     throw new StepOpen(`${choice.preset.name} needs a key: pass --key-file <path> or --key-stdin`, "--key-file");
   }
   // OpenRouter mints a key on sign-in: the tile's first action, with pasting a key beside it.
+  const t = wordsOf(deps);
   if (choice.preset.id === "openrouter" && deps.signInWithOpenRouter !== undefined && !again) {
     const how = await deps.prompter.choose({
-      label: "How do you want to connect OpenRouter?",
+      label: t("cli.onboard.ask.openRouterHow"),
       options: [
-        {
-          value: "sign-in",
-          label: "Sign in with OpenRouter",
-          hint: "opens your browser; a key is made for Tavi, billed per use to your credits",
-        },
-        { value: "paste", label: "Paste a key instead" },
+        { value: "sign-in", label: t("cli.onboard.ask.openRouterSignIn"), hint: t("cli.onboard.ask.openRouterSignInHint") },
+        { value: "paste", label: t("cli.onboard.ask.pasteKey") },
       ],
       default: "sign-in",
     });
     if (how === "sign-in") {
       try {
         const key = await deps.signInWithOpenRouter();
-        deps.prompter.say(`${GLYPHS.done} Signed in: OpenRouter made a key for Tavi. It is stored in Tavi's credentials file (0600).`);
+        deps.prompter.say(`${GLYPHS.done} ${t("cli.onboard.say.openRouterSignedIn")}`);
         return key;
       } catch (error) {
         if (error instanceof OnboardCancelled) throw error;
@@ -355,18 +371,12 @@ async function keyFor(deps: OnboardDependencies, choice: ModelChoice, headless: 
       }
     }
   }
-  deps.prompter.say(
-    `Create a key at ${keyPageOf(choice.preset)} if you have none. It is stored in Tavi's credentials file (0600), never shown again.`,
-  );
+  deps.prompter.say(t("cli.onboard.say.createKey", { page: keyPageOf(choice.preset) }));
   return await deps.prompter.text({
-    label: `${choice.preset.name} key (hidden)`,
+    label: t("cli.onboard.ask.key", { provider: choice.preset.name }),
     secret: true,
     check: (value) =>
-      value.trim() === ""
-        ? "Paste the key, or press Ctrl-C to stop (your progress is kept)"
-        : /\s/u.test(value.trim())
-          ? "A key has no spaces in it"
-          : undefined,
+      value.trim() === "" ? t("cli.onboard.ask.keyEmpty") : /\s/u.test(value.trim()) ? t("cli.onboard.ask.keySpaces") : undefined,
   });
 }
 
@@ -403,19 +413,23 @@ async function pickModels(
     const fast = headless.fastModel ?? (headless.model === undefined ? suggestion.fast : undefined);
     return { main, ...(fast === undefined || fast === main ? {} : { fast }) };
   }
+  const t = wordsOf(deps);
   const options: ChoiceOption[] = suggestion.candidates.map((model, index) => ({
     value: model,
     label: model,
-    ...(index === 0 ? { hint: "suggested" } : {}),
+    ...(index === 0 ? { hint: t("cli.onboard.ask.suggested") } : {}),
   }));
-  options.push({ value: "other", label: "Other…" });
-  const chosen = await deps.prompter.choose({ label: "Which model should Tavi use?", options, default: suggestion.main ?? "other" });
+  options.push({ value: "other", label: t("cli.onboard.ask.other") });
+  const chosen = await deps.prompter.choose({ label: t("cli.onboard.ask.model"), options, default: suggestion.main ?? "other" });
   const main =
     chosen !== "other"
       ? chosen
-      : await deps.prompter.text({ label: "Model id", check: (value) => (value === "" ? "a model id" : undefined) });
+      : await deps.prompter.text({
+          label: t("cli.onboard.ask.modelId"),
+          check: (value) => (value === "" ? t("cli.onboard.ask.modelIdWrong") : undefined),
+        });
   if (suggestion.fast === undefined || suggestion.fast === main) return { main };
-  const fast = await deps.prompter.confirm({ label: `Use ${suggestion.fast} as the fast model for summaries and ideas?`, default: true });
+  const fast = await deps.prompter.confirm({ label: t("cli.onboard.ask.fastModel", { model: suggestion.fast }), default: true });
   return fast ? { main, fast: suggestion.fast } : { main };
 }
 
@@ -515,9 +529,9 @@ async function chatGptModelStep(deps: OnboardDependencies, run: OnboardRun, curr
 /** A model set up but not checked yet (`tavi models add`): one short request, if the person wants it, and its result. */
 async function checkModel(deps: OnboardDependencies, workspaceId: string, step: OnboardingStatus["steps"][number]): Promise<void> {
   const name = step.detail.split(" · ").slice(0, 2).join(" · ");
-  if (!(await deps.prompter.confirm({ label: `${name} is set up but not checked yet. Check it with one short request?`, default: true })))
-    return;
-  deps.prompter.say("Checking it with one short request…");
+  const t = wordsOf(deps);
+  if (!(await deps.prompter.confirm({ label: t("cli.onboard.ask.checkModel", { name }), default: true }))) return;
+  deps.prompter.say(t("cli.onboard.say.checking"));
   const answer = await deps.transport
     .request<OnboardingVerifyAnswer>("onboarding", { action: "verify", workspaceId, role: "main" }, 60_000)
     .catch((error: unknown) => error);
@@ -619,7 +633,11 @@ async function modelStep(
       ).models.map((entry) => entry.modelId);
     } catch (error) {
       say(`${GLYPHS.failed} ${choice.preset.name} could not list its models: ${errorMessage(error)}`);
-      if (headless !== undefined || attempt > 2 || !(await deps.prompter.confirm({ label: "Try another key?", default: true })))
+      if (
+        headless !== undefined ||
+        attempt > 2 ||
+        !(await deps.prompter.confirm({ label: wordsOf(deps)("cli.onboard.ask.anotherKey"), default: true }))
+      )
         throw new StepOpen("The model step is not done: its models could not be listed", "--key-file");
       key = await keyFor(deps, choice, headless, true);
       await deps.transport.request("credentials", { action: "set", reference: connectionId, value: key });
@@ -636,12 +654,12 @@ async function modelStep(
     if (working) say("Your previous model is still the default.");
     const options: ChoiceOption[] = [
       // A local server takes no key: there is none to change.
-      ...(choice.preset.localOnly ? [] : [{ value: "key", label: "Enter another key" }]),
-      { value: "model", label: "Choose another model" },
-      { value: "later", label: "Leave it for now", hint: "the connection stays; tavi onboard asks again" },
+      ...(choice.preset.localOnly ? [] : [{ value: "key", label: wordsOf(deps)("cli.onboard.ask.enterKey") }]),
+      { value: "model", label: wordsOf(deps)("cli.onboard.ask.chooseModel") },
+      { value: "later", label: wordsOf(deps)("cli.onboard.ask.later"), hint: wordsOf(deps)("cli.onboard.ask.laterHint") },
     ];
     const next = await deps.prompter.choose({
-      label: "What now?",
+      label: wordsOf(deps)("cli.onboard.ask.whatNow"),
       options,
       default: main?.errorCode === "auth" && !choice.preset.localOnly ? "key" : "model",
     });
@@ -668,16 +686,15 @@ export async function offerRhumbKey(
     .then((answer) => answer.credentials.includes(RHUMB_CREDENTIAL_REF))
     .catch(() => true);
   if (stored) return;
-  deps.prompter.say(
-    "Providers retire models, sometimes with weeks' notice. With a free Rhumb key (https://rhumbdata.com/sign-up), Tavi checks daily and says before one you use goes.",
-  );
-  const key = (await deps.prompter.text({ label: "Rhumb key (hidden; Enter to skip)", secret: true })).trim();
+  const t = wordsOf(deps);
+  deps.prompter.say(t("cli.onboard.say.rhumb"));
+  const key = (await deps.prompter.text({ label: t("cli.onboard.ask.rhumbKey"), secret: true })).trim();
   if (key === "") return;
   try {
     await deps.transport.request("credentials", { action: "set", reference: RHUMB_CREDENTIAL_REF, value: key });
-    deps.prompter.say(`${GLYPHS.done} Rhumb key stored: tavi serve checks your models daily; run tavi models sync to check now.`);
+    deps.prompter.say(`${GLYPHS.done} ${t("cli.onboard.say.rhumbStored")}`);
   } catch (error) {
-    deps.prompter.say(`${GLYPHS.failed} The Rhumb key was not stored: ${errorMessage(error)}`);
+    deps.prompter.say(`${GLYPHS.failed} ${t("cli.onboard.say.rhumbNotStored", { why: errorMessage(error) })}`);
   }
 }
 
@@ -738,7 +755,10 @@ function elsewhere(deps: OnboardDependencies, kind: OnboardingStepKind, flowStep
 /** A step this terminal flow leaves to another surface or command: said with what does it. */
 function deferred(deps: OnboardDependencies, step: OnboardingStatus["steps"][number]): void {
   if (step.state === "done") return;
-  deps.prompter.say(`${stepLine(step)}${STEP_COMMANDS[step.kind] === "" ? "" : `\n  later: ${STEP_COMMANDS[step.kind]}`}`);
+  const t = wordsOf(deps);
+  deps.prompter.say(
+    `${stepLine(step, t)}${STEP_COMMANDS[step.kind] === "" ? "" : `\n  ${t("cli.onboard.later", { command: STEP_COMMANDS[step.kind] })}`}`,
+  );
 }
 
 /** A headless run's other steps: each flag sets its step; a step without its flags is left as it is. */
@@ -838,9 +858,14 @@ export async function runOnboard(deps: OnboardDependencies, run: OnboardRun): Pr
     let current = await status(deps, run.workspaceId);
     // No flow at all (`tavi.onboarding` disabled, no plugin's): the checklist alone, with the command for each open step.
     if (current.providerId === null && run.headless === undefined) {
-      say("Setup's guided flow is turned off here; this is what is open, with the command for each:");
+      const t = wordsOf(deps);
+      say(t("cli.onboard.flowOff"));
       for (const step of current.steps)
-        say(step.state === "done" || STEP_COMMANDS[step.kind] === "" ? stepLine(step) : `${stepLine(step)}\n  ${STEP_COMMANDS[step.kind]}`);
+        say(
+          step.state === "done" || STEP_COMMANDS[step.kind] === ""
+            ? stepLine(step, t)
+            : `${stepLine(step, t)}\n  ${STEP_COMMANDS[step.kind]}`,
+        );
       return result(current.complete ? ONBOARD_EXIT.ok : ONBOARD_EXIT.open, current);
     }
     const steps = walked(run, current);
@@ -848,10 +873,11 @@ export async function runOnboard(deps: OnboardDependencies, run: OnboardRun): Pr
       if (run.headless === undefined) {
         // What is still open is another surface's (apps, web search): said, with where, never as "set up".
         const elsewhereOpen = current.steps.filter((step) => current.open.includes(step.kind));
-        if (elsewhereOpen.length === 0) say("Everything is set up. `tavi setup` goes through it again.");
+        const t = wordsOf(deps);
+        if (elsewhereOpen.length === 0) say(t("cli.onboard.allSet"));
         else {
-          say(`Setup: ${checklistCount(current)}. What is left is done elsewhere:`);
-          for (const step of elsewhereOpen) say(stepLine(step));
+          say(t("cli.onboard.leftElsewhere", { count: checklistCount(current, t) }));
+          for (const step of elsewhereOpen) say(stepLine(step, t));
         }
       }
       // Headless with the model still open and no flag for it: the flag it needs is named.
@@ -889,7 +915,13 @@ export async function runOnboard(deps: OnboardDependencies, run: OnboardRun): Pr
           step?.state === "done" &&
           run.mode === "setup" &&
           run.headless === undefined &&
-          !(await deps.prompter.confirm({ label: `Model: ${step.detail}. Change it?`, default: false }))
+          !(await deps.prompter.confirm({
+            label: wordsOf(deps)("cli.onboard.changeIt", {
+              step: wordsOf(deps)("cli.onboard.step.model"),
+              detail: onboardingStepDetail(step, wordsOf(deps)),
+            }),
+            default: false,
+          }))
         )
           continue;
         if (step?.state === "done" && run.headless === undefined && run.mode === "onboard") {
@@ -904,7 +936,13 @@ export async function runOnboard(deps: OnboardDependencies, run: OnboardRun): Pr
         run.mode === "setup" &&
         kind !== "ideas" &&
         kind !== "service" &&
-        !(await deps.prompter.confirm({ label: `${STEP_LABELS[kind]}: ${step.detail}. Change it?`, default: false }))
+        !(await deps.prompter.confirm({
+          label: wordsOf(deps)("cli.onboard.changeIt", {
+            step: wordsOf(deps)(STEP_LABELS[kind]),
+            detail: onboardingStepDetail(step, wordsOf(deps)),
+          }),
+          default: false,
+        }))
       ) {
         continue;
       } else {
@@ -944,11 +982,14 @@ export async function runOnboard(deps: OnboardDependencies, run: OnboardRun): Pr
     }
     if (run.headless === undefined) {
       say("");
-      for (const step of current.steps) say(stepLine(step));
+      const t = wordsOf(deps);
+      for (const step of current.steps) say(stepLine(step, t));
       // The model step is done on `main`, but Ideas and summaries run on a fast model that failed.
-      const fastAdvice = fastModelFailure(current.steps.find((step) => step.kind === "model"));
-      if (fastAdvice !== undefined)
-        say(`${GLYPHS.todo} Fix the fast model — ${fastAdvice}\n  tavi models set-role fast <connection> <model>`);
+      const fastAdvice = fastModelFailureIn(
+        current.steps.find((step) => step.kind === "model"),
+        t,
+      );
+      if (fastAdvice !== undefined) say(`${GLYPHS.todo} ${t("cli.onboard.fixFast", { advice: fastAdvice })}`);
       // The canvas's steps (apps, search) not walked in this run: said, with the command that does each now.
       for (const flowStep of flow.flow.steps) {
         if (

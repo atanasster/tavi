@@ -30,11 +30,12 @@ import {
   approvalTitleOf,
   isUnifiedDiff,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { definedOnly } from "@tavi/contracts/util";
 import stringWidth from "string-width";
 
 import { formLines } from "../features/approvals/form.js";
-import { FORMS, fieldOf, type FormState } from "./forms.js";
+import { FORMS, fieldLabel, fieldOf, formTitle, type FormState } from "./forms.js";
 import { GLYPHS, RULES, divider } from "./theme.js";
 
 /**
@@ -136,6 +137,8 @@ export interface ChatStoreOptions {
   readonly schedule?: (callback: () => void, ms: number) => () => void;
   /** Whether the operator can type a prompt; the status says what to do next. Default true. */
   readonly prompting?: boolean;
+  /** The words of the workspace's language; English until `words` says otherwise. */
+  readonly words?: CoreT;
 }
 
 /** Ink draws at most this many frames a second (its default, set explicitly), and the tree hears of a change at most once a frame. */
@@ -277,6 +280,8 @@ export class ChatStore {
   #form: FormState | undefined;
   /** The question card on screen said the answer could not be typed here: said again once it can. */
   #questionUntyped: string | undefined;
+  /** The words the chat speaks: the workspace's language, once the owner says it. */
+  #t: CoreT;
   /** Events reduced so far. */
   eventsReduced = 0;
   /** Times the tree was told of a new view: against the events, a measure of coalescing. */
@@ -286,12 +291,25 @@ export class ChatStore {
     this.#options = options;
     this.#frameMs = options.frameMs ?? FRAME_MS;
     this.#schedule = options.schedule ?? defaultSchedule;
+    this.#t = options.words ?? coreEnglish;
     this.#view = {
       committed: this.#committedView(),
       live: [],
-      status: statusLine(this.#state, false, options.prompting ?? true),
+      status: statusLine(this.#state, false, options.prompting ?? true, "new", false, this.#t),
       running: false,
     };
+  }
+
+  /** The words the chat speaks now: what every line it adds is said in. */
+  get t(): CoreT {
+    return this.#t;
+  }
+
+  /** The chat speaks `t` from now on (the workspace's language, read from the owner); lines already printed stay as they are. */
+  words(t: CoreT): void {
+    if (t === this.#t) return;
+    this.#t = t;
+    this.#dirty();
   }
 
   /** The last view the tree was given: a stable snapshot between flushes. */
@@ -399,7 +417,7 @@ export class ChatStore {
     // The card already said it could not be typed here: it can now.
     if (this.#questionUntyped === taskId && this.#answerable() !== undefined) {
       this.#questionUntyped = undefined;
-      this.#line("  Type the answer and press Enter.", "notice");
+      this.#line(this.#t("tui.store.typeAnswer"), "notice");
     }
     this.#dirty();
   }
@@ -500,13 +518,14 @@ export class ChatStore {
   /** Whether the owner leaves the task's rounds to a client (this one) to decide. */
   /** Where the followed task's rounds are decided, as a status pane names it. */
   roundsDecidedWhere(): string {
-    if (this.decidesRounds) return "its card above decides it (y/n, s/a where offered)";
+    const t = this.#t;
+    if (this.decidesRounds) return t("tui.store.decidedWhere.card");
     if (this.#roundsAnsweredBy === "owner") {
       return this.#firing !== undefined
-        ? `schedule ${printable(this.#firing.name)}'s fire decides it while it runs`
-        : "the owner answers it (the run's own policy)";
+        ? t("tui.store.decidedWhere.fire", { name: printable(this.#firing.name) })
+        : t("tui.store.decidedWhere.owner");
     }
-    return "`tavi approvals approve|reject` decides it";
+    return t("tui.store.decidedWhere.elsewhere");
   }
 
   /** Who answers the current task's rounds, as last told (`answeredBy`). */
@@ -608,16 +627,22 @@ export class ChatStore {
     if (event.kind === "turn.suggested")
       this.#mark(
         previous.transcript.length,
-        `Suggested next: ${event.suggestions.map((text) => `“${printable(text.replace(/\s+/g, " "))}”`).join(" · ")} — type one as your next prompt`,
+        this.#t("tui.store.suggested", {
+          suggestions: event.suggestions.map((text) => `“${printable(text.replace(/\s+/g, " "))}”`).join(" · "),
+        }),
         "notice",
       );
     if (event.kind === "plugin.notice") this.#mark(previous.transcript.length, `${event.pluginId}: ${printable(event.notice)}`, "notice");
     if (event.kind === "task.spawned" && this.#state !== previous)
-      this.#mark(previous.transcript.length, `Spawned ${event.workerAgentId}: ${event.childRunId} (depth ${event.depth})`, "notice");
+      this.#mark(
+        previous.transcript.length,
+        this.#t("tui.store.spawned", { worker: event.workerAgentId, run: event.childRunId, depth: String(event.depth) }),
+        "notice",
+      );
     if (event.kind === "approval.settled") {
       // Where the stream settled it: before whatever the resumed turn adds.
       for (const round of this.#state.settled.slice(this.#settledNoted)) {
-        this.#mark(previous.transcript.length, settledLine(round), "notice");
+        this.#mark(previous.transcript.length, settledLine(round, this.#t), "notice");
         if (round.steps === this.#deciding) this.#deciding = undefined;
       }
       this.#settledNoted = this.#state.settled.length;
@@ -634,7 +659,7 @@ export class ChatStore {
       this.#card = undefined;
       this.#reviewCard = undefined;
       this.#suspensionNoted = undefined;
-      this.#line(`${GLYPHS.warning} ${event.reason}: what the chat did before this point is not shown`, "notice");
+      this.#line(this.#t("tui.store.resync", { mark: GLYPHS.warning, reason: event.reason }), "notice");
       this.#truncationNoted = true;
     }
     // A decision for a round no longer pending was answered some other way
@@ -706,8 +731,8 @@ export class ChatStore {
   /** `/taint`'s lines: what chat `taskId` (the one shown) read, the remedy, and that `/compact` does not clear it. */
   taintDetails(taskId: string | undefined = this.#state.taskId): readonly string[] {
     const label = taskId === undefined ? undefined : this.#taints.get(taskId);
-    if (label === undefined) return ["This chat has read nothing Tavi does not trust (as far as its record and rounds say)."];
-    return taintDetailLines(label).map((line) => printable(line));
+    if (label === undefined) return [this.#t("tui.store.noTaint")];
+    return taintDetailLines(label, this.#t).map((line) => printable(line));
   }
 
   /** Whether the chat shown is tainted: `/compact` says it does not clear it. */
@@ -748,7 +773,7 @@ export class ChatStore {
     this.#flushToken = undefined;
     const before = this.#view.committed.length;
     if (this.#state.truncated && !this.#truncationNoted) {
-      this.#line(`${GLYPHS.warning} joined late: the start of this chat's stream is no longer held, so it is not shown`, "notice");
+      this.#line(this.#t("tui.store.joinedLate", { mark: GLYPHS.warning }), "notice");
       this.#truncationNoted = true;
     }
     const live = this.#commitEntries(this.#state.transcript, this.#running ? "live" : "final");
@@ -762,25 +787,33 @@ export class ChatStore {
     const answer = this.#answerable();
     const form = this.#form;
     const field = form === undefined ? undefined : fieldOf(form);
+    const t = this.#t;
     this.#view = {
       committed: this.#lines.length === before ? this.#view.committed : this.#committedView(),
       live: budget === 0 ? [] : rows.slice(Math.max(0, rows.length - budget)),
       status:
-        (form !== undefined && field !== undefined ? formStatus(form, field) : undefined) ??
+        (form !== undefined && field !== undefined ? formStatus(form, field, t) : undefined) ??
         (this.#endedWith === undefined ? undefined : this.#withTaint(this.#endedWith)) ??
         (this.#deciding !== undefined && this.#deciding === this.#state.pending[0]?.steps
-          ? `${GLYPHS.more} deciding round ${this.#deciding}`
+          ? t("tui.status.deciding", { mark: GLYPHS.more, steps: String(this.#deciding) })
           : decision !== undefined
-            ? `${GLYPHS.waiting} round ${decision.steps}: ${roundKeys(decision.scopes, decision.scopeGroup, decision.scopeHosts, this.#lasting())}`
+            ? t("tui.status.round", {
+                mark: GLYPHS.waiting,
+                steps: String(decision.steps),
+                keys: roundKeys(decision.scopes, decision.scopeGroup, decision.scopeHosts, this.#lasting(), t),
+              })
             : this.#reviewing !== undefined && this.#state.status === "review_required"
-              ? `${GLYPHS.more} sending the review`
+              ? t("tui.status.sendingReview", { mark: GLYPHS.more })
               : review !== undefined
-                ? `${GLYPHS.waiting} review: y releases the output and resumes, n rejects it`
+                ? t("tui.status.review", { mark: GLYPHS.waiting, keys: t("tui.review.keys") })
                 : this.#answering && this.#state.status === "waiting"
-                  ? `${GLYPHS.more} sending the answer`
+                  ? t("tui.status.sendingAnswer", { mark: GLYPHS.more })
                   : answer !== undefined
-                    ? `${GLYPHS.waiting} the chat asks: ${clipStatus(this.#state.waiting?.choices?.header ?? this.#state.waiting?.question ?? "")} · type the answer and press Enter`
-                    : this.#withTaint(statusLine(this.#state, this.#running, this.#options.prompting ?? true, this.#next, this.#home))),
+                    ? t("tui.status.asks", {
+                        mark: GLYPHS.waiting,
+                        question: clipStatus(this.#state.waiting?.choices?.header ?? this.#state.waiting?.question ?? ""),
+                      })
+                    : this.#withTaint(statusLine(this.#state, this.#running, this.#options.prompting ?? true, this.#next, this.#home, t))),
       running: this.#running,
       ...definedOnly({
         decision,
@@ -788,7 +821,7 @@ export class ChatStore {
         review,
         answer,
       }),
-      ...(field === undefined ? {} : { form: { label: field.label.replace(/ \(.*\)$/, ""), secret: field.secret === true } }),
+      ...(field === undefined ? {} : { form: { label: fieldLabel(field, t).replace(/ \(.*\)$/, ""), secret: field.secret === true } }),
     };
     this.treeUpdates += 1;
     for (const listener of [...this.#listeners]) listener();
@@ -890,6 +923,7 @@ export class ChatStore {
   /** A suspension, explained once in full: the status row only has room to point at it. */
   #noteSuspension(): void {
     const state = this.#state;
+    const t = this.#t;
     const task = state.taskId ?? "<task-id>";
     let key: string | undefined;
     let lines: string[] = [];
@@ -903,17 +937,27 @@ export class ChatStore {
         state.waiting.question !== undefined
           ? [
               // The header is the question's short topic, as the canvas shows it.
-              `${GLYPHS.waiting} The chat asks${state.waiting.choices?.header === undefined ? "" : ` (${state.waiting.choices.header})`}: ${state.waiting.question}`,
+              state.waiting.choices?.header === undefined
+                ? t("tui.card.asks", { mark: GLYPHS.waiting, question: state.waiting.question })
+                : t("tui.card.asksAbout", { mark: GLYPHS.waiting, header: state.waiting.choices.header, question: state.waiting.question }),
               // Options are numbered: typing a number (or several, for a
               // multi-select) picks them, as it does in a chat.
               ...(state.waiting.choices?.options.map((option, index) => `  ${formatChoiceOption(option, index)}`) ?? []),
               this.#answerable() !== undefined
                 ? state.waiting.choices === undefined
-                  ? "  Type the answer and press Enter."
-                  : `  Type ${state.waiting.choices.multiSelect ? "the numbers of your choices" : "a number"}${state.waiting.choices.allowOther ? " or your own answer" : ""} and press Enter.`
-                : "  It waits for the answer in the conversation it was asked in.",
+                  ? t("tui.store.typeAnswer")
+                  : t(
+                      state.waiting.choices.multiSelect
+                        ? state.waiting.choices.allowOther
+                          ? "tui.card.typeNumbersOrOwn"
+                          : "tui.card.typeNumbers"
+                        : state.waiting.choices.allowOther
+                          ? "tui.card.typeNumberOrOwn"
+                          : "tui.card.typeNumber",
+                    )
+                : t("tui.card.waitsElsewhere"),
             ]
-          : [`${GLYPHS.waiting} The chat waits on ${state.waiting.on} until ${state.waiting.deadlineAt}; it resumes on its own.`];
+          : [t("tui.card.waitsOn", { mark: GLYPHS.waiting, on: state.waiting.on, deadline: state.waiting.deadlineAt })];
       // Shown as not typed here: said again once it can be (`conversation`).
       if (key !== this.#suspensionNoted && state.waiting.question !== undefined && this.#answerable() === undefined) {
         this.#questionUntyped = state.taskId;
@@ -930,10 +974,12 @@ export class ChatStore {
   /** The status line with the taint chip: up to three sources, and where the details are. */
   #withTaint(line: string): string {
     // A private chat says so on its status line, before its taint chip.
-    if (this.#state.taskId !== undefined && this.#private.has(this.#state.taskId)) line = line === "" ? "private" : `${line} · private`;
+    const t = this.#t;
+    if (this.#state.taskId !== undefined && this.#private.has(this.#state.taskId))
+      line = line === "" ? t("tui.status.private") : `${line} · ${t("tui.status.private")}`;
     const label = this.#shownTaint();
     if (label === undefined) return line;
-    const chip = `${GLYPHS.warning} ${clipStatus(printable(taintChipText(label)))} (/taint)`;
+    const chip = t("tui.status.taintChip", { mark: GLYPHS.warning, chip: clipStatus(printable(taintChipText(label, t))) });
     return line === "" ? chip : `${line} · ${chip}`;
   }
 
@@ -943,14 +989,16 @@ export class ChatStore {
    * listed has arrived, what decides it. One decision for the whole round.
    */
   #noteRound(round: RunState["pending"][number], task: string): void {
+    const t = this.#t;
     if (this.#card?.steps !== round.steps) {
       this.#card = { steps: round.steps, calls: new Set(), asked: false };
+      const steps = String(round.steps);
       this.#line(
         this.#roundsAnsweredBy === "owner"
-          ? `${GLYPHS.waiting} Round ${round.steps} needs approval${this.#answeredByClause()}:`
+          ? t("tui.card.roundOwner", { mark: GLYPHS.waiting, steps, by: this.#answeredByClause() })
           : this.decidesRounds
-            ? `${GLYPHS.waiting} Round ${round.steps} needs approval:`
-            : `${GLYPHS.waiting} Round ${round.steps} needs approval — decide it with tavi approvals approve|reject ${task}:`,
+            ? t("tui.card.round", { mark: GLYPHS.waiting, steps })
+            : t("tui.card.roundElsewhere", { mark: GLYPHS.waiting, steps, task }),
         "notice",
       );
     }
@@ -959,7 +1007,7 @@ export class ChatStore {
       if (card.calls.has(request.callId)) continue;
       card.calls.add(request.callId);
       this.#line(
-        `  ${GLYPHS.bullet} ${callLine(request.toolName, approvalTitleOf(request), request.input)}${request.risk === undefined ? "" : ` [${request.risk.level} risk]`}`,
+        `  ${GLYPHS.bullet} ${callLine(request.toolName, approvalTitleOf(request), request.input)}${request.risk === undefined ? "" : t("tui.card.risk", { level: riskLevel(request.risk.level, t) })}`,
         "notice",
       );
       const form = request.display?.form;
@@ -967,12 +1015,15 @@ export class ChatStore {
       const shown = form === undefined ? (request.display?.command ?? request.display?.destination) : undefined;
       if (shown !== undefined && shown !== request.display?.title) this.#line(`      ${printable(shown).slice(0, 200)}`, "notice");
       if (request.display?.forThisChat !== undefined && request.allowedScopes?.includes("session") === true)
-        this.#line(`      for this chat, approving covers: ${printable(request.display.forThisChat).slice(0, 200)}`, "notice");
+        this.#line(t("tui.card.forThisChat", { what: printable(request.display.forThisChat).slice(0, 200) }), "notice");
       // On one line, its line breaks marked, so no line of it can pass for one of the card's own; a cut says so.
       const stdin = request.display?.stdin;
       if (stdin !== undefined)
         this.#line(
-          `      stdin: ${printable(stdin.replace(/\r?\n/g, " ⏎ ")).slice(0, 200)}${stdin.length > 200 ? ` … (${stdin.length} characters; the canvas shows more)` : ""}`,
+          t(stdin.length > 200 ? "tui.card.stdinLong" : "tui.card.stdin", {
+            text: printable(stdin.replace(/\r?\n/g, " ⏎ ")).slice(0, 200),
+            n: String(stdin.length),
+          }),
           "notice",
         );
       if (form !== undefined) for (const line of formLines(form, "full", printable)) this.#line(`      ${line}`, "notice");
@@ -984,22 +1035,25 @@ export class ChatStore {
         // Only the diff's own lines are counted: a cut diff's closing note is none.
         const more = lines.slice(TERMINAL_DIFF_LINES).filter((line) => /^[ +\-@]/.test(line)).length;
         if (lines.length > TERMINAL_DIFF_LINES)
-          this.#line(`      … ${more === 0 ? "the rest" : `${more} more lines`} in the canvas's Details (tavi ui)`, "notice");
+          this.#line(more === 0 ? t("tui.card.diffRest") : t("tui.card.diffMore", { n: String(more) }), "notice");
       }
       // Why it is asked, and from where, as the canvas shows it: Tavi's words first, a page's claim after.
-      for (const line of provenanceLines(request)) this.#line(`      ${line}`, "notice");
+      for (const line of provenanceLines(request, t)) this.#line(`      ${line}`, "notice");
       // The round's label is the chat's as the call was made: the header's chip says it before the record does.
       if (request.risk?.label?.integrity === "untrusted" && this.#state.taskId !== undefined)
         this.setTaint(this.#state.taskId, request.risk.label);
       // What else flags it (taint has its own lines above).
       const reasons = flaggedReasons(request.risk?.reasons);
-      if (reasons.length > 0) this.#line(`      Flagged: ${printable(reasons.join(" · ")).slice(0, 300)}`, "notice");
+      if (reasons.length > 0) this.#line(t("tui.card.flagged", { reasons: printable(reasons.join(" · ")).slice(0, 300) }), "notice");
     }
     if (!card.asked && this.decidesRounds && this.#whole(round)) {
       card.asked = true;
       const decision = this.#decidable();
       this.#line(
-        `  ${roundKeys(decision?.scopes ?? ["once"], decision?.scopeGroup, decision?.scopeHosts, this.#lasting())} — or decide it in another terminal: tavi approvals approve|reject ${task}`,
+        t("tui.card.decide", {
+          keys: roundKeys(decision?.scopes ?? ["once"], decision?.scopeGroup, decision?.scopeHosts, this.#lasting(), t),
+          task,
+        }),
         "notice",
       );
     }
@@ -1011,37 +1065,30 @@ export class ChatStore {
    * the command that does it elsewhere.
    */
   #noteReview(review: NonNullable<RunState["review"]>): void {
+    const t = this.#t;
     if (this.#reviewCard?.steps !== review.steps) {
       this.#reviewCard = { steps: review.steps, asked: false };
-      const artifacts = review.requests.map(
-        (request) => `  ${GLYPHS.bullet} ${printable(request.artifactId)} (from ${printable(request.toolName)})`,
+      const artifacts = review.requests.map((request) =>
+        t("tui.card.reviewItem", { mark: GLYPHS.bullet, artifact: printable(request.artifactId), tool: printable(request.toolName) }),
       );
-      const header = `${GLYPHS.waiting} Output needs review${this.#answeredByClause()}:`;
+      const header = t("tui.card.review", { mark: GLYPHS.waiting, by: this.#answeredByClause() });
       for (const line of [header, ...artifacts]) this.#line(line, "notice");
       if (!this.decidesRounds && this.#roundsAnsweredBy === "client") {
         this.#reviewCard.asked = true;
-        this.#line(
-          "  Decide each in another terminal with tavi artifacts approve|reject <artifact-id>; with the last decision add",
-          "notice",
-        );
-        this.#line("  --resume --connection <id> --model <id> (the owner's own target) to resume the chat.", "notice");
+        this.#line(t("tui.card.reviewElsewhere1"), "notice");
+        this.#line(t("tui.card.reviewElsewhere2"), "notice");
       }
     }
     if (!this.#reviewCard.asked && this.decidesRounds) {
       this.#reviewCard.asked = true;
-      this.#line(
-        "  y releases all of it and resumes the chat, n rejects all of it — or decide each in another terminal: tavi artifacts approve|reject <artifact-id>",
-        "notice",
-      );
+      this.#line(t("tui.card.reviewKeys"), "notice");
     }
   }
 
   /** Who answers a suspension the owner answers, as a card's header says it; empty when a client does. */
   #answeredByClause(): string {
     if (this.#roundsAnsweredBy !== "owner") return "";
-    return this.#firing !== undefined
-      ? `; schedule ${printable(this.#firing.name)}'s fire decides it while it runs`
-      : "; the owner answers it (the run's own policy)";
+    return this.#firing !== undefined ? this.#t("tui.card.byFire", { name: printable(this.#firing.name) }) : this.#t("tui.card.byOwner");
   }
 
   /** A tool card's call line, computed once per card. */
@@ -1113,7 +1160,7 @@ export class ChatStore {
       }
       // A message sent into the running turn, where the model read it.
       if (entry.kind === "steer") {
-        const line = `${GLYPHS.prompt} ${printable(entry.text)} (sent into the turn)`;
+        const line = this.#t("tui.transcript.steered", { mark: GLYPHS.prompt, text: printable(entry.text) });
         if (held) {
           live.push(line);
           continue;
@@ -1128,7 +1175,7 @@ export class ChatStore {
         continue;
       }
       if (held) {
-        live.push(toolLine(entry, this.#callLineOf(entry)));
+        live.push(toolLine(entry, this.#callLineOf(entry), this.#t));
         continue;
       }
       // A plan is shown as the checklist it is, not as a tool call.
@@ -1150,27 +1197,28 @@ export class ChatStore {
           );
         const shown = plan?.join("\n");
         if (plan !== undefined && !superseded && shown !== this.#plan) {
-          this.#line(`${GLYPHS.call} ${this.#plan === undefined ? "Plan" : "Plan (updated)"}`, "tool");
+          this.#line(`${GLYPHS.call} ${this.#t(this.#plan === undefined ? "tui.transcript.plan" : "tui.transcript.planUpdated")}`, "tool");
           for (const item of plan) this.#line(`  ${printable(item)}`, "tool");
           this.#plan = shown;
         }
         this.#done.add(entry.key);
         continue;
       }
-      this.#line(toolLine(entry, this.#callLineOf(entry)), entry.status === "completed" ? "tool" : "failure");
+      this.#line(toolLine(entry, this.#callLineOf(entry), this.#t), entry.status === "completed" ? "tool" : "failure");
       // Past-chat search names the chats it found, by title, not a line of JSON.
       const cited =
         entry.status === "completed" && entry.toolName === SESSIONS_SEARCH_TOOL_ID ? pastChatSearchCitations(entry.output) : undefined;
       if (cited !== undefined) {
-        this.#line(`  ${GLYPHS.result} ${pastChatSearchSummary(cited.found)}`, "tool");
+        this.#line(`  ${GLYPHS.result} ${pastChatSearchSummary(cited.found, this.#t)}`, "tool");
         for (const chat of cited.chats) this.#line(`    ${GLYPHS.bullet} ${clamp(printable(chat.title), SUMMARY_CHARS)}`, "tool");
-        if (cited.found > cited.chats.length) this.#line(`    ${GLYPHS.more} and ${cited.found - cited.chats.length} more`, "tool");
+        if (cited.found > cited.chats.length)
+          this.#line(this.#t("tui.transcript.moreChats", { mark: GLYPHS.more, n: String(cited.found - cited.chats.length) }), "tool");
       }
       // A skill proposed: where it waits, and the command that shows it, in place of its output's JSON.
       const proposed =
         entry.status === "completed" && entry.toolName === SKILLS_PROPOSE_TOOL_ID ? skillProposedOf(entry.output) : undefined;
       if (proposed !== undefined)
-        this.#line(`  ${GLYPHS.result} ${printable(skillProposalNoticeLine(proposed.skillId, proposed.version))}`, "notice");
+        this.#line(`  ${GLYPHS.result} ${printable(skillProposalNoticeLine(proposed.skillId, proposed.version, this.#t))}`, "notice");
       const result = entry.status === "completed" && cited === undefined && proposed === undefined ? outputLine(entry.output) : undefined;
       if (result !== undefined) this.#line(`  ${GLYPHS.result} ${result}`, "tool");
       const masked = entry.status === "completed" ? maskedSecretsNote(entry.redacted) : undefined;
@@ -1188,12 +1236,12 @@ function isActive(state: RunState): boolean {
 }
 
 /** A tool card's header: the tool, what it was called with, and how it ended. */
-function toolLine(card: Extract<TranscriptEntry, { readonly kind: "tool" }>, call: string): string {
+function toolLine(card: Extract<TranscriptEntry, { readonly kind: "tool" }>, call: string, t: CoreT = coreEnglish): string {
   const took = card.durationMs === undefined ? "" : ` ${durationOf(card.durationMs)}`;
   if (card.status === "completed") return `${GLYPHS.call} ${call} ${GLYPHS.done}${took}`;
-  if (card.status === "running") return `${GLYPHS.call} ${call} (did not finish)`;
-  if (card.status === "interrupted") return `${GLYPHS.call} ${call} (interrupted)`;
-  return `${GLYPHS.call} ${call} ${GLYPHS.failed} ${card.errorCode ?? "failed"}${card.message === undefined ? "" : `: ${printable(card.message)}`}`;
+  if (card.status === "running") return t("tui.tool.didNotFinish", { mark: GLYPHS.call, call });
+  if (card.status === "interrupted") return t("tui.tool.interrupted", { mark: GLYPHS.call, call });
+  return `${GLYPHS.call} ${call} ${GLYPHS.failed} ${card.errorCode ?? t("tui.tool.failed")}${card.message === undefined ? "" : `: ${printable(card.message)}`}`;
 }
 
 /** The line that opens or closes a Markdown fence: its run of marks. */
@@ -1249,27 +1297,49 @@ export function plainEmphasis(text: string, before = ""): string {
 const SUMMARY_CHARS = 72;
 
 /** The keys a round's card offers: `s` and `a` only where every call offers that scope. */
-function roundKeys(scopes: readonly ApprovalScope[], scopeGroup?: string, scopeHosts: readonly string[] = [], home = false): string {
+function roundKeys(
+  scopes: readonly ApprovalScope[],
+  scopeGroup?: string,
+  scopeHosts: readonly string[] = [],
+  home = false,
+  t: CoreT = coreEnglish,
+): string {
   if (scopeGroup !== undefined && scopes.includes("session")) {
     // One question for the group: `y` allows it for the task (the owner's
     // default for a grouped round), `a` saves a rule for every tool of it.
     // The browser is allowed on the hosts the round opens, so the keys name them.
-    const name = `the ${printable(displaySafe(toolGroupLabel(scopeGroup, scopeHosts)))}`;
+    const name = t("tui.keys.groupName", { label: printable(displaySafe(toolGroupLabel(scopeGroup, scopeHosts, t))) });
     return [
-      `y allows ${name} for this chat`,
-      ...(scopes.includes("always") ? [`a always (${name}, in every chat)`] : []),
-      "n refuses it",
-      "N refuses with a reason",
+      t("tui.keys.group.allow", { name }),
+      ...(scopes.includes("always") ? [t("tui.keys.group.always", { name })] : []),
+      t("tui.keys.group.refuse"),
+      t("tui.keys.group.refuseWhy"),
     ].join(", ");
   }
   return [
-    "y approves it",
+    t("tui.keys.approve"),
     // In Home, which never ends, a chat grant lasts until tomorrow, as the canvas's Allow until tomorrow says.
-    ...(scopes.includes("session") ? [home ? "s until tomorrow" : "s for the rest of this chat"] : []),
-    ...(scopes.includes("always") ? ["a always (a workspace rule)"] : []),
-    "n rejects it",
-    "N rejects with a reason",
+    ...(scopes.includes("session") ? [t(home ? "tui.keys.untilTomorrow" : "tui.keys.restOfChat")] : []),
+    ...(scopes.includes("always") ? [t("tui.keys.always")] : []),
+    t("tui.keys.reject"),
+    t("tui.keys.rejectWhy"),
   ].join(", ");
+}
+
+/** A risk level as a card says it: the channel's words, lowercased (`[high risk]`); a level it does not know, as given. */
+function riskLevel(level: string, t: CoreT): string {
+  switch (level) {
+    case "low":
+      return t("channel.approval.risk.low");
+    case "medium":
+      return t("channel.approval.risk.medium");
+    case "high":
+      return t("channel.approval.risk.high").toLowerCase();
+    case "critical":
+      return t("channel.approval.risk.critical").toLowerCase();
+    default:
+      return level;
+  }
 }
 
 /**
@@ -1330,21 +1400,22 @@ function durationOf(ms: number): string {
 }
 
 /** A settled round, as the scrollback records it: who decided, and what. */
-function settledLine(round: RunState["settled"][number]): string {
+function settledLine(round: RunState["settled"][number], t: CoreT = coreEnglish): string {
   const approved = round.decisions.filter((decision) => decision.approved).length;
   // A blanket `--approval approve|deny` saw no call: say so rather than name the principal. Its decider id is the same
   // for both; the round's decisions say which it was.
   const by = !round.decidedBy.startsWith("auto:")
     ? printable(round.decidedBy)
     : approved === 0
-      ? "automatic denial (--approval deny)"
-      : "automatic approval (--approval approve)";
-  if (approved === round.decisions.length) return `${GLYPHS.done} Round ${round.steps} approved by ${by}`;
-  if (approved === 0) return `${GLYPHS.failed} Round ${round.steps} rejected by ${by}`;
+      ? t("tui.settled.autoDeny")
+      : t("tui.settled.autoApprove");
+  const steps = String(round.steps);
+  if (approved === round.decisions.length) return t("tui.settled.approved", { mark: GLYPHS.done, steps, by });
+  if (approved === 0) return t("tui.settled.rejected", { mark: GLYPHS.failed, steps, by });
   const each = round.decisions
     .map((decision) => `${printable(decision.callId)} ${decision.approved ? GLYPHS.done : GLYPHS.failed}`)
     .join(", ");
-  return `Round ${round.steps} decided by ${by}: ${each}`;
+  return t("tui.settled.mixed", { steps, by, each });
 }
 
 /** A question in the status row: its first line, cut to stay one row. */
@@ -1369,26 +1440,37 @@ const ORIGIN_VALUE_CHARS = 60;
  * page's own title only after, neutralized), and where the call's values
  * appear. Nothing for a call made in a clean chat that nothing flags.
  */
-function provenanceLines(request: RunState["pending"][number]["requests"][number]): readonly string[] {
+function provenanceLines(request: RunState["pending"][number]["requests"][number], t: CoreT = coreEnglish): readonly string[] {
   const provenance = request.provenance;
   const tainted = requestTainted(request);
   const lines: string[] = [];
-  const why = whyAskedText(provenance?.gateReason, tainted, provenance?.skillCeiling, request.toolName);
-  if (why !== undefined) lines.push(`${GLYPHS.warning} Why am I asked? ${why}`);
+  const why = whyAskedText(provenance?.gateReason, tainted, provenance?.skillCeiling, request.toolName, t);
+  if (why !== undefined) lines.push(t("tui.card.why", { mark: GLYPHS.warning, why }));
   const sources = requestSources(request);
-  const chips = sources === undefined ? [] : provenanceChips(sources);
+  const chips = sources === undefined ? [] : provenanceChips(sources, t);
   if (chips.length > 0)
-    lines.push(`  read: ${chips.map((chip) => `${chip.established}${chip.claim === undefined ? "" : ` (${chip.claim})`}`).join("; ")}`);
+    lines.push(
+      t("tui.card.read", {
+        chips: chips.map((chip) => `${chip.established}${chip.claim === undefined ? "" : ` (${chip.claim})`}`).join("; "),
+      }),
+    );
   for (const origin of provenance?.argOrigins ?? []) {
     if (!tainted && origin.from === "unmatched") continue;
-    lines.push(`  “${neutralizedText(origin.value, ORIGIN_VALUE_CHARS)}” ${argOriginWords(origin)}`);
+    lines.push(`  “${neutralizedText(origin.value, ORIGIN_VALUE_CHARS)}” ${argOriginWords(origin, t)}`);
   }
   return lines.map((line) => printable(line));
 }
 
 /** One short row: what the task is doing, the verb first. Details are committed as notices. */
-export function statusLine(state: RunState, running: boolean, prompting = true, next: NextPrompt = "new", home = false): string {
-  const line = runStatusLine(state, running, prompting, next, home);
+export function statusLine(
+  state: RunState,
+  running: boolean,
+  prompting = true,
+  next: NextPrompt = "new",
+  home = false,
+  t: CoreT = coreEnglish,
+): string {
+  const line = runStatusLine(state, running, prompting, next, home, t);
   // Plugins' lines ride the row while nothing asks the person for anything.
   const plugins = Object.values(state.pluginStatus)
     .map((text) => printable(text.replace(/\s+/g, " ")))
@@ -1398,57 +1480,71 @@ export function statusLine(state: RunState, running: boolean, prompting = true, 
     : `${line}${line === "" ? "" : " · "}${clipStatus(plugins)}`;
 }
 
-function runStatusLine(state: RunState, running: boolean, prompting: boolean, next: NextPrompt, home: boolean): string {
+function runStatusLine(state: RunState, running: boolean, prompting: boolean, next: NextPrompt, home: boolean, t: CoreT): string {
   const task = state.taskId === undefined ? "" : ` ${state.taskId}`;
   // A settled chat's next prompt continues it, unless `/side` was typed or it has no conversation here.
   const offer = !prompting
     ? ""
     : next === "continue"
-      ? ` Type to continue it (${home ? "/side for a side chat" : "/new for a new chat"}), or Ctrl-C to quit.`
+      ? t(home ? "tui.status.offer.continueHome" : "tui.status.offer.continue")
       : next === "home"
-        ? " Type a message for Home, or Ctrl-C to quit."
+        ? t("tui.status.offer.home")
         : next === "side"
-          ? " Type a prompt for a side chat, or Ctrl-C to quit."
-          : " Type a prompt for a new chat, or Ctrl-C to quit.";
+          ? t("tui.status.offer.side")
+          : t("tui.status.offer.new");
   switch (state.status) {
     case "idle":
       return running
-        ? `${GLYPHS.running} starting…`
+        ? t("tui.status.starting", { mark: GLYPHS.running })
         : !prompting
           ? ""
           : next === "home"
-            ? "Type a message for Home and press Enter; /help lists the commands. Ctrl-C quits."
-            : "Type a prompt and press Enter; /help lists the commands. Ctrl-C quits.";
+            ? t("tui.status.idleHome")
+            : t("tui.status.idle");
     case "running":
-      return `${GLYPHS.running} running${task}${prompting ? " · Esc aborts it, Ctrl-C detaches" : ""}`;
+      return t(prompting ? "tui.status.runningKeys" : "tui.status.running", { mark: GLYPHS.running, task });
     case "awaiting_approval":
-      return `${GLYPHS.waiting} approval needed (see above)${task}`;
+      return t("tui.status.approval", { mark: GLYPHS.waiting, task });
     case "waiting":
       // What it waits for, in the row: a question scrolled away is still named.
       // Not answerable from this prompt (the chat that answers it does that), so the way to it is /needs.
       return state.waiting?.question === undefined
-        ? `${GLYPHS.waiting} waiting (see above)${task}`
-        : `${GLYPHS.waiting} waiting on your answer${task}: ${clipStatus(state.waiting.choices?.header ?? state.waiting.question)}${prompting ? " · /needs shows where to answer it" : ""}`;
+        ? t("tui.status.waiting", { mark: GLYPHS.waiting, task })
+        : t(prompting ? "tui.status.waitingAnswerWhere" : "tui.status.waitingAnswer", {
+            mark: GLYPHS.waiting,
+            task,
+            question: clipStatus(state.waiting.choices?.header ?? state.waiting.question),
+          });
     case "review_required":
-      return `${GLYPHS.waiting} review needed (see above)${task}`;
+      return t("tui.status.reviewNeeded", { mark: GLYPHS.waiting, task });
     // A finished turn is said without its id: /chats lists ids, where they are acted on.
     case "completed":
-      return `${GLYPHS.done} Done.${offer}`;
+      return t("tui.status.done", { mark: GLYPHS.done, offer });
     case "stopped":
-      return `${state.outcome?.kind === "stopped" ? printable(state.outcome.message) : "stopped"}${offer}`;
+      return `${state.outcome?.kind === "stopped" ? printable(state.outcome.message) : t("tui.status.stopped")}${offer}`;
     case "failed":
-      return `${GLYPHS.failed} failed: ${state.outcome?.kind === "failed" ? printable(state.outcome.message) : "see tavi tasks"}${prompting && next === "continue" ? " · type to continue it" : ""}`;
+      return t("tui.status.failed", {
+        mark: GLYPHS.failed,
+        why: state.outcome?.kind === "failed" ? printable(state.outcome.message) : t("tui.status.failedSeeTasks"),
+        more: prompting && next === "continue" ? t("tui.status.typeToContinue") : "",
+      });
     case "unknown":
-      return `${GLYPHS.more} resumed${task} after the owner restarted`;
+      return t("tui.status.resumed", { mark: GLYPHS.more, task });
   }
 }
 
 /** A form's status row: which form, which field of how many, and how to leave it. */
-function formStatus(form: FormState, field: ReturnType<typeof fieldOf>): string {
+function formStatus(form: FormState, field: ReturnType<typeof fieldOf>, t: CoreT): string {
   const spec = FORMS[form.id];
-  const choices = field.choices === undefined ? "" : ` (${field.choices.join(", ")})`;
-  const skip = field.optional === true ? "; Enter on nothing leaves it out" : "";
-  return `${GLYPHS.form} ${spec.title}, ${form.index + 1}/${spec.fields.length}: ${field.label}${choices}${skip}; Esc cancels`;
+  return t("tui.form.status", {
+    mark: GLYPHS.form,
+    title: formTitle(form.id, t),
+    at: String(form.index + 1),
+    of: String(spec.fields.length),
+    label: fieldLabel(field, t),
+    choices: field.choices === undefined ? "" : ` (${field.choices.join(", ")})`,
+    skip: field.optional === true ? t("tui.form.skip") : "",
+  });
 }
 
 // Shared with the web canvas: `@tavi/client` reads an `approvals list` answer into rounds.

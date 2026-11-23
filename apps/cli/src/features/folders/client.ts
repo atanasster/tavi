@@ -5,6 +5,7 @@ import type { TaskFolderOptions, TaskFoldersPruneOptions } from "./parse.js";
 import { foldersPrune } from "./prune.js";
 import { folderLines, hostPathOf } from "./owner.js";
 import { terminalText } from "../../shared/terminal-text.js";
+import { storeWords } from "../../shared/terminal-words.js";
 import { prefixedId } from "@tavi/node-kit";
 import { homedir } from "node:os";
 import { connectOwnerOrReport } from "../../cli/owner-connection.js";
@@ -129,6 +130,7 @@ export async function taskFoldersPruneCli(io: CliIo, dataDirectory: string, opti
             chatOf: async (workspaceId, taskId) => await folders.chatOf(workspaceId, taskId),
             io,
             confirm: io.isTty ? confirmOnTerminal : undefined,
+            words: await storeWords(store, options.workspaceId),
             exit: EXIT,
           },
           options,

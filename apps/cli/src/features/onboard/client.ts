@@ -2,6 +2,8 @@ import { emitJson, jsonText } from "../../cli/output.js";
 import { EXIT, configRefusalExit } from "../../cli/exit.js";
 import type { OnboardCommandOptions } from "./parse.js";
 import { terminalText } from "../../shared/terminal-text.js";
+import { wordsOfSettingsAnswer } from "../../shared/terminal-words.js";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { TaviError, type OnboardingProviderAnswer, type OnboardingResetAnswer, type OnboardingStatus } from "@tavi/contracts";
 import { readFile } from "node:fs/promises";
 import { Readable } from "node:stream";
@@ -74,6 +76,17 @@ export async function onboardCliCommand(
     return Buffer.concat(chunks).toString("utf8");
   };
   const run = async (transport: OnboardTransport): Promise<number> => {
+    // The workspace's language, as the owner (or the data directory) holds it; English when it cannot be read.
+    const words = async (): Promise<CoreT> =>
+      wordsOfSettingsAnswer(
+        await transport.request("workspace-settings", { action: "get", workspaceId: options.workspaceId }).catch(() => undefined),
+      );
+    /** A prompter speaking the workspace's language from its first question. */
+    const wordedPrompter = async (): Promise<Prompter> => {
+      const prompter = await makePrompter();
+      prompter.useWords?.(await words());
+      return prompter;
+    };
     switch (options.action) {
       case "status": {
         const status = await transport.request<OnboardingStatus>("onboarding", {
@@ -82,10 +95,12 @@ export async function onboardCliCommand(
           surface: "cli",
         });
         if (json) emitJson(io, status);
-        else
+        else {
+          const t = await words();
           io.stdout(
-            `Setup: ${checklistCount(status)}\n${status.steps.map(stepLine).join("\n")}\n${status.complete ? "" : "\nThe model is not set up yet: run tavi onboard.\n"}`,
+            `${t("cli.onboard.setup", { count: checklistCount(status, t) })}\n${status.steps.map((step) => stepLine(step, t)).join("\n")}\n${status.complete ? "" : `\n${t("cli.onboard.modelOpen")}\n`}`,
           );
+        }
         return status.complete ? ONBOARD_EXIT.ok : ONBOARD_EXIT.open;
       }
       case "provider": {
@@ -125,12 +140,13 @@ export async function onboardCliCommand(
         const anySecret = found.some((one) => one.secrets.size > 0);
         let secrets = options.withSecrets === true;
         if (!secrets && anySecret && !json && (io.isTty || extras.input !== undefined)) {
-          const prompter = await makePrompter();
+          const prompter = await wordedPrompter();
           try {
             const bot = found.some((one) => one.secrets.has("telegram"));
             const keys = found.some((one) => [...one.secrets.keys()].some((name) => name !== "telegram"));
-            const what = keys && bot ? "these keys and the bot token" : bot ? "the bot token" : "these keys";
-            secrets = await prompter.confirm({ label: `Copy ${what} into Tavi's credentials file (0600)?`, default: false });
+            const t = prompter.words?.() ?? (await words());
+            const what = t(keys && bot ? "cli.onboard.import.keysAndToken" : bot ? "cli.onboard.import.token" : "cli.onboard.import.keys");
+            secrets = await prompter.confirm({ label: t("cli.onboard.import.copy", { what }), default: false });
           } finally {
             prompter.close();
           }
@@ -155,7 +171,7 @@ export async function onboardCliCommand(
       }
       case "onboard":
       case "setup": {
-        const prompter = await makePrompter();
+        const prompter = await wordedPrompter();
         try {
           const system = extras.system?.(options.dataDirectory) ?? defaultStepSystem(options.dataDirectory, userScopeRunner);
           // Over SSH, `--paste` takes the address the browser landed on; the listener here waits as well.
@@ -163,7 +179,10 @@ export async function onboardCliCommand(
             signInWithOpenRouterHere({
               say: (text) => prompter.say(text),
               ...(options.paste === true
-                ? { paste: async (signal: AbortSignal) => await prompter.text({ label: "The address the browser landed on", signal }) }
+                ? {
+                    paste: async (signal: AbortSignal) =>
+                      await prompter.text({ label: (prompter.words?.() ?? coreEnglish)("cli.onboard.ask.landedOn"), signal }),
+                  }
                 : {}),
               ...(extras.fetch === undefined ? {} : { fetch: extras.fetch }),
               ...(extras.openRouter?.endpoints === undefined ? {} : { endpoints: extras.openRouter.endpoints }),

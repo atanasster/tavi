@@ -19,6 +19,9 @@ import {
   type HeartbeatTickRecord,
 } from "@tavi/contracts";
 
+import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
+
+import { paddedCell } from "../../shared/terminal-text.js";
 import { parseHeartbeatDuration, type HeartbeatCommandOptions } from "./parse.js";
 
 /**
@@ -160,64 +163,142 @@ export function editedInstructions(
   }
 }
 
-const DAY_NAMES = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-const TELL: Readonly<Record<string, string>> = {
-  "urgent-now": "urgent things right away, the rest in a summary when the next window opens",
-  "everything-now": "everything as it happens (at most the hourly limit)",
-  "digest-only": "only in the summary when the next window opens",
+const TELL: Readonly<Record<string, CoreKey>> = {
+  "urgent-now": "cli.heartbeat.tell.urgentNow",
+  "everything-now": "cli.heartbeat.tell.everythingNow",
+  "digest-only": "cli.heartbeat.tell.digestOnly",
 };
 
+/** An interval as the status says it: `30m`, `2h`, `45s` in English (`30 мин` in Bulgarian). */
+function intervalWords(ms: number, t: CoreT): string {
+  const said = formatHeartbeatInterval(ms);
+  const unit = said.at(-1);
+  const n = said.slice(0, -1);
+  return t(unit === "h" ? "cli.heartbeat.interval.h" : unit === "m" ? "cli.heartbeat.interval.m" : "cli.heartbeat.interval.s", { n });
+}
+
+/** A weekday as the status lists it: `mon`, `tue` in English (`пн`, `вт` in Bulgarian). */
+const SHORT_DAYS: readonly CoreKey[] = [
+  "date.weekdayShort.0",
+  "date.weekdayShort.1",
+  "date.weekdayShort.2",
+  "date.weekdayShort.3",
+  "date.weekdayShort.4",
+  "date.weekdayShort.5",
+  "date.weekdayShort.6",
+];
+
 /** A heartbeat's settings and state, for `status` and after every change. */
-export function heartbeatStatusText(answer: HeartbeatGetAnswer): string {
+export function heartbeatStatusText(answer: HeartbeatGetAnswer, t: CoreT = coreEnglish): string {
   const config = answer.config;
+  const none = t("cli.heartbeat.none");
+  const listOrNone = (list: readonly string[]): string => (list.length === 0 ? none : list.join(", "));
   const paused =
     config.paused === undefined
       ? ""
-      : ` (paused: ${config.paused.reason}${config.paused.until === undefined ? "" : `, until ${config.paused.until}`})`;
-  const days = config.daysOfWeek === undefined ? "" : `, ${config.daysOfWeek.map((day) => DAY_NAMES[day] ?? String(day)).join(",")}`;
+      : config.paused.until === undefined
+        ? t("cli.heartbeat.paused", { reason: config.paused.reason })
+        : t("cli.heartbeat.pausedUntil", { reason: config.paused.reason, until: config.paused.until });
+  const dayName = (day: number): string => {
+    const key = SHORT_DAYS[day];
+    return key === undefined ? String(day) : t(key).toLowerCase();
+  };
+  const days = config.daysOfWeek === undefined ? "" : `, ${config.daysOfWeek.map(dayName).join(",")}`;
+  const instructionLines = config.instructions.split("\n").filter((line) => line.trim() !== "").length;
+  const tell = TELL[config.tellMe];
   const lines = [
-    `Heartbeat: ${config.enabled ? "on" : "off"}${paused}${answer.state === undefined ? " (never saved; these are the defaults)" : ""}`,
-    `Checks every ${formatHeartbeatInterval(config.everyMs)}, ${config.activeHours.start}–${config.activeHours.end} ${answer.timezone}${days}; looks deeper every ${formatHeartbeatInterval(config.deepCheckEveryMs)}`,
-    `Tells you: ${TELL[config.tellMe] ?? config.tellMe}; at most ${config.maxNowPerHour} urgent an hour`,
-    `Targets: ${config.targets.length === 0 ? "Home only" : config.targets.map((target) => `${target.connectionId} → ${target.to}`).join(", ")}`,
-    `Provider: ${config.providerId}${answer.providers.length === 0 || config.providerId === "off" || answer.providers.includes(config.providerId) ? "" : " (not installed here)"}`,
-    ...providerLines(answer),
-    `Model: ${config.model === undefined ? "the workspace's fast model" : `${config.model.connectionId}/${config.model.model}`}; persona: ${config.agentId ?? "none"}`,
-    `Limits: ${config.budget.modelTicksPerDay} checks, ${config.budget.tokensPerDay} tokens${config.budget.usdPerDay === undefined ? "" : `, $${config.budget.usdPerDay}`} a day`,
-    `Extra tools: ${config.extraTools.length === 0 ? "none" : config.extraTools.join(", ")}`,
-    `Sites it may read: ${config.fetchHosts.length === 0 ? "none" : config.fetchHosts.join(", ")}`,
-    `Sources turned off: ${config.disabledSources.length === 0 ? "none" : config.disabledSources.join(", ")}`,
-    `Provider notes: ${answer.state?.memo === undefined ? "none" : `${new TextEncoder().encode(answer.state.memo).length} bytes`}`,
-    `Instructions: ${config.instructions.trim() === "" ? "none yet (tavi heartbeat edit)" : `${config.instructions.split("\n").filter((line) => line.trim() !== "").length} line(s)`}`,
-    `Mutes: ${config.mutes.length === 0 ? "none" : config.mutes.join(", ")}`,
-    `Next check: ${answer.state?.nextTickAt ?? "none scheduled"}; last check: ${answer.state?.lastTickAt ?? "never"}`,
-    `Host: ${answer.hostRunning ? "running here" : "not running here (it runs in tavi serve)"}`,
-    `Revision: ${answer.revision}`,
+    t("cli.heartbeat.state", {
+      state: t(config.enabled ? "cli.heartbeat.on" : "cli.heartbeat.off"),
+      paused,
+      defaults: answer.state === undefined ? t("cli.heartbeat.defaults") : "",
+    }),
+    t("cli.heartbeat.checks", {
+      every: intervalWords(config.everyMs, t),
+      start: config.activeHours.start,
+      end: config.activeHours.end,
+      timezone: answer.timezone,
+      days,
+      deep: intervalWords(config.deepCheckEveryMs, t),
+    }),
+    t("cli.heartbeat.tells", { how: tell === undefined ? config.tellMe : t(tell), n: String(config.maxNowPerHour) }),
+    t("cli.heartbeat.targets", {
+      targets:
+        config.targets.length === 0
+          ? t("cli.heartbeat.homeOnly")
+          : config.targets.map((target) => `${target.connectionId} → ${target.to}`).join(", "),
+    }),
+    t("cli.heartbeat.provider", {
+      provider: config.providerId,
+      missing:
+        answer.providers.length === 0 || config.providerId === "off" || answer.providers.includes(config.providerId)
+          ? ""
+          : t("cli.heartbeat.notInstalled"),
+    }),
+    ...providerLines(answer, t),
+    t("cli.heartbeat.model", {
+      model: config.model === undefined ? t("cli.heartbeat.fastModel") : `${config.model.connectionId}/${config.model.model}`,
+      persona: config.agentId ?? none,
+    }),
+    t("cli.heartbeat.limits", {
+      checks: String(config.budget.modelTicksPerDay),
+      tokens: String(config.budget.tokensPerDay),
+      usd: config.budget.usdPerDay === undefined ? "" : `, $${config.budget.usdPerDay}`,
+    }),
+    t("cli.heartbeat.tools", { list: listOrNone(config.extraTools) }),
+    t("cli.heartbeat.sites", { list: listOrNone(config.fetchHosts) }),
+    t("cli.heartbeat.sourcesOff", { list: listOrNone(config.disabledSources) }),
+    t("cli.heartbeat.notes", {
+      notes:
+        answer.state?.memo === undefined
+          ? none
+          : t("cli.heartbeat.bytes", { n: String(new TextEncoder().encode(answer.state.memo).length) }),
+    }),
+    t("cli.heartbeat.instructions", {
+      instructions:
+        config.instructions.trim() === ""
+          ? t("cli.heartbeat.noInstructions")
+          : t("cli.heartbeat.lines", { n: String(instructionLines), count: instructionLines }),
+    }),
+    t("cli.heartbeat.mutes", { list: listOrNone(config.mutes) }),
+    t("cli.heartbeat.next", {
+      next: answer.state?.nextTickAt ?? t("cli.heartbeat.noneScheduled"),
+      last: answer.state?.lastTickAt ?? t("cli.heartbeat.never"),
+    }),
+    t("cli.heartbeat.host", { host: t(answer.hostRunning ? "cli.heartbeat.hostHere" : "cli.heartbeat.hostElsewhere") }),
+    t("cli.heartbeat.revision", { revision: String(answer.revision) }),
   ];
   return lines.join("\n");
 }
 
 /** A plugin provider's disclosure and what its egress switches let it receive; nothing for the built-in. */
-function providerLines(answer: HeartbeatGetAnswer): readonly string[] {
+function providerLines(answer: HeartbeatGetAnswer, t: CoreT): readonly string[] {
   const detail = answer.providerDetails.find((provider) => provider.id === answer.config.providerId);
   if (detail === undefined || detail.kind === "builtin") return [];
   const on = detail.receives.filter((field) => answer.config.providerEgress[field]);
+  const off = detail.receives.filter((field) => !on.includes(field));
   return [
     ...(detail.disclosure === undefined ? [] : [`  ${detail.disclosure}`]),
-    `  Receives: ${on.length === 0 ? "nothing yet (tavi heartbeat egress <field> on)" : on.join(", ")}${detail.receives.length > on.length ? ` (off: ${detail.receives.filter((field) => !on.includes(field)).join(", ")})` : ""}`,
+    `  ${t("cli.heartbeat.receives", {
+      fields: on.length === 0 ? t("cli.heartbeat.receivesNothing") : on.join(", "),
+      off: off.length === 0 ? "" : t("cli.heartbeat.receivesOff", { fields: off.join(", ") }),
+    })}`,
   ];
 }
 
 /** One log row: when, what kind, what came of it, and what it cost. */
-export function heartbeatLogLine(tick: HeartbeatTickRecord): string {
+export function heartbeatLogLine(tick: HeartbeatTickRecord, t: CoreT = coreEnglish): string {
   const kind = tick.kind ?? "-";
   const outcome = tick.reason === null ? tick.outcome : `${tick.outcome} (${tick.reason})`;
+  const counts = { now: String(tick.itemsNow), later: String(tick.itemsLater), resolved: String(tick.itemsRetracted) };
   const items =
     tick.itemsNow + tick.itemsLater + tick.itemsRetracted === 0
       ? ""
-      : ` · ${tick.itemsNow} now, ${tick.itemsLater} later${tick.itemsRetracted === 0 ? "" : `, ${tick.itemsRetracted} resolved`}`;
-  const cost = tick.tokens === 0 ? "" : ` · ${tick.tokens} tokens${tick.costUsd === null ? "" : `, $${tick.costUsd.toFixed(4)}`}`;
-  const context = heartbeatTickContext(tick)
+      : ` · ${t(tick.itemsRetracted === 0 ? "cli.heartbeat.log.items" : "cli.heartbeat.log.itemsResolved", counts)}`;
+  const cost =
+    tick.tokens === 0
+      ? ""
+      : ` · ${t("cli.heartbeat.log.tokens", { n: String(tick.tokens) })}${tick.costUsd === null ? "" : `, $${tick.costUsd.toFixed(4)}`}`;
+  const context = heartbeatTickContext(tick, t)
     .map((part) => ` · ${part}`)
     .join("");
   const decided = heartbeatHookDecisions(tick.hookDecisions)
@@ -225,25 +306,23 @@ export function heartbeatLogLine(tick: HeartbeatTickRecord): string {
       (decision) => ` · ${decision.by} ${decision.action} ${decision.key}${decision.reason === undefined ? "" : ` (${decision.reason})`}`,
     )
     .join("");
-  return `${tick.createdAt}  ${kind.padEnd(6)} ${outcome}${items}${cost}${context}${tick.error === null ? "" : ` · ${tick.error}`}${decided}`;
+  return `${tick.createdAt}  ${paddedCell(kind, 6)} ${outcome}${items}${cost}${context}${tick.error === null ? "" : ` · ${tick.error}`}${decided}`;
 }
 
 /** What an action prints. */
-export function heartbeatResultText(options: Pick<HeartbeatCommandOptions, "action">, result: unknown): string {
+export function heartbeatResultText(options: Pick<HeartbeatCommandOptions, "action">, result: unknown, t: CoreT = coreEnglish): string {
   switch (options.action) {
     case "log": {
       const ticks = (result as HeartbeatLogAnswer).ticks;
-      return ticks.length === 0 ? "No checks yet." : ticks.map(heartbeatLogLine).join("\n");
+      return ticks.length === 0 ? t("cli.heartbeat.log.none") : ticks.map((tick) => heartbeatLogLine(tick, t)).join("\n");
     }
     case "run-now":
-      return (result as HeartbeatRunNowAnswer).status === "started"
-        ? "Checking now."
-        : "A check is in progress; this one runs right after it.";
+      return t((result as HeartbeatRunNowAnswer).status === "started" ? "cli.heartbeat.checking" : "cli.heartbeat.checkQueued");
     case "forget": {
       const removed = (result as HeartbeatForgetAnswer).removed;
-      return `Forgot ${removed.ticks} log row(s), ${removed.items} item(s) and ${removed.tasks} task(s). Its settings stay.`;
+      return t("cli.heartbeat.forgot", { ticks: String(removed.ticks), items: String(removed.items), tasks: String(removed.tasks) });
     }
     default:
-      return heartbeatStatusText(result as HeartbeatGetAnswer);
+      return heartbeatStatusText(result as HeartbeatGetAnswer, t);
   }
 }

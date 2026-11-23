@@ -30,6 +30,7 @@ import {
   type ChannelsTestAnswer,
 } from "@tavi/contracts";
 import { zodIssues } from "@tavi/contracts/zod-util";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import {
   CHANNELS_SHARED_CLIENTS_SETTING,
   channelDescriptorOf,
@@ -54,6 +55,7 @@ import { offlineSharedGrants } from "../mcp/offline-context.js";
 import type { Server } from "node:http";
 import { UsageError } from "../../cli/argv.js";
 import { jsonText } from "../../cli/output.js";
+import { ownerWords, yesNoHint } from "../../shared/terminal-words.js";
 import { keptByNote } from "../apps/shared-grants.js";
 import { relayOAuthCallbacks } from "../oauth/loopback.js";
 
@@ -81,7 +83,7 @@ export async function channelsCliCommand(options: ResolvedDataDirectory<Channels
             );
           return response.result as T;
         },
-        io,
+        { ...io, words: async () => await ownerWords(client, options.workspaceId) },
       );
       return EXIT.ok;
     } catch (error) {
@@ -335,6 +337,8 @@ export interface ChannelsCliIo {
   stderr(text: string): void;
   confirm?(question: string): Promise<boolean>;
   sleep?(ms: number): Promise<void>;
+  /** The workspace's words, read only when a question is asked (a pairing's); English when absent. */
+  words?(): Promise<CoreT>;
 }
 
 /** Runs `options` through `ask`, printing as `--format` says; a refusal is thrown for the caller to report. */
@@ -608,8 +612,9 @@ export async function runChannelsCli(options: ChannelsCommandOptions, ask: Chann
           let approved = options.yes === true;
           if (!approved) {
             try {
+              const t = (await io.words?.()) ?? coreEnglish;
               approved = await confirm(
-                `A message from ${who} carried the code. Allow them as ${field(options.name ?? principalId)}? [y/N] `,
+                `${t("prompt.channels.allowPairing", { who, as: field(options.name ?? principalId) })} ${yesNoHint(false, t)} `,
               );
             } catch (error) {
               await ask<{ readonly ok: true }>({ action: "cancel-pair", workspaceId, pairingId: started.pairingId }).catch(() => undefined);

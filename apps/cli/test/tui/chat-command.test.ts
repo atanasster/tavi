@@ -1117,6 +1117,147 @@ describe("tavi chat over a scripted owner", () => {
     await done;
   });
 
+  it("speaks the workspace's language: Bulgarian chrome, д approves as y does, and a key the round does not offer is ignored", async () => {
+    const client = new ScriptedClient();
+    client.subscribed = {
+      result: { replayed: 2, resync: false, truncated: false, roundsAnsweredBy: "client" },
+      events: [
+        event(0, "run.started", { threadId: "thread-1", workspaceId: "default" }),
+        event(1, "approval.required", {
+          callId: "call-a",
+          toolName: "fs.write",
+          summary: "Write notes.md?",
+          input: {},
+          steps: 4,
+          approvalId: "approval-a",
+          effect: "mutating",
+          allowedScopes: ["once"],
+        }),
+      ],
+    };
+    client.answers = {
+      "workspace-settings": () => ({ ok: true, result: { settings: { locale: "bg" }, effective: {} } }),
+      approve: () => ({ ok: false, error: { code: "CONFLICT", message: "round 4 is no longer pending" } }),
+      approvals: () => ({
+        ok: true,
+        result: {
+          rows: [
+            {
+              record: { approvalId: "approval-a", taskId: "task-1", callId: "call-a", toolId: "fs.write", steps: 4, createdAt: AT },
+              task: {},
+            },
+          ],
+          truncated: false,
+        },
+      }),
+    };
+    const { tty, done } = chatOver(client, { attach: "task-1" });
+    await waitFor(() => tty.output().includes("искане 4: д — одобри, н — откажи, Н — откажи с причина"));
+    // ч and в are the session and always keys: a round that offers only once takes neither, in either language.
+    tty.type("чвsa");
+    tty.type("д");
+    await waitFor(() => tty.output().includes("искане 4 не е решено тук"));
+    expect(client.requests.filter((request) => request.command === "approve").map((request) => request.payload)).toEqual([
+      { taskId: "task-1", workspaceId: "default", expectedSteps: 4, verdict: "approve", decidedBy: "operator" },
+    ]);
+    // Offered again: Н asks for a reason, in Bulgarian, and Esc drops it.
+    tty.type("Н");
+    await waitFor(() => tty.output().includes("защо отказваш искане 4?"));
+    tty.type(String.fromCharCode(27));
+    await waitFor(() => tty.output().includes("отказът не е изпратен"));
+    tty.type(CTRL_C);
+    await done;
+  });
+
+  it("grants in Bulgarian what the English keys grant: ч the session, в always, Н a rejection with its reason", async () => {
+    for (const keys of ["ч", "в", "Н"] as const) {
+      const client = new ScriptedClient();
+      client.subscribed = {
+        result: { replayed: 2, resync: false, truncated: false, roundsAnsweredBy: "client" },
+        events: [
+          event(0, "run.started", { threadId: "thread-1", workspaceId: "default" }),
+          event(1, "approval.required", {
+            callId: "call-a",
+            toolName: "sandbox.run",
+            summary: "Run `make test` in the sandbox",
+            input: { command: "make", args: ["test"] },
+            steps: 1,
+            approvalId: "approval-a",
+            effect: "external",
+            allowedScopes: ["once", "session", "always"],
+          }),
+        ],
+      };
+      client.answers = {
+        "workspace-settings": () => ({ ok: true, result: { settings: { locale: "bg" }, effective: {} } }),
+        approvals: () => ({
+          ok: true,
+          result: {
+            rows: [
+              {
+                record: { approvalId: "approval-a", taskId: "task-1", callId: "call-a", toolId: "sandbox.run", steps: 1, createdAt: AT },
+                task: {},
+              },
+            ],
+            truncated: false,
+          },
+        }),
+        tasks: () => ({
+          ok: true,
+          result: { found: true, task: { taskId: "task-1", workspaceId: "default", status: "waiting" }, admissions: [] },
+        }),
+      };
+      const { tty, done } = chatOver(client, { attach: "task-1" });
+      await waitFor(() => tty.output().includes("ч — до края на този чат, в — винаги (правило за работното пространство)"));
+      tty.type(keys);
+      if (keys === "Н") {
+        await waitFor(() => tty.output().includes("защо отказваш искане 1?"));
+        tty.type("не и в този клон\r");
+      }
+      await waitFor(() => client.requests.some((request) => request.command === "approve"));
+      const approve = client.requests.find((request) => request.command === "approve")?.payload as {
+        verdict?: string;
+        scope?: string;
+        note?: string;
+      };
+      expect(approve, keys).toMatchObject(
+        keys === "Н" ? { verdict: "reject", note: "не и в този клон" } : { verdict: "approve", scope: keys === "ч" ? "session" : "always" },
+      );
+      tty.type(CTRL_C);
+      await done;
+    }
+  });
+
+  it("releases a review on д and rejects it on Н, as on y and n", async () => {
+    for (const key of ["д", "Н"] as const) {
+      const client = new ScriptedClient();
+      client.subscribed = {
+        result: { replayed: 2, resync: false, truncated: false, roundsAnsweredBy: "client" },
+        events: [
+          event(0, "run.started", { threadId: "thread-1", workspaceId: "default" }),
+          event(1, "task.review_required", {
+            steps: 2,
+            requests: [{ artifactId: "artifact-1", toolName: "sandbox.run", callId: "call-a" }],
+          }),
+        ],
+      };
+      client.answers = {
+        "workspace-settings": () => ({ ok: true, result: { settings: { locale: "bg" }, effective: {} } }),
+        review: () => ({ ok: true, result: {} }),
+      };
+      const { tty, done } = chatOver(client, { attach: "task-1" });
+      await waitFor(() => tty.output().includes("д — пусни всичко и продължи чата"));
+      tty.type(key);
+      await waitFor(() => client.requests.some((request) => request.command === "review"));
+      const review = client.requests.find((request) => request.command === "review")?.payload as {
+        decisions?: readonly { readonly approved: boolean }[];
+      };
+      expect(review.decisions, key).toEqual([{ artifactId: "artifact-1", approved: key === "д" }]);
+      tty.type(CTRL_C);
+      await done;
+    }
+  });
+
   it("reads a task's workspace again after a read that failed, rather than keeping the chat's own", async () => {
     const client = new ScriptedClient();
     const required = (sequence: number, steps: number) =>

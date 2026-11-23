@@ -39,6 +39,8 @@ import { OnboardCancelled, type ChoiceOption, type Prompter } from "./prompter.j
 import { attachedTransport, type OnboardTransport } from "./transport.js";
 import { connectLiveOwner } from "../../cli/owner-connection.js";
 import { GLYPHS } from "../../tui/theme.js";
+import { wordsIn } from "../../shared/terminal-words.js";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 
 /**
  * The terminal's steps after the model:
@@ -143,6 +145,8 @@ export interface StepContext {
 }
 
 const say = (context: StepContext, text: string) => context.prompter.say(text);
+/** The words the prompter speaks now: the workspace's language once it is known, English until then. */
+const wordsOf = (context: Pick<StepContext, "prompter">): CoreT => context.prompter.words?.() ?? coreEnglish;
 const skip = async (context: StepContext, kind: "about" | "channels" | "voice" | "service" | "search" | "ideas" | "apps" | "tasks") => {
   await context.transport.request("onboarding", { action: "skip", workspaceId: context.workspaceId, step: kind });
 };
@@ -185,14 +189,21 @@ export async function languageStep(context: Pick<StepContext, "transport" | "pro
       options: SUPPORTED_LOCALES.map((locale) => ({ value: locale, label: LOCALE_NAMES[locale] })),
       default: stored ?? DEFAULT_LOCALE,
     });
-    if (!isLocale(chosen) || chosen === stored || (stored === undefined && chosen === DEFAULT_LOCALE)) return;
+    if (!isLocale(chosen)) return;
+    // The questions after this one are asked in the language chosen — only once it is the workspace's, so a save
+    // that fails leaves the run speaking the language every later `tavi` command will.
+    if (chosen === stored || (stored === undefined && chosen === DEFAULT_LOCALE)) {
+      context.prompter.useWords?.(wordsIn(chosen));
+      return;
+    }
     await context.transport.request("workspace-settings", {
       action: "set",
       workspaceId: context.workspaceId,
       key: "locale",
       value: chosen,
     });
-    context.prompter.say(`${GLYPHS.done} Language: ${LOCALE_NAMES[chosen]}`);
+    context.prompter.useWords?.(wordsIn(chosen));
+    context.prompter.say(`${GLYPHS.done} ${wordsIn(chosen)("cli.onboard.language", { name: LOCALE_NAMES[chosen] })}`);
   } catch (error) {
     // Ctrl-C or the input ending stops the run, as at every other question.
     if (error instanceof OnboardCancelled) throw error;
@@ -315,7 +326,8 @@ export async function saveAbout(
 }
 
 export async function aboutStep(context: StepContext): Promise<void> {
-  if (!(await begin(context, "about", "Tell Tavi your name and time zone?"))) return;
+  const t = wordsOf(context);
+  if (!(await begin(context, "about", t("cli.onboard.ask.about")))) return;
   const fields = context.flowStep?.about?.fields ?? ["name", "timezone", "activeHours"];
   const settings = await context.transport.request<WorkspaceSettingsAnswer>("workspace-settings", {
     action: "get",
@@ -324,17 +336,17 @@ export async function aboutStep(context: StepContext): Promise<void> {
   const values: { name?: string; timezone?: string; activeHours?: { readonly start: string; readonly end: string } } = {};
   if (fields.includes("name")) {
     const name = await context.prompter.text({
-      label: "Your name",
+      label: t("cli.onboard.ask.name"),
       ...(settings.settings.operatorName === undefined ? {} : { default: settings.settings.operatorName }),
-      check: (value) => (value.length > 80 ? "at most 80 characters" : undefined),
+      check: (value) => (value.length > 80 ? t("cli.onboard.ask.nameTooLong") : undefined),
     });
     if (name !== "") values.name = name;
   }
   if (fields.includes("timezone")) {
     values.timezone = await context.prompter.text({
-      label: "Your time zone",
+      label: t("cli.onboard.ask.timezone"),
       default: settings.effective.timezone,
-      check: (value) => (/^[A-Za-z_]+(?:\/[A-Za-z0-9_+-]+)*$/u.test(value) ? undefined : "an IANA zone such as Europe/Berlin"),
+      check: (value) => (/^[A-Za-z_]+(?:\/[A-Za-z0-9_+-]+)*$/u.test(value) ? undefined : t("cli.onboard.ask.timezoneWrong")),
     });
   }
   if (fields.includes("activeHours")) {
@@ -345,9 +357,9 @@ export async function aboutStep(context: StepContext): Promise<void> {
     if (heartbeat?.config.enabled === true) {
       const current = `${heartbeat.config.activeHours.start}-${heartbeat.config.activeHours.end}`;
       const typed = await context.prompter.text({
-        label: "Hours the heartbeat may check in (HH:MM-HH:MM)",
+        label: t("cli.onboard.ask.hours"),
         default: current,
-        check: (value) => (parseActiveHours(value) === undefined ? "a range such as 08:00-22:00" : undefined),
+        check: (value) => (parseActiveHours(value) === undefined ? t("cli.onboard.ask.hoursWrong") : undefined),
       });
       const hours = parseActiveHours(typed);
       if (hours !== undefined && typed !== current) values.activeHours = hours;
@@ -393,16 +405,17 @@ export async function tasksStep(context: StepContext): Promise<void> {
     workspaceId: context.workspaceId,
   });
   const current = settings.effective.tasksHome ?? settings.settings.tasksHome ?? "tavi";
+  const t = wordsOf(context);
   const options: ChoiceOption[] = [
-    { value: "tavi", label: "Tavi's own list", hint: "works in every chat and channel, nothing to set up" },
-    ...connected.map((item) => ({ value: item.id, label: printable(item.label), hint: "your to-dos go there" })),
+    { value: "tavi", label: t("cli.onboard.ask.tasksTavi"), hint: t("cli.onboard.ask.tasksTaviHint") },
+    ...connected.map((item) => ({ value: item.id, label: printable(item.label), hint: t("cli.onboard.ask.tasksAppHint") })),
     ...(connected.some((item) => item.id === "mcp:todoist")
       ? []
-      : [{ value: "connect", label: "Todoist", hint: "connect it first; the sign-in is in your browser" }]),
-    { value: "later", label: "Not now" },
+      : [{ value: "connect", label: "Todoist", hint: t("cli.onboard.ask.todoistHint") }]),
+    { value: "later", label: t("cli.onboard.ask.notNow") },
   ];
   const choice = await context.prompter.choose({
-    label: "Where do you keep tasks?",
+    label: t("cli.onboard.ask.tasks"),
     options,
     default: options.some((option) => option.value === current) ? current : "tavi",
   });
@@ -559,7 +572,7 @@ async function pairOn(
           state.senderName === undefined ? singleLine(state.sender) : `${singleLine(state.senderName)} (${singleLine(state.sender)})`;
         let mine = false;
         try {
-          mine = await context.prompter.confirm({ label: `A message from ${who} carried the code. Is this you?`, default: false });
+          mine = await context.prompter.confirm({ label: wordsOf(context)("cli.onboard.ask.isThisYou", { who }), default: false });
         } catch (error) {
           await context.transport
             .request("channels", {
@@ -590,7 +603,7 @@ async function pairOn(
       // Expired, or the owner restarted and forgot it (codes live in its memory): a new one.
       if (state.state === "gone" || state.state === "expired") break;
     }
-    if (!(await context.prompter.confirm({ label: "The code is no longer valid. Get a new one?", default: true }))) return false;
+    if (!(await context.prompter.confirm({ label: wordsOf(context)("cli.onboard.ask.newCode"), default: true }))) return false;
   }
   return false;
 }
@@ -617,7 +630,8 @@ export async function channelsStep(context: StepContext): Promise<void> {
     return;
   }
   const label = printable(descriptor.label);
-  if (!(await begin(context, "channels", `Message Tavi from ${label}?`))) return;
+  const t = wordsOf(context);
+  if (!(await begin(context, "channels", t("cli.onboard.ask.channel", { channel: label })))) return;
   const fields = channelSecretFields(descriptor);
   if (descriptor.setupHelp !== undefined) say(context, descriptor.setupHelp);
   else for (const field of fields) if (field.help !== undefined) say(context, `${field.label}: ${field.help}`);
@@ -625,9 +639,9 @@ export async function channelsStep(context: StepContext): Promise<void> {
     const secrets: Record<string, string> = {};
     for (const field of fields)
       secrets[field.key] = await context.prompter.text({
-        label: `${field.label} (hidden)`,
+        label: t("cli.onboard.ask.hidden", { label: field.label }),
         secret: true,
-        check: (value) => (value === "" ? "Paste it, or press Ctrl-C to stop (your progress is kept)" : undefined),
+        check: (value) => (value === "" ? t("cli.onboard.ask.pasteIt") : undefined),
       });
     const own = context.status.steps.find((step) => step.kind === "channels")?.createdRef;
     const added = await addChannel(context.transport, context.workspaceId, descriptor, secrets, own);
@@ -637,7 +651,7 @@ export async function channelsStep(context: StepContext): Promise<void> {
       return;
     }
     say(context, `${GLYPHS.failed} ${added.problem}`);
-    if (!(await context.prompter.confirm({ label: "Try again?", default: true }))) return;
+    if (!(await context.prompter.confirm({ label: t("cli.onboard.ask.tryAgain"), default: true }))) return;
   }
 }
 
@@ -707,15 +721,16 @@ export async function serviceStep(context: StepContext): Promise<void> {
   const existing = await system.readText(place.path);
   const ours = existing !== undefined && own === place.label && unitNamesDataDirectory(existing, system.dataDirectory);
   if (ours && context.mode === "setup") {
+    const t = wordsOf(context);
     const choice = await context.prompter.choose({
-      label: `Tavi runs from ${place.path}.`,
+      label: t("cli.onboard.ask.runsFrom", { path: place.path }),
       options: [
-        { value: "keep", label: "Keep it" },
-        { value: "remove", label: "Remove it", hint: "stops the service and deletes the unit this flow wrote" },
+        { value: "keep", label: t("cli.onboard.ask.keepIt") },
+        { value: "remove", label: t("cli.onboard.ask.removeIt"), hint: t("cli.onboard.ask.removeItHint") },
       ],
       default: "keep",
     });
-    if (choice === "remove" && (await context.prompter.confirm({ label: "Stop the service and delete its unit?", default: false }))) {
+    if (choice === "remove" && (await context.prompter.confirm({ label: t("cli.onboard.ask.removeService"), default: false }))) {
       for (const [command, args] of place.unload) await system.run(command, args);
       await system.remove(place.path);
       say(context, `${GLYPHS.done} Removed. Start \`tavi serve\` yourself when you want channels and schedules.`);
@@ -724,15 +739,18 @@ export async function serviceStep(context: StepContext): Promise<void> {
   }
   // A unit there already that this flow did not write for this data folder: replacing it is said, never a surprise.
   const another = existing !== undefined && !ours;
+  const t = wordsOf(context);
   const options: ChoiceOption[] = [
-    another
-      ? { value: "write", label: "Start Tavi with my computer", hint: `a unit not written by this setup is at ${place.path}; it is kept` }
-      : { value: "write", label: "Start Tavi with my computer", hint: `writes ${place.path}, as your user` },
-    { value: "self", label: "I run it myself", hint: "a terminal, tmux, my own unit" },
-    { value: "later", label: "Not now" },
+    {
+      value: "write",
+      label: t("cli.onboard.ask.startWithComputer"),
+      hint: t(another ? "cli.onboard.ask.unitThere" : "cli.onboard.ask.unitWrites", { path: place.path }),
+    },
+    { value: "self", label: t("cli.onboard.ask.runItMyself"), hint: t("cli.onboard.ask.runItMyselfHint") },
+    { value: "later", label: t("cli.onboard.ask.notNow") },
   ];
   const choice = await context.prompter.choose({
-    label: "Channels, reminders and schedules work only while tavi serve runs. Keep it running?",
+    label: t("cli.onboard.ask.service"),
     options,
     default: "write",
   });
@@ -772,7 +790,7 @@ export async function serviceStep(context: StepContext): Promise<void> {
     );
     return;
   }
-  if (!(await context.prompter.confirm({ label: "Start it now?", default: true }))) {
+  if (!(await context.prompter.confirm({ label: t("cli.onboard.ask.startNow"), default: true }))) {
     say(context, `Start it later with:\n  ${loadLine}${place.linger === undefined ? "" : `\n  ${place.linger}`}`);
     return;
   }
@@ -839,16 +857,20 @@ export async function voiceStep(context: StepContext): Promise<void> {
     );
   const voice = await context.transport.request<VoiceSetupStatus>("models", { action: "voice-status" });
   if (voice.ready) return say(context, `${GLYPHS.done} Voice messages: transcribed on this computer`);
-  const missing = `Missing: ${voice.missing.join(", ")}.`;
+  const t = wordsOf(context);
+  const missing = voice.missing.join(", ");
   if (!voice.automatic) {
     // Asked all the same, so a no is a skip here as anywhere: the commands are what a yes gets.
-    if (!(await begin(context, "voice", `Set up voice messages? ${missing} Tavi cannot install them here: you run the commands it gives.`)))
-      return;
+    if (!(await begin(context, "voice", t("cli.onboard.ask.voiceByHand", { missing })))) return;
     say(context, "Run these, then tavi setup voice again:");
     for (const command of voice.commands) say(context, `  ${command}`);
     return;
   }
-  const question = `Set up voice messages? ${missing} Homebrew installs what is missing as your user, and Whisper's base model (${String(voice.modelInfo.megabytes)} MB, ${voice.modelInfo.licence}) downloads from Hugging Face.`;
+  const question = t("cli.onboard.ask.voice", {
+    missing,
+    mb: String(voice.modelInfo.megabytes),
+    licence: voice.modelInfo.licence,
+  });
   if (!(await begin(context, "voice", question))) return;
   let current = await context.transport.request<VoiceSetupStatus>("models", { action: "voice-setup" });
   let said = "";
@@ -873,32 +895,34 @@ export async function voiceStep(context: StepContext): Promise<void> {
 }
 
 export async function searchStep(context: StepContext): Promise<void> {
-  if (!(await begin(context, "search", "Set up web search?"))) return;
+  const t = wordsOf(context);
+  if (!(await begin(context, "search", t("cli.onboard.ask.search")))) return;
   const kind = (await context.prompter.choose({
-    label: "Which search provider?",
+    label: t("cli.onboard.ask.searchProvider"),
     options: WEB_SEARCH_KINDS.map((candidate) => ({
       value: candidate,
       label: candidate,
-      hint:
+      hint: t(
         candidate === "searxng"
-          ? "your own instance, by its address"
+          ? "cli.onboard.ask.searxngHint"
           : WEB_SEARCH_CAPABILITIES[candidate].supportsKeyless
-            ? "no key needed"
-            : "needs a key",
+            ? "cli.onboard.ask.noKeyNeeded"
+            : "cli.onboard.ask.needsKey",
+      ),
     })),
   })) as (typeof WEB_SEARCH_KINDS)[number];
   const key = searchNeedsKey(kind)
     ? await context.prompter.text({
-        label: `${kind} key (hidden)`,
+        label: t("cli.onboard.ask.key", { provider: kind }),
         secret: true,
-        check: (value) => (value === "" ? "Paste the key" : undefined),
+        check: (value) => (value === "" ? t("cli.onboard.ask.pasteKeyShort") : undefined),
       })
     : undefined;
   const baseUrl =
     kind === "searxng"
       ? await context.prompter.text({
-          label: "Your SearXNG address (https://…)",
-          check: (value) => (/^https?:\/\/\S+$/u.test(value) ? undefined : "an http(s) URL"),
+          label: t("cli.onboard.ask.searxngUrl"),
+          check: (value) => (/^https?:\/\/\S+$/u.test(value) ? undefined : t("cli.onboard.ask.baseUrlWrong")),
         })
       : undefined;
   try {
@@ -978,11 +1002,12 @@ export async function ideasStep(context: StepContext): Promise<string | undefine
     say(context, "Personal ideas start once `tavi serve` runs; `tavi ideas` shows them.");
   }
   if (prompts.length === 0) return undefined;
-  say(context, "Try one:");
+  const t = wordsOf(context);
+  say(context, t("cli.onboard.ask.tryOne"));
   const options: ChoiceOption[] = [
     ...prompts.map((prompt, index) => ({ value: String(index), label: prompt.label, hint: prompt.prompt })),
-    { value: "none", label: "Not now" },
+    { value: "none", label: t("cli.onboard.ask.notNow") },
   ];
-  const picked = await context.prompter.choose({ label: "Start a new chat with it", options, default: "none" });
+  const picked = await context.prompter.choose({ label: t("cli.onboard.ask.startChat"), options, default: "none" });
   return picked === "none" ? undefined : prompts[Number(picked)]?.prompt;
 }

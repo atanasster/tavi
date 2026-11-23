@@ -1,7 +1,10 @@
 import { parsePluginCommandLine } from "@tavi/contracts";
+import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
+import stringWidth from "string-width";
 
 import { FORM_COMMANDS, type FormId } from "./forms.js";
 import { PANES, type Pane } from "./panes.js";
+import { paddedCell } from "../shared/terminal-text.js";
 import { divider } from "./theme.js";
 
 /**
@@ -194,16 +197,17 @@ const HELP_COLUMN = 16;
  * note indented two.
  */
 export function helpRows(head: string, text: string, columns: number): string[] {
-  const lead = head === "" ? "  " : `  ${head}`.length < HELP_COLUMN ? `  ${head}`.padEnd(HELP_COLUMN) : `  ${head} `;
+  // Measured in terminal columns: a Cyrillic letter is one, a wide character two.
+  const lead = head === "" ? "  " : stringWidth(`  ${head}`) < HELP_COLUMN ? paddedCell(`  ${head}`, HELP_COLUMN) : `  ${head} `;
   const indent = " ".repeat(head === "" ? 2 : HELP_COLUMN);
   const rows: string[] = [];
   let row = lead;
   let filled = false;
   for (const word of text.split(" ")) {
-    if (filled && row.length + 1 + word.length >= columns) {
+    if (filled && stringWidth(row) + 1 + stringWidth(word) >= columns) {
       rows.push(row);
       row = indent + word;
-    } else if (!filled && head !== "" && row.length + word.length >= columns) {
+    } else if (!filled && head !== "" && stringWidth(row) + stringWidth(word) >= columns) {
       // A command too wide to start its description on the same row has the row to itself.
       rows.push(row.trimEnd());
       row = indent + word;
@@ -221,69 +225,42 @@ export function helpRows(head: string, text: string, columns: number): string[] 
  * with no chat shown starts a new chat, `/home` is refused, and `/new` is a
  * command of its own rather than `/side`'s twin. Wrapped to `columns`.
  */
-export const commandHelp = (homeOn: boolean, columns = 100): readonly string[] => [
-  divider("commands"),
+export const commandHelp = (homeOn: boolean, columns = 100, t: CoreT = coreEnglish): readonly string[] => [
+  divider(t("tui.help.title")),
   ...(
     [
-      ["/needs", "everything waiting on you: questions with their options, approvals, reviews"],
-      ["/agents", "the workspace's agents, and the mailbox of the chat followed here"],
-      ["/schedules", "the workspace's schedules: next and last fire"],
-      ["/approvals", "the workspace's pending approval rounds, and where to decide each"],
-      ["/credentials", "the credential references the owner stores"],
-      ["/models", "model connections, the default and role bindings"],
-      ["/plugins", "built-in and installed plugins, their state and what awaits review"],
-      ["/credentials set [reference]", "store a credential; its value is typed hidden"],
-      ["/models add [id] [base-url] [credential] [model]", "add a connection"],
-      ["/models set-default [connection] [model]", "the workspace's default model"],
-      ["/models set-role [role] [connection] [model]", "bind a role"],
-      ["/models test [connection] [model]", "test a connection"],
+      ["/needs", "tui.help.needs"],
+      ["/agents", "tui.help.agents"],
+      ["/schedules", "tui.help.schedules"],
+      ["/approvals", "tui.help.approvals"],
+      ["/credentials", "tui.help.credentials"],
+      ["/models", "tui.help.models"],
+      ["/plugins", "tui.help.plugins"],
+      ["/credentials set [reference]", "tui.help.credentialsSet"],
+      ["/models add [id] [base-url] [credential] [model]", "tui.help.modelsAdd"],
+      ["/models set-default [connection] [model]", "tui.help.modelsSetDefault"],
+      ["/models set-role [role] [connection] [model]", "tui.help.modelsSetRole"],
+      ["/models test [connection] [model]", "tui.help.modelsTest"],
       ...(homeOn
-        ? [
-            [
-              "/side [topic]",
-              "the next prompt (or the topic) starts a side chat of the chat shown, which begins from it and reads its notes; otherwise a prompt continues the chat shown, or goes to Home",
-            ],
-            ["/home", "back to your Home: its newest turns, then type to continue it"],
-            ["/chats", "the workspace's recent chats, your Home first; /open <task-id> continues one"],
-          ]
-        : [
-            [
-              "/side [topic]",
-              "the next prompt (or the topic) starts a side chat of the chat shown, which begins from it and reads its notes; otherwise a prompt continues the chat shown, or starts one",
-            ],
-            ["/chats", "the workspace's recent chats; /open <task-id> continues one"],
-          ]),
-      ["/open <task-id>", "follow a chat from its beginning and continue it"],
-      [
-        "/compact",
-        "fresh context: the chat's next message starts a new epoch, its earlier turns summarized and archived (a long chat also does this by itself); it does not clear taint",
-      ],
-      [
-        "/taint",
-        "what the chat shown read that Tavi does not trust (the status line's ⚠ chip), what that changes, and the remedy: start a fresh chat",
-      ],
-      [
-        "/answer [<n> <text>]",
-        "the questions open in this chat, its workers' too, numbered; with a number, answers that one (a typed line answers a question only when exactly one is open)",
-      ],
-      [
-        "/model [<connection> <model>]",
-        "the chat shown's model; with one named, the chat runs it from its next turn, and it becomes the default for new chats",
-      ],
-      [
-        "/folder",
-        "the chat shown's working folder and attached folders; from its next message: /folder set <path> works in a folder under an --fs-root, /folder add <path> [--rw] attaches one (read-only unless --rw), /folder drop <label> detaches one, and /folder reset goes back to the chat's own folder (also when its folder is gone)",
-      ],
-      [
-        "/steer <text>",
-        "send this into the turn that runs now: the model reads it before its next step (a line typed while a turn runs is queued for after it; with none running, a message)",
-      ],
-      homeOn ? ["/new", "the same as /side"] : ["/new", "the next prompt starts a new chat"],
-      ["/help, /?", "this list"],
-      [
-        "",
-        "Typed at the prompt, even while a run is going. A pane is a snapshot; a form asks what its words leave out, a field at a time. Esc drops a command half typed, or cancels a form.",
-      ],
-    ] as const
-  ).flatMap(([head, text]) => helpRows(head, text, columns)),
+        ? ([
+            ["/side [topic]", "tui.help.sideHome"],
+            ["/home", "tui.help.home"],
+            ["/chats", "tui.help.chatsHome"],
+          ] as const)
+        : ([
+            ["/side [topic]", "tui.help.side"],
+            ["/chats", "tui.help.chats"],
+          ] as const)),
+      ["/open <task-id>", "tui.help.open"],
+      ["/compact", "tui.help.compact"],
+      ["/taint", "tui.help.taint"],
+      ["/answer [<n> <text>]", "tui.help.answer"],
+      ["/model [<connection> <model>]", "tui.help.model"],
+      ["/folder", "tui.help.folder"],
+      ["/steer <text>", "tui.help.steer"],
+      homeOn ? (["/new", "tui.help.newHome"] as const) : (["/new", "tui.help.new"] as const),
+      ["/help, /?", "tui.help.help"],
+      ["", "tui.help.note"],
+    ] as const satisfies readonly (readonly [string, CoreKey])[]
+  ).flatMap(([head, key]) => helpRows(head, t(key), columns)),
 ];

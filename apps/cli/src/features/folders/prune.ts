@@ -1,8 +1,10 @@
 import { FOLDER_TRASH_KEEP_DAYS, byteSize } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { applyFolderPrune, planFolderPrune, type FolderPruneDependencies } from "@tavi/runtime";
 
 import type { TaskFoldersPruneOptions } from "./parse.js";
 import { terminalText } from "../../shared/terminal-text.js";
+import { yesNoHint } from "../../shared/terminal-words.js";
 
 /**
  * `tavi tasks folders prune`:
@@ -14,38 +16,61 @@ export interface FoldersPruneDependencies extends FolderPruneDependencies {
   readonly io: { readonly stdout: (chunk: string) => void; readonly stderr: (chunk: string) => void };
   /** Asks the person at the terminal; absent without one. */
   readonly confirm: ((question: string) => Promise<boolean>) | undefined;
+  /** The workspace's words for the plan, the question and the outcome; English when absent. */
+  readonly words?: CoreT;
   readonly exit: { readonly ok: number; readonly usage: number; readonly unavailable: number };
 }
 
+/** The prune's question: `Move 2 folder(s) (3 MB) to the trash and delete 1 from it?`, in the workspace's words. */
+function foldersQuestion(folders: number, total: string, expired: number, t: CoreT = coreEnglish): string {
+  const move = t("prompt.folders.move", { n: String(folders), count: folders, total });
+  return expired > 0
+    ? t("prompt.folders.moveAndDelete", { move, n: String(expired), count: expired })
+    : t("prompt.folders.moveOnly", { move });
+}
+
 /** A size as the plan prints it: "at least" when its walk stopped at its bound. */
-const sized = (entry: { readonly bytes: number; readonly approximate?: true }): string =>
-  `${entry.approximate === true ? "at least " : ""}${byteSize(entry.bytes)}`;
+const sized = (entry: { readonly bytes: number; readonly approximate?: true }, t: CoreT): string =>
+  entry.approximate === true ? t("prompt.folders.atLeast", { size: byteSize(entry.bytes) }) : byteSize(entry.bytes);
 
 export async function foldersPrune(deps: FoldersPruneDependencies, options: TaskFoldersPruneOptions): Promise<number> {
   const { io } = deps;
+  const t = deps.words ?? coreEnglish;
+  const days = String(FOLDER_TRASH_KEEP_DAYS);
   const plan = await planFolderPrune(deps, {
     olderThanDays: options.olderThanDays,
     olderThanGiven: options.olderThanGiven,
     ...(options.chat === undefined ? {} : { chat: { workspaceId: options.workspaceId, taskId: options.chat } }),
   });
   const expired = plan.trash.filter((entry) => entry.expired);
-  const what =
-    options.chat === undefined ? `runs' folders unused for more than ${options.olderThanDays} days` : `chat ${options.chat}'s folder`;
-  if (plan.folders.length === 0) io.stdout(`No ${what} to move.\n`);
+  if (plan.folders.length === 0)
+    io.stdout(
+      `${
+        options.chat === undefined
+          ? t("prompt.folders.noneOld", { days: String(options.olderThanDays) })
+          : t("prompt.folders.noneChat", { chat: options.chat })
+      }\n`,
+    );
   else {
-    io.stdout(`${options.dryRun ? "Would move" : "To move"} to chats/.trash/ (deleted after ${FOLDER_TRASH_KEEP_DAYS} days):\n`);
+    io.stdout(`${t(options.dryRun ? "prompt.folders.wouldMove" : "prompt.folders.toMove", { days })}\n`);
     for (const entry of plan.folders)
       io.stdout(
-        `  ${terminalText(entry.taskId)}\t${entry.kind}\t${sized(entry)}\tlast active ${entry.lastActiveAt}\t${terminalText(entry.path)}\n`,
+        `  ${terminalText(entry.taskId)}\t${entry.kind}\t${sized(entry, t)}\t${t("prompt.folders.lastActive", { when: entry.lastActiveAt })}\t${terminalText(entry.path)}\n`,
       );
   }
   if (plan.skipped.length > 0) {
-    io.stdout("Left in place:\n");
+    io.stdout(`${t("prompt.folders.leftInPlace")}\n`);
     for (const entry of plan.skipped) io.stdout(`  ${terminalText(entry.taskId ?? entry.path)}\t${terminalText(entry.reason)}\n`);
   }
   if (plan.trash.length > 0) {
     io.stdout(
-      `In the trash: ${plan.trash.length} folder(s), ${byteSize(plan.trash.reduce((total, entry) => total + entry.bytes, 0))}; ${expired.length} past ${FOLDER_TRASH_KEEP_DAYS} days ${options.dryRun ? "would be" : "to be"} deleted.\n`,
+      `${t(options.dryRun ? "prompt.folders.trashWould" : "prompt.folders.trash", {
+        n: String(plan.trash.length),
+        count: plan.trash.length,
+        size: byteSize(plan.trash.reduce((total, entry) => total + entry.bytes, 0)),
+        expired: String(expired.length),
+        days,
+      })}\n`,
     );
   }
   if (options.dryRun) return deps.exit.ok;
@@ -59,19 +84,19 @@ export async function foldersPrune(deps: FoldersPruneDependencies, options: Task
     }
     const total = byteSize(plan.folders.reduce((sum, entry) => sum + entry.bytes, 0));
     if (
-      !(await deps.confirm(
-        `Move ${plan.folders.length} folder(s) (${total}) to the trash${expired.length > 0 ? ` and delete ${expired.length} from it` : ""}? [y/N] `,
-      ))
+      !(await deps.confirm(`${foldersQuestion(plan.folders.length, total, expired.length, deps.words)} ${yesNoHint(false, deps.words)} `))
     ) {
-      io.stdout("Nothing moved.\n");
+      io.stdout(`${t("prompt.folders.nothingMoved")}\n`);
       return deps.exit.ok;
     }
   }
   const result = await applyFolderPrune(deps, plan);
-  for (const moved of result.moved) io.stdout(`Moved ${terminalText(moved.taskId)}'s folder to ${terminalText(moved.to)}\n`);
-  for (const removed of result.removed) io.stdout(`Deleted ${terminalText(removed)} from the trash\n`);
-  for (const failed of result.failed) io.stderr(`Could not move ${terminalText(failed.taskId)}'s folder: ${terminalText(failed.reason)}\n`);
+  for (const moved of result.moved)
+    io.stdout(`${t("prompt.folders.moved", { task: terminalText(moved.taskId), to: terminalText(moved.to) })}\n`);
+  for (const removed of result.removed) io.stdout(`${t("prompt.folders.deleted", { path: terminalText(removed) })}\n`);
+  for (const failed of result.failed)
+    io.stderr(`${t("prompt.folders.moveFailed", { task: terminalText(failed.taskId), reason: terminalText(failed.reason) })}\n`);
   for (const failed of result.trashFailed)
-    io.stderr(`Could not delete ${terminalText(failed.path)} from the trash: ${terminalText(failed.reason)}\n`);
+    io.stderr(`${t("prompt.folders.deleteFailed", { path: terminalText(failed.path), reason: terminalText(failed.reason) })}\n`);
   return result.failed.length === 0 && result.trashFailed.length === 0 ? deps.exit.ok : deps.exit.unavailable;
 }

@@ -182,7 +182,8 @@ describe("tavi onboard on a fresh store", () => {
     expect((await tavi(["config", "get", "workspace.locale", "--data-dir", english])).out).toBe("workspace.locale = en (default)\n");
     const bulgarian = directories.create("tavi-onboard-bg-");
     const chosen = await tavi(["onboard", "--data-dir", bulgarian], ["2", ...custom(baseUrl, KEY), ...REST]);
-    expect(chosen.out).toContain("✓ Language: Български");
+    // Said in the language just chosen: every question after it is asked in it.
+    expect(chosen.out).toContain("✓ Език: Български");
     expect((await tavi(["config", "get", "workspace.locale", "--data-dir", bulgarian])).out).toBe("workspace.locale = bg (set)\n");
     // A full `tavi setup` asks again with the stored language pre-selected; Enter keeps it.
     const again = await tavi(["setup", "--data-dir", bulgarian], [""]);

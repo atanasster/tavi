@@ -2,6 +2,9 @@ import { PassThrough } from "node:stream";
 
 import { describe, expect, it } from "vitest";
 
+import { coreEnglish } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
+
 import { createLinePrompter, OnboardCancelled, wantsPlainPrompts } from "../../src/features/onboard/prompter.js";
 
 /** The plain line renderer: one reader, a hidden answer kept apart, Ctrl-C cancelling. */
@@ -80,6 +83,69 @@ describe("the line prompter", () => {
     expect(written).toContain("Type a number from 1 to 2.");
     // No ANSI sequence anywhere: a screen reader reads every byte.
     expect(written).not.toMatch(/\u001b\[/u);
+  });
+
+  describe.each([
+    { language: "English", words: coreEnglish, yes: "[Y/n]", no: "[y/N]", retry: "Answer y or n.", choose: "Type a number from 1 to 2." },
+    {
+      language: "Bulgarian",
+      words: coreIn("bg"),
+      yes: "[Д/н]",
+      no: "[д/Н]",
+      retry: "Отговори с „д“ или „н“.",
+      choose: "Напиши число от 1 до 2.",
+    },
+  ])("in $language", ({ words, yes, no, retry, choose }) => {
+    it.each([
+      ["y", true],
+      ["Yes", true],
+      ["д", true],
+      ["Да", true],
+      ["n", false],
+      ["NO", false],
+      ["н", false],
+      ["не", false],
+      ["", true],
+    ] as const)("reads %j as %s, whichever language it speaks", async (typed, answer) => {
+      const input = new PassThrough();
+      let written = "";
+      const prompter = createLinePrompter({ input, write: (text) => void (written += text) });
+      prompter.useWords?.(words);
+      input.write(`${typed}\n`);
+      expect(await prompter.confirm({ label: "Go?", default: true })).toBe(answer);
+      expect(written).toBe(`Go? ${yes} `);
+    });
+
+    it("asks again in its own words for anything else, and says its hints and its retry there", async () => {
+      const input = new PassThrough();
+      let written = "";
+      const prompter = createLinePrompter({ input, write: (text) => void (written += text) });
+      prompter.useWords?.(words);
+      expect(prompter.words?.()).toBe(words);
+      input.write("maybe\nда\n");
+      expect(await prompter.confirm({ label: "Go?", default: false })).toBe(true);
+      expect(written).toBe(`Go? ${no} ${retry}\nGo? ${no} `);
+      written = "";
+      input.write("7\n1\n");
+      await prompter.choose({
+        label: "Pick",
+        options: [
+          { value: "a", label: "A" },
+          { value: "b", label: "B" },
+        ],
+      });
+      expect(written).toContain(choose);
+    });
+  });
+
+  it("speaks English until told otherwise", async () => {
+    const input = new PassThrough();
+    let written = "";
+    const prompter = createLinePrompter({ input, write: (text) => void (written += text) });
+    expect(prompter.words?.()).toBe(coreEnglish);
+    input.write("н\n");
+    expect(await prompter.confirm({ label: "Go?", default: true })).toBe(false);
+    expect(written).toBe("Go? [Y/n] ");
   });
 
   it("is the renderer for TERM=dumb, a screen reader, --plain or no terminal", () => {

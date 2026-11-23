@@ -1,3 +1,7 @@
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+
+import { yesNoHint, yesNoOf } from "../../shared/terminal-words.js";
+
 /**
  * The prompts `tavi onboard` and `tavi setup` ask: pure questions answered by a renderer. The steps never touch a
  * terminal themselves, so the same step drives the Ink renderer at a TTY, the
@@ -34,6 +38,13 @@ export interface Prompter {
   }): Promise<string>;
   choose(question: { readonly label: string; readonly options: readonly ChoiceOption[]; readonly default?: string }): Promise<string>;
   confirm(question: { readonly label: string; readonly default: boolean }): Promise<boolean>;
+  /**
+   * The prompter's own words from now on — the `[Y/n]` hint, "Answer y or n." — in the workspace's language
+   * (English until told). A yes or no is read in either language whatever these are.
+   */
+  useWords?(t: CoreT): void;
+  /** The words `useWords` last gave (English before it was called): the flow says its own lines in them. */
+  words?(): CoreT;
   close(): void;
 }
 
@@ -64,6 +75,7 @@ function erased(typed: string): string {
  */
 export function createLinePrompter(streams: LinePrompterStreams): Prompter {
   const input = streams.input as TtyInput;
+  let t: CoreT = coreEnglish;
   let buffered = "";
   let ended = false;
   let waiting: { readonly hidden: boolean; readonly resolve: (line: string) => void; readonly reject: (error: Error) => void } | undefined;
@@ -168,19 +180,23 @@ export function createLinePrompter(streams: LinePrompterStreams): Prompter {
         // A choice's own value, typed: as good as its number.
         const named = question.options.find((candidate) => candidate.value === typed);
         if (named !== undefined) return named.value;
-        streams.write(`Type a number from 1 to ${String(question.options.length)}.\n`);
+        streams.write(`${t("prompt.choose.retry", { n: String(question.options.length) })}\n`);
       }
     },
     async confirm(question) {
       for (;;) {
-        streams.write(`${question.label} ${question.default ? "[Y/n]" : "[y/N]"} `);
-        const typed = (await line()).trim().toLowerCase();
+        streams.write(`${question.label} ${yesNoHint(question.default, t)} `);
+        const typed = (await line()).trim();
         if (typed === "") return question.default;
-        if (["y", "yes"].includes(typed)) return true;
-        if (["n", "no"].includes(typed)) return false;
-        streams.write("Answer y or n.\n");
+        const answer = yesNoOf(typed);
+        if (answer !== undefined) return answer;
+        streams.write(`${t("prompt.confirm.retry")}\n`);
       }
     },
+    useWords: (words) => {
+      t = words;
+    },
+    words: () => t,
     close: () => {
       input.removeListener("data", onData);
       input.removeListener("end", onEnd);

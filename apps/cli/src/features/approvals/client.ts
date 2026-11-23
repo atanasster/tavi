@@ -1,6 +1,8 @@
 import { emit, emitError } from "../../cli/output.js";
 import { EXIT, isOwnershipContention, reportCommandFailure } from "../../cli/exit.js";
 import { terminalText } from "../../shared/terminal-text.js";
+import { ownerWords, storeWords } from "../../shared/terminal-words.js";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import {
   displaySafe,
   NEEDS_MAX_LIMIT,
@@ -102,11 +104,12 @@ async function approvalsHistory(options: ResolvedDataDirectory<ApprovalsCommandO
  * directory is read directly, the same queue either way.
  */
 async function approvalsNeeds(options: ResolvedDataDirectory<ApprovalsCommandOptions>, io: CliIo): Promise<number> {
-  const print = (answer: NeedsAnswer): void =>
+  // Text is said in the workspace's language; JSON stays as programs read it.
+  const print = (answer: NeedsAnswer, t: CoreT): void =>
     emit(io, options.format, answer, (value) =>
       value.needs.length === 0
-        ? "(nothing needs you)"
-        : value.needs.map(needLine).join("\n") + (value.truncated ? "\n(more are waiting than one page holds)" : ""),
+        ? t("cli.needs.none")
+        : value.needs.map((need) => needLine(need, t)).join("\n") + (value.truncated ? `\n${t("cli.needs.more")}` : ""),
     );
   const input = { workspaceId: options.workspaceId, limit: Math.min(options.limit, NEEDS_MAX_LIMIT) };
   try {
@@ -117,11 +120,16 @@ async function approvalsNeeds(options: ResolvedDataDirectory<ApprovalsCommandOpt
       io,
       undefined,
       undefined,
-      options.format === "json" ? undefined : (result) => print(NeedsAnswerSchema.parse(result)),
+      options.format === "json"
+        ? undefined
+        : async (result, client) => print(NeedsAnswerSchema.parse(result), await ownerWords(client, options.workspaceId)),
     );
     if (attached !== undefined) return attached;
     return await withStorePreservingOwnership(options.dataDirectory, async (store) => {
-      print(await listNeeds(store.asPort().repositories, input, await offlineChannelNames(store.asPort().repositories)));
+      print(
+        await listNeeds(store.asPort().repositories, input, await offlineChannelNames(store.asPort().repositories)),
+        options.format === "json" ? coreEnglish : await storeWords(store, options.workspaceId),
+      );
       return EXIT.ok;
     });
   } catch (error) {

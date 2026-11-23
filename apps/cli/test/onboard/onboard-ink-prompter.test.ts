@@ -2,6 +2,8 @@ import { stripVTControlCharacters } from "node:util";
 
 import { describe, expect, it } from "vitest";
 
+import { coreIn } from "@tavi/contracts/locales/core-server";
+
 import { createInkPrompter } from "../../src/features/onboard/ink-prompter.js";
 import { OnboardCancelled } from "../../src/features/onboard/prompter.js";
 import { fakeTty } from "../support/fake-tty.js";
@@ -75,6 +77,22 @@ describe("the Ink prompter", () => {
     const fallback = prompter.confirm({ label: "Start it now?", default: true });
     await keys("\r");
     expect(await fallback).toBe(true);
+  });
+
+  it("confirms in Bulgarian with д or н, still takes y and n, and shows [Д/н] and its answer in Bulgarian", async () => {
+    const { prompter, keys, output } = terminal();
+    prompter.useWords?.(coreIn("bg"));
+    const yes = prompter.confirm({ label: "Да започна ли?", default: true });
+    await keys("x", "д");
+    expect(await yes).toBe(true);
+    expect(output()).toContain("Да започна ли? [Д/н] да");
+    const no = prompter.confirm({ label: "Да спра ли?", default: true });
+    await keys("Н");
+    expect(await no).toBe(false);
+    expect(output()).toContain("Да спра ли? [Д/н] не");
+    const english = prompter.confirm({ label: "Още?", default: false });
+    await keys("y");
+    expect(await english).toBe(true);
   });
 
   it("cancels the run on Ctrl-C at any question", async () => {

@@ -29,8 +29,11 @@ export async function attachToOwner(
   interpret?: (result: unknown) => number,
   /** The exit for a refusal code this command reads differently from the default mapping. */
   refused?: (code: string | undefined) => number | undefined,
-  /** How the answer is written, for a command with a text form; omitted, it is printed as JSON. */
-  print?: (result: unknown) => void,
+  /**
+   * How the answer is written, for a command with a text form; omitted, it is printed as JSON. It may ask the
+   * same owner more (`client`): the workspace's language, which a text form is said in.
+   */
+  print?: (result: unknown, client: IpcClient) => void | Promise<void>,
 ): Promise<number | undefined> {
   // Throws a typed `UNAVAILABLE` for an owner that is present but unusable:
   // never a fallback to the database it holds.
@@ -45,7 +48,7 @@ export async function attachToOwner(
       return ownerRefusalExit(response.error?.code);
     }
     if (print === undefined) emitJson(io, response.result);
-    else print(response.result);
+    else await print(response.result, client);
     return interpret === undefined ? EXIT.ok : interpret(response.result);
   } finally {
     client.close();

@@ -1,4 +1,4 @@
-import { plural } from "@tavi/contracts/util";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import type { PersistencePort } from "@tavi/contracts";
 import { configOnOwner } from "../../cli/owner.js";
 import { emit, jsonText } from "../../cli/output.js";
@@ -7,6 +7,8 @@ import { writeFileSync } from "node:fs";
 import type { ReportsCommandOptions } from "./parse.js";
 import type { CliIo } from "../../cli/io.js";
 import { type ResolvedDataDirectory, withStore } from "../../cli/store.js";
+import { alignedColumns } from "../../shared/terminal-text.js";
+import { ownerWords, storeWords } from "../../shared/terminal-words.js";
 
 /**
  * `tavi reports show|open <artifact-id>`.
@@ -33,6 +35,7 @@ import { type ResolvedDataDirectory, withStore } from "../../cli/store.js";
  */
 async function reportsHistoryCommand(options: ResolvedDataDirectory<ReportsCommandOptions>, io: CliIo): Promise<number> {
   const workspaceId = options.workspaceId ?? "default";
+  const textual = options.format !== "json";
   // The window goes into the query, not a filter after it: `limit` then means
   // "the newest N *within the window*", and a window that matches nothing
   // says so because the store found nothing — not because the newest N rows
@@ -49,11 +52,19 @@ async function reportsHistoryCommand(options: ResolvedDataDirectory<ReportsComma
       label: `tavi reports ${options.action}`,
       mutates: false,
       build: () => ({ action: "list" as const, ...query }),
-      render: (result) => renderHistory(options, io, workspaceId, result as ReportHistory),
+      // Text is said in the workspace's language; JSON is read by programs and stays as it is.
+      render: async (result, client) =>
+        renderHistory(options, io, workspaceId, result as ReportHistory, textual ? await ownerWords(client, workspaceId) : coreEnglish),
     });
     if (viaOwner !== undefined) return viaOwner;
     return await withStore(options.dataDirectory, async (store) =>
-      renderHistory(options, io, workspaceId, await store.asPort().repositories.reports.list(query)),
+      renderHistory(
+        options,
+        io,
+        workspaceId,
+        await store.asPort().repositories.reports.list(query),
+        textual ? await storeWords(store, workspaceId) : coreEnglish,
+      ),
     );
   } catch (error) {
     return reportCommandFailure(error, io, "reports command failed");
@@ -69,6 +80,7 @@ async function renderHistory(
   io: CliIo,
   workspaceId: string,
   { reports, unreadable }: ReportHistory,
+  t: CoreT = coreEnglish,
 ): Promise<number> {
   if (unreadable.length > 0) {
     // Named, not hidden: a period that exists but cannot be read is a
@@ -101,7 +113,7 @@ async function renderHistory(
         ),
         unreadable,
       },
-      (value) => (value.reports.length === 0 ? "no reports have been generated yet for this workspace\n" : reportListText(value.reports)),
+      (value) => (value.reports.length === 0 ? `${t("cli.reports.none")}\n` : reportListText(value.reports, t)),
     );
     return EXIT.ok;
   }
@@ -229,22 +241,22 @@ async function renderHistory(
   };
   emit(io, options.format, result, (value) =>
     value.groups.every((group) => group.points.length === 0)
-      ? `no recorded report matches that project/metric/window in ${workspaceId}\n`
+      ? `${t("cli.reports.noTrend", { workspace: workspaceId })}\n`
       : value.groups
           .map(
             (group) =>
               `${group.projectId} ${group.metricKey} (${group.unit})\n` +
-              `  period\tvalue\tchange\tchange%\n` +
+              `  ${t("cli.reports.trendHeader")}\n` +
               group.points
                 .map(
                   (point) =>
                     `  ${point.periodStart}..${point.periodEnd}\t${point.value}\t${point.change === null ? "-" : point.change}\t` +
-                    `${point.changePercent === null ? (point.basis === null ? "-" : `n/a (${point.basis})`) : point.changePercent.toFixed(1)}${point.gap ? "\t(gap)" : ""}\n`,
+                    `${point.changePercent === null ? (point.basis === null ? "-" : t("cli.reports.notApplicableWhy", { basis: point.basis })) : point.changePercent.toFixed(1)}${point.gap ? `\t${t("cli.reports.gap")}` : ""}\n`,
                 )
                 .join("") +
               (group.change === null
                 ? ""
-                : `  overall\t\t${group.change.absolute}\t${group.change.percent === null ? "n/a" : group.change.percent.toFixed(1)}\n`),
+                : `  ${t("cli.reports.overall")}\t\t${group.change.absolute}\t${group.change.percent === null ? t("cli.reports.notApplicable") : group.change.percent.toFixed(1)}\n`),
           )
           .join(""),
   );
@@ -314,7 +326,7 @@ export async function reportsCommand(options: ResolvedDataDirectory<ReportsComma
  * with its id under it for `tavi reports open` — an `art-<uuid>` beside the
  * rest would run past a terminal's width.
  */
-function reportListText(
+export function reportListText(
   reports: readonly {
     readonly periodStart: string;
     readonly periodEnd: string;
@@ -324,18 +336,20 @@ function reportListText(
     readonly projects: number;
     readonly metrics: number;
   }[],
+  t: CoreT = coreEnglish,
 ): string {
-  const rows = [
-    ["PERIOD", "GENERATED (UTC)", "SIZE", "CONTENTS"],
+  // Each column as wide as its widest cell in terminal columns, the translated header included.
+  const [header = "", ...lines] = alignedColumns([
+    [t("cli.reports.column.period"), t("cli.reports.column.generated"), t("cli.reports.column.size"), t("cli.reports.column.contents")],
     ...reports.map((row) => [
       `${row.periodStart}..${row.periodEnd}`,
       row.generatedAt.slice(0, 16).replace("T", " "),
-      `${row.bytes} B`,
-      `${plural(row.projects, "project")}, ${plural(row.metrics, "metric")}`,
+      t("cli.reports.bytes", { n: String(row.bytes) }),
+      t("cli.reports.contents", {
+        projects: t("cli.reports.projects", { n: String(row.projects), count: row.projects }),
+        metrics: t("cli.reports.metrics", { n: String(row.metrics), count: row.metrics }),
+      }),
     ]),
-  ];
-  const widths = rows[0]?.map((_, column) => Math.max(...rows.map((row) => (row[column] ?? "").length))) ?? [];
-  const line = (row: readonly string[]) =>
-    `${row.map((cell, column) => (column === row.length - 1 ? cell : cell.padEnd(widths[column] ?? 0))).join("  ")}\n`;
-  return [line(rows[0] ?? []), ...reports.map((report, index) => `${line(rows[index + 1] ?? [])}  ${report.artifactId}\n`)].join("");
+  ]);
+  return [`${header}\n`, ...reports.map((report, index) => `${lines[index] ?? ""}\n  ${report.artifactId}\n`)].join("");
 }

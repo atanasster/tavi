@@ -12,9 +12,11 @@ import {
   type SchedulesListResult,
   type TaskListResult,
 } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+import stringWidth from "string-width";
 
 import { replacementsInWords, type ModelReplacements } from "../features/models/replacements.js";
+import { paddedCell } from "../shared/terminal-text.js";
 import { GLYPHS, divider } from "./theme.js";
 
 /**
@@ -29,95 +31,119 @@ import { GLYPHS, divider } from "./theme.js";
 export const PANES = ["needs", "agents", "schedules", "approvals", "credentials", "models", "plugins"] as const;
 export type Pane = (typeof PANES)[number];
 
+/** `seconds` in the largest whole unit: "3h", "5m". */
+function spanOf(magnitude: number, t: CoreT): string {
+  return magnitude < 60
+    ? t("tui.time.seconds", { n: String(magnitude) })
+    : magnitude < 3600
+      ? t("tui.time.minutes", { n: String(Math.floor(magnitude / 60)) })
+      : magnitude < 86_400
+        ? t("tui.time.hours", { n: String(Math.floor(magnitude / 3600)) })
+        : t("tui.time.days", { n: String(Math.floor(magnitude / 86_400)) });
+}
+
 /** How far `iso` is from `now`, in the largest whole unit: "in 3h", "5m ago". */
-export function relative(iso: string, now: number): string {
+export function relative(iso: string, now: number, t: CoreT = coreEnglish): string {
   const at = Date.parse(iso);
   if (Number.isNaN(at)) return iso;
   const seconds = Math.round((at - now) / 1000);
   const magnitude = Math.abs(seconds);
-  const span =
-    magnitude < 60
-      ? `${magnitude}s`
-      : magnitude < 3600
-        ? `${Math.floor(magnitude / 60)}m`
-        : magnitude < 86_400
-          ? `${Math.floor(magnitude / 3600)}h`
-          : `${Math.floor(magnitude / 86_400)}d`;
-  if (magnitude < 1) return "now";
-  return seconds > 0 ? `in ${span}` : `${span} ago`;
+  if (magnitude < 1) return t("tui.time.now");
+  const span = spanOf(magnitude, t);
+  return seconds > 0 ? t("tui.time.in", { span }) : t("tui.time.ago", { span });
 }
 
 /** A wait's length: `relative`'s span, never "in" or "now". */
-const waitedFor = (since: number, now: number): string => {
-  const span = relative(new Date(since).toISOString(), now);
-  return span === "now" ? "0s" : span.replace(/ ago$/, "");
-};
+const waitedFor = (since: number, now: number, t: CoreT): string => spanOf(Math.abs(Math.round((since - now) / 1000)), t);
 
-const header = (title: string, workspaceId: string): string => divider(`${title} (workspace ${workspaceId})`);
+const header = (title: string, workspaceId: string, t: CoreT): string => divider(t("tui.pane.header", { title, workspace: workspaceId }));
 
 /**
  * The workspace's agents, then the mailbox of the task followed here: absent
  * from `result` when no task is followed, or when `followed` — the task the
  * chat follows — is not in this workspace.
  */
-export function agentsPane(result: AgentsListResult, workspaceId: string, now: number, followed?: string): string[] {
-  const lines = [header("agents", workspaceId)];
-  if (result.agents.length === 0) lines.push("  none defined (`tavi agents add` defines one)");
+export function agentsPane(
+  result: AgentsListResult,
+  workspaceId: string,
+  now: number,
+  followed?: string,
+  t: CoreT = coreEnglish,
+): string[] {
+  const lines = [header(t("tui.pane.agents"), workspaceId, t)];
+  if (result.agents.length === 0) lines.push(t("tui.pane.agents.none"));
   for (const agent of result.agents) {
     const description = agent.description === undefined ? "" : ` · ${agent.description}`;
     lines.push(
-      `  ${agent.enabled ? GLYPHS.on : GLYPHS.off} ${agent.agentId} — ${agent.name}${description}${agent.enabled ? "" : " (disabled)"}`,
+      `  ${agent.enabled ? GLYPHS.on : GLYPHS.off} ${agent.agentId} — ${agent.name}${description}${agent.enabled ? "" : t("tui.pane.agents.disabled")}`,
     );
   }
-  if (result.truncated) lines.push(`  ${GLYPHS.more} more exist: \`tavi agents list\` shows every one`);
+  if (result.truncated) lines.push(t("tui.pane.agents.more", { mark: GLYPHS.more }));
   if (result.unreadable !== undefined && result.unreadable.length > 0) {
-    lines.push(`  ${GLYPHS.warning} unreadable, not shown: ${result.unreadable.join(", ")} (\`tavi doctor\`)`);
+    lines.push(t("tui.pane.agents.unreadable", { mark: GLYPHS.warning, ids: result.unreadable.join(", ") }));
   }
   const mailbox = result.mailbox;
   if (mailbox === undefined) {
     lines.push(
-      followed === undefined
-        ? "  mailbox: no task followed here"
-        : `  mailbox of task ${followed}: not shown, the task is not in workspace ${workspaceId}`,
+      followed === undefined ? t("tui.pane.mailbox.none") : t("tui.pane.mailbox.elsewhere", { task: followed, workspace: workspaceId }),
     );
     return lines;
   }
   const count = `${mailbox.pending.length}${mailbox.truncated ? "+" : ""}`;
   lines.push(
     mailbox.pending.length === 0
-      ? `  mailbox of task ${mailbox.taskId}: empty`
-      : `  mailbox of task ${mailbox.taskId}: ${count} waiting to be received`,
+      ? t("tui.pane.mailbox.empty", { task: mailbox.taskId })
+      : t("tui.pane.mailbox.waiting", { task: mailbox.taskId, count }),
   );
   for (const envelope of mailbox.pending) {
     // Undelivered past its expiry: listed still, and said to be expired.
     const expired = envelope.expiresAt !== undefined && Date.parse(envelope.expiresAt) <= now;
-    const expires = envelope.expiresAt === undefined ? "" : `, ${expired ? "expired" : "expires"} ${relative(envelope.expiresAt, now)}`;
+    const expires =
+      envelope.expiresAt === undefined
+        ? ""
+        : t(expired ? "tui.pane.mailbox.expired" : "tui.pane.mailbox.expires", { when: relative(envelope.expiresAt, now, t) });
     lines.push(
-      `    ${envelope.kind} from ${envelope.senderAgentId} (task ${envelope.senderTaskId}), ${relative(envelope.createdAt, now)}${expires}`,
+      t("tui.pane.mailbox.envelope", {
+        kind: envelope.kind,
+        sender: envelope.senderAgentId,
+        task: envelope.senderTaskId,
+        when: relative(envelope.createdAt, now, t),
+        expires,
+      }),
     );
   }
-  if (mailbox.truncated) lines.push(`    ${GLYPHS.more} and more`);
+  if (mailbox.truncated) lines.push(t("tui.pane.mailbox.more", { mark: GLYPHS.more }));
   return lines;
 }
 
 /** Each schedule with its next fire, or why there is none, and its last fire's outcome. */
-export function schedulesPane(result: SchedulesListResult, workspaceId: string, now: number): string[] {
-  const lines = [header("schedules", workspaceId)];
-  if (result.schedules.length === 0) lines.push("  none (`tavi schedules add` creates one)");
+export function schedulesPane(result: SchedulesListResult, workspaceId: string, now: number, t: CoreT = coreEnglish): string[] {
+  const lines = [header(t("tui.pane.schedules"), workspaceId, t)];
+  if (result.schedules.length === 0) lines.push(t("tui.pane.schedules.none"));
   for (const schedule of result.schedules) {
-    const next = !schedule.enabled ? "disabled" : schedule.nextRunAt === null ? "not armed" : `next ${relative(schedule.nextRunAt, now)}`;
-    const agent = schedule.agentId === undefined ? "" : ` as ${schedule.agentId}`;
+    const next = !schedule.enabled
+      ? t("tui.pane.schedules.disabled")
+      : schedule.nextRunAt === null
+        ? t("tui.pane.schedules.notArmed")
+        : t("tui.pane.schedules.next", { when: relative(schedule.nextRunAt, now, t) });
+    const agent = schedule.agentId === undefined ? "" : t("tui.pane.schedules.as", { agent: schedule.agentId });
     lines.push(`  ${schedule.enabled ? GLYPHS.on : GLYPHS.off} ${schedule.name}${agent} — ${next}`);
     if (schedule.lastRunAt !== null) {
       const outcome = schedule.lastOutcome === null ? "" : `: ${schedule.lastOutcome}`;
-      const task = schedule.lastRunTaskId === null ? "" : ` (task ${schedule.lastRunTaskId})`;
-      lines.push(`    last ${relative(schedule.lastRunAt, now)}${outcome}${task}`);
+      const task = schedule.lastRunTaskId === null ? "" : t("tui.pane.schedules.task", { task: schedule.lastRunTaskId });
+      lines.push(t("tui.pane.schedules.last", { when: relative(schedule.lastRunAt, now, t), outcome, task }));
     }
     if (schedule.consecutiveFailures > 0) {
-      lines.push(`    ${GLYPHS.warning} ${plural(schedule.consecutiveFailures, "failure")} in a row`);
+      lines.push(
+        t("tui.pane.schedules.failures", {
+          mark: GLYPHS.warning,
+          count: schedule.consecutiveFailures,
+          n: String(schedule.consecutiveFailures),
+        }),
+      );
     }
   }
-  if (result.truncated) lines.push(`  ${GLYPHS.more} more exist: \`tavi schedules list\` shows every one`);
+  if (result.truncated) lines.push(t("tui.pane.schedules.more", { mark: GLYPHS.more }));
   return lines;
 }
 
@@ -126,41 +152,60 @@ export function schedulesPane(result: SchedulesListResult, workspaceId: string, 
  * with its options and how long it still waits, and where to answer it — here,
  * for the task followed; `tavi answer` otherwise — then approvals and reviews.
  */
-export function needsPane(result: NeedsAnswer, workspaceId: string, followed: string | undefined, now: number): string[] {
-  const lines = [header("needs you", workspaceId)];
+export function needsPane(
+  result: NeedsAnswer,
+  workspaceId: string,
+  followed: string | undefined,
+  now: number,
+  t: CoreT = coreEnglish,
+): string[] {
+  const lines = [header(t("tui.pane.needs"), workspaceId, t)];
   if (result.needs.length === 0) {
-    lines.push("  nothing");
+    lines.push(t("tui.pane.needs.nothing"));
     return lines;
   }
   for (const need of result.needs) {
     const due =
-      need.deadlineAt === undefined ? "" : ` — ${Date.parse(need.deadlineAt) > now ? `due ${relative(need.deadlineAt, now)}` : "past due"}`;
+      need.deadlineAt === undefined
+        ? ""
+        : ` — ${Date.parse(need.deadlineAt) > now ? t("tui.pane.needs.due", { when: relative(need.deadlineAt, now, t) }) : t("tui.pane.needs.pastDue")}`;
     if (need.kind === "question") {
       const options = need.question.choices?.options.map((option, index) => `${index + 1}. ${option.label}`).join("  ");
       lines.push(
-        `  ? task ${need.taskId}${need.question.originLabel === undefined ? "" : ` (${need.question.originLabel})`}: ${need.question.question}${due}`,
+        t("tui.pane.needs.question", {
+          task: need.taskId,
+          origin: need.question.originLabel === undefined ? "" : ` (${need.question.originLabel})`,
+          question: need.question.question,
+          due,
+        }),
       );
       if (options !== undefined) lines.push(`    ${options}`);
-      lines.push(need.taskId === followed ? "    type the answer here" : `    \`tavi answer ${need.taskId} <answer>\``);
+      lines.push(need.taskId === followed ? t("tui.pane.needs.answerHere") : `    \`tavi answer ${need.taskId} <answer>\``);
     } else if (need.kind === "approval") {
       lines.push(
-        `  ! task ${need.taskId}: ${need.approval.toolId}${need.approval.summary === undefined ? "" : ` ${need.approval.summary}`}${due}`,
+        t("tui.pane.needs.approval", {
+          task: need.taskId,
+          tool: need.approval.toolId,
+          summary: need.approval.summary === undefined ? "" : ` ${need.approval.summary}`,
+          due,
+        }),
       );
       // Decided here when it is the chat shown (its round's keys), else from any terminal.
-      lines.push(
-        need.taskId === followed
-          ? "    decide it here, with the keys its card names"
-          : `    \`tavi approvals approve|reject ${need.taskId}\``,
-      );
+      lines.push(need.taskId === followed ? t("tui.pane.needs.decideHere") : `    \`tavi approvals approve|reject ${need.taskId}\``);
     } else if (need.kind === "connect") {
-      lines.push(`  ${GLYPHS.key} task ${need.taskId}: sign in to ${need.connect.appName} again — \`tavi apps connect\`${due}`);
+      lines.push(t("tui.pane.needs.connect", { mark: GLYPHS.key, task: need.taskId, app: need.connect.appName, due }));
     } else {
       lines.push(
-        `  ${GLYPHS.notice} task ${need.taskId}: ${plural(need.review.artifactCount, "result")} to review — \`tavi artifacts list\``,
+        t("tui.pane.needs.review", {
+          mark: GLYPHS.notice,
+          task: need.taskId,
+          count: need.review.artifactCount,
+          n: String(need.review.artifactCount),
+        }),
       );
     }
   }
-  if (result.truncated) lines.push(`  ${GLYPHS.more} more are waiting: \`tavi needs\` shows them`);
+  if (result.truncated) lines.push(t("tui.pane.needs.more", { mark: GLYPHS.more }));
   return lines;
 }
 
@@ -176,10 +221,11 @@ export function approvalsPane(
   workspaceId: string,
   followed: { readonly taskId: string; readonly decidedWhere: string } | undefined,
   now: number,
+  t: CoreT = coreEnglish,
 ): string[] {
-  const lines = [header("pending approvals", workspaceId)];
+  const lines = [header(t("tui.pane.approvals"), workspaceId, t)];
   if (result.rows.length === 0) {
-    lines.push("  none");
+    lines.push(t("tui.pane.approvals.none"));
     return lines;
   }
   const rounds = new Map<string, { readonly taskId: string; readonly steps: number; readonly tools: string[]; since: string }>();
@@ -195,29 +241,36 @@ export function approvalsPane(
   // The listing stopped mid-round, maybe: its last round may miss calls.
   if (result.truncated && lastKey !== undefined && rounds.size > 1) rounds.delete(lastKey);
   for (const round of rounds.values()) {
-    const which = `round ${round.steps}`;
     const where =
       round.taskId === followed?.taskId
-        ? `the task followed here: ${followed.decidedWhere}`
-        : `\`tavi chat --attach ${round.taskId}\` or \`tavi approvals approve|reject ${round.taskId}\``;
+        ? t("tui.pane.approvals.followed", { where: followed.decidedWhere })
+        : t("tui.pane.approvals.elsewhere", { task: round.taskId });
     // An owner's clock a little ahead of this one is no negative wait.
     const waited = Math.min(Date.parse(round.since), now);
     lines.push(
-      `  task ${round.taskId}, ${which}: ${round.tools.join(", ")} — waiting ${Number.isNaN(waited) ? round.since : waitedFor(waited, now)}`,
+      t("tui.pane.approvals.round", {
+        task: round.taskId,
+        steps: String(round.steps),
+        tools: round.tools.join(", "),
+        waited: Number.isNaN(waited) ? round.since : waitedFor(waited, now, t),
+      }),
     );
     lines.push(`    ${where}`);
   }
-  if (result.truncated) lines.push(`  ${GLYPHS.more} more are pending: \`tavi approvals list\` shows every one`);
+  if (result.truncated) lines.push(t("tui.pane.approvals.more", { mark: GLYPHS.more }));
   return lines;
 }
 
 /** The credential references the owner's store holds — names only: a value is never read back. */
-export function credentialsPane(result: { readonly credentials: readonly string[]; readonly unusable?: readonly string[] }): string[] {
-  const lines = [divider("credentials (the owner's store)")];
-  lines.push(result.credentials.length === 0 ? "  none stored" : `  ${result.credentials.join(", ")}`);
+export function credentialsPane(
+  result: { readonly credentials: readonly string[]; readonly unusable?: readonly string[] },
+  t: CoreT = coreEnglish,
+): string[] {
+  const lines = [divider(t("tui.pane.credentials"))];
+  lines.push(result.credentials.length === 0 ? t("tui.pane.credentials.none") : `  ${result.credentials.join(", ")}`);
   if (result.unusable !== undefined && result.unusable.length > 0)
-    lines.push(`  ${GLYPHS.warning} unusable, not a valid reference: ${result.unusable.join(", ")}`);
-  lines.push("  /credentials set <reference> stores one, its value typed hidden");
+    lines.push(t("tui.pane.credentials.unusable", { mark: GLYPHS.warning, names: result.unusable.join(", ") }));
+  lines.push(t("tui.pane.credentials.how"));
   return lines;
 }
 
@@ -268,30 +321,40 @@ export function modelsPane(
         readonly hint?: string;
       }
     | { readonly problem: string },
+  t: CoreT = coreEnglish,
 ): string[] {
-  const lines = [header("models", workspaceId), "  connections (shared by every workspace):"];
-  if (connections.length === 0) lines.push("    none (/models add adds one)");
+  const lines = [header(t("tui.pane.models"), workspaceId, t), t("tui.pane.models.connections")];
+  if (connections.length === 0) lines.push(t("tui.pane.models.noConnections"));
   for (const connection of connections) {
-    const model = connection.defaultModel === null ? "" : `, default ${connection.defaultModel}`;
     lines.push(
-      `    ${connection.connectionId} — ${connection.baseUrl}, credential ${connection.credentialRef}${model}${connection.localOnly === true ? " (local only)" : ""}`,
+      t("tui.pane.models.connection", {
+        connection: connection.connectionId,
+        baseUrl: connection.baseUrl,
+        credential: connection.credentialRef,
+        model: connection.defaultModel === null ? "" : t("tui.pane.models.connectionDefault", { model: connection.defaultModel }),
+        local: connection.localOnly === true ? t("tui.pane.models.localOnly") : "",
+      }),
     );
   }
   const target = (value: { readonly connectionId: string; readonly model: string }): string => `${value.connectionId}/${value.model}`;
-  lines.push(`  default: ${roles.workspaceDefault === null ? "none (/models set-default)" : target(roles.workspaceDefault.target)}`);
+  lines.push(
+    t("tui.pane.models.default", {
+      target: roles.workspaceDefault === null ? t("tui.pane.models.noDefault") : target(roles.workspaceDefault.target),
+    }),
+  );
   for (const binding of roles.roles) {
-    const fallback = binding.fallback.length === 0 ? "" : `, then ${binding.fallback.map(target).join(", ")}`;
-    lines.push(`  role ${binding.role}: ${target(binding.target)}${fallback}`);
+    const fallback = binding.fallback.length === 0 ? "" : t("tui.pane.models.then", { targets: binding.fallback.map(target).join(", ") });
+    lines.push(t("tui.pane.models.role", { role: binding.role, target: target(binding.target), fallback }));
   }
   const unbound = (roles.resolved ?? []).filter((entry) => !roles.roles.some((binding) => binding.role === entry.role));
   if (unbound.length > 0) {
     const onDefault = unbound.filter((entry) => entry.source === "workspace-default").map((entry) => entry.role);
     const nowhere = unbound.filter((entry) => entry.source === null).map((entry) => entry.role);
-    if (onDefault.length > 0) lines.push(`  unbound, on the default: ${onDefault.join(", ")}`);
-    if (nowhere.length > 0) lines.push(`  unbound, resolving to nothing: ${nowhere.join(", ")}`);
+    if (onDefault.length > 0) lines.push(t("tui.pane.models.onDefault", { roles: onDefault.join(", ") }));
+    if (nowhere.length > 0) lines.push(t("tui.pane.models.nowhere", { roles: nowhere.join(", ") }));
   }
-  if (roles.roles.length > 0) lines.push("  (role bindings are configuration: the owner's own runs use the default)");
-  if (lifecycle !== undefined) lines.push(...lifecycleLines(lifecycle));
+  if (roles.roles.length > 0) lines.push(t("tui.pane.models.rolesNote"));
+  if (lifecycle !== undefined) lines.push(...lifecycleLines(lifecycle, t));
   return lines;
 }
 
@@ -300,17 +363,19 @@ export function modelsPane(
  * yet checked) before any all-clear, and a mere notice (a deprecation with no
  * date) left to doctor, as the canvas leaves it.
  */
-function lifecycleLines(lifecycle: NonNullable<Parameters<typeof modelsPane>[3]>): string[] {
-  if ("problem" in lifecycle) return [`  lifecycle: could not be read (${lifecycle.problem})`];
-  if (lifecycle.checkedAt === null) return [`  lifecycle: not checked${lifecycle.hint === undefined ? "" : ` (${lifecycle.hint})`}`];
+function lifecycleLines(lifecycle: NonNullable<Parameters<typeof modelsPane>[3]>, t: CoreT): string[] {
+  if ("problem" in lifecycle) return [t("tui.pane.lifecycle.problem", { problem: lifecycle.problem })];
+  if (lifecycle.checkedAt === null)
+    return [
+      lifecycle.hint === undefined ? t("tui.pane.lifecycle.notChecked") : t("tui.pane.lifecycle.notCheckedHint", { hint: lifecycle.hint }),
+    ];
   const shown = lifecycle.warnings.filter((warning) => warning.level !== "info");
   const unchecked = lifecycle.unchecked ?? [];
   const gaps = [
-    ...(lifecycle.stale === true ? ["  lifecycle: stale, the daily sync has not run (tavi models sync)"] : []),
-    ...(unchecked.length === 0 ? [] : [`  lifecycle: not yet checked: ${unchecked.join(", ")}`]),
+    ...(lifecycle.stale === true ? [t("tui.pane.lifecycle.stale")] : []),
+    ...(unchecked.length === 0 ? [] : [t("tui.pane.lifecycle.unchecked", { models: unchecked.join(", ") })]),
   ];
-  if (shown.length === 0 && gaps.length === 0)
-    return [`  lifecycle: no model in use is retiring or redirected (checked ${lifecycle.checkedAt.slice(0, 10)})`];
+  if (shown.length === 0 && gaps.length === 0) return [t("tui.pane.lifecycle.clear", { date: lifecycle.checkedAt.slice(0, 10) })];
   return [
     ...gaps,
     ...shown.flatMap((warning) => {
@@ -324,20 +389,20 @@ function lifecycleLines(lifecycle: NonNullable<Parameters<typeof modelsPane>[3]>
 }
 
 /** The owner's plugins: each one's state there, and what awaits review. Changes are `tavi plugins` or the canvas's. */
-export function pluginsPane(result: { readonly plugins: readonly PluginView[] }): string[] {
-  const lines = [divider("plugins (the owner's)")];
+export function pluginsPane(result: { readonly plugins: readonly PluginView[] }, t: CoreT = coreEnglish): string[] {
+  const lines = [divider(t("tui.pane.plugins"))];
   for (const plugin of result.plugins) {
     const pending = plugin.versions.filter((version) => version.reviewState === "proposed").map((version) => version.version);
     lines.push(
-      `  ${plugin.id}${plugin.kind !== "builtin" ? ` ${plugin.activeVersion ?? ""}`.trimEnd() : ""}  ${plugin.enabled ? "enabled" : "disabled"}${plugin.phase === undefined ? "" : `, ${plugin.phase}`}${plugin.core ? " (core)" : ""}` +
-        `${pending.length === 0 ? "" : `  ${GLYPHS.flagged} awaiting review: ${pending.join(", ")}`}${plugin.error === undefined ? "" : `  ${GLYPHS.failed} ${plugin.error}`}`,
+      `  ${plugin.id}${plugin.kind !== "builtin" ? ` ${plugin.activeVersion ?? ""}`.trimEnd() : ""}  ${t(plugin.enabled ? "tui.pane.plugins.enabled" : "tui.pane.plugins.disabled")}${plugin.phase === undefined ? "" : `, ${plugin.phase}`}${plugin.core ? t("tui.pane.plugins.core") : ""}` +
+        `${pending.length === 0 ? "" : t("tui.pane.plugins.awaiting", { mark: GLYPHS.flagged, versions: pending.join(", ") })}${plugin.error === undefined ? "" : `  ${GLYPHS.failed} ${plugin.error}`}`,
     );
     const running = pluginRunningVersion(plugin);
-    if (running?.router !== undefined) lines.push(`    ${describeRouterDeclaration(running.router)}`);
-    for (const line of running === undefined ? [] : describePluginHeartbeat(running)) lines.push(`    ${line}`);
-    if (running?.memory !== undefined) lines.push(`    ${describeMemoryDeclaration(running.memory)}`);
+    if (running?.router !== undefined) lines.push(`    ${describeRouterDeclaration(running.router, t)}`);
+    for (const line of running === undefined ? [] : describePluginHeartbeat(running, t)) lines.push(`    ${line}`);
+    if (running?.memory !== undefined) lines.push(`    ${describeMemoryDeclaration(running.memory, t)}`);
   }
-  lines.push("  tavi plugins (or the canvas's Plugins view) installs, reviews, enables and configures them");
+  lines.push(t("tui.pane.plugins.how"));
   return lines;
 }
 
@@ -350,33 +415,40 @@ export function chatsPane(
   result: TaskListResult,
   workspaceId: string,
   reader: { readonly principalId: string; readonly homeOn: boolean; readonly followed?: string },
+  t: CoreT = coreEnglish,
 ): string[] {
-  const lines = [header("chats", workspaceId)];
+  const lines = [header(t("tui.pane.chats"), workspaceId, t)];
   const mine = (row: TaskListResult["rows"][number]): boolean => row.chatKind === "home" && row.principalId === reader.principalId;
   // Another person's Home is a chat like any other here; with Home off, so is the reader's.
   const rows = reader.homeOn ? [...result.rows.filter(mine), ...result.rows.filter((row) => !mine(row))] : result.rows;
-  if (rows.length === 0) lines.push(reader.homeOn ? "  none yet: your first message begins Home" : "  none yet");
+  if (rows.length === 0) lines.push(t(reader.homeOn ? "tui.pane.chats.noneHome" : "tui.pane.chats.none"));
+  // The kind's column fits the widest of Home, dm and chat in this language (4 in English); a group's
+  // name, rarer, may run one past it, as it always has. The status is a code, 14 wide.
+  const kindWidth = Math.max(
+    4,
+    ...(["tui.pane.chats.kind.home", "tui.pane.chats.kind.dm", "tui.pane.chats.kind.chat"] as const).map((key) => stringWidth(t(key))),
+  );
   for (const row of rows) {
     // A channel conversation's Home says which kind it is.
     const kind =
       reader.homeOn && mine(row)
-        ? "Home"
+        ? t("tui.pane.chats.kind.home")
         : row.conversationHome !== undefined
           ? row.conversationHome.kind === "group"
-            ? "group"
-            : "dm"
+            ? t("tui.pane.chats.kind.group")
+            : t("tui.pane.chats.kind.dm")
           : row.chatKind === undefined || row.chatKind === "home"
-            ? "chat"
+            ? t("tui.pane.chats.kind.chat")
             : row.chatKind;
     const title = row.title ?? row.promptPreview ?? "";
     const clipped = title.length > 60 ? `${title.slice(0, 59)}${GLYPHS.more}` : title;
     // A private chat is marked: nothing in it is remembered.
-    const marked = row.memoryMode === "private" ? `private · ${clipped}` : clipped;
+    const marked = row.memoryMode === "private" ? t("tui.pane.chats.private", { title: clipped }) : clipped;
     lines.push(
-      `  ${row.taskId === reader.followed ? GLYPHS.prompt : " "} ${row.taskId}  ${kind.padEnd(4)}  ${row.status.padEnd(14)}  ${marked}`.trimEnd(),
+      `  ${row.taskId === reader.followed ? GLYPHS.prompt : " "} ${row.taskId}  ${paddedCell(kind, kindWidth)}  ${paddedCell(row.status, 14)}  ${marked}`.trimEnd(),
     );
   }
-  if (result.truncated || result.nextCursor !== undefined) lines.push(`  ${GLYPHS.more} older chats too: \`tavi tasks\` lists every one`);
-  lines.push(reader.homeOn ? "  /open <task-id> continues one; /home goes back to Home" : "  /open <task-id> continues one");
+  if (result.truncated || result.nextCursor !== undefined) lines.push(t("tui.pane.chats.older", { mark: GLYPHS.more }));
+  lines.push(t(reader.homeOn ? "tui.pane.chats.howHome" : "tui.pane.chats.how"));
   return lines;
 }

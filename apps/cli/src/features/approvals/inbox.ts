@@ -10,7 +10,8 @@ import {
   type PendingApprovalRow,
   type PersistencePort,
 } from "@tavi/contracts";
-import { definedOnly, plural } from "@tavi/contracts/util";
+import { definedOnly } from "@tavi/contracts/util";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 
 import { numberedOptions, oneLine } from "../run/waiting-text.js";
 
@@ -200,35 +201,36 @@ const NEED_TITLE_CHARS = 60;
  * waiting, and one with the command that answers it, so no row runs past a
  * terminal's width. `--format json` is for scripts.
  */
-export function needLine(need: NeedRow): string {
+export function needLine(need: NeedRow, t: CoreT = coreEnglish): string {
   const chat = (text: string | undefined) => (text === undefined ? need.taskId : `${oneLine(text, NEED_TITLE_CHARS)} (${need.taskId})`);
-  const until = need.deadlineAt === undefined ? "" : ` · until ${need.deadlineAt.slice(0, 16).replace("T", " ")}Z`;
+  const until =
+    need.deadlineAt === undefined ? "" : ` · ${t("cli.needs.until", { time: `${need.deadlineAt.slice(0, 16).replace("T", " ")}Z` })}`;
   const entry = (head: string, title: string | undefined, how: string) => `${head}\n    ${chat(title)}${until}\n    ${how}`;
   switch (need.kind) {
     case "question": {
       return entry(
         `? ${oneLine(need.question.question, 200)}${numberedOptions(need.question.choices)}`,
         need.question.originLabel ?? need.question.taskTitle,
-        `answer: tavi answer ${need.taskId} <answer>`,
+        t("cli.needs.answer", { task: need.taskId }),
       );
     }
     case "approval":
       return entry(
         `! ${need.approval.toolId}${need.approval.summary === undefined ? "" : ` ${oneLine(need.approval.summary, 200)}`}`,
         need.approval.taskTitle,
-        `decide: tavi approvals approve ${need.taskId} (or reject)`,
+        t("cli.needs.decide", { task: need.taskId }),
       );
     case "review":
       return entry(
-        `◆ ${plural(need.review.artifactCount, "result")} to review`,
+        `◆ ${t("cli.needs.review", { n: String(need.review.artifactCount), count: need.review.artifactCount })}`,
         need.review.taskTitle,
-        `decide: tavi artifacts list, then approve or reject`,
+        t("cli.needs.reviewHow"),
       );
     case "connect":
       return entry(
-        `↻ sign in to ${oneLine(need.connect.appName, 60)} again`,
+        `↻ ${t("cli.needs.connect", { app: oneLine(need.connect.appName, 60) })}`,
         need.connect.taskTitle,
-        "tavi apps connect, or Connected apps in tavi ui",
+        t("cli.needs.connectHow"),
       );
   }
 }

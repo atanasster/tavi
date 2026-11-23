@@ -1,7 +1,7 @@
 import { emit } from "../../cli/output.js";
 import { EXIT, refusalExit } from "../../cli/exit.js";
 import type { PermissionsCommandOptions } from "./parse.js";
-import { indentedLines, terminalText } from "../../shared/terminal-text.js";
+import { alignedColumns, indentedLines, terminalText } from "../../shared/terminal-text.js";
 import {
   SHIPPED_TOOL_RULES,
   displaySafe,
@@ -82,13 +82,12 @@ function renderRules(rules: readonly ToolRule[]): string {
     `${RULE_SOURCES[rule.source]}${rule.workspaceId === "*" && rule.source !== "shipped" ? ", all workspaces" : ""}`,
   ]);
   const header = ["RULE", "DECISION", "TOOL", "SOURCE"];
-  const widths = header.map((title, column) => Math.max(title.length, ...rows.map((row) => (row[column] ?? "").length)));
-  const line = (row: readonly string[]) =>
-    row.map((cell, column) => (column === row.length - 1 ? cell : cell.padEnd(widths[column] ?? 0))).join("  ");
+  // Sized by terminal columns, so a wide character in a rule's tool or note does not push the columns after it.
+  const [head = "", ...lines] = alignedColumns([header, ...rows]);
   return [
-    line(header),
+    head,
     ...rules.flatMap((rule, index) => [
-      line(rows[index] ?? []),
+      lines[index] ?? "",
       ...(rule.note === undefined ? [] : indentedLines(shown(rule.note), NOTE_INDENT, NOTE_WIDTH)),
     ]),
   ].join("\n");

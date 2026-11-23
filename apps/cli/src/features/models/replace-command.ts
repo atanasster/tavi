@@ -1,4 +1,5 @@
 import { TaviError, TaviErrorCodeSchema } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { prefixedId } from "@tavi/node-kit";
 
 import { EXIT, reportCommandFailure, reportFailure } from "../../cli/exit.js";
@@ -6,6 +7,7 @@ import { confirmOnTerminal, type CliIo } from "../../cli/io.js";
 import { configOnOwner, OWNER_WORKSPACE } from "../../cli/owner.js";
 import { emitJson } from "../../cli/output.js";
 import { terminalText } from "../../shared/terminal-text.js";
+import { ownerWords, storeWords, yesNoHint } from "../../shared/terminal-words.js";
 import type { RuntimeFactory } from "../../cli/runtime-options.js";
 import type { ResolvedDataDirectory } from "../../cli/store.js";
 import type { TaviRuntime } from "../../runtime/types.js";
@@ -32,6 +34,8 @@ export async function modelsReplaceCommand(
     io.stderr("models replace needs <connection>/<model> and --with <model>\n");
     return EXIT.usage;
   }
+  // The workspace's words, read once before the plan is printed: the plan, the question and the outcome all say them.
+  let t: CoreT = coreEnglish;
   const onOwner = await configOnOwner(options.dataDirectory, "models", io, {
     label: "tavi models replace",
     mutates: true,
@@ -49,10 +53,11 @@ export async function modelsReplaceCommand(
         const code = TaviErrorCodeSchema.safeParse(preview.error?.code);
         throw new TaviError(code.success ? code.data : "INTERNAL", preview.error?.message ?? "the owner refused the replace");
       }
-      const go = await confirmReplace(preview.result as ReplacePreview, options.yes === true, io);
+      t = await ownerWords(client);
+      const go = await confirmReplace(preview.result as ReplacePreview, options.yes === true, io, t);
       return go === true ? { ...payload, confirmed: true } : go;
     },
-    render: (result) => printReplaced(result as ReplaceResult, io),
+    render: (result) => printReplaced(result as ReplaceResult, io, t),
   });
   if (onOwner !== undefined) return onOwner;
 
@@ -77,9 +82,11 @@ export async function modelsReplaceCommand(
     return reportFailure(error, io, "models replace could not open the data directory");
   }
   try {
-    const go = await confirmReplace(await previewReplace(runtime, from, to, OWNER_WORKSPACE.workspaceId), options.yes === true, io);
+    const preview = await previewReplace(runtime, from, to, OWNER_WORKSPACE.workspaceId);
+    t = await storeWords(runtime.store);
+    const go = await confirmReplace(preview, options.yes === true, io, t);
     if (go !== true) return go;
-    return printReplaced(await replaceModel(runtime, from, to, OWNER_WORKSPACE.workspaceId), io);
+    return printReplaced(await replaceModel(runtime, from, to, OWNER_WORKSPACE.workspaceId), io, t);
   } catch (error) {
     // A refusal (itself, an unknown connection) exits as the owner's would: usage, or unavailable.
     return reportCommandFailure(error, io, "models replace failed");
@@ -89,58 +96,63 @@ export async function modelsReplaceCommand(
 }
 
 /** Lists what would change and asks: `true` to go ahead, else the exit code to stop with. */
-async function confirmReplace(preview: ReplacePreview, yes: boolean, io: CliIo): Promise<true | number> {
+async function confirmReplace(preview: ReplacePreview, yes: boolean, io: CliIo, t: CoreT = coreEnglish): Promise<true | number> {
   const target = terminalText(`${preview.from.connectionId}/${preview.from.model}`);
   // Said first: a use where nothing could be read is neither listed nor moved.
-  for (const source of preview.unread) io.stderr(`not read: ${terminalText(source)}\n`);
+  for (const source of preview.unread) io.stderr(`${t("prompt.models.notRead", { source: terminalText(source) })}\n`);
   if (preview.usedBy.length === 0) {
-    io.stderr(`${target} is not used anywhere in ${preview.workspaceId} that could be read; nothing to replace\n`);
+    io.stderr(`${t("prompt.models.unused", { model: target, workspace: preview.workspaceId })}\n`);
     return preview.unread.length === 0 ? EXIT.ok : EXIT.taskFailed;
   }
-  io.stderr(`${target} is used by:\n${preview.usedBy.map((use) => `  ${terminalText(useInWords(use))}\n`).join("")}`);
+  io.stderr(
+    `${t("prompt.models.usedBy", { model: target })}\n${preview.usedBy.map((use) => `  ${terminalText(useInWords(use, t))}\n`).join("")}`,
+  );
   if (yes) return true;
   if (!io.isTty) {
-    io.stderr("Nothing changed: run again with --yes to replace it in all of these.\n");
+    io.stderr(`${t("prompt.models.needsYes")}\n`);
     return EXIT.usage;
   }
   const replacement = terminalText(`${preview.to.connectionId}/${preview.to.model}`);
-  if (await confirmOnTerminal(`Replace it with ${replacement} in all of these? [y/N] `)) return true;
-  io.stderr("Nothing changed.\n");
+  if (await confirmOnTerminal(`${t("prompt.models.replace", { model: replacement })} ${yesNoHint(false, t)} `)) return true;
+  io.stderr(`${t("prompt.models.nothingChanged")}\n`);
   return EXIT.ok;
 }
 
-function printReplaced(result: ReplaceResult, io: CliIo): number {
+function printReplaced(result: ReplaceResult, io: CliIo, t: CoreT = coreEnglish): number {
   emitJson(io, result);
-  for (const { use, reason } of result.skipped) io.stderr(`not replaced: ${terminalText(`${useInWords(use)}: ${reason}`)}\n`);
-  for (const { use, error } of result.failed) io.stderr(`failed: ${terminalText(`${useInWords(use)}: ${error}`)}\n`);
-  for (const source of result.unread) io.stderr(`not read, so not replaced there: ${terminalText(source)}\n`);
-  for (const note of result.notes) io.stderr(`note: ${terminalText(note)}\n`);
+  for (const { use, reason } of result.skipped)
+    io.stderr(`${t("prompt.models.notReplaced", { what: terminalText(`${useInWords(use, t)}: ${reason}`) })}\n`);
+  for (const { use, error } of result.failed)
+    io.stderr(`${t("prompt.models.failed", { what: terminalText(`${useInWords(use, t)}: ${error}`) })}\n`);
+  for (const source of result.unread) io.stderr(`${t("prompt.models.notReadThere", { source: terminalText(source) })}\n`);
+  for (const note of result.notes) io.stderr(`${t("prompt.models.note", { note: terminalText(note) })}\n`);
   return result.failed.length === 0 && result.unread.length === 0 ? EXIT.ok : EXIT.taskFailed;
 }
 
 /** A use as the confirmation lists it. */
-function useInWords(use: ModelUse): string {
+function useInWords(use: ModelUse, t: CoreT = coreEnglish): string {
   const where = use.workspaceId === undefined ? "" : ` (${use.workspaceId})`;
+  const name = use.detail ?? "";
   switch (use.kind) {
     case "connection-default":
-      return "the connection's default";
+      return t("prompt.models.use.connectionDefault");
     case "video":
-      return "native video on its connection";
+      return t("prompt.models.use.video");
     case "workspace-default":
-      return `the workspace default${where}`;
+      return t("prompt.models.use.workspaceDefault", { where });
     case "role":
-      return `the ${use.detail ?? ""} role${where}`;
+      return t("prompt.models.use.role", { name, where });
     case "role-fallback":
-      return `a fallback of the ${use.detail ?? ""} role${where}`;
+      return t("prompt.models.use.roleFallback", { name, where });
     case "routine":
-      return `the routine ${use.detail ?? ""}${where}`;
+      return t("prompt.models.use.routine", { name, where });
     case "routine-fallback":
-      return `a fallback of the routine ${use.detail ?? ""}${where}`;
+      return t("prompt.models.use.routineFallback", { name, where });
     case "heartbeat":
-      return `a heartbeat${where}`;
+      return t("prompt.models.use.heartbeat", { where });
     case "activity-summary":
-      return `activity summaries${where}`;
+      return t("prompt.models.use.activitySummary", { where });
     case "chat":
-      return `${use.count ?? 1} chat(s) that chose it${where}`;
+      return t("prompt.models.use.chat", { n: String(use.count ?? 1), count: use.count ?? 1, where });
   }
 }

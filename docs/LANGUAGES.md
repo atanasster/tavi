@@ -51,7 +51,7 @@ it is translated. Anything not yet translated stays in English.
 | Counts in the canvas | Yes: "20 000" in Bulgarian, "20,000" in English |
 | The canvas's own words | As each view is translated |
 | Setup's steps: each step's state, Tavi's own steps, a model check's advice, why a plugin's steps were not used | Yes, in the canvas; a setup plugin is told the language and chooses its own words |
-| The terminal chat (`tavi chat`) | As its screens are translated |
+| The terminal: `tavi chat`, onboarding, confirms and the text of status, doctor, reports, tasks and needs | Yes |
 | Chat replies, channel messages and reports | As each is translated |
 | CLI `--help`, usage errors and `--format json` | No: they stay in English, since scripts read them |
 | These docs | No: they are written in English |
@@ -65,6 +65,23 @@ sentence beside the English, so the canvas shows them in your language. An
 error with no key, or one from a newer server whose key this canvas does not
 know, shows in English. The terminal, logs and `--format json` keep the
 English message, and so does what the agent reads.
+
+In a Bulgarian workspace the terminal speaks Bulgarian: `tavi chat`'s status
+row, cards, panes and forms, approval and review cards, onboarding, the
+`[Д/н]` confirms, the text output of `tavi tasks`, `tavi reports`,
+`tavi heartbeat`, `tavi doctor`, `tavi onboard status` and `tavi needs`, the
+`tavi tasks folders prune` plan and outcome, and `tavi models replace`. The
+language is read from the owner's `workspace.locale` (or the data directory's
+when no owner runs), English when it cannot be read. Key hints read
+„д — одобри“, „н — откажи“, „Н — откажи с причина“, „ч — до края на този чат“
+and „в — винаги (правило за работното пространство)“. The English keys
+y/n/N/s/a keep working in either language, and a Bulgarian key never grants
+more than its English twin; a yes or no is read as y/yes/д/да and n/no/н/не.
+Onboarding asks the rest of its questions in the chosen language only once
+that choice is saved. Some informational lines, field labels a plugin supplies,
+preset notes and usage errors stay English. Columns are measured in terminal
+cells, so Cyrillic and wide characters stay aligned. The words live in the
+`terminal` part of the `core` catalogue (`tui.*`, `prompt.*`, `cli.*`).
 
 Notices Tavi posts into a chat or Home (a scheduled run's result, a routine
 that paused, a server that needs signing in again, the heartbeat's digest) and

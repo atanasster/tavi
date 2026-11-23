@@ -2,6 +2,8 @@ import { emit } from "../../cli/output.js";
 import { EXIT, configRefusalExit, refusalExit, reportCommandFailure } from "../../cli/exit.js";
 import type { HeartbeatCommandOptions } from "./parse.js";
 import { terminalText } from "../../shared/terminal-text.js";
+import { ownerWords, storeWords } from "../../shared/terminal-words.js";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { heartbeatCommand as runHeartbeatAction } from "./owner.js";
 import { editedInstructions, heartbeatPayload, heartbeatResultText } from "./text.js";
 import {
@@ -24,8 +26,10 @@ import { type ResolvedDataDirectory, withStorePreservingOwnership } from "../../
  * now, which needs the owner's host.
  */
 export async function heartbeatCliCommand(options: ResolvedDataDirectory<HeartbeatCommandOptions>, io: CliIo): Promise<number> {
-  const print = (result: unknown): number => {
-    emit(io, options.format, result, () => heartbeatResultText(options, result));
+  // Text is said in the workspace's language; JSON stays as programs read it.
+  const textual = options.format !== "json";
+  const print = (result: unknown, t: CoreT = coreEnglish): number => {
+    emit(io, options.format, result, () => heartbeatResultText(options, result, t));
     return EXIT.ok;
   };
   if (options.action === "edit" && options.file === undefined && !io.isTty) {
@@ -77,7 +81,7 @@ export async function heartbeatCliCommand(options: ResolvedDataDirectory<Heartbe
         ...(readRevision === undefined ? {} : { readRevision }),
       });
     },
-    render: (result) => print(result),
+    render: async (result, client) => print(result, textual ? await ownerWords(client, options.workspaceId) : coreEnglish),
   });
   if (onOwner !== undefined) return onOwner;
   if (options.action === "run-now") {
@@ -127,7 +131,7 @@ export async function heartbeatCliCommand(options: ResolvedDataDirectory<Heartbe
         io.stderr(`${terminalText(answer.error.message)}\n`);
         return answer.error.code === "NOT_FOUND" ? codes.NOT_FOUND : configRefusalExit(answer.error.code);
       }
-      return print(answer.result);
+      return print(answer.result, textual ? await storeWords(store, options.workspaceId) : coreEnglish);
     });
   } catch (error) {
     return reportCommandFailure(error, io, "heartbeat command failed");

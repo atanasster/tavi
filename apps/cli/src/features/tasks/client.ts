@@ -19,7 +19,10 @@ import {
 } from "@tavi/contracts";
 import type { IpcClient } from "@tavi/runtime";
 import type { TaskHistoryOptions, TaskInstructionsOptions, CancelCommandOptions, RecoverCommandOptions } from "./parse.js";
-import { terminalText } from "../../shared/terminal-text.js";
+import { paddedCell, terminalText } from "../../shared/terminal-text.js";
+import { ownerWords, storeWords } from "../../shared/terminal-words.js";
+import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
+import stringWidth from "string-width";
 import { nowTimestamp, plural } from "@tavi/contracts/util";
 import { prefixedId } from "@tavi/node-kit";
 import { homedir } from "node:os";
@@ -132,8 +135,18 @@ export async function listTasks(io: CliIo, explicit?: string, taskId?: string): 
     // when nobody is running. The task-id filter travels in the request
     // payload so an attached client gets the same single-task view a direct,
     // unattached invocation would.
-    const print = (document: unknown): void => printTasks(io, document as Record<string, unknown>, taskId);
-    const attached = await attachToOwner(dataDirectory, "tasks", taskId === undefined ? {} : { taskId }, io, undefined, undefined, print);
+    // The list is said in the workspace's language: read from the owner, or the data directory, only when text is printed.
+    const textual = taskId === undefined && isTextOutput(io);
+    const print = (document: unknown, t: CoreT = coreEnglish): void => printTasks(io, document as Record<string, unknown>, taskId, t);
+    const attached = await attachToOwner(
+      dataDirectory,
+      "tasks",
+      taskId === undefined ? {} : { taskId },
+      io,
+      undefined,
+      undefined,
+      async (document, client) => print(document, textual ? await ownerWords(client) : coreEnglish),
+    );
     if (attached !== undefined) return attached;
     // The offline path's modules load only when no owner answers: an attached `tavi tasks` stays off the runtime.
     const { buildTaskDocument, buildTaskShowDocument } = await import("../doctor/reports.js");
@@ -151,7 +164,7 @@ export async function listTasks(io: CliIo, explicit?: string, taskId?: string): 
         io.stderr(`tasks failed: NOT_FOUND: Task ${taskId} does not exist\n`);
         return EXIT.unavailable;
       }
-      print(document);
+      print(document, textual ? await storeWords(store) : coreEnglish);
       return EXIT.ok;
     });
   } catch (error) {
@@ -160,8 +173,8 @@ export async function listTasks(io: CliIo, explicit?: string, taskId?: string): 
 }
 
 /** `tavi tasks` as its text form at a terminal or under `--format text` (the list; one task stays a record), else JSON. */
-function printTasks(io: CliIo, document: Record<string, unknown>, taskId: string | undefined): void {
-  if (taskId === undefined && isTextOutput(io)) io.stdout(taskListText(document));
+function printTasks(io: CliIo, document: Record<string, unknown>, taskId: string | undefined, t: CoreT): void {
+  if (taskId === undefined && isTextOutput(io)) io.stdout(taskListText(document, t));
   else emitJson(io, document);
 }
 
@@ -178,29 +191,31 @@ const lineOf = (value: unknown, max: number): string => {
  * `tavi tasks` for a person: the most recent tasks, a line each — status, when, id, title — then what waits on
  * them (approvals, unresolved effects, deliveries, expired leases), each a count with the command that shows it.
  */
-export function taskListText(document: Record<string, unknown>): string {
+export function taskListText(document: Record<string, unknown>, t: CoreT = coreEnglish): string {
   const tasks = listOf(document["tasks"]);
   const lines: string[] = [];
-  if (tasks.length === 0) lines.push("No tasks yet.");
+  if (tasks.length === 0) lines.push(t("cli.tasks.none"));
   else {
-    const width = Math.max(...tasks.map((task) => String(task["status"] ?? "").length));
+    const width = Math.max(...tasks.map((task) => stringWidth(String(task["status"] ?? ""))));
     for (const task of tasks) {
-      const status = String(task["status"] ?? "").padEnd(width);
+      const status = paddedCell(String(task["status"] ?? ""), width);
       const when = typeof task["updatedAt"] === "string" ? task["updatedAt"].slice(0, 16).replace("T", " ") : "";
       const title = lineOf(task["title"], 70) || lineOf(task["summary"], 70) || lineOf(task["finalText"], 70);
       lines.push(`${status}  ${when}  ${String(task["taskId"] ?? "")}${title === "" ? "" : `  ${title}`}`);
     }
   }
-  const counts: [unknown, string, string][] = [
-    [document["pendingApprovals"], "pending approval", "pending approvals"],
-    [document["unresolvedEffects"], "effect of unknown outcome", "effects of unknown outcome"],
-    [document["pendingDeliveries"], "delivery of unknown outcome", "deliveries of unknown outcome"],
-    [document["expiredLeases"], "expired lease", "expired leases"],
-    [document["cancellations"], "cancellation", "cancellations"],
+  const counts: [unknown, CoreKey][] = [
+    [document["pendingApprovals"], "cli.tasks.also.approvals"],
+    [document["unresolvedEffects"], "cli.tasks.also.effects"],
+    [document["pendingDeliveries"], "cli.tasks.also.deliveries"],
+    [document["expiredLeases"], "cli.tasks.also.leases"],
+    [document["cancellations"], "cli.tasks.also.cancellations"],
   ];
-  const waiting = counts.filter(([list]) => listOf(list).length > 0).map(([list, one, many]) => plural(listOf(list).length, one, many));
-  if (waiting.length > 0) lines.push("", `Also: ${waiting.join(", ")}.`);
-  lines.push("", "One task in full: tavi tasks <task-id>. Everything as JSON: tavi tasks --format json.");
+  const waiting = counts
+    .filter(([list]) => listOf(list).length > 0)
+    .map(([list, key]) => t(key, { n: String(listOf(list).length), count: listOf(list).length }));
+  if (waiting.length > 0) lines.push("", t("cli.tasks.also", { list: waiting.join(", ") }));
+  lines.push("", t("cli.tasks.more"));
   return `${lines.join("\n")}\n`;
 }
 

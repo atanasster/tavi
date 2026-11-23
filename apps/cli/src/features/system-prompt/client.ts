@@ -1,6 +1,6 @@
 import { emitJson } from "../../cli/output.js";
 import { EXIT, refusalExit } from "../../cli/exit.js";
-import { terminalText } from "../../shared/terminal-text.js";
+import { paddedCell, terminalText } from "../../shared/terminal-text.js";
 import { TaviError, DEFAULT_WORKSPACE_ID, type SystemPromptAnswer, type SystemPromptPreview } from "@tavi/contracts";
 import type { IpcClient, IpcClientResponse } from "@tavi/runtime";
 import { readFileSync } from "node:fs";
@@ -105,7 +105,7 @@ export async function systemPromptCommand(options: ResolvedDataDirectory<SystemP
       const size = layer.generated ? "generated per call" : `${layer.length ?? 0} chars`;
       const skills = layer.skills === undefined ? "" : `, ${layer.skills} active ${layer.skills === 1 ? "skill" : "skills"}`;
       const state = layer.active ? "" : " (not sent)";
-      io.stdout(`  ${layer.kind.padEnd(8)} ${terminalText(layer.label)} — ${size}${skills}${state}\n`);
+      io.stdout(`  ${paddedCell(layer.kind, 8)} ${terminalText(layer.label)} — ${size}${skills}${state}\n`);
       if (!layer.active && layer.detail !== undefined) io.stdout(`           ${terminalText(layer.detail)}\n`);
     }
     const facts = preview.layers.find((layer) => layer.kind === "facts" && layer.sample === true);

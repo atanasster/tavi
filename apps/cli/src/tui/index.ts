@@ -46,6 +46,7 @@ import {
   parsePluginCommandLine,
   FolderViewSchema,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { errorMessage, nowTimestamp } from "@tavi/contracts/util";
 import { assertPipeOwnedHere, prefixedId, privacyProblem, sleep } from "@tavi/node-kit";
 import { render, type Instance } from "ink";
@@ -65,7 +66,7 @@ import { roundCallIds } from "../shared/rounds.js";
 import { chatCommand, commandHelp, type FolderChange, helpRows } from "./commands.js";
 import { folderLines, hostPathOf } from "../features/folders/owner.js";
 import { clientCwdFor, remoteFoldersOf } from "../features/remote/folders.js";
-import { enterField, FORMS, formOutcome, formRequest, looksLikeCredential, openForm, type FormStep } from "./forms.js";
+import { enterField, formOutcome, formRequest, formTitle, looksLikeCredential, openForm, type FormStep } from "./forms.js";
 import {
   agentsPane,
   approvalsPane,
@@ -79,6 +80,7 @@ import {
   type Pane,
 } from "./panes.js";
 import { ChatStore, FRAME_MS, MAX_FPS, pendingRoundsOf, plainEmphasis } from "./store.js";
+import { wordsOfSettingsAnswer } from "../shared/terminal-words.js";
 import { GLYPHS, divider } from "./theme.js";
 
 /**
@@ -217,12 +219,12 @@ const WORKER_POLL_MS = 5_000;
  * task it links to. A notice is never sent anywhere from here; a side chat
  * replies to one from the web app.
  */
-export function noticeLine(notice: Pick<ChatNotice, "title" | "summary" | "sourceTaskId">): string {
+export function noticeLine(notice: Pick<ChatNotice, "title" | "summary" | "sourceTaskId">, t: CoreT = coreEnglish): string {
   const summary = notice.summary
     .replace(/\s*\n\s*/g, "; ")
     .replace(/\s+/g, " ")
     .trim();
-  return `${GLYPHS.notice} ${notice.title}${summary === "" ? "" : ` — ${summary}`}${notice.sourceTaskId === undefined ? "" : ` (task ${notice.sourceTaskId})`}`;
+  return `${GLYPHS.notice} ${notice.title}${summary === "" ? "" : ` — ${summary}`}${notice.sourceTaskId === undefined ? "" : t("tui.chat.noticeTask", { task: notice.sourceTaskId })}`;
 }
 
 /** A notice's identity as printed: a later settle of the same source is printed again. */
@@ -286,6 +288,8 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
   const columns = (): number => dimension(streams.stdout.columns, 80);
   const rows = (): number => dimension(streams.stdout.rows, 24);
   const store = new ChatStore({ columns, rows, reservedRows: RESERVED_ROWS, prompting: options.replay === undefined });
+  /** The chat's words, as the store speaks them now: the workspace's language once the owner says it. */
+  const t: CoreT = (key, params) => store.t(key, params);
   const started = Date.now();
   let renders = 0;
   let deltas = 0;
@@ -370,7 +374,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       } catch (error) {
         // Checked whole before it played: only a file changed since can fail here.
         failure = error;
-        store.finishWith(`${GLYPHS.failed} the recording changed while it played: ${errorMessage(error)}`, "failure");
+        store.finishWith(t("tui.chat.recordingChanged", { mark: GLYPHS.failed, error: errorMessage(error) }), "failure");
       }
       store.end();
       store.flush();
@@ -399,10 +403,16 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       return finish(exit.unavailable);
     }
     const owner = client;
+    // The workspace's settings, read once as the chat starts: the language every line below is said in, and
+    // `chat.home`. A failed read is English, with Home off.
+    const settings = await owner
+      .request("workspace-settings", { action: "get", workspaceId: options.workspaceId }, { timeoutMs: READ_TIMEOUT_MS })
+      .catch(failedOf);
+    store.words(wordsOfSettingsAnswer(settings.ok ? settings.result : undefined));
     /** Whether the owner has gone, said as what could not be done: an action checks it before it starts. */
     const ownerGone = (what: string): boolean => {
       if (owner.state !== "closed") return false;
-      store.fail(`the owner is gone: ${what}`);
+      store.fail(t("tui.chat.ownerGone", { what }));
       return true;
     };
 
@@ -496,10 +506,10 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
     stopWatching = owner.onState((state) => {
       if (state === "reconnecting") {
         reconnecting = true;
-        store.notice("the owner went away; reconnecting");
+        store.notice(t("tui.chat.reconnecting"));
       } else if (state === "ready" && reconnecting) {
         reconnecting = false;
-        store.notice("reconnected");
+        store.notice(t("tui.chat.reconnected"));
         // A followed stream resumes (or resyncs), but no stream follows a chat
         // between turns: its plugins' lines may have been cleared meanwhile.
         // Nor is the place it stopped one a restarted owner knows.
@@ -521,11 +531,12 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           store.finishWith(`${GLYPHS.failed} ${failure.message}`, "failure");
           return;
         }
-        const again =
+        store.finishWith(
           store.running && current !== undefined
-            ? `, then \`tavi chat --attach ${current}\` to follow task ${current} again`
-            : ", then `tavi chat` again";
-        store.finishWith(`${GLYPHS.failed} the owner did not come back; start \`tavi serve\`${again}`, "failure");
+            ? t("tui.chat.goneAttach", { mark: GLYPHS.failed, task: current })
+            : t("tui.chat.gone", { mark: GLYPHS.failed }),
+          "failure",
+        );
       }
     });
 
@@ -583,7 +594,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       if (mine !== generation || !unsettled) return;
       if (recorded.kind === "live") return;
       if (recorded.kind === "cancelled") {
-        store.finishWith(`${GLYPHS.failed} task ${taskId} was cancelled.`, "failure");
+        store.finishWith(t("tui.chat.cancelled", { mark: GLYPHS.failed, task: taskId }), "failure");
         dropQueued();
         return;
       }
@@ -612,13 +623,12 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         store.seed({ review: { steps: ending.steps, requests: ending.requests } });
         return;
       }
-      store.settleWith(recordedLine(ending, taskId === home));
+      store.settleWith(recordedLine(ending, taskId === home, t));
       settled = taskId;
       shownSince(taskId);
       offerContinuation();
       sendQueued();
-      if (!startFresh && !noConversation.has(taskId))
-        store.notice(taskId === home ? "type to continue Home" : "type to continue this chat");
+      if (!startFresh && !noConversation.has(taskId)) store.notice(t(taskId === home ? "tui.chat.continueHome" : "tui.chat.continueChat"));
     };
 
     /** The oldest queued prompt, sent once the turn that just ended has let go of the screen. */
@@ -637,7 +647,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
     /** A task that takes no further turn: what was queued behind it is not sent. */
     const dropQueued = (): void => {
       if (queuedPrompts.length === 0) return;
-      store.fail(`the chat was cancelled: ${queuedPrompts.length} queued prompt${queuedPrompts.length === 1 ? " was" : "s were"} not sent`);
+      store.fail(t("tui.chat.queueDropped", { count: queuedPrompts.length, n: String(queuedPrompts.length) }));
       queuedPrompts.length = 0;
     };
 
@@ -667,7 +677,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         )
         .catch(failedOf);
       const card = answer.ok ? MemoryCardAnswerSchema.safeParse(answer.result) : undefined;
-      return card?.success === true ? memoryCardLine(card.data) : noticeLine(notice);
+      return card?.success === true ? memoryCardLine(card.data) : noticeLine(notice, t);
     };
     /**
      * What a turn that just ended here used, as one dim line: read from its saved turn, the
@@ -705,7 +715,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         // The chat moved on, or the task spoke, while it was read: old turns would print below newer ones.
         if (mine !== generation || (store.status !== "idle" && store.status !== "unknown")) return;
         if (page === undefined || !page.success || page.data.entries.length === 0) return;
-        if (page.data.nextBefore !== undefined) store.notice("earlier turns are saved too: `tavi ui` pages back through them");
+        if (page.data.nextBefore !== undefined) store.notice(t("tui.chat.earlierSaved"));
         // Notices among the turns, each after the turn it followed.
         const notices = [...(page.data.notices ?? [])];
         noticeRoot = taskId;
@@ -725,7 +735,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           while (notices[0] !== undefined && notices[0].afterSeq < before) {
             const notice = notices.shift() as ChatNotice;
             noticeSeen.add(noticeSeenKey(notice));
-            store.note(cards.get(notice.noticeId) ?? noticeLine(notice), "notice");
+            store.note(cards.get(notice.noticeId) ?? noticeLine(notice, t), "notice");
           }
         };
         for (const saved of page.data.entries) {
@@ -735,7 +745,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
             // Saved text shows its emphasis as words, as the live stream does.
             if (item.kind === "text") store.note(plainEmphasis(item.text), "text");
             else if (item.kind === "question") store.note(`? ${item.text}`, "notice");
-            else if (item.kind === "steer") store.echo(`${item.text} (sent into the turn)`);
+            else if (item.kind === "steer") store.echo(t("tui.chat.steered", { text: item.text }));
             else store.note(`  ${item.toolName} ${item.status}${item.errorCode === undefined ? "" : ` (${item.errorCode})`}`, "notice");
           }
           // What the answer used, dim: `/why` names them.
@@ -754,7 +764,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       if (answer.ok) learnWorkspace(taskId, answer.result);
       if (mine !== generation) return undefined;
       if (!answer.ok) {
-        store.fail(`could not read task ${taskId}'s record: ${answer.error?.code}: ${answer.error?.message}`);
+        store.fail(t("tui.chat.recordUnread", { task: taskId, code: String(answer.error?.code), message: String(answer.error?.message) }));
         return undefined;
       }
       store.setTaint(taskId, taintOfRecorded(answer.result as RecordedTask));
@@ -799,7 +809,10 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       if (noConversation.has(taskId)) return { kind: "none" };
       const answer = await owner.request("tasks", { taskId }, { timeoutMs: READ_TIMEOUT_MS }).catch(failedOf);
       if (!answer.ok)
-        return { kind: "unreadable", why: `${answer.error?.code ?? "REFUSED"}: ${answer.error?.message ?? "the owner refused the read"}` };
+        return {
+          kind: "unreadable",
+          why: `${answer.error?.code ?? "REFUSED"}: ${answer.error?.message ?? t("tui.chat.refusedRead")}`,
+        };
       learnWorkspace(taskId, answer.result);
       const recorded = answer.result as RecordedTask;
       // A Home's conversation is the person's, not its first message's key.
@@ -821,18 +834,14 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         .then((answer) => {
           if (mine !== generation) return;
           if (!answer.ok) {
-            store.fail(
-              `could not list round ${steps}'s calls (${answer.error?.code}); decide it with \`tavi approvals approve|reject ${taskId}\``,
-            );
+            store.fail(t("tui.chat.roundUnlisted", { steps: String(steps), why: String(answer.error?.code), task: taskId }));
             return;
           }
           store.roundCalls(steps, roundCallIds((answer.result as ApprovalsListResult).rows, steps));
         })
         .catch((error: unknown) => {
           if (mine === generation)
-            store.fail(
-              `could not list round ${steps}'s calls (${errorMessage(error)}); decide it with \`tavi approvals approve|reject ${taskId}\``,
-            );
+            store.fail(t("tui.chat.roundUnlisted", { steps: String(steps), why: errorMessage(error), task: taskId }));
         });
     };
 
@@ -948,7 +957,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       if (from === "saved") {
         const opened = await owner.subscribe(taskId, callbacks).catch(failedOf);
         if ("ok" in opened) return opened.error.message;
-        if (!opened.response.ok) return opened.response.error?.message ?? "the owner refused to follow that chat";
+        if (!opened.response.ok) return opened.response.error?.message ?? t("tui.chat.refusedFollow");
         if (mine === generation) following = opened.subscription;
         else void opened.subscription?.close();
         const result = opened.response.result as SubscribeResult;
@@ -960,7 +969,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
             if (recorded === undefined) return endUnread(mine);
             if (recorded.kind === "live") {
               if (mine === generation && store.status === "idle")
-                store.notice(`${taskId === home ? "Home" : `chat ${taskId}`} is taking a turn; following it live`);
+                store.notice(t(taskId === home ? "tui.chat.homeLive" : "tui.chat.chatLive", { task: taskId }));
               return;
             }
             // Its conversation first: a question it waits on is answered by typing.
@@ -972,7 +981,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       }
       replay = { expected: undefined, delivered: 0 };
       const opened = await owner.subscribe(taskId, { from: "beginning", ...callbacks });
-      if (!opened.response.ok) return opened.response.error?.message ?? "the owner refused to follow that chat";
+      if (!opened.response.ok) return opened.response.error?.message ?? t("tui.chat.refusedFollow");
       const result = opened.response.result as SubscribeResult;
       // A stream that settled at the end of its replay was let go already (`follow`).
       if (mine === generation) following = opened.subscription;
@@ -992,13 +1001,10 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         void readRecord(taskId, mine).then((recorded) => {
           if (recorded === undefined) return;
           if (recorded.kind === "live") {
-            store.note(`The owner has published nothing of task ${taskId} yet; following it live.`, "notice");
+            store.note(t("tui.chat.nothingYet", { task: taskId }), "notice");
             return;
           }
-          store.note(
-            `The owner holds no stream of task ${taskId}: it ended before this owner started, or its stream was evicted.`,
-            "notice",
-          );
+          store.note(t("tui.chat.noStream", { task: taskId }), "notice");
           // Its saved history says what the stream no longer does.
           void showSaved(taskId, mine).finally(() => settleFromRecord(taskId, recorded, mine));
         });
@@ -1019,10 +1025,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       return listed?.success === true ? listed.data.rows.find((row) => row.workspaceId === options.workspaceId)?.taskId : undefined;
     };
 
-    // `chat.home`: read once; a failed read is off, and the chat is what it was before Home.
-    const settings = await owner
-      .request("workspace-settings", { action: "get", workspaceId: options.workspaceId }, { timeoutMs: READ_TIMEOUT_MS })
-      .catch(failedOf);
+    // `chat.home`, from the settings read as the chat started; a failed read is off, and the chat is what it was before Home.
     homeOn =
       settings.ok &&
       (settings.result as { readonly effective?: { readonly homeChat?: unknown } } | undefined)?.effective?.homeChat === true;
@@ -1041,8 +1044,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
     } else if (home !== undefined) {
       // `tavi chat` opens on Home: its newest turns, then type to continue it.
       const refused = await attach(home, "saved");
-      if (refused !== undefined)
-        store.finishWith(`${GLYPHS.failed} Home could not be followed: ${refused}; a message still goes to it`, "failure");
+      if (refused !== undefined) store.finishWith(t("tui.chat.homeUnfollowed", { mark: GLYPHS.failed, why: refused }), "failure");
     }
 
     /**
@@ -1063,7 +1065,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           const payload = { workspaceId, conversationId: answer.conversationId, text, clientMessageId };
           const first = await owner.request("reply", payload).catch(failedOf);
           if (first.ok || first.error?.code !== CLIENT_TIMEOUT || mine !== generation) return first;
-          store.notice("the owner has not answered yet; sending the answer again as the same message");
+          store.notice(t("tui.chat.answerResend"));
           return owner.request("reply", payload);
         })
         .catch(failedOf)
@@ -1073,9 +1075,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
             // Unknown, not refused: it may have been recorded. Answered again, it is this message still.
             unansweredAnswers.set(answer.taskId, clientMessageId);
             store.answering(false);
-            store.fail(
-              `The owner did not answer: the answer may have been recorded (message ${clientMessageId}); answering again sends it as the same message`,
-            );
+            store.fail(t("tui.chat.answerUnknown", { message: clientMessageId }));
             return;
           }
           unansweredAnswers.delete(answer.taskId);
@@ -1086,7 +1086,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
             setTimeout(() => {
               if (mine !== generation || store.answerNow() !== undefined || store.status !== "waiting") return;
               store.answering(false);
-              store.notice("the answer was recorded, but the chat has not resumed yet; you may answer again");
+              store.notice(t("tui.chat.answerNotResumed"));
             }, deps.answerSettleMs ?? ANSWER_SETTLE_MS);
             return;
           }
@@ -1097,7 +1097,9 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
             noConversation.add(answer.taskId);
             offerContinuation();
           }
-          store.fail(`The answer was not sent: ${reply.error?.code ?? "REFUSED"}: ${reply.error?.message ?? "the owner refused it"}`);
+          store.fail(
+            t("tui.chat.answerNotSent", { code: reply.error?.code ?? "REFUSED", message: reply.error?.message ?? t("tui.chat.refusedIt") }),
+          );
         });
     };
 
@@ -1131,14 +1133,14 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       readonly workerLabel?: string | undefined;
       readonly taskTitle?: string | undefined;
       readonly taskId: string;
-    }): string => row.workerLabel ?? row.taskTitle ?? `worker ${row.taskId}`;
+    }): string => row.workerLabel ?? row.taskTitle ?? t("tui.chat.worker", { task: row.taskId });
     /** How many questions are open in the chat shown: its own and its workers'. */
     const openQuestions = (): number => (store.answerNow() === undefined ? 0 : 1) + shownWorkers().length;
     const workerHint = (): string => {
       const count = openQuestions();
       return count === 1
-        ? `${GLYPHS.more} type your answer`
-        : `${GLYPHS.more} ${count} questions are open: /answer lists them, /answer <n> <text> answers one`;
+        ? t("tui.chat.typeYourAnswer", { mark: GLYPHS.more })
+        : t("tui.chat.questionsOpen", { mark: GLYPHS.more, n: String(count) });
     };
     /**
      * The chat shown's notices, read on the workers' cadence: they
@@ -1173,7 +1175,9 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           pageFrom: noticePageFrom.get(root),
         })) {
           store.note(
-            notice.kind === "memory" ? await memoryNoticeLine(notice, taskWorkspaces.get(root) ?? options.workspaceId) : noticeLine(notice),
+            notice.kind === "memory"
+              ? await memoryNoticeLine(notice, taskWorkspaces.get(root) ?? options.workspaceId)
+              : noticeLine(notice, t),
             "notice",
           );
         }
@@ -1225,13 +1229,18 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         for (const row of asked) {
           workerSeen.add(row.waitId);
           const choices = row.choices?.options.map((option, index) => `${index + 1}. ${option.label}`).join("  ");
-          store.note(`? ${asker(row)} asks: ${row.question}${choices === undefined ? "" : `\n  ${choices}`}`, "notice");
+          store.note(
+            `${t("tui.chat.workerAsks", { worker: asker(row), question: row.question })}${choices === undefined ? "" : `\n  ${choices}`}`,
+            "notice",
+          );
         }
         for (const row of listed.data.handoffs.filter((handoff) => handoff.taskId !== root)) {
           if (workerSeen.has(row.waitId)) continue;
           workerSeen.add(row.waitId);
           store.note(
-            `! ${asker(row)} needs you in its browser${row.handoff.instructions === undefined ? "" : `: ${row.handoff.instructions}`} — take control in the web app's chat`,
+            row.handoff.instructions === undefined
+              ? t("tui.chat.handoff", { worker: asker(row) })
+              : t("tui.chat.handoffWhy", { worker: asker(row), instructions: row.handoff.instructions }),
             "notice",
           );
         }
@@ -1243,10 +1252,10 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
     };
     /** A worker's question answered here: at its wait. */
     const answerWorker = (row: PendingQuestionRow, text: string): void => {
-      if (ownerGone("the answer was not sent")) return;
+      if (ownerGone(t("tui.chat.gone.answer"))) return;
       workerQuestions = workerQuestions.filter((open) => open.waitId !== row.waitId);
       answeredWaits.add(row.waitId);
-      store.echo(`${text} (to ${asker(row)})`, "text");
+      store.echo(t("tui.chat.toWorker", { text, worker: asker(row) }), "text");
       void owner
         .request(
           "approvals",
@@ -1255,11 +1264,16 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         )
         .catch(failedOf)
         .then((answer) => {
-          if (answer.ok) store.note(`${GLYPHS.done} answered ${asker(row)}'s question`, "notice");
+          if (answer.ok) store.note(t("tui.chat.answeredWorker", { mark: GLYPHS.done, worker: asker(row) }), "notice");
           else {
             // Not recorded: offered again at the next read.
             answeredWaits.delete(row.waitId);
-            store.fail(`The answer was not sent: ${answer.error?.code ?? "REFUSED"}: ${answer.error?.message ?? "the owner refused it"}`);
+            store.fail(
+              t("tui.chat.answerNotSent", {
+                code: answer.error?.code ?? "REFUSED",
+                message: answer.error?.message ?? t("tui.chat.refusedIt"),
+              }),
+            );
           }
           void readWorkers();
         });
@@ -1277,14 +1291,13 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       if (index === undefined) {
         store.note(
           numbered.length === 0
-            ? `${GLYPHS.more} no question is open in this chat`
+            ? t("tui.chat.noQuestion", { mark: GLYPHS.more })
             : [
-                divider("open questions"),
+                divider(t("tui.chat.openQuestions")),
                 ...numbered.map(
-                  (entry, at) =>
-                    `  ${at + 1}. ${entry.own ? "this chat's own question, shown above" : `${asker(entry.row)}: ${entry.row.question}`}`,
+                  (entry, at) => `  ${at + 1}. ${entry.own ? t("tui.chat.ownQuestion") : `${asker(entry.row)}: ${entry.row.question}`}`,
                 ),
-                "  /answer <n> <text> answers one",
+                t("tui.chat.answerHow"),
               ].join("\n"),
           "text",
         );
@@ -1292,11 +1305,11 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       }
       const entry = numbered[index - 1];
       if (entry === undefined) {
-        store.fail(`no open question ${index}: /answer lists them`);
+        store.fail(t("tui.chat.noSuchQuestion", { n: String(index) }));
         return;
       }
       if (text === undefined) {
-        store.fail(`type the answer after its number: /answer ${index} <text>`);
+        store.fail(t("tui.chat.answerAfterNumber", { n: String(index) }));
         return;
       }
       if (entry.own) answerQuestion(entry.question, text);
@@ -1309,7 +1322,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
      * a pane asked for while a run goes is printed when its read answers.
      */
     const showPane = (pane: Pane): void => {
-      if (ownerGone("no pane can be read")) return;
+      if (ownerGone(t("tui.chat.gone.pane"))) return;
       const workspaceId = options.workspaceId;
       const followed = current;
       const read = (command: "agents" | "schedules" | "approvals" | "credentials" | "models", payload: Record<string, unknown>) =>
@@ -1325,22 +1338,22 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           // agents are still this workspace's, without its mailbox.
           if (!answer.ok && followed !== undefined && answer.error?.code === "NOT_FOUND") {
             const bare = await read("agents", {});
-            return bare.ok ? agentsPane(bare.result as AgentsListResult, workspaceId, Date.now(), followed) : bare;
+            return bare.ok ? agentsPane(bare.result as AgentsListResult, workspaceId, Date.now(), followed, t) : bare;
           }
-          return answer.ok ? agentsPane(answer.result as AgentsListResult, workspaceId, Date.now()) : answer;
+          return answer.ok ? agentsPane(answer.result as AgentsListResult, workspaceId, Date.now(), undefined, t) : answer;
         },
         schedules: async () => {
           const answer = await read("schedules", {});
-          return answer.ok ? schedulesPane(answer.result as SchedulesListResult, workspaceId, Date.now()) : answer;
+          return answer.ok ? schedulesPane(answer.result as SchedulesListResult, workspaceId, Date.now(), t) : answer;
         },
         plugins: async () => {
           // `plugins` is owner-wide: its list takes no workspace.
           const answer = await owner.request("plugins", { action: "list" }, { timeoutMs: READ_TIMEOUT_MS }).catch(failedOf);
-          return answer.ok ? pluginsPane(answer.result as Parameters<typeof pluginsPane>[0]) : answer;
+          return answer.ok ? pluginsPane(answer.result as Parameters<typeof pluginsPane>[0], t) : answer;
         },
         credentials: async () => {
           const answer = await read("credentials", {});
-          return answer.ok ? credentialsPane(answer.result as Parameters<typeof credentialsPane>[0]) : answer;
+          return answer.ok ? credentialsPane(answer.result as Parameters<typeof credentialsPane>[0], t) : answer;
         },
         models: async () => {
           const [connections, roles, lifecycle] = await Promise.all([
@@ -1360,18 +1373,19 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
               : // An older owner refuses the action itself: no lifecycle lines. Any other failure is said.
                 lifecycle.error?.code === "INVALID_INPUT"
                 ? undefined
-                : { problem: lifecycle.error?.message ?? "no answer" },
+                : { problem: lifecycle.error?.message ?? t("tui.chat.noAnswer") },
+            t,
           );
         },
         needs: async () => {
           const answer = await owner.request("approvals", { action: "needs", workspaceId }, { timeoutMs: READ_TIMEOUT_MS }).catch(failedOf);
-          return answer.ok ? needsPane(answer.result as NeedsAnswer, workspaceId, followed, Date.now()) : answer;
+          return answer.ok ? needsPane(answer.result as NeedsAnswer, workspaceId, followed, Date.now(), t) : answer;
         },
         approvals: async () => {
           // Wide enough that a round is rarely cut; one that is, is left out.
           const answer = await read("approvals", { limit: APPROVALS_PANE_LIMIT });
           const where = followed === undefined ? undefined : { taskId: followed, decidedWhere: store.roundsDecidedWhere() };
-          return answer.ok ? approvalsPane(answer.result as ApprovalsListResult, workspaceId, where, Date.now()) : answer;
+          return answer.ok ? approvalsPane(answer.result as ApprovalsListResult, workspaceId, where, Date.now(), t) : answer;
         },
       };
       void panes[pane]().then((drawn) => {
@@ -1379,7 +1393,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           store.note(drawn.join("\n"), "text");
           return;
         }
-        store.fail(`/${pane}: ${drawn.error?.code ?? "REFUSED"}: ${drawn.error?.message ?? "the owner refused the read"}`);
+        store.fail(`/${pane}: ${drawn.error?.code ?? "REFUSED"}: ${drawn.error?.message ?? t("tui.chat.refusedRead")}`);
       });
     };
 
@@ -1398,27 +1412,27 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         return;
       }
       store.form(undefined);
-      if (ownerGone("the form was not sent")) return;
+      if (ownerGone(t("tui.chat.gone.form"))) return;
       const request = formRequest(step.id, step.values, options.workspaceId);
-      store.note(`${GLYPHS.form} ${FORMS[step.id].title}…`, "notice");
+      store.note(`${GLYPHS.form} ${formTitle(step.id, t)}…`, "notice");
       void owner
         .request(request.command, request.payload, { timeoutMs: request.timeoutMs })
         .catch(failedOf)
         .then((answer) => {
           if (!answer.ok) {
             // The owner's refusal may quote what was sent: never a key's shape.
-            const why = redactCredentialShapes(answer.error?.message ?? "the owner refused it");
-            store.fail(`${FORMS[step.id].title}: ${answer.error?.code ?? "REFUSED"}: ${why}`);
+            const why = redactCredentialShapes(answer.error?.message ?? t("tui.chat.refusedIt"));
+            store.fail(`${formTitle(step.id, t)}: ${answer.error?.code ?? "REFUSED"}: ${why}`);
             return;
           }
-          store.note(formOutcome(step.id, step.values, answer.result).join("\n"), "text");
+          store.note(formOutcome(step.id, step.values, answer.result, t).join("\n"), "text");
         });
     };
     const onForm = {
       enter: (typed: string): void => {
         const state = store.formNow();
         if (state === undefined) return;
-        const step = enterField(state, typed);
+        const step = enterField(state, typed, t);
         if (step.kind === "again") {
           // Said without what was typed: it may be a secret.
           store.fail(step.reason);
@@ -1429,7 +1443,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       cancel: (): void => {
         const state = store.formNow();
         store.form(undefined);
-        if (state !== undefined) store.notice(`${FORMS[state.id].title}: cancelled, nothing was sent`);
+        if (state !== undefined) store.notice(t("tui.chat.formCancelled", { title: formTitle(state.id, t) }));
       },
     };
 
@@ -1454,8 +1468,8 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         .catch(failedOf)
         .then((answer) => {
           const text = answer.ok ? (answer.result as { readonly text?: string } | undefined)?.text : undefined;
-          if (text !== undefined) store.note(text === "" ? `/${command.name} answered nothing` : text, "notice");
-          else store.fail(`/${command.name}: ${answer.ok ? "no answer" : (answer.error?.message ?? "the owner refused it")}`);
+          if (text !== undefined) store.note(text === "" ? t("tui.chat.pluginSilent", { name: command.name }) : text, "notice");
+          else store.fail(`/${command.name}: ${answer.ok ? t("tui.chat.noAnswer") : (answer.error?.message ?? t("tui.chat.refusedIt"))}`);
         });
     };
 
@@ -1464,9 +1478,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       // into the transcript, not as an answer, not echoed by a command's
       // refusal: it has a form of its own. First, before anything shows it.
       if (looksLikeCredential(prompt)) {
-        store.fail(
-          "That looks like a credential, so it was not sent or shown. Store it with /credentials set <reference>, where its value is typed hidden.",
-        );
+        store.fail(t("tui.chat.credential"));
         return;
       }
       // A plugin's command, before the chat's own refuse it as unknown.
@@ -1481,27 +1493,27 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         if (command.kind === "help")
           store.note(
             [
-              ...commandHelp(homeOn, columns()),
+              ...commandHelp(homeOn, columns(), t),
               ...(pluginCommands.length === 0
                 ? []
                 : [
-                    divider("plugins' commands"),
+                    divider(t("tui.chat.pluginCommands")),
                     ...pluginCommands.flatMap((entry) => helpRows(`/${entry.name}`, `${entry.description} (${entry.pluginId})`, columns())),
                   ]),
             ].join("\n"),
             "text",
           );
-        else if (command.kind === "unknown") store.fail(`no command ${command.typed}: /help lists them`);
+        else if (command.kind === "unknown") store.fail(t("tui.chat.unknownCommand", { typed: command.typed }));
         else if (command.kind === "pane") showPane(command.pane);
         else if (command.kind === "side") side(command.topic);
         else if (command.kind === "new") {
           // With Home on, the same as `/side`; with Home off it starts a new chat.
-          if (homeOn) store.notice("/new does what /side does");
+          if (homeOn) store.notice(t("tui.chat.newIsSide"));
           side(undefined, homeOn);
         } else if (command.kind === "home") goHome();
         else if (command.kind === "chats") showChats();
         else if (command.kind === "open") {
-          if (command.taskId === undefined) store.fail("/open takes a chat's task id: /chats lists them");
+          if (command.taskId === undefined) store.fail(t("tui.chat.openNeedsId"));
           else open(command.taskId);
         } else if (command.kind === "answer") answerNumbered(command.index, command.text);
         else if (command.kind === "compact") freshContext();
@@ -1509,9 +1521,9 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         else if (command.kind === "model") chatModel(command.target);
         else if (command.kind === "folder") chatFolder(command.change);
         else if (command.kind === "steer") {
-          if (command.text === undefined) store.fail("/steer takes the message to send into the running turn: /steer <text>");
+          if (command.text === undefined) store.fail(t("tui.chat.steerNeedsText"));
           else steerTurn(command.text);
-        } else if (!ownerGone("no form can be sent")) stepForm(openForm(command.form, command.words));
+        } else if (!ownerGone(t("tui.chat.gone.noForm"))) stepForm(openForm(command.form, command.words, t));
         return;
       }
       // A typed line answers a question only when exactly one is open: the chat's own, or a worker's.
@@ -1524,11 +1536,11 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         return;
       }
       if (asking > 1) {
-        store.notice(`${asking} questions are open, so this is a message, not an answer: /answer <n> <text> answers one`);
+        store.notice(t("tui.chat.notAnAnswer", { n: String(asking) }));
         // The chat waits on its own question: the message goes once its turn ends, never as that answer.
         if (answer !== undefined) {
           queuedPrompts.push({ prompt, side: false });
-          store.notice("queued: sends after this turn");
+          store.notice(t("tui.chat.queued"));
           return;
         }
       }
@@ -1557,17 +1569,16 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         if (!reply.ok && reply.error?.code === CLIENT_TIMEOUT) reply = await owner.request("reply", payload).catch(failedOf);
         if (mine !== generation) return;
         if (!reply.ok) {
-          store.fail(`not sent into the turn: ${reply.error?.code ?? "REFUSED"}: ${reply.error?.message ?? "the owner refused it"}`);
+          store.fail(
+            t("tui.chat.steerNotSent", {
+              why: `${reply.error?.code ?? "REFUSED"}: ${reply.error?.message ?? t("tui.chat.refusedIt")}`,
+            }),
+          );
           return;
         }
         const steered = (reply.result as { readonly steered?: unknown } | undefined)?.steered === true;
-        store.note(
-          steered
-            ? `${GLYPHS.more} sent into the running turn: it shows there once the model reads it`
-            : `${GLYPHS.more} the turn had ended: sent as the chat's next message`,
-          "notice",
-        );
-      })().catch((error: unknown) => store.fail(`not sent into the turn: ${errorMessage(error)}`));
+        store.note(t(steered ? "tui.chat.steered.sent" : "tui.chat.steered.next", { mark: GLYPHS.more }), "notice");
+      })().catch((error: unknown) => store.fail(t("tui.chat.steerNotSent", { why: errorMessage(error) })));
     };
 
     /** A prompt sent now, or — while a turn runs — queued behind it, keeping whether `/side` came before it. */
@@ -1578,7 +1589,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         startFresh = false;
         sideParent = undefined;
         offerContinuation();
-        store.notice(`queued: sends after this turn${queuedPrompts.length > 1 ? ` (${queuedPrompts.length} waiting)` : ""}`);
+        store.notice(queuedPrompts.length > 1 ? t("tui.chat.queuedMany", { n: String(queuedPrompts.length) }) : t("tui.chat.queued"));
         return;
       }
       dispatchPrompt(prompt);
@@ -1596,11 +1607,11 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       offerContinuation();
       if (topic !== undefined) {
         // A marker between the chat left and the side chat: what follows is not Home's.
-        store.notice(homeOn ? "a side chat begins" : "a new chat begins");
+        store.notice(t(homeOn ? "tui.chat.sideBegins" : "tui.chat.newBegins"));
         sendOrQueue(topic);
         return;
       }
-      store.notice(homeOn ? "the next prompt starts a side chat" : "the next prompt starts a new chat");
+      store.notice(t(homeOn ? "tui.chat.nextSide" : "tui.chat.nextNew"));
     };
 
     /**
@@ -1622,25 +1633,17 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       startFresh = false;
       sideParent = undefined;
       if (queuedPrompts.length > 0) {
-        store.note(
-          `${GLYPHS.more} ${queuedPrompts.length} queued prompt${queuedPrompts.length === 1 ? " was" : "s were"} not sent: they were for the chat left`,
-          "notice",
-        );
+        store.note(t("tui.chat.queueLeft", { mark: GLYPHS.more, count: queuedPrompts.length, n: String(queuedPrompts.length) }), "notice");
         queuedPrompts.length = 0;
       }
       if (going !== undefined) {
-        store.note(
-          going === home
-            ? `${GLYPHS.more} Home goes on at the owner; /home follows it again`
-            : `${GLYPHS.more} chat ${going} goes on at the owner; /open ${going} follows it again`,
-          "notice",
-        );
-      } else if (sending) store.notice("the prompt just sent goes on at the owner; /chats lists it once it is admitted");
+        store.note(t(going === home ? "tui.chat.homeGoesOn" : "tui.chat.chatGoesOn", { mark: GLYPHS.more, task: going }), "notice");
+      } else if (sending) store.notice(t("tui.chat.sentGoesOn"));
     };
 
     /** Follow chat `taskId` in place of the one shown, and continue it. */
     const open = (taskId: string): void => {
-      if (ownerGone("no chat can be opened")) return;
+      if (ownerGone(t("tui.chat.gone.open"))) return;
       leave();
       offerContinuation();
       const mine = ++opening;
@@ -1656,14 +1659,14 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
     /** `/home`: back to the person's Home, or — with none yet — the next message begins it. */
     const goHome = (): void => {
       if (!homeOn) {
-        store.fail("Home is off in this workspace: `tavi config set chat.home on` turns it on");
+        store.fail(t("tui.chat.homeOff"));
         return;
       }
-      if (ownerGone("Home cannot be opened")) return;
+      if (ownerGone(t("tui.chat.gone.home"))) return;
       if (home !== undefined && current === home) {
         startFresh = false;
         offerContinuation();
-        store.notice("this is Home: type to continue it");
+        store.notice(t("tui.chat.thisIsHome"));
         return;
       }
       void (async () => {
@@ -1680,7 +1683,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         store.begin();
         store.end();
         offerContinuation();
-        store.notice("you have no Home yet: your next message begins it");
+        store.notice(t("tui.chat.noHomeYet"));
       })();
     };
 
@@ -1692,10 +1695,10 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
     const freshContext = (): void => {
       const chat = current ?? settled;
       if (chat === undefined) {
-        store.notice("no chat is shown: a new chat starts fresh anyway");
+        store.notice(t("tui.chat.compactNothing"));
         return;
       }
-      if (ownerGone("fresh context cannot be asked for")) return;
+      if (ownerGone(t("tui.chat.gone.compact"))) return;
       void owner
         .request(
           "chat-context",
@@ -1704,12 +1707,8 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         )
         .catch(failedOf)
         .then((answer) => {
-          if (answer.ok)
-            store.note(
-              `${GLYPHS.more} fresh context: your next message starts a new epoch; earlier turns are summarized and archived${store.tainted ? ". It does not clear taint: /taint says what this chat read, and a fresh chat starts clean" : ""}`,
-              "notice",
-            );
-          else store.fail(`fresh context was not set: ${answer.error?.message ?? "the owner refused"}`);
+          if (answer.ok) store.note(t(store.tainted ? "tui.chat.compactedTainted" : "tui.chat.compacted", { mark: GLYPHS.more }), "notice");
+          else store.fail(t("tui.chat.compactRefused", { why: answer.error?.message ?? t("tui.chat.refused") }));
         });
     };
 
@@ -1719,7 +1718,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
      * With no chat shown, the default is what the next new chat runs.
      */
     const chatModel = (target: { readonly connectionId: string; readonly model: string } | undefined): void => {
-      if (ownerGone("no model can be read or set")) return;
+      if (ownerGone(t("tui.chat.gone.model"))) return;
       const chat = current ?? settled;
       const workspaceId = chat === undefined ? options.workspaceId : (taskWorkspaces.get(chat) ?? options.workspaceId);
       const label = (named: { readonly connectionId: string; readonly model: string }): string => `${named.connectionId}/${named.model}`;
@@ -1736,8 +1735,11 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
             )?.activeTarget;
             store.note(
               roles.ok
-                ? `${GLYPHS.more} ${homeOn && home === undefined ? "Home begins with your first message, and runs" : "no chat is shown: a new chat runs"} ${active === undefined || active === null ? "no configured model" : label(active)}`
-                : `${GLYPHS.failed} the model could not be read: ${roles.error?.message ?? "the owner refused"}`,
+                ? t(homeOn && home === undefined ? "tui.chat.model.homeRuns" : "tui.chat.model.newRuns", {
+                    mark: GLYPHS.more,
+                    model: active === undefined || active === null ? t("tui.chat.model.none") : label(active),
+                  })
+                : t("tui.chat.model.unread", { mark: GLYPHS.failed, why: roles.error?.message ?? t("tui.chat.refused") }),
               roles.ok ? "notice" : "failure",
             );
             return;
@@ -1752,21 +1754,24 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
                 | undefined)
             : undefined;
           if (!read.ok || answer === undefined)
-            store.fail(`this chat's model could not be read: ${read.error?.message ?? "the owner refused"}`);
+            store.fail(t("tui.chat.model.chatUnread", { why: read.error?.message ?? t("tui.chat.refused") }));
           else if (answer.target === null)
             store.note(
               answer.source === "chosen"
-                ? `${GLYPHS.failed} this chat's model is offered by no connection now: /model <connection> <model> picks another`
-                : `${GLYPHS.more} this chat runs no configured model: /model <connection> <model> picks one`,
+                ? t("tui.chat.model.gone", { mark: GLYPHS.failed })
+                : t("tui.chat.model.unset", { mark: GLYPHS.more }),
               answer.source === "chosen" ? "failure" : "notice",
             );
-          else store.notice(`this chat runs ${label(answer.target)}${answer.source === "chosen" ? "" : ", the default"}`);
+          else
+            store.notice(
+              t(answer.source === "chosen" ? "tui.chat.model.runs" : "tui.chat.model.runsDefault", { model: label(answer.target) }),
+            );
           return;
         }
         if (chat !== undefined) {
           const chosen = await ask({ action: "set-chat", taskId: chat, connectionId: target.connectionId, model: target.model });
           if (!chosen.ok) {
-            store.fail(`this chat's model was not set: ${chosen.error?.message ?? "the owner refused"}`);
+            store.fail(t("tui.chat.model.notSet", { why: chosen.error?.message ?? t("tui.chat.refused") }));
             return;
           }
         }
@@ -1782,26 +1787,30 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           const outranked =
             active === undefined || active === null || label(active) === label(target)
               ? undefined
-              : `${label(active)}, which role main or the owner's own flags choose`;
+              : t("tui.chat.model.outranked", { model: label(active) });
           if (chat === undefined)
             store.note(
               outranked === undefined
-                ? `${GLYPHS.more} new chats run ${label(target)}`
-                : `${GLYPHS.more} ${label(target)} is the default, but new chats run ${outranked}`,
+                ? t("tui.chat.model.newChatsRun", { mark: GLYPHS.more, model: label(target) })
+                : t("tui.chat.model.defaultBut", { mark: GLYPHS.more, model: label(target), active: outranked }),
               "notice",
             );
           else
             store.note(
               outranked === undefined
-                ? `${GLYPHS.more} this chat and new chats run ${label(target)}`
-                : `${GLYPHS.more} this chat runs ${label(target)}; new chats run ${outranked}`,
+                ? t("tui.chat.model.bothRun", { mark: GLYPHS.more, model: label(target) })
+                : t("tui.chat.model.thisRuns", { mark: GLYPHS.more, model: label(target), active: outranked }),
               "notice",
             );
         } else
           store.note(
             chat === undefined
-              ? `${GLYPHS.failed} the default was not set: ${made.error?.message ?? "the owner refused"}`
-              : `${GLYPHS.more} this chat runs ${label(target)}; it could not be made the default for new chats: ${made.error?.message ?? "the owner refused"}`,
+              ? t("tui.chat.model.defaultNotSet", { mark: GLYPHS.failed, why: made.error?.message ?? t("tui.chat.refused") })
+              : t("tui.chat.model.notDefault", {
+                  mark: GLYPHS.more,
+                  model: label(target),
+                  why: made.error?.message ?? t("tui.chat.refused"),
+                }),
             chat === undefined ? "failure" : "notice",
           );
       })();
@@ -1816,14 +1825,10 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
      * gone. Home's folder moves only by this.
      */
     const chatFolder = (change: FolderChange | undefined): void => {
-      if (ownerGone("no folder can be read or set")) return;
+      if (ownerGone(t("tui.chat.gone.folder"))) return;
       const chat = current ?? settled;
       if (chat === undefined) {
-        store.notice(
-          homeOn && home === undefined
-            ? "Home begins with your first message: /folder then shows and changes its folder"
-            : "no chat is shown: /folder shows and changes the folder of the chat shown",
-        );
+        store.notice(t(homeOn && home === undefined ? "tui.chat.folder.homeFirst" : "tui.chat.folder.noChat"));
         return;
       }
       // A path for an owner on another computer is its own (`~` its home), and a relative one is refused here.
@@ -1856,13 +1861,15 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         .then((answer) => {
           if (!answer.ok) {
             store.fail(
-              `${change === undefined ? "this chat's folder could not be read" : "this chat's folder was not changed"}: ${answer.error?.message ?? "the owner refused"}`,
+              t(change === undefined ? "tui.chat.folder.unread" : "tui.chat.folder.unchanged", {
+                why: answer.error?.message ?? t("tui.chat.refused"),
+              }),
             );
             return;
           }
           const view = FolderViewSchema.safeParse(answer.result);
           if (!view.success) {
-            store.fail("the owner's answer for this chat's folder could not be read");
+            store.fail(t("tui.chat.folder.unreadable"));
             return;
           }
           store.note(folderLines(view.data, change !== undefined).join("\n"), view.data.unavailable === undefined ? "notice" : "failure");
@@ -1871,7 +1878,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
 
     /** `/chats`: the recent chats, the person's Home first; workers are no chats. */
     const showChats = (): void => {
-      if (ownerGone("no chat can be listed")) return;
+      if (ownerGone(t("tui.chat.gone.chats"))) return;
       void owner
         .request(
           "tasks",
@@ -1883,17 +1890,22 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           const listed = answer.ok ? TaskListResultSchema.safeParse(answer.result) : undefined;
           if (listed === undefined || !listed.success) {
             const why = answer.ok
-              ? "the owner's answer could not be read"
-              : `${answer.error?.code ?? "REFUSED"}: ${answer.error?.message ?? "the owner refused the read"}`;
+              ? t("tui.chat.answerUnreadable")
+              : `${answer.error?.code ?? "REFUSED"}: ${answer.error?.message ?? t("tui.chat.refusedRead")}`;
             store.fail(`/chats: ${why}`);
             return;
           }
           store.note(
-            chatsPane(listed.data, options.workspaceId, {
-              principalId: options.principalId,
-              homeOn,
-              ...(current === undefined ? {} : { followed: current }),
-            }).join("\n"),
+            chatsPane(
+              listed.data,
+              options.workspaceId,
+              {
+                principalId: options.principalId,
+                homeOn,
+                ...(current === undefined ? {} : { followed: current }),
+              },
+              t,
+            ).join("\n"),
             "text",
           );
         });
@@ -1905,7 +1917,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
      * `queuedSide` and `queuedParent` for a queued prompt: whether `/side` came before it, and from which chat.
      */
     const dispatchPrompt = (prompt: string, queuedSide?: boolean, queuedParent?: string): void => {
-      if (ownerGone("start `tavi serve`, then `tavi chat` again")) return;
+      if (ownerGone(t("tui.chat.gone.prompt"))) return;
       // A settled chat goes on: the prompt continues it, as a reply into
       // its conversation, and the model sees what came before — unless `/side`
       // asked for a chat of its own, or the chat has no conversation to reply into.
@@ -1985,14 +1997,14 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
               return;
             }
             if (!response.ok && response.error?.code === CLIENT_TIMEOUT && attempt === 1) {
-              store.notice("the owner has not answered yet; asking again under the same key");
+              store.notice(t("tui.chat.runResend"));
               dispatch(2);
               return;
             }
             if (dispatching === operationKey) dispatching = undefined;
             if (!response.ok) {
               store.finishWith(
-                `${GLYPHS.failed} ${response.error?.code ?? "REFUSED"}: ${response.error?.message ?? "the owner refused the run"}`,
+                `${GLYPHS.failed} ${response.error?.code ?? "REFUSED"}: ${response.error?.message ?? t("tui.chat.refusedRun")}`,
                 "failure",
               );
               keepMemory();
@@ -2069,7 +2081,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         release();
         if (mine !== generation) return;
         const toHome = homeOn && taskId !== home;
-        store.notice(`chat ${taskId} ${why}: this prompt ${toHome ? "goes to Home" : "starts a new chat"}`);
+        store.notice(t(toHome ? "tui.chat.fallBackHome" : "tui.chat.fallBackNew", { task: taskId, why }));
         startTask(prompt, true, toHome ? "home" : undefined);
       };
       /** How many admissions the task's record held before the reply: a turn admitted since is this prompt's. */
@@ -2104,8 +2116,11 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
               // Admitted, and ended while the stream could not say so: its ending, read back.
               if ((record.admissions ?? []).length > before) return settleFromRecord(taskId, state, mine);
               stop(
-                `${GLYPHS.failed} the prompt ${recorded ? "was recorded" : "may have been recorded"} (message ${clientMessageId}), but task ${taskId} has not started its turn: ` +
-                  `it may yet — \`tavi chat --attach ${taskId}\` follows it; \`tavi tasks ${taskId}\` shows it`,
+                t(recorded ? "tui.chat.notStarted" : "tui.chat.mayNotStart", {
+                  mark: GLYPHS.failed,
+                  message: clientMessageId,
+                  task: taskId,
+                }),
               );
             });
         }, deps.answerSettleMs ?? ANSWER_SETTLE_MS);
@@ -2114,10 +2129,8 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         const conversation = await conversationOf(taskId);
         if (mine !== generation) return release();
         if (conversation.kind === "unreadable")
-          return stop(
-            `${GLYPHS.failed} could not read task ${taskId}'s record (${conversation.why}): nothing was sent; type the prompt again`,
-          );
-        if (conversation.kind === "none") return fallBack("has no conversation here to continue");
+          return stop(t("tui.chat.notSentUnread", { mark: GLYPHS.failed, task: taskId, why: conversation.why }));
+        if (conversation.kind === "none") return fallBack(t("tui.chat.noConversation"));
         // From the turn before's last event, and before the reply is sent: a
         // settled task's stream holds only what plugins showed since, so every
         // event of the new turn arrives here and nothing of the earlier ones
@@ -2139,7 +2152,11 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         }
         if (!opened.response.ok) {
           return stop(
-            `${GLYPHS.failed} ${opened.response.error?.code ?? "REFUSED"}: ${opened.response.error?.message ?? "the owner refused to follow the chat"}; nothing was sent`,
+            t("tui.chat.notSentRefused", {
+              mark: GLYPHS.failed,
+              code: opened.response.error?.code ?? "REFUSED",
+              message: opened.response.error?.message ?? t("tui.chat.refusedFollowChat"),
+            }),
           );
         }
         following = opened.subscription;
@@ -2163,7 +2180,11 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           }
           if (!again.response.ok) {
             stop(
-              `${GLYPHS.failed} ${again.response.error?.code ?? "REFUSED"}: ${again.response.error?.message ?? "the owner refused to follow the chat"}; nothing was sent`,
+              t("tui.chat.notSentRefused", {
+                mark: GLYPHS.failed,
+                code: again.response.error?.code ?? "REFUSED",
+                message: again.response.error?.message ?? t("tui.chat.refusedFollowChat"),
+              }),
             );
             return false;
           }
@@ -2182,7 +2203,11 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         if (mine !== generation) return release();
         if (!read.ok)
           return stop(
-            `${GLYPHS.failed} could not read task ${taskId}'s record (${read.error?.code ?? "REFUSED"}: ${read.error?.message ?? "refused"}): nothing was sent; type the prompt again`,
+            t("tui.chat.notSentUnread", {
+              mark: GLYPHS.failed,
+              task: taskId,
+              why: `${read.error?.code ?? "REFUSED"}: ${read.error?.message ?? t("tui.chat.refusedShort")}`,
+            }),
           );
         before = ((read.result as RecordedTask).admissions ?? []).length;
         const payload = { workspaceId, conversationId: conversation.id, text: prompt, clientMessageId };
@@ -2195,7 +2220,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         // An answer that timed out may still have been recorded: sent once
         // more, the same message id is the same message, not a second one.
         if (!reply.ok && reply.error?.code === CLIENT_TIMEOUT && mine === generation) {
-          store.notice("the owner has not answered yet; sending the prompt again as the same message");
+          store.notice(t("tui.chat.promptResend"));
           reply = await owner.request("reply", payload).catch(failedOf);
         }
         if (mine !== generation) return release();
@@ -2208,9 +2233,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           // Unknown, not refused: the stream stays followed, so a turn that does start shows.
           release();
           recorded = false;
-          store.fail(
-            `the owner did not answer: the prompt may have been recorded (message ${clientMessageId}); still following task ${taskId}`,
-          );
+          store.fail(t("tui.chat.promptUnknown", { message: clientMessageId, task: taskId }));
           settleLater();
           return;
         }
@@ -2220,10 +2243,14 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           // No such conversation on the local connection: as if it had none.
           store.forgetConversation(taskId);
           noConversation.add(taskId);
-          return fallBack("has no conversation on this owner's local connection");
+          return fallBack(t("tui.chat.noLocalConversation"));
         }
         stop(
-          `${GLYPHS.failed} the prompt was not sent: ${reply.error?.code ?? "REFUSED"}: ${reply.error?.message ?? "the owner refused it"}; type it again to send it to this chat`,
+          t("tui.chat.promptNotSent", {
+            mark: GLYPHS.failed,
+            code: reply.error?.code ?? "REFUSED",
+            message: reply.error?.message ?? t("tui.chat.refusedIt"),
+          }),
         );
       })().catch((error: unknown) => stop(`${GLYPHS.failed} ${errorMessage(error)}`));
     };
@@ -2266,11 +2293,11 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           if (mine !== generation || answer.ok) return;
           store.decisionAnswered(steps);
           const code = answer.error?.code ?? "REFUSED";
-          const why = answer.error?.message ?? "the owner refused the decision";
+          const why = answer.error?.message ?? t("tui.chat.refusedDecision");
           store.note(
             code === "CONFLICT" || code === IPC_NOT_PENDING
-              ? `${GLYPHS.failed} Round ${steps} was not decided here: ${why}`
-              : `${GLYPHS.failed} Round ${steps}: ${code}: ${why}`,
+              ? t("tui.chat.roundNotDecided", { mark: GLYPHS.failed, steps: String(steps), why })
+              : t("tui.chat.roundRefused", { mark: GLYPHS.failed, steps: String(steps), code, why }),
             "failure",
           );
         });
@@ -2281,14 +2308,14 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       const mine = generation;
       store.aborting(taskId);
       // Said now: the turn may end — and the stream move on — before the answer arrives.
-      store.notice(`aborting task ${taskId}'s turn`);
+      store.notice(t("tui.chat.aborting", { task: taskId }));
       void owner
         .request("abort", { taskId })
         .catch(failedOf)
         .then((answer) => {
           if (mine !== generation || answer.ok) return;
           store.aborting(undefined);
-          store.fail(`abort: ${answer.error?.message ?? answer.error?.code ?? "refused"}`);
+          store.fail(t("tui.chat.abortRefused", { why: answer.error?.message ?? answer.error?.code ?? t("tui.chat.refusedShort") }));
         });
     };
 
@@ -2307,7 +2334,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       const mine = generation;
       store.reviewing(review.steps);
       // Said now: the resumed turn may run to its end before the answer arrives.
-      store.notice(`${review.approved ? "releasing" : "rejecting"} the output, as ${options.principalId}, and resuming the chat`);
+      store.notice(t(review.approved ? "tui.chat.releasing" : "tui.chat.rejecting", { principal: options.principalId }));
       void workspaceOf(review.taskId)
         .then((workspaceId) =>
           owner.request("review", {
@@ -2324,19 +2351,16 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           if (mine !== generation || answer.ok) return;
           store.reviewRefused(review.steps);
           const code = answer.error?.code ?? "REFUSED";
-          const why = answer.error?.message ?? "the owner refused it";
+          const why = answer.error?.message ?? t("tui.chat.refusedIt");
           store.note(
             code === CLIENT_TIMEOUT
-              ? `${GLYPHS.failed} The owner did not answer the review in time: ${why}`
+              ? t("tui.chat.reviewTimeout", { mark: GLYPHS.failed, why })
               : code === "CONFLICT" || code === IPC_NOT_PENDING
-                ? `${GLYPHS.failed} The review was refused — part of it was decided elsewhere, or it is no longer pending: ${why}`
-                : `${GLYPHS.failed} The owner refused the review: ${code}: ${why}`,
+                ? t("tui.chat.reviewConflict", { mark: GLYPHS.failed, why })
+                : t("tui.chat.reviewRefused", { mark: GLYPHS.failed, code, why }),
             "failure",
           );
-          store.note(
-            `  Decide what is left artifact by artifact: tavi artifacts approve|reject <artifact-id>, with --resume --connection <id> --model <id> on the last.`,
-            "failure",
-          );
+          store.note(t("tui.chat.reviewByHand"), "failure");
         });
     };
 
@@ -2364,7 +2388,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           const ended = store.schedule;
           if (mine !== generation || answered?.roundsAnsweredBy !== "client" || !store.awaitingOwner || ended === undefined) return;
           store.answeredBy("client");
-          store.notice(`schedule ${ended.name}'s fire has ended: this chat may decide what it left pending`);
+          store.notice(t("tui.chat.fireEnded", { name: ended.name }));
           const round = store.pendingRound;
           if (round !== undefined) listRound(taskId, round, mine);
         })
@@ -2401,27 +2425,23 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       const said = queuedPrompts
         .map((queued) => `“${queued.prompt.length > 60 ? `${queued.prompt.slice(0, 59)}…` : queued.prompt}”`)
         .join(", ");
-      streams.stderr(`${queuedPrompts.length} queued prompt${queuedPrompts.length === 1 ? " was" : "s were"} not sent: ${said}\n`);
+      streams.stderr(`${t("tui.exit.queued", { count: queuedPrompts.length, n: String(queuedPrompts.length), prompts: said })}\n`);
     }
     if (store.running && replying !== undefined) {
       const { taskId, clientMessageId, sent } = replying;
       if (!sent) {
-        streams.stderr(`Quit before the prompt was sent: task ${taskId} was not continued.\n`);
+        streams.stderr(`${t("tui.exit.notSent", { task: taskId })}\n`);
         return finish(exit.ok);
       }
-      streams.stderr(
-        `Detached before the owner answered: the prompt may have been recorded (message ${clientMessageId}) and task ${taskId} continued; follow it with \`tavi chat --attach ${taskId}\`.\n`,
-      );
+      streams.stderr(`${t("tui.exit.replyUnknown", { message: clientMessageId, task: taskId })}\n`);
       return finish(exit.detached);
     }
     if (store.running && current !== undefined) {
-      streams.stderr(`Detached: the owner continues task ${current}; follow it again with \`tavi chat --attach ${current}\`\n`);
+      streams.stderr(`${t("tui.exit.detached", { task: current })}\n`);
       return finish(exit.detached);
     }
     if (store.running && dispatching !== undefined) {
-      streams.stderr(
-        `Detached before the owner answered: it may still start this run (operation key ${dispatching}); \`tavi tasks\` lists it once admitted.\n`,
-      );
+      streams.stderr(`${t("tui.exit.runUnknown", { key: dispatching })}\n`);
       return finish(exit.detached);
     }
     return finish(exit.ok);
@@ -2443,13 +2463,17 @@ function waitingOf(ending: Extract<Ending, { readonly kind: "waiting" }>): Omit<
 }
 
 /** How a chat's recorded ending is said on reopening it: without its id (`/chats` lists ids); Home is never done, only ready. */
-export function recordedLine(ending: Ending, home = false): string {
+export function recordedLine(ending: Ending, home = false, t: CoreT = coreEnglish): string {
   // Home's last turn, done or failed, leaves it ready for the next message, as the chats list and the canvas say.
-  if (home && (ending.kind === "completed" || ending.kind === "failed" || ending.kind === "stopped")) return `${GLYPHS.done} ready`;
-  if (ending.kind === "completed") return `${GLYPHS.done} completed (recorded)`;
-  if (ending.kind === "stopped") return `${ending.message} (recorded)`;
-  if (ending.kind === "failed") return `${GLYPHS.failed} failed${ending.reason === undefined ? "" : `: ${ending.reason}`} (recorded)`;
-  return `${ending.kind} (recorded)`;
+  if (home && (ending.kind === "completed" || ending.kind === "failed" || ending.kind === "stopped"))
+    return t("tui.recorded.ready", { mark: GLYPHS.done });
+  if (ending.kind === "completed") return t("tui.recorded.completed", { mark: GLYPHS.done });
+  if (ending.kind === "stopped") return t("tui.recorded.other", { what: ending.message });
+  if (ending.kind === "failed")
+    return ending.reason === undefined
+      ? t("tui.recorded.failed", { mark: GLYPHS.failed })
+      : t("tui.recorded.failedWhy", { mark: GLYPHS.failed, why: ending.reason });
+  return t("tui.recorded.other", { what: ending.kind });
 }
 
 /** A recorded stream, checked whole before it plays; read again as it plays, so no event is held. */
