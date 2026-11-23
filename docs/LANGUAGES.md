@@ -43,6 +43,32 @@ the next visit starts in that language before the owner answers. `tavi chat`
 reads the language again while it runs, so a change reaches an open chat
 within seconds; lines already shown stay as they were.
 
+### Tavi in Bulgarian
+
+A chat asking to approve two calls, with the cards in Bulgarian:
+
+![The Home chat in Bulgarian: two calls wait for approval, "Напомни: Полей цветята" (reminders.create) and "Добави задача: яйца" (todos.add), each with its risk, why Tavi asks and where each value came from, above the buttons Разреши отметнатите, Разреши всички and Откажи](assets/screens/bg/01-chat-approval-cards.png)
+
+The Ideas tab, with the built-in ideas in Bulgarian:
+
+![The Ideas tab in Bulgarian: idea cards such as "Мога да сравня крайната цена на продукт в различни магазини", each with why it is offered, what it uses and a Опитай button](assets/screens/bg/02-ideas.png)
+
+The Command Center's Activity:
+
+![The Command Center's Activity in Bulgarian: runs per day for the last 14 days, a day heading "Събота, 21 ное · 1 задача", and the rail with what waits for you and what is coming up](assets/screens/bg/03-center-activity.png)
+
+The Pulse page:
+
+![The Pulse page in Bulgarian: suggestions of what to watch, how often, active hours, the days of the week пн to нд and how to tell you](assets/screens/bg/04-center-pulse.png)
+
+Settings → General, where the language is chosen:
+
+![Settings → General in Bulgarian, with the Език (Language) picker set to Български above the time zone](assets/screens/bg/08-settings-general.png)
+
+The Ideas tab on a phone:
+
+<img src="assets/screens/bg/11-mobile-ideas.png" alt="The Ideas tab in Bulgarian on a phone-width screen, with the navigation Чат, Идеи, Център, Настройки and the first idea card" width="390">
+
 ## What follows the language
 
 Each part of Tavi follows the language as it is translated. A few corners are

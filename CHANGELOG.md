@@ -4,7 +4,7 @@ All notable changes to Tavi are recorded here. The project follows
 [Semantic Versioning](https://semver.org); before 1.0, a minor version may
 change behaviour or stored data.
 
-## Unreleased
+## 0.5.0 — 2026-11-23
 
 Tavi speaks Bulgarian: choose the language once, and the canvas, the
 terminal, chat apps, the agent's replies and plugins follow it.
@@ -37,7 +37,8 @@ terminal, chat apps, the agent's replies and plugins follow it.
   descriptions.
 - The agent replies in the workspace's language unless you write in another,
   reads the local time with that language's day and month names, and writes
-  ideas and new routines' reports in it. Its own instructions stay English.
+  ideas and new routines' reports in it; a built-in idea switches language as
+  soon as the workspace does. Its own instructions stay English.
   Memory recall understands Bulgarian dates, and automatic capture recognises
   Bulgarian passwords and sensitive topics.
 - Language packs for plugins: `locales/<lang>.json`, declared under `locales`
