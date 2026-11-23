@@ -7,7 +7,7 @@ import { type Browser, launchBrowser, type Page, root } from "../../scripts/docs
 import { cleanUp, cli, openSession, type Session } from "../../scripts/docs/session.mjs";
 
 /**
- * The overflow walk (plans/I18N-PLAN.md, section 2b): every canvas screen in
+ * The overflow walk (docs/LANGUAGES.md, "The overflow walk"): every canvas screen in
  * Bulgarian and in the stretched `qps` pseudo-locale, at phone, tablet and
  * desktop widths, light and dark, each checked by apps/ui/scripts/overflow-probe.js
  * for words that spill out of their box, labels an ellipsis cuts, buttons that
