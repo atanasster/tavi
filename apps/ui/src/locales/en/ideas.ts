@@ -1,5 +1,5 @@
-import { navPathIn } from "@tavi/contracts/locales/core";
-import { CORE_EN } from "@tavi/contracts/locales/core-en";
+import { navPathIn } from "@tavi/contracts/locales/core-canvas";
+import { CORE_CANVAS_EN } from "@tavi/contracts/locales/core-canvas-en";
 
 /** The words of features/ideas, in English. */
 export const ideas = {
@@ -40,16 +40,16 @@ export const ideas = {
   "ideas.menu.moreLikeThis": "More like this",
   "ideas.menu.moreLikeThisDone": "More like this next time, in {section}.",
   "ideas.menu.notNow": "Not now",
-  "ideas.menu.notNowDone": `Hidden for a week. Bring it back in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.ideas")}.`,
+  "ideas.menu.notNowDone": `Hidden for a week. Bring it back in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.ideas")}.`,
   "ideas.menu.notInterested": "Not interested",
-  "ideas.menu.notInterestedDone": `Not offered again. Bring it back in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.ideas")}.`,
+  "ideas.menu.notInterestedDone": `Not offered again. Bring it back in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.ideas")}.`,
   "ideas.menu.mute": "Not interested in {section}",
-  "ideas.menu.muteDone": `No more {section} ideas. Unmute it in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.ideas")}.`,
+  "ideas.menu.muteDone": `No more {section} ideas. Unmute it in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.ideas")}.`,
   "ideas.menu.excludeBrief": "Don’t use my brief",
   "ideas.menu.excludeChat": "Don’t use that chat",
   "ideas.menu.excludeThat": "Don’t use that",
   "ideas.menu.excludeQuote": "Don’t use “{excerpt}”",
-  "ideas.menu.excludeDone": `That is no longer used for ideas. Use it again in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.ideas")}.`,
+  "ideas.menu.excludeDone": `That is no longer used for ideas. Use it again in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.ideas")}.`,
 
   "ideas.recur.title": "Make it recurring",
   "ideas.recur.created": "Routine “{name}” created; it starts once its check passes.",
@@ -83,10 +83,10 @@ export const ideas = {
   "ideas.page.description": "Things I can do for you, from what you have told me and what I can do here. Nothing runs until you send it.",
   "ideas.page.refresh": "Refresh",
   "ideas.page.tune": "Tune",
-  "ideas.page.off": `Ideas are off — turn them on in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.ideas")}.`,
-  "ideas.page.openSettings": `Open ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.ideas")}`,
+  "ideas.page.off": `Ideas are off — turn them on in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.ideas")}.`,
+  "ideas.page.openSettings": `Open ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.ideas")}`,
   "ideas.page.noModel": "Until a fast model is set, ideas match only the words you used and keep their plain wording.",
-  "ideas.page.setModel": `Set one in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.models")}`,
+  "ideas.page.setModel": `Set one in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.models")}`,
   "ideas.page.loading": "Loading ideas…",
   "ideas.page.empty": "No ideas yet.",
   "ideas.page.emptyHint": "Refresh to look for some now, or tell me more about yourself in a chat.",

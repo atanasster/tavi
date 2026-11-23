@@ -69,7 +69,7 @@ import {
   type TextRef,
   type TextRefParams,
 } from "@tavi/contracts";
-import type { CoreKey } from "@tavi/contracts/locales/core";
+import type { CanvasCoreKey } from "@tavi/contracts/locales/core";
 import { connectionLocality } from "@tavi/agent-host/task-summarizer";
 import { hybridNearMatch, hybridSearch, MEMORY_VECTOR_FAILURES_MAX, type HybridRecallDependencies } from "../features/memory/vectors.js";
 import type { MemoryOverride, MemoryOverrideDependencies, MemoryServicePort, ModelConfigPort as ModelConfigService } from "@tavi/contracts";
@@ -562,7 +562,7 @@ export async function applyWorkspaceSetting(
 }
 
 /** A value refused for `key`, by its key: the English is what the terminal always printed. */
-const refused = (message: CoreKey, params: TextRefParams, key: WorkspaceSettingKey): TaviError =>
+const refused = (message: CanvasCoreKey, params: TextRefParams, key: WorkspaceSettingKey): TaviError =>
   keyedError("INVALID_INPUT", message, params, { details: { key } });
 
 /** "a or b" for two choices, said in the reader's language; a longer list joined as English writes it. */

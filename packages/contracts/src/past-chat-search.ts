@@ -1,4 +1,4 @@
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 
 /**
  * Past-chat search, `sessions.search`:
@@ -41,7 +41,7 @@ const CITED_TASK_ID = /^[\w.:-]{1,128}$/;
 /** The longest title a card shows. */
 const CITED_TITLE_MAX_CHARS = 120;
 
-function citation(taskId: unknown, title: unknown, t: CoreT): PastChatCitation | undefined {
+function citation(taskId: unknown, title: unknown, t: CanvasCoreT): PastChatCitation | undefined {
   if (typeof taskId !== "string" || !CITED_TASK_ID.test(taskId) || typeof title !== "string") return undefined;
   const line = title.replace(/\s+/g, " ").trim().slice(0, CITED_TITLE_MAX_CHARS);
   return { taskId, title: line === "" ? t("pastChats.search.untitled") : line };
@@ -66,7 +66,7 @@ function stringLiteral(literal: string): string | undefined {
  */
 export function pastChatSearchCitations(
   output: unknown,
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): { readonly found: number; readonly chats: readonly PastChatCitation[] } | undefined {
   if (typeof output !== "object" || output === null) return undefined;
   const record = output as {
@@ -102,6 +102,6 @@ export function pastChatSearchCitations(
 }
 
 /** A search card's line: "Searched earlier chats · 3 found". */
-export function pastChatSearchSummary(found: number, t: CoreT = coreEnglish): string {
+export function pastChatSearchSummary(found: number, t: CanvasCoreT = canvasCoreEnglish): string {
   return t("pastChats.search.summary", { count: found, found: String(found) });
 }

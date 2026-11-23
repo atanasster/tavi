@@ -131,4 +131,20 @@ export const connect = {
     one: "What it taught will be removed from {providers} when it next runs.",
     other: "What it taught will be removed from {providers} when each next runs.",
   },
+  // What a mod's hooks read, as its review says it (`modHookReadsLine`): the canvas shows it too.
+  "mods.reads.everyTool": "every tool",
+  "mods.reads.fromSources": "from {sources}",
+  "mods.reads.onChannels": "on {channels}",
+  "mods.reads.scope": " (turns {where})",
+  "mods.reads.everyWorkspace": "It sees this in every workspace.",
+  "mods.reads.toolInput": "Sees the input of {tools}{scope}, and can refuse the call.",
+  "mods.reads.toolResult": "Sees and can change the output of {tools}{scope}.",
+  "mods.reads.prompt": "Reads every prompt and every message you receive{scope}, and can add to it or drop it.{trusted}",
+  "mods.reads.everyChannel": ", on every channel",
+  "mods.reads.trustedContext": "What it adds is trusted context: it does not mark the chat as holding untrusted content.",
+  "mods.reads.modelStep": "Sees each model call as it starts: its step and its model{scope}.",
+  "mods.reads.turn": "Sees when each turn starts and ends, and its token usage{scope}.",
+  "mods.reads.heartbeatTick": "Sees when each heartbeat check runs and how it ended.",
+  "mods.reads.heartbeatItem":
+    "Sees each heartbeat item's key, title, urgency, sources and signal keys, with the check's time and your timezone, and can hold it back for good or make it wait for the summary.",
 } as const;

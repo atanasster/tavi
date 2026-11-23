@@ -1,6 +1,6 @@
 import type { CatalogFor } from "@tavi/contracts/i18n";
-import { CORE_BG } from "@tavi/contracts/locales/core-bg";
-import { navPathIn } from "@tavi/contracts/locales/core";
+import { CORE_CANVAS_BG } from "@tavi/contracts/locales/core-canvas-bg";
+import { navPathIn } from "@tavi/contracts/locales/core-canvas";
 
 import type { chatPanel as en } from "../en/chat-panel.js";
 
@@ -140,8 +140,8 @@ export const chatPanel = {
   "chatPanel.memory.nothingRecalled": "Още нищо не е припомнено.",
   "chatPanel.memory.usedWhen": "използвано {when}",
 
-  "chatPanel.instructions.settingsLink": `Основни инструкции: ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.systemPrompt")} →`,
-  "chatPanel.instructions.soulLink": `Характери: ${navPathIn(CORE_BG, "nav.route.center", "nav.center.identity")} →`,
+  "chatPanel.instructions.settingsLink": `Основни инструкции: ${navPathIn(CORE_CANVAS_BG, "nav.route.settings", "nav.settings.systemPrompt")} →`,
+  "chatPanel.instructions.soulLink": `Характери: ${navPathIn(CORE_CANVAS_BG, "nav.route.center", "nav.center.identity")} →`,
   "chatPanel.instructions.placeholder": "Как да работи този чат: тон, език, върху какво да се съсредоточи…",
   "chatPanel.instructions.label": "инструкциите на чата",
   "chatPanel.instructions.heading": "Инструкции на чата",

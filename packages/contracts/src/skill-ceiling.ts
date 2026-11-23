@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 import { ToolIdSchema } from "./tools.js";
 
 /**
@@ -139,7 +139,7 @@ function declaredText(ceiling: SkillCeilingSummary): string {
 }
 
 /** "Why am I asked?" for a call outside the ceiling, naming the skill and what it declared. */
-export function skillCeilingWords(ceiling: SkillCeilingSummary, t: CoreT = coreEnglish): string {
+export function skillCeilingWords(ceiling: SkillCeilingSummary, t: CanvasCoreT = canvasCoreEnglish): string {
   const why = t("skill.ceiling.why", {
     count: ceiling.skillIds.length,
     skills: ceiling.skillIds.map((id) => t("skill.ceiling.name", { id })).join(", "),
@@ -178,7 +178,7 @@ export function skillToolsEscalation(
 export function skillToolsEscalationText(
   parent: readonly string[] | undefined,
   next: readonly string[] | undefined,
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string | undefined {
   const escalation = skillToolsEscalation(parent, next);
   if (escalation === undefined) return undefined;

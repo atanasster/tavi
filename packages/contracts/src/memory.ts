@@ -10,7 +10,7 @@ import {
   type ContentLabel,
 } from "./content-label.js";
 import { IdSchema, TimestampSchema, WorkspaceIdSchema } from "./ids.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 // Acyclic: provenance-display.ts has only type imports besides content-label.ts.
 import { desktopAppOf, desktopSourceWords, neutralizedText, PROVENANCE_TITLE_CHARS, sourceWords } from "./provenance-display.js";
 
@@ -535,7 +535,7 @@ export function memoryProvenanceUntrusted(provenance: MemoryProvenance | undefin
 /** The hosts a provenance line names before "and N more". */
 const PROVENANCE_HOSTS_SHOWN = 3;
 
-const listed = (parts: readonly string[], t: CoreT): string =>
+const listed = (parts: readonly string[], t: CanvasCoreT): string =>
   parts.length <= 1
     ? (parts[0] ?? "")
     : t("provenance.sources.last", { sources: parts.slice(0, -1).join(", "), last: parts[parts.length - 1] ?? "" });
@@ -560,7 +560,7 @@ function provenanceLineKey(options: { readonly tidyUp?: boolean; readonly routin
 export function memoryProvenanceLine(
   provenance: MemoryProvenance | undefined,
   options: { readonly tidyUp?: boolean; readonly routine?: boolean } = {},
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string | undefined {
   if (provenance === undefined || provenance.integrity !== "untrusted") return undefined;
   // What a desktop tool read keeps the `web` source, but is said as an app's screen, naming the app (QA 1893).
@@ -729,7 +729,7 @@ export type MemoryDeletion = z.infer<typeof MemoryDeletionSchema>;
  * that quoted the record, and the model
  * requests kept for turns and heartbeat ticks whose prompt carried it.
  */
-export const MEMORY_FORGET_UNREACHED = coreEnglish("memory.forget.unreached");
+export const MEMORY_FORGET_UNREACHED = canvasCoreEnglish("memory.forget.unreached");
 
 /**
  * What a forget's receipt says of the memory providers its removal waits for
@@ -737,13 +737,19 @@ export const MEMORY_FORGET_UNREACHED = coreEnglish("memory.forget.unreached");
  * `/forget`, the Center, a card's *Undo* and a chat forgotten with its
  * memory. Undefined when it waits for none.
  */
-export function memoryPendingProvidersNote(providers: readonly string[] | undefined, t: CoreT = coreEnglish): string | undefined {
+export function memoryPendingProvidersNote(
+  providers: readonly string[] | undefined,
+  t: CanvasCoreT = canvasCoreEnglish,
+): string | undefined {
   if (providers === undefined || providers.length === 0) return undefined;
   return t("memory.provider.pending", { count: providers.length, providers: providers.join(", ") });
 }
 
 /** The same note for a forgotten chat: what the chat taught is what the providers still hold. */
-export function memoryTaughtPendingProvidersNote(providers: readonly string[] | undefined, t: CoreT = coreEnglish): string | undefined {
+export function memoryTaughtPendingProvidersNote(
+  providers: readonly string[] | undefined,
+  t: CanvasCoreT = canvasCoreEnglish,
+): string | undefined {
   if (providers === undefined || providers.length === 0) return undefined;
   return t("memory.provider.pendingTaught", { count: providers.length, providers: providers.join(", ") });
 }

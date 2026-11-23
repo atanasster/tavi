@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { TimestampSchema } from "./ids.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 import { MemoryProvenanceSchema } from "./memory.js";
 import type { AsyncRepository } from "./persistence-types.js";
 import type { ModelUsage } from "./model.js";
@@ -659,7 +659,7 @@ export const HeartbeatHookDecisionSchema = z.object({
 export type HeartbeatHookDecision = z.infer<typeof HeartbeatHookDecisionSchema>;
 
 /** Why a check ran, in words, for the log; nothing for an ordinary interval check or a closed-hours row. */
-function wakeWords(tick: Pick<HeartbeatTickRecord, "kind" | "wakeReason">, t: CoreT): string | undefined {
+function wakeWords(tick: Pick<HeartbeatTickRecord, "kind" | "wakeReason">, t: CanvasCoreT): string | undefined {
   if (tick.kind === "window") return undefined;
   switch (tick.wakeReason) {
     case "event":
@@ -678,7 +678,7 @@ function wakeWords(tick: Pick<HeartbeatTickRecord, "kind" | "wakeReason">, t: Co
 /** What a log row adds about a check, read without trusting the row: why it ran, and how many memories it used. */
 export function heartbeatTickContext(
   tick: Pick<HeartbeatTickRecord, "kind" | "wakeReason" | "inputs">,
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): readonly string[] {
   const memory = tick.inputs !== null && typeof tick.inputs === "object" ? (tick.inputs as { memory?: unknown }).memory : undefined;
   const memories = Array.isArray(memory) ? memory.length : 0;
@@ -690,7 +690,7 @@ export function heartbeatTickContext(
 }
 
 /** What a mod decided about one item, as a log row says it: "acme.quiet held back (a reason)". */
-export function heartbeatHookDecisionText(decision: HeartbeatHookDecision, t: CoreT = coreEnglish): string {
+export function heartbeatHookDecisionText(decision: HeartbeatHookDecision, t: CanvasCoreT = canvasCoreEnglish): string {
   const heldBack = decision.action === "held back";
   if (decision.reason === undefined) return t(heldBack ? "heartbeat.hook.heldBack" : "heartbeat.hook.waited", { by: decision.by });
   return t(heldBack ? "heartbeat.hook.heldBackBecause" : "heartbeat.hook.waitedBecause", { by: decision.by, reason: decision.reason });
@@ -871,7 +871,7 @@ const RECEIVE_DISCLOSURES = {
 } as const satisfies Record<HeartbeatReceive, string>;
 
 /** What approving a heartbeat provider means, in the words the CLI and the canvas both show. */
-export function describeHeartbeatDeclaration(heartbeat: PluginHeartbeatDeclaration, t: CoreT = coreEnglish): string {
+export function describeHeartbeatDeclaration(heartbeat: PluginHeartbeatDeclaration, t: CanvasCoreT = canvasCoreEnglish): string {
   const receives = heartbeat.receives.map((field) => t(RECEIVE_DISCLOSURES[field]));
   const what = receives.length === 0 ? t("heartbeat.plugin.receive.none") : receives.join(", ");
   return t(heartbeat.usesTurns ? "heartbeat.plugin.describeTurns" : "heartbeat.plugin.describe", {
@@ -886,7 +886,7 @@ export function describePluginHeartbeat(
     readonly heartbeat?: PluginHeartbeatDeclaration | undefined;
     readonly heartbeatSignals?: PluginHeartbeatSignalsDeclaration | undefined;
   },
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): readonly string[] {
   return [
     ...(version.heartbeat === undefined ? [] : [describeHeartbeatDeclaration(version.heartbeat, t)]),
@@ -895,7 +895,10 @@ export function describePluginHeartbeat(
 }
 
 /** What approving heartbeat signal sources means. */
-export function describeHeartbeatSignalsDeclaration(signals: PluginHeartbeatSignalsDeclaration, t: CoreT = coreEnglish): string {
+export function describeHeartbeatSignalsDeclaration(
+  signals: PluginHeartbeatSignalsDeclaration,
+  t: CanvasCoreT = canvasCoreEnglish,
+): string {
   const offers = Object.entries(signals.offers ?? {});
   const sources = signals.sources.join(", ");
   if (offers.length === 0) return t("heartbeat.plugin.signals", { sources });
@@ -913,7 +916,7 @@ export function pluginSignalSourceLabel(
   pluginName: string,
   sourceId: string,
   signals: PluginHeartbeatSignalsDeclaration,
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string {
   const offer = signals.offers?.[sourceId];
   if (offer !== undefined) return t("heartbeat.plugin.sourceOffer", { offer, plugin: pluginName });

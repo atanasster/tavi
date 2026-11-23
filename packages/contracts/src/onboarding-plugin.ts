@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 import { ONBOARDING_ABI } from "./onboarding.js";
 
 /**
@@ -28,7 +28,7 @@ export type PluginOnboardingDeclaration = z.infer<typeof PluginOnboardingDeclara
 /** What the person is shown when they review an onboarding flow: what it receives, and that it only chooses steps. */
 export function describeOnboardingDeclaration(
   onboarding: z.input<typeof PluginOnboardingDeclarationSchema>,
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string {
   const details = t(
     onboarding.receives?.includes("status-detail") === true ? "plugin.onboarding.withDetails" : "plugin.onboarding.noDetails",

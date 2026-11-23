@@ -85,7 +85,6 @@ export const channels = {
   "channel.approval.subject.waiting": "Waiting for approval: {title}",
   "channel.approval.subject.needed": "Approval needed: {title}",
   "channel.approval.operatorOnly": "The operator decides this task's approvals; you will hear here once they have.",
-  "channel.approval.reset": "This conversation was reset, so this round was withdrawn.",
   "channel.approval.alreadyDecided": "This round was already decided.",
   "channel.approval.notYours": "Only the person this chat belongs to can decide it.",
   "channel.approval.reasonWaiting": 'Waiting for your reason — reply in this chat, or send "-".',
@@ -362,15 +361,6 @@ export const channels = {
   "channel.heartbeat.mutedNote": "Muted",
   "channel.heartbeat.sources": "Sources: {list}",
   "channel.heartbeat.resolved": "Resolved · {time}",
-  "channel.heartbeat.alert.dayClock": "{weekday} {time}",
-  "channel.heartbeat.alert.budget":
-    "The heartbeat used today's budget, or has too little of it left for another check, and rests until {time}.",
-  "channel.heartbeat.alert.providerMissing":
-    "The heartbeat paused: its provider {providerId} is not available. Use the built-in one, or pick another.",
-  "channel.heartbeat.alert.providerStopped":
-    "The heartbeat paused: its provider {providerId} stopped. Use the built-in one, or pick another.",
-  "channel.heartbeat.alert.failures":
-    "The heartbeat failed {n} times in a row (last: {reason}) and paused; resume it once the cause is fixed (the log has the error).",
   "channel.reminder.when": "{day}{year} {time}",
   "channel.reminder.late": " (late: was due {time})",
   "channel.reminder.noModel": " (task not started: no model is configured)",
@@ -434,49 +424,5 @@ export const channels = {
   "channel.room.context.known": "when someone {owner} has told me about addresses me here",
   "channel.room.context.private":
     "Messages from people Tavi doesn't know are left out, and nothing I read here is kept for {owner}'s private use.",
-  "channel.schedule.alert.staleDispatchNext":
-    'Schedule "{name}": the {fireTime} fire started but never reported a result, and the next fire is already scheduled.',
-  "channel.schedule.alert.staleDispatch": 'Schedule "{name}": the {fireTime} fire started but never reported a result.',
-  "channel.schedule.alert.fireThrew": 'Scheduled run "{name}" could not be dispatched: {detail}',
-  "channel.schedule.alert.carryOnFailed": 'Scheduled run "{name}" (task {taskId}) could not carry on after its wait: {detail}',
-  "channel.schedule.alert.schedulingRefused":
-    'Scheduled run "{name}" was refused {tool}: a scheduled run never creates or changes schedules or routines. Its tool list still names {entry} and is left as it is; only these calls are refused. Remove {entry} from its tools to stop listing it.',
-  "channel.schedule.alert.stopped": 'Scheduled run "{name}" was stopped:',
-  "channel.schedule.alert.stoppedTask": 'Scheduled run "{name}" (task {taskId}) was stopped:',
-  "channel.schedule.alert.overTokens": "{stopped} it used {tokens}, past its ceiling of {ceiling}. Its next fire runs as usual.",
-  "channel.schedule.alert.overTime": "{stopped} it worked past its {minutes}-minute limit. Its next fire runs as usual.",
-  "channel.schedule.alert.precheckFailed":
-    'Scheduled run "{name}" did not run: its pre-check ({precheck}) could not be made: {reason}. It is tried again at each fire; you are told again only once a check has worked in between.',
-  "channel.schedule.alert.specDisabled": 'Schedule "{name}" was disabled because its time ({spec}) has no next occurrence.',
-  "channel.schedule.alert.diskLow": 'Scheduled run "{name}" did not start: {reason}. Free space and it will run on the next sweep.',
-  "channel.schedule.alert.diskReason": "refused: only {mib} MiB free on the data directory's filesystem",
-  "channel.schedule.alert.missed": 'Scheduled run "{name}" did not run: {reason}.',
-  "channel.schedule.alert.missedSkip": "skipped: missed by {minutes}m (policy: skip)",
-  "channel.schedule.alert.missedLate": "skipped: missed by {minutes}m (beyond the 6h catch-up window)",
-  "channel.schedule.alert.startFailed": 'Scheduled run "{name}" could not start: {detail}',
-  "channel.schedule.alert.decidedElsewhere":
-    'Scheduled run "{name}" (task {taskId}): round {steps} was decided by another front end, so this schedule stopped deciding it',
-  "channel.schedule.alert.unrecorded": "(unrecorded)",
-  "channel.schedule.alert.cutShort": {
-    one: 'Scheduled run "{name}" had nothing to report, but {n} of its calls was refused, so it may have missed something. See its recent fires.',
-    other:
-      'Scheduled run "{name}" had nothing to report, but {n} of its calls were refused, so it may have missed something. See its recent fires.',
-  },
-  "channel.schedule.alert.undelivered": 'Scheduled run "{name}" finished without delivering anything: no brief was sent',
-  "channel.schedule.alert.failed": 'Scheduled run "{name}" failed: {text}',
-  "channel.schedule.alert.waiting": 'Scheduled run "{name}" waiting: {text}',
-  "channel.schedule.alert.ended": 'Scheduled run "{name}" {status}: {text}',
-  "channel.schedule.alert.noDetail": "no further detail",
-  "channel.schedule.alert.failedHome": 'Scheduled run "{name}" failed; its run, with its final text, is in the schedule\'s recent fires.',
-  "channel.schedule.alert.waitingHome": 'Scheduled run "{name}" waiting; its run, with its final text, is in the schedule\'s recent fires.',
-  "channel.schedule.alert.endedHome": 'Scheduled run "{name}" {status}; its run, with its final text, is in the schedule\'s recent fires.',
-  "channel.schedule.alert.overlap": 'Scheduled run "{name}" did not start: the previous run is still going.',
-  "channel.schedule.alert.overlapCounting":
-    'Scheduled run "{name}" did not start: the previous run is still going. It is stopped once it has worked {minutes} minutes.',
-  "channel.schedule.alert.overlapWaiting":
-    'Scheduled run "{name}" did not start: the previous run is waiting on a worker or an answer; only the time it works counts toward its {minutes}-minute limit.',
-  "channel.schedule.alert.watchBackoff":
-    'Schedule "{name}" ran {n} times in a row within an hour, each on a change to {path}: until {until} it checks only at its cadence.',
-  "channel.schedule.alert.itsFile": "its file",
   "channel.mcp.notice": "{title}. {summary}\nOpen in Tavi: {path}",
 } as const;

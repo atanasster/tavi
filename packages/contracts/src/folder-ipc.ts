@@ -9,7 +9,7 @@ import {
   ChatFolderModeSchema,
 } from "./chat-folders.js";
 import { IdSchema, TimestampSchema } from "./ids.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 
 /**
  * A chat's working folder over IPC: the
@@ -174,7 +174,7 @@ export const FolderViewSchema = z.strictObject({
 export type FolderView = z.infer<typeof FolderViewSchema>;
 
 /** The label a chat's own managed folder is shown by. */
-export function managedFolderLabel(t: CoreT = coreEnglish): string {
+export function managedFolderLabel(t: CanvasCoreT = canvasCoreEnglish): string {
   return t("folder.managed.label");
 }
 

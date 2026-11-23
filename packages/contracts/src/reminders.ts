@@ -18,8 +18,8 @@ import {
   type ReminderYearly,
 } from "./schedule-time.js";
 import { TimeZoneSchema, isValidTimeZone } from "./workspace-settings.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
-import type { CoreKey } from "./locales/core-en.js";
+import { canvasCoreEnglish, isCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
+import type { CanvasCoreKey } from "./locales/core-canvas-en.js";
 
 /**
  * Reminders: a light record that says
@@ -124,7 +124,7 @@ export function formatReminderOffset(offset: ReminderOffset): string {
 }
 
 /** "15 minutes before", "1 day before at 20:00": what a read-back or a delivery says of a notice. */
-export function describeReminderOffset(offset: ReminderOffset, t: CoreT = coreEnglish): string {
+export function describeReminderOffset(offset: ReminderOffset, t: CanvasCoreT = canvasCoreEnglish): string {
   const key = ({ m: "reminder.offset.minutes", h: "reminder.offset.hours", d: "reminder.offset.days" } as const)[offset.unit];
   const span = t(key, { count: offset.amount, amount: String(offset.amount) });
   return offset.at === undefined ? span : t("reminder.offset.at", { span, time: offset.at });
@@ -986,8 +986,8 @@ const READ_BACK_PARTS = (instant: Date, timezone: string) => {
 };
 
 /** "Mon 5 Oct 10:00": an instant as a person reads it in `timezone`, in `t`'s words ("пн, 5 окт в 10:00"). */
-export function formatReminderTime(instant: Date, timezone: string, now: Date = new Date(), t: CoreT = coreEnglish): string {
-  if (t !== coreEnglish) return reminderTimeIn(instant, timezone, now, t, false);
+export function formatReminderTime(instant: Date, timezone: string, now: Date = new Date(), t: CanvasCoreT = canvasCoreEnglish): string {
+  if (!isCoreEnglish(t)) return reminderTimeIn(instant, timezone, now, t, false);
   const parts = READ_BACK_PARTS(instant, timezone);
   // A date in another year says so: "Sun 27 Aug" alone reads as the coming one.
   const year = parts.year === READ_BACK_PARTS(now, timezone).year ? "" : ` ${parts.year}`;
@@ -1007,8 +1007,8 @@ const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
  * remind you Sun 20:00 and Mon 09:00". A notice within the coming week is
  * named by weekday; a later one by its date.
  */
-export function reminderReadBack(reminder: ReminderSchedule, now: Date, t: CoreT = coreEnglish): string {
-  if (t !== coreEnglish) return readBackIn(reminder, now, t);
+export function reminderReadBack(reminder: ReminderSchedule, now: Date, t: CanvasCoreT = canvasCoreEnglish): string {
+  if (!isCoreEnglish(t)) return readBackIn(reminder, now, t);
   const { when, timezone } = reminder;
   const nearby = (instant: Date) => {
     const parts = READ_BACK_PARTS(instant, timezone);
@@ -1040,10 +1040,10 @@ export function reminderReadBack(reminder: ReminderSchedule, now: Date, t: CoreT
 }
 
 /** An instant in `t`'s words: its weekday and time when `short`, else its date too, and its year when not `now`'s. */
-function reminderTimeIn(instant: Date, timezone: string, now: Date, t: CoreT, short: boolean): string {
+function reminderTimeIn(instant: Date, timezone: string, now: Date, t: CanvasCoreT, short: boolean): string {
   const parts = READ_BACK_PARTS(instant, timezone);
   const weekday = weekdayShort(
-    WEEKDAY_SHORT_KEYS.findIndex((key) => coreEnglish(key) === parts.weekday),
+    WEEKDAY_SHORT_KEYS.findIndex((key) => canvasCoreEnglish(key) === parts.weekday),
     t,
   );
   if (short) return t("reminder.readBack.at", { day: weekday, time: parts.time });
@@ -1059,7 +1059,7 @@ function reminderTimeIn(instant: Date, timezone: string, now: Date, t: CoreT, sh
  * `reminderReadBack` in `t`'s words, for a person reading it in the terminal:
  * "пн, 5 окт в 10:00 Europe/Sofia; ще ти напомня нд в 20:00 и пн в 09:00".
  */
-function readBackIn(reminder: ReminderSchedule, now: Date, t: CoreT): string {
+function readBackIn(reminder: ReminderSchedule, now: Date, t: CanvasCoreT): string {
   const { when, timezone } = reminder;
   const at = (instant: Date, short: boolean) => reminderTimeIn(instant, timezone, now, t, short);
   const nearby = (instant: Date) => at(instant, instant.getTime() - now.getTime() < 6 * DAY_MS);
@@ -1097,9 +1097,9 @@ function readBackIn(reminder: ReminderSchedule, now: Date, t: CoreT): string {
 }
 
 /** A day of the month as an ordinal ("31st"): its form by how the number ends, 11–19 as the rest. */
-function dayOrdinal(day: number, t: CoreT): string {
+function dayOrdinal(day: number, t: CanvasCoreT): string {
   const last = day % 100 >= 11 && day % 100 <= 19 ? 0 : day % 10;
-  const key: CoreKey =
+  const key: CanvasCoreKey =
     last === 1
       ? "schedule.repeat.ordinal.d1"
       : last === 2
@@ -1123,7 +1123,7 @@ const WEEKDAY_SHORT_KEYS = [
   "date.weekdayShort.4",
   "date.weekdayShort.5",
   "date.weekdayShort.6",
-] as const satisfies readonly CoreKey[];
+] as const satisfies readonly CanvasCoreKey[];
 
 /** The month names' keys, 0 = January. */
 const MONTH_KEYS = [
@@ -1139,7 +1139,7 @@ const MONTH_KEYS = [
   "date.month.10",
   "date.month.11",
   "date.month.12",
-] as const satisfies readonly CoreKey[];
+] as const satisfies readonly CanvasCoreKey[];
 
 /** The short month names' keys, 0 = January. */
 const MONTH_SHORT_KEYS = [
@@ -1155,17 +1155,17 @@ const MONTH_SHORT_KEYS = [
   "date.monthShort.10",
   "date.monthShort.11",
   "date.monthShort.12",
-] as const satisfies readonly CoreKey[];
+] as const satisfies readonly CanvasCoreKey[];
 
 /**
  * An English short day as `en-GB` writes it ("Thu 15 Oct", "Tue 29 Sept") in
  * `t`'s language, or `undefined` when `text` is not one.
  */
-export function englishShortDayText(text: string, t: CoreT = coreEnglish): string | undefined {
+export function englishShortDayText(text: string, t: CanvasCoreT = canvasCoreEnglish): string | undefined {
   const match = /^([A-Z][a-z]{2}) (\d{1,2}) ([A-Z][a-z]{2,3})$/.exec(text);
   if (match === null) return undefined;
-  const weekday = WEEKDAY_SHORT_KEYS.findIndex((key) => coreEnglish(key) === match[1]);
-  const month = MONTH_SHORT_KEYS.findIndex((key) => coreEnglish(key) === (match[3] === "Sept" ? "Sep" : match[3]));
+  const weekday = WEEKDAY_SHORT_KEYS.findIndex((key) => canvasCoreEnglish(key) === match[1]);
+  const month = MONTH_SHORT_KEYS.findIndex((key) => canvasCoreEnglish(key) === (match[3] === "Sept" ? "Sep" : match[3]));
   const weekdayKey = WEEKDAY_SHORT_KEYS[weekday];
   const monthKey = MONTH_SHORT_KEYS[month];
   if (weekdayKey === undefined || monthKey === undefined) return undefined;
@@ -1173,7 +1173,7 @@ export function englishShortDayText(text: string, t: CoreT = coreEnglish): strin
 }
 
 /** A weekday's short name in `t`'s language: "Mon". */
-const weekdayShort = (day: number, t: CoreT): string => {
+const weekdayShort = (day: number, t: CanvasCoreT): string => {
   const key = WEEKDAY_SHORT_KEYS[day];
   return key === undefined ? String(day) : t(key);
 };
@@ -1182,7 +1182,7 @@ const weekdayShort = (day: number, t: CoreT): string => {
  * The nth weekday's ordinal, by the weekday's agreement class (`m`: Mon, Tue,
  * Thu, Fri; `f`: Sun, Wed, Sat), for languages whose ordinal agrees with it.
  */
-const NTH_KEYS: Readonly<Record<string, { readonly m: CoreKey; readonly f: CoreKey }>> = {
+const NTH_KEYS: Readonly<Record<string, { readonly m: CanvasCoreKey; readonly f: CanvasCoreKey }>> = {
   "1": { m: "schedule.repeat.nth.1.m", f: "schedule.repeat.nth.1.f" },
   "2": { m: "schedule.repeat.nth.2.m", f: "schedule.repeat.nth.2.f" },
   "3": { m: "schedule.repeat.nth.3.m", f: "schedule.repeat.nth.3.f" },
@@ -1199,7 +1199,7 @@ export interface RepeatPattern {
 }
 
 /** The day a monthly or yearly repeat falls on: "on the 31st (the last day in shorter months)", "on the last Fri", "on 29 Feb". */
-function repeatDayText(pattern: RepeatPattern, t: CoreT): string | undefined {
+function repeatDayText(pattern: RepeatPattern, t: CanvasCoreT): string | undefined {
   if (pattern.monthly !== undefined) {
     if ("dayOfMonth" in pattern.monthly)
       return t(pattern.monthly.dayOfMonth > 28 ? "schedule.repeat.dayOfMonthLate" : "schedule.repeat.dayOfMonth", {
@@ -1232,7 +1232,11 @@ function repeatDayText(pattern: RepeatPattern, t: CoreT): string | undefined {
  * label leads with it (`"label"`: "Monthly on the 1st", "Yearly on 29 Feb").
  * Neither is "every day" ("Daily").
  */
-export function repeatDaysText(pattern: RepeatPattern, style: "sentence" | "label" = "sentence", t: CoreT = coreEnglish): string {
+export function repeatDaysText(
+  pattern: RepeatPattern,
+  style: "sentence" | "label" = "sentence",
+  t: CanvasCoreT = canvasCoreEnglish,
+): string {
   const day = repeatDayText(pattern, t);
   const [sentence, label] =
     pattern.monthly !== undefined
@@ -1252,7 +1256,7 @@ const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0] as const;
  * day (or none given) is `undefined`, a daily cadence. Three or more days in a
  * row read as a range.
  */
-export function daysOfWeekText(days: readonly number[] | undefined, t: CoreT = coreEnglish): string | undefined {
+export function daysOfWeekText(days: readonly number[] | undefined, t: CanvasCoreT = canvasCoreEnglish): string | undefined {
   if (days === undefined) return undefined;
   const picked = new Set(days);
   if (WEEK_ORDER.every((day) => picked.has(day))) return undefined;

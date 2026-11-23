@@ -43,7 +43,7 @@ import {
   isLocalConnectionId,
   RESERVED_CHANNEL_CONNECTION_IDS,
 } from "@tavi/contracts";
-import type { CoreKey } from "@tavi/contracts/locales/core";
+import type { CanvasCoreKey } from "@tavi/contracts/locales/core";
 import { definedOnly, errorMessage } from "@tavi/contracts/util";
 import { prefixedId } from "@tavi/node-kit";
 import { type ChannelHost, type ChannelRecord, isTrustedProxyEntry, type PairingRegistry } from "@tavi/runtime";
@@ -1055,7 +1055,7 @@ function checkedSettings(
 
 function checkedValue(descriptor: ChannelDescriptor, field: ChannelField, value: string | number | boolean): string | number | boolean {
   const names = { channel: descriptor.label, field: field.label };
-  const refuse = (key: CoreKey, params: TextRefParams = {}): never => {
+  const refuse = (key: CanvasCoreKey, params: TextRefParams = {}): never => {
     throw keyedError("INVALID_INPUT", key, { ...names, ...params });
   };
   if (field.type === "choice")

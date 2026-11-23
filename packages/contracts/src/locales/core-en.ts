@@ -1,47 +1,27 @@
-import { date } from "./en/date.js";
-import { labels } from "./en/labels.js";
-import { safety } from "./en/safety.js";
-import { schedule } from "./en/schedule.js";
-import { connect } from "./en/connect.js";
-import { errors } from "./en/errors.js";
-import { notices } from "./en/notices.js";
-import { onboarding } from "./en/onboarding.js";
-import { nav } from "./en/nav.js";
-import { agent } from "./en/agent.js";
-import { reports } from "./en/reports.js";
+import { CORE_CANVAS_EN } from "./core-canvas-en.js";
 import { channels } from "./en/channels.js";
 import { terminal } from "./en/terminal.js";
 import { plugins } from "./en/plugins.js";
-import { apps } from "./en/apps.js";
 import { presets } from "./en/presets.js";
 import { setup } from "./en/setup.js";
 import { pages } from "./en/pages.js";
 
 /**
  * The `core` namespace in English: words every surface shares (the canvas,
- * the terminal, the owner's messages), starting with the calendar's. Every
- * other language's `core` catalogue matches it key for key.
+ * the terminal, the owner's messages), starting with the calendar's, and the
+ * server's own (the terminal's, the chat apps', setup's narration, the
+ * owner's pages, the presets and the built-in plugins'). Every other
+ * language's `core` catalogue matches it key for key.
  *
  * Names are spelled here rather than asked of `Intl`, whose month
  * abbreviations differ between ICU versions ("Sep" / "Sept"); a heading must
  * read the same on every machine.
  */
 export const CORE_EN = {
-  ...date,
-  ...labels,
-  ...safety,
-  ...schedule,
-  ...connect,
-  ...errors,
-  ...notices,
-  ...onboarding,
-  ...nav,
-  ...agent,
-  ...reports,
+  ...CORE_CANVAS_EN,
   ...channels,
   ...terminal,
   ...plugins,
-  ...apps,
   ...presets,
   ...setup,
   ...pages,

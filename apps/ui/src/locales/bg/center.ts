@@ -1,6 +1,6 @@
 import type { CatalogFor } from "@tavi/contracts/i18n";
-import { CORE_BG } from "@tavi/contracts/locales/core-bg";
-import { navPathIn } from "@tavi/contracts/locales/core";
+import { CORE_CANVAS_BG } from "@tavi/contracts/locales/core-canvas-bg";
+import { navPathIn } from "@tavi/contracts/locales/core-canvas";
 
 import type { center as en } from "../en/center.js";
 
@@ -133,7 +133,7 @@ export const center = {
   "center.roundCard.sessionTitle": "Изпълнява се без питане до края на този чат",
   "center.roundCard.denyEllipsis": "Откажи…",
   "center.roundCard.deciding": "Решавам…",
-  "center.roundCard.alwaysHint": `„Разрешавай винаги“ запазва правило за работното пространство; отмени го в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.permissions")}.`,
+  "center.roundCard.alwaysHint": `„Разрешавай винаги“ запазва правило за работното пространство; отмени го в ${navPathIn(CORE_CANVAS_BG, "nav.route.settings", "nav.settings.permissions")}.`,
   "center.roundCard.inputCut": {
     one: "… още {count} знак — отвори линка на картата за целия вход.",
     other: "… още {count} знака — отвори линка на картата за целия вход.",
@@ -994,7 +994,7 @@ export const center = {
   "center.heartbeatWatch.saved": "Запазено.",
 
   "center.heartbeatTargets.unreadable": "Не успях да прочета каналите: {error}",
-  "center.heartbeatTargets.noChannels": `Свържи канал от ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.channels")}, за да ти пиша и там.`,
+  "center.heartbeatTargets.noChannels": `Свържи канал от ${navPathIn(CORE_CANVAS_BG, "nav.route.settings", "nav.settings.channels")}, за да ти пиша и там.`,
   "center.heartbeatTargets.full": "Най-много {count} канала: премахни един, за да добавиш друг.",
   "center.heartbeatTargets.where": "Къде",
   "center.heartbeatTargets.home": "„Начало“ (винаги, когато е включено)",
@@ -1062,8 +1062,8 @@ export const center = {
   "center.heartbeatOffer.title": "Да включа ли пулса?",
   "center.heartbeatOffer.ask": "Да проверявам ли нещата на всеки {interval} между {start} и {end} и да ти пиша само когато нещо те чака?",
   "center.heartbeatOffer.hint": {
-    one: `До {count} проверка на ден, всяка е кратък ход само за четене с бързия ти модел; всичко това можеш да промениш после в ${navPathIn(CORE_BG, "nav.route.center", "nav.center.heartbeat")}.`,
-    other: `До {count} проверки на ден, всяка е кратък ход само за четене с бързия ти модел; всичко това можеш да промениш после в ${navPathIn(CORE_BG, "nav.route.center", "nav.center.heartbeat")}.`,
+    one: `До {count} проверка на ден, всяка е кратък ход само за четене с бързия ти модел; всичко това можеш да промениш после в ${navPathIn(CORE_CANVAS_BG, "nav.route.center", "nav.center.heartbeat")}.`,
+    other: `До {count} проверки на ден, всяка е кратък ход само за четене с бързия ти модел; всичко това можеш да промениш после в ${navPathIn(CORE_CANVAS_BG, "nav.route.center", "nav.center.heartbeat")}.`,
   },
   "center.heartbeatOffer.watch": "За какво ще следя",
   "center.heartbeatOffer.turnOn": "Включи",
@@ -1304,7 +1304,7 @@ export const center = {
   "center.memorySettings.captureOn": "Включено: агентът предлага неща за запомняне, а ти решаваш.",
   "center.memorySettings.captureOff": "Изключено: само каквото напишеш ти.",
   "center.memorySettings.captureModel": "Предлага ги моделът за запомняне, ролята за извличане в {link}.",
-  "center.memorySettings.modelsLink": `${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.models")}`,
+  "center.memorySettings.modelsLink": `${navPathIn(CORE_CANVAS_BG, "nav.route.settings", "nav.settings.models")}`,
   "center.memorySettings.keepLegend": "Запазвай без питане",
   "center.memorySettings.keepHelp":
     "Само каквото е написано от теб в твоите чатове; никога чувствителни теми, промени, нещо от инструменти, страници или съобщения, нито каквото и да е в чат, след като е прочел такова",
@@ -1325,8 +1325,8 @@ export const center = {
   "center.memorySettings.sensitiveSuggest": "Предлагай скрити",
   "center.memorySettings.more": "Още",
   "center.memorySettings.retrieval": "Качество на търсенето",
-  "center.memorySettings.hybridHint": `Извличането намира и спомени, казани с други думи, чрез модела за ембединги в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.models")}; само по думи, когато той не отговаря`,
-  "center.memorySettings.lexicalHint": `Извличането търси по думи; търсенето по смисъл иска модел за ембединги в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.models")}`,
+  "center.memorySettings.hybridHint": `Извличането намира и спомени, казани с други думи, чрез модела за ембединги в ${navPathIn(CORE_CANVAS_BG, "nav.route.settings", "nav.settings.models")}; само по думи, когато той не отговаря`,
+  "center.memorySettings.lexicalHint": `Извличането търси по думи; търсенето по смисъл иска модел за ембединги в ${navPathIn(CORE_CANVAS_BG, "nav.route.settings", "nav.settings.models")}`,
   "center.memorySettings.hybridNote": "Вече търся в паметта и по смисъл.",
   "center.memorySettings.lexicalNote": "Отново търся в паметта само по думи.",
   "center.memorySettings.lexical": "Думи",

@@ -3,7 +3,7 @@
  * matcher is tested against (`CallAssessment.subjects`).
  */
 
-import { coreEnglish } from "./locales/core.js";
+import { canvasCoreEnglish } from "./locales/core-canvas.js";
 
 /** A subject no realistic allow glob can cover: what a script the splitter cannot read becomes. */
 export const UNPARSED_SUBJECT_PREFIX = "\u0000unparsed ";
@@ -17,10 +17,10 @@ const MAX_PARSE_DEPTH = 32;
  * makes a `sandbox.run` card show every time, with this as its reason. The
  * owner words its assessment in English (`shell.reason.*` in the `core` words).
  */
-export const SHELL_QUOTING_REASON = coreEnglish("shell.reason.quoting");
-export const SHELL_CONTINUATION_REASON = coreEnglish("shell.reason.continuation");
-export const SHELL_BRACED_EXPANSION_REASON = coreEnglish("shell.reason.bracedExpansion");
-export const SHELL_PROCESS_SUBSTITUTION_REASON = coreEnglish("shell.reason.processSubstitution");
+export const SHELL_QUOTING_REASON = canvasCoreEnglish("shell.reason.quoting");
+export const SHELL_CONTINUATION_REASON = canvasCoreEnglish("shell.reason.continuation");
+export const SHELL_BRACED_EXPANSION_REASON = canvasCoreEnglish("shell.reason.bracedExpansion");
+export const SHELL_PROCESS_SUBSTITUTION_REASON = canvasCoreEnglish("shell.reason.processSubstitution");
 
 /** A script read as `/bin/sh` reads it: its simple commands, and what in it no rule should cover. */
 export interface ShellScriptReading {
@@ -331,7 +331,7 @@ export function splitShellCommands(script: string): readonly string[] {
  * Why a line is asked about every time when the grammar below and the
  * splitter above disagree: one of them finds a command the other does not.
  */
-export const SHELL_PARSE_DISAGREEMENT_REASON = coreEnglish("shell.reason.parseDisagreement");
+export const SHELL_PARSE_DISAGREEMENT_REASON = canvasCoreEnglish("shell.reason.parseDisagreement");
 
 /** A word as the grammar read it. */
 export interface ShellWord {

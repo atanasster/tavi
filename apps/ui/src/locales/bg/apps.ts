@@ -1,6 +1,6 @@
 import type { CatalogFor } from "@tavi/contracts/i18n";
-import { CORE_BG } from "@tavi/contracts/locales/core-bg";
-import { navPathIn } from "@tavi/contracts/locales/core";
+import { CORE_CANVAS_BG } from "@tavi/contracts/locales/core-canvas-bg";
+import { navPathIn } from "@tavi/contracts/locales/core-canvas";
 
 import type { apps as en } from "../en/apps.js";
 
@@ -189,7 +189,7 @@ export const apps = {
   // ChannelSheet
   "apps.channel.notInstalled": "{channel} вече не е инсталиран.",
   "apps.channel.add": "Добави {channel}",
-  "apps.channel.notSimple": `{channel} иска настройки, които тук не питам: добави го в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.channels")}.`,
+  "apps.channel.notSimple": `{channel} иска настройки, които тук не питам: добави го в ${navPathIn(CORE_CANVAS_BG, "nav.route.settings", "nav.settings.channels")}.`,
   "apps.channel.close": "Затвори",
   "apps.channel.paired": "Връзката с {channel} е готова: съобщенията ти оттам стигат до Tavi.",
   "apps.channel.added": "{channel} е добавен и отговаря.",
@@ -214,7 +214,7 @@ export const apps = {
   "apps.settings.required": "{label} (задължително)",
   "apps.settings.credential": "Пази се като данни за достъп; остави празно, за да не се променя",
   "apps.settings.choose": "Избери…",
-  "apps.settings.list": `Списък: задава се в ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.plugins")}.`,
+  "apps.settings.list": `Списък: задава се в ${navPathIn(CORE_CANVAS_BG, "nav.route.settings", "nav.settings.plugins")}.`,
   // ToolDecisions
   "apps.tools.allow": "Разреши",
   "apps.tools.ask": "Питай",

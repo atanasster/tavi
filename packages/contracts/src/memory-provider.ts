@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { IdSchema } from "./ids.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 import { MAX_MEMORY_KEYWORDS, MAX_MEMORY_KEYWORD_CHARS, MAX_PREFERENCE_KEY_CHARS, MEMORY_SEARCH_MAX, type MemoryKind } from "./memory.js";
 import type { ModelUsage } from "./model.js";
 import { defineProviderError } from "./util.js";
@@ -443,7 +443,7 @@ const CAPABILITY_DISCLOSURES = {
 } as const satisfies Record<MemoryProviderCapability, string>;
 
 /** What approving a memory provider means, derived from what it does and what it asks to receive. */
-export function describeMemoryDeclaration(memory: PluginMemoryDeclaration, t: CoreT = coreEnglish): string {
+export function describeMemoryDeclaration(memory: PluginMemoryDeclaration, t: CanvasCoreT = canvasCoreEnglish): string {
   const does = memory.capabilities.map((capability) => t(CAPABILITY_DISCLOSURES[capability])).join(", ");
   const fields = memory.receives.map((field) => t(RECEIVE_DISCLOSURES[field]));
   const receives =

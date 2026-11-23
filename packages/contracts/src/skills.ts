@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { IdSchema, TimestampSchema } from "./ids.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 import { MemoryProvenanceSchema, memoryProvenanceLine } from "./memory.js";
 import { clip } from "./util.js";
 
@@ -191,7 +191,7 @@ export function skillProposedOf(output: unknown): { readonly skillId: string; re
 }
 
 /** A terminal's one line under a proposal's call: where it waits, and the command that shows it. */
-export function skillProposalNoticeLine(skillId: string, version: string, t: CoreT = coreEnglish): string {
+export function skillProposalNoticeLine(skillId: string, version: string, t: CanvasCoreT = canvasCoreEnglish): string {
   return t("skill.proposal.notice", { command: skillReviewCommand(skillId, version) });
 }
 
@@ -206,7 +206,10 @@ export function skillReviewCommand(skillId: string, version: string): string {
  * may come from there. Tavi cannot tell which words did, so the whole text is
  * flagged, not spans of it. `undefined` for a clean turn's.
  */
-export function skillProposalUntrustedLine(version: Pick<SkillVersion, "manifest">, t: CoreT = coreEnglish): string | undefined {
+export function skillProposalUntrustedLine(
+  version: Pick<SkillVersion, "manifest">,
+  t: CanvasCoreT = canvasCoreEnglish,
+): string | undefined {
   const line = memoryProvenanceLine(version.manifest.proposal?.untrusted, {}, t);
   return line === undefined ? undefined : t("skill.proposal.untrusted", { line });
 }
@@ -304,7 +307,7 @@ export function condenseSkillTrace(tools: readonly SkillTraceSource[]): {
 }
 
 /** A trace call as one line: `web_fetch {"url":"…"} — failed`. */
-export function skillTraceLine(call: SkillTraceCall, t: CoreT = coreEnglish): string {
+export function skillTraceLine(call: SkillTraceCall, t: CanvasCoreT = canvasCoreEnglish): string {
   const line = `${call.toolName}${call.input === "" ? "" : ` ${call.input}`}`;
   return call.status === "completed" ? line : t("skill.trace.ended", { call: line, status: t(`skill.trace.${call.status}`) });
 }
@@ -347,7 +350,7 @@ export type SkillActivationHistoryEntry = z.infer<typeof SkillActivationHistoryE
  */
 export function skillActivationHistoryText(
   entry: Pick<SkillActivationHistoryEntry, "reason" | "previousVersion" | "newVersion">,
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string {
   const previous = entry.previousVersion;
   const version = entry.newVersion ?? t("skill.history.none");
@@ -453,7 +456,7 @@ export function skillUsageOf(
 }
 
 /** A skill's use in words: "never used", or "3 uses, last 2026-10-20". */
-export function skillUsageText(usage: Pick<SkillUseSummary, "uses" | "lastUsedAt">, t: CoreT = coreEnglish): string {
+export function skillUsageText(usage: Pick<SkillUseSummary, "uses" | "lastUsedAt">, t: CanvasCoreT = canvasCoreEnglish): string {
   return usage.lastUsedAt === undefined
     ? t("skill.usage.never")
     : t("skill.usage.count", { count: usage.uses, uses: String(usage.uses), date: usage.lastUsedAt.slice(0, 10) });

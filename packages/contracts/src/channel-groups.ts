@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 
 /**
  * The group-chat seam: what a
@@ -186,7 +186,7 @@ const TRIGGER_WORDS = {
 } as const satisfies Readonly<Record<AddressKind, string>>;
 
 /** A trigger in words: "mention me or reply to one of my messages". */
-export function triggerInWords(trigger: RoomTrigger, t: CoreT = coreEnglish): string {
+export function triggerInWords(trigger: RoomTrigger, t: CanvasCoreT = canvasCoreEnglish): string {
   const words = trigger.map((kind) => t(TRIGGER_WORDS[kind]));
   return words.length <= 1
     ? (words[0] ?? "")

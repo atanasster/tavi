@@ -1,5 +1,5 @@
-import { navPathIn } from "@tavi/contracts/locales/core";
-import { CORE_EN } from "@tavi/contracts/locales/core-en";
+import { navPathIn } from "@tavi/contracts/locales/core-canvas";
+import { CORE_CANVAS_EN } from "@tavi/contracts/locales/core-canvas-en";
 
 /** The words of features/apps, in English. */
 export const apps = {
@@ -194,7 +194,7 @@ export const apps = {
   // ChannelSheet
   "apps.channel.notInstalled": "{channel} is no longer installed.",
   "apps.channel.add": "Add {channel}",
-  "apps.channel.notSimple": `{channel} needs settings this sheet does not ask for: add it in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.channels")}.`,
+  "apps.channel.notSimple": `{channel} needs settings this sheet does not ask for: add it in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.channels")}.`,
   "apps.channel.close": "Close",
   "apps.channel.paired": "Paired on {channel}: your messages there reach Tavi.",
   "apps.channel.added": "{channel} is added and answers.",
@@ -220,7 +220,7 @@ export const apps = {
   "apps.settings.required": "{label} (required)",
   "apps.settings.credential": "Stored as a credential; leave empty to keep it",
   "apps.settings.choose": "Choose…",
-  "apps.settings.list": `A list: set it in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.plugins")}.`,
+  "apps.settings.list": `A list: set it in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.plugins")}.`,
   // ToolDecisions
   "apps.tools.allow": "Allow",
   "apps.tools.ask": "Ask",

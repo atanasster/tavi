@@ -1,7 +1,6 @@
 import {
   describeReminderOffset,
   instantForLocalTime,
-  isCoreKey,
   parseReminderOffset,
   reminderReadBack,
   type Reminder,
@@ -17,7 +16,7 @@ import {
   repeatDaysText,
 } from "@tavi/contracts";
 
-import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
+import { coreEnglish, isCoreKey, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
 import stringWidth from "string-width";
 import { alignedColumns, indentedLines } from "../../shared/terminal-text.js";
 import { reminderWhenText } from "./when-text.js";

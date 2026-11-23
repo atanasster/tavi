@@ -139,4 +139,20 @@ export const connect = {
     one: "{providers} ще премахне наученото от него при следващото си пускане.",
     other: "{providers} ще премахнат наученото от него, всеки при следващото си пускане.",
   },
+  // What a mod's hooks read, as its review says it (`modHookReadsLine`): the canvas shows it too.
+  "mods.reads.everyTool": "всеки инструмент",
+  "mods.reads.fromSources": "от {sources}",
+  "mods.reads.onChannels": "в {channels}",
+  "mods.reads.scope": " (ходовете {where})",
+  "mods.reads.everyWorkspace": "Вижда това във всяко работно пространство.",
+  "mods.reads.toolInput": "Вижда входа на {tools}{scope} и може да откаже извикването.",
+  "mods.reads.toolResult": "Вижда и може да промени изхода на {tools}{scope}.",
+  "mods.reads.prompt": "Чете всяка заявка и всяко съобщение, което получаваш{scope}, и може да добави към него или да го изпусне.{trusted}",
+  "mods.reads.everyChannel": ", във всеки канал",
+  "mods.reads.trustedContext": "Каквото добавя, е контекст с доверие: не отбелязва чата като съдържащ непроверено съдържание.",
+  "mods.reads.modelStep": "Вижда всяко извикване на модела, когато започва: стъпката и модела му{scope}.",
+  "mods.reads.turn": "Вижда кога всеки ход започва и свършва и колко токена е похарчил{scope}.",
+  "mods.reads.heartbeatTick": "Вижда кога тръгва всяка проверка на пулса и как е приключила.",
+  "mods.reads.heartbeatItem":
+    "Вижда ключа, заглавието, спешността, източниците и ключовете на сигналите на всеки елемент от пулса, с часа на проверката и часовата ти зона, и може да го задържи завинаги или да го остави за обобщението.",
 } as const satisfies CatalogFor<typeof en>;

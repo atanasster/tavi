@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { APP_HEALTH } from "./connected-apps.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 
 /**
  * A `connect` wait: a call in a
@@ -34,7 +34,7 @@ export type ConnectSettlement = z.infer<typeof ConnectSettlementSchema>;
 /** A channel's words for a connect need: text only, no link, no token — a login never starts from a channel. */
 export function connectNeedText(
   request: Pick<ConnectRequest, "appName"> & Partial<Pick<ConnectRequest, "health">>,
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string {
   return t(request.health === "not-set-up" ? "app.connect.need.notSetUp" : "app.connect.need.signInAgain", { app: request.appName });
 }

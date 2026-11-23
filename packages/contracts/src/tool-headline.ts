@@ -10,8 +10,8 @@
  * the contract rather than an oversight: the caller shows the tool id alone.
  */
 
-import { coreEnglish, type CoreT } from "./locales/core.js";
-import type { CoreKey } from "./locales/core-en.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
+import type { CanvasCoreKey } from "./locales/core-canvas-en.js";
 
 /** What the collectors and the report tools are scoped by. */
 const PROJECT_FIELDS = ["projectId", "metricKey"] as const;
@@ -76,7 +76,7 @@ export function toolCallHeadline(toolId: string, input: unknown): string | undef
 }
 
 /** What a call does, in a word or two, for the tools a person is asked about most; others go by their tool id. */
-const TOOL_CALL_VERBS: Readonly<Record<string, CoreKey>> = {
+const TOOL_CALL_VERBS: Readonly<Record<string, CanvasCoreKey>> = {
   "browser.navigate": "tool.title.browserNavigate",
   "fs.delete": "tool.title.fsDelete",
   "fs.edit": "tool.title.fsEdit",
@@ -95,7 +95,7 @@ const TOOL_CALL_VERBS: Readonly<Record<string, CoreKey>> = {
  * the call a headline, else its tool id with the headline, else the tool id —
  * never the tool id twice.
  */
-export function toolCallTitle(toolId: string, summary: string | undefined, t: CoreT = coreEnglish): string {
+export function toolCallTitle(toolId: string, summary: string | undefined, t: CanvasCoreT = canvasCoreEnglish): string {
   if (summary === undefined || summary === "") return toolId;
   const verb = Object.hasOwn(TOOL_CALL_VERBS, toolId) ? TOOL_CALL_VERBS[toolId] : undefined;
   return verb === undefined ? `${toolId} ${summary}` : t(verb, { subject: summary });

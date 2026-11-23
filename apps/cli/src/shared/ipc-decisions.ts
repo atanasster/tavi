@@ -19,7 +19,7 @@ import {
   englishOf,
   textRef,
 } from "@tavi/contracts";
-import type { CoreKey } from "@tavi/contracts/locales/core";
+import type { CanvasCoreKey } from "@tavi/contracts/locales/core";
 import type { InFlightFires } from "@tavi/agent-host/schedule-scheduler";
 
 import { scheduleInFlightMessage, undecidableRoundMessage } from "./rounds.js";
@@ -115,7 +115,7 @@ export type IpcAnswer<R> = { readonly ok: true; readonly result: R } | IpcRefusa
 export const refuse = (code: string, message: string): IpcRefusal => ({ ok: false, error: { code, message } });
 
 /** A refusal a person reads, by key: its message is the key's English, so the terminal reads what it always did. */
-export function refuseKeyed(code: string, key: CoreKey, params?: TextRefParams): IpcRefusal {
+export function refuseKeyed(code: string, key: CanvasCoreKey, params?: TextRefParams): IpcRefusal {
   const i18n = textRef(key, params);
   return { ok: false, error: { code, message: englishOf(i18n), i18n } };
 }

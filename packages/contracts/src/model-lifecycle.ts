@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 import { TimestampSchema } from "./ids.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
-import type { CoreKey } from "./locales/core-en.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
+import type { CanvasCoreKey } from "./locales/core-canvas-en.js";
 
 /**
  * A model's lifecycle on one provider, as Rhumb (https://rhumbdata.com) last
@@ -167,9 +167,9 @@ export function worstLifecycleLevel(warnings: readonly LifecycleWarning[]): Life
  * clause about the model ("retired on 2026-11-19"), what follows "This model"
  * in the canvas's picker.
  */
-export function lifecycleWarningText(warning: LifecycleWarning, t: CoreT = coreEnglish): string {
+export function lifecycleWarningText(warning: LifecycleWarning, t: CanvasCoreT = canvasCoreEnglish): string {
   const date = warning.date;
-  const dated = (bare: CoreKey, on: CoreKey): string => (date === undefined ? t(bare) : t(on, { date }));
+  const dated = (bare: CanvasCoreKey, on: CanvasCoreKey): string => (date === undefined ? t(bare) : t(on, { date }));
   switch (warning.code) {
     case "retired":
       return dated("model.lifecycle.retired", "model.lifecycle.retiredOn");

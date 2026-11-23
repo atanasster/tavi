@@ -57,6 +57,21 @@
       "types": "./dist/locales/core-en.d.mts",
       "import": "./dist/locales/core-en.mjs"
     },
+    "./locales/core-canvas": {
+      "development": "./src/locales/core-canvas.ts",
+      "types": "./dist/locales/core-canvas.d.mts",
+      "import": "./dist/locales/core-canvas.mjs"
+    },
+    "./locales/core-canvas-en": {
+      "development": "./src/locales/core-canvas-en.ts",
+      "types": "./dist/locales/core-canvas-en.d.mts",
+      "import": "./dist/locales/core-canvas-en.mjs"
+    },
+    "./locales/core-canvas-bg": {
+      "development": "./src/locales/core-canvas-bg.ts",
+      "types": "./dist/locales/core-canvas-bg.d.mts",
+      "import": "./dist/locales/core-canvas-bg.mjs"
+    },
     "./print-theme": {
       "development": "./src/print-theme.ts",
       "types": "./dist/print-theme.d.mts",
@@ -128,6 +143,18 @@
       "./locales/core-en": {
         "types": "./dist/locales/core-en.d.mts",
         "import": "./dist/locales/core-en.mjs"
+      },
+      "./locales/core-canvas": {
+        "types": "./dist/locales/core-canvas.d.mts",
+        "import": "./dist/locales/core-canvas.mjs"
+      },
+      "./locales/core-canvas-en": {
+        "types": "./dist/locales/core-canvas-en.d.mts",
+        "import": "./dist/locales/core-canvas-en.mjs"
+      },
+      "./locales/core-canvas-bg": {
+        "types": "./dist/locales/core-canvas-bg.d.mts",
+        "import": "./dist/locales/core-canvas-bg.mjs"
       },
       "./print-theme": {
         "types": "./dist/print-theme.d.mts",

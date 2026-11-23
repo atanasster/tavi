@@ -9,7 +9,7 @@ import {
   type TextRef,
   type TextRefParams,
 } from "@tavi/contracts";
-import type { CoreKey } from "@tavi/contracts/locales/core";
+import type { CanvasCoreKey } from "@tavi/contracts/locales/core";
 
 /**
  * One closed health vocabulary for every source, each
@@ -74,25 +74,25 @@ const inSentence = (label: string): string => label.replace(/^Your /, "your ");
  * A repair's words by key: the English it has always shown, cut to its line, beside the key the canvas says in its
  * language. The English is the key's own template, so it reads as before.
  */
-function said(key: CoreKey, params: TextRefParams | undefined, max: number): { readonly text: string; readonly ref: TextRef } {
+function said(key: CanvasCoreKey, params: TextRefParams | undefined, max: number): { readonly text: string; readonly ref: TextRef } {
   const ref = textRef(key, params);
   return { text: (renderTextRef(ref) ?? key).slice(0, max), ref };
 }
 
 /** A repair's title (its button) by key. */
-function titled(key: CoreKey, params?: TextRefParams): { readonly title: string; readonly titleRef: TextRef } {
+function titled(key: CanvasCoreKey, params?: TextRefParams): { readonly title: string; readonly titleRef: TextRef } {
   const words = said(key, params, 120);
   return { title: words.text, titleRef: words.ref };
 }
 
 /** A repair's detail (its cause) by key. */
-function detailed(key: CoreKey, params?: TextRefParams): { readonly detail: string; readonly detailRef: TextRef } {
+function detailed(key: CanvasCoreKey, params?: TextRefParams): { readonly detail: string; readonly detailRef: TextRef } {
   const words = said(key, params, 300);
   return { detail: words.text, detailRef: words.ref };
 }
 
 /** "Review Calendar's tools", or "Review notes' tools" for a name ending in s. */
-const possessiveKey = (name: string, key: "app.repair.reviewTools" | "app.repair.fixSettings"): CoreKey =>
+const possessiveKey = (name: string, key: "app.repair.reviewTools" | "app.repair.fixSettings"): CanvasCoreKey =>
   /s$/i.test(name) ? `${key}S` : key;
 
 /** "a and b and c", each by its label, as one nested reference. */

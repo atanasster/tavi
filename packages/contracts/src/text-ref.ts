@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { coreEnglish, type CoreKey, type CoreT } from "./locales/core.js";
-import { CORE_EN } from "./locales/core-en.js";
+import { canvasCoreEnglish, type CanvasCoreKey, type CanvasCoreT } from "./locales/core-canvas.js";
+import { CORE_CANVAS_EN } from "./locales/core-canvas-en.js";
 
 /**
  * Words stored for later, by key: a `core` catalogue key and its parameters,
@@ -39,18 +39,22 @@ export const TextRefSchema: z.ZodType<TextRef> = TextRefShape.refine((ref) => de
   message: "nested too deeply",
 });
 
-/** A reference to a `core` key, checked by the compiler. */
-export function textRef(key: CoreKey, params?: TextRefParams): TextRef {
+/**
+ * A reference to a `core` key, checked by the compiler: one of the words the
+ * canvas says too (`CanvasCoreKey`), since whichever surface reads it back,
+ * the canvas included, must know it.
+ */
+export function textRef(key: CanvasCoreKey, params?: TextRefParams): TextRef {
   return params === undefined ? { key } : { key, params };
 }
 
-/** Whether `key` is one of the `core` catalogue's. */
-export function isCoreKey(key: string): key is CoreKey {
-  return Object.hasOwn(CORE_EN, key);
+/** Whether `key` is one of the words every surface says, the canvas included: a reference's key a reader knows. */
+export function isCanvasCoreKey(key: string): key is CanvasCoreKey {
+  return Object.hasOwn(CORE_CANVAS_EN, key);
 }
 
 /** How a key said by code rather than by its template is said: undefined falls back to its template. */
-type ComputedSaying = (params: TextRefParams, t: CoreT) => string | undefined;
+type ComputedSaying = (params: TextRefParams, t: CanvasCoreT) => string | undefined;
 const computedSayings = new Map<string, ComputedSaying>();
 
 /**
@@ -58,13 +62,13 @@ const computedSayings = new Map<string, ComputedSaying>();
  * hold (a schedule's cadence, composed from many keys). The key's own template, over the English stored beside the
  * data, is what a reader without `say`, or one `say` cannot read, shows.
  */
-export function sayTextRefWith(key: CoreKey, say: ComputedSaying): void {
+export function sayTextRefWith(key: CanvasCoreKey, say: ComputedSaying): void {
   computedSayings.set(key, say);
 }
 
 /** `ref` said by `t`, its nested references first; undefined when a key in it is not one this build knows. */
-export function renderTextRef(ref: TextRef, t: CoreT = coreEnglish): string | undefined {
-  if (!isCoreKey(ref.key)) return undefined;
+export function renderTextRef(ref: TextRef, t: CanvasCoreT = canvasCoreEnglish): string | undefined {
+  if (!isCanvasCoreKey(ref.key)) return undefined;
   if (ref.params === undefined) return t(ref.key);
   const computed = computedSayings.get(ref.key)?.(ref.params, t);
   if (computed !== undefined) return computed;
@@ -82,7 +86,7 @@ export function renderTextRef(ref: TextRef, t: CoreT = coreEnglish): string | un
 
 /** `ref` in English, as it is stored beside the reference. */
 export function englishOf(ref: TextRef): string {
-  return renderTextRef(ref, coreEnglish) ?? ref.key;
+  return renderTextRef(ref, canvasCoreEnglish) ?? ref.key;
 }
 
 /**
@@ -90,7 +94,7 @@ export function englishOf(ref: TextRef): string {
  * and every key in it is known, else `fallback`, the English stored with it
  * (an older row, written before references, has only that).
  */
-export function localizedText(fallback: string, ref: TextRef | undefined, t: CoreT): string {
+export function localizedText(fallback: string, ref: TextRef | undefined, t: CanvasCoreT): string {
   return ref === undefined ? fallback : (renderTextRef(ref, t) ?? fallback);
 }
 
@@ -103,7 +107,7 @@ export function storedWords(words: StoredWords): { readonly text: string; readon
 }
 
 /** `words` said by `t`: a reference in its language, plain text as it is. */
-export function storedWordsIn(words: StoredWords, t: CoreT): string {
+export function storedWordsIn(words: StoredWords, t: CanvasCoreT): string {
   const stored = storedWords(words);
   return localizedText(stored.text, stored.ref, t);
 }

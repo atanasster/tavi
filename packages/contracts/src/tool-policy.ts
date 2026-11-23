@@ -17,7 +17,7 @@ import { hostAndPathOf } from "./url-text.js";
 // Acyclic: argument-provenance.ts imports only zod, content-label.ts and terminal-text.ts.
 import { ARG_PROVENANCE_LIMITS, ArgOriginSchema } from "./argument-provenance.js";
 import { ToolEffectSchema, ToolIdSchema, ToolSinkSchema, type ToolEffect, type ToolSink } from "./tools.js";
-import { coreEnglish, type CoreKey, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreKey, type CanvasCoreT } from "./locales/core-canvas.js";
 import { originCovers, TASK_ORIGINS } from "./task-origins.js";
 import { SourceStatusSchema, type SourceStatus } from "./pdf.js";
 import { ApprovalDisplaySchema, clipDisplay, displayHides, type ApprovalDisplay, cardText, clipText } from "./approval-card.js";
@@ -75,7 +75,7 @@ export function isStaleWebPattern(pattern: string): boolean {
  * approval card: `browser.*` is "browser" ("use the browser"), or "browser on
  * example.com" given the hosts its round opens; `web_search` "web search".
  */
-export function toolGroupLabel(group: string, hosts: readonly string[] = [], t: CoreT = coreEnglish): string {
+export function toolGroupLabel(group: string, hosts: readonly string[] = [], t: CanvasCoreT = canvasCoreEnglish): string {
   // The browser is allowed on the hosts its round opens (`display.host`), never on every site: the card names them.
   if (group === "browser.*")
     return hosts.length === 0 ? t("tool.group.browser") : t("tool.group.browserOn", { hosts: [...new Set(hosts)].join(", ") });
@@ -86,12 +86,12 @@ export function toolGroupLabel(group: string, hosts: readonly string[] = [], t: 
 }
 
 /** What a grouped card adds after what it allows: for the browser, that another site is asked about again. */
-export function toolGroupScopeNote(group: string, t: CoreT = coreEnglish): string | undefined {
+export function toolGroupScopeNote(group: string, t: CanvasCoreT = canvasCoreEnglish): string | undefined {
   return group === "browser.*" ? t("tool.group.scopeNote.browser") : undefined;
 }
 
 /** Why a dotted `web.` pattern is refused. */
-export function staleWebPatternMessage(t: CoreT = coreEnglish): string {
+export function staleWebPatternMessage(t: CanvasCoreT = canvasCoreEnglish): string {
   return t("tool.pattern.staleWeb");
 }
 
@@ -861,7 +861,7 @@ export const PROPOSAL_ALLOW_RULE_NOTE =
   "A proposal needs no approval: it only files a suggestion, and its card is where you keep or discard it. Remove it to be asked each time.";
 
 /** The notes Tavi writes on its own rules, by the key that says each one. */
-const RULE_NOTE_KEYS: readonly CoreKey[] = [
+const RULE_NOTE_KEYS: readonly CanvasCoreKey[] = [
   "permissions.note.sandboxReadOnly",
   "permissions.note.messagingSend",
   "permissions.note.askUser",
@@ -876,14 +876,14 @@ const RULE_NOTE_KEYS: readonly CoreKey[] = [
   "permissions.note.messagingLifted",
   "permissions.note.messagingAllow",
 ];
-const RULE_NOTES = new Map(RULE_NOTE_KEYS.map((key) => [coreEnglish(key), key] as const));
+const RULE_NOTES = new Map(RULE_NOTE_KEYS.map((key) => [canvasCoreEnglish(key), key] as const));
 
 /**
  * A rule's note in `t`'s words when Tavi wrote it (a shipped or seeded rule's,
  * stored in English); the owner's own note, or one this build does not know,
  * as it was written.
  */
-export function ruleNoteIn(note: string, t: CoreT): string {
+export function ruleNoteIn(note: string, t: CanvasCoreT): string {
   const key = RULE_NOTES.get(note);
   return key === undefined ? note : t(key);
 }

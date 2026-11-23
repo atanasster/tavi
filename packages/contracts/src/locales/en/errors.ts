@@ -351,4 +351,52 @@ export const errors = {
     "You signed in as {named}, but this connection is {previous}. Add it as another account instead, or disconnect this one first.",
   "error.oauth.connectionRemoved": "The connection was removed while it was signing in.",
   "error.oauth.revoked": `{channel}'s sign-in was revoked or expired: reconnect it in ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")}`,
+  // Workspace settings' refusals (`tavi config set`, Settings).
+  "error.settings.unknownWorkspace": "workspace {workspace} is not configured on this owner",
+  "error.settings.taintLower": "a page can only raise security.taint; lower it with `tavi permissions taint {mode}`",
+  "error.settings.conflict":
+    "The settings for workspace {workspace} changed since they were read (expected revision {expected}, current revision {current})",
+  "error.settings.providerVerbs":
+    "The memory provider and its egress change only with tavi memory set-provider and tavi memory egress (or the Center's Provider), which say what they send first",
+  "error.settings.personalNeedsHybrid":
+    "Personal memory is embedded only with hybrid recall: tavi memory config retrieval hybrid --include-personal",
+  "error.settings.hybridUnchecked":
+    "Hybrid recall cannot be checked here: turn it on from the Center or `tavi memory config retrieval hybrid`",
+  "error.settings.needsEmbedding":
+    "Hybrid recall needs an embedding model: bind one with `tavi models set-role embedding --connection <id> --model <id>`, then turn hybrid on",
+  "error.settings.confirmHybrid": "{disclosure} Confirm to turn hybrid recall on.",
+  "error.settings.confirmIt": "{disclosure} Confirm to turn it on.",
+  "error.settings.disclosures": "{first} {second}",
+  "error.settings.homeDmOff": "chat.home-dm links your DMs to Home, which is off in this workspace: turn chat.home on first",
+  "error.settings.notSender":
+    "{identity} is not a sender id on a chat channel's connection this data directory knows; use <connection>:<sender id> such as my-chat:123456789, with a connection saved in Settings or one the person has messaged",
+  "error.settings.timezone": "{value} is not an IANA time zone; use a name such as Europe/Berlin or America/New_York",
+  "error.settings.operatorName": 'operator.name takes one line of up to {max} characters, such as "Robin"',
+  "error.settings.locale": "{value} is not a language Tavi speaks; use one of {locales}",
+  "error.settings.onOff": "{value} is not on or off",
+  "error.settings.homeDm":
+    "{value} is not a DM identity; use <connection>:<sender id> such as my-chat:123456789 (a comma-separated list), or off",
+  "error.settings.desktopApps": "{value} is not an app; use a comma-separated list of bundle ids or app names, such as {example}, or none",
+  "error.settings.thumbnailHosts": "{value} is not a host or *.domain; use a comma-separated list such as {example}, or none",
+  "error.settings.jsonObject": "{key} takes a JSON object, such as {example}",
+  "error.settings.notValid": "{key} is not valid: {where}{issue}",
+  "error.settings.unknownProblem": "unknown problem",
+  "error.settings.taint": "{value} is not a taint mode; use off, observe or enforce",
+  "error.settings.injection": "{value} is not an injection detector mode; use off, patterns or model",
+  "error.settings.sandboxNetwork": "{value} is not a sandbox network mode; use granted or ask",
+  "error.settings.mcpIds": "{value} is not a list of MCP server ids; use a comma-separated list such as mcp.docs,mcp.home, or none",
+  "error.settings.sandboxDomain":
+    "{value} is not a domain sandbox.run may reach; use a comma-separated list such as {example} (or @registries), or none",
+  "error.settings.sandboxMax": "sandbox.domains holds at most {max} domains",
+  "error.settings.wholeNumber": "{value} is not a whole number from {min} to {max}",
+  "error.settings.videoDays": "{value} is not a number of days from 1 to {max}",
+  "error.settings.vision": "{value} is not a vision engine: {engines}",
+  "error.settings.deferral": "{value} is not a tool deferral: {deferrals}",
+  "error.settings.tasksHome": "{value} is not a task home: tavi, or mcp:<server> (for example mcp:todoist)",
+  "error.settings.promptLayout": "{value} is not a prompt layout: {layouts}",
+  "error.settings.keptRequests": "{value} is not a count from 0 to {max}",
+  "error.settings.maxTokens": "{value} is not a number of tokens from {min} to {max}",
+  "error.settings.budget": "{value} is not a number of tokens from {min} to {max}; unset it for no budget",
+  "error.settings.modelTarget": "{value} is not <connection>/<model>, for example openrouter/openai/gpt-4.1-mini",
+  "error.settings.or": "{first} or {second}",
 } as const;

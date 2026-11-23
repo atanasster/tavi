@@ -10,7 +10,7 @@ import {
   type Translate,
 } from "@tavi/contracts/i18n";
 
-import { CORE_EN, type CoreKey } from "@tavi/contracts/locales/core-en";
+import { CORE_CANVAS_EN, type CanvasCoreKey } from "@tavi/contracts/locales/core-canvas-en";
 
 import { en, type UiKey } from "../locales/en.js";
 import { readStored, writeStored } from "./storage.js";
@@ -26,10 +26,14 @@ import { readStored, writeStored } from "./storage.js";
  * (kept in this browser) stands in, so a Bulgarian page does not flash English.
  */
 
-/** A language's catalogues: the canvas's own and the `core` words it shares with every surface. */
+/**
+ * A language's catalogues: the canvas's own and the `core` words it shares with every surface — the canvas's part of
+ * `core` (`core-canvas`), never the server's own words (the terminal's, the chat apps', setup's narration), which it
+ * never says.
+ */
 interface Catalogues {
   readonly ui: CatalogFor<typeof en>;
-  readonly core: CatalogFor<typeof CORE_EN>;
+  readonly core: CatalogFor<typeof CORE_CANVAS_EN>;
 }
 
 /** The browser's convenience copy of the last language shown. */
@@ -44,15 +48,15 @@ export const PSEUDO_STORAGE_KEY = "tavi.pseudoLocale";
 
 const loaders: { readonly [L in Exclude<Locale, "en">]: () => Promise<Catalogues> } = {
   bg: async () => {
-    const [ui, core] = await Promise.all([import("../locales/bg.js"), import("@tavi/contracts/locales/core-bg")]);
-    return { ui: ui.bg, core: core.CORE_BG };
+    const [ui, core] = await Promise.all([import("../locales/bg.js"), import("@tavi/contracts/locales/core-canvas-bg")]);
+    return { ui: ui.bg, core: core.CORE_CANVAS_BG };
   },
 };
 
 const loaded: { [L in Exclude<Locale, "en">]?: Catalogues } = {};
 let locale: Locale = DEFAULT_LOCALE;
 let translate: Translate<UiKey> = createTranslator({ en }, DEFAULT_LOCALE);
-let translateCoreWords: Translate<CoreKey> = createTranslator({ en: CORE_EN }, DEFAULT_LOCALE);
+let translateCoreWords: Translate<CanvasCoreKey> = createTranslator({ en: CORE_CANVAS_EN }, DEFAULT_LOCALE);
 const listeners = new Set<() => void>();
 let requested = 0;
 
@@ -66,7 +70,7 @@ function publish(next: Locale): void {
     options,
   );
   translateCoreWords = createTranslator(
-    { en: CORE_EN, ...Object.fromEntries(languages.map(([language, catalogues]) => [language, catalogues.core])) },
+    { en: CORE_CANVAS_EN, ...Object.fromEntries(languages.map(([language, catalogues]) => [language, catalogues.core])) },
     next,
     options,
   );
@@ -121,7 +125,7 @@ export function translateNow(key: UiKey, params?: MessageParams): string {
  * owner), for the helpers in `time.ts` and `format.ts`. The shell remounts its
  * views on a change of language, so a view that shows them is drawn again.
  */
-export function translateCore(key: CoreKey, params?: MessageParams): string {
+export function translateCore(key: CanvasCoreKey, params?: MessageParams): string {
   return translateCoreWords(key, params);
 }
 

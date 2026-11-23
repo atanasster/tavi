@@ -271,33 +271,36 @@ English so a missing or misspelt key fails the typecheck:
 
 | Namespace | English | Bulgarian | Used by |
 | :--- | :--- | :--- | :--- |
-| `core` | `packages/contracts/src/locales/core-en.ts`, from the parts in `en/` | `core-bg.ts`, from `bg/` | Every surface: the canvas, the terminal, the owner's messages to chat apps, the agent host |
+| `core` | `packages/contracts/src/locales/core-en.ts`, from the parts in `en/` | `core-bg.ts`, from `bg/` | Every surface: the canvas (its parts only, `core-canvas-en.ts` / `core-canvas-bg.ts`), the terminal, the owner's messages to chat apps, the agent host |
 | `ui` | `apps/ui/src/locales/en.ts`, from the parts in `en/` | `bg.ts`, from `bg/` | The canvas |
 | `ideas` | `packages/plugin-kit/src/ideas/locales/en.ts` | `bg.ts` beside it | The built-in ideas, and Bulgarian trigger words |
 | A plugin's own | its manifest, and `locales/en.json` for messages | `locales/bg.json` | That plugin ([Translating your plugin](PLUGINS.md#translating-your-plugin)) |
 
 The `core` catalogue is assembled from parts, one file per part and language
-in `packages/contracts/src/locales/{en,bg}/`:
+in `packages/contracts/src/locales/{en,bg}/`. The canvas loads only the parts
+it says (marked "canvas" below), from `core-canvas-en.ts` and
+`core-canvas-bg.ts`; the server's own parts stay out of its bundle, and
+`core-en.ts` / `core-bg.ts` add them for the owner and the terminal:
 
 | Part | Its words |
 | :--- | :--- |
-| `date` | Weekdays, months, date patterns and durations |
-| `labels` | Tool call titles, idea categories and capabilities, approval channels, tool groups |
-| `safety` | Provenance, why Tavi asked, shell and skill limits |
-| `schedule` | Schedules, reminders, routines and their cadence; memory cards and settings |
-| `connect` | What Tavi needs connected (apps, channels, models, plugins, the browser, the desktop) |
-| `errors` | Keyed errors and the generic frame (`error.generic`) |
-| `notices` | Notices in a chat or Home, and a schedule's run outcomes |
-| `onboarding` | Onboarding's steps and their state |
-| `nav` | The canvas's routes and Settings views, which menu paths are built from |
-| `agent` | Words the agent's host says to a person (empty for now) |
-| `reports` | Language names, and routine reports and their PDF |
+| `date` (canvas) | Weekdays, months, date patterns and durations |
+| `labels` (canvas) | Tool call titles, idea categories and capabilities, approval channels, tool groups |
+| `safety` (canvas) | Provenance, why Tavi asked, shell and skill limits |
+| `schedule` (canvas) | Schedules, reminders, routines and their cadence; memory cards and settings |
+| `connect` (canvas) | What Tavi needs connected (apps, channels, models, plugins, the browser, the desktop), and what a mod's hooks read |
+| `errors` (canvas) | Keyed errors and the generic frame (`error.generic`), a workspace setting's refusals |
+| `notices` (canvas) | Notices in a chat or Home, a schedule's run outcomes, and a schedule's and the heartbeat's alerts |
+| `onboarding` (canvas) | Onboarding's steps and their state, its refusals and sign-in errors |
+| `nav` (canvas) | The canvas's routes and Settings views, which menu paths are built from |
+| `agent` (canvas) | Words the agent's host says to a person (empty for now) |
+| `reports` (canvas) | Language names, and routine reports and their PDF |
 | `channels` | Messages to chat apps: approvals, questions, cards, digests, receipts |
 | `terminal` | `tavi chat`, the prompts and the text output of the CLI |
 | `plugins` | The built-ins' descriptions, channel setup, guard reasons, the flight card, the daily brief's PDF |
-| `apps` | Connected apps' repairs and MCP questions |
+| `apps` (canvas) | Connected apps' repairs and MCP questions |
 | `presets` | MCP presets and the shared OAuth clients' setup steps |
-| `setup` | Onboarding's narration, refusals and sign-in errors, a workspace setting's refusals |
+| `setup` | Onboarding's narration in the terminal |
 | `pages` | The approval link and OAuth pages, slash command descriptions |
 
 `@tavi/contracts/i18n` holds the machinery: the list of languages
@@ -308,6 +311,14 @@ to the key itself for one English lacks. The canvas loads English with the
 page and every other language in its own chunk, only when the workspace speaks
 it. The owner, the terminal and the agent host read every language at once
 with `coreIn(locale)` from `@tavi/contracts/locales/core-server`.
+
+The shared helpers in `@tavi/contracts` take the canvas's `core` words
+(`CanvasCoreT`, from `@tavi/contracts/locales/core-canvas`), and so does
+`textRef`: a word stored for later, or a keyed error, is one every surface can
+read back, the canvas included. A key the canvas says that sits in a server
+part fails the typecheck; move it to a canvas part, keeping its name and its
+words. The owner and the terminal pass the whole catalogue (`coreIn`, or
+`coreEnglish` from `@tavi/contracts/locales/core`), which holds those words too.
 
 ## Adding a string
 
@@ -331,7 +342,7 @@ built from the nav's own labels, the `nav.*` keys the canvas's routes read, with
 `navPath(...)` in a message said at run time (`englishOf` for its English) or
 `navPathIn(words, ...)` inside a catalogue's message, `words` being that
 language's nav words: the part's own `./nav.js` in `@tavi/contracts`,
-`CORE_EN` / `CORE_BG` in the canvas. `strayMenuPaths` checks a catalogue for
+`CORE_CANVAS_EN` / `CORE_CANVAS_BG` in the canvas. `strayMenuPaths` checks a catalogue for
 a path the nav does not have.
 
 A count is a plural message, one form per plural category the language has:
@@ -415,11 +426,12 @@ none.
 
 1. Add its code to `SUPPORTED_LOCALES`, its own name to `LOCALE_NAMES` and its
    `Intl` locale to `INTL_LOCALE` in `packages/contracts/src/i18n.ts`, and its
-   name key to `LANGUAGE_NAME_KEYS` in `packages/contracts/src/locales/core.ts`
+   name key to `LANGUAGE_NAME_KEYS` in `packages/contracts/src/locales/core-canvas.ts`
    (with `reports.language.<code>` in every language's `reports` part).
 2. Write the `core` parts in `packages/contracts/src/locales/<code>/`, one per
-   part in `en/`, and `core-<code>.ts` beside `core-en.ts` to assemble them.
-   Add it to `coreIn` in `core-server.ts`, and export it from
+   part in `en/`, and `core-canvas-<code>.ts` and `core-<code>.ts` beside
+   `core-canvas-en.ts` and `core-en.ts` to assemble them.
+   Add it to `coreIn` in `core-server.ts`, and export both from
    `packages/contracts` (`package.json` `exports` and `publishConfig.exports`,
    and the `tsdown` entry).
 3. Write the `ui` parts in `apps/ui/src/locales/<code>/` and

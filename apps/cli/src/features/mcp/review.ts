@@ -15,7 +15,7 @@ import {
   type TextRef,
   type ToolEffect,
 } from "@tavi/contracts";
-import type { CoreKey } from "@tavi/contracts/locales/core";
+import type { CanvasCoreKey } from "@tavi/contracts/locales/core";
 import { definedOnly, isRecord } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
 import { injectionPatternSignals } from "@tavi/runtime";
@@ -508,7 +508,7 @@ function structuralChanges(node: unknown, pointer: string, depth = 0): readonly 
  */
 const BUILT_IN_FAMILIES: readonly {
   /** Its name in a warning, by key. */
-  readonly key: CoreKey;
+  readonly key: CanvasCoreKey;
   /** The family's ids among the registered (none of them an MCP server's). */
   readonly members: (toolIds: readonly string[]) => readonly string[];
   readonly words: ReadonlySet<string>;

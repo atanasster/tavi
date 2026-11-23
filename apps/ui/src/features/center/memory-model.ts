@@ -9,7 +9,7 @@ import type {
 } from "@tavi/contracts";
 
 import { decimal, formatBytes } from "../../lib/format.js";
-import { coreEnglish, type CoreKey } from "@tavi/contracts/locales/core";
+import { canvasCoreEnglish, type CanvasCoreKey } from "@tavi/contracts/locales/core-canvas";
 import { translateCore, translateNow } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
 import { saidLabels } from "./model.js";
@@ -127,7 +127,7 @@ export function otherPeopleLine(others: MemoryListAnswer["otherPeople"], people:
 }
 
 /** A layer's words as a `core` key: what the owner writes in English, said by `t`. */
-type LayerWords = readonly [CoreKey, Record<string, string>?];
+type LayerWords = readonly [CanvasCoreKey, Record<string, string>?];
 
 /** The key a layer's label is written with, by its kind and what it names. */
 function labelWords(layer: SystemPromptLayer): LayerWords | undefined {
@@ -155,7 +155,7 @@ function labelWords(layer: SystemPromptLayer): LayerWords | undefined {
 }
 
 /** The details the owner writes for a layer, each with its key. */
-const DETAIL_KEYS: readonly CoreKey[] = [
+const DETAIL_KEYS: readonly CanvasCoreKey[] = [
   "prompt.layer.replacedWorkspace",
   "prompt.layer.replacedExplicit",
   "prompt.layer.personaBlank",
@@ -172,7 +172,7 @@ const DETAIL_KEYS: readonly CoreKey[] = [
 function said(written: string, words: LayerWords | undefined): string {
   if (words === undefined) return written;
   const [key, params] = words;
-  return coreEnglish(key, params) === written ? translateCore(key, params) : written;
+  return canvasCoreEnglish(key, params) === written ? translateCore(key, params) : written;
 }
 
 /** A layer's label in the reader's language: "Shipped default (tavi-default-5)" is "Вградените инструкции (tavi-default-5)". */
@@ -184,7 +184,7 @@ export function layerLabel(layer: SystemPromptLayer): string {
 export function layerDetail(layer: SystemPromptLayer): string | undefined {
   const detail = layer.detail;
   if (detail === undefined || layer.sample === true) return detail;
-  const key = DETAIL_KEYS.find((candidate) => coreEnglish(candidate) === detail);
+  const key = DETAIL_KEYS.find((candidate) => canvasCoreEnglish(candidate) === detail);
   return key === undefined ? detail : translateCore(key);
 }
 

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { errorMessage } from "./util.js";
-import { coreEnglish, type CoreKey, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreKey, type CanvasCoreT } from "./locales/core-canvas.js";
 import { englishOf, renderTextRef, textRef, TextRefSchema, type TextRef, type TextRefParams } from "./text-ref.js";
 
 /**
@@ -62,7 +62,7 @@ export const TAVI_ERROR_CODES = [
 ] as const;
 
 /** What a stopped turn says, in the transcript and the chats list's words. Its code stays in the trajectory. */
-export function turnStoppedMessage(t: CoreT = coreEnglish): string {
+export function turnStoppedMessage(t: CanvasCoreT = canvasCoreEnglish): string {
   return t("turn.stopped.message");
 }
 
@@ -130,7 +130,7 @@ export class TaviError extends Error {
  */
 export function keyedError(
   code: TaviErrorCode,
-  key: CoreKey,
+  key: CanvasCoreKey,
   params?: TextRefParams,
   options: Omit<TaviErrorOptions, "i18n"> = {},
 ): TaviError {
@@ -144,7 +144,7 @@ export function keyedError(
  * nothing in English) around its English message. For a person's surfaces (the canvas, `tavi chat`, a chat app's
  * reply); the CLI's stderr, logs and what the model reads keep `message`.
  */
-export function errorTextIn(error: unknown, t: CoreT = coreEnglish): string {
+export function errorTextIn(error: unknown, t: CanvasCoreT = canvasCoreEnglish): string {
   const said =
     error instanceof Error
       ? error

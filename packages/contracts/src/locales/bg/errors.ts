@@ -361,4 +361,55 @@ export const errors = {
     "Влезе като {named}, а тази връзка е за {previous}. Добави го като друг акаунт или първо прекъсни тази връзка.",
   "error.oauth.connectionRemoved": "Връзката беше премахната по време на входа.",
   "error.oauth.revoked": `Входът в {channel} е отменен или изтекъл: свържи го пак от ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")}`,
+  // Workspace settings' refusals (`tavi config set`, Settings).
+  "error.settings.unknownWorkspace": "работното пространство {workspace} не е настроено на този сървър на Tavi",
+  "error.settings.taintLower": "страницата може само да вдигне security.taint; свали го с `tavi permissions taint {mode}`",
+  "error.settings.conflict":
+    "Настройките на работното пространство {workspace} са променени, откакто бяха прочетени (очаквана версия {expected}, текуща версия {current})",
+  "error.settings.providerVerbs":
+    "Доставчикът на памет и какво му се изпраща се сменят само с tavi memory set-provider и tavi memory egress (или „Доставчик“ в командния център), които първо казват какво изпращат",
+  "error.settings.personalNeedsHybrid":
+    "Личната памет се превръща в ембединги само при хибридно припомняне: tavi memory config retrieval hybrid --include-personal",
+  "error.settings.hybridUnchecked":
+    "Тук не мога да проверя хибридното припомняне: включи го от командния център или с `tavi memory config retrieval hybrid`",
+  "error.settings.needsEmbedding":
+    "Хибридното припомняне иска модел за ембединги: задай такъв с `tavi models set-role embedding --connection <id> --model <id>`, после включи хибридното",
+  "error.settings.confirmHybrid": "{disclosure} — потвърди, за да включа хибридното припомняне.",
+  "error.settings.confirmIt": "{disclosure} — потвърди, за да го включа.",
+  "error.settings.disclosures": "{first} {second}",
+  "error.settings.homeDmOff":
+    "chat.home-dm свързва личните ти разговори с „Начало“, което е изключено в това работно пространство: първо включи chat.home",
+  "error.settings.notSender":
+    "{identity} не е идентификатор на подател във връзка на чат канал, позната на тази папка с данни; използвай <connection>:<sender id>, например my-chat:123456789, с връзка, запазена в настройките, или такава, от която човекът е писал",
+  "error.settings.timezone": "{value} не е часова зона по IANA; използвай име като Europe/Berlin или America/New_York",
+  "error.settings.operatorName": "operator.name приема един ред с до {max} знака, например „Робин“",
+  "error.settings.locale": "{value} не е език, който Tavi говори; използвай някой от: {locales}",
+  "error.settings.onOff": "{value} не е on или off",
+  "error.settings.homeDm":
+    "{value} не е идентичност за личен разговор; използвай <connection>:<sender id>, например my-chat:123456789 (списък, разделен със запетаи), или off",
+  "error.settings.desktopApps":
+    "{value} не е приложение; използвай списък с идентификатори или имена на приложения, разделени със запетаи, например {example}, или none",
+  "error.settings.thumbnailHosts": "{value} не е хост или *.домейн; използвай списък, разделен със запетаи, например {example}, или none",
+  "error.settings.jsonObject": "{key} приема JSON обект, например {example}",
+  "error.settings.notValid": "{key} не е валиден: {where}{issue}",
+  "error.settings.unknownProblem": "неясен проблем",
+  "error.settings.taint": "{value} не е режим за следене на съдържанието; използвай off, observe или enforce",
+  "error.settings.injection": "{value} не е режим за откриване на инжекции; използвай off, patterns или model",
+  "error.settings.sandboxNetwork": "{value} не е мрежов режим на изолираната среда; използвай granted или ask",
+  "error.settings.mcpIds":
+    "{value} не е списък с идентификатори на MCP сървъри; използвай списък, разделен със запетаи, например mcp.docs,mcp.home, или none",
+  "error.settings.sandboxDomain":
+    "{value} не е домейн, до който sandbox.run може да стигне; използвай списък, разделен със запетаи, например {example} (или @registries), или none",
+  "error.settings.sandboxMax": "sandbox.domains побира най-много {max} домейна",
+  "error.settings.wholeNumber": "{value} не е цяло число от {min} до {max}",
+  "error.settings.videoDays": "{value} не е брой дни от 1 до {max}",
+  "error.settings.vision": "{value} не е механизъм за зрение: {engines}",
+  "error.settings.deferral": "{value} не е начин за отлагане на инструменти: {deferrals}",
+  "error.settings.tasksHome": "{value} не е място за задачите: tavi или mcp:<server> (например mcp:todoist)",
+  "error.settings.promptLayout": "{value} не е подредба на инструкциите: {layouts}",
+  "error.settings.keptRequests": "{value} не е брой от 0 до {max}",
+  "error.settings.maxTokens": "{value} не е брой токени от {min} до {max}",
+  "error.settings.budget": "{value} не е брой токени от {min} до {max}; махни стойността, за да няма лимит",
+  "error.settings.modelTarget": "{value} не е <connection>/<model>, например openrouter/openai/gpt-4.1-mini",
+  "error.settings.or": "{first} или {second}",
 } as const satisfies CatalogFor<typeof en>;

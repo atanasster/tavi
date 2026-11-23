@@ -1,5 +1,5 @@
-import { navPathIn } from "@tavi/contracts/locales/core";
-import { CORE_EN } from "@tavi/contracts/locales/core-en";
+import { navPathIn } from "@tavi/contracts/locales/core-canvas";
+import { CORE_CANVAS_EN } from "@tavi/contracts/locales/core-canvas-en";
 
 /** The words of features/welcome, in English. */
 export const welcome = {
@@ -110,9 +110,9 @@ export const welcome = {
   "welcome.search.testing": "Testing…",
   "welcome.search.add": "Add and test",
   "welcome.search.adding": "Adding {provider} and running one search…",
-  "welcome.search.exists": `A {kind} search provider is set up already: test or change it in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.search")}.`,
+  "welcome.search.exists": `A {kind} search provider is set up already: test or change it in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.search")}.`,
   "welcome.search.notChanged": "The search provider was not changed.",
-  "welcome.search.credentialTaken": `The credential {credential} is already in use: add the provider in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.search")} under another name.`,
+  "welcome.search.credentialTaken": `The credential {credential} is already in use: add the provider in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.search")} under another name.`,
   "welcome.search.notAdded": "The search provider was not added.",
   "welcome.search.keyNotStored": "The key was not stored.",
   "welcome.search.notEnabled": "The search provider was not turned on.",
@@ -132,7 +132,7 @@ export const welcome = {
   "welcome.tasks.saving": "Saving {app} as where your to-dos go…",
   "welcome.tasks.adding": "Adding Todoist…",
   "welcome.tasks.notAdded": "Todoist was not added: {message}",
-  "welcome.tasks.notListed": `Todoist was added but is not listed yet: open ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.apps")}.`,
+  "welcome.tasks.notListed": `Todoist was added but is not listed yet: open ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.apps")}.`,
   "welcome.tasks.ownTitle": "Tavi’s own list",
   "welcome.tasks.ownBody": "Works in every chat and channel with nothing to set up: ask Tavi to add, list or tick off a to-do.",
   "welcome.tasks.useOwn": "Use Tavi’s list",
@@ -141,7 +141,7 @@ export const welcome = {
   "welcome.tasks.todoistBody":
     "Keep your to-dos in Todoist: Tavi adds, finds and completes tasks there, and asks before anything is deleted.",
   "welcome.tasks.connectTodoist": "Connect Todoist",
-  "welcome.tasks.later": `Nothing is copied between the two. Change it later in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.general")}, or with {command}.`,
+  "welcome.tasks.later": `Nothing is copied between the two. Change it later in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.general")}, or with {command}.`,
 
   "welcome.channels.scope": "Pick the chat app you use. Only people you pair can message Tavi there.",
   "welcome.channels.seeAll": "See all channels",
@@ -153,7 +153,7 @@ export const welcome = {
   "welcome.channels.back": "Back to channels",
 
   "welcome.channel.refused": "The channel change was refused.",
-  "welcome.channel.notRemoved": `{reason} It could not be removed ({message}): remove it in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.channels")}.`,
+  "welcome.channel.notRemoved": `{reason} It could not be removed ({message}): remove it in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.channels")}.`,
   "welcome.channel.notSetUp": "{channel} was not set up: {message}.",
   "welcome.channel.checkFailed": "{channel} failed its check: {detail}. Check it and try again.",
   "welcome.channel.noReason": "no reason given",

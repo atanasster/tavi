@@ -8,7 +8,7 @@ import {
   type TextRef,
   type TextRefParams,
 } from "@tavi/contracts";
-import type { CoreKey } from "@tavi/contracts/locales/core";
+import type { CanvasCoreKey } from "@tavi/contracts/locales/core";
 
 import { refuseKeyed } from "../../shared/ipc-decisions.js";
 import type { ChannelApprovals } from "./channel-approvals.js";
@@ -24,7 +24,7 @@ export type NeedAnswerOutcome =
     };
 
 /** A refusal of an answer, by key: its English is the key's. */
-function refused(code: "NOT_FOUND" | "CONFLICT", key: CoreKey, params?: TextRefParams): NeedAnswerOutcome {
+function refused(code: "NOT_FOUND" | "CONFLICT", key: CanvasCoreKey, params?: TextRefParams): NeedAnswerOutcome {
   return refuseKeyed(code, key, params) as NeedAnswerOutcome;
 }
 

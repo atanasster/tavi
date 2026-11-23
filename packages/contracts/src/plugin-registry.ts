@@ -10,7 +10,7 @@ import type { AsyncRepository } from "./persistence-types.js";
 import { z } from "zod";
 
 import { SECRET_KEY_REF_PATTERN, TimestampSchema } from "./ids.js";
-import { coreEnglish, type CoreKey, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreKey, type CanvasCoreT } from "./locales/core-canvas.js";
 import { SUPPORTED_LOCALES, type Locale } from "./i18n.js";
 import { ToolEffectSchema } from "./tools.js";
 import { RouterFeatureSchema } from "./router.js";
@@ -209,7 +209,7 @@ export function pluginToolOutputTrust(tool: Pick<PluginToolDeclaration, "untrust
 }
 
 /** What a listing adds after a tool's effect for its output: nothing for the default (untrusted). */
-export function pluginToolOutputNote(output: PluginToolOutputTrust | undefined, t: CoreT = coreEnglish): string {
+export function pluginToolOutputNote(output: PluginToolOutputTrust | undefined, t: CanvasCoreT = canvasCoreEnglish): string {
   return output === "trusted" ? t("plugin.tool.note", { note: t("plugin.tool.note.trustedOutput") }) : "";
 }
 
@@ -221,7 +221,7 @@ export function pluginToolDeclarationNote(
     readonly cardFields?: readonly string[] | undefined;
     readonly browserWorker?: boolean | undefined;
   },
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string {
   const notes = [
     ...(tool.sink === undefined ? [] : [t("plugin.tool.note.sink", { sink: tool.sink })]),
@@ -233,13 +233,13 @@ export function pluginToolDeclarationNote(
 }
 
 /** A tool's effect as its badge says it: read-only, mutating, external; an effect this release does not know reads as it arrives. */
-const TOOL_EFFECT_KEYS: Readonly<Record<z.infer<typeof ToolEffectSchema>, CoreKey>> = {
+const TOOL_EFFECT_KEYS: Readonly<Record<z.infer<typeof ToolEffectSchema>, CanvasCoreKey>> = {
   "read-only": "plugin.tool.effect.readOnly",
   mutating: "plugin.tool.effect.mutating",
   external: "plugin.tool.effect.external",
 };
 
-const toolEffectLabel = (effect: string, t: CoreT): string =>
+const toolEffectLabel = (effect: string, t: CanvasCoreT): string =>
   Object.hasOwn(TOOL_EFFECT_KEYS, effect) ? t(TOOL_EFFECT_KEYS[effect as keyof typeof TOOL_EFFECT_KEYS]) : effect;
 
 /** A tool as a review lists it: `acme.weather.forecast (read-only)`, with its output's trust when that is not the default, and what it asks of the gate. */
@@ -253,7 +253,7 @@ export function describePluginTool(
     readonly cardFields?: readonly string[] | undefined;
     readonly browserWorker?: boolean | undefined;
   },
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string {
   return t("plugin.tool.line", {
     id: tool.id,
@@ -350,7 +350,7 @@ export function pluginRunningVersion(plugin: PluginView): PluginView["versions"]
 }
 
 /** What approving a routing provider means, in the words the CLI and the canvas both show. */
-export function describeRouterDeclaration(router: PluginRouterDeclaration, t: CoreT = coreEnglish): string {
+export function describeRouterDeclaration(router: PluginRouterDeclaration, t: CanvasCoreT = canvasCoreEnglish): string {
   const extra = router.features.flatMap((feature) => (feature === "model" ? [] : [t(ROUTER_FEATURE_DISCLOSURES[feature])]));
   const receives = extra.length === 0 ? t("plugin.router.receives") : t("plugin.router.receivesAnd", { extra: extra.join(", ") });
   const words = {
@@ -403,7 +403,7 @@ export interface PluginChannelDisclosure {
 }
 
 /** What a channel asks for beyond carrying messages, as its review says it: each is granted by this approval or a later choice. */
-function grantsOf(descriptor: ChannelDescriptor, t: CoreT): string[] {
+function grantsOf(descriptor: ChannelDescriptor, t: CanvasCoreT): string[] {
   const app = descriptor.app;
   return [
     ...(app?.mailbox === true ? [t("plugin.channel.mailbox")] : []),
@@ -414,7 +414,7 @@ function grantsOf(descriptor: ChannelDescriptor, t: CoreT): string[] {
   ];
 }
 
-export function channelDisclosureOf(descriptor: ChannelDescriptor, t: CoreT = coreEnglish): PluginChannelDisclosure {
+export function channelDisclosureOf(descriptor: ChannelDescriptor, t: CanvasCoreT = canvasCoreEnglish): PluginChannelDisclosure {
   const oauth = descriptor.auth.kind === "oauth2" ? descriptor.auth.oauth : undefined;
   const endpoints = [
     ...(oauth === undefined

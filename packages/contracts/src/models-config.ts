@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { IdSchema, SECRET_KEY_REF_PATTERN, TimestampSchema } from "./ids.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 
 /**
  * User-configured model connections, catalog and role bindings.
@@ -99,7 +99,7 @@ const PRESET_NOTE_KEYS = {
 } as const;
 
 /** What a preset's setup says about it beyond its name, in the reader's language; undefined when it says nothing. */
-export function presetNote(preset: Pick<ModelProviderPreset, "id" | "note">, t: CoreT = coreEnglish): string | undefined {
+export function presetNote(preset: Pick<ModelProviderPreset, "id" | "note">, t: CanvasCoreT = canvasCoreEnglish): string | undefined {
   const key = Object.hasOwn(PRESET_NOTE_KEYS, preset.id) ? PRESET_NOTE_KEYS[preset.id as keyof typeof PRESET_NOTE_KEYS] : undefined;
   return key === undefined ? preset.note : t(key);
 }
@@ -146,7 +146,7 @@ export const MODEL_PROVIDER_PRESETS: readonly ModelProviderPreset[] = [
     keysUrl: "https://platform.claude.com/settings/keys",
     pdfNever: true,
     videoNever: true,
-    note: coreEnglish("model.preset.note.anthropic"),
+    note: canvasCoreEnglish("model.preset.note.anthropic"),
   },
   {
     id: "gemini",
@@ -166,7 +166,7 @@ export const MODEL_PROVIDER_PRESETS: readonly ModelProviderPreset[] = [
     requiresKey: false,
     localOnly: true,
     docsUrl: "https://docs.ollama.com/api/openai-compatibility",
-    note: coreEnglish("model.preset.note.ollama"),
+    note: canvasCoreEnglish("model.preset.note.ollama"),
   },
   {
     id: "lmstudio",
@@ -176,7 +176,7 @@ export const MODEL_PROVIDER_PRESETS: readonly ModelProviderPreset[] = [
     requiresKey: false,
     localOnly: true,
     docsUrl: "https://lmstudio.ai/docs/developer/openai-compat",
-    note: coreEnglish("model.preset.note.lmstudio"),
+    note: canvasCoreEnglish("model.preset.note.lmstudio"),
   },
   {
     id: "custom",
@@ -186,7 +186,7 @@ export const MODEL_PROVIDER_PRESETS: readonly ModelProviderPreset[] = [
     requiresKey: true,
     localOnly: false,
     docsUrl: "https://developers.openai.com/api/reference/overview",
-    note: coreEnglish("model.preset.note.custom"),
+    note: canvasCoreEnglish("model.preset.note.custom"),
   },
 ];
 
@@ -245,7 +245,7 @@ export function readsVideo(capabilities: readonly string[]): boolean {
 }
 
 /** What the owner confirms before a model gets video input: the whole clip goes to the provider, each time. */
-export function videoDisclosure(provider: string, model: string, t: CoreT = coreEnglish): string {
+export function videoDisclosure(provider: string, model: string, t: CanvasCoreT = canvasCoreEnglish): string {
   return t("model.video.disclosure", { provider, model });
 }
 

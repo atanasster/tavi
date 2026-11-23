@@ -1,6 +1,6 @@
 import type { CatalogFor } from "@tavi/contracts/i18n";
-import { CORE_BG } from "@tavi/contracts/locales/core-bg";
-import { navPathIn } from "@tavi/contracts/locales/core";
+import { CORE_CANVAS_BG } from "@tavi/contracts/locales/core-canvas-bg";
+import { navPathIn } from "@tavi/contracts/locales/core-canvas";
 
 import type { chat as en } from "../en/chat.js";
 
@@ -200,9 +200,9 @@ export const chat = {
   "chat.approval.group.explain": "„Разреши за този чат“ му позволява да ползва {group}, без да пита отново, до края на този чат.",
   "chat.approval.group.explainLasting":
     "„Разреши до утре“ му позволява да ползва {group}, без да пита отново, в този чат за един ден или докато чатът започне отначало.",
-  "chat.approval.group.explainAlways": `„Разреши винаги“ не пита повече в нито един чат. Отмени го от ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.permissions")}.`,
+  "chat.approval.group.explainAlways": `„Разреши винаги“ не пита повече в нито един чат. Отмени го от ${navPathIn(CORE_CANVAS_BG, "nav.route.settings", "nav.settings.permissions")}.`,
   "chat.approval.always.title": "Запазва правило, което разрешава точно: {rules}",
-  "chat.approval.always.notice": `„Разреши винаги“ запазва правило, което разрешава точно: {rules}. Отмени го от ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.permissions")}.`,
+  "chat.approval.always.notice": `„Разреши винаги“ запазва правило, което разрешава точно: {rules}. Отмени го от ${navPathIn(CORE_CANVAS_BG, "nav.route.settings", "nav.settings.permissions")}.`,
   "chat.approval.rule.any": "всяко извикване на {tool}",
   "chat.approval.confirm.calls": "Потвърди тези действия. Одобрените извиквания може да променят локални данни.",
   "chat.approval.confirm.criticalSingle": "Това извикване е с критичен риск. Потвърди, за да го изпълня.",

@@ -31,7 +31,7 @@ import {
   storedWords,
   type StoredWords,
 } from "@tavi/contracts";
-import type { CoreKey } from "@tavi/contracts/locales/core";
+import type { CanvasCoreKey } from "@tavi/contracts/locales/core-canvas";
 import type { Locale } from "@tavi/contracts/i18n";
 import { errorMessage } from "@tavi/contracts/util";
 
@@ -469,7 +469,7 @@ export function startHeartbeatHost(
     // "Thu 07:00", the weekday by key so the alert says it in its reader's language.
     const parts = localDateTime(new Date(until), timezone);
     const local = textRef("channel.heartbeat.alert.dayClock", {
-      weekday: textRef(`date.weekdayShort.${parts.weekday}` as CoreKey),
+      weekday: textRef(`date.weekdayShort.${parts.weekday}` as CanvasCoreKey),
       time: `${String(parts.hour).padStart(2, "0")}:${String(parts.minute).padStart(2, "0")}`,
     });
     await pause(state, "budget", textRef("channel.heartbeat.alert.budget", { time: local }), until);

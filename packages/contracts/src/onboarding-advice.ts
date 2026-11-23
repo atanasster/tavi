@@ -1,8 +1,8 @@
-import { coreEnglish, type CoreKey, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreKey, type CanvasCoreT } from "./locales/core-canvas.js";
 import { clip } from "./util.js";
 import { daysBetween, LIFECYCLE_WARNING_DAYS, type ModelLifecycle } from "./model-lifecycle.js";
 import { MODEL_PROVIDER_PRESETS, keyPageOf, type ModelProviderPreset } from "./models-config.js";
-import { CORE_EN } from "./locales/core-en.js";
+import { isCanvasCoreKey } from "./text-ref.js";
 import {
   fastModelFailure,
   ONBOARDING_ABI,
@@ -66,14 +66,14 @@ const presetNamed = (id: string | undefined): ModelProviderPreset | undefined =>
   id === undefined ? undefined : MODEL_PROVIDER_PRESETS.find((preset) => preset.id === id);
 
 /** How to start each local server when it isn't running, by preset id. */
-const START_LOCAL: Readonly<Record<string, CoreKey>> = {
+const START_LOCAL: Readonly<Record<string, CanvasCoreKey>> = {
   ollama: "onboarding.advice.startOllama",
   lmstudio: "onboarding.advice.startLmStudio",
 };
 
 /** A `core` key and its parameters: a message said in whichever language the reader's surface speaks. */
 export interface CoreText {
-  readonly key: CoreKey;
+  readonly key: CanvasCoreKey;
   readonly params?: Readonly<Record<string, string>>;
 }
 
@@ -83,7 +83,7 @@ export function verifyAdviceText(code: VerifyAdviceCode, context: VerifyAdviceCo
   const provider = preset === undefined ? {} : { provider: preset.name };
   const model = context.model === undefined ? {} : { model: context.model };
   // Each sentence once with the provider or model named, once without: "The provider" and "this model" are words, not data.
-  const named = (key: CoreKey, any: CoreKey, params: Readonly<Record<string, string>>): CoreText =>
+  const named = (key: CanvasCoreKey, any: CanvasCoreKey, params: Readonly<Record<string, string>>): CoreText =>
     preset === undefined ? { key: any, params } : { key, params: { ...provider, ...params } };
   switch (code) {
     case "auth":
@@ -127,20 +127,18 @@ export function verifyAdviceText(code: VerifyAdviceCode, context: VerifyAdviceCo
 }
 
 /** The advice for `code`, worded for the connection it happened on. */
-export function verifyAdvice(code: VerifyAdviceCode, context: VerifyAdviceContext = {}, t: CoreT = coreEnglish): string {
+export function verifyAdvice(code: VerifyAdviceCode, context: VerifyAdviceContext = {}, t: CanvasCoreT = canvasCoreEnglish): string {
   const { key, params } = verifyAdviceText(code, context);
   return t(key, params);
 }
 
-const isCoreKey = (key: string): key is CoreKey => Object.hasOwn(CORE_EN, key);
-
 /** A detail message in `t`'s language, each parameter that is a message of its own said first; undefined for a key this build lacks. */
-function detailIn(text: OnboardingDetailText, t: CoreT): string | undefined {
-  if (!isCoreKey(text.key)) return undefined;
+function detailIn(text: OnboardingDetailText, t: CanvasCoreT): string | undefined {
+  if (!isCanvasCoreKey(text.key)) return undefined;
   const params: Record<string, string | number> = {};
   for (const [name, value] of Object.entries(text.params ?? {})) {
     if (typeof value !== "object") params[name] = value;
-    else if (isCoreKey(value.key)) params[name] = t(value.key, value.params);
+    else if (isCanvasCoreKey(value.key)) params[name] = t(value.key, value.params);
     else return undefined;
   }
   return t(text.key, params);
@@ -150,7 +148,10 @@ function detailIn(text: OnboardingDetailText, t: CoreT): string | undefined {
  * A step's detail in `t`'s language: its `detailText` when it has one this
  * build knows, else the owner's English `detail`; cut as the owner cuts it.
  */
-export function onboardingStepDetail(step: Pick<OnboardingStepStatus, "detail" | "detailText">, t: CoreT = coreEnglish): string {
+export function onboardingStepDetail(
+  step: Pick<OnboardingStepStatus, "detail" | "detailText">,
+  t: CanvasCoreT = canvasCoreEnglish,
+): string {
   const said = step.detailText === undefined ? undefined : detailIn(step.detailText, t);
   return said === undefined ? step.detail : clip(said, ONBOARDING_STEP_DETAIL_MAX);
 }
@@ -158,7 +159,7 @@ export function onboardingStepDetail(step: Pick<OnboardingStepStatus, "detail" |
 /** `fastModelFailure` in `t`'s language: the advice after a failed fast model, from the step's `detailText` when it carries it. */
 export function fastModelFailureIn(
   step: Pick<OnboardingStepStatus, "state" | "detail" | "detailText"> | undefined,
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string | undefined {
   const english = fastModelFailure(step);
   const fast = step?.detailText?.params?.["fast"];
@@ -453,7 +454,7 @@ export function suggestRoles(
 }
 
 /** What voice setup reports missing (`VoiceSetupStatus.missing`) that has words of its own; FFmpeg and whisper.cpp are names, said as they are. */
-const VOICE_PART_KEYS: Readonly<Record<string, CoreKey>> = {
+const VOICE_PART_KEYS: Readonly<Record<string, CanvasCoreKey>> = {
   "a speech model": "onboarding.voice.part.model",
   "analyzers.json naming the model": "onboarding.voice.part.analyzers",
 };
@@ -465,7 +466,7 @@ const VOICE_PART_KEYS: Readonly<Record<string, CoreKey>> = {
  */
 export function voiceMissingText(
   missing: readonly string[],
-): string | { readonly key: CoreKey; readonly params: { readonly before: string; readonly after: string } } {
+): string | { readonly key: CanvasCoreKey; readonly params: { readonly before: string; readonly after: string } } {
   const at = missing.findIndex((part) => Object.hasOwn(VOICE_PART_KEYS, part));
   const key = at < 0 ? undefined : VOICE_PART_KEYS[missing[at] ?? ""];
   if (key === undefined) return missing.join(", ");
@@ -478,7 +479,7 @@ export function voiceMissingText(
 }
 
 /** Voice setup's missing parts said by `t`: "whisper.cpp, a speech model" in English. */
-export function voiceMissingWords(missing: readonly string[], t: CoreT = coreEnglish): string {
+export function voiceMissingWords(missing: readonly string[], t: CanvasCoreT = canvasCoreEnglish): string {
   const text = voiceMissingText(missing);
   return typeof text === "string" ? text : t(text.key, text.params);
 }

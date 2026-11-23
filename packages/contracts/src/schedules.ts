@@ -16,7 +16,7 @@ import {
 import { STALE_WEB_PATTERN_MESSAGE, isStaleWebPattern } from "./tool-policy.js";
 import type { SchedulePrecheck, SchedulePrecheckState } from "./schedule-precheck.js";
 import { definedOnly } from "./util.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 import { renderTextRef, sayTextRefWith, textRef, TEXT_REF_PARAM_MAX, type TextRef } from "./text-ref.js";
 
 /**
@@ -243,7 +243,7 @@ export function scheduleCatchUpLookbackMs(spec: Pick<ScheduleSpec, "monthly" | "
  * the tools' read-backs and the web app say a schedule's and a routine
  * trigger's cadence through it.
  */
-export function scheduleSpecText(spec: ScheduleSpec, style: "sentence" | "label" = "sentence", t: CoreT = coreEnglish): string {
+export function scheduleSpecText(spec: ScheduleSpec, style: "sentence" | "label" = "sentence", t: CanvasCoreT = canvasCoreEnglish): string {
   const sentence = style === "sentence";
   const weekdays = daysOfWeekText(spec.daysOfWeek, t);
   const pattern = spec.monthly !== undefined || spec.yearly !== undefined;
@@ -312,7 +312,7 @@ sayTextRefWith("schedule.spec.stored", (params, t) => {
 });
 
 /** Times as a sentence lists them: "07:00, 12:00 and 19:00". */
-function listAnd(items: readonly string[], t: CoreT): string {
+function listAnd(items: readonly string[], t: CanvasCoreT): string {
   return items.length <= 1
     ? items.join("")
     : t("schedule.spec.listAnd", { items: items.slice(0, -1).join(", "), last: items.at(-1) ?? "" });
@@ -392,7 +392,7 @@ export type ScheduleNotify = (typeof SCHEDULE_NOTIFY_MODES)[number];
 export const ScheduleNotifySchema = z.enum(SCHEDULE_NOTIFY_MODES);
 
 /** When a schedule's runs tell its person, in words: the CLI's `show`, the tools' answers and the web page say it alike. */
-export function scheduleNotifyText(notify: ScheduleNotify | undefined, t: CoreT = coreEnglish): string {
+export function scheduleNotifyText(notify: ScheduleNotify | undefined, t: CanvasCoreT = canvasCoreEnglish): string {
   if (notify === "when-sent") return t("schedule.notify.whenSent");
   if (notify === "if-changed") return t("schedule.notify.ifChanged");
   return t("schedule.notify.always");
@@ -464,7 +464,7 @@ export function scheduleFireMaxTokens(schedule: { readonly maxTokens?: number | 
 }
 
 /** A token count as people read it: "12,345 tokens". */
-export function tokenCountText(tokens: number, t: CoreT = coreEnglish): string {
+export function tokenCountText(tokens: number, t: CanvasCoreT = canvasCoreEnglish): string {
   return t("schedule.tokens", { count: Math.round(tokens) });
 }
 
@@ -477,7 +477,10 @@ export function parseTokenCount(value: string, schema: z.ZodNumber): number | un
 }
 
 /** What a schedule's token ceiling says, in words: `undefined` when it has none. */
-export function scheduleMaxTokensText(schedule: { readonly maxTokens?: number | undefined }, t: CoreT = coreEnglish): string | undefined {
+export function scheduleMaxTokensText(
+  schedule: { readonly maxTokens?: number | undefined },
+  t: CanvasCoreT = canvasCoreEnglish,
+): string | undefined {
   return schedule.maxTokens === undefined ? undefined : t("schedule.maxTokens", { tokens: tokenCountText(schedule.maxTokens, t) });
 }
 
@@ -584,7 +587,7 @@ export function scheduleEmailSubjectMatches(trigger: Pick<ScheduleEmailTrigger, 
 }
 
 /** An email trigger in a line: where it listens, whom it takes mail from, and its subject filter. */
-export function scheduleEmailTriggerSentence(trigger: ScheduleEmailTrigger | undefined, t: CoreT = coreEnglish): string {
+export function scheduleEmailTriggerSentence(trigger: ScheduleEmailTrigger | undefined, t: CanvasCoreT = canvasCoreEnglish): string {
   if (trigger === undefined) return t("schedule.email.off");
   const words = { connection: trigger.connectionId, senders: trigger.senders.join(", ") };
   return trigger.subject === undefined
@@ -617,7 +620,7 @@ export const SCHEDULE_WATCH_DEFAULT_EVERY_HOURS = 1;
 /** What a watcher does, in words: "watches the page https://… every hour; runs only when it changes". */
 export function scheduleWatchSentence(
   schedule: { readonly precheck?: SchedulePrecheck; readonly spec: ScheduleSpec },
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string | undefined {
   const { precheck, spec } = schedule;
   if (precheck === undefined) return undefined;
@@ -656,7 +659,7 @@ export function schedulePausedText(
     readonly spec?: ScheduleSpec;
   },
   now: Date = new Date(),
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string | undefined {
   if (schedule.enabled) return undefined;
   if (schedule.spec !== undefined && scheduleFinished(schedule.spec, now)) return t("schedule.finished");
@@ -666,7 +669,7 @@ export function schedulePausedText(
 }
 
 /** What a schedule that ended says of itself, in English. */
-export const SCHEDULE_FINISHED_TEXT = coreEnglish("schedule.finished");
+export const SCHEDULE_FINISHED_TEXT = canvasCoreEnglish("schedule.finished");
 
 /** Whether a spec that ends (`once`, `until`) has no occurrence left after `now`: a schedule of it is finished, not paused. */
 export function scheduleFinished(spec: ScheduleSpec, now: Date): boolean {
@@ -1195,7 +1198,7 @@ export function scheduledWorkUsage(
 }
 
 /** A month's scheduled work in words: "12,345 tokens (about $0.42) of a 1,000,000-token budget (1%)". */
-export function scheduledWorkText(usage: ScheduledWorkUsage, t: CoreT = coreEnglish): string {
+export function scheduledWorkText(usage: ScheduledWorkUsage, t: CanvasCoreT = canvasCoreEnglish): string {
   return renderTextRef(scheduledWorkRef(usage), t) ?? "";
 }
 

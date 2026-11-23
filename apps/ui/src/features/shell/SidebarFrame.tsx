@@ -5,7 +5,7 @@ import { type PanelBounds, loadWidth, saveWidth, useResizablePanel } from "../..
 import { DEFAULT_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH, SIDEBAR_RESERVE_WIDTH } from "../../lib/layout.js";
 import { translateCore, useT } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
-import type { CoreKey } from "@tavi/contracts/locales/core-en";
+import type { CanvasCoreKey } from "@tavi/contracts/locales/core-canvas-en";
 
 export const SIDEBAR_WIDTH_KEY = "tavi.sidebar.width";
 
@@ -28,7 +28,7 @@ export type SidebarPanel = "chats" | "center" | "settings";
 const PANEL_WORDS: Readonly<
   Record<
     SidebarPanel,
-    { readonly title: UiKey | { readonly core: CoreKey }; readonly label: UiKey; readonly hide: UiKey; readonly show: UiKey }
+    { readonly title: UiKey | { readonly core: CanvasCoreKey }; readonly label: UiKey; readonly hide: UiKey; readonly show: UiKey }
   >
 > = {
   chats: {

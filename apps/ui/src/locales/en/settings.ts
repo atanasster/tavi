@@ -1,5 +1,5 @@
-import { navPathIn } from "@tavi/contracts/locales/core";
-import { CORE_EN } from "@tavi/contracts/locales/core-en";
+import { navPathIn } from "@tavi/contracts/locales/core-canvas";
+import { CORE_CANVAS_EN } from "@tavi/contracts/locales/core-canvas-en";
 
 /** The words of features/settings, in English. */
 export const settings = {
@@ -20,8 +20,8 @@ export const settings = {
   "settings.models.target.unconfigured": "No model is configured, so runs are refused. Choose a model below.",
   "settings.models.target.unconfiguredUntilRestart":
     "The owner started with no model configured, so runs are refused. Restart `tavi serve` to run {next}.",
-  "settings.models.target.unresolved": `The owner runs {running}; the saved model choice cannot be resolved yet. Check ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.models")} before restarting \`tavi serve\`.`,
-  "settings.models.target.startupUnresolved": `The owner runs its startup model; the saved model choice cannot be resolved yet. Check ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.models")} before restarting \`tavi serve\`.`,
+  "settings.models.target.unresolved": `The owner runs {running}; the saved model choice cannot be resolved yet. Check ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.models")} before restarting \`tavi serve\`.`,
+  "settings.models.target.startupUnresolved": `The owner runs its startup model; the saved model choice cannot be resolved yet. Check ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.models")} before restarting \`tavi serve\`.`,
   "settings.models.target.untilRestart": "The owner runs {running} until `tavi serve` is restarted; then it runs {next}.",
   "settings.models.target.startupUntilRestart": "The owner runs its startup model until `tavi serve` is restarted; then it runs {next}.",
   "settings.models.chatModelUnavailable": "chat model unavailable — pick another",
@@ -84,7 +84,7 @@ export const settings = {
   "settings.video.unknown": "unknown",
 
   "settings.channels.notRunning": "{label} isn't running, so a code sent to it could not arrive. Fix it in {link}, which says why.",
-  "settings.channels.notRunningLink": `${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.channels")}`,
+  "settings.channels.notRunningLink": `${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.channels")}`,
 
   "settings.nav.workspace": "Workspace {workspaceId}",
 
@@ -505,7 +505,7 @@ export const settings = {
   "settings.video.notInstalled": "not installed",
   "settings.video.notInstalledFix": "not installed ({fix})",
   "settings.video.runs": "runs: {confinement}",
-  "settings.video.toolsOff": `The video tools are off (${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.general")}, or tavi config set video.enabled on).`,
+  "settings.video.toolsOff": `The video tools are off (${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.general")}, or tavi config set video.enabled on).`,
   "settings.video.offIn": "The video tools are off in: {workspaces}.",
   "settings.video.configError": "analyzers.json is not used: {error}",
   "settings.video.none": "none",

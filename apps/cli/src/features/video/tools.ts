@@ -46,7 +46,7 @@ import {
   type VideoRun,
   type VideoSource,
 } from "@tavi/contracts";
-import type { CoreKey } from "@tavi/contracts/locales/core";
+import type { CanvasCoreKey } from "@tavi/contracts/locales/core";
 
 import { cardWords } from "../approvals/card-words.js";
 import { folderFileLabel, type FolderFile } from "../folders/fs-tools.js";
@@ -216,8 +216,8 @@ interface LoadedVideo {
 }
 
 /** A refusal or failure as it is said, by key: its key and parameters, and `sentence`, its English. */
-type Said = { readonly key: CoreKey; readonly params?: TextRefParams; readonly sentence: string };
-const said = (key: CoreKey, params?: TextRefParams): Said => ({
+type Said = { readonly key: CanvasCoreKey; readonly params?: TextRefParams; readonly sentence: string };
+const said = (key: CanvasCoreKey, params?: TextRefParams): Said => ({
   key,
   ...(params === undefined ? {} : { params }),
   sentence: englishOf(textRef(key, params)),

@@ -5,7 +5,7 @@ import { ToolPatternSchema } from "./tool-policy.js";
 import { TASK_ORIGINS, type FrontEnd } from "./task-origins.js";
 import type { ModelUsage } from "./model.js";
 import type { Locale } from "./i18n.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 import type { AdmissionKind, ChatKind } from "./ports/tasks.js";
 import type { ChatFolder, ChatFolderMode, ChatFolderPrimaryKind } from "./chat-folders.js";
 
@@ -162,7 +162,10 @@ export function modFailureRuleOf(hook: Pick<ModHookDeclaration, "event" | "onFai
  * beside the disclosure at approval, so a hook with no match is
  * seen to read everything it is offered. Said by `t` (English by default).
  */
-export function modHookReadsLine(hook: Pick<ModHookDeclaration, "event" | "match" | "contextTrusted">, t: CoreT = coreEnglish): string {
+export function modHookReadsLine(
+  hook: Pick<ModHookDeclaration, "event" | "match" | "contextTrusted">,
+  t: CanvasCoreT = canvasCoreEnglish,
+): string {
   const tools =
     hook.match?.tools === undefined ? t("mods.reads.everyTool") : hook.match.tools.map((pattern) => `\`${pattern}\``).join(", ");
   const where = [
@@ -181,7 +184,7 @@ function readsOf(
   tools: string,
   where: string,
   scope: string,
-  t: CoreT,
+  t: CanvasCoreT,
 ): string {
   switch (hook.event) {
     case "tool.check":
@@ -218,7 +221,7 @@ export interface PluginModHookView {
   readonly contextTrusted?: true;
 }
 
-export function modHookViewsOf(mods: ModsDeclaration, t: CoreT = coreEnglish): readonly PluginModHookView[] {
+export function modHookViewsOf(mods: ModsDeclaration, t: CanvasCoreT = canvasCoreEnglish): readonly PluginModHookView[] {
   return mods.hooks.map((hook) => ({
     event: hook.event,
     ...(hook.match === undefined ? {} : { match: hook.match }),

@@ -25,9 +25,8 @@ import {
   WorkspaceSettingsAnswerSchema,
   TaviError,
   DEFAULT_WORKSPACE_ID,
-  isCoreKey,
 } from "@tavi/contracts";
-import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
+import { coreEnglish, isCoreKey, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
 import { ownerWords, storeWords } from "../../shared/terminal-words.js";
 import { zodIssues } from "@tavi/contracts/zod-util";
 import { PluginRegistry } from "@tavi/runtime";

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { BROWSER_TITLE_MAX, BROWSER_URL_MAX } from "./browser-history.js";
 import { IdSchema, TimestampSchema } from "./ids.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 import { SITE_RECIPES_MAX } from "./site-recipes.js";
 
 /**
@@ -201,7 +201,7 @@ export type BrowserSiteNoteProposedAnswer = z.infer<typeof BrowserSiteNotePropos
  * A session's duration as the Browser cards and `tavi browser history` say it:
  * "45 s", "18 min", "2 h", "2 h 5 min", in the words of `t`.
  */
-export function formatBrowserDuration(ms: number, t: CoreT = coreEnglish): string {
+export function formatBrowserDuration(ms: number, t: CanvasCoreT = canvasCoreEnglish): string {
   const minutes = Math.floor(ms / 60_000);
   if (minutes < 1) return t("browser.duration.seconds", { seconds: String(Math.max(0, Math.round(ms / 1000))) });
   if (minutes < 60) return t("browser.duration.minutes", { minutes: String(minutes) });

@@ -5,9 +5,9 @@ import type { AsyncRepository } from "./persistence-types.js";
 
 import { IdSchema, TimestampSchema } from "./ids.js";
 import { defineProviderError } from "./util.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 import type { Locale } from "./i18n.js";
-import type { CoreKey } from "./locales/core-en.js";
+import type { CanvasCoreKey } from "./locales/core-canvas-en.js";
 
 /**
  * Ideas: things Tavi offers to do for a person,
@@ -119,7 +119,7 @@ export type IdeaCategory = (typeof IDEA_CATEGORIES)[number];
 export const IdeaCategorySchema = z.enum(IDEA_CATEGORIES);
 
 /** Each section's heading, as a word key. */
-const IDEA_CATEGORY_KEYS: Readonly<Record<IdeaCategory, CoreKey>> = {
+const IDEA_CATEGORY_KEYS: Readonly<Record<IdeaCategory, CanvasCoreKey>> = {
   productivity: "ideas.category.productivity",
   work: "ideas.category.work",
   learning: "ideas.category.learning",
@@ -130,7 +130,7 @@ const IDEA_CATEGORY_KEYS: Readonly<Record<IdeaCategory, CoreKey>> = {
 };
 
 /** A section's heading: "Travel & errands". */
-export function ideaCategoryLabel(category: IdeaCategory, t: CoreT = coreEnglish): string {
+export function ideaCategoryLabel(category: IdeaCategory, t: CanvasCoreT = canvasCoreEnglish): string {
   return t(IDEA_CATEGORY_KEYS[category]);
 }
 
@@ -178,7 +178,7 @@ export const IDEA_PLUGIN_CAPABILITIES = ["places", "care", "jobs", "trends", "tr
 export const IdeaPluginCapabilitySchema = z.enum(IDEA_PLUGIN_CAPABILITIES);
 
 /** Each capability as a card's *Uses* line names it, as a word key. */
-const IDEA_CAPABILITY_KEYS: Readonly<Record<IdeaCapability, CoreKey>> = {
+const IDEA_CAPABILITY_KEYS: Readonly<Record<IdeaCapability, CanvasCoreKey>> = {
   web: "ideas.capability.web",
   browser: "ideas.capability.browser",
   memory: "ideas.capability.memory",
@@ -201,7 +201,7 @@ const IDEA_CAPABILITY_KEYS: Readonly<Record<IdeaCapability, CoreKey>> = {
 };
 
 /** A capability as a card's *Uses* line names it: "Smart home". */
-export function ideaCapabilityLabel(capability: IdeaCapability, t: CoreT = coreEnglish): string {
+export function ideaCapabilityLabel(capability: IdeaCapability, t: CanvasCoreT = canvasCoreEnglish): string {
   return t(IDEA_CAPABILITY_KEYS[capability]);
 }
 
@@ -638,7 +638,7 @@ export const PluginIdeasDeclarationSchema = z.strictObject({
 });
 export type PluginIdeasDeclaration = z.infer<typeof PluginIdeasDeclarationSchema>;
 
-const IDEAS_RECEIVE_DISCLOSURES: Readonly<Record<IdeasReceive, CoreKey>> = {
+const IDEAS_RECEIVE_DISCLOSURES: Readonly<Record<IdeasReceive, CanvasCoreKey>> = {
   // Every receive but the ledger has a per-workspace switch: its words say so.
   memory: "ideas.provider.receive.memory",
   tasks: "ideas.provider.receive.tasks",
@@ -647,7 +647,7 @@ const IDEAS_RECEIVE_DISCLOSURES: Readonly<Record<IdeasReceive, CoreKey>> = {
 };
 
 /** What the person is shown when they review an ideas provider: what it may receive, and that it only proposes. */
-export function describeIdeasDeclaration(ideas: z.input<typeof PluginIdeasDeclarationSchema>, t: CoreT = coreEnglish): string {
+export function describeIdeasDeclaration(ideas: z.input<typeof PluginIdeasDeclarationSchema>, t: CanvasCoreT = canvasCoreEnglish): string {
   return [
     ideas.receives.length === 0
       ? t("ideas.provider.receivesNone")

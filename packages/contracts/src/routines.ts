@@ -13,7 +13,7 @@ import {
 import { SCHEDULE_TIME_PATTERN, instantForLocalTime, isValidTimeZone, localDateTime } from "./schedule-time.js";
 import { RoutineNetworkModeSchema } from "./routine-egress.js";
 import { ContentLabelSchema } from "./content-label.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 import { DEFAULT_LOCALE, isLocale, SUPPORTED_LOCALES, type Locale } from "./i18n.js";
 import { memoryProvenanceLine, type MemoryProvenance } from "./memory.js";
 
@@ -149,7 +149,11 @@ export function routineTemplateIdOf(snapshot: {
     : snapshot.report.templateVersion;
 }
 /** A report's title: its plugin template's, "LLM news" for model releases, else the routine's name. */
-export function routineReportTitle(snapshot: Pick<RoutineSnapshot, "report" | "agent">, name: string, t: CoreT = coreEnglish): string {
+export function routineReportTitle(
+  snapshot: Pick<RoutineSnapshot, "report" | "agent">,
+  name: string,
+  t: CanvasCoreT = canvasCoreEnglish,
+): string {
   return (
     snapshot.report.template?.title ??
     (routineTemplateIdOf(snapshot) === LLM_RELEASES_ROUTINE_TEMPLATE_ID ? t("routine.report.llmNews") : name)
@@ -466,7 +470,7 @@ export interface RoutineRevision {
   readonly provenance?: RoutineProvenance;
 }
 /** What the routine page and `routines.inspect` say of a revision's provenance; undefined when there is none. */
-export function routineProvenanceLine(provenance: RoutineProvenance | undefined, t: CoreT = coreEnglish): string | undefined {
+export function routineProvenanceLine(provenance: RoutineProvenance | undefined, t: CanvasCoreT = canvasCoreEnglish): string | undefined {
   return memoryProvenanceLine(provenance, { routine: true }, t);
 }
 export type RoutineRevisionSummary = Omit<RoutineRevision, "snapshot">;

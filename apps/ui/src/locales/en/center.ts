@@ -1,5 +1,5 @@
-import { navPathIn } from "@tavi/contracts/locales/core";
-import { CORE_EN } from "@tavi/contracts/locales/core-en";
+import { navPathIn } from "@tavi/contracts/locales/core-canvas";
+import { CORE_CANVAS_EN } from "@tavi/contracts/locales/core-canvas-en";
 
 /** The words of features/center, in English. */
 export const center = {
@@ -135,7 +135,7 @@ export const center = {
   "center.roundCard.sessionTitle": "Runs without asking for the rest of this chat",
   "center.roundCard.denyEllipsis": "Deny…",
   "center.roundCard.deciding": "Deciding…",
-  "center.roundCard.alwaysHint": `Always allow saves a workspace rule; revoke it in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.permissions")}.`,
+  "center.roundCard.alwaysHint": `Always allow saves a workspace rule; revoke it in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.permissions")}.`,
   "center.roundCard.inputCut": {
     one: "… {count} more characters — follow the card's link for the whole input.",
     other: "… {count} more characters — follow the card's link for the whole input.",
@@ -1000,7 +1000,7 @@ export const center = {
   "center.heartbeatWatch.saved": "Saved.",
 
   "center.heartbeatTargets.unreadable": "The channels could not be read: {error}",
-  "center.heartbeatTargets.noChannels": `Connect a channel in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.channels")} to be messaged there too.`,
+  "center.heartbeatTargets.noChannels": `Connect a channel in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.channels")} to be messaged there too.`,
   "center.heartbeatTargets.full": "At most {count} channel targets: remove one to add another.",
   "center.heartbeatTargets.where": "Where",
   "center.heartbeatTargets.home": "Home (always, when it is on)",
@@ -1069,8 +1069,8 @@ export const center = {
   "center.heartbeatOffer.ask":
     "Want me to check on things every {interval} between {start} and {end}, and only message you when something needs you?",
   "center.heartbeatOffer.hint": {
-    one: `Up to {count} checks a day, each a short read-only turn on your fast model; you can change all of it later in ${navPathIn(CORE_EN, "nav.route.center", "nav.center.heartbeat")}.`,
-    other: `Up to {count} checks a day, each a short read-only turn on your fast model; you can change all of it later in ${navPathIn(CORE_EN, "nav.route.center", "nav.center.heartbeat")}.`,
+    one: `Up to {count} checks a day, each a short read-only turn on your fast model; you can change all of it later in ${navPathIn(CORE_CANVAS_EN, "nav.route.center", "nav.center.heartbeat")}.`,
+    other: `Up to {count} checks a day, each a short read-only turn on your fast model; you can change all of it later in ${navPathIn(CORE_CANVAS_EN, "nav.route.center", "nav.center.heartbeat")}.`,
   },
   "center.heartbeatOffer.watch": "What I'd keep an eye on",
   "center.heartbeatOffer.turnOn": "Turn on",
@@ -1303,7 +1303,7 @@ export const center = {
   "center.memorySettings.captureOn": "On: the agent suggests things to remember, and you decide.",
   "center.memorySettings.captureOff": "Off: only what you write yourself.",
   "center.memorySettings.captureModel": "Suggested by the capture model, the extraction role in {link}.",
-  "center.memorySettings.modelsLink": `${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.models")}`,
+  "center.memorySettings.modelsLink": `${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.models")}`,
   "center.memorySettings.keepLegend": "Keep without asking",
   "center.memorySettings.keepHelp":
     "Only what you typed yourself in your own chats; never sensitive topics, updates, what came from tools, pages or messages, or anything in a chat once it has read one",
@@ -1324,8 +1324,8 @@ export const center = {
   "center.memorySettings.sensitiveSuggest": "Suggest, masked",
   "center.memorySettings.more": "More",
   "center.memorySettings.retrieval": "Search quality",
-  "center.memorySettings.hybridHint": `Recall also finds memories worded differently, through the embedding model in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.models")}; words alone when it cannot answer`,
-  "center.memorySettings.lexicalHint": `Recall matches words; meaning search needs an embedding model in ${navPathIn(CORE_EN, "nav.route.settings", "nav.settings.models")}`,
+  "center.memorySettings.hybridHint": `Recall also finds memories worded differently, through the embedding model in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.models")}; words alone when it cannot answer`,
+  "center.memorySettings.lexicalHint": `Recall matches words; meaning search needs an embedding model in ${navPathIn(CORE_CANVAS_EN, "nav.route.settings", "nav.settings.models")}`,
   "center.memorySettings.hybridNote": "Memory is now searched by meaning too.",
   "center.memorySettings.lexicalNote": "Memory is searched by its words again.",
   "center.memorySettings.lexical": "Words",

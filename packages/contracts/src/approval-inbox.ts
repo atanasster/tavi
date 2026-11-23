@@ -7,7 +7,7 @@ import { ApprovalScopeSchema, RiskLevelSchema } from "./tool-policy.js";
 import { LabelSummarySchema } from "./content-label.js";
 import { TaskOriginSchema } from "./task-origins.js";
 import type { PendingWaitsAnswer, PendingWaitsInput } from "./needs.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 
 /**
  * The approvals inbox and its history: every
@@ -85,7 +85,7 @@ const SummarySchema = z.string().max(80);
 export function approvalChannelLabel(
   via: string,
   connectionName?: (connectionId: string) => string | undefined,
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string {
   switch (via) {
     case "cli":

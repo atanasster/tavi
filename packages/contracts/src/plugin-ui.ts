@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { SUPPORTED_LOCALES } from "./i18n.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 import { PLUGIN_ID_PATTERN, PluginVersionSchema } from "./plugin-ids.js";
 import { PLUGIN_MESSAGES_MAX, PluginMessageKeySchema, PluginMessageSchema } from "./plugin-messages.js";
 
@@ -36,7 +36,11 @@ export type PluginUiChannel = z.infer<typeof PluginUiChannelSchema>;
  * takeover surface is the one that drives them, so the operator is told the
  * plugin is not given them: the channel is declared, never delivered.
  */
-export function channelDisclosure(channels: readonly PluginUiChannel[], disclosure: string | undefined, t: CoreT = coreEnglish): string {
+export function channelDisclosure(
+  channels: readonly PluginUiChannel[],
+  disclosure: string | undefined,
+  t: CanvasCoreT = canvasCoreEnglish,
+): string {
   const said = disclosure ?? t("plugin.ui.channels.receives", { channels: channels.join(", ") });
   if (!channels.includes("browser.control")) return said;
   // Two whole sentences: the plugin's own (or what it receives), then what control asks for.
@@ -226,7 +230,7 @@ export function pluginUiFiles(ui: PluginUi): readonly string[] {
 }
 
 /** How a contribution is listed for review: `id (role) → slots; channels; disclosure`. */
-export function describePluginUiContribution(contribution: PluginUiContribution, t: CoreT = coreEnglish): string {
+export function describePluginUiContribution(contribution: PluginUiContribution, t: CanvasCoreT = canvasCoreEnglish): string {
   const name =
     contribution.role === undefined
       ? contribution.id

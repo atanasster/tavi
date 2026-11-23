@@ -4,7 +4,7 @@ import type { ChannelField } from "./channels.js";
 import { APP_ACCESS, APP_CATEGORIES, AppScopeSchema } from "./app-basics.js";
 import { ConfidentialitySchema } from "./content-label.js";
 import { IdSchema } from "./ids.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 import { LOOPBACK_ORIGIN_PATTERN } from "./mcp-ipc.js";
 import { MCP_PRESET_IDS } from "./mcp-manifest.js";
 import type { PluginConfigField } from "./plugin-registry.js";
@@ -218,7 +218,7 @@ export type PluginAppsBlock = z.infer<typeof PluginAppsBlockSchema>;
  * sentences, and each tool's title — the label Connected apps shows — with
  * its sentence.
  */
-export function describePluginApps(block: PluginAppsBlock, t: CoreT = coreEnglish): string[] {
+export function describePluginApps(block: PluginAppsBlock, t: CanvasCoreT = canvasCoreEnglish): string[] {
   // The author's words, escaped as a JSON string is (no line breaks, quotes escaped), inside the language's quotes.
   // JSON leaves typographic quotes alone, so the language's own marks (and the nested „‚‘ pair) are escaped too:
   // the author's text can never close the quote around it.

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { watchablePage } from "./heartbeat.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 
 /**
  * A schedule's pre-check: one read-only, deterministic look before a fire runs,
@@ -91,7 +91,7 @@ export function schedulePrecheckText(precheck: SchedulePrecheck): string {
 }
 
 /** What a pre-check does, in words: the CLI's `show`, the tools' answers and the web page say it alike. */
-export function schedulePrecheckSentence(precheck: SchedulePrecheck | undefined, t: CoreT = coreEnglish): string {
+export function schedulePrecheckSentence(precheck: SchedulePrecheck | undefined, t: CanvasCoreT = canvasCoreEnglish): string {
   if (precheck === undefined) return t("schedule.precheck.none");
   const key =
     precheck.kind === "page-changed"

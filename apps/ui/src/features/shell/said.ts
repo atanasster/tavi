@@ -1,4 +1,4 @@
-import type { CoreKey } from "@tavi/contracts/locales/core-en";
+import type { CanvasCoreKey } from "@tavi/contracts/locales/core-canvas-en";
 
 import { translateCore, translateNow } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
@@ -27,7 +27,7 @@ export function said<Rest extends object>(key: UiKey, rest: Rest): Rest & { read
  * word naming a place in the canvas (a route, a Settings view, a Command Center section) that messages from the
  * owner name in their menu paths too ("Settings → Models"), so both read one key.
  */
-export function saidCoreEntry<Value extends string>(value: Value, key: CoreKey): { readonly value: Value; readonly label: string } {
+export function saidCoreEntry<Value extends string>(value: Value, key: CanvasCoreKey): { readonly value: Value; readonly label: string } {
   return {
     value,
     get label() {

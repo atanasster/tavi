@@ -3,11 +3,13 @@ import { z } from "zod";
 import { IdSchema, TimestampSchema } from "./ids.js";
 import { MAX_MEMORY_TITLE_CHARS, MEMORY_KINDS, MemoryProvenanceSchema, memoryProvenanceLine, memoryProvenanceUntrusted } from "./memory.js";
 import { MemoryRelatedSchema, MemoryScopeTargetSchema } from "./memory-ipc.js";
+import { canvasCoreEnglish, isCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
+// The terminal's line and a chat app's card say the chat apps' words too (`channel.memory.*`): the server's alone.
 import { coreEnglish, type CoreT } from "./locales/core.js";
 import { englishShortDayText } from "./reminders.js";
 import { navPath } from "./nav.js";
 import { englishOf, renderTextRef } from "./text-ref.js";
-import type { CoreKey } from "./locales/core-en.js";
+import type { CanvasCoreKey } from "./locales/core-canvas-en.js";
 
 /**
  * Memory cards: the *Proposed ·
@@ -114,7 +116,7 @@ export function memoryDigestKey(localDate: string): string {
  */
 export function memoryDigestNoticeText(
   input: { readonly listed: number; readonly waiting: number; readonly oldestExpires: string },
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): {
   readonly title: string;
   readonly summary: string;
@@ -266,23 +268,26 @@ export function memoryCardItemIsPlain(
 }
 
 /** What a card says of an item proposed after its chat read untrusted content; undefined for any other. */
-export function memoryCardProvenanceLine(item: Pick<MemoryCardItem, "provenance" | "tidyUp">, t: CoreT = coreEnglish): string | undefined {
+export function memoryCardProvenanceLine(
+  item: Pick<MemoryCardItem, "provenance" | "tidyUp">,
+  t: CanvasCoreT = canvasCoreEnglish,
+): string | undefined {
   return memoryProvenanceLine(item.provenance, { tidyUp: item.tidyUp === true }, t);
 }
 
 /** What a waiting tidy-up says on a card, a channel message, the terminal and `/memory review`. */
-export const MEMORY_TIDY_UP_LOOK = coreEnglish("memory.card.tidyUpLook");
+export const MEMORY_TIDY_UP_LOOK = canvasCoreEnglish("memory.card.tidyUpLook");
 
 /** What a single *Keep* of a tidy-up answers on a card, a channel or a command: it is kept in the Center. */
-export const MEMORY_TIDY_UP_NEEDS_LOOK = coreEnglish("memory.card.tidyUpNeedsLook");
+export const MEMORY_TIDY_UP_NEEDS_LOOK = canvasCoreEnglish("memory.card.tidyUpNeedsLook");
 
 /** What an update says it replaces: "updates: Reply in Spanish". */
-export function memoryUpdatesLine(updates: { readonly title: string | null }, t: CoreT = coreEnglish): string {
+export function memoryUpdatesLine(updates: { readonly title: string | null }, t: CanvasCoreT = canvasCoreEnglish): string {
   return t("memory.card.updates", { title: updates.title ?? t("memory.card.aKeptMemory") });
 }
 
 /** What a near-matched fact says it may replace: "may update: Lives in Lisbon". */
-export function memoryMayUpdateLine(mayUpdate: { readonly title: string | null }, t: CoreT = coreEnglish): string {
+export function memoryMayUpdateLine(mayUpdate: { readonly title: string | null }, t: CanvasCoreT = canvasCoreEnglish): string {
   return t("memory.card.mayUpdate", { title: mayUpdate.title ?? t("memory.card.aKeptMemory") });
 }
 
@@ -304,7 +309,7 @@ export type MemoryCardAnswer = z.infer<typeof MemoryCardAnswerSchema>;
 /** A card notice's stored words: how many things it holds, never what they are (invariant 22). */
 export function memoryCardNoticeText(
   input: { readonly count: number; readonly flush: boolean },
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): {
   readonly title: string;
   readonly summary: string;
@@ -320,8 +325,8 @@ export function memoryCardNoticeText(
  * `memoryDigestNoticeText`) in `t`'s language: read back from its counts and date, and
  * left as stored when it is not one of those.
  */
-export function memoryCardTitleText(title: string, t: CoreT = coreEnglish): string {
-  if (t === coreEnglish) return title;
+export function memoryCardTitleText(title: string, t: CanvasCoreT = canvasCoreEnglish): string {
+  if (isCoreEnglish(t)) return title;
   const digest = /^(\d+)(?: of (\d+))? things? waiting to be remembered — the oldest expires (.+)$/.exec(title);
   if (digest !== null) {
     const listed = Number.parseInt(digest[1] as string, 10);
@@ -355,11 +360,11 @@ export function memoryCardTitleOf(revision: { readonly title?: string | undefine
 }
 
 /** Where a kept record applies, as a card's heading says it. */
-export function memoryCardScopeLabel(target: string | undefined, t: CoreT = coreEnglish): string {
+export function memoryCardScopeLabel(target: string | undefined, t: CanvasCoreT = canvasCoreEnglish): string {
   return t(target?.startsWith("chat:") === true ? "memory.card.scope.chat" : "memory.card.scope.everywhere");
 }
 
-const STATE_LABELS: Readonly<Record<MemoryCardState, CoreKey>> = {
+const STATE_LABELS: Readonly<Record<MemoryCardState, CanvasCoreKey>> = {
   proposed: "memory.card.state.proposed",
   saved: "memory.card.state.saved",
   discarded: "memory.card.state.discarded",
@@ -371,12 +376,15 @@ const STATE_LABELS: Readonly<Record<MemoryCardState, CoreKey>> = {
 };
 
 /** A state's word on a card. */
-export function memoryCardStateLabel(state: MemoryCardState, t: CoreT = coreEnglish): string {
+export function memoryCardStateLabel(state: MemoryCardState, t: CanvasCoreT = canvasCoreEnglish): string {
   return t(STATE_LABELS[state]);
 }
 
 /** What a card item is called: its title, or what stands in for text the card never shows. */
-export function memoryCardItemName(item: Pick<MemoryCardItem, "title" | "sensitive" | "state">, t: CoreT = coreEnglish): string {
+export function memoryCardItemName(
+  item: Pick<MemoryCardItem, "title" | "sensitive" | "state">,
+  t: CanvasCoreT = canvasCoreEnglish,
+): string {
   if (item.state === "forgotten") return t("memory.card.state.forgotten");
   if (item.state === "hidden") return t("memory.card.item.hidden");
   if (item.sensitive) return t("memory.card.item.sensitive");
@@ -386,7 +394,7 @@ export function memoryCardItemName(item: Pick<MemoryCardItem, "title" | "sensiti
 /** A card's heading: "Proposed · remember everywhere", "Saved", "2 things to remember", or its receipt once decided. */
 export function memoryCardHeading(
   card: Pick<MemoryCardAnswer, "title" | "items" | "forgotten" | "digest">,
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string {
   const items = card.items;
   // A digest says what it said when it was sent while anything on it still waits.
@@ -432,12 +440,12 @@ export function memorySeenCount(used: (MemoryCounted & { readonly listed?: Memor
 }
 
 /** The heading over what a listing showed: "Looked through 6 memories", or "Looked through 5 more" beside those used. */
-export function memoryListedHeading(listed: number, used: number, t: CoreT = coreEnglish): string {
+export function memoryListedHeading(listed: number, used: number, t: CanvasCoreT = canvasCoreEnglish): string {
   return t(used > 0 ? "memory.used.lookedThroughMore" : "memory.used.lookedThrough", { count: listed, n: String(listed) });
 }
 
 /** The canvas chip under an answer: "Used 3 memories", "Looked through 6 memories", "Used 1 memory · looked through 5 more". */
-export function memoryUsedLabel(count: number, listed = 0, t: CoreT = coreEnglish): string {
+export function memoryUsedLabel(count: number, listed = 0, t: CanvasCoreT = canvasCoreEnglish): string {
   if (count === 0 && listed > 0) return memoryListedHeading(listed, 0, t);
   return listed === 0
     ? t("memory.used.used", { count, n: String(count) })
@@ -445,7 +453,7 @@ export function memoryUsedLabel(count: number, listed = 0, t: CoreT = coreEnglis
 }
 
 /** The terminal's dim line after an answer: "memory: 3 used · /why", "memory: 6 looked through · /why". */
-export function memoryUsedLine(count: number, listed = 0, t: CoreT = coreEnglish): string {
+export function memoryUsedLine(count: number, listed = 0, t: CanvasCoreT = canvasCoreEnglish): string {
   const parts = [
     ...(count > 0 || listed === 0 ? [t("memory.usedLine.used", { count, n: String(count) })] : []),
     ...(listed > 0 ? [t("memory.usedLine.looked", { count: listed, n: String(listed) })] : []),
@@ -537,7 +545,7 @@ function memoryCardCommands(keepable: readonly MemoryCardItem[], plain: number, 
 }
 
 /** What a listed item proposed after its chat read untrusted content adds: *Keep all* leaves it waiting. */
-export const MEMORY_PROVENANCE_KEEP_ALONE = coreEnglish("memory.card.keepAllLeavesIt");
+export const MEMORY_PROVENANCE_KEEP_ALONE = canvasCoreEnglish("memory.card.keepAllLeavesIt");
 
 /**
  * A channel card's button press: `y:<token>:<op>`, at most 36
@@ -732,7 +740,7 @@ export const MemoryCardAllAnswerSchema = z.strictObject({
 export type MemoryCardAllAnswer = z.infer<typeof MemoryCardAllAnswerSchema>;
 
 /** What a *Keep all* says: "Kept 4", or "Kept 4 · 1 needs a look — open Tavi to review". */
-export function memoryKeptAllText(kept: number, needsLook: number, t: CoreT = coreEnglish): string {
+export function memoryKeptAllText(kept: number, needsLook: number, t: CanvasCoreT = canvasCoreEnglish): string {
   return needsLook === 0
     ? t("memory.card.keptAll", { count: String(kept) })
     : t("memory.card.keptAllNeedsLook", { kept: String(kept), count: needsLook, n: String(needsLook) });

@@ -16,8 +16,8 @@ import type { ApprovalProvenance, GateReason } from "./tool-policy.js";
 import type { ArgOrigin } from "./argument-provenance.js";
 // Acyclic: skill-ceiling.ts imports only zod and the `core` words.
 import { skillCeilingWords, type SkillCeilingSummary } from "./skill-ceiling.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
-import type { CoreKey } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
+import type { CanvasCoreKey } from "./locales/core-canvas.js";
 
 /**
  * Text from content made safe to show on one line, in any surface (a React
@@ -38,7 +38,7 @@ export function neutralizedText(text: string, max: number): string {
 }
 
 /** Each source kind's words in the `core` catalogue. */
-const SOURCE_KEYS: Readonly<Record<SourceKind, CoreKey>> = {
+const SOURCE_KEYS: Readonly<Record<SourceKind, CanvasCoreKey>> = {
   web: "provenance.source.web",
   search: "provenance.source.search",
   email: "provenance.source.email",
@@ -58,7 +58,7 @@ const SOURCE_KEYS: Readonly<Record<SourceKind, CoreKey>> = {
 };
 
 /** A source kind in plain words. */
-export function sourceWords(source: SourceKind, t: CoreT = coreEnglish): string {
+export function sourceWords(source: SourceKind, t: CanvasCoreT = canvasCoreEnglish): string {
   return t(SOURCE_KEYS[source]);
 }
 
@@ -68,7 +68,7 @@ export const SOURCE_WORDS: Readonly<Record<SourceKind, string>> = Object.fromEnt
 ) as Record<SourceKind, string>;
 
 /** A desktop app's screen in plain words: what `refEstablished` says for a `DESKTOP_HOST_PREFIX` host. */
-export function desktopSourceWords(t: CoreT = coreEnglish): string {
+export function desktopSourceWords(t: CanvasCoreT = canvasCoreEnglish): string {
   return t("provenance.source.desktop");
 }
 
@@ -118,7 +118,7 @@ export const PROVENANCE_SOURCES_SHOWN = 3;
 const MAX_CHIPS = 8;
 
 /** Each gate reason's "Why am I asked?" in the `core` catalogue. */
-const GATE_REASON_KEYS: Readonly<Record<GateReason, CoreKey>> = {
+const GATE_REASON_KEYS: Readonly<Record<GateReason, CanvasCoreKey>> = {
   "novel-url": "provenance.why.novelUrl",
   "tainted-payload": "provenance.why.taintedPayload",
   "tainted-message": "provenance.why.taintedMessage",
@@ -131,7 +131,7 @@ const GATE_REASON_KEYS: Readonly<Record<GateReason, CoreKey>> = {
 };
 
 /** "Why am I asked?" in plain words, for each reason the gate asks once; a ceiling's card names its skill (`skillCeilingWords`). */
-export function gateReasonWords(reason: GateReason, t: CoreT = coreEnglish): string {
+export function gateReasonWords(reason: GateReason, t: CanvasCoreT = canvasCoreEnglish): string {
   return t(GATE_REASON_KEYS[reason]);
 }
 
@@ -144,10 +144,10 @@ export const GATE_REASON_WORDS: Readonly<Record<GateReason, string>> = Object.fr
  * "Why am I asked?" for a desktop action under taint, in English: it is asked as a `persist` call, but a keypress
  * or a click changes an app on the person's computer, not a routine or a file Tavi keeps.
  */
-export const DESKTOP_TAINTED_WORDS = coreEnglish("provenance.why.desktopTainted");
+export const DESKTOP_TAINTED_WORDS = canvasCoreEnglish("provenance.why.desktopTainted");
 
 /** What a card says when the chat is tainted but the taint step did not ask (another rule did). */
-export function taintedCallWords(t: CoreT = coreEnglish): string {
+export function taintedCallWords(t: CanvasCoreT = canvasCoreEnglish): string {
   return t("provenance.why.tainted");
 }
 
@@ -160,7 +160,7 @@ export function whyAskedText(
   tainted: boolean,
   skillCeiling?: SkillCeilingSummary | undefined,
   toolName?: string | undefined,
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string | undefined {
   if (gateReason === "outside-skill-ceiling" && skillCeiling !== undefined) return skillCeilingWords(skillCeiling, t);
   if (gateReason === "tainted-persist" && toolName?.startsWith("desktop.") === true) return t("provenance.why.desktopTainted");
@@ -169,7 +169,10 @@ export function whyAskedText(
 }
 
 /** One source, as Tavi established it: the host it parsed, the verified sender domain, or the kind. */
-export function refEstablished(ref: { readonly source: SourceKind; readonly host?: string | undefined }, t: CoreT = coreEnglish): string {
+export function refEstablished(
+  ref: { readonly source: SourceKind; readonly host?: string | undefined },
+  t: CanvasCoreT = canvasCoreEnglish,
+): string {
   const app = desktopAppOf(ref);
   if (app !== undefined) return app === "" ? desktopSourceWords(t) : t("provenance.source.desktopApp", { app });
   const host = ref.host === undefined ? "" : neutralizedText(ref.host, HOST_CHARS);
@@ -193,7 +196,7 @@ export function refEstablished(ref: { readonly source: SourceKind; readonly host
 }
 
 /** What content says about itself, after what Tavi established: "the page calls itself “…”". */
-function claimOf(ref: Pick<LabelRef, "source" | "title">, t: CoreT): string | undefined {
+function claimOf(ref: Pick<LabelRef, "source" | "title">, t: CanvasCoreT): string | undefined {
   if (ref.title === undefined) return undefined;
   const title = neutralizedText(ref.title, PROVENANCE_TITLE_CHARS);
   if (title === "") return undefined;
@@ -239,7 +242,7 @@ export function requestSources(request: ProvenanceOfRequest): SourcesOf | undefi
  * A card's source chips: one per ref (newest first), then each source kind no
  * ref names. Equal chips once; at most 8.
  */
-export function provenanceChips(provenance: SourcesOf, t: CoreT = coreEnglish): readonly ProvenanceChip[] {
+export function provenanceChips(provenance: SourcesOf, t: CanvasCoreT = canvasCoreEnglish): readonly ProvenanceChip[] {
   const chips: ProvenanceChip[] = [];
   const seen = new Set<string>();
   for (const ref of provenance.refs) {
@@ -261,7 +264,11 @@ export function provenanceChips(provenance: SourcesOf, t: CoreT = coreEnglish): 
 }
 
 /** "example.com, mail you forwarded or quoted (via x.example) and 2 more": the established part of the chips, for one line. */
-export function provenanceSourcesPhrase(provenance: SourcesOf, shown: number = PROVENANCE_SOURCES_SHOWN, t: CoreT = coreEnglish): string {
+export function provenanceSourcesPhrase(
+  provenance: SourcesOf,
+  shown: number = PROVENANCE_SOURCES_SHOWN,
+  t: CanvasCoreT = canvasCoreEnglish,
+): string {
   const all = provenanceChips(provenance, t).map((chip) => chip.established);
   if (all.length === 0) return sourceWords("unknown-source", t);
   const head = all.slice(0, shown);
@@ -277,14 +284,14 @@ export function provenanceSourcesPhrase(provenance: SourcesOf, shown: number = P
  * mail you forwarded or quoted (via x.example) — once only". `onceOnly`: the call may be approved
  * once only. Bounded: three sources, each host at most 80 characters.
  */
-export function approvalProvenanceLine(provenance: SourcesOf, onceOnly: boolean, t: CoreT = coreEnglish): string {
+export function approvalProvenanceLine(provenance: SourcesOf, onceOnly: boolean, t: CanvasCoreT = canvasCoreEnglish): string {
   return t(onceOnly ? "provenance.line.onceOnly" : "provenance.line", {
     sources: provenanceSourcesPhrase(provenance, PROVENANCE_SOURCES_SHOWN, t),
   });
 }
 
 /** Where one of a call's strings appears, in plain words. */
-export function argOriginWords(origin: ArgOrigin, t: CoreT = coreEnglish): string {
+export function argOriginWords(origin: ArgOrigin, t: CanvasCoreT = canvasCoreEnglish): string {
   if (origin.from === "person") return t("provenance.origin.person");
   if (origin.from === "unmatched") return t("provenance.origin.unmatched");
   // A built-in desktop tool's output whose label named no app (a failed call's) carries the bare prefix: the gate
@@ -297,12 +304,12 @@ export function argOriginWords(origin: ArgOrigin, t: CoreT = coreEnglish): strin
 }
 
 /** What a header's taint chip says: up to three sources Tavi established. */
-export function taintChipText(label: SourcesOf, t: CoreT = coreEnglish): string {
+export function taintChipText(label: SourcesOf, t: CanvasCoreT = canvasCoreEnglish): string {
   return t("taint.chip", { sources: provenanceSourcesPhrase(label, PROVENANCE_SOURCES_SHOWN, t) });
 }
 
 /** The remedy for a tainted chat (WORKING-FOLDERS.md §Taint): a new chat, never an un-taint. */
-export function taintRemedy(t: CoreT = coreEnglish): string {
+export function taintRemedy(t: CanvasCoreT = canvasCoreEnglish): string {
   return t("taint.remedy");
 }
 
@@ -310,7 +317,7 @@ export function taintRemedy(t: CoreT = coreEnglish): string {
 export const TAINT_REMEDY = taintRemedy();
 
 /** The taint details' head line. */
-export function taintDetailHead(t: CoreT = coreEnglish): string {
+export function taintDetailHead(t: CanvasCoreT = canvasCoreEnglish): string {
   return t("taint.detail.head");
 }
 
@@ -318,7 +325,7 @@ export function taintDetailHead(t: CoreT = coreEnglish): string {
 export const TAINT_DETAIL_HEAD = taintDetailHead();
 
 /** What the taint details say after the sources: what it changes, the remedy, and that Fresh context (`/compact`) does not clear it. */
-export function taintDetailNotes(t: CoreT = coreEnglish): readonly string[] {
+export function taintDetailNotes(t: CanvasCoreT = canvasCoreEnglish): readonly string[] {
   return [t("taint.detail.lasting"), t("taint.detail.fresh"), t("taint.detail.compact")];
 }
 
@@ -329,7 +336,7 @@ export const TAINT_DETAIL_NOTES: readonly string[] = taintDetailNotes();
  * The taint chip's details as lines (`tavi chat`'s `/taint`; the canvas
  * popover shows the same parts): what the chat read, then `taintDetailNotes`.
  */
-export function taintDetailLines(label: SourcesOf, t: CoreT = coreEnglish): readonly string[] {
+export function taintDetailLines(label: SourcesOf, t: CanvasCoreT = canvasCoreEnglish): readonly string[] {
   const chips = provenanceChips(label, t);
   return [
     taintDetailHead(t),

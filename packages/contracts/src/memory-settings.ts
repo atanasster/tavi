@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { TaviError } from "./errors.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { canvasCoreEnglish, type CanvasCoreT } from "./locales/core-canvas.js";
 import { MEMORY_PROPOSAL_TTL_DAYS } from "./memory.js";
 import { BUILTIN_MEMORY_PROVIDER_ID } from "./memory-provider.js";
 
@@ -97,7 +97,7 @@ export const MEMORY_EMBEDDING_PERSONAL_DISCLOSURE_REASON = "memory-embedding-per
  */
 export function memoryEmbeddingDisclosure(
   input: { readonly connectionId: string; readonly records: number },
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string {
   return t("memory.disclosure.embedding", { connection: input.connectionId, count: input.records });
 }
@@ -111,7 +111,7 @@ export function memoryEmbeddingDisclosure(
  */
 export function memoryPersonalEmbeddingDisclosure(
   input: { readonly connectionId: string; readonly personal: number },
-  t: CoreT = coreEnglish,
+  t: CanvasCoreT = canvasCoreEnglish,
 ): string {
   return t("memory.disclosure.personalEmbedding", { connection: input.connectionId, count: input.personal });
 }
@@ -142,7 +142,7 @@ export const MEMORY_PROVIDER_DISCLOSURE_REASON = "memory-provider-disclosure";
  * is the person's own, shared by every workspace they use, and would reach
  * this workspace's provider.
  */
-export function memoryPersonalDisclosure(providerId: string, t: CoreT = coreEnglish): string {
+export function memoryPersonalDisclosure(providerId: string, t: CanvasCoreT = canvasCoreEnglish): string {
   return t("memory.disclosure.personal", { provider: providerId });
 }
 

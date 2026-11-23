@@ -81,7 +81,6 @@ export const channels = {
   "channel.approval.subject.waiting": "Чака одобрение: {title}",
   "channel.approval.subject.needed": "Нужно е одобрение: {title}",
   "channel.approval.operatorOnly": "Одобренията за тази задача решава собственикът; ще разбереш тук, щом реши.",
-  "channel.approval.reset": "Разговорът започна отначало, затова това искане е оттеглено.",
   "channel.approval.alreadyDecided": "Това искане вече е решено.",
   "channel.approval.notYours": "Само човекът, на когото е този чат, може да го реши.",
   "channel.approval.reasonWaiting": "Чакам причината — отговори в този чат или изпрати „-“.",
@@ -353,13 +352,6 @@ export const channels = {
   "channel.heartbeat.mutedNote": "Заглушено",
   "channel.heartbeat.sources": "Източници: {list}",
   "channel.heartbeat.resolved": "Решено · {time}",
-  "channel.heartbeat.alert.dayClock": "{weekday} {time}",
-  "channel.heartbeat.alert.budget": "Пулсът изчерпа днешния бюджет или му остава твърде малко за още една проверка и почива до {time}.",
-  "channel.heartbeat.alert.providerMissing":
-    "Пулсът е на пауза: доставчикът му {providerId} не е достъпен. Използвай вградения или избери друг.",
-  "channel.heartbeat.alert.providerStopped": "Пулсът е на пауза: доставчикът му {providerId} спря. Използвай вградения или избери друг.",
-  "channel.heartbeat.alert.failures":
-    "Пулсът се провали {n} пъти поред (последно: {reason}) и е на пауза; пусни го отново, щом причината е отстранена (грешката е в лога).",
   "channel.reminder.when": "{day}{year} {time}",
   "channel.reminder.late": " (закъсняло: трябваше да е в {time})",
   "channel.reminder.noModel": " (задачата не е пусната: няма настроен модел)",
@@ -415,50 +407,5 @@ export const channels = {
   "channel.room.context.known": "при съобщение към мен тук от някого, когото познавам от {owner}",
   "channel.room.context.private":
     "Съобщенията от хора, които Tavi не познава, остават настрана и нищо прочетено тук не се пази за личната употреба на {owner}.",
-  "channel.schedule.alert.staleDispatchNext":
-    "График „{name}“: пускането от {fireTime} започна, но така и не съобщи резултат, а следващото вече е насрочено.",
-  "channel.schedule.alert.staleDispatch": "График „{name}“: пускането от {fireTime} започна, но така и не съобщи резултат.",
-  "channel.schedule.alert.fireThrew": "Пускането на графика „{name}“ не можа да тръгне: {detail}",
-  "channel.schedule.alert.carryOnFailed": "Пускането на графика „{name}“ (задача {taskId}) не можа да продължи след изчакването: {detail}",
-  "channel.schedule.alert.schedulingRefused":
-    "На пускането на графика „{name}“ беше отказано {tool}: пусканията по график никога не създават и не променят графици или рутини. Списъкът с инструментите му още съдържа {entry} и остава такъв; отказват се само тези извиквания. Махни {entry} от инструментите му, за да не се появява повече.",
-  "channel.schedule.alert.stopped": "Пускането на графика „{name}“ беше спряно:",
-  "channel.schedule.alert.stoppedTask": "Пускането на графика „{name}“ (задача {taskId}) беше спряно:",
-  "channel.schedule.alert.overTokens": "{stopped} използва {tokens}, над тавана си от {ceiling}. Следващото му пускане е както обикновено.",
-  "channel.schedule.alert.overTime": "{stopped} работи над лимита си от {minutes}\u00a0мин. Следващото му пускане е както обикновено.",
-  "channel.schedule.alert.precheckFailed":
-    "Пускането на графика „{name}“ не тръгна: предварителната му проверка ({precheck}) не можа да се направи: {reason}. Опитва се отново при всяко пускане; ще ти кажа пак само след като някоя проверка мине успешно междувременно.",
-  "channel.schedule.alert.specDisabled": "Графикът „{name}“ е изключен, защото времето му ({spec}) няма следваща поява.",
-  "channel.schedule.alert.diskLow":
-    "Пускането на графика „{name}“ не започна: {reason}. Освободи място и ще тръгне при следващата проверка.",
-  "channel.schedule.alert.diskReason": "отказано: само {mib}\u00a0МБ свободни във файловата система на папката с данни",
-  "channel.schedule.alert.missed": "Пускането на графика „{name}“ не тръгна: {reason}.",
-  "channel.schedule.alert.missedSkip": "пропуснато: закъсняло с {minutes}\u00a0мин (правило: пропусни)",
-  "channel.schedule.alert.missedLate": "пропуснато: закъсняло с {minutes}\u00a0мин (извън 6-часовия прозорец за наваксване)",
-  "channel.schedule.alert.startFailed": "Пускането на графика „{name}“ не можа да започне: {detail}",
-  "channel.schedule.alert.decidedElsewhere":
-    "Пускането на графика „{name}“ (задача {taskId}): искането на стъпка {steps} беше решено от друго приложение, затова този график спря да го решава",
-  "channel.schedule.alert.unrecorded": "(незаписана)",
-  "channel.schedule.alert.cutShort": {
-    one: "Пускането на графика „{name}“ нямаше какво да докладва, но {n} от извикванията му беше отказано, така че може да е пропуснало нещо. Виж последните му пускания.",
-    other:
-      "Пускането на графика „{name}“ нямаше какво да докладва, но {n} от извикванията му бяха отказани, така че може да е пропуснало нещо. Виж последните му пускания.",
-  },
-  "channel.schedule.alert.undelivered": "Пускането на графика „{name}“ завърши, без да достави нищо: не е изпратен бюлетин",
-  "channel.schedule.alert.failed": "Пускането на графика „{name}“ се провали: {text}",
-  "channel.schedule.alert.waiting": "Пускането на графика „{name}“ чака: {text}",
-  "channel.schedule.alert.ended": "Пускането на графика „{name}“ — {status}: {text}",
-  "channel.schedule.alert.noDetail": "няма повече подробности",
-  "channel.schedule.alert.failedHome": "Пускането на графика „{name}“ се провали; крайният му текст е в последните пускания на графика.",
-  "channel.schedule.alert.waitingHome": "Пускането на графика „{name}“ чака; крайният му текст е в последните пускания на графика.",
-  "channel.schedule.alert.endedHome": "Пускането на графика „{name}“ — {status}; крайният му текст е в последните пускания на графика.",
-  "channel.schedule.alert.overlap": "Пускането на графика „{name}“ не започна: предишното още тече.",
-  "channel.schedule.alert.overlapCounting":
-    "Пускането на графика „{name}“ не започна: предишното още тече. Спира, щом е работило {minutes}\u00a0мин.",
-  "channel.schedule.alert.overlapWaiting":
-    "Пускането на графика „{name}“ не започна: предишното чака помощник или отговор; към лимита му от {minutes}\u00a0мин се брои само времето, в което работи.",
-  "channel.schedule.alert.watchBackoff":
-    "Графикът „{name}“ тръгна {n} пъти поред в рамките на час, всеки път при промяна на {path}: до {until} проверява само по графика си.",
-  "channel.schedule.alert.itsFile": "файла си",
   "channel.mcp.notice": "{title}. {summary}\nОтвори в Tavi: {path}",
 } as const satisfies CatalogFor<typeof en>;
