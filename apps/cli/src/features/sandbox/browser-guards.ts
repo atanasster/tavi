@@ -1,7 +1,7 @@
 import { type BrowserActGuard, type CallAssessment, TaviError, urlIsFinalStep } from "@tavi/contracts";
 import { hostAllowed, isIpLiteralHost } from "@tavi/runtime";
 
-import type { CoreT } from "@tavi/contracts/locales/core";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { assessBrowserAct, commitsFormSubmit, exemptAsSearch } from "../approvals/call-assessors.js";
 import { listedExactly, literalAddressRefusal, resolvedAddressRefusal } from "../browser/address-guard.js";
 import { hostAllowedWithPort } from "../http/tools.js";
@@ -316,7 +316,12 @@ export async function noteBlock<T>(ctx: BrowserToolContext, result: T, runId: st
  * `file:` URL) is refused before anyone is asked; a host off the list is asked
  * about, and the card says allowing the browser is what opens it.
  */
-export function withDestination(ctx: BrowserToolContext, assessment: CallAssessment, input: unknown): CallAssessment {
+export function withDestination(
+  ctx: BrowserToolContext,
+  assessment: CallAssessment,
+  input: unknown,
+  t: CoreT = coreEnglish,
+): CallAssessment {
   const url = (input as { readonly url?: unknown }).url;
   if (typeof url !== "string") return assessment;
   const target = navigationTarget(ctx, url, (input as { readonly sessionId?: unknown }).sessionId);
@@ -331,7 +336,7 @@ export function withDestination(ctx: BrowserToolContext, assessment: CallAssessm
         reasons: [
           ...named.reasons,
           // That another site asks again is the card's own note (`toolGroupScopeNote`), not said twice.
-          `${named.display.host ?? "this site"} is not one of your allowed sites yet`,
+          t("approval.reason.browser.notAllowed", { host: named.display.host ?? t("approval.reason.browser.thisSite") }),
         ],
       };
 }
@@ -380,7 +385,7 @@ export function opensInTab(ctx: BrowserToolContext, input: unknown, t?: CoreT): 
   const assessed = assessBrowserAct(input, element, undefined, undefined, undefined, t);
   const url = tabDestinationOf(ctx, input);
   if (url === undefined || assessed.hardDeny !== undefined) return assessed;
-  const destined = withDestination(ctx, assessed, { sessionId: call?.sessionId, url });
+  const destined = withDestination(ctx, assessed, { sessionId: call?.sessionId, url }, t);
   const host = URL.parse(url)?.host ?? "";
   return host === "" ? destined : { ...destined, subjects: [host], scopeHost: host, display: { ...destined.display, host } };
 }

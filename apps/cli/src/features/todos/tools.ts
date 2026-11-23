@@ -19,6 +19,7 @@ import { zodIssues } from "@tavi/contracts/zod-util";
 import { definedOnly } from "@tavi/contracts/util";
 import type { ToolRegistry } from "@tavi/runtime";
 
+import { cardWords } from "../approvals/card-words.js";
 import { deliverToOf, instantOf, labelledByStored, originTaskOf, type ReminderToolDependencies } from "../reminders/tools.js";
 
 /**
@@ -154,26 +155,43 @@ function assessment(title: string, askWhenTainted: boolean, reasons: readonly st
   };
 }
 
-const ASSESSORS: Readonly<Partial<Record<keyof typeof operations, (input: unknown) => CallAssessment>>> = {
-  add: (input) => {
+type Assessor = (input: unknown, context: InvocationContext | undefined) => CallAssessment;
+
+const ASSESSORS: Readonly<Partial<Record<keyof typeof operations, Assessor>>> = {
+  add: (input, context) => {
+    const t = cardWords(context);
     const parsed = operations.add.safeParse(input);
-    return assessment(parsed.success ? `Add to-do: ${parsed.data.text}` : "Add a to-do", false, []);
+    return assessment(parsed.success ? t("approval.card.todo.add", { text: parsed.data.text }) : t("approval.card.todo.addAny"), false, []);
   },
-  complete: (input) => {
+  complete: (input, context) => {
+    const t = cardWords(context);
     const parsed = operations.complete.safeParse(input);
+    const reopen = parsed.success && parsed.data.reopen === true;
     return assessment(
-      `${parsed.success && parsed.data.reopen === true ? "Reopen" : "Tick off"} to-do ${parsed.success ? parsed.data.todoId : ""}`.trim(),
+      parsed.success
+        ? t(reopen ? "approval.card.todo.reopen" : "approval.card.todo.complete", { id: parsed.data.todoId })
+        : t("approval.card.todo.completeAny"),
       true,
-      ["changes an existing to-do"],
+      [t("approval.reason.todo.changes")],
     );
   },
-  update: (input) => {
+  update: (input, context) => {
+    const t = cardWords(context);
     const parsed = operations.update.safeParse(input);
-    return assessment(`Change to-do ${parsed.success ? parsed.data.todoId : ""}`.trim(), true, ["changes an existing to-do"]);
+    return assessment(
+      parsed.success ? t("approval.card.todo.change", { id: parsed.data.todoId }) : t("approval.card.todo.changeAny"),
+      true,
+      [t("approval.reason.todo.changes")],
+    );
   },
-  remove: (input) => {
+  remove: (input, context) => {
+    const t = cardWords(context);
     const parsed = operations.remove.safeParse(input);
-    return assessment(`Remove to-do ${parsed.success ? parsed.data.todoId : ""}`.trim(), true, ["removes a to-do for good"]);
+    return assessment(
+      parsed.success ? t("approval.card.todo.remove", { id: parsed.data.todoId }) : t("approval.card.todo.removeAny"),
+      true,
+      [t("approval.reason.todo.removes")],
+    );
   },
 };
 

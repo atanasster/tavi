@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   TOOL_LABEL_KEY,
   TRUSTED_PUBLIC,
+  type InvocationContext,
   joinMemoryProvenance,
   memoryProvenanceLabel,
   memoryProvenanceUntrusted,
@@ -19,7 +20,6 @@ import {
   RoutineDeliveryWindowSchema,
   SCHEDULE_TIME_PATTERN,
   TaviError,
-  formatReminderTime,
   hostTimeZone,
   routineSetupDefaults,
   routineSetupTriggers,
@@ -30,6 +30,10 @@ import {
   type ToolSink,
 } from "@tavi/contracts";
 import type { RoutineControlService, ToolRegistry } from "@tavi/runtime";
+import type { CoreT } from "@tavi/contracts/locales/core";
+
+import { cardWords } from "../approvals/card-words.js";
+import { reminderWhenText } from "../reminders/when-text.js";
 import { cadenceReadBack, cadenceSpecFields, triggerCadence } from "../schedules/tools.js";
 const id = z.string().min(1).max(128);
 // Model-facing shapes express JSON constraints; the control service additionally validates IANA zones and cross-field policy invariants.
@@ -170,12 +174,17 @@ function triggerSummary(
   },
   now: Date,
   zoneKnown: boolean,
+  t: CoreT,
 ): string {
   const triggers = routineSetupTriggers(setup);
   const summary = triggers
     .map((trigger) => {
       const spec = routineTriggerSpec(trigger);
-      return spec !== undefined ? cadenceReadBack(spec) : trigger.kind === "once" ? `once at ${trigger.runAt}` : "";
+      return spec !== undefined
+        ? cadenceReadBack(spec, t)
+        : trigger.kind === "once"
+          ? t("approval.card.routine.onceAt", { time: trigger.runAt })
+          : "";
     })
     .join("; ");
   let next: Date | undefined;
@@ -190,14 +199,41 @@ function triggerSummary(
       next = undefined;
     }
   }
-  const withNext = next === undefined ? summary : `${summary}; next ${formatReminderTime(next, setup.timezone)}`;
+  const withNext =
+    next === undefined ? summary : t("approval.card.schedule.next", { cadence: summary, time: reminderWhenText(next, setup.timezone, t) });
   return withNext.charAt(0).toUpperCase() + withNext.slice(1);
 }
 /** Where a new routine's reports go, as its card says it. */
-function deliveryLine(delivery: { readonly targetId: string; readonly pdf?: boolean | undefined } | undefined): string {
-  return delivery === undefined
-    ? "Reports are saved in the app; external delivery requires a configured destination."
-    : `Reports are saved in the app and delivered to ${delivery.targetId}${delivery.pdf === true ? " as a PDF" : ""}.`;
+function deliveryLine(delivery: { readonly targetId: string; readonly pdf?: boolean | undefined } | undefined, t: CoreT): string {
+  if (delivery === undefined) return t("approval.card.routine.savedOnly");
+  return t(delivery.pdf === true ? "approval.card.routine.deliveredPdf" : "approval.card.routine.delivered", { target: delivery.targetId });
+}
+/**
+ * A new routine's card detail: when it runs, the skills it follows, how its
+ * research reaches the web and where its reports go.
+ */
+function createDetail(
+  setup:
+    | {
+        readonly at?: string | undefined;
+        readonly timezone: string;
+        readonly triggers?: readonly RoutineTrigger[] | undefined;
+        readonly skills?: readonly { readonly skillId: string; readonly version?: string | undefined }[] | undefined;
+      }
+    | undefined,
+  when: { readonly now: Date; readonly zoneKnown: boolean } | undefined,
+  openWeb: boolean,
+  delivery: { readonly targetId: string; readonly pdf?: boolean | undefined } | undefined,
+  t: CoreT,
+): string {
+  const skills = (setup?.skills ?? []).map((skill) => (skill.version === undefined ? skill.skillId : `${skill.skillId}@${skill.version}`));
+  return [
+    setup === undefined || when === undefined ? "" : `${triggerSummary(setup, when.now, when.zoneKnown, t)}. `,
+    skills.length === 0 ? "" : `${t("approval.card.routine.skills", { skills: skills.join(", ") })} `,
+    t(openWeb ? "approval.card.routine.openWeb" : "approval.card.routine.allowlist"),
+    " ",
+    deliveryLine(delivery, t),
+  ].join("");
 }
 /** What a routine's `get` answers of its pinned folder. */
 const PinnedFolderSchema = z.object({ revision: z.object({ snapshot: z.object({ folder: z.object({ path: z.string() }).optional() }) }) });
@@ -423,14 +459,16 @@ export function registerRoutineTools(
         ? {
             annotations: { destructive: true },
             // An allow rule lifts a destructive call; under taint it is still asked about.
-            assess: (input: unknown) => {
+            assess: (input: unknown, context: InvocationContext | undefined) => {
+              const t = cardWords(context);
               const parsed = operations.archive.safeParse(input);
+              const routineId = (parsed.success ? parsed.data.routineId : undefined) ?? t("approval.card.routine.thisConversations");
               return {
                 subjects: [],
                 risk: "medium" as const,
-                reasons: ["Archives the routine; it cannot be resumed"],
+                reasons: [t("approval.reason.routine.archive")],
                 askWhenTainted: true,
-                display: { title: `Archive routine ${(parsed.success ? parsed.data.routineId : undefined) ?? "(this conversation's)"}` },
+                display: { title: t("approval.card.routine.archive", { id: routineId }) },
               };
             },
           }
@@ -442,7 +480,8 @@ export function registerRoutineTools(
               await Promise.resolve(refreshZone(context.workspaceId)).catch(() => undefined);
               return true;
             },
-            assess: (input: unknown, context: { readonly workspaceId: string } | undefined) => {
+            assess: (input: unknown, context: InvocationContext | undefined) => {
+              const t = cardWords(context);
               const parsed = operations.create.safeParse(input);
               const permissions = service.setupPermissions();
               // A setup whose triggers cannot be armed is refused before anyone is asked to approve it.
@@ -452,7 +491,9 @@ export function registerRoutineTools(
               let setup: ReturnType<typeof storedSetup> | undefined;
               let refusal: string | undefined;
               try {
-                setup = parsed.success ? storedSetup(parsed.data.setup, workspaceZone ?? "the workspace's zone") : undefined;
+                setup = parsed.success
+                  ? storedSetup(parsed.data.setup, workspaceZone ?? t("approval.card.schedule.workspaceZone"))
+                  : undefined;
                 if (setup !== undefined) routineSetupTriggers(setup);
               } catch (error) {
                 refusal = errorMessage(error);
@@ -460,11 +501,19 @@ export function registerRoutineTools(
               return {
                 subjects: [],
                 risk: "medium" as const,
-                reasons: ["Creates a recurring research routine"],
+                reasons: [t("approval.reason.routine.create")],
                 ...(refusal === undefined ? {} : { hardDeny: refusal }),
                 display: {
-                  title: parsed.success ? `Create routine: ${parsed.data.setup.name}`.slice(0, 300) : "Create research routine",
-                  detail: `${setup !== undefined && refusal === undefined ? `${triggerSummary(setup, options.now?.() ?? new Date(), zoneKnown)}. ` : ""}${(setup?.skills?.length ?? 0) > 0 ? `Follows the skills ${(setup?.skills ?? []).map((skill) => (skill.version === undefined ? skill.skillId : `${skill.skillId}@${skill.version}`)).join(", ")}. ` : ""}${permissions.networkMode === "open_web" ? "Research may search and read public HTTPS pages using guarded web retrieval." : "Research uses the configured host allowlist."} ${deliveryLine(parsed.success ? parsed.data.setup.delivery : undefined)}`,
+                  title: parsed.success
+                    ? t("approval.card.routine.create", { name: parsed.data.setup.name }).slice(0, 300)
+                    : t("approval.card.routine.createAny"),
+                  detail: createDetail(
+                    setup,
+                    refusal === undefined ? { now: options.now?.() ?? new Date(), zoneKnown } : undefined,
+                    permissions.networkMode === "open_web",
+                    parsed.success ? parsed.data.setup.delivery : undefined,
+                    t,
+                  ),
                 },
               };
             },

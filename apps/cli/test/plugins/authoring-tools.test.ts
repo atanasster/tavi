@@ -71,6 +71,10 @@ describe("plugin authoring tools", () => {
     const validate = setup().registry.get("plugins.validate");
     const assessment = validate?.assess?.({ path: "mods/guard" }, assessContext);
     expect(assessment).toMatchObject({ askWhenTainted: true, display: { title: "Validate the plugin in mods/guard" } });
+    expect(validate?.assess?.({ path: "mods/guard" }, { ...assessContext, locale: "bg" })).toMatchObject({
+      display: { title: "Провери плъгина в mods/guard" },
+      reasons: ["пуска register на плъгина в изолирана среда"],
+    });
     const verdict = (tainted: boolean) =>
       evaluateGate({
         toolId: "plugins.validate",

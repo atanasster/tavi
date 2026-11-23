@@ -460,4 +460,39 @@ describe("the gate", () => {
       await store.close();
     }
   });
+
+  it("writes its cards in the workspace's language, and in English as before", async () => {
+    const { registry, store } = await fixture();
+    try {
+      const card = (name: string, input: unknown, locale?: "bg") =>
+        registry.get(`reminders.${name}`)?.assess?.(input, locale === undefined ? assessContext : { ...assessContext, locale });
+      const withTask = { ...dentist, prompt: "Check the train" };
+      expect(card("create", withTask, "bg")).toMatchObject({
+        display: { title: "Напомни: Dentist appointment", detail: "Пуска и задача: Check the train" },
+        reasons: ["пуска задача, когато се задейства"],
+      });
+      expect(card("create", withTask)).toMatchObject({
+        display: { title: "Remind: Dentist appointment", detail: "Also starts a task: Check the train" },
+        reasons: ["starts a task when it fires"],
+      });
+      expect(card("create", {}, "bg")?.display.title).toBe("Създай напомняне");
+      expect(card("update", { reminderId: "r1", text: "x" }, "bg")).toMatchObject({
+        display: { title: "Промени напомнянето r1" },
+        reasons: ["променя съществуващо напомняне"],
+      });
+      expect(card("update", { reminderId: "r1", text: "x" })?.display.title).toBe("Change reminder r1");
+      expect(card("cancel", { reminderId: "r1" }, "bg")).toMatchObject({
+        display: { title: "Отмени напомнянето r1" },
+        reasons: ["отменя съществуващо напомняне"],
+      });
+      expect(card("cancel", { reminderId: "r1" })).toMatchObject({
+        display: { title: "Cancel reminder r1" },
+        reasons: ["cancels an existing reminder"],
+      });
+      expect(card("snooze", { reminderId: "r1", minutes: 10 }, "bg")?.display.title).toBe("Отложи напомнянето r1 с 10 минути");
+      expect(card("snooze", { reminderId: "r1", minutes: 10 })?.display.title).toBe("Snooze reminder r1 for 10 minutes");
+    } finally {
+      await store.close();
+    }
+  });
 });

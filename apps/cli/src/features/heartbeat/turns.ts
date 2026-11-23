@@ -31,6 +31,7 @@ import { WITHHELD_BY_PLUGIN } from "@tavi/agent-host/workflow";
 import type { ToolRegistry } from "@tavi/runtime";
 import { z } from "zod";
 
+import { cardWords } from "../approvals/card-words.js";
 import type { SitePolicy } from "../browser/site-policy.js";
 
 /**
@@ -246,7 +247,7 @@ export function registerHeartbeatFetchTool(
       const key = pageKey(url);
       const vouched = key !== undefined && reports.fetchScope(context.runId)?.pages.has(key) === true;
       return {
-        display: { title: `Read ${url}`.slice(0, 300) },
+        display: { title: cardWords(context)("approval.card.heartbeat.read", { url }).slice(0, 300) },
         subjects: [],
         risk: "low",
         reasons: [],

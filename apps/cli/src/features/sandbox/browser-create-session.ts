@@ -35,7 +35,7 @@ export function registerBrowserCreateSession(registry: ToolRegistry, ctx: Browse
       // Refused before anyone is asked: allowing it could not make it open.
       if (typeof url === "string" && !opensFromNothing(url))
         return { ...assessBrowserCreateSession(input, t), hardDeny: NEEDS_ABSOLUTE_URL };
-      return withDestination(ctx, assessBrowserCreateSession(input, t), input);
+      return withDestination(ctx, assessBrowserCreateSession(input, t), input, t);
     },
     // With a `url`, the page's text reaches the model.
     untrustedOutput: true,

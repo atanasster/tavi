@@ -1,5 +1,12 @@
 import { providerOperation } from "../plugin-host/provider-bindings.js";
-import { assertPublicDestination, boundPublicFetch, egressHostRefusal, resolveFetchBinding, urlRefusal } from "../fetch-tool.js";
+import {
+  assertPublicDestination,
+  boundPublicFetch,
+  egressHostRefusal,
+  fetchCardTitle,
+  resolveFetchBinding,
+  urlRefusal,
+} from "../fetch-tool.js";
 import { hostRefusal } from "../host-policy.js";
 import { z } from "zod";
 import {
@@ -9,6 +16,7 @@ import {
   isKnownUrl,
   isWideningNetworkMode,
   normalizeUrl,
+  type InvocationContext,
   type ModelPort,
   type RoutineEnvelope,
   type RoutineFence,
@@ -636,10 +644,10 @@ export function routineResearchTools(
         id === "web_fetch"
           ? {
               ...unassessed,
-              assess: (input: unknown) => {
+              assess: (input: unknown, context: InvocationContext | undefined) => {
                 const url = (input as { readonly url?: unknown } | null)?.url;
                 return {
-                  display: { title: `Fetch ${String(url)}`.slice(0, 300) },
+                  display: { title: fetchCardTitle(String(url), context?.locale) },
                   subjects: [],
                   risk: "low" as const,
                   reasons: [],

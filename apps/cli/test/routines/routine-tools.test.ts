@@ -57,6 +57,26 @@ it("derives scope and conversation from invocation and keeps root object schemas
       .assess?.({ operationKey: "create", setup: { name: "News", objective: "Find news", timezone: "Europe/Berlin" } }, assessContext)
       .display,
   ).toMatchObject({ title: "Create routine: News", detail: expect.stringContaining("public HTTPS") });
+  // In the workspace's language: its title, detail and reasons.
+  const bg = registry
+    .get("routines.create")!
+    .assess?.(
+      { operationKey: "create", setup: { name: "News", objective: "Find news", timezone: "Europe/Berlin" } },
+      { ...assessContext, locale: "bg" },
+    );
+  expect(bg).toMatchObject({
+    display: { title: "Създай рутина: News", detail: expect.stringContaining("публични HTTPS страници") },
+    reasons: ["Създава повтаряща се рутина за проучване"],
+  });
+  expect(
+    registry.get("routines.archive")!.assess?.({ routineId: "r1", expectedVersion: 1 }, { ...assessContext, locale: "bg" }),
+  ).toMatchObject({
+    display: { title: "Архивирай рутината r1" },
+    reasons: ["Архивира рутината; после не може да се пусне отново"],
+  });
+  expect(registry.get("routines.archive")!.assess?.({ routineId: "r1", expectedVersion: 1 }, assessContext).display.title).toBe(
+    "Archive routine r1",
+  );
 });
 
 it("creates a routine after approval without requiring an HTTP host allowlist", async () => {

@@ -28,7 +28,10 @@ export function registerBrowserNavigate(registry: ToolRegistry, ctx: BrowserTool
     effect: "external",
     requiredPermissions: ["tools.invoke"],
     inputSchema: BrowserNavigateInputSchema,
-    assess: (input, context) => withDestination(ctx, assessBrowserNavigate(input, cardWords(context)), input),
+    assess: (input, context) => {
+      const t = cardWords(context);
+      return withDestination(ctx, assessBrowserNavigate(input, t), input, t);
+    },
     // The page's text reaches the model: web content is untrusted.
     untrustedOutput: true,
     // Every browser read is personal: sessions share the persistent profile, with the person's cookies.

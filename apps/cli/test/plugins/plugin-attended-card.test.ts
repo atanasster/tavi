@@ -77,6 +77,7 @@ async function loaded() {
 }
 
 const CONTEXT = { workspaceId: "default", principalId: "operator", runId: "task-1", caller: "test" } as never;
+const BG_CONTEXT = { workspaceId: "default", principalId: "operator", runId: "task-1", caller: "test", locale: "bg" } as never;
 
 describe("a manifest's attendedOnly and card", () => {
   it("takes attendedOnly only as true, and card fields only as JSON pointers, at most 8", () => {
@@ -122,6 +123,14 @@ describe("a manifest's attendedOnly and card", () => {
         risk: "medium",
         subjects: [],
       });
+      expect(assessment?.reasons).toEqual(["the plugin's approved manifest has a person decide every call of this tool"]);
+      // Tavi's frame in the workspace's language; the tool's id and the call's values as they are.
+      expect(watch?.assess?.({ name: "Backend, US", query: { keywords: ["backend", "go"] }, cadence: "hourly" }, BG_CONTEXT)).toMatchObject(
+        {
+          display: { title: "Пусни acme.jobs.watch", detail: 'name: Backend, US\nquery/keywords: ["backend","go"]\ncadence: hourly' },
+          reasons: ["одобреният манифест на плъгина иска човек да решава за всяко извикване на този инструмент"],
+        },
+      );
       // A long value is cut to its row's share of the card: three given rows of (2,000 - 2) / 3.
       const long = { name: "x".repeat(1_000), query: { keywords: ["go"] }, cadence: "hourly" };
       expect(watch?.assess?.(long, CONTEXT)?.display.detail?.split("\n")[0]?.length).toBe(666);

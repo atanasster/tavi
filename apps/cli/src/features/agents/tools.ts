@@ -24,6 +24,7 @@ import { sha256Hex } from "@tavi/node-kit";
 import type { ToolRegistry } from "@tavi/runtime";
 
 import { assessAgentsSpawn } from "../approvals/call-assessors.js";
+import { cardWords } from "../approvals/card-words.js";
 
 /**
  * The governed agent tool surface for delegation: a small governed agent
@@ -496,8 +497,8 @@ export function registerAgentTools(registry: ToolRegistry, agents: AgentCommunic
     effect: "read-only",
     requiredPermissions: ["tools.invoke"],
     inputSchema: ReadPayloadInputSchema,
-    assess: (): CallAssessment => ({
-      display: { title: "Read a worker's offloaded result" },
+    assess: (_input, context): CallAssessment => ({
+      display: { title: cardWords(context)("approval.card.worker.payload") },
       subjects: [],
       risk: "low",
       reasons: [],

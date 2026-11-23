@@ -19,6 +19,7 @@ import { errorMessage } from "@tavi/contracts/util";
 import type { ToolRegistry } from "@tavi/runtime";
 import { z } from "zod";
 
+import { cardWords } from "../approvals/card-words.js";
 import {
   GENERIC_VISION_TOOL_ID,
   computerAdapterFor,
@@ -117,17 +118,20 @@ export function registerBrowserVisionTool(registry: ToolRegistry, options: Brows
     requiredPermissions: ["tools.invoke"],
     inputSchema: InputSchema,
     // Asked about on its own: acting by sight, it can press anything on the page.
-    assess: (input) => ({
-      display: {
-        title: "Act in the browser by sight",
-        detail: String((input as { instruction?: unknown }).instruction ?? "").slice(0, 2_000),
-      },
-      subjects: [],
-      risk: "high",
-      reasons: ["clicks and types where it sees fit on the page, not on chosen elements"],
-      // Its shipped ask rule asks every time; under taint the step is a `tainted-payload` ask.
-      browserSteps: [{ kind: "send" }],
-    }),
+    assess: (input, context) => {
+      const t = cardWords(context);
+      return {
+        display: {
+          title: t("approval.card.browser.bySight"),
+          detail: String((input as { instruction?: unknown }).instruction ?? "").slice(0, 2_000),
+        },
+        subjects: [],
+        risk: "high",
+        reasons: [t("approval.reason.browser.bySight")],
+        // Its shipped ask rule asks every time; under taint the step is a `tainted-payload` ask.
+        browserSteps: [{ kind: "send" }],
+      };
+    },
     untrustedOutput: true,
     outputSource: "web",
     // Every browser read is personal: sessions share the persistent profile, with the person's cookies.

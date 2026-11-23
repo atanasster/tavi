@@ -15,6 +15,9 @@ import { createBrotliDecompress, createGunzip, createInflate, gunzipSync, inflat
 import { z } from "zod";
 import { TaviError, htmlToText, isPrimarySourceHost, type RoutineNetworkMode } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
+import type { Locale } from "@tavi/contracts/i18n";
+import { coreEnglish } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import type { ToolRegistry } from "./tools/registry.js";
 import { classifyAddresses, describeAddressRefusal, isIpLiteralHost } from "./address-guard.js";
 import { hostRefusal, isLoopbackHostname } from "./host-policy.js";
@@ -233,6 +236,12 @@ export interface FetchResult {
 async function resolveAll(hostname: string): Promise<readonly string[]> {
   const answers = await dnsLookup(hostname, { all: true });
   return answers.map((answer) => answer.address);
+}
+
+/** A fetch's approval card title, in the workspace's language (`InvocationContext.locale`). */
+export function fetchCardTitle(url: string, locale: Locale | undefined): string {
+  const t = locale === undefined || locale === "en" ? coreEnglish : coreIn(locale);
+  return t("approval.card.fetch", { url }).slice(0, 300);
 }
 
 /**
@@ -1029,11 +1038,11 @@ export function registerFetchTool(registry: ToolRegistry, base: FetchToolOptions
     // A host off the list is refused before the call, pointing at the browser when there is one. The binding is the URL's alone:
     // every page of one fetch is the same request.
     resolveBinding: async (input: unknown, context: InvocationContext) => resolveFetchBinding(options, fetchRequestOf(input), context),
-    assess: (input) => {
+    assess: (input, context) => {
       const url = (input as { readonly url: string }).url;
       const refusal = options.networkMode === "custom_hosts" ? hostRefusal(url, options.allowedHosts ?? []) : undefined;
       return {
-        display: { title: `Fetch ${url}`.slice(0, 300) },
+        display: { title: fetchCardTitle(url, context?.locale) },
         subjects: [],
         risk: "low",
         reasons: [],

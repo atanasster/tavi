@@ -41,6 +41,7 @@ import { readPluginManifest, sniffMediaType, type ExternalToolRegistration, type
 import { inAttendedDeferredFamily } from "@tavi/agent-host/workflow";
 import { z } from "zod";
 
+import { cardEffect, cardRisk, cardWords } from "../approvals/card-words.js";
 import { serverHasEgress, type McpActionContext } from "./actions.js";
 import { MAX_VIEW_IMAGE_BYTES, VIEWABLE_IMAGE_TYPES } from "../tools/assistant.js";
 import { cleanServerText, mcpResultLabel, mcpServerDisplayName, serverLine, type McpCallResult } from "./results.js";
@@ -236,12 +237,16 @@ export function mcpAssessment(
     readonly identity?: string | undefined;
   },
   args: unknown,
+  context?: Pick<InvocationContext, "locale">,
 ): CallAssessment {
+  const t = cardWords(context);
   const decision = input.tool.decision;
   if (decision === undefined) throw new TaviError("CONFLICT", `${input.tool.toolId} has no approved decision`);
   const shown = JSON.stringify(args ?? {});
   const detail =
-    shown.length <= SHOWN_ARGUMENTS ? shown : `arguments ${String(shown.length)} characters, sha256 ${sha256Hex(shown).slice(0, 16)}`;
+    shown.length <= SHOWN_ARGUMENTS
+      ? shown
+      : t("approval.card.mcp.argumentsHashed", { count: shown.length, n: String(shown.length), hash: sha256Hex(shown).slice(0, 16) });
   const risk = maxRisk(EFFECT_RISK[decision.effect], decision.minRisk ?? "low", argumentFloor(decision.argFloors ?? [], args));
   return {
     // The account it acts as, so two of one app's accounts are told apart on the card.
@@ -253,7 +258,13 @@ export function mcpAssessment(
     subjects: [],
     risk,
     reasons: [
-      `an MCP tool of ${input.serverName}, approved as ${decision.effect}${decision.minRisk === undefined ? "" : ` with a ${decision.minRisk} floor`}`,
+      decision.minRisk === undefined
+        ? t("approval.reason.mcp.tool", { server: input.serverName, effect: cardEffect(decision.effect, t) })
+        : t("approval.reason.mcp.toolFloor", {
+            server: input.serverName,
+            effect: cardEffect(decision.effect, t),
+            risk: cardRisk(decision.minRisk, t),
+          }),
     ],
     ...(risk === "critical" ? { onceOnly: true } : {}),
     // Every tool whose sink is not `none` asks once in a tainted chat, in every taint mode.
@@ -715,7 +726,7 @@ export class McpBridge {
       ...(input.deferred ? { deferred: true } : {}),
       // The server's hints, as the spec defaults them (an unhinted tool is a destructive write), on Tavi's annotations.
       annotations: mcpAnnotations(definition.annotations, decision.effect),
-      assess: (args) =>
+      assess: (args, context) =>
         mcpAssessment(
           {
             serverName: input.serverName,
@@ -725,6 +736,7 @@ export class McpBridge {
             identity: input.identity,
           },
           args,
+          context,
         ),
       offered: (context) => this.#offered(pluginId, context),
       holdsCall: (taskId, callId) => this.#holds(pluginId, taskId, callId),
@@ -1052,7 +1064,7 @@ export class McpBridge {
     const { pluginId, serverName } = input;
     const slug = mcpSlugOf(pluginId) as string;
     const sink = mcpToolSink("read-only", input.egress);
-    const assess = (name: string, args: unknown): CallAssessment => ({
+    const assess = (name: string, args: unknown, context: InvocationContext | undefined): CallAssessment => ({
       display: {
         title: `${serverName}: ${name}`,
         detail: JSON.stringify(args ?? {}).slice(0, SHOWN_ARGUMENTS),
@@ -1060,7 +1072,7 @@ export class McpBridge {
       },
       subjects: [],
       risk: "low",
-      reasons: [`reads a resource of the MCP server ${serverName}`],
+      reasons: [cardWords(context)("approval.reason.mcp.resource", { server: serverName })],
       ...(sink.sink === "none" ? {} : { askWhenTainted: true }),
       alwaysAnyCall: false,
     });
@@ -1087,7 +1099,7 @@ export class McpBridge {
         id: listId,
         description: `[${serverName}] Lists the resources the MCP server offers: each one's URI, name and kind. Read one with ${readId}.`,
         inputSchema: z.strictObject({}),
-        assess: (args) => assess("resources_list", args),
+        assess: (args, context) => assess("resources_list", args, context),
         handler: async ({ context, signal }) => {
           await allowed(context, listId);
           const listed = await this.#options.supervisor.read(pluginId, (connection, read) => connection.listResources(read), { signal });
@@ -1104,7 +1116,7 @@ export class McpBridge {
         id: readId,
         description: `[${serverName}] Reads one resource of the MCP server by its URI, as ${listId} lists it. Its text is cut at ${String(MCP_RESOURCE_READ_MAX_CHARS)} characters.`,
         inputSchema: z.strictObject({ uri: z.string().min(1).max(2_048).describe("The resource's URI, as the server lists it") }),
-        assess: (args) => assess("resource_read", args),
+        assess: (args, context) => assess("resource_read", args, context),
         handler: async ({ input: args, context, signal }) => {
           await allowed(context, readId);
           const { uri } = args as { readonly uri: string };

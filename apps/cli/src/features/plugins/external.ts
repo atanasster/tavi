@@ -23,6 +23,7 @@ import {
   type HeartbeatProvider,
   type HeartbeatSignalSource,
   type CallAssessment,
+  type InvocationContext,
   type ChannelDescriptor,
   type MessagingConnectorDefinition,
   type PluginDefinition,
@@ -75,6 +76,7 @@ import {
   type TurnHookRegistry,
 } from "@tavi/runtime";
 
+import { cardRisk, cardWords } from "../approvals/card-words.js";
 import { cleanSchema, schemaFlags } from "../mcp/review.js";
 
 /**
@@ -1230,16 +1232,17 @@ function toolRegistration(
     ...(minRisk === undefined && declared.attendedOnly !== true && declared.card === undefined
       ? {}
       : {
-          assess: (input: unknown): CallAssessment => {
+          assess: (input: unknown, context: InvocationContext | undefined): CallAssessment => {
+            const t = cardWords(context);
             const rows = cardRows(input, declared.card?.fields ?? [], clipText);
             const effectRisk = declared.effect === "read-only" ? "low" : "medium";
             return {
-              display: { title: `Run ${id}`, ...(rows.length === 0 ? {} : { detail: rows.join("\n") }) },
+              display: { title: t("approval.card.runTool", { tool: id }), ...(rows.length === 0 ? {} : { detail: rows.join("\n") }) },
               subjects: [],
               risk: minRisk === undefined ? effectRisk : maxRisk(effectRisk, minRisk),
               reasons: [
-                ...(minRisk === undefined ? [] : [`the plugin's approved manifest rates this tool at least ${minRisk} risk`]),
-                ...(declared.attendedOnly === true ? ["the plugin's approved manifest has a person decide every call of this tool"] : []),
+                ...(minRisk === undefined ? [] : [t("approval.reason.plugin.minRisk", { risk: cardRisk(minRisk, t) })]),
+                ...(declared.attendedOnly === true ? [t("approval.reason.plugin.attended")] : []),
               ],
               ...(declared.attendedOnly === true ? { attendedOnly: true } : {}),
             };

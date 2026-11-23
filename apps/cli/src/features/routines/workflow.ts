@@ -56,6 +56,7 @@ import {
   routineSkillContext,
 } from "@tavi/runtime";
 import { registerAgentTools } from "../agents/tools.js";
+import { cardWords } from "../approvals/card-words.js";
 
 /** A resume admission, handed to the routine run that holds its task. */
 type RoutineResume = (input: AdmitInput, options?: WorkflowInvokeOptions) => Promise<AdmissionResult>;
@@ -429,12 +430,15 @@ export async function executeRoutineWorkflow(
       description: "Start this routine's research worker; it takes no arguments and returns its evidence.",
       // Arguments a model sends anyway (the full spawn shape, from habit or history) are accepted and ignored.
       inputSchema: z.object({}),
-      assess: () => ({
-        display: { title: "Start the routine's research worker", detail: run.snapshot.objective.slice(0, 2_000) },
-        subjects: [`agent:${run.snapshot.agent.agentId}`],
-        risk: "medium" as const,
-        reasons: ["runs the routine's research worker, within the run's limits"],
-      }),
+      assess: (_input, context) => {
+        const t = cardWords(context);
+        return {
+          display: { title: t("approval.card.routine.worker"), detail: run.snapshot.objective.slice(0, 2_000) },
+          subjects: [`agent:${run.snapshot.agent.agentId}`],
+          risk: "medium" as const,
+          reasons: [t("approval.reason.routine.worker")],
+        };
+      },
       handler: async (call) => {
         await runs.assertFence(fence, "synthesis");
         // The research worker starts with the synthesis call's label, as any spawn does.

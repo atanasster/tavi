@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { InvocationContext } from "@tavi/contracts";
 import type { PluginFileCheck, ToolRegistry } from "@tavi/runtime";
 
+import { cardWords } from "../approvals/card-words.js";
 import { PLUGIN_AUTHORING_GUIDE, PLUGIN_AUTHORING_GUIDE_VERSION } from "./authoring-guide.js";
 import { validatePlugin, type ValidateOptions } from "./validate.js";
 
@@ -64,14 +65,20 @@ export function registerAuthoringTools(registry: ToolRegistry, options: Authorin
     inputSchema: ValidateSchema,
     // It runs the folder's code: a turn holding untrusted content is asked first, once only,
     // as a chat-started one is refused it by the messaging profile.
-    assess: (input) => {
+    assess: (input, context) => {
+      const t = cardWords(context);
       const parsed = ValidateSchema.safeParse(input);
       return {
         subjects: [],
         risk: "low",
-        reasons: ["runs the plugin's register in a sandbox"],
+        reasons: [t("approval.reason.plugin.validate")],
         askWhenTainted: true,
-        display: { title: `Validate the plugin in ${parsed.success ? parsed.data.path : "a folder"}`.slice(0, 300) },
+        display: {
+          title: (parsed.success
+            ? t("approval.card.plugin.validate", { path: parsed.data.path })
+            : t("approval.card.plugin.validateAny")
+          ).slice(0, 300),
+        },
       };
     },
     handler: async ({ input, context, signal }) => {

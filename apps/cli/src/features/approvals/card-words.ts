@@ -1,3 +1,4 @@
+import type { RiskLevel, ToolEffect } from "@tavi/contracts";
 import type { Locale } from "@tavi/contracts/i18n";
 import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
 import { coreIn } from "@tavi/contracts/locales/core-server";
@@ -100,6 +101,22 @@ export function cardKind(kind: string, t: CoreT): string {
   if (t === coreEnglish) return kind;
   const key = `approval.card.kind.${kind}`;
   return Object.hasOwn(KIND_KEYS, kind) ? t(key as CoreKey) : kind;
+}
+
+/** A risk level as a card's reason names it ("at least high risk"). */
+export function cardRisk(risk: RiskLevel, t: CoreT): string {
+  return t(`approval.card.risk.${risk}`);
+}
+
+const EFFECT_KEYS = {
+  "read-only": "approval.card.effect.readOnly",
+  mutating: "approval.card.effect.mutating",
+  external: "approval.card.effect.external",
+} as const satisfies Record<ToolEffect, CoreKey>;
+
+/** A tool's effect as a card's reason names it ("approved as read-only"). */
+export function cardEffect(effect: ToolEffect, t: CoreT): string {
+  return t(EFFECT_KEYS[effect]);
 }
 
 /** The kinds a card names in words: a browser's and the desktop's. */

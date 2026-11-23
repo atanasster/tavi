@@ -149,6 +149,21 @@ describe("todos.*", () => {
       const assessed = registry.get("todos.remove")?.assess?.({ todoId: "x" }, { ...alice });
       expect(assessed).toMatchObject({ askWhenTainted: true });
       expect(registry.get("todos.add")?.assess?.({ text: "x", operationKey: "k" }, { ...alice })).not.toHaveProperty("askWhenTainted");
+      // The card in the workspace's language; in English as before.
+      expect(registry.get("todos.remove")?.assess?.({ todoId: "x" }, { ...alice, locale: "bg" })).toMatchObject({
+        display: { title: "Премахни задачата x" },
+        reasons: ["премахва задача завинаги"],
+      });
+      expect(assessed).toMatchObject({ display: { title: "Remove to-do x" }, reasons: ["removes a to-do for good"] });
+      expect(registry.get("todos.complete")?.assess?.({ todoId: "x", reopen: true }, { ...alice, locale: "bg" })?.display.title).toBe(
+        "Отвори отново задачата x",
+      );
+      expect(
+        registry.get("todos.add")?.assess?.({ text: "Купи мляко", operationKey: "k" }, { ...alice, locale: "bg" })?.display.title,
+      ).toBe("Добави задача: Купи мляко");
+      expect(registry.get("todos.add")?.assess?.({ text: "Buy milk", operationKey: "k" }, { ...alice })?.display.title).toBe(
+        "Add to-do: Buy milk",
+      );
     } finally {
       await store.close();
     }

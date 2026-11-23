@@ -99,6 +99,17 @@ describe("the reading of one call", () => {
     expect(
       mcpAssessment({ serverName: "Home", tool: record("read-only"), sink: "none" }, { text: "x".repeat(400) }).display.detail,
     ).toMatch(/^arguments \d+ characters, sha256 [a-f0-9]{16}$/);
+    // Tavi's own words in the workspace's language; the server's name and tool as the server says them.
+    const floored = { serverName: "Home", tool: record("external", { minRisk: "high" }), sink: "persist" as const };
+    expect(mcpAssessment(floored, {}).reasons).toEqual(["an MCP tool of Home, approved as external with a high floor"]);
+    expect(mcpAssessment(floored, {}, { locale: "bg" })).toMatchObject({
+      display: { title: "Home: HassTurnOn" },
+      reasons: ["MCP инструмент на Home, одобрен като външен с риск поне висок"],
+    });
+    expect(
+      mcpAssessment({ serverName: "Home", tool: record("read-only"), sink: "none" }, { text: "x".repeat(400) }, { locale: "bg" }).display
+        .detail,
+    ).toMatch(/^аргументи: \d+\u00a0знака, sha256 [a-f0-9]{16}$/);
   });
 
   it("passes content on, with links listed and images noted", () => {

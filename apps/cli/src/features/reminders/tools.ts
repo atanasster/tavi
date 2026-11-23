@@ -29,6 +29,8 @@ import { zodIssues } from "@tavi/contracts/zod-util";
 import { definedOnly } from "@tavi/contracts/util";
 import type { ToolRegistry } from "@tavi/runtime";
 
+import { cardWords } from "../approvals/card-words.js";
+
 /**
  * The agent's reminder tools:
  * `reminders.create`, `.list`, `.update`, `.cancel` and `.snooze`.
@@ -294,30 +296,46 @@ function assessment(title: string, askWhenTainted: boolean, reasons: readonly st
   };
 }
 
-const ASSESSORS: Readonly<Partial<Record<keyof typeof operations, (input: unknown) => CallAssessment>>> = {
-  create: (input) => {
+type Assessor = (input: unknown, context: InvocationContext | undefined) => CallAssessment;
+
+const ASSESSORS: Readonly<Partial<Record<keyof typeof operations, Assessor>>> = {
+  create: (input, context) => {
+    const t = cardWords(context);
     const parsed = operations.create.safeParse(input);
-    if (!parsed.success) return assessment("Create a reminder", true, []);
-    const task = parsed.data.prompt !== undefined;
+    if (!parsed.success) return assessment(t("approval.card.reminder.createAny"), true, []);
+    const prompt = parsed.data.prompt;
     return assessment(
-      `Remind: ${parsed.data.text}`,
-      task,
-      task ? ["starts a task when it fires"] : [],
-      task ? `Also starts a task: ${parsed.data.prompt ?? ""}` : undefined,
+      t("approval.card.reminder.create", { text: parsed.data.text }),
+      prompt !== undefined,
+      prompt === undefined ? [] : [t("approval.reason.reminder.startsTask")],
+      prompt === undefined ? undefined : t("approval.card.reminder.alsoTask", { prompt }),
     );
   },
-  update: (input) => {
+  update: (input, context) => {
+    const t = cardWords(context);
     const parsed = operations.update.safeParse(input);
-    return assessment(`Change reminder ${parsed.success ? parsed.data.reminderId : ""}`.trim(), true, ["changes an existing reminder"]);
+    return assessment(
+      parsed.success ? t("approval.card.reminder.change", { id: parsed.data.reminderId }) : t("approval.card.reminder.changeAny"),
+      true,
+      [t("approval.reason.reminder.changes")],
+    );
   },
-  cancel: (input) => {
+  cancel: (input, context) => {
+    const t = cardWords(context);
     const parsed = operations.cancel.safeParse(input);
-    return assessment(`Cancel reminder ${parsed.success ? parsed.data.reminderId : ""}`.trim(), true, ["cancels an existing reminder"]);
+    return assessment(
+      parsed.success ? t("approval.card.reminder.cancel", { id: parsed.data.reminderId }) : t("approval.card.reminder.cancelAny"),
+      true,
+      [t("approval.reason.reminder.cancels")],
+    );
   },
-  snooze: (input) => {
+  snooze: (input, context) => {
+    const t = cardWords(context);
     const parsed = operations.snooze.safeParse(input);
     return assessment(
-      parsed.success ? `Snooze reminder ${parsed.data.reminderId} for ${parsed.data.minutes} minutes` : "Snooze a reminder",
+      parsed.success
+        ? t("approval.card.reminder.snooze", { id: parsed.data.reminderId, count: parsed.data.minutes, n: String(parsed.data.minutes) })
+        : t("approval.card.reminder.snoozeAny"),
       false,
       [],
     );

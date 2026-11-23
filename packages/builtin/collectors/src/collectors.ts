@@ -11,6 +11,9 @@ import {
   type ToolRegistrar,
 } from "@tavi/contracts";
 import { BodyTooLargeError, isLoopbackHostname, readBoundedBody } from "@tavi/node-kit";
+import type { Locale } from "@tavi/contracts/i18n";
+import { coreEnglish } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 
 /**
  * Deterministic collector tools.
@@ -1822,7 +1825,19 @@ export function registerCollectorTools(registry: ToolRegistrar, options: Collect
       ...(source.outputConfidentiality === undefined ? {} : { outputConfidentiality: source.outputConfidentiality }),
       ...(callSink === undefined
         ? {}
-        : { assess: () => ({ display: { title: `Run ${source.id}` }, subjects: [], risk: "low" as const, reasons: [], sink: callSink }) }),
+        : {
+            assess: (_input: unknown, context: { readonly locale?: Locale | undefined } | undefined) => {
+              const locale = context?.locale;
+              const t = locale === undefined || locale === "en" ? coreEnglish : coreIn(locale);
+              return {
+                display: { title: t("approval.card.runTool", { tool: source.id }) },
+                subjects: [],
+                risk: "low" as const,
+                reasons: [],
+                sink: callSink,
+              };
+            },
+          }),
       inputSchema: ProjectInputSchema,
       handler: async ({ input, context }: { input: unknown; context: { readonly workspaceId: string } }) => {
         const parsed = ProjectInputSchema.safeParse(input);
