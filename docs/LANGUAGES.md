@@ -98,6 +98,14 @@ when no owner runs), English when it cannot be read. Key hints read
 and „в — винаги (правило за работното пространство)“. The English keys
 y/n/N/s/a keep working in either language, and a Bulgarian key never grants
 more than its English twin; a yes or no is read as y/yes/д/да and n/no/н/не.
+The status row under a round's card says the keys shorter („д — одобри,
+ч — за чата, в — правило, н — откажи, Н — откажи с причина“), and the card
+above it says them in full. When a Bulgarian row is too wide for the terminal,
+it leaves out the round's number and then the group's hosts, never part of a
+key. Any other Bulgarian status row is cut where a clause or word ends, keeping
+a chat's private and taint marks. The text of `tavi heartbeat`, `tavi doctor`
+and `tavi onboard status` wraps at spaces to the terminal's width, and is left
+unwrapped in a pipe.
 Onboarding asks the rest of its questions in the chosen language only once
 that choice is saved. Some informational lines, field labels a plugin supplies,
 preset notes and usage errors stay English. Columns are measured in terminal

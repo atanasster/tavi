@@ -1152,7 +1152,7 @@ describe("tavi chat over a scripted owner", () => {
       }),
     };
     const { tty, done } = chatOver(client, { attach: "task-1" });
-    await waitFor(() => tty.output().includes("искане 4: д — одобри, н — откажи, Н — откажи с причина"));
+    await waitFor(() => tty.output().includes("д — одобри, н — откажи, Н — откажи с причина"));
     // ч and в are the session and always keys: a round that offers only once takes neither, in either language.
     tty.type("чвsa");
     tty.type("д");

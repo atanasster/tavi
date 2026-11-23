@@ -3,6 +3,8 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from "@tavi/contracts/i18n";
 import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { coreIn } from "@tavi/contracts/locales/core-server";
 
+import { wrappedLines } from "./terminal-text.js";
+
 /**
  * The terminal's language: the workspace's `workspace.locale`, as the owner
  * holds it — or, with no owner, as the data directory stores it — and English
@@ -80,3 +82,12 @@ export function yesNoOf(typed: string): boolean | undefined {
 /** The hint after a yes-or-no question: `[Y/n]` when Enter says yes, `[y/N]` when it says no (`[Д/н]`, `[д/Н]` in Bulgarian). */
 export const yesNoHint = (fallback: boolean, t: CoreT = coreEnglish): string =>
   t(fallback ? "prompt.confirm.hintYes" : "prompt.confirm.hintNo");
+
+/**
+ * A page of command output for a terminal `columns` wide: in English as it always was, and in another language with
+ * each line too wide for the terminal cut at spaces and going on two columns deeper (`wrappedLines`), so the terminal
+ * never wraps a translated line inside a word. With no width known (a pipe, or a terminal that reports 0) every line
+ * is left whole, for whatever reads it.
+ */
+export const pageIn = (t: CoreT, text: string, columns: number | undefined): string =>
+  t === coreEnglish || columns === undefined || columns <= 0 ? text : wrappedLines(text, columns);

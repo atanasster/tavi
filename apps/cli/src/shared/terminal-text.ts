@@ -57,6 +57,78 @@ export function paddedCell(text: string, width: number): string {
   return text + " ".repeat(Math.max(0, width - stringWidth(text)));
 }
 
+/** Where a clause of a one-row line ends: a part (`·`, `;`), a list item (`,`) or an aside (`—`). */
+const CLAUSE_BREAKS = / · |; |, | — /g;
+
+/**
+ * One row of at most `columns` terminal columns: as it is when it fits, else
+ * cut at the last place that fits where a clause ends (`·`, `;`, `,`, `—`) —
+ * or where a word does, when a clause's end would keep less than half the row
+ * — and ended with `…`, so no word is cut in two. A first word wider than the
+ * row is cut between its characters, as nothing else can be. A width of 0 or
+ * less is no width: the text is left as it is.
+ */
+export function fittedRow(text: string, columns: number): string {
+  if (columns <= 0 || stringWidth(text) <= columns) return text;
+  if (columns === 1) return "…";
+  const room = columns - 1;
+  const kept = (cut: number): string => text.slice(0, cut).replace(/[\s·,;—]+$/u, "");
+  const lastFitting = (breaks: RegExp): number | undefined => {
+    let cut: number | undefined;
+    for (const match of text.matchAll(breaks)) {
+      const piece = kept(match.index);
+      if (piece === "") continue;
+      if (stringWidth(piece) > room) break;
+      cut = match.index;
+    }
+    return cut;
+  };
+  const clause = lastFitting(CLAUSE_BREAKS);
+  const word = lastFitting(/ +/g);
+  const cut = clause !== undefined && (word === undefined || stringWidth(kept(clause)) * 2 >= room) ? clause : word;
+  if (cut !== undefined) return `${kept(cut)}…`;
+  return `${brokenWord(text, room)[0] ?? ""}…`;
+}
+
+/**
+ * Text whose lines wider than `columns` are each cut at spaces, the first
+ * using the whole width and the rest going on at its indent plus `deeper`.
+ * Unlike `fittedText`, every line stands alone — command output, not a help
+ * page's paragraphs — and none is joined to the next. A line with a tab, or
+ * with columns aligned by runs of spaces, is a table row, left as it is; so is
+ * every line when `columns` is 0 or less (no width is known).
+ */
+export function wrappedLines(text: string, columns: number, deeper = "  "): string {
+  if (columns <= 0) return text;
+  return text
+    .split("\n")
+    .flatMap((line) => {
+      if (line.includes("\t") || stringWidth(line) <= columns) return [line];
+      const head = /^ */.exec(line)?.[0] ?? "";
+      if (/\S {2,}\S/.test(line.slice(head.length))) return [line];
+      const indent = `${head}${deeper}`;
+      const widest = Math.max(1, columns - stringWidth(indent));
+      const lines: string[] = [];
+      let current = head;
+      let empty = true;
+      for (const word of line.slice(head.length).split(" ")) {
+        if (word === "") continue;
+        for (const piece of stringWidth(word) > widest ? brokenWord(word, widest) : [word]) {
+          if (!empty && stringWidth(current) + 1 + stringWidth(piece) > columns) {
+            lines.push(current);
+            current = indent;
+            empty = true;
+          }
+          current = empty ? `${current}${piece}` : `${current} ${piece}`;
+          empty = false;
+        }
+      }
+      if (!empty) lines.push(current);
+      return lines;
+    })
+    .join("\n");
+}
+
 /** The width a CLI page is laid out to: the terminal's columns, 80 in a pipe. */
 export const pageWidth = (columns: number | undefined): number => columns ?? 80;
 

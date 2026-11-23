@@ -58,6 +58,15 @@ const waitedFor = (since: number, now: number, t: CoreT): string => spanOf(Math.
 
 const header = (title: string, workspaceId: string, t: CoreT): string => divider(t("tui.pane.header", { title, workspace: workspaceId }));
 
+/** A mailbox message's kind in the chat's language. */
+const MAILBOX_KINDS = {
+  message: "tui.pane.mailbox.kind.message",
+  request: "tui.pane.mailbox.kind.request",
+  reply: "tui.pane.mailbox.kind.reply",
+  progress: "tui.pane.mailbox.kind.progress",
+  result: "tui.pane.mailbox.kind.result",
+} as const;
+
 /**
  * The workspace's agents, then the mailbox of the task followed here: absent
  * from `result` when no task is followed, or when `followed` — the task the
@@ -104,7 +113,7 @@ export function agentsPane(
         : t(expired ? "tui.pane.mailbox.expired" : "tui.pane.mailbox.expires", { when: relative(envelope.expiresAt, now, t) });
     lines.push(
       t("tui.pane.mailbox.envelope", {
-        kind: envelope.kind,
+        kind: t(MAILBOX_KINDS[envelope.kind]),
         sender: envelope.senderAgentId,
         task: envelope.senderTaskId,
         when: relative(envelope.createdAt, now, t),
@@ -423,11 +432,21 @@ export function chatsPane(
   const rows = reader.homeOn ? [...result.rows.filter(mine), ...result.rows.filter((row) => !mine(row))] : result.rows;
   if (rows.length === 0) lines.push(t(reader.homeOn ? "tui.pane.chats.noneHome" : "tui.pane.chats.none"));
   // The kind's column fits the widest of Home, dm and chat in this language (4 in English); a group's
-  // name, rarer, may run one past it, as it always has. The status is a code, 14 wide.
+  // name, rarer, may run one past it, as it always has. The status is a code: its column is 14 wide, or as
+  // wide as the widest status listed (`awaiting_approval`), so the titles after it line up.
   const kindWidth = Math.max(
     4,
-    ...(["tui.pane.chats.kind.home", "tui.pane.chats.kind.dm", "tui.pane.chats.kind.chat"] as const).map((key) => stringWidth(t(key))),
+    ...(
+      [
+        "tui.pane.chats.kind.home",
+        "tui.pane.chats.kind.dm",
+        "tui.pane.chats.kind.chat",
+        "tui.pane.chats.kind.side",
+        "tui.pane.chats.kind.run",
+      ] as const
+    ).map((key) => stringWidth(t(key))),
   );
+  const statusWidth = Math.max(14, ...rows.map((row) => stringWidth(row.status)));
   for (const row of rows) {
     // A channel conversation's Home says which kind it is.
     const kind =
@@ -439,13 +458,17 @@ export function chatsPane(
             : t("tui.pane.chats.kind.dm")
           : row.chatKind === undefined || row.chatKind === "home"
             ? t("tui.pane.chats.kind.chat")
-            : row.chatKind;
+            : row.chatKind === "side"
+              ? t("tui.pane.chats.kind.side")
+              : row.chatKind === "run"
+                ? t("tui.pane.chats.kind.run")
+                : row.chatKind;
     const title = row.title ?? row.promptPreview ?? "";
     const clipped = title.length > 60 ? `${title.slice(0, 59)}${GLYPHS.more}` : title;
     // A private chat is marked: nothing in it is remembered.
     const marked = row.memoryMode === "private" ? t("tui.pane.chats.private", { title: clipped }) : clipped;
     lines.push(
-      `  ${row.taskId === reader.followed ? GLYPHS.prompt : " "} ${row.taskId}  ${paddedCell(kind, kindWidth)}  ${paddedCell(row.status, 14)}  ${marked}`.trimEnd(),
+      `  ${row.taskId === reader.followed ? GLYPHS.prompt : " "} ${row.taskId}  ${paddedCell(kind, kindWidth)}  ${paddedCell(row.status, statusWidth)}  ${marked}`.trimEnd(),
     );
   }
   if (result.truncated || result.nextCursor !== undefined) lines.push(t("tui.pane.chats.older", { mark: GLYPHS.more }));

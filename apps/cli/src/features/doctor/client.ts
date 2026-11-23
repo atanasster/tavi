@@ -8,7 +8,7 @@ import { attachToOwner } from "../../cli/owner.js";
 import type { RuntimeFactory } from "../../cli/runtime-options.js";
 import { replacementsInWords, replacementsOf } from "../models/replacements.js";
 import { SANDBOX_OPTION_FLAGS } from "../sandbox/setup.js";
-import { ownerWords, storeWords } from "../../shared/terminal-words.js";
+import { ownerWords, pageIn, storeWords } from "../../shared/terminal-words.js";
 import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 
 /**
@@ -113,7 +113,7 @@ export async function doctor(
 
 /** The report as JSON, or its summary under `--format text`. */
 function printDoctor(io: CliIo, report: DoctorDocument, fromOwner: boolean, t: CoreT): void {
-  if (isTextOutput(io)) io.stdout(doctorSummary(report, fromOwner, t));
+  if (isTextOutput(io)) io.stdout(pageIn(t, doctorSummary(report, fromOwner, t), io.columns));
   else emitJson(io, report);
 }
 

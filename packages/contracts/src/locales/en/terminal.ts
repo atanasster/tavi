@@ -26,6 +26,23 @@ export const terminal = {
   /** A tool group's name inside a key's words: "the browser on example.com". */
   "tui.keys.groupName": "the {label}",
   "tui.review.keys": "y releases the output and resumes, n rejects it",
+  /**
+   * The same keys in the status row, one line under the card that says them in full: a language whose full words are
+   * wider than a terminal's row says them shorter here. English says them as the card does.
+   */
+  "tui.rowKeys.group.allow": "y allows {name} for this chat",
+  "tui.rowKeys.group.always": "a always ({name}, in every chat)",
+  /** A grouped round's keys when the row names the group once, ahead of them. */
+  "tui.rowKeys.group.allowIt": "y for this chat",
+  "tui.rowKeys.group.alwaysIt": "a always (in every chat)",
+  "tui.rowKeys.group.refuse": "n refuses it",
+  "tui.rowKeys.group.refuseWhy": "N refuses with a reason",
+  "tui.rowKeys.approve": "y approves it",
+  "tui.rowKeys.untilTomorrow": "s until tomorrow",
+  "tui.rowKeys.restOfChat": "s for the rest of this chat",
+  "tui.rowKeys.always": "a always (a workspace rule)",
+  "tui.rowKeys.reject": "n rejects it",
+  "tui.rowKeys.rejectWhy": "N rejects with a reason",
 
   // ------------------------------------------------------------------ /help
   "tui.help.title": "commands",
@@ -131,6 +148,12 @@ export const terminal = {
   "tui.pane.mailbox.expired": ", expired {when}",
   "tui.pane.mailbox.expires": ", expires {when}",
   "tui.pane.mailbox.envelope": "    {kind} from {sender} (task {task}), {when}{expires}",
+  /** A mailbox message's kind, as the envelope line names it. */
+  "tui.pane.mailbox.kind.message": "message",
+  "tui.pane.mailbox.kind.request": "request",
+  "tui.pane.mailbox.kind.reply": "reply",
+  "tui.pane.mailbox.kind.progress": "progress",
+  "tui.pane.mailbox.kind.result": "result",
   "tui.pane.mailbox.more": "    {mark} and more",
   "tui.pane.schedules": "schedules",
   "tui.pane.schedules.none": "  none (`tavi schedules add` creates one)",
@@ -198,6 +221,8 @@ export const terminal = {
   "tui.pane.chats.kind.group": "group",
   "tui.pane.chats.kind.dm": "dm",
   "tui.pane.chats.kind.chat": "chat",
+  "tui.pane.chats.kind.side": "side",
+  "tui.pane.chats.kind.run": "run",
   "tui.pane.chats.private": "private · {title}",
   "tui.pane.chats.older": "  {mark} older chats too: `tavi tasks` lists every one",
   "tui.pane.chats.howHome": "  /open <task-id> continues one; /home goes back to Home",
@@ -216,6 +241,10 @@ export const terminal = {
   "tui.store.joinedLate": "{mark} joined late: the start of this chat's stream is no longer held, so it is not shown",
   "tui.status.deciding": "{mark} deciding round {steps}",
   "tui.status.round": "{mark} round {steps}: {keys}",
+  /** A round's row without its number, when the keys alone only just fit the terminal (a translated row). */
+  "tui.status.roundKeys": "{mark} {keys}",
+  /** A grouped round's row when its keys name the group once, ahead of them (a translated row too wide otherwise). */
+  "tui.status.roundGroup": "{mark} {name}: {keys}",
   "tui.status.sendingReview": "{mark} sending the review",
   "tui.status.review": "{mark} review: {keys}",
   "tui.status.sendingAnswer": "{mark} sending the answer",
@@ -281,6 +310,8 @@ export const terminal = {
   "tui.status.reviewNeeded": "{mark} review needed (see above){task}",
   "tui.status.done": "{mark} Done.{offer}",
   "tui.status.stopped": "stopped",
+  /** A stopped turn's row: why it stopped, then what the next prompt does (`offer`, which starts with its own space here). */
+  "tui.status.stoppedWith": "{why}{offer}",
   "tui.status.failed": "{mark} failed: {why}{more}",
   "tui.status.failedSeeTasks": "see tavi tasks",
   "tui.status.typeToContinue": " · type to continue it",

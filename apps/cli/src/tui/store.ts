@@ -35,6 +35,7 @@ import { definedOnly } from "@tavi/contracts/util";
 import stringWidth from "string-width";
 
 import { formLines } from "../features/approvals/form.js";
+import { fittedRow } from "../shared/terminal-text.js";
 import { FORMS, fieldLabel, fieldOf, formTitle, type FormState } from "./forms.js";
 import { GLYPHS, RULES, divider } from "./theme.js";
 
@@ -147,6 +148,8 @@ export const FRAME_MS = Math.ceil(1000 / MAX_FPS);
 
 /** The live region's own cap: a terminal shrunk by less than this never clears (see the header). */
 export const MAX_LIVE_ROWS = 6;
+/** The fewest columns a cut status row keeps for the chat's state before its private and taint marks. */
+const MIN_STATE_COLUMNS = 12;
 /** How many lines of a file change's diff an approval round prints. */
 const TERMINAL_DIFF_LINES = 20;
 
@@ -788,32 +791,35 @@ export class ChatStore {
     const form = this.#form;
     const field = form === undefined ? undefined : fieldOf(form);
     const t = this.#t;
+    // A translated status row is cut where a clause or a word ends, never inside a word; English's is as it always was.
+    const fit = t === coreEnglish ? undefined : fittedRow;
+    const row = (status: string): string => (fit === undefined ? status : fit(status, width));
     this.#view = {
       committed: this.#lines.length === before ? this.#view.committed : this.#committedView(),
       live: budget === 0 ? [] : rows.slice(Math.max(0, rows.length - budget)),
-      status:
+      status: row(
         (form !== undefined && field !== undefined ? formStatus(form, field, t) : undefined) ??
-        (this.#endedWith === undefined ? undefined : this.#withTaint(this.#endedWith)) ??
-        (this.#deciding !== undefined && this.#deciding === this.#state.pending[0]?.steps
-          ? t("tui.status.deciding", { mark: GLYPHS.more, steps: String(this.#deciding) })
-          : decision !== undefined
-            ? t("tui.status.round", {
-                mark: GLYPHS.waiting,
-                steps: String(decision.steps),
-                keys: roundKeys(decision.scopes, decision.scopeGroup, decision.scopeHosts, this.#lasting(), t),
-              })
-            : this.#reviewing !== undefined && this.#state.status === "review_required"
-              ? t("tui.status.sendingReview", { mark: GLYPHS.more })
-              : review !== undefined
-                ? t("tui.status.review", { mark: GLYPHS.waiting, keys: t("tui.review.keys") })
-                : this.#answering && this.#state.status === "waiting"
-                  ? t("tui.status.sendingAnswer", { mark: GLYPHS.more })
-                  : answer !== undefined
-                    ? t("tui.status.asks", {
-                        mark: GLYPHS.waiting,
-                        question: clipStatus(this.#state.waiting?.choices?.header ?? this.#state.waiting?.question ?? ""),
-                      })
-                    : this.#withTaint(statusLine(this.#state, this.#running, this.#options.prompting ?? true, this.#next, this.#home, t))),
+          (this.#endedWith === undefined ? undefined : this.#withTaint(this.#endedWith, fit)) ??
+          (this.#deciding !== undefined && this.#deciding === this.#state.pending[0]?.steps
+            ? t("tui.status.deciding", { mark: GLYPHS.more, steps: String(this.#deciding) })
+            : decision !== undefined
+              ? roundRow(decision, this.#lasting(), t, fit === undefined ? undefined : width)
+              : this.#reviewing !== undefined && this.#state.status === "review_required"
+                ? t("tui.status.sendingReview", { mark: GLYPHS.more })
+                : review !== undefined
+                  ? t("tui.status.review", { mark: GLYPHS.waiting, keys: t("tui.review.keys") })
+                  : this.#answering && this.#state.status === "waiting"
+                    ? t("tui.status.sendingAnswer", { mark: GLYPHS.more })
+                    : answer !== undefined
+                      ? t("tui.status.asks", {
+                          mark: GLYPHS.waiting,
+                          question: clipStatus(this.#state.waiting?.choices?.header ?? this.#state.waiting?.question ?? "", t),
+                        })
+                      : this.#withTaint(
+                          statusLine(this.#state, this.#running, this.#options.prompting ?? true, this.#next, this.#home, t),
+                          fit,
+                        )),
+      ),
       running: this.#running,
       ...definedOnly({
         decision,
@@ -972,15 +978,21 @@ export class ChatStore {
   }
 
   /** The status line with the taint chip: up to three sources, and where the details are. */
-  #withTaint(line: string): string {
+  #withTaint(line: string, fit?: (line: string, columns: number) => string): string {
     // A private chat says so on its status line, before its taint chip.
     const t = this.#t;
-    if (this.#state.taskId !== undefined && this.#private.has(this.#state.taskId))
-      line = line === "" ? t("tui.status.private") : `${line} · ${t("tui.status.private")}`;
+    const marks: string[] = [];
+    if (this.#state.taskId !== undefined && this.#private.has(this.#state.taskId)) marks.push(t("tui.status.private"));
     const label = this.#shownTaint();
-    if (label === undefined) return line;
-    const chip = t("tui.status.taintChip", { mark: GLYPHS.warning, chip: clipStatus(printable(taintChipText(label, t))) });
-    return line === "" ? chip : `${line} · ${chip}`;
+    if (label !== undefined)
+      marks.push(t("tui.status.taintChip", { mark: GLYPHS.warning, chip: clipStatus(printable(taintChipText(label, t)), t) }));
+    if (marks.length === 0) return line;
+    const tail = marks.join(" · ");
+    // A row cut to fit (`fit`) gives up its own words before the marks, which say what the chat is: the state is cut to
+    // the room the marks leave (a few columns at least), and only what still does not fit is cut from the marks' end.
+    const room = Math.max(MIN_STATE_COLUMNS, this.#options.columns() - stringWidth(tail) - 3);
+    const shown = fit === undefined || line === "" ? line : fit(line, room);
+    return shown === "" ? tail : `${shown} · ${tail}`;
   }
 
   /**
@@ -1304,27 +1316,125 @@ function roundKeys(
   home = false,
   t: CoreT = coreEnglish,
 ): string {
-  if (scopeGroup !== undefined && scopes.includes("session")) {
+  const label = scopeGroup === undefined ? undefined : groupLabel(scopeGroup, scopeHosts, t);
+  return roundKeyList(scopes, label, home, t, "card").join(", ");
+}
+
+/** A tool group's name as a round's keys say it: the browser with the hosts its round opens. */
+const groupLabel = (scopeGroup: string, scopeHosts: readonly string[], t: CoreT): string =>
+  printable(displaySafe(toolGroupLabel(scopeGroup, scopeHosts, t)));
+
+/**
+ * A round's keys, one entry each. `label` is the group the round's calls share (absent: none); the card says each key
+ * in full, and the status row, one line under it, may say them shorter (`tui.rowKeys.*`).
+ */
+function roundKeyList(
+  scopes: readonly ApprovalScope[],
+  label: string | undefined,
+  home: boolean,
+  t: CoreT,
+  place: "card" | "row",
+): string[] {
+  const words = ROUND_KEYS[place];
+  if (label !== undefined && scopes.includes("session")) {
     // One question for the group: `y` allows it for the task (the owner's
     // default for a grouped round), `a` saves a rule for every tool of it.
     // The browser is allowed on the hosts the round opens, so the keys name them.
-    const name = t("tui.keys.groupName", { label: printable(displaySafe(toolGroupLabel(scopeGroup, scopeHosts, t))) });
+    const name = t("tui.keys.groupName", { label });
     return [
-      t("tui.keys.group.allow", { name }),
-      ...(scopes.includes("always") ? [t("tui.keys.group.always", { name })] : []),
-      t("tui.keys.group.refuse"),
-      t("tui.keys.group.refuseWhy"),
-    ].join(", ");
+      t(words.groupAllow, { name }),
+      ...(scopes.includes("always") ? [t(words.groupAlways, { name })] : []),
+      t(words.groupRefuse),
+      t(words.groupRefuseWhy),
+    ];
   }
   return [
-    t("tui.keys.approve"),
+    t(words.approve),
     // In Home, which never ends, a chat grant lasts until tomorrow, as the canvas's Allow until tomorrow says.
-    ...(scopes.includes("session") ? [t(home ? "tui.keys.untilTomorrow" : "tui.keys.restOfChat")] : []),
-    ...(scopes.includes("always") ? [t("tui.keys.always")] : []),
-    t("tui.keys.reject"),
-    t("tui.keys.rejectWhy"),
-  ].join(", ");
+    ...(scopes.includes("session") ? [t(home ? words.untilTomorrow : words.restOfChat)] : []),
+    ...(scopes.includes("always") ? [t(words.always)] : []),
+    t(words.reject),
+    t(words.rejectWhy),
+  ];
 }
+
+/**
+ * The status row that offers a round's keys. With no `columns` (English), the row as it always was. With them, a row
+ * that fits and never cuts a key's words: first the round numbered, each key naming its group; then the group named
+ * once, ahead of keys that leave it out, with fewer of its hosts (`…` where some are left out); then the first keys
+ * alone, each whole, and `…` for the rest. The card above names every call, host and key in full.
+ */
+function roundRow(decision: NonNullable<ChatView["decision"]>, home: boolean, t: CoreT, columns?: number): string {
+  const group = decision.scopeGroup;
+  const hosts = decision.scopeHosts ?? [];
+  const label = group === undefined ? undefined : groupLabel(group, hosts, t);
+  const numbered = t("tui.status.round", {
+    mark: GLYPHS.waiting,
+    steps: String(decision.steps),
+    keys: roundKeyList(decision.scopes, label, home, t, "row").join(", "),
+  });
+  if (columns === undefined) return numbered;
+  const fits = (row: string): boolean => stringWidth(row) <= columns;
+  if (fits(numbered)) return numbered;
+  // The group's keys without its name, which the row then says once.
+  const grouped = label !== undefined && decision.scopes.includes("session");
+  const keys = grouped
+    ? [
+        t("tui.rowKeys.group.allowIt"),
+        ...(decision.scopes.includes("always") ? [t("tui.rowKeys.group.alwaysIt")] : []),
+        t("tui.rowKeys.group.refuse"),
+        t("tui.rowKeys.group.refuseWhy"),
+      ]
+    : roundKeyList(decision.scopes, undefined, home, t, "row");
+  const labels =
+    group === undefined
+      ? [""]
+      : [
+          groupLabel(group, hosts, t),
+          ...hosts.slice(1).map((_, index) => `${groupLabel(group, hosts.slice(0, hosts.length - 1 - index), t)}…`),
+          ...(hosts.length === 0 ? [] : [`${groupLabel(group, [], t)}…`]),
+        ];
+  const row = (name: string, list: readonly string[]): string =>
+    grouped
+      ? t("tui.status.roundGroup", { mark: GLYPHS.waiting, name, keys: list.join(", ") })
+      : t("tui.status.roundKeys", { mark: GLYPHS.waiting, keys: list.join(", ") });
+  for (const name of labels) if (fits(row(name, keys))) return row(name, keys);
+  // Too narrow for every key: the first ones, each whole, and a mark that more are on the card.
+  const shortest = labels.at(-1) ?? "";
+  for (let count = keys.length - 1; count > 0; count -= 1) {
+    const cut = `${row(shortest, keys.slice(0, count))}…`;
+    if (fits(cut)) return cut;
+  }
+  return fittedRow(row(shortest, keys.slice(0, 1)), columns);
+}
+
+/** A round's keys as its card says them, and as the status row does (English says both alike). */
+const ROUND_KEYS = {
+  card: {
+    groupAllow: "tui.keys.group.allow",
+    groupAlways: "tui.keys.group.always",
+    groupRefuse: "tui.keys.group.refuse",
+    groupRefuseWhy: "tui.keys.group.refuseWhy",
+    approve: "tui.keys.approve",
+    untilTomorrow: "tui.keys.untilTomorrow",
+    restOfChat: "tui.keys.restOfChat",
+    always: "tui.keys.always",
+    reject: "tui.keys.reject",
+    rejectWhy: "tui.keys.rejectWhy",
+  },
+  row: {
+    groupAllow: "tui.rowKeys.group.allow",
+    groupAlways: "tui.rowKeys.group.always",
+    groupRefuse: "tui.rowKeys.group.refuse",
+    groupRefuseWhy: "tui.rowKeys.group.refuseWhy",
+    approve: "tui.rowKeys.approve",
+    untilTomorrow: "tui.rowKeys.untilTomorrow",
+    restOfChat: "tui.rowKeys.restOfChat",
+    always: "tui.rowKeys.always",
+    reject: "tui.rowKeys.reject",
+    rejectWhy: "tui.rowKeys.rejectWhy",
+  },
+} as const;
 
 /** A risk level as a card says it: the channel's words, lowercased (`[high risk]`); a level it does not know, as given. */
 function riskLevel(level: string, t: CoreT): string {
@@ -1418,9 +1528,14 @@ function settledLine(round: RunState["settled"][number], t: CoreT = coreEnglish)
   return t("tui.settled.mixed", { steps, by, each });
 }
 
+/** `text` ended as a sentence: with a full stop unless it already ends with one, a question or an exclamation. */
+const sentence = (text: string): string => (/[.!?…]$/u.test(text) ? text : `${text}.`);
+
 /** A question in the status row: its first line, cut to stay one row. */
-function clipStatus(text: string): string {
+function clipStatus(text: string, t: CoreT = coreEnglish): string {
   const line = printable(text.split("\n")[0] ?? "");
+  // A translated row is cut where a word ends (`fittedRow`); English's as it always was.
+  if (t !== coreEnglish) return fittedRow(line, 60);
   return line.length > 60 ? `${line.slice(0, 59)}${GLYPHS.more}` : line;
 }
 
@@ -1477,7 +1592,7 @@ export function statusLine(
     .join(" · ");
   return plugins === "" || !["idle", "running", "completed"].includes(state.status)
     ? line
-    : `${line}${line === "" ? "" : " · "}${clipStatus(plugins)}`;
+    : `${line}${line === "" ? "" : " · "}${clipStatus(plugins, t)}`;
 }
 
 function runStatusLine(state: RunState, running: boolean, prompting: boolean, next: NextPrompt, home: boolean, t: CoreT): string {
@@ -1513,15 +1628,20 @@ function runStatusLine(state: RunState, running: boolean, prompting: boolean, ne
         : t(prompting ? "tui.status.waitingAnswerWhere" : "tui.status.waitingAnswer", {
             mark: GLYPHS.waiting,
             task,
-            question: clipStatus(state.waiting.choices?.header ?? state.waiting.question),
+            question: clipStatus(state.waiting.choices?.header ?? state.waiting.question, t),
           });
     case "review_required":
       return t("tui.status.reviewNeeded", { mark: GLYPHS.waiting, task });
     // A finished turn is said without its id: /chats lists ids, where they are acted on.
     case "completed":
       return t("tui.status.done", { mark: GLYPHS.done, offer });
-    case "stopped":
-      return `${state.outcome?.kind === "stopped" ? printable(state.outcome.message) : t("tui.status.stopped")}${offer}`;
+    case "stopped": {
+      const said = state.outcome?.kind === "stopped" ? printable(state.outcome.message) : undefined;
+      if (t === coreEnglish) return t("tui.status.stoppedWith", { why: said ?? t("tui.status.stopped"), offer });
+      // A translated row says why it stopped as a sentence of its own, and the offer after it only when there is one.
+      const why = said === undefined || said.trim() === "" ? t("tui.status.stopped") : sentence(said.trimEnd());
+      return offer === "" ? why : t("tui.status.stoppedWith", { why, offer });
+    }
     case "failed":
       return t("tui.status.failed", {
         mark: GLYPHS.failed,

@@ -2,7 +2,7 @@ import { emitJson, jsonText } from "../../cli/output.js";
 import { EXIT, configRefusalExit } from "../../cli/exit.js";
 import type { OnboardCommandOptions } from "./parse.js";
 import { terminalText } from "../../shared/terminal-text.js";
-import { wordsOfSettingsAnswer } from "../../shared/terminal-words.js";
+import { pageIn, wordsOfSettingsAnswer } from "../../shared/terminal-words.js";
 import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { TaviError, type OnboardingProviderAnswer, type OnboardingResetAnswer, type OnboardingStatus } from "@tavi/contracts";
 import { readFile } from "node:fs/promises";
@@ -98,7 +98,11 @@ export async function onboardCliCommand(
         else {
           const t = await words();
           io.stdout(
-            `${t("cli.onboard.setup", { count: checklistCount(status, t) })}\n${status.steps.map((step) => stepLine(step, t)).join("\n")}\n${status.complete ? "" : `\n${t("cli.onboard.modelOpen")}\n`}`,
+            pageIn(
+              t,
+              `${t("cli.onboard.setup", { count: checklistCount(status, t) })}\n${status.steps.map((step) => stepLine(step, t)).join("\n")}\n${status.complete ? "" : `\n${t("cli.onboard.modelOpen")}\n`}`,
+              io.columns,
+            ),
           );
         }
         return status.complete ? ONBOARD_EXIT.ok : ONBOARD_EXIT.open;

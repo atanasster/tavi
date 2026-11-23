@@ -2,7 +2,7 @@ import { emit } from "../../cli/output.js";
 import { EXIT, configRefusalExit, refusalExit, reportCommandFailure } from "../../cli/exit.js";
 import type { HeartbeatCommandOptions } from "./parse.js";
 import { terminalText } from "../../shared/terminal-text.js";
-import { ownerWords, storeWords } from "../../shared/terminal-words.js";
+import { ownerWords, pageIn, storeWords } from "../../shared/terminal-words.js";
 import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { heartbeatCommand as runHeartbeatAction } from "./owner.js";
 import { editedInstructions, heartbeatPayload, heartbeatResultText } from "./text.js";
@@ -29,7 +29,7 @@ export async function heartbeatCliCommand(options: ResolvedDataDirectory<Heartbe
   // Text is said in the workspace's language; JSON stays as programs read it.
   const textual = options.format !== "json";
   const print = (result: unknown, t: CoreT = coreEnglish): number => {
-    emit(io, options.format, result, () => heartbeatResultText(options, result, t));
+    emit(io, options.format, result, () => pageIn(t, heartbeatResultText(options, result, t), io.columns));
     return EXIT.ok;
   };
   if (options.action === "edit" && options.file === undefined && !io.isTty) {
