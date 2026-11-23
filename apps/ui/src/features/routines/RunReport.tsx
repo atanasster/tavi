@@ -7,7 +7,7 @@ import { useT } from "../../lib/i18n.js";
 import { when } from "../../lib/time.js";
 import { attempt } from "../../lib/ipc.js";
 import { Failure, Section } from "../../ui/Parts.js";
-import { listed, readArtifact, webUrl, type RunInspection } from "./api.js";
+import { listed, networkModeLabel, readArtifact, runModeLabel, webUrl, type RunInspection } from "./api.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
 
@@ -32,8 +32,8 @@ export function ResearchAuthority({
           grant: policy.grantId,
           policy: policy.policyRevision,
           revision: policy.revision,
-          mode: policy.mode,
-          network: policy.networkMode,
+          mode: runModeLabel(policy.mode),
+          network: networkModeLabel(policy.networkMode),
           state: policy.revokedAt
             ? t("routines.authority.revoked", {
                 at: policy.revokedAt,

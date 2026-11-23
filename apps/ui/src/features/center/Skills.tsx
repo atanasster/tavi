@@ -25,6 +25,7 @@ import { Button } from "../../ui/Button.js";
 import { Confirm } from "../../ui/Confirm.js";
 import { Empty } from "../../ui/Empty.js";
 import { Failure, LoadError, Pending } from "../../ui/Parts.js";
+import { statusLabel } from "../../lib/format.js";
 import { useTimeZone, useWorkspace } from "../shell/Workspace.js";
 import {
   decideSkill,
@@ -318,7 +319,7 @@ function SkillVersionViewer({
             {withParts(
               t(foreignProvenance(stored.provenance) ? "center.skills.metaForeign" : "center.skills.meta", { source: stored.provenance }),
               {
-                state: stored.reviewState,
+                state: statusLabel(stored.reviewState),
                 hash: <span className="soul-skill-hash">{stored.contentHash}</span>,
               },
             )}

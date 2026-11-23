@@ -14,6 +14,7 @@ import { Card } from "./Card.js";
 import { useAnnounce } from "../hooks/use-announce.js";
 import type { ActionTone } from "../hooks/use-action.js";
 import { useT } from "../lib/i18n.js";
+import { statusLabel } from "../lib/format.js";
 import { Button } from "./Button.js";
 
 /**
@@ -57,7 +58,7 @@ const TONES: Readonly<Record<string, Tone>> = {
 };
 
 export function StatusBadge({ status }: { readonly status: string }) {
-  return <span className={`badge badge-${TONES[status] ?? "muted"}`}>{status.replaceAll("-", " ")}</span>;
+  return <span className={`badge badge-${TONES[status] ?? "muted"}`}>{statusLabel(status)}</span>;
 }
 
 export function Section({

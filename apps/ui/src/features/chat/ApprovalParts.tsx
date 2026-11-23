@@ -12,10 +12,11 @@ import {
   whyAskedText,
 } from "@tavi/contracts";
 import { clip } from "@tavi/contracts/util";
-import type { RiskLevel } from "@tavi/contracts";
+import type { RiskLevel, ToolEffect } from "@tavi/contracts";
 import type { UiKey } from "../../locales/en.js";
 import { translateCore, useT } from "../../lib/i18n.js";
 import { Notice } from "../../ui/Parts.js";
+import { codeLabel } from "../../lib/format.js";
 import { FormFillTable } from "../transcript/FormFillTable.js";
 
 /** How much of a call's input a card shows before cutting it. */
@@ -169,7 +170,7 @@ export function CallLine({ request, grouped }: { readonly request: PendingRound[
         ) : grouped ? null : (
           <>
             {" "}
-            <span className="badge">{request.effect ?? t("chat.call.effectUnknown")}</span>
+            <span className="badge">{request.effect === undefined ? t("chat.call.effectUnknown") : effectLabel(request.effect)}</span>
           </>
         )}
         {request.display?.destructive === true ? (
@@ -239,6 +240,16 @@ const RISK_KEYS: Readonly<Record<RiskLevel, UiKey>> = {
   high: "chat.call.risk.high",
   critical: "chat.call.risk.critical",
 };
+
+/** A tool's effect as its badge says it; an effect the canvas does not know reads as it arrives. */
+const EFFECT_KEYS = {
+  "read-only": "chat.call.effect.readOnly",
+  mutating: "chat.call.effect.mutating",
+  external: "chat.call.effect.external",
+} as const satisfies Readonly<Record<ToolEffect, UiKey>>;
+
+/** A tool's effect in the reader's language; an effect the canvas does not know reads as it arrives. */
+export const effectLabel = (effect: string): string => codeLabel(EFFECT_KEYS, effect);
 
 /** How a row's check reads: a short word, and what it means. */
 const FORM_STATUS: Readonly<Record<ApprovalForm["rows"][number]["status"], { readonly mark: UiKey; readonly words: UiKey }>> = {

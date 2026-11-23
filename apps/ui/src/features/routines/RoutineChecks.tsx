@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { RoutineLedgerVerdict, RoutineReadiness } from "@tavi/contracts";
 
 import { useAction } from "../../hooks/use-action.js";
-import { listed, routineStep } from "./api.js";
+import { listed, networkModeLabel, routineStep } from "./api.js";
 import { Failure, Section, Summary } from "../../ui/Parts.js";
 import { useT } from "../../lib/i18n.js";
 import { when } from "../../lib/time.js";
@@ -127,7 +127,7 @@ function ReadinessReport({ readiness, timeZone }: { readonly readiness: RoutineR
           t("routines.checks.research"),
           t("routines.checks.researchLine", {
             state: research.ready ? t("routines.checks.ready") : t("routines.checks.blockedBy", { reason: String(research.blockedBy) }),
-            network: research.networkMode,
+            network: networkModeLabel(research.networkMode),
             hosts: listed(research.hosts),
             tools: listed(research.tools),
           }),

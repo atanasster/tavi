@@ -46,6 +46,8 @@ export const chatPanel = {
   "chatPanel.activity.state.answered": "отговорен със следващото ти съобщение",
   "chatPanel.activity.state.waiting": "чака теб",
   "chatPanel.activity.state.done": "готов",
+  "chatPanel.activity.state.completed": "завършен",
+  "chatPanel.activity.state.stopped": "спрян",
   "chatPanel.activity.started": "Започна чата · {state}",
   "chatPanel.activity.instructionsChanged": "Инструкциите се промениха (версия {revision})",
   "chatPanel.activity.fromThisTurn": "От този ход",

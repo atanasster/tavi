@@ -3,6 +3,7 @@ import type {
   RoutineDetail,
   RoutineGrantView,
   RoutineListTrigger,
+  RoutineNetworkMode,
   RoutineRecord,
   RoutineRun,
   RoutineRunEffortTotals,
@@ -10,10 +11,29 @@ import type {
   RoutinesPayload,
 } from "@tavi/contracts";
 import { readChunks } from "../../lib/chunks.js";
-import { formatCount } from "../../lib/format.js";
+import { codeLabel, formatCount } from "../../lib/format.js";
 import { formatElapsed } from "../../lib/time.js";
 import { translateNow } from "../../lib/i18n.js";
 import { ask, mapOutcome, withList, type Outcome, type SettingsClient } from "../../lib/ipc.js";
+import type { UiKey } from "../../locales/en.js";
+
+const RUN_MODE_LABELS = {
+  production: "routines.mode.production",
+  preview: "routines.mode.preview",
+} as const satisfies Readonly<Record<RoutineRun["mode"], UiKey>>;
+
+const NETWORK_MODE_LABELS = {
+  allowlist: "routines.network.allowlist",
+  primary_sources: "routines.network.primarySources",
+  custom_hosts: "routines.network.customHosts",
+  open_web: "routines.network.openWeb",
+} as const satisfies Readonly<Record<RoutineNetworkMode, UiKey>>;
+
+/** A run's mode in the reader's language; a mode the canvas does not know reads as it arrives. */
+export const runModeLabel = (mode: string): string => codeLabel(RUN_MODE_LABELS, mode);
+
+/** How far a run may reach the web, in the reader's language; an unknown mode reads as it arrives. */
+export const networkModeLabel = (mode: string): string => codeLabel(NETWORK_MODE_LABELS, mode);
 
 /**
  * The canvas's side of the owner's `routines` family: one request shape, the

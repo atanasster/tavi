@@ -65,6 +65,22 @@ describe("workers in Bulgarian", () => {
     expect(labels).not.toContain("agent hierarchy");
   });
 
+  it("names a worker's state and what it waits on, not the owner's codes", async () => {
+    const waiting: AgentTreeResult = {
+      ...tree,
+      nodes: [tree.nodes[0] as AgentTreeNode, { ...node("child", "waiting"), needs: ["approval", "handoff"] }],
+    };
+    const page = await mount(
+      <InWorkspace timeZone="UTC" workspaceId="default" client={{ request: async () => ({ ok: true, result: waiting }) as never }}>
+        <AgentTree taskId="root" version="1" onOpen={async () => {}} onOpenWorker={() => undefined} />
+      </InWorkspace>,
+    );
+    await settle();
+    expect([...page.querySelectorAll(".badge")].map((badge) => badge.textContent)).toEqual(["чака"]);
+    expect(page.textContent).toMatch(/Чака одобрение и\s+действие в браузъра/);
+    for (const word of ["waiting", "approval", "handoff"]) expect(page.textContent).not.toContain(word);
+  });
+
   it("titles a worker's transcript as view only and pages back in Bulgarian", async () => {
     const request = async () => ({ ok: true, result: { entries: [saved], nextBefore: 1 } }) as never;
     const page = await mount(

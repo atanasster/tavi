@@ -148,14 +148,17 @@ export interface WaitingItem {
  * How an admitted turn stands, in words. A turn that stopped to wait for the
  * reader, `answered` by a later message, waits no more.
  */
-function stateOf(admission: AdmissionRecord, answered: boolean): string {
+export function stateOf(admission: AdmissionRecord, answered: boolean): string {
   if (admission.state === "pending") return translateNow("chatPanel.activity.state.queued");
   if (admission.state === "claimed") return translateNow("chatPanel.activity.state.working");
   if (admission.state === "refused") return translateNow("chatPanel.activity.state.refused");
   if (admission.state === "failed") return translateNow("chatPanel.activity.state.failed");
   if (admission.result?.status === "waiting")
     return translateNow(answered ? "chatPanel.activity.state.answered" : "chatPanel.activity.state.waiting");
-  // A status the owner names stays as it arrives.
+  if (admission.result?.status === "completed") return translateNow("chatPanel.activity.state.completed");
+  if (admission.result?.status === "stopped") return translateNow("chatPanel.activity.state.stopped");
+  if (admission.result?.status === "failed") return translateNow("chatPanel.activity.state.failed");
+  // A status the owner names that the canvas does not know stays as it arrives.
   return admission.result?.status ?? translateNow("chatPanel.activity.state.done");
 }
 

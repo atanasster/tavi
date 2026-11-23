@@ -4,6 +4,7 @@ import type { Session } from "../shell/shell.js";
 import { sessionStats, sessionToolGroups } from "../shell/shell.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { formatElapsed } from "../../lib/time.js";
+import { statusLabel } from "../../lib/format.js";
 import { translateNow, useT } from "../../lib/i18n.js";
 import type { SettingsClient } from "../../lib/ipc.js";
 import { readTaskRecord } from "./tasks-api.js";
@@ -125,7 +126,10 @@ function CallDetails({
         ? ({
             ok: true,
             value: translateNow("chat.trajectory.record", {
-              status: answer.value.task?.status ?? translateNow("chat.trajectory.statusUnknown"),
+              status:
+                answer.value.task?.status !== undefined
+                  ? statusLabel(answer.value.task.status)
+                  : translateNow("chat.trajectory.statusUnknown"),
               admissions: answer.value.admissions?.length ?? 0,
               executions: answer.value.executions?.length ?? 0,
             }),

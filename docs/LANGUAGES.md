@@ -86,6 +86,11 @@ app is set to Bulgarian. The commands themselves stay `/tavi ask` and
 follow the workspace's language once Tavi passes plugins the language; until
 then they are in English.
 
+Status words the canvas shows for codes the owner sends (the state of a
+routine, run, delivery, schedule, reminder, plugin or worker; a run's mode and
+network reach; a tool's effect; a review state) come from the canvas's own
+catalogue. A code the canvas doesn't know yet is shown as the owner sent it.
+
 ## How the language packs are laid out
 
 Words are kept in catalogues, one per namespace and language, typed against

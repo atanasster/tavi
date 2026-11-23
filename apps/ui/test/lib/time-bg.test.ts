@@ -122,6 +122,8 @@ describe("relative days, times and spans in Bulgarian", () => {
     expect(formatBytes(120)).toBe(`120${NBSP}байта`);
     expect(formatBytes(1536)).toBe(`1,5${NBSP}КБ`);
     expect(formatBytes(3 * 1024 * 1024)).toBe(`3,0${NBSP}МБ`);
-    expect(artifactMeta({ contentType: "text/plain", byteSize: 120, reviewState: "pending" })).toBe(`text/plain, 120${NBSP}байта, pending`);
+    expect(artifactMeta({ contentType: "text/plain", byteSize: 120, reviewState: "pending" })).toBe(
+      `text/plain, 120${NBSP}байта, чака преглед`,
+    );
   });
 });

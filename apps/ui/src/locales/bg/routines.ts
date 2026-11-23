@@ -104,6 +104,13 @@ export const routines = {
   "routines.revisions.close": "Затвори",
   "routines.revisions.restore": "Възстанови като нова версия",
 
+  "routines.mode.production": "редовно",
+  "routines.mode.preview": "пробно",
+  "routines.network.allowlist": "по списък",
+  "routines.network.primarySources": "първоизточници",
+  "routines.network.customHosts": "избрани хостове",
+  "routines.network.openWeb": "цялата мрежа",
+
   "routines.runs.title": "Пускания",
   "routines.runs.none": "Още няма пускания.",
   "routines.runs.revision": "версия {revision}",
@@ -160,7 +167,7 @@ export const routines = {
   "routines.deliveries.resume": "Продължи доставката до това място",
 
   "routines.authority.grant":
-    "Разрешение {grant} · версия на политиката {policy} · закачено от версия {revision} · {mode} · изходящ трафик {network}. {state}",
+    "Разрешение {grant} · версия на политиката {policy} · закачено от версия {revision} · {mode} · изходящ трафик: {network}. {state}",
   "routines.authority.revoked": "Отнето {at}: {reason}.",
   "routines.authority.noReason": "няма записана причина",
   "routines.authority.live": "Активно.",

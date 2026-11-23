@@ -2,6 +2,7 @@
 import type { RoutineDetail } from "@tavi/contracts";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { RoutineChecks } from "../../../src/features/routines/RoutineChecks.js";
 import { RunInspector } from "../../../src/features/routines/RunInspector.js";
 import { routineStatusView } from "../../../src/features/routines/status.js";
 import { setLocale } from "../../../src/lib/i18n.js";
@@ -102,5 +103,31 @@ describe("routines in Bulgarian", () => {
     }
     expect(page.textContent).not.toContain("Refresh run");
     expect(page.textContent).not.toContain("Summary");
+    expect(page.querySelector(".badge")?.textContent).toBe("успешно");
+    expect(page.textContent).toContain("редовно · версия 1");
+    expect(page.textContent).not.toContain("succeeded");
+    expect(page.textContent).not.toContain("production");
+  });
+
+  it("name a routine's web reach in its readiness line", async () => {
+    const readiness = {
+      routineId: "routine",
+      revision: { active: 1, latest: 1, candidate: null },
+      research: { ready: true, blockedBy: null, retryable: null, tools: [], hosts: [], networkMode: "open_web", grant: null },
+      delivery: { authorized: true, blockedBy: null, targets: [] },
+      owner: { heartbeatAt: null, state: "live", heartbeatAgeMs: 0 },
+      storage: { freeBytes: null, belowFloor: null },
+      schedule: null,
+      renderer: null,
+    };
+    const client: SettingsClient = { request: async () => ({ ok: true, result: readiness }) as never };
+    const page = await mount(
+      <InWorkspace client={client} workspaceId="default">
+        <RoutineChecks routineId="routine" timeZone="UTC" auto asked={0} />
+      </InWorkspace>,
+    );
+    await settle();
+    expect(page.textContent).toContain("изходящ трафик: цялата мрежа");
+    expect(page.textContent).not.toContain("open_web");
   });
 });

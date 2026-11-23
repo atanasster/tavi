@@ -17,6 +17,12 @@ export const workers = {
   "workers.tree.dismiss": "Dismiss {id}",
   "workers.tree.under": { one: "{count} agent under it", other: "{count} agents under it" },
 
+  "workers.need.approval": "approval",
+  "workers.need.review": "review",
+  "workers.need.question": "question",
+  "workers.need.handoff": "handoff",
+  "workers.need.connect": "connect",
+
   "workers.needs.worker": "worker {id}",
   "workers.needs.label": "your workers ask",
   "workers.needs.whose": "{asker}'s question",

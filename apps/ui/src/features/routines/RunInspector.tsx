@@ -10,7 +10,7 @@ import { formatCount } from "../../lib/format.js";
 import { useT } from "../../lib/i18n.js";
 import { formatElapsed, when } from "../../lib/time.js";
 import { ActionNote, DetailHead, Failure, InlineConfirm, LoadState, Section, StatusBadge, Summary } from "../../ui/Parts.js";
-import { json, routineRequest, routineStep, type RunInspection } from "./api.js";
+import { json, routineRequest, routineStep, runModeLabel, type RunInspection } from "./api.js";
 import { Deliveries } from "./RunDeliveries.js";
 import { RunRecords } from "./RunRecords.js";
 import { ResearchAuthority, RunReport } from "./RunReport.js";
@@ -106,7 +106,9 @@ export function RunInspector({
             {value ? <StatusBadge status={value.run.status} /> : null}
           </>
         }
-        description={value ? t("routines.inspector.description", { mode: value.run.mode, revision: value.run.revision }) : undefined}
+        description={
+          value ? t("routines.inspector.description", { mode: runModeLabel(value.run.mode), revision: value.run.revision }) : undefined
+        }
       >
         <div className="actions">
           <Button onClick={refresh}>{t("routines.inspector.refresh")}</Button>

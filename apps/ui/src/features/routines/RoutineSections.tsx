@@ -7,7 +7,7 @@ import { when } from "../../lib/time.js";
 import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
 import { LoadError, LoadMore, Notice, Section, StatusBadge } from "../../ui/Parts.js";
-import { runEffort, type RoutineOverviewData, type RunSummary } from "./api.js";
+import { runEffort, runModeLabel, type RoutineOverviewData, type RunSummary } from "./api.js";
 import { RoutineSettingsView } from "./RoutineSettings.js";
 
 /** Text in which a span in backticks is code: shown as code, never with its backticks. */
@@ -46,7 +46,7 @@ export function RoutineRuns({
                 {when(item.startedAt ?? item.claimedAt, timeZone)}
               </Button>
               <span className="item-meta meta-sm">
-                {[item.mode, t("routines.runs.revision", { revision: item.revision }), ...runEffort(item)].join(" · ")}
+                {[runModeLabel(item.mode), t("routines.runs.revision", { revision: item.revision }), ...runEffort(item)].join(" · ")}
               </span>
               {item.headline ? <span className="item-meta meta-sm">{firstLine(item.headline, 120)}</span> : null}
             </div>

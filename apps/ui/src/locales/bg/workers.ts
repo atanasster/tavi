@@ -22,6 +22,12 @@ export const workers = {
   "workers.tree.dismiss": "Скрий {id}",
   "workers.tree.under": { one: "{count} помощник под него", other: "{count} помощници под него" },
 
+  "workers.need.approval": "одобрение",
+  "workers.need.review": "преглед",
+  "workers.need.question": "отговор",
+  "workers.need.handoff": "действие в браузъра",
+  "workers.need.connect": "вход в приложение",
+
   "workers.needs.worker": "помощник {id}",
   "workers.needs.label": "помощниците ти питат",
   "workers.needs.whose": "въпрос от {asker}",

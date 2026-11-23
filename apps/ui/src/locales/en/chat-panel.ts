@@ -40,6 +40,8 @@ export const chatPanel = {
   "chatPanel.activity.state.answered": "answered by your next message",
   "chatPanel.activity.state.waiting": "waiting for you",
   "chatPanel.activity.state.done": "done",
+  "chatPanel.activity.state.completed": "completed",
+  "chatPanel.activity.state.stopped": "stopped",
   "chatPanel.activity.started": "Started · {state}",
   "chatPanel.activity.instructionsChanged": "Instructions changed (revision {revision})",
   "chatPanel.activity.fromThisTurn": "From this turn",

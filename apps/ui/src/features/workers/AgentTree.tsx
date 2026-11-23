@@ -1,8 +1,9 @@
 import { useRef, useState, type ReactNode } from "react";
-import type { AgentTreeNode, AgentTreeResult } from "@tavi/contracts";
+import type { AgentTreeNode, AgentTreeResult, TaskNeedKind } from "@tavi/contracts";
+import type { UiKey } from "../../locales/en.js";
 import { errorMessage, nowTimestamp } from "@tavi/contracts/util";
 import { translateNow, useT } from "../../lib/i18n.js";
-import { listed } from "../../lib/format.js";
+import { listed, statusLabel } from "../../lib/format.js";
 import { withParts } from "../../ui/with-parts.js";
 import { instantLabel, todayIn, formatElapsed } from "../../lib/time.js";
 import { useSerialRead } from "../../hooks/use-loaded.js";
@@ -15,6 +16,15 @@ import { AGENT_TREE_MAX_INDENT_EM } from "../../lib/layout.js";
 import { useTimeZone, useWorkspace } from "../shell/Workspace.js";
 /** How often the tree is read when the owner offers no change feed (`center watch`) to follow. */
 export const AGENT_TREE_FALLBACK_POLL_MS = 30_000;
+/** What a task waits on a person for, as the tree names it. */
+const NEED_LABELS: Readonly<Record<TaskNeedKind, UiKey>> = {
+  approval: "workers.need.approval",
+  review: "workers.need.review",
+  question: "workers.need.question",
+  handoff: "workers.need.handoff",
+  connect: "workers.need.connect",
+};
+
 const ended = (status: string) => ["completed", "failed", "stopped", "cancelled"].includes(status);
 /** The owner bounds breadth-first; the visual tree groups each parent's subtree. */
 export function orderedTree(nodes: readonly AgentTreeNode[]): readonly AgentTreeNode[] {
@@ -199,7 +209,9 @@ export function AgentTree({
         {!tree && !error ? <Pending label={t("workers.tree.loading")} className="notice" status /> : null}
         {tree?.ancestryUnknown ? <p>{t("workers.tree.ancestryUnknown")}</p> : null}
         {tree?.truncated ? <p>{t("workers.tree.truncated", { tasks: 200, ancestors: 32 })}</p> : null}
-        {tree?.nodes[0]?.needs?.length ? <p role="status">{t("workers.tree.needs", { needs: listed(tree.nodes[0].needs) })}</p> : null}
+        {tree?.nodes[0]?.needs?.length ? (
+          <p role="status">{t("workers.tree.needs", { needs: listed(tree.nodes[0].needs.map((need) => t(NEED_LABELS[need]))) })}</p>
+        ) : null}
         {needs}
         {folded.size ? (
           <Button aria-expanded={showCompleted} onClick={() => setShowCompleted((before) => !before)}>
@@ -215,7 +227,7 @@ export function AgentTree({
                 marginInlineStart: `${Math.min(AGENT_TREE_MAX_INDENT_EM, Math.max(0, node.depth - (tree?.nodes[0]?.depth ?? 0) - 1))}em`,
               }}
             >
-              <span className="badge">{node.status}</span>{" "}
+              <span className="badge">{statusLabel(node.status)}</span>{" "}
               <Button aria-pressed={opened === node.taskId} onClick={() => onOpenWorker(node)}>
                 {workerLabel(node)} — {node.taskId}
               </Button>
@@ -237,7 +249,9 @@ export function AgentTree({
               {node.finalText !== undefined && ended(node.status) ? (
                 <FinalText key={`${node.taskId}:${node.updatedAt}`} text={node.finalText} label={workerLabel(node)} />
               ) : null}
-              {node.needs?.length ? <strong> · {t("workers.tree.nodeNeeds", { needs: listed(node.needs) })}</strong> : null}
+              {node.needs?.length ? (
+                <strong> · {t("workers.tree.nodeNeeds", { needs: listed(node.needs.map((need) => t(NEED_LABELS[need]))) })}</strong>
+              ) : null}
               {!ended(node.status) ? (
                 <Button disabled={busy !== undefined} onClick={() => void cancel(node.taskId)}>
                   {t("workers.tree.cancel", { id: node.taskId })}

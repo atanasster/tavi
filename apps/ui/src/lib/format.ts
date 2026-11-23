@@ -2,6 +2,7 @@ import { formatNumber } from "@tavi/contracts/i18n";
 import { clip } from "@tavi/contracts/util";
 
 import { currentLocale, translateNow } from "./i18n.js";
+import type { UiKey } from "../locales/en.js";
 
 /**
  * The canvas's words for numbers and cut text, said the same way on every
@@ -67,5 +68,71 @@ export const artifactMeta = (row: { readonly contentType: string; readonly byteS
     count: row.byteSize,
     contentType: row.contentType,
     size: String(row.byteSize),
-    state: row.reviewState,
+    state: reviewStateLabel(row.reviewState),
   });
+
+/** The words for the status codes the owner sends; a code not listed shows as it arrives. */
+const STATUS_LABELS: Readonly<Record<string, UiKey>> = {
+  ok: "ui.status.ok",
+  active: "ui.status.active",
+  succeeded: "ui.status.succeeded",
+  passed: "ui.status.passed",
+  delivered: "ui.status.delivered",
+  completed: "ui.status.completed",
+  done: "ui.status.done",
+  finished: "ui.status.finished",
+  accepted: "ui.status.accepted",
+  admitted: "ui.status.admitted",
+  approved: "ui.status.approved",
+  verified: "ui.status.verified",
+  fetched: "ui.status.fetched",
+  snippet: "ui.status.snippet",
+  registered: "ui.status.registered",
+  starting: "ui.status.starting",
+  running: "ui.status.running",
+  stopping: "ui.status.stopping",
+  dispatching: "ui.status.dispatching",
+  queued: "ui.status.queued",
+  evaluating: "ui.status.evaluating",
+  pending: "ui.status.pending",
+  proposed: "ui.status.proposed",
+  waiting: "ui.status.waiting",
+  draft: "ui.status.draft",
+  resumed: "ui.status.resumed",
+  degraded: "ui.status.degraded",
+  interrupted: "ui.status.interrupted",
+  uncertain: "ui.status.uncertain",
+  "setup-needed": "ui.status.setupNeeded",
+  "paused-failures": "ui.status.pausedFailures",
+  "credential-blocked": "ui.status.credentialBlocked",
+  deferred: "ui.status.deferred",
+  suppressed: "ui.status.suppressed",
+  withheld: "ui.status.withheld",
+  skipped: "ui.status.skipped",
+  cancelled: "ui.status.cancelled",
+  stopped: "ui.status.stopped",
+  paused: "ui.status.paused",
+  disabled: "ui.status.disabled",
+  off: "ui.status.off",
+  archived: "ui.status.archived",
+  removed: "ui.status.removed",
+  rejected: "ui.status.rejected",
+  failed: "ui.status.failed",
+  expired: "ui.status.expired",
+};
+
+/** A code from the owner in the reader's language, by its map; a code the map does not hold reads as `unknown` says. */
+export function codeLabel(map: Readonly<Record<string, UiKey>>, code: string, unknown: (code: string) => string = (raw) => raw): string {
+  const key = Object.hasOwn(map, code) ? map[code] : undefined;
+  return key === undefined ? unknown(code) : translateNow(key);
+}
+
+/** A status code from the owner in the reader's language; an unknown one reads as it arrives, its dashes as spaces. */
+export function statusLabel(status: string): string {
+  return codeLabel(STATUS_LABELS, status, (raw) => raw.replaceAll("-", " "));
+}
+
+/** A review state (an artifact's, a tool's) in the reader's language: pending there waits on a person's review. */
+export function reviewStateLabel(state: string): string {
+  return state === "pending" ? translateNow("ui.status.reviewPending") : statusLabel(state);
+}

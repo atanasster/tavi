@@ -12,6 +12,7 @@ import {
   type McpToolChoice,
 } from "./plugins-api.js";
 import { BusyFieldset, Failure, LoadState, Notice } from "../../ui/Parts.js";
+import { reviewStateLabel } from "../../lib/format.js";
 import { Select } from "../../ui/Select.js";
 import { Modal } from "../../ui/Modal.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
@@ -525,7 +526,7 @@ export function McpReviewModal({
                       <td>
                         <strong>{tool.shown.name}</strong>{" "}
                         <span className="muted">
-                          {tool.toolId} · {tool.state}
+                          {tool.toolId} · {reviewStateLabel(tool.state)}
                         </span>
                         {tool.shown.description === undefined ? null : <div className="muted">{tool.shown.description.slice(0, 300)}</div>}
                         {marks.map((mark) => (

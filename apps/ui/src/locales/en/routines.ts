@@ -99,6 +99,13 @@ export const routines = {
   "routines.revisions.close": "Close",
   "routines.revisions.restore": "Restore as a new revision",
 
+  "routines.mode.production": "production",
+  "routines.mode.preview": "preview",
+  "routines.network.allowlist": "allowlist",
+  "routines.network.primarySources": "primary_sources",
+  "routines.network.customHosts": "custom_hosts",
+  "routines.network.openWeb": "open_web",
+
   "routines.runs.title": "Runs",
   "routines.runs.none": "No runs yet.",
   "routines.runs.revision": "revision {revision}",
