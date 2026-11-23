@@ -9,26 +9,28 @@ import {
   type MessagingServicePort,
   type ModHookDeclaration,
   type PersistencePort,
-  englishOf,
   navPath,
+  renderTextRef,
 } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 import { digestPicked, ideaOfDigestReply } from "@tavi/agent-host/ideas-host";
+
+import { channelWords, workspaceLocaleOf } from "../channels/channel-words.js";
+import { IDEAS_WORDS, typedWord } from "../channels/typed-words.js";
 
 import { ideasCommand, type IdeasCommandDependencies } from "./owner.js";
 
 /**
  * `/ideas`: the operator's top ideas in any front
  * end or channel, as a short list with each one's starter prompt, and
- * `refresh` to ask the provider for new ones. It only reads and asks: steering
+ * `refresh` to ask the provider for new ones, in the workspace's language (its
+ * words are taken in every language Tavi speaks: `обнови`). It only reads and asks: steering
  * (not now, mute, pin…) is the Ideas tab's and `tavi ideas`'.
  */
 
 export const IDEAS_COMMANDS: readonly ModCommandDeclaration[] = [
   { name: "ideas", description: "Things I can do for you: your top ideas, or refresh to look for new ones." },
 ];
-
-const USAGE = "Usage: /ideas [refresh]. Steer them in the Ideas tab or with tavi ideas.";
 
 /** Where a channel command was typed: a direct chat, a group, an email thread, or a place the owner could not tell. */
 export type IdeasCommandPlace = "direct" | "group" | "email" | undefined;
@@ -40,26 +42,22 @@ export function ideasSlashCommand(
   },
 ): (input: ModCommandInput) => Promise<ModCommandResult> {
   return async ({ envelope, args }) => {
-    if (deps.principalOf(envelope.workspaceId) !== envelope.principalId) return { text: "/ideas is the workspace operator's." };
+    const t = await channelWords(workspaceLocaleOf(deps.repositories.workspaceSettings), envelope.workspaceId);
+    const USAGE = t("channel.ideas.usage");
+    if (deps.principalOf(envelope.workspaceId) !== envelope.principalId) return { text: t("channel.ideas.operatorOnly") };
     // Never where others read: a group, an email thread, or a channel place the owner could not tell.
-    if (envelope.source === "messaging" && deps.placeOf?.(envelope) !== "direct")
-      return { text: "/ideas answers only in your own direct chat with Tavi, never where others read." };
+    if (envelope.source === "messaging" && deps.placeOf?.(envelope) !== "direct") return { text: t("channel.ideas.directOnly") };
     const words = args
       .trim()
       .split(/\s+/u)
       .filter((part) => part !== "");
     const workspaceId = envelope.workspaceId;
-    if (words.length === 1 && words[0] === "refresh") {
+    if (words.length === 1 && typedWord(words[0], IDEAS_WORDS) === "refresh") {
       const answer = await ideasCommand(deps, { action: "refresh", workspaceId });
       if (!answer.ok) return { text: answer.error.message };
       const status = "status" in answer.result ? answer.result.status : undefined;
       return {
-        text:
-          status === "busy"
-            ? "Ideas are being looked for elsewhere; try /ideas in a minute."
-            : status === "queued"
-              ? "A look is under way; another follows it."
-              : "Looking for new ideas; /ideas shows them in a moment.",
+        text: status === "busy" ? t("channel.ideas.busy") : status === "queued" ? t("channel.ideas.queued") : t("channel.ideas.looking"),
       };
     }
     if (words.length > 0) return { text: USAGE };
@@ -68,13 +66,18 @@ export function ideasSlashCommand(
     if (!("ideas" in answer.result)) return { text: USAGE };
     // Off, the tab shows no cards: neither does this, whatever is still stored.
     if (answer.result.enabled === false)
-      return {
-        text: `Ideas are off. Turn them on in ${englishOf(navPath("nav.route.settings", "nav.settings.ideas"))}, or with tavi ideas on.`,
-      };
+      return { text: t("channel.ideas.off", { path: renderTextRef(navPath("nav.route.settings", "nav.settings.ideas"), t) ?? "" }) };
     const top = answer.result.ideas.filter((idea) => idea.status === "active").slice(0, IDEA_FOR_YOU_MAX);
-    if (top.length === 0) return { text: "No ideas yet. /ideas refresh looks for some." };
-    const lines = top.map((idea, index) => `${index + 1}. ${idea.title} (${ideaCategoryLabel(idea.category)})\n   Try: ${idea.prompt}`);
-    return { text: ["Ideas for you:", ...lines, "More in the Ideas tab."].join("\n") };
+    if (top.length === 0) return { text: t("channel.ideas.none") };
+    const lines = top.map((idea, index) =>
+      t("channel.ideas.line", {
+        n: String(index + 1),
+        title: idea.title,
+        category: ideaCategoryLabel(idea.category, t),
+        prompt: idea.prompt,
+      }),
+    );
+    return { text: [t("channel.ideas.heading"), ...lines, t("channel.ideas.more")].join("\n") };
   };
 }
 

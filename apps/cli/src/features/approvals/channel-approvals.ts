@@ -1411,7 +1411,9 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
         ? t("channel.approval.word.session")
         : scope === "always"
           ? t("channel.approval.word.always")
-          : (scope ?? t("channel.approval.word.once"));
+          : scope === undefined || scope === "once"
+            ? t("channel.approval.word.once")
+            : scope;
     const named = (scope: string | undefined): string => t("channel.approval.applied.scope", { scope: word(scope) });
     // No scope asked for: say what the round's default applied (a browser round's is the task).
     if (requested === undefined) return applied.length === 1 && applied[0] !== "once" ? named(applied[0]) : "";

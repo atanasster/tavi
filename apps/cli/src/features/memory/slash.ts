@@ -34,6 +34,7 @@ import {
 import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 
 import { channelWords, zonedClock, zonedShortDay } from "../channels/channel-words.js";
+import { MEMORY_WORDS, REMEMBER_CHAT_FLAGS, typedWord, typedWords } from "../channels/typed-words.js";
 
 import { decideMemoryRecord, keepAllPlain, memoryDecisionWords, type MemoryDecision } from "./bulk.js";
 import { memoryCommand, type MemoryCommandDependencies } from "./owner.js";
@@ -72,6 +73,12 @@ export const MEMORY_COMMANDS: readonly ModCommandDeclaration[] = [
   },
   { name: "why", description: "The memories the last answer used." },
 ];
+
+/** Any of `/remember`'s chat flags as a word of its own, to take out of the text saved. */
+const REMEMBER_CHAT_FLAG = new RegExp(
+  `(^|\\s)(?:${REMEMBER_CHAT_FLAGS.map((flag) => flag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})(?=\\s|$)`,
+  "gu",
+);
 
 /** The fixed answers: groups and email never take a memory command. */
 export const MEMORY_GROUP_ANSWER = coreEnglish("channel.memory.group");
@@ -310,8 +317,8 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
 
   const remember: CommandRun = command(async (context, args) => {
     const words = args.split(/\s+/);
-    const chatOnly = words.includes("--chat");
-    const text = args.replace(/(^|\s)--chat(?=\s|$)/g, " ").trim();
+    const chatOnly = words.some((word) => REMEMBER_CHAT_FLAGS.includes(word));
+    const text = args.replace(REMEMBER_CHAT_FLAG, " ").trim();
     const { t } = context;
     if (text === "") return t("channel.memory.rememberUsage");
     if (chatOnly && context.chatTaskId === undefined) return t("channel.memory.chatFirst");
@@ -531,7 +538,11 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
   const memory: CommandRun = command(
     async (context, args) => {
       const usage = context.t("channel.memory.usage");
-      const [verb = "status", ...rest] = args.split(/\s+/).filter((word) => word !== "");
+      // Its words in any language Tavi speaks: `запази всички` is `keep all`.
+      const [verb = "status", ...rest] = typedWords(
+        args.split(/\s+/).filter((word) => word !== ""),
+        MEMORY_WORDS,
+      );
       switch (verb) {
         case "status":
           return rest.length === 0 ? await status(context) : usage;
@@ -551,7 +562,7 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
           return usage;
       }
     },
-    (args) => ["", "status", "on", "off"].includes(args),
+    (args) => args === "" || ["status", "on", "off"].includes(typedWord(args, MEMORY_WORDS) ?? ""),
   );
 
   const why: CommandRun = command(async (context, args) => {

@@ -23,7 +23,9 @@ import {
   disarmUrls,
   flaggedReasons,
 } from "@tavi/contracts";
+import { SUPPORTED_LOCALES } from "@tavi/contracts/i18n";
 import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { clip } from "@tavi/contracts/util";
 import { hostAndPathOf, trimTrailing } from "@tavi/contracts/url-text";
 import type { ApprovalRoundAnnouncement, ApprovalRoundSettlement } from "@tavi/agent-host/workflow";
@@ -49,30 +51,80 @@ export const ROUND_TOKEN_SHAPE = /^[a-km-np-z2-9]{8}$/i;
 export const TASK_ID_SHAPE = /^task-/;
 
 /**
+ * The words a typed decision is written with, lower case, in every language
+ * Tavi speaks, whatever the workspace's: each language's own word as help names
+ * it (`channel.approval.word.*`), and the forms a person naturally types: the
+ * imperative and the first person, never a participle ("одобрено") or a noun
+ * ("отказ"), as English takes "approve" but not "approved".
+ */
+export const TYPED_VERBS: { readonly approve: readonly string[]; readonly reject: readonly string[] } = {
+  approve: [
+    "approve",
+    "allow",
+    ...wordsIn("channel.approval.word.approve"),
+    "одобри",
+    "одобрете",
+    "одобрявам",
+    "разреши",
+    "разрешете",
+    "разрешавам",
+  ],
+  reject: [
+    "reject",
+    "deny",
+    ...wordsIn("channel.approval.word.reject"),
+    "откажи",
+    "откажете",
+    "отказвам",
+    "отхвърли",
+    "отхвърлете",
+    "отхвърлям",
+  ],
+};
+export const TYPED_SCOPES: { readonly [S in ApprovalScope]: readonly string[] } = {
+  once: ["once", ...wordsIn("channel.approval.word.once"), "веднъж", "еднократно"],
+  // The glossary's "чат" for a chat-long grant, and the "сесия" a person may still type.
+  session: ["session", ...wordsIn("channel.approval.word.session"), "чат", "чата", "сесия", "сесията"],
+  always: ["always", ...wordsIn("channel.approval.word.always"), "винаги"],
+};
+
+/** `key`'s word in every language, lower case. */
+function wordsIn(
+  key: "channel.approval.word.approve" | "channel.approval.word.reject" | `channel.approval.word.${ApprovalScope}`,
+): string[] {
+  return SUPPORTED_LOCALES.map((locale) => coreIn(locale)(key).toLowerCase());
+}
+
+/** The scope a typed word names, case aside, in any language; undefined for any other word. */
+function typedScope(word: string | undefined): ApprovalScope | undefined {
+  const lower = word?.toLowerCase();
+  return lower === undefined ? undefined : SCOPES.find((scope) => TYPED_SCOPES[scope].includes(lower));
+}
+
+/**
  * Parse a whole message as an approval command, or `null` when it is not one.
- * The grammar is `(approve|allow|reject|deny) [token|task-id] [once|session|always] [reason…]`;
- * a scope only follows an approval and a reason only follows a rejection, so an
+ * The grammar is `(approve|allow|reject|deny) [token|task-id] [once|session|always] [reason…]`,
+ * its words taken in every language Tavi speaks (`одобри k3f9 винаги`, `откажи твърде рисково`),
+ * case aside; a scope only follows an approval and a reason only follows a rejection, so an
  * ordinary sentence that happens to start with "approve" is not a command.
  */
 export function parseApprovalCommand(text: string): ApprovalCommand | null {
   const words = text.trim().split(/\s+/);
   const verb = (words[0] ?? "").toLowerCase();
-  if (!["approve", "allow", "reject", "deny"].includes(verb)) return null;
-  const approved = verb === "approve" || verb === "allow";
+  const approved = TYPED_VERBS.approve.includes(verb);
+  if (!approved && !TYPED_VERBS.reject.includes(verb)) return null;
+  // "Откажи се", "отказвам се": to give up, an ordinary sentence and never a rejection.
+  if (!approved && /^се[,.;:!?…]*$/u.test(words[1]?.toLowerCase() ?? "")) return null;
   let index = 1;
   let target: string | undefined;
   const next = words[index];
-  if (next !== undefined && /^[A-Za-z0-9._-]{1,128}$/.test(next) && !SCOPES.includes(next.toLowerCase() as ApprovalScope)) {
+  if (next !== undefined && /^[A-Za-z0-9._-]{1,128}$/.test(next) && typedScope(next) === undefined) {
     target = next;
     index += 1;
   }
   if (approved) {
-    const scopeWord = words[index]?.toLowerCase();
-    let scope: ApprovalScope | undefined;
-    if (scopeWord !== undefined && SCOPES.includes(scopeWord as ApprovalScope)) {
-      scope = scopeWord as ApprovalScope;
-      index += 1;
-    }
+    const scope = typedScope(words[index]);
+    if (scope !== undefined) index += 1;
     if (index < words.length) return null;
     return { approved, ...(target === undefined ? {} : { target }), ...(scope === undefined ? {} : { scope }) };
   }
@@ -97,6 +149,7 @@ const riskMark = (level: RiskLevel, t: CoreT): string => t(`channel.approval.ris
 export function approvalWords(t: CoreT = coreEnglish): {
   readonly approve: string;
   readonly reject: string;
+  readonly once: string;
   readonly session: string;
   readonly always: string;
   readonly reason: string;
@@ -104,6 +157,7 @@ export function approvalWords(t: CoreT = coreEnglish): {
   return {
     approve: t("channel.approval.word.approve"),
     reject: t("channel.approval.word.reject"),
+    once: t("channel.approval.word.once"),
     session: t("channel.approval.word.session"),
     always: t("channel.approval.word.always"),
     reason: t("channel.approval.reason"),

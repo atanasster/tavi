@@ -506,7 +506,7 @@ export function memoryCardLine(card: Pick<MemoryCardAnswer, "title" | "items" | 
     (item) =>
       item.state === "proposed" && !item.sensitive && item.updates === undefined && item.mayUpdate === undefined && item.tidyUp === true,
   );
-  const commands = memoryCardCommands(keepable, plain.length, digest);
+  const commands = memoryCardCommands(keepable, plain.length, digest, t);
   const looks = [
     ...(sensitiveWaiting
       ? [t(keepable.length === 0 && !updateWaiting && !tidyWaiting ? "memory.line.openToReview" : "memory.line.openForSensitive")]
@@ -521,13 +521,19 @@ export function memoryCardLine(card: Pick<MemoryCardAnswer, "title" | "items" | 
 /**
  * The `/memory` commands a card's waiting items take: one item's own
  * keep and discard, else by number — and *keep all* only while a plain one
- * waits, since it keeps nothing else.
+ * waits, since it keeps nothing else. In `t`'s words, as `/memory` takes them in every language.
  */
-function memoryCardCommands(keepable: readonly MemoryCardItem[], plain: number, digest: boolean): string[] {
+function memoryCardCommands(keepable: readonly MemoryCardItem[], plain: number, digest: boolean, t: CoreT): string[] {
   const [only] = keepable;
   if (keepable.length === 0 || only === undefined) return [];
-  if (keepable.length === 1 && !digest) return [`/memory keep ${only.number}`, `/memory discard ${only.number}`];
-  return ["/memory keep <n>", ...(plain > 0 ? ["/memory keep all"] : []), "/memory discard <n>"];
+  if (keepable.length === 1 && !digest)
+    return [t("channel.memory.cmd.keep", { n: String(only.number) }), t("channel.memory.cmd.discard", { n: String(only.number) })];
+  const any = "<n>";
+  return [
+    t("channel.memory.cmd.keep", { n: any }),
+    ...(plain > 0 ? [t("channel.memory.cmd.keepAll")] : []),
+    t("channel.memory.cmd.discard", { n: any }),
+  ];
 }
 
 /** What a listed item proposed after its chat read untrusted content adds: *Keep all* leaves it waiting. */
@@ -637,7 +643,7 @@ export function memoryCardChannelMessage(
     return { text: lines.join("\n"), buttons: [] };
   }
   if (mode === "text") {
-    const hint = memoryCardCommands(items.filter(memoryCardItemKeepable), plain.length, digest);
+    const hint = memoryCardCommands(items.filter(memoryCardItemKeepable), plain.length, digest, t);
     const [kept] = saved;
     if (waiting.length === 0 && saved.length === 1 && kept !== undefined)
       hint.push(t("channel.memory.card.forgetUndoes", { n: String(kept.number) }));

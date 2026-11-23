@@ -9,8 +9,8 @@ export const channels = {
   "channel.time.dayTime": "{day}, {time}",
 
   /**
-   * The words a typed answer to an approval starts with, as the help names them. They are the words
-   * `parseApprovalCommand` accepts: a language lists its own here once its words are taken as typed.
+   * The words a typed answer to an approval is written with, as help and cards name them in this
+   * language. `parseApprovalCommand` takes every language's, whatever the workspace speaks.
    */
   "channel.approval.word.approve": "approve",
   "channel.approval.word.reject": "reject",
@@ -237,6 +237,10 @@ export const channels = {
   "channel.memory.review.replace": " — {line}, open Tavi to replace it",
   "channel.memory.review.more": "and {n} more — open Tavi to review",
   "channel.memory.review.decideInApp": "Decide them in the app, or with tavi memory review.",
+  /** A `/memory` command a card names, with an item's number or "<n>". */
+  "channel.memory.cmd.keep": "/memory keep {n}",
+  "channel.memory.cmd.discard": "/memory discard {n}",
+  "channel.memory.cmd.keepAll": "/memory keep all",
   "channel.memory.review.commands": "/memory keep <n…> · /memory keep all · /memory discard <n…>",
   "channel.memory.review.heading": { one: "{n} waiting:", other: "{n} waiting:" },
   "channel.memory.decide.notNumbered": "{n}: nothing is numbered {n} here — /memory review lists what waits.",
@@ -372,6 +376,26 @@ export const channels = {
   "channel.reminder.doneNote": "Done",
   "channel.reminder.snoozed": "Snoozed until {time}.",
   "channel.reminder.snoozedNote": "Snoozed until {time}",
+
+  // `/ideas` and the weekly ideas digest. A sub-word typed in any language is taken (`typed-words.ts`).
+  "channel.ideas.operatorOnly": "/ideas is the workspace operator's.",
+  "channel.ideas.directOnly": "/ideas answers only in your own direct chat with Tavi, never where others read.",
+  "channel.ideas.usage": "Usage: /ideas [refresh]. Steer them in the Ideas tab or with tavi ideas.",
+  "channel.ideas.busy": "Ideas are being looked for elsewhere; try /ideas in a minute.",
+  "channel.ideas.queued": "A look is under way; another follows it.",
+  "channel.ideas.looking": "Looking for new ideas; /ideas shows them in a moment.",
+  /** {path} is the settings page: "Settings → Ideas". */
+  "channel.ideas.off": "Ideas are off. Turn them on in {path}, or with tavi ideas on.",
+  "channel.ideas.none": "No ideas yet. /ideas refresh looks for some.",
+  "channel.ideas.heading": "Ideas for you:",
+  /** One idea of `/ideas`: its number, title, category, and the starter prompt to send. */
+  "channel.ideas.line": "{n}. {title} ({category})\n   Try: {prompt}",
+  "channel.ideas.more": "More in the Ideas tab.",
+  "channel.ideas.digest.heading": "Ideas for you this week:",
+  /** {numbers}: "1, 2, 3", joined with `sep` and, before the last, `lastSep`. */
+  "channel.ideas.digest.reply": "Reply {numbers} to start one, or see more in Tavi's Ideas tab.",
+  "channel.ideas.digest.sep": ", ",
+  "channel.ideas.digest.lastSep": ", ",
   "channel.conversation.homeLinked":
     "This chat is linked to your Home, which never ends, so nothing was reset. Open a side chat from Home for a fresh start, or unlink this chat with `tavi config set chat.home-dm off`.",
   "channel.conversation.resetNotYours": "Only the person this chat's task belongs to can start it over.",

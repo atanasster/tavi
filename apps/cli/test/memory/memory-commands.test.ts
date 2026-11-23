@@ -480,6 +480,25 @@ describe("/memory keep all", () => {
   }, 60_000);
 });
 
+describe("/memory typed in Bulgarian", () => {
+  it("takes `запази всички`, `преглед` and `отхвърли <n>` in an English workspace, answering in English", async () => {
+    const { front, turn, propose, card, statusOf } = await composed();
+    const chat = await turn("hello");
+    const kept = await propose("operator", "you like long walks");
+    await card(chat, "operator", [kept.recordId]);
+    expect(await front("/memory запази всички", chat)).toBe("Kept 1. Undo it from the Saved card.");
+    expect(await statusOf(kept.recordId)).toBe("approved");
+    const discarded = await propose("operator", "you like cold tea");
+    await card(chat, "operator", [discarded.recordId]);
+    expect(await front("/memory преглед", chat)).toContain("cold tea");
+    expect(await front("/memory Отхвърли 1", chat)).toMatch(/^Discarded: /u);
+    expect(await statusOf(discarded.recordId)).toBe("rejected");
+    expect(await front("/memory скачай", chat)).toBe(
+      "Usage: /memory [status | review | keep <n…> | keep all | discard <n…> | off | on | pause | resume].",
+    );
+  }, 60_000);
+});
+
 describe("a proposal made after its chat read untrusted content", () => {
   const read: MemoryProvenance = {
     integrity: "untrusted",

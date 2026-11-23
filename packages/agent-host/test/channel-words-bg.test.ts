@@ -10,6 +10,7 @@ import {
   retractHeartbeatItems,
   type HeartbeatDeliveryPort,
 } from "../src/hosts/heartbeat-delivery.js";
+import { ideasDigestText } from "../src/hosts/ideas-host.js";
 import { sendAlert } from "../src/schedulers/schedule-alerts.js";
 
 /**
@@ -188,5 +189,26 @@ describe("a schedule's alert in Bulgarian", () => {
     const run = deps();
     await sendAlert(schedule, { identity: "fire", kind: "missed-run", text: missed }, run.deps);
     expect(run.sent[0]).toBe('Scheduled run "brief" did not run: skipped: missed by 42m (policy: skip).');
+  });
+});
+
+describe("the weekly ideas digest in Bulgarian", () => {
+  const ideas = [{ title: "Планирай пътуване" }, { title: "Сравни цени" }, { title: "Напомни ми" }];
+
+  it("frames its ideas in Bulgarian, the numbers joined as a person says them", () => {
+    expect(ideasDigestText(ideas, bg)).toBe(
+      "Идеи за теб тази седмица:\n1. Планирай пътуване\n2. Сравни цени\n3. Напомни ми\n\nОтговори с 1, 2 или 3, за да започнеш някоя, или виж още в раздела „Идеи“ на Tavi.",
+    );
+    expect(ideasDigestText(ideas.slice(0, 1), bg).split("\n").at(-1)).toBe(
+      "Отговори с 1, за да започнеш някоя, или виж още в раздела „Идеи“ на Tavi.",
+    );
+  });
+
+  it("reads as before in English", () => {
+    const english = [{ title: "Plan a trip" }, { title: "Compare prices" }];
+    expect(ideasDigestText(english)).toBe(ideasDigestText(english, coreEnglish));
+    expect(ideasDigestText(english)).toBe(
+      "Ideas for you this week:\n1. Plan a trip\n2. Compare prices\n\nReply 1, 2 to start one, or see more in Tavi's Ideas tab.",
+    );
   });
 });

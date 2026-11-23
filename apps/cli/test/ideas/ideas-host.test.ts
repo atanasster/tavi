@@ -908,6 +908,9 @@ describe("the ideas host", () => {
     now = new Date("2026-10-20T11:00:00.000Z");
     expect(await reply("2")).toBeUndefined();
     expect((await reply("try 2"))?.key).toBe("travel.b");
+    // In Bulgarian too, whatever the workspace speaks.
+    expect((await reply("Пробвай 2"))?.key).toBe("travel.b");
+    expect((await reply("опитай 2!"))?.key).toBe("travel.b");
     // Once picked, no later reply picks again.
     await digestPicked(deps, "default");
     expect(await reply("try 2")).toBeUndefined();

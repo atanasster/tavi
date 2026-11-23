@@ -46,6 +46,8 @@ import {
   TaviError,
 } from "@tavi/contracts";
 import { DEFAULT_LOCALE, type Locale } from "@tavi/contracts/i18n";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { clip as clipTo } from "@tavi/contracts/util";
 import { zodIssues } from "@tavi/contracts/zod-util";
 import { sha256Hex } from "@tavi/node-kit";
@@ -709,14 +711,39 @@ function turnHost(
   return { host, settled };
 }
 
-/** The digest's words: the ideas numbered, and how to start one. Titles only — never what an idea quoted. */
-export function ideasDigestText(ideas: readonly Pick<Idea, "title">[]): string {
+/**
+ * The digest's words, in `t`'s language: the ideas numbered, and how to start one.
+ * Titles only — never what an idea quoted.
+ */
+export function ideasDigestText(ideas: readonly Pick<Idea, "title">[], t: CoreT = coreEnglish): string {
+  const numbers = ideas.map((_, index) => String(index + 1));
+  const last = numbers.pop();
+  const said =
+    last === undefined
+      ? ""
+      : numbers.length === 0
+        ? last
+        : `${numbers.join(t("channel.ideas.digest.sep"))}${t("channel.ideas.digest.lastSep")}${last}`;
   return [
-    "Ideas for you this week:",
+    t("channel.ideas.digest.heading"),
     ...ideas.map((idea, index) => `${index + 1}. ${idea.title}`),
     "",
-    `Reply ${ideas.map((_, index) => index + 1).join(", ")} to start one, or see more in Tavi's Ideas tab.`,
+    t("channel.ideas.digest.reply", { numbers: said }),
   ].join("\n");
+}
+
+/** The words the digest is sent in: the workspace's language, English when it cannot be read. */
+async function digestWords(deps: IdeasHostDependencies, workspaceId: string): Promise<CoreT> {
+  try {
+    const locale = (await deps.locale?.(workspaceId)) ?? DEFAULT_LOCALE;
+    return locale === DEFAULT_LOCALE ? coreEnglish : coreIn(locale);
+  } catch (error) {
+    deps.log?.("the workspace's language could not be read; the ideas digest goes in English", {
+      workspaceId,
+      reason: error instanceof Error ? error.message : String(error),
+    });
+    return coreEnglish;
+  }
 }
 
 /**
@@ -750,7 +777,7 @@ export async function sendIdeasDigest(deps: IdeasHostDependencies, workspaceId: 
   const sent = await send({
     workspaceId,
     connectionId: digest.channel,
-    text: ideasDigestText(offered),
+    text: ideasDigestText(offered, await digestWords(deps, workspaceId)),
     effectId: `ideas-digest:${workspaceId}:${today}:${digest.channel}:${refused}`,
   });
   if (sent.status !== "sent") {
@@ -773,8 +800,8 @@ export async function sendIdeasDigest(deps: IdeasHostDependencies, workspaceId: 
   return "sent";
 }
 
-/** A digest pick: `try 2` (a week), or a bare `2` (a day), within the digest's count. */
-const DIGEST_PICK = new RegExp(`^\\s*(try\\s+)?([1-${IDEA_DIGEST_MAX}])\\s*[.!]?\\s*$`, "iu");
+/** A digest pick: `try 2` or `пробвай 2` (a week), or a bare `2` (a day), within the digest's count. */
+const DIGEST_PICK = new RegExp(`^\\s*((?:try|опитай|пробвай)\\s+)?([1-${IDEA_DIGEST_MAX}])\\s*[.!]?\\s*$`, "iu");
 
 /**
  * The idea one reply to the weekly digest picks: in the very chat it

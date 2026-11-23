@@ -82,10 +82,20 @@ Messages Tavi sends to a chat app speak the workspace's language: approval
 requests with their buttons and receipts, questions and their choices, memory
 cards and the `/memory` and `/forget` answers, the heartbeat's items, digest,
 buttons and `/heartbeat` status, reminders with their Done and Snooze buttons,
-the answer to `/new`, a schedule's or routine's alert, a server notice, and the
-notice a busy group chat gets. Error details Tavi passes on as it got them (why
-a run failed, a provider's own message) stay as they were written. A workspace
-whose language can't be read is answered in English.
+the answer to `/new`, `/ideas` and the weekly ideas digest, a schedule's or
+routine's alert, a server notice, and the notice a busy group chat gets. Error
+details Tavi passes on as it got them (why a run failed, a provider's own
+message) stay as they were written. A workspace whose language can't be read is
+answered in English.
+
+What you type back is read in English and Bulgarian alike, whatever the
+workspace's language: an approval as `одобри` or `разреши` (with `веднъж`,
+`чат` or `сесия`, or `винаги`) and `откажи` or `отхвърли` with your reason, a
+command's words as `/memory запази всички`, `/memory преглед`,
+`/heartbeat пауза 2ч` (or `30мин`, `1д`, `2 часа`), `/heartbeat продължи` and
+`/ideas обнови`, and a digest pick as `пробвай 2`. The commands' names stay
+`/memory`, `/heartbeat` and `/ideas`, and the help lists the words of the
+workspace's language.
 
 On Discord, the `/tavi` command descriptions and the "Ask Tavi about this"
 message menu carry Bulgarian names, which Discord shows to people whose Discord
