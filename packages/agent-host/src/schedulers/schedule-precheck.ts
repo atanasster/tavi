@@ -4,6 +4,7 @@ import {
   type ScheduleRecord,
   schedulePrecheckNote,
   schedulePrecheckText,
+  textRef,
 } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
@@ -90,7 +91,11 @@ export async function precheckFire(
       {
         identity: `precheck:${sha256Hex(schedulePrecheckText(precheck)).slice(0, 16)}:${last?.checkedAt ?? "never"}`,
         kind: "precheck-failed",
-        text: `Scheduled run "${schedule.name}" did not run: its pre-check (${schedulePrecheckText(precheck)}) could not be made: ${result.reason}. It is tried again at each fire; you are told again only once a check has worked in between.`,
+        text: textRef("channel.schedule.alert.precheckFailed", {
+          name: schedule.name,
+          precheck: schedulePrecheckText(precheck),
+          reason: result.reason,
+        }),
       },
       deps,
     );

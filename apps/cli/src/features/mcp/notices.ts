@@ -7,7 +7,9 @@ import {
   type PostNoticeInput,
   type TextRef,
   navPath,
+  renderTextRef,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
 import { prefixedId } from "@tavi/node-kit";
 
@@ -58,6 +60,8 @@ export interface McpNoticeDeliveryDeps {
   }) => Promise<void>;
   readonly now: () => string;
   readonly log?: (message: string, fields?: Readonly<Record<string, unknown>>) => void;
+  /** The words a channel is told in: the workspace's language. Absent, English. */
+  readonly channelWords?: (workspaceId: string) => Promise<CoreT>;
 }
 
 /** A notice in Tavi's words: what happened and what to do. */
@@ -132,10 +136,15 @@ export function noticeWordRefs(notice: Pick<McpNoticeRecord, "pluginId" | "kind"
   }
 }
 
-/** The plain message a channel gets: no buttons, and where to decide it. */
-export function noticeChannelText(notice: Pick<McpNoticeRecord, "pluginId" | "kind" | "detail">): string {
-  const words = noticeWords(notice);
-  return `${words.title}. ${words.summary}\nOpen in Tavi: ${englishOf(navPath("nav.route.center", "nav.center.waitingOnYou", "nav.center.servers"))}`;
+/** The plain message a channel gets, in `t`'s words: no buttons, and where to decide it. */
+export function noticeChannelText(notice: Pick<McpNoticeRecord, "pluginId" | "kind" | "detail">, t: CoreT = coreEnglish): string {
+  const refs = noticeWordRefs(notice);
+  const said = (ref: TextRef): string => renderTextRef(ref, t) ?? englishOf(ref);
+  return t("channel.mcp.notice", {
+    title: said(refs.title),
+    summary: said(refs.summary),
+    path: said(navPath("nav.route.center", "nav.center.waitingOnYou", "nav.center.servers")),
+  });
 }
 
 /**
@@ -187,6 +196,15 @@ export async function deliverMcpNotice(deps: McpNoticeDeliveryDeps, notice: McpN
       });
     }
     if (!sendNow) continue;
+    let t: CoreT = coreEnglish;
+    try {
+      t = (await deps.channelWords?.(workspaceId)) ?? coreEnglish;
+    } catch (error) {
+      deps.log?.("the workspace's language could not be read; an MCP notice is sent in English", {
+        workspaceId,
+        reason: errorMessage(error),
+      });
+    }
     for (const target of await deps.targets(workspaceId, operator)) {
       if (deps.isLocalConnection(target.connectionId)) continue;
       // A direct chat with the operator only: the chat's sender is the chat itself, bound to the operator here. A group,
@@ -199,7 +217,7 @@ export async function deliverMcpNotice(deps: McpNoticeDeliveryDeps, notice: McpN
           workspaceId,
           connectionId: target.connectionId,
           chatId: target.chatId,
-          text: noticeChannelText(notice),
+          text: noticeChannelText(notice, t),
         });
         sent += 1;
       } catch (error) {

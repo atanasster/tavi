@@ -1,6 +1,7 @@
 import {
   navPath,
   noticeWordsOf,
+  renderTextRef,
   textRef,
   type MessagingServicePort,
   type RoutineDeliveryTarget,
@@ -10,6 +11,7 @@ import {
   type RoutineScope,
   type TextRef,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
 
 /**
@@ -42,6 +44,8 @@ export interface RoutineNoticeDependencies {
     readonly summaryRef?: TextRef;
   }) => Promise<boolean>;
   readonly log: (message: string, fields: Record<string, unknown>) => void;
+  /** The words a target's channel is told in: the workspace's language. Absent, English. */
+  readonly channelWords?: (workspaceId: string) => Promise<CoreT>;
 }
 
 export interface RoutineNotices {
@@ -140,9 +144,18 @@ export function createRoutineNotices(deps: RoutineNoticeDependencies): RoutineNo
     run: RoutineRun,
     input: { readonly key: string; readonly title: TextRef; readonly text: TextRef; readonly skipTarget?: string },
   ): Promise<boolean> => {
-    // The channel reads the English: a chat app's messages follow the language in a later release.
     const words = noticeWordsOf({ title: input.title, summary: input.text });
-    const sent = await sendToTarget(run, input.key, words.summary, input.skipTarget);
+    // The channel reads the workspace's language; Home stores the English with its key.
+    let t: CoreT = coreEnglish;
+    try {
+      t = (await deps.channelWords?.(run.workspaceId)) ?? coreEnglish;
+    } catch (error) {
+      deps.log("the workspace's language could not be read; a routine notice is sent in English", {
+        routineId: run.routineId,
+        error: errorMessage(error),
+      });
+    }
+    const sent = await sendToTarget(run, input.key, renderTextRef(input.text, t) ?? words.summary, input.skipTarget);
     if (sent === true) return true;
     try {
       const posted = await deps.postHome({

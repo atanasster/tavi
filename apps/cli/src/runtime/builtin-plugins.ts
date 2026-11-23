@@ -45,6 +45,7 @@ import {
 } from "@tavi/contracts";
 import { forgetChatHistory } from "../features/tasks/history-owner.js";
 import { runDuePurges } from "../features/channels/purge.js";
+import { workspaceLocaleOf } from "../features/channels/channel-words.js";
 import { randomUUID } from "node:crypto";
 import { startAgentWaitScheduler, type AgentWaitSchedulerHandle } from "@tavi/agent-host/agent-wait-scheduler";
 import { repeatEvery, startScheduleScheduler, type ScheduleSchedulerHandle } from "@tavi/agent-host/schedule-scheduler";
@@ -817,6 +818,7 @@ export function composeBuiltinPlugins(composed: ConversationsContext) {
                   now: () => clock.now(),
                   ownerAllowed: (workspaceId, principalId) => access.actsIn(workspaceId, principalId),
                   onDiagnostic: (message, fields) => log.warn(message, fields),
+                  localeOf: workspaceLocaleOf(persistencePort.repositories.workspaceSettings),
                 }),
                 now: () => clock.now(),
                 log: (event) => log[event.level](event.message, event.detail === undefined ? undefined : { detail: event.detail }),
@@ -1235,6 +1237,7 @@ export function composeBuiltinPlugins(composed: ConversationsContext) {
                   connections: repositories.messagingConnections,
                   outbox: repositories.messagingOutbox,
                   log: (message, fields) => log.warn(message, fields),
+                  localeOf: workspaceLocaleOf(repositories.workspaceSettings),
                 }),
                 // A provider's model turns need the workflow: an owner without a model connection has none to run.
                 ...(workflow === undefined
@@ -1300,6 +1303,7 @@ export function composeBuiltinPlugins(composed: ConversationsContext) {
                     host: () => late.heartbeatHost,
                     author: "command",
                     now: () => new Date(clock.now()),
+                    onDiagnostic: (message, fields) => log.warn(message, fields),
                   }),
                 ),
               );
@@ -1388,7 +1392,7 @@ export function composeBuiltinPlugins(composed: ConversationsContext) {
                 newId: (prefix) => clock.newId(prefix),
                 now: () => new Date(clock.now()),
                 // A receipt names the channels whose earlier card messages cannot be edited.
-                channelNote: async (recordId) => memoryUnreachedNote((await memoryChannelCards.beforeForget(recordId)).unreached),
+                channelNote: async (recordId, t) => memoryUnreachedNote((await memoryChannelCards.beforeForget(recordId)).unreached, t),
               });
               for (const [name, run] of Object.entries(commands))
                 scope.defer(turnHooks.registerCommand(MEMORY_PLUGIN_ID, MEMORY_COMMANDS, name, run));

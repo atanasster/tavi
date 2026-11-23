@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   TaviError,
   isUntrusted,
+  localDateTime,
   conversationOfKey,
   topicConversationKey,
   formatReminderClock,
@@ -19,9 +20,11 @@ import {
   type ReminderFire,
   disarmUrls,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
 
 import { pressOf } from "../channels/button-press.js";
+import { channelWords, type WorkspaceLocaleOf, zonedClock, zonedShortDay } from "../channels/channel-words.js";
 
 /**
  * Saying a reminder where it was asked.
@@ -97,13 +100,24 @@ export async function reminderReplyTarget(
   return undefined;
 }
 
-/** "⏰ Dentist appointment — Mon 5 Oct 10:00 (late: was due 09:00)": what a fire says. */
-export function reminderMessageText(reminder: Reminder, fire: ReminderFire, late: boolean): string {
+/** "Mon 5 Oct 10:00" in `t`'s words, the year said when it is not this one; English as `formatReminderTime` says it. */
+function reminderWhenText(instant: Date, timezone: string, t: CoreT): string {
+  if (t === coreEnglish) return formatReminderTime(instant, timezone);
+  const year = localDateTime(instant, timezone).year;
+  return t("channel.reminder.when", {
+    day: zonedShortDay(instant, timezone, t),
+    year: year === localDateTime(new Date(), timezone).year ? "" : ` ${year}`,
+    time: zonedClock(instant, timezone),
+  });
+}
+
+/** "⏰ Dentist appointment — Mon 5 Oct 10:00 (late: was due 09:00)": what a fire says, in `t`'s words. */
+export function reminderMessageText(reminder: Reminder, fire: ReminderFire, late: boolean, t: CoreT = coreEnglish): string {
   const event =
     reminder.when.kind === "event" && fire.occurrence === "notice"
-      ? ` — ${formatReminderTime(new Date(reminder.when.at), reminder.timezone)}`
+      ? ` — ${reminderWhenText(new Date(reminder.when.at), reminder.timezone, t)}`
       : "";
-  const overdue = late ? ` (late: was due ${formatReminderClock(new Date(fire.fireAt), reminder.timezone)})` : "";
+  const overdue = late ? t("channel.reminder.late", { time: formatReminderClock(new Date(fire.fireAt), reminder.timezone) }) : "";
   return `⏰ ${reminder.text}${event}${overdue}`;
 }
 
@@ -117,12 +131,12 @@ export function isReminderPress(event: InboundEvent): boolean {
 const SNOOZE_MINUTES: Readonly<Record<string, 10 | 60>> = { s: 10, h: 60 };
 
 /** Done, Snooze 10 min and Snooze 1 h under a fire, for a channel with buttons. */
-function reminderButtons(token: string): readonly (readonly OutboundButton[])[] {
+function reminderButtons(token: string, t: CoreT): readonly (readonly OutboundButton[])[] {
   return [
     [
-      { label: "✅ Done", data: `m:${token}:d` },
-      { label: "⏰ Snooze 10 min", data: `m:${token}:s` },
-      { label: "⏰ Snooze 1 h", data: `m:${token}:h` },
+      { label: `✅ ${t("channel.reminder.button.done")}`, data: `m:${token}:d` },
+      { label: `⏰ ${t("channel.reminder.button.snooze10")}`, data: `m:${token}:s` },
+      { label: `⏰ ${t("channel.reminder.button.snooze1h")}`, data: `m:${token}:h` },
     ],
   ];
 }
@@ -182,10 +196,12 @@ export interface ReminderDeliveryDependencies extends ReminderTargetDependencies
    */
   readonly ownerAllowed?: (workspaceId: string, principalId: string) => boolean;
   readonly onDiagnostic?: (message: string, fields?: Record<string, unknown>) => void;
+  /** The workspace's language, which a fire's message, buttons and subject speak; absent, English. */
+  readonly localeOf?: WorkspaceLocaleOf;
 }
 
 /** What a reminder with a `prompt` adds to what it says when there is no model to start its task. */
-export const REMINDER_NO_MODEL_NOTE = " (task not started: no model is configured)";
+export const REMINDER_NO_MODEL_NOTE = coreEnglish("channel.reminder.noModel");
 
 const effectIdOf = (reminder: Reminder, fire: ReminderFire, attempt: number): string =>
   `reminder:${reminder.reminderId}:${fire.fireAt}:${attempt}`;
@@ -279,8 +295,9 @@ export function createReminderDelivery(deps: ReminderDeliveryDependencies): Remi
         }
       };
       const withTask = () => (taskId === undefined ? {} : { taskId });
-      // What a fire says, wherever it is said.
-      const message = said(reminder, `${reminderMessageText(reminder, fire, late)}${noModel ? REMINDER_NO_MODEL_NOTE : ""}`);
+      // What a fire says, wherever it is said, in the workspace's language.
+      const t = await channelWords(deps.localeOf, reminder.workspaceId, deps.onDiagnostic);
+      const message = said(reminder, `${reminderMessageText(reminder, fire, late, t)}${noModel ? t("channel.reminder.noModel") : ""}`);
       /**
        * The fire, said in the canvas too: in the chat it reached — a forum topic's side chat, else the
        * conversation's current one — when that chat is the reminder's own person's. Best effort, never failing the delivery.
@@ -344,7 +361,7 @@ export function createReminderDelivery(deps: ReminderDeliveryDependencies): Remi
           const email = deps.isEmailConnection?.(replyTo.connectionId) === true;
           const buttons =
             !email && fire.token !== undefined && deps.messaging.capabilitiesOf(replyTo.connectionId)?.interactions === true
-              ? reminderButtons(fire.token)
+              ? reminderButtons(fire.token, t)
               : undefined;
           const outcome = await deps.messaging.send({
             // Each refused attempt is its own outbox effect: the outbox keeps a
@@ -355,7 +372,9 @@ export function createReminderDelivery(deps: ReminderDeliveryDependencies): Remi
             destination,
             parts: [{ content: message }],
             ...(buttons === undefined ? {} : { buttons }),
-            ...(email ? { subject: said(reminder, `Reminder: ${reminder.text.replace(/\s+/g, " ").slice(0, 120)}`) } : {}),
+            ...(email
+              ? { subject: said(reminder, t("channel.reminder.subject", { text: reminder.text.replace(/\s+/g, " ").slice(0, 120) })) }
+              : {}),
           });
           // An uncertain send may have arrived: it is not sent again.
           if (outcome.status !== "rejected") {
@@ -388,6 +407,8 @@ export interface ReminderButtonDependencies {
   readonly messaging: Pick<MessagingServicePort, "answerInteraction" | "buildReplyDestination" | "editMessage">;
   readonly now: () => string;
   readonly onDiagnostic?: (message: string, fields?: Record<string, unknown>) => void;
+  /** The workspace's language, which the acks and receipts speak; absent, English. */
+  readonly localeOf?: WorkspaceLocaleOf;
 }
 
 /**
@@ -412,13 +433,14 @@ export function createReminderButtons(deps: ReminderButtonDependencies): {
       );
       const answer = press.answer;
       const now = deps.now();
+      const t = await channelWords(deps.localeOf, actor.workspaceId, deps.onDiagnostic);
       if (press.tooOld(now)) {
-        await answer("This button press is too old to act on.");
+        await answer(t("channel.button.tooOld"));
         return true;
       }
       const found = await deps.repositories.reminders.fireByToken(match[1] ?? "");
       if (found === undefined) {
-        await answer("This reminder is no longer available.");
+        await answer(t("channel.reminder.gone"));
         return true;
       }
       const { reminder, fire } = found;
@@ -430,22 +452,22 @@ export function createReminderButtons(deps: ReminderButtonDependencies): {
         deliverTo.connectionId === event.connectionId &&
         deliverTo.conversationId === event.externalConversationId;
       if (!own) {
-        await answer("Only the person this reminder is for can use its buttons.");
+        await answer(t("channel.reminder.notYours"));
         return true;
       }
       const settle = (note: string): Promise<void> =>
-        press.settle(() => said(reminder, `${reminderMessageText(reminder, fire, fire.late === true)}\n\n${note}`));
+        press.settle(() => said(reminder, `${reminderMessageText(reminder, fire, fire.late === true, t)}\n\n${note}`));
       try {
         const minutes = SNOOZE_MINUTES[match[2] ?? ""];
         if (minutes === undefined) {
           await deps.repositories.reminders.acknowledge({ reminderId: reminder.reminderId, fireAt: fire.fireAt, now });
-          await answer("Done.");
-          await settle("Done ✓");
+          await answer(t("channel.reminder.done"));
+          await settle(`${t("channel.reminder.doneNote")} ✓`);
         } else {
           const snoozed = await deps.repositories.reminders.snooze({ reminderId: reminder.reminderId, fireAt: fire.fireAt, minutes, now });
           const until = formatReminderClock(new Date(snoozed.followUp.fireAt), reminder.timezone);
-          await answer(`Snoozed until ${until}.`);
-          await settle(`Snoozed until ${until}`);
+          await answer(t("channel.reminder.snoozed", { time: until }));
+          await settle(t("channel.reminder.snoozedNote", { time: until }));
         }
       } catch (error) {
         await answer(errorMessage(error).slice(0, 190));

@@ -25,10 +25,11 @@ import {
   inboundParts,
   noticeWordsOf,
   textRef,
-  englishOf,
   navPath,
+  renderTextRef,
 } from "@tavi/contracts";
 import { channelDescriptorOf } from "../features/channels/catalog.js";
+import { channelWords, workspaceLocaleOf } from "../features/channels/channel-words.js";
 import { TERMINAL_TASK_STATUSES, createAgentCommunicationService } from "@tavi/agent-host/agent-communication";
 import { definedOnly, errorMessage } from "@tavi/contracts/util";
 import type { MemoryCommandPlace } from "../features/memory/slash.js";
@@ -347,6 +348,12 @@ export function composeConversations(composed: SchedulesContext) {
      * or the terminal is admitted as before, its turn ending with the model's
      * own refusal where the person sees it, rather than dropped unseen.
      */
+    /** The words a reply to a chat app speaks: the workspace's language, English when it cannot be read. */
+    const wordsFor = async (workspaceId: string) =>
+      await channelWords(workspaceLocaleOf(persistencePort.repositories.workspaceSettings), workspaceId, (message, fields) =>
+        logger.warn(message, fields),
+      );
+
     const refuseWithoutModel = async (event: InboundEvent, actor: MemoryActor): Promise<void> => {
       logger.warn("an inbound message was not admitted: no model is configured", {
         connectionId: event.connectionId,
@@ -360,6 +367,7 @@ export function composeConversations(composed: SchedulesContext) {
         ...(event.externalMessageId === undefined ? {} : { externalMessageId: event.externalMessageId }),
       });
       if (destination === undefined) return;
+      const t = await wordsFor(actor.workspaceId);
       const conversation = sha256Hex(event.externalConversationId).slice(0, 16);
       await messaging
         .send({
@@ -369,7 +377,9 @@ export function composeConversations(composed: SchedulesContext) {
           destination,
           parts: [
             {
-              content: `Your message arrived, but Tavi has no model set up yet, so it was not acted on. Once the operator adds one (${englishOf(navPath("nav.route.settings", "nav.settings.models"))}, or \`tavi models add\`), send it again.`,
+              content: t("channel.conversation.noModel", {
+                path: renderTextRef(navPath("nav.route.settings", "nav.settings.models"), t) ?? "",
+              }),
             },
           ],
         })
@@ -956,7 +966,7 @@ export function composeConversations(composed: SchedulesContext) {
                 connectionId: event.connectionId,
                 workspaceId: actor.workspaceId,
                 destination,
-                parts: [{ content: `That question was already answered: ${taken}. To ask for something new, say it in other words.` }],
+                parts: [{ content: (await wordsFor(actor.workspaceId))("channel.conversation.alreadyAnswered", { answer: taken }) }],
               });
             }
             return undefined;
@@ -1028,7 +1038,10 @@ export function composeConversations(composed: SchedulesContext) {
         const answer = await turnHooks.runCommand(name, { envelope, args: pluginCommand.args });
         const destination = plainReplyDestination(messaging, event);
         // A command withdrawn since it was listed is said to be gone, never met with silence.
-        const text = maskPluginText(answer?.text ?? `/${name}: no plugin answers it now.`, MOD_COMMAND_TEXT_MAX_CHARS);
+        const text = maskPluginText(
+          answer?.text ?? (await wordsFor(actor.workspaceId))("channel.conversation.noPlugin", { name }),
+          MOD_COMMAND_TEXT_MAX_CHARS,
+        );
         if (destination !== undefined && text.trim() !== "") {
           await messaging.send({
             effectId: `plugin-command:${event.connectionId}:${event.providerEventId}`,
@@ -1057,8 +1070,7 @@ export function composeConversations(composed: SchedulesContext) {
               destination,
               parts: [
                 {
-                  content:
-                    "This chat is linked to your Home, which never ends, so nothing was reset. Open a side chat from Home for a fresh start, or unlink this chat with `tavi config set chat.home-dm off`.",
+                  content: (await wordsFor(actor.workspaceId))("channel.conversation.homeLinked"),
                 },
               ],
             });
@@ -1103,6 +1115,7 @@ export function composeConversations(composed: SchedulesContext) {
         }
         const destination = plainReplyDestination(messaging, event);
         if (destination !== undefined) {
+          const t = await wordsFor(actor.workspaceId);
           await messaging.send({
             effectId: `conversation-reset:${event.connectionId}:${event.providerEventId}`,
             connectionId: event.connectionId,
@@ -1111,13 +1124,13 @@ export function composeConversations(composed: SchedulesContext) {
             parts: [
               {
                 content: !owned
-                  ? "Only the person this chat's task belongs to can start it over."
+                  ? t("channel.conversation.resetNotYours")
                   : ended === undefined
-                    ? "Nothing to reset: your next message starts a new conversation."
+                    ? t("channel.conversation.nothingToReset")
                     : // No task id: a chat app's reader cannot use one. The earlier chat stays in the Tavi app.
                       withdrew
-                      ? "Started a new conversation. What the earlier one was still doing is cancelled; you can read it in the Tavi app."
-                      : "Started a new conversation. You can still read the earlier one in the Tavi app.",
+                      ? t("channel.conversation.startedCancelled")
+                      : t("channel.conversation.started"),
               },
             ],
           });

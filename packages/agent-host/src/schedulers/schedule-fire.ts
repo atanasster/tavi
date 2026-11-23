@@ -14,6 +14,7 @@ import {
   scheduleSpecEnds,
   scheduleSpecText,
   untrustedLabel,
+  textRef,
 } from "@tavi/contracts";
 import { definedOnly, errorMessage } from "@tavi/contracts/util";
 
@@ -169,7 +170,7 @@ async function fireOnce(
       {
         identity: manualId ?? fireTime,
         kind: "spec-disabled",
-        text: `Schedule "${schedule.name}" was disabled because its time (${scheduleSpecText(schedule.spec)}) has no next occurrence.`,
+        text: textRef("channel.schedule.alert.specDisabled", { name: schedule.name, spec: scheduleSpecText(schedule.spec) }),
       },
       deps,
     );
@@ -251,7 +252,7 @@ async function fireOnce(
       {
         identity: staleMarkerFireTime,
         kind: "stale-dispatch",
-        text: `Schedule "${schedule.name}": the ${staleMarkerFireTime} fire started but never reported a result.`,
+        text: textRef("channel.schedule.alert.staleDispatch", { name: schedule.name, fireTime: staleMarkerFireTime }),
       },
       deps,
     );
@@ -328,7 +329,10 @@ async function fireOnce(
       {
         identity: alertIdentity,
         kind: "disk-low",
-        text: `Scheduled run "${schedule.name}" did not start: ${reason}. Free space and it will run on the next sweep.`,
+        text: textRef("channel.schedule.alert.diskLow", {
+          name: schedule.name,
+          reason: textRef("channel.schedule.alert.diskReason", { mib: String(mib) }),
+        }),
       },
       deps,
     );
@@ -363,7 +367,19 @@ async function fireOnce(
       // nothing "failed".
       await sendAlert(
         schedule,
-        { identity: alertIdentity, kind: "missed-run", text: `Scheduled run "${schedule.name}" did not run: ${reason}.` },
+        {
+          identity: alertIdentity,
+          kind: "missed-run",
+          text: textRef("channel.schedule.alert.missed", {
+            name: schedule.name,
+            reason: textRef(
+              schedule.missedRunPolicy === "skip" ? "channel.schedule.alert.missedSkip" : "channel.schedule.alert.missedLate",
+              {
+                minutes: String(minutes),
+              },
+            ),
+          }),
+        },
         deps,
       );
       return { kind: "skipped", reason: "missed" };
@@ -625,7 +641,11 @@ async function fireOnce(
     deps.log({ level: "error", message: "schedule admission failed", detail: { scheduleId: schedule.scheduleId, error } });
     await sendAlert(
       schedule,
-      { identity: alertIdentity, kind: "start-failed", text: `Scheduled run "${schedule.name}" could not start: ${detail}` },
+      {
+        identity: alertIdentity,
+        kind: "start-failed",
+        text: textRef("channel.schedule.alert.startFailed", { name: schedule.name, detail }),
+      },
       deps,
     );
     if (countsTowardPause(manual)) await pauseIfFailing(schedule, { fireTime: slot, alertIdentity }, deps);

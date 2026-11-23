@@ -14,6 +14,7 @@ import type {
   ScheduleRecord,
   ScheduleRepositoryPort,
   SendOutcome,
+  TextRef,
   WorkflowApprovalRequest,
   WorkflowPort,
 } from "@tavi/contracts";
@@ -953,8 +954,11 @@ describe("fireSchedule", () => {
 
   it("tells Home an alert its target refused or could not take, keyed as the send so it is told once", async () => {
     const schedule = scheduleFixture({ alert: { connectionId: "telegram-main", destination: "8346819670" } });
-    const homeAlerts: { sourceKey: string; text: string }[] = [];
-    const alertHome = async (_schedule: ScheduleRecord, alert: { readonly sourceKey: string; readonly text: string }) => {
+    const homeAlerts: { sourceKey: string; text: string; ref?: TextRef }[] = [];
+    const alertHome = async (
+      _schedule: ScheduleRecord,
+      alert: { readonly sourceKey: string; readonly text: string; readonly ref?: TextRef },
+    ) => {
       homeAlerts.push(alert);
       return true;
     };
@@ -962,7 +966,12 @@ describe("fireSchedule", () => {
     await fireSchedule(schedule, "2026-04-05T04:00:00.000Z", { ...refused.deps, alertHome });
     expect(refused.alerts).toHaveLength(1);
     expect(homeAlerts).toEqual([
-      { sourceKey: refused.alerts[0]?.effectId, text: expect.stringMatching(/^Scheduled run "morning-brief" did not start: refused/) },
+      {
+        sourceKey: refused.alerts[0]?.effectId,
+        text: expect.stringMatching(/^Scheduled run "morning-brief" did not start: refused/),
+        // Home says it in its reader's language, by key.
+        ref: expect.objectContaining({ key: "channel.schedule.alert.diskLow" }),
+      },
     ]);
     const broken = harness({ freeBytes: 1024 });
     await fireSchedule(schedule, "2026-04-05T04:00:00.000Z", {

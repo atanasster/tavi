@@ -9,6 +9,7 @@ import {
   reachesSchedulingWrite,
   scheduledWorkDenial,
   unattendedDenial,
+  textRef,
 } from "@tavi/contracts";
 
 import { sendAlert } from "./schedule-alerts.js";
@@ -198,7 +199,7 @@ export async function resolveSuspensions(
               {
                 identity: `allow:${entry}`,
                 kind: "scheduling-refused",
-                text: `Scheduled run "${schedule.name}" was refused ${request.toolName}: a scheduled run never creates or changes schedules or routines. Its tool list still names ${entry} and is left as it is; only these calls are refused. Remove ${entry} from its tools to stop listing it.`,
+                text: textRef("channel.schedule.alert.schedulingRefused", { name: schedule.name, tool: request.toolName, entry }),
               },
               deps,
             );

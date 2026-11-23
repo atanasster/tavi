@@ -13,6 +13,7 @@ import type {
   TextRef,
   WorkflowPort,
 } from "@tavi/contracts";
+import type { CoreT } from "@tavi/contracts/locales/core";
 
 import type { InFlightFireRegistry } from "./in-flight.js";
 
@@ -115,8 +116,11 @@ export interface ScheduleSchedulerDependencies {
    */
   readonly alertHome?: (
     schedule: ScheduleRecord,
+    /** `ref`: the alert's words by key, where they are Tavi's: Home says them in its reader's language. */
     alert: { readonly sourceKey: string; readonly text: string; readonly ref?: TextRef },
   ) => Promise<boolean>;
+  /** The words an alert to a chat app is said in: its workspace's language. Absent, English. */
+  readonly channelWords?: (workspaceId: string) => Promise<CoreT>;
   /**
    * Stop a run that worked past its schedule's `maxRunMinutes`: cancel its
    * task and the workers it spawned, and settle the wait it is suspended on,

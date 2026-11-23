@@ -108,7 +108,11 @@ export async function reportFire(
       {
         identity: alertIdentity,
         kind: "round-decided-elsewhere",
-        text: `Scheduled run "${schedule.name}" (task ${refusal.taskId}): round ${refusal.steps ?? "(unrecorded)"} was decided by another front end, so this schedule stopped deciding it`,
+        text: textRef("channel.schedule.alert.decidedElsewhere", {
+          name: schedule.name,
+          taskId: refusal.taskId,
+          steps: refusal.steps ?? textRef("channel.schedule.alert.unrecorded"),
+        }),
       },
       deps,
     );
@@ -297,7 +301,7 @@ async function reportRun(
       {
         identity: alertIdentity,
         kind: "run-outcome",
-        text: `Scheduled run "${schedule.name}" had nothing to report, but ${cutShort}, so it may have missed something. See its recent fires.`,
+        text: textRef("channel.schedule.alert.cutShort", { name: schedule.name, count: refusedCalls, n: String(refusedCalls) }),
       },
       deps,
     );
@@ -307,7 +311,7 @@ async function reportRun(
       {
         identity: alertIdentity,
         kind: "run-undelivered",
-        text: `Scheduled run "${schedule.name}" finished without delivering anything: no brief was sent`,
+        text: textRef("channel.schedule.alert.undelivered", { name: schedule.name }),
       },
       deps,
     );
@@ -319,8 +323,26 @@ async function reportRun(
         kind: "run-outcome",
         // The run's own words, which a webhook's caller or an email's sender may have steered: no address in
         // them is a link in the alert's chat.
-        text: `Scheduled run "${schedule.name}" ${status}: ${disarmUrls(finalText, NO_KNOWN_URLS) || "no further detail"}`,
-        homeText: `Scheduled run "${schedule.name}" ${status}; its run, with its final text, is in the schedule's recent fires.`,
+        text: textRef(
+          status === "failed"
+            ? "channel.schedule.alert.failed"
+            : status === "waiting"
+              ? "channel.schedule.alert.waiting"
+              : "channel.schedule.alert.ended",
+          {
+            name: schedule.name,
+            status,
+            text: disarmUrls(finalText, NO_KNOWN_URLS) || textRef("channel.schedule.alert.noDetail"),
+          },
+        ),
+        homeText: textRef(
+          status === "failed"
+            ? "channel.schedule.alert.failedHome"
+            : status === "waiting"
+              ? "channel.schedule.alert.waitingHome"
+              : "channel.schedule.alert.endedHome",
+          { name: schedule.name, status },
+        ),
       },
       deps,
     );

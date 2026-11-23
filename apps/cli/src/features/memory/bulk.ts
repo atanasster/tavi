@@ -1,4 +1,5 @@
 import { TaviError, memoryProvenanceUntrusted, type MemoryItem, type MemoryPayload } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 
 /**
  * How a person decides waiting memory, in one place for every surface: a
@@ -27,8 +28,21 @@ import { TaviError, memoryProvenanceUntrusted, type MemoryItem, type MemoryPaylo
 export type MemoryDecision = "done" | "conflict" | "tidy" | "stale" | "Already kept" | "Already discarded" | "No longer waiting";
 
 /** What a stale tidy-up tells the person, in the Center's words. */
-export const MEMORY_TIDY_STALE =
-  "A memory it replaces changed since this was suggested: discard it, and the next weekly run suggests it again.";
+export const MEMORY_TIDY_STALE = coreEnglish("channel.memory.tidyStale");
+
+/** A record that no longer waits, as a press or a command says it in `t`'s words. */
+export function memoryDecisionWords(
+  outcome: Exclude<MemoryDecision, "done" | "conflict" | "tidy" | "stale">,
+  t: CoreT = coreEnglish,
+): string {
+  return t(
+    outcome === "Already kept"
+      ? "channel.memory.already.kept"
+      : outcome === "Already discarded"
+        ? "channel.memory.already.discarded"
+        : "channel.memory.already.noLongerWaiting",
+  );
+}
 
 /** A record's state as a press or a command says it once it no longer waits. */
 function memoryStatusWords(status: string | undefined): Exclude<MemoryDecision, "done" | "conflict" | "tidy" | "stale"> {

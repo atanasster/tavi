@@ -7,9 +7,12 @@ import {
   type ModCommandDeclaration,
   type ModCommandInput,
   type ModCommandResult,
-  englishOf,
   navPath,
+  renderTextRef,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+
+import { channelWords, workspaceLocaleOf, zonedClock } from "../channels/channel-words.js";
 
 import { parseHeartbeatDuration } from "./parse.js";
 import { heartbeatCommand, type HeartbeatCommandDependencies } from "./owner.js";
@@ -26,41 +29,61 @@ export const HEARTBEAT_COMMANDS: readonly ModCommandDeclaration[] = [
   { name: "heartbeat", description: "Your heartbeat: its status, pause [2h], resume, or now to check at once." },
 ];
 
-const USAGE = `Usage: /heartbeat [status | pause [30m|2h|1d] | resume | now]. Change its settings in ${englishOf(navPath("nav.route.center", "nav.center.heartbeat"))}, with tavi heartbeat, or by asking.`;
+/** How `/heartbeat` is used, and where its settings change. */
+const usage = (t: CoreT): string =>
+  t("channel.heartbeat.usage", { path: renderTextRef(navPath("nav.route.center", "nav.center.heartbeat"), t) ?? "" });
 
 /** Why it is paused, as Center → Heartbeat says it (HEARTBEAT.md). */
-const PAUSED_WHY: Readonly<Record<HeartbeatPauseReason, string>> = {
-  user: "by you",
-  budget: "(today's limit was reached)",
-  failures: "(it failed repeatedly)",
-  provider: "(its provider is unavailable)",
-};
+const PAUSED_WHY = {
+  user: "channel.heartbeat.paused.user",
+  budget: "channel.heartbeat.paused.budget",
+  failures: "channel.heartbeat.paused.failures",
+  provider: "channel.heartbeat.paused.provider",
+} as const satisfies Readonly<Record<HeartbeatPauseReason, string>>;
+
+/** A check interval in `t`'s words: "30m", "2h" (`formatHeartbeatInterval`'s). */
+function intervalText(ms: number, t: CoreT): string {
+  if (t === coreEnglish) return formatHeartbeatInterval(ms);
+  const said = formatHeartbeatInterval(ms);
+  const unit = said.slice(-1);
+  const n = said.slice(0, -1);
+  return t(unit === "h" ? "channel.heartbeat.interval.h" : unit === "m" ? "channel.heartbeat.interval.m" : "channel.heartbeat.interval.s", {
+    n,
+  });
+}
 
 /** "on · next 14:32" and the rest of the status line. */
-function statusLine(result: HeartbeatGetAnswer): string {
-  const clock = (iso: string): string =>
-    new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: result.timezone }).format(
-      new Date(iso),
-    );
+function statusLine(result: HeartbeatGetAnswer, t: CoreT = coreEnglish): string {
+  const clock = (iso: string): string => zonedClock(new Date(iso), result.timezone);
   const { config } = result;
   const paused =
     config.paused === undefined
       ? undefined
-      : `paused ${PAUSED_WHY[config.paused.reason]}${config.paused.until === undefined ? "" : ` until ${clock(config.paused.until)}`}`;
+      : config.paused.until === undefined
+        ? t(PAUSED_WHY[config.paused.reason])
+        : t("channel.heartbeat.pausedUntil", { why: t(PAUSED_WHY[config.paused.reason]), time: clock(config.paused.until) });
   // Off and paused: said, so turning it on later does not find it still paused unawares.
-  if (!config.enabled) return paused === undefined ? "Heartbeat off." : `Heartbeat off (and ${paused}).`;
+  if (!config.enabled) return paused === undefined ? t("channel.heartbeat.off") : t("channel.heartbeat.offPaused", { paused });
   // The days as `tavi heartbeat hours` sets them: none said when it checks every day.
-  const days = daysOfWeekText(config.daysOfWeek);
-  const window = `every ${formatHeartbeatInterval(config.everyMs)}, ${days === undefined ? "" : `${days} `}${config.activeHours.start}–${config.activeHours.end} ${result.timezone}`;
-  if (paused !== undefined) return `Heartbeat ${paused} · ${window}.`;
-  const next = result.state?.nextTickAt === undefined ? "" : ` · next check ${clock(result.state.nextTickAt)}`;
-  const last = result.state?.lastTickAt === undefined ? "" : ` · last ${clock(result.state.lastTickAt)}`;
-  return `Heartbeat on${next}${last} · ${window}.`;
+  const days = daysOfWeekText(config.daysOfWeek, t);
+  const window = t(days === undefined ? "channel.heartbeat.window" : "channel.heartbeat.windowDays", {
+    every: intervalText(config.everyMs, t),
+    days: days ?? "",
+    start: config.activeHours.start,
+    end: config.activeHours.end,
+    zone: result.timezone,
+  });
+  if (paused !== undefined) return t("channel.heartbeat.statusPaused", { paused, window });
+  const next = result.state?.nextTickAt === undefined ? "" : t("channel.heartbeat.next", { time: clock(result.state.nextTickAt) });
+  const last = result.state?.lastTickAt === undefined ? "" : t("channel.heartbeat.last", { time: clock(result.state.lastTickAt) });
+  return t("channel.heartbeat.on", { next, last, window });
 }
 
 export function heartbeatSlashCommand(deps: HeartbeatCommandDependencies): (input: ModCommandInput) => Promise<ModCommandResult> {
   return async ({ envelope, args }) => {
-    if (deps.principalOf(envelope.workspaceId) !== envelope.principalId) return { text: "/heartbeat is the workspace operator's." };
+    const t = await channelWords(workspaceLocaleOf(deps.repositories.workspaceSettings), envelope.workspaceId, deps.onDiagnostic);
+    const USAGE = usage(t);
+    if (deps.principalOf(envelope.workspaceId) !== envelope.principalId) return { text: t("channel.heartbeat.operatorOnly") };
     const [verb = "status", amount, ...extra] = args
       .trim()
       .split(/\s+/)
@@ -70,7 +93,7 @@ export function heartbeatSlashCommand(deps: HeartbeatCommandDependencies): (inpu
     /** The heartbeat after an action, as one line, or the owner's refusal in its words. */
     const said = (answer: Awaited<ReturnType<typeof heartbeatCommand>>): ModCommandResult => {
       if (!answer.ok) return { text: answer.error.message };
-      return "config" in answer.result ? { text: statusLine(answer.result) } : { text: USAGE };
+      return "config" in answer.result ? { text: statusLine(answer.result, t) } : { text: USAGE };
     };
     switch (verb) {
       case "status":
@@ -78,7 +101,7 @@ export function heartbeatSlashCommand(deps: HeartbeatCommandDependencies): (inpu
       case "pause": {
         const forMs = amount === undefined ? undefined : parseHeartbeatDuration(amount);
         if (amount !== undefined && (forMs === undefined || forMs > HEARTBEAT_PAUSE_MAX_MS))
-          return { text: "Pause for a duration such as 30m, 2h or 1d (at most 7d), or with none until you resume." };
+          return { text: t("channel.heartbeat.pauseUsage") };
         return said(await heartbeatCommand(deps, { action: "pause", ...scope, ...(forMs === undefined ? {} : { forMs }) }));
       }
       case "resume":
@@ -89,7 +112,9 @@ export function heartbeatSlashCommand(deps: HeartbeatCommandDependencies): (inpu
         if (!answer.ok) return { text: answer.error.message };
         return {
           text:
-            "status" in answer.result && answer.result.status === "started" ? "Checking now." : "A check is running; this one follows it.",
+            "status" in answer.result && answer.result.status === "started"
+              ? t("channel.heartbeat.checking")
+              : t("channel.heartbeat.queued"),
         };
       }
       default:

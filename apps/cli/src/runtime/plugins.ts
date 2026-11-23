@@ -1,4 +1,5 @@
 import { TERMINAL_TASK_STATUSES } from "@tavi/agent-host/agent-communication";
+import { channelWords, workspaceLocaleOf } from "../features/channels/channel-words.js";
 import { builtinPluginsWithUi } from "../features/plugins/catalog.js";
 import { snapshotDevPlugin } from "../features/plugins/dev.js";
 import { builtCanvasDirectory } from "../canvas-directory.js";
@@ -167,6 +168,8 @@ export async function composePlugins(composed: AccessContext) {
         if (destination === undefined) return;
         await late.messaging.send({ effectId, connectionId, workspaceId, destination, parts: [{ content: text }] });
       },
+      channelWords: async (workspaceId) =>
+        await channelWords(workspaceLocaleOf(persistencePort.repositories.workspaceSettings), workspaceId),
     },
   });
   if (ownership !== undefined) await mcpHost.reap();

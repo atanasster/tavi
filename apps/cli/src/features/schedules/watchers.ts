@@ -8,7 +8,10 @@ import {
   SCHEDULE_WATCH_MIN_INTERVAL_MS,
   type ScheduleRecord,
   type ScheduleRepositoryPort,
+  type TextRef,
   TaviError,
+  englishOf,
+  textRef,
 } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
@@ -57,7 +60,10 @@ export interface ScheduleWatcherDependencies {
   /** Absent: `watchFileChanges`. */
   readonly watchFile?: WatchFile;
   /** Tells the schedule's person something about its watch, once per `identity`. */
-  readonly alert?: (schedule: ScheduleRecord, alert: { readonly identity: string; readonly text: string }) => Promise<void>;
+  readonly alert?: (
+    schedule: ScheduleRecord,
+    alert: { readonly identity: string; readonly text: string; readonly ref?: TextRef },
+  ) => Promise<void>;
   /** Arms a timer, returning what disarms it. Absent: `setTimeout`, not keeping the process alive. */
   readonly setTimer?: (callback: () => void, ms: number) => () => void;
   /**
@@ -245,10 +251,13 @@ export function createScheduleWatchers(deps: ScheduleWatcherDependencies): Sched
       runs: recent.length,
     });
     try {
-      await deps.alert?.(schedule, {
-        identity: `watch-backoff:${new Date(until).toISOString()}`,
-        text: `Schedule "${schedule.name}" ran ${recent.length} times in a row within an hour, each on a change to ${watchedPath(schedule) ?? "its file"}: until ${new Date(until).toISOString()} it checks only at its cadence.`,
+      const said = textRef("channel.schedule.alert.watchBackoff", {
+        name: schedule.name,
+        n: String(recent.length),
+        path: watchedPath(schedule) ?? textRef("channel.schedule.alert.itsFile"),
+        until: new Date(until).toISOString(),
       });
+      await deps.alert?.(schedule, { identity: `watch-backoff:${new Date(until).toISOString()}`, text: englishOf(said), ref: said });
     } catch (error) {
       deps.log("warn", "a watcher's back-off could not be told", { scheduleId, error: errorMessage(error) });
     }

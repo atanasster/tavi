@@ -26,6 +26,7 @@ import { registerRoutineTools } from "../features/routines/tools.js";
 import { createRoutineNotices } from "../features/routines/notices.js";
 import { executeRoutinePipeline } from "../features/routines/pipeline.js";
 import { executeRoutineWorkflow, type RoutineFolderPinner } from "../features/routines/workflow.js";
+import { channelWords, workspaceLocaleOf } from "../features/channels/channel-words.js";
 import { externalConnectionsOf } from "./channel-destinations.js";
 import type { TaviRuntime } from "./types.js";
 import type { WorkflowContext } from "./workflow.js";
@@ -150,6 +151,7 @@ export function composeRoutines(composed: WorkflowContext) {
     messaging,
     postHome: (input) => chatNotices.postAlert(input),
     log: (message, fields) => logger.warn(message, fields),
+    channelWords: async (workspaceId) => await channelWords(workspaceLocaleOf(persistencePort.repositories.workspaceSettings), workspaceId),
   });
   late.routineNotices = routineNotices;
   const routineNews = new RoutineNewsService(routineRuns);
@@ -378,10 +380,10 @@ export function composeRoutines(composed: WorkflowContext) {
     // A routine's pinned folder is checked as a chat's primary is, when it is created.
     checkFolder: (path) => chatFolders.checkPrimary(path),
     templateOf: (id) => routineTemplates.get(id),
-  });
-  // The workspace's zone as the routines and schedules tools read it: one cache, refreshed once per step for both.
     // A routine set up here writes its report in the workspace's language.
     languageOf: async (workspaceId) => localeOf((await persistencePort.repositories.workspaceSettings.get(workspaceId)).settings),
+  });
+  // The workspace's zone as the routines and schedules tools read it: one cache, refreshed once per step for both.
   const workspaceZone = rememberedWorkspaceZone(persistencePort.repositories.workspaceSettings);
   registerRoutineTools(tools, routineControl, {
     workspaceTimezone: workspaceZone.zoneOf,

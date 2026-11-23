@@ -1,7 +1,9 @@
-import { englishOf, navPath } from "@tavi/contracts";
+import { navPath, renderTextRef } from "@tavi/contracts";
 import type { MessagingConnectionRecord, MessagingOutboxRepositoryPort, MessagingServicePort, OutboundButton } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import type { HeartbeatDeliveryPort } from "@tavi/agent-host/heartbeat-delivery";
 
+import { channelWords, type WorkspaceLocaleOf } from "../channels/channel-words.js";
 import type { ChatNotices } from "../tasks/notices.js";
 
 /**
@@ -17,22 +19,29 @@ export interface HeartbeatDeliveryDependencies {
   readonly connections: { get(connectionId: string): Promise<MessagingConnectionRecord | undefined> };
   readonly outbox: Pick<MessagingOutboxRepositoryPort, "get">;
   readonly log: (message: string, fields: Record<string, unknown>) => void;
+  /** The workspace's language, which its channel messages and buttons speak; absent, English. */
+  readonly localeOf?: WorkspaceLocaleOf;
 }
 
-/** Where an item is opened, for a channel without buttons; the owner knows no address for the canvas. */
-export const HEARTBEAT_OPEN_HINT = `Open it in Tavi: ${englishOf(navPath("nav.route.center", "nav.center.heartbeat"))}.`;
+/** Where an item is opened, for a channel without buttons, in `t`'s words; the owner knows no address for the canvas. */
+export function heartbeatOpenHint(t: CoreT = coreEnglish): string {
+  return t("channel.heartbeat.openHint", { path: renderTextRef(navPath("nav.route.center", "nav.center.heartbeat"), t) ?? "" });
+}
+
+/** Where an item is opened, in English. */
+export const HEARTBEAT_OPEN_HINT = heartbeatOpenHint();
 
 /**
  * An item's buttons: at most three, labels at most 20 characters, data
  * `h:<token>:<o|s|m>` — Open, Snooze 1 h, Don't tell me — 20 bytes, well
  * within a channel's 64.
  */
-export function heartbeatButtons(token: string): readonly (readonly OutboundButton[])[] {
+export function heartbeatButtons(token: string, t: CoreT = coreEnglish): readonly (readonly OutboundButton[])[] {
   return [
     [
-      { label: "Open", data: `h:${token}:o` },
-      { label: "Snooze 1 h", data: `h:${token}:s` },
-      { label: "Don't tell me", data: `h:${token}:m` },
+      { label: t("channel.heartbeat.button.open"), data: `h:${token}:o` },
+      { label: t("channel.heartbeat.button.snooze"), data: `h:${token}:s` },
+      { label: t("channel.heartbeat.button.mute"), data: `h:${token}:m` },
     ],
   ];
 }
@@ -49,6 +58,8 @@ export function createHeartbeatDelivery(deps: HeartbeatDeliveryDependencies): He
   };
 
   return {
+    words: async (state) => await channelWords(deps.localeOf, state.workspaceId, deps.log),
+
     notify: async (state, notice) =>
       await deps.notices.postHeartbeat({ workspaceId: state.workspaceId, principalId: state.principalId, ...notice }),
 
@@ -65,6 +76,7 @@ export function createHeartbeatDelivery(deps: HeartbeatDeliveryDependencies): He
         });
         return "skipped";
       }
+      const t = await channelWords(deps.localeOf, state.workspaceId, deps.log);
       const outcome = await deps.messaging.send({
         effectId: message.effectId,
         connectionId: target.connectionId,
@@ -72,8 +84,10 @@ export function createHeartbeatDelivery(deps: HeartbeatDeliveryDependencies): He
         destination,
         subject: message.subject,
         // An item's message: three buttons where the channel has them, else a line saying where to open it.
-        parts: [{ content: message.buttonToken === undefined || interactive ? message.text : `${message.text}\n\n${HEARTBEAT_OPEN_HINT}` }],
-        ...(message.buttonToken !== undefined && interactive ? { buttons: heartbeatButtons(message.buttonToken) } : {}),
+        parts: [
+          { content: message.buttonToken === undefined || interactive ? message.text : `${message.text}\n\n${heartbeatOpenHint(t)}` },
+        ],
+        ...(message.buttonToken !== undefined && interactive ? { buttons: heartbeatButtons(message.buttonToken, t) } : {}),
       });
       return outcome.status;
     },

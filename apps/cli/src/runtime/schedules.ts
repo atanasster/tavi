@@ -26,6 +26,7 @@ import { credentialKeyFile } from "../features/credentials/store.js";
 import { registerScheduleTools } from "../features/schedules/tools.js";
 import { registerTodoTools } from "../features/todos/tools.js";
 import { freeBytesAt } from "../shared/disk.js";
+import { channelWords, workspaceLocaleOf } from "../features/channels/channel-words.js";
 import type { RoutinesContext } from "./routines.js";
 
 /** How often the schedule sweep's routine bookkeeping prunes old due details, evidence and run snapshots. */
@@ -136,7 +137,8 @@ export function composeSchedules(composed: RoutinesContext) {
     checkFile: precheckFile,
     fire: (schedule) => fireScheduleManually(schedule, "watch"),
     alert: async (schedule, alert) => {
-      if (scheduleDependencies !== undefined) await sendAlert(schedule, { ...alert, kind: "watch-backoff" }, scheduleDependencies);
+      if (scheduleDependencies !== undefined)
+        await sendAlert(schedule, { identity: alert.identity, kind: "watch-backoff", text: alert.ref ?? alert.text }, scheduleDependencies);
     },
     actsIn: (workspaceId, principalId) => access.actsIn(workspaceId, principalId),
     // The timer's sync lists the schedules only after a schedule write settled here: an idle tick reads nothing,
@@ -385,6 +387,11 @@ export function composeSchedules(composed: RoutinesContext) {
               }),
             });
           },
+          // An alert to a chat app is said in its workspace's language.
+          channelWords: async (workspaceId) =>
+            await channelWords(workspaceLocaleOf(persistencePort.repositories.workspaceSettings), workspaceId, (message, fields) =>
+              logger.warn(message, fields),
+            ),
           log: (event) => logger[event.level](event.message, event.detail === undefined ? {} : { detail: event.detail }),
         };
   late.scheduleDependencies = scheduleDependencies;

@@ -1,7 +1,10 @@
 import type { HeartbeatSignalSource, InboundEvent, MessagingServicePort, PersistencePort } from "@tavi/contracts";
+import { coreEnglish } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
 import type { RoomNotice } from "@tavi/runtime";
+
+import { channelWords, type WorkspaceLocaleOf } from "./channel-words.js";
 
 /**
  * Group pairing: the
@@ -20,7 +23,8 @@ const MAX_INVITATIONS = 200;
 /** How long an invitation waits for the operator before it lapses. */
 const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-export const FLOOD_NOTICE = "I'm getting a lot of messages here, so I'm skipping some. I'll pick up again in a minute.";
+/** The flood notice in English; a room hears it in its workspace's language. */
+export const FLOOD_NOTICE = coreEnglish("channel.room.flood");
 
 interface RoomInvitation {
   readonly connectionId: string;
@@ -49,6 +53,8 @@ export interface RoomInvitationsDependencies {
   /** A connection's workspace, for the flood notice's send; undefined for one no longer configured. */
   readonly workspaceOf: (connectionId: string) => Promise<string | undefined>;
   readonly log?: (message: string, fields: Record<string, unknown>) => void;
+  /** The workspace's language, which the flood notice speaks; absent, English. */
+  readonly localeOf?: WorkspaceLocaleOf;
 }
 
 export function createRoomInvitations(deps: RoomInvitationsDependencies): RoomInvitations {
@@ -83,7 +89,7 @@ export function createRoomInvitations(deps: RoomInvitationsDependencies): RoomIn
       connectionId: event.connectionId,
       workspaceId,
       destination,
-      parts: [{ content: FLOOD_NOTICE }],
+      parts: [{ content: (await channelWords(deps.localeOf, workspaceId, deps.log))("channel.room.flood") }],
     });
   }
 

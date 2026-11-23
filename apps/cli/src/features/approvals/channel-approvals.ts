@@ -28,11 +28,13 @@ import {
   type PersistencePort,
   type WorkflowPort,
 } from "@tavi/contracts";
-import { clip, definedOnly, errorMessage, plural } from "@tavi/contracts/util";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+import { clip, definedOnly, errorMessage } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
 import type { ApprovalRoundAnnouncement, ApprovalRoundSettlement, ReviewAnnouncement } from "@tavi/agent-host/workflow";
 
 import { pressOf } from "../channels/button-press.js";
+import { channelWords, type WorkspaceLocaleOf } from "../channels/channel-words.js";
 import {
   type ApprovalCommand,
   BUTTON_SCOPES,
@@ -52,7 +54,6 @@ import {
   questionReceipt,
   questionToken,
   renderRoundText,
-  LINK_BEARER_NOTE,
   ROUND_BUTTON,
   ROUND_TOKEN_SHAPE,
   roundExpiryLine,
@@ -127,6 +128,8 @@ export interface ChannelApprovalDependencies {
   readonly operatorOf?: (workspaceId: string) => string | undefined;
   /** The workspace's time zone, which a round's deadline and decision times are shown in; UTC without it. */
   readonly timeZoneOf?: (workspaceId: string) => Promise<string | undefined>;
+  /** The workspace's language, which cards, receipts and buttons are said in; English without it. */
+  readonly localeOf?: WorkspaceLocaleOf;
   /** The hosts a task's people wrote in their own messages (lower-case, ASCII): a card leaves them linked. None when absent. */
   readonly personHostsOf?: (taskId: string) => Promise<ReadonlySet<string>>;
   /** The operator's PIN a critical round's link page asks for; `undefined` when none is set. */
@@ -135,11 +138,15 @@ export interface ChannelApprovalDependencies {
 }
 
 /** What a press of each scope says it approves, as its acknowledgement: "Approving for this chat…". */
-const SCOPE_PRESS_WORDS: Readonly<Record<ApprovalScope, string>> = { once: " once", session: " for this chat", always: " in every chat" };
+const SCOPE_PRESS_KEYS = {
+  once: "channel.approval.approving",
+  session: "channel.approval.approvingSession",
+  always: "channel.approval.approvingAlways",
+} as const satisfies Readonly<Record<ApprovalScope, string>>;
 
 /** A round `/new` withdrew: its settle event's `detail.reason`, and what it says where it was asked. */
 const ROUND_RESET_REASON = "conversation-reset";
-const ROUND_RESET_NOTICE = "This conversation was reset, so this round was withdrawn.";
+const ROUND_RESET_NOTICE = coreEnglish("channel.approval.reset");
 
 /** A question link's `choice` for a multi-select question's one form link. */
 const MULTI_SELECT_CHOICE = "*";
@@ -271,6 +278,8 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       return undefined;
     }
   };
+  /** The workspace's words: its language, or English when it cannot be read. */
+  const wordsOf = (workspaceId: string | undefined): Promise<CoreT> => channelWords(deps.localeOf, workspaceId, deps.onDiagnostic);
   /** The hosts the task's people wrote; none when they cannot be read, so every host is disarmed. */
   const personHostsOf = async (taskId: string): Promise<ReadonlySet<string>> => {
     try {
@@ -306,7 +315,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     task: { readonly workspaceId: string; readonly principalId: string },
     actor: { readonly workspaceId: string; readonly principalId: string },
   ): boolean => task.workspaceId === actor.workspaceId && actor.principalId === (deps.operatorOf?.(task.workspaceId) ?? task.principalId);
-  const OPERATOR_DECIDES = "The operator decides this task's approvals; you will hear here once they have.";
+  const OPERATOR_DECIDES = "channel.approval.operatorOnly" as const;
 
   /**
    * Whether a card on a connection with links goes to anyone but the sender
@@ -450,7 +459,9 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     ).length;
     const effectId = `approval:${round.taskId}:${round.steps}`;
     const suffix = failures === 0 ? "" : `:${failures}`;
-    const recordedText = message.body + (expiresAt === undefined ? "" : `\n${roundExpiryLine(expiresAt, await zoneOf(round.workspaceId))}`);
+    const t = await wordsOf(round.workspaceId);
+    const recordedText =
+      message.body + (expiresAt === undefined ? "" : `\n${roundExpiryLine(expiresAt, await zoneOf(round.workspaceId), t)}`);
     const cardIds: string[] = [];
     let reached = false;
     let unreachable = false;
@@ -464,7 +475,9 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     } else if (placement.destination !== undefined) {
       const scopes = message.formApproval === "none" ? [] : message.scopes;
       const buttons =
-        capabilities?.approvals === "buttons" && capabilities.interactions ? scopeButtons(scopes, round.token, message.group) : undefined;
+        capabilities?.approvals === "buttons" && capabilities.interactions
+          ? scopeButtons(scopes, round.token, message.group, t)
+          : undefined;
       const maxTextLength = capabilities?.maxTextLength;
       const parts =
         maxTextLength === undefined || recordedText.length <= maxTextLength
@@ -504,11 +517,14 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
         });
     }
     // A decider the platform would not let the card reach is told how to open the way.
-    const noticeText = reached
-      ? `⏸ Waiting on ${placement.name}'s approval (round ${round.token}).`
-      : unreachable
-        ? `⏸ Round ${round.token} waits on ${placement.name}'s approval: open a one-to-one chat with me, or approve it in Tavi: the web app, the CLI or another chat.`
-        : `⏸ Round ${round.token} waits on ${placement.name}'s approval in Tavi: the web app, the CLI or another chat.`;
+    const noticeText = `⏸ ${t(
+      reached
+        ? "channel.approval.private.waiting"
+        : unreachable
+          ? "channel.approval.private.unreachable"
+          : "channel.approval.private.elsewhere",
+      { name: placement.name, token: round.token },
+    )}`;
     const noticeIds = await send(round, `${effectId}:notice${suffix}`, noticeText, replyTarget);
     await repositories.approvalRoundDeliveries.record({
       taskId: round.taskId,
@@ -559,11 +575,12 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       const owner = await repositories.tasks.get(round.taskId);
       const forOperator = owner === undefined || operatorDecides(owner) || (await linksWithheld(round.taskId, replyTarget));
       const capabilities = deps.messaging.capabilitiesOf(replyTarget.connectionId);
+      const t = await wordsOf(round.workspaceId);
       // A fill this chat may not approve is offered ❌ alone.
       const scopes = message.formApproval === "none" ? [] : message.scopes;
       const buttons =
         !forOperator && capabilities?.approvals === "buttons" && capabilities.interactions
-          ? scopeButtons(scopes, round.token, message.group)
+          ? scopeButtons(scopes, round.token, message.group, t)
           : undefined;
       // Single-use links where the connection has a public address (email):
       // one per offered choice, spent together.
@@ -574,27 +591,27 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
           : await Promise.all(
               [...offeredScopes(scopes, message.group), "deny" as const].map(async (choice) => {
                 const token = await mintLink({ taskId: round.taskId, kind: "round", steps: round.steps, choice, expiresAt });
-                return `${linkLabel(choice, message.group, message.groupName)}: ${base}/i/${token}`;
+                return `${linkLabel(choice, message.group, message.groupName, t)}: ${base}/i/${token}`;
               }),
             );
       // What is recorded (and shown on a link's page, and edited in place) is
       // the announcement without its links: a raw token lives only in the one
       // message it was sent in.
       const recordedText =
-        message.body + (expiresAt === undefined ? "" : `\n${roundExpiryLine(expiresAt, await zoneOf(round.workspaceId))}`);
+        message.body + (expiresAt === undefined ? "" : `\n${roundExpiryLine(expiresAt, await zoneOf(round.workspaceId), t)}`);
       const text =
         recordedText +
         (linkLines.length === 0
           ? ""
-          : `\n\nOr open a link — each asks you to confirm before it decides, and works once. ${LINK_BEARER_NOTE}\n${linkLines.join("\n")}`);
+          : `\n\n${t("channel.approval.link.intro", { note: t("channel.approval.link.bearer") })}\n${linkLines.join("\n")}`);
       // An email carries the round's token in its subject, so a bare
       // "approve" in a reply names this round.
       const subject =
         deps.isEmailConnection?.(replyTarget.connectionId) !== true
           ? undefined
           : forOperator
-            ? `Waiting for approval: ${subjectSafe(clip(message.subjectTitle, 120))}`
-            : `[tavi ${round.token}] Approval needed: ${subjectSafe(clip(message.subjectTitle, 120))}`;
+            ? t("channel.approval.subject.waiting", { title: subjectSafe(clip(message.subjectTitle, 120)) })
+            : `[tavi ${round.token}] ${t("channel.approval.subject.needed", { title: subjectSafe(clip(message.subjectTitle, 120)) })}`;
       // The outbox keeps a refused send's outcome for good: each attempt after
       // a failure is its own effect, while a re-entered node repeating an
       // attempt still finds that attempt's outcome and sends nothing twice.
@@ -673,7 +690,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     await send(
       { workspaceId: review.invocation.workspaceId },
       `review:${review.taskId}:${createHash("sha256").update(ids.join(",")).digest("hex").slice(0, 32)}`,
-      reviewNoticeText(review.requests),
+      reviewNoticeText(review.requests, await wordsOf(review.invocation.workspaceId)),
       replyTarget,
     );
   };
@@ -748,6 +765,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     // (not a worker's, nor a room's shown privately) may be answered without its token.
     const ownChat = !privately && (await repositories.messagingConversations.getByTask(round.taskId)) !== undefined;
     const zone = await zoneOf(round.workspaceId);
+    const t = await wordsOf(round.workspaceId);
     const personHosts = await personHostsOf(round.taskId);
     const direct =
       privately ||
@@ -763,6 +781,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
         ...(maxTextLength === undefined ? {} : { maxTextLength }),
         ...(hasButtons ? { buttons: { ownChat } } : {}),
         personHosts,
+        t,
         ...(forms.length === 0 ? {} : { formView }),
         ...(formApproval === undefined ? {} : { formApproval }),
         onListed: (listed) => {
@@ -780,7 +799,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     // Rows that do not fit three messages (the links and expiry line beside them) are not shown, so the chat may only reject.
     const fits = (text: string): boolean =>
       maxTextLength === undefined ||
-      splitMessage(round.expiresAt === undefined ? text : `${text}\n${roundExpiryLine(round.expiresAt, zone)}`, maxTextLength, 3) !==
+      splitMessage(round.expiresAt === undefined ? text : `${text}\n${roundExpiryLine(round.expiresAt, zone, t)}`, maxTextLength, 3) !==
         undefined;
     if (forms.length > 0 && !fits(body)) {
       formApproval = "none";
@@ -790,7 +809,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       body,
       scopes: roundScopes(announcement.requests),
       subjectTitle: announcement.requests[0]?.display?.title ?? announcement.requests[0]?.summary ?? "a tool call",
-      ...(group === undefined ? {} : { group, groupName: groupName(group, announcement.requests) }),
+      ...(group === undefined ? {} : { group, groupName: groupName(group, announcement.requests, t) }),
       ...(formApproval === undefined ? {} : { formApproval }),
       ...(email && formApproval === "link" ? { linkForms: forms.map((form) => maskedForm(form)) } : {}),
     };
@@ -984,16 +1003,13 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     const notice =
       round === undefined
         ? undefined
-        : settlementText(
-            settlement,
-            expired,
-            deps.channelName?.(via) ?? via,
-            at,
-            definedOnly({
+        : settlementText(settlement, expired, deps.channelName?.(via) ?? via, at, {
+            ...definedOnly({
               timeZone: await zoneOf(round.workspaceId),
               decider: await deciderName(round.workspaceId, settlement.decisions[0]?.decidedBy, via),
             }),
-          );
+            t: await wordsOf(round.workspaceId),
+          });
     await repositories.approvalRounds.appendEvent({
       taskId: settlement.taskId,
       steps: settlement.steps,
@@ -1057,7 +1073,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
           !(await repositories.approvalRounds.listEvents(round.taskId, round.steps)).some((event) => event.kind === "announced")
         )
           continue;
-        await notify(round, ROUND_RESET_NOTICE, via, replyTarget).catch((error: unknown) =>
+        await notify(round, (await wordsOf(round.workspaceId))("channel.approval.reset"), via, replyTarget).catch((error: unknown) =>
           deps.onDiagnostic?.("a reset conversation's round could not be shown as withdrawn", {
             taskId: round.taskId,
             steps: round.steps,
@@ -1163,6 +1179,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     }: Parameters<ChannelApprovals["decide"]>[0],
     beforeAdmission?: () => void,
   ): ReturnType<ChannelApprovals["decide"]> => {
+    const t = await wordsOf(actor.workspaceId);
     const tokenRound = typed.target === undefined ? undefined : await repositories.approvalRounds.getByToken(typed.target.toLowerCase());
     // `approve it`, `allow notifications`: a second word that looks like
     // neither a round token nor a task id is not naming a round — the message
@@ -1205,7 +1222,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
         : typed;
     const byToken = command.target === undefined ? undefined : tokenRound;
     const taskId = byToken?.taskId ?? command.target ?? conversationTaskId;
-    if (taskId === undefined) return "There is nothing to approve or reject: this conversation has no task.";
+    if (taskId === undefined) return t("channel.approval.decide.noTask");
     const task = await repositories.tasks.get(taskId);
     // Workspace *and* principal: any other sender bound in the same workspace
     // must not decide this task's rounds. A person's own task goes on below, so
@@ -1223,7 +1240,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
           detail: { reason: "not-owner" },
           at: deps.now(),
         });
-      return `There is no task ${JSON.stringify(command.target ?? taskId)} of yours to decide.`;
+      return t("channel.approval.decide.notYours", { task: JSON.stringify(command.target ?? taskId) });
     }
     // A question the task is waiting on wins over the keyword: "approve" is a
     // plausible answer to "shall I?". A token names a round, so it never does.
@@ -1263,17 +1280,17 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     };
     if (round === undefined || round.kind !== "approval") {
       const lingering = (await repositories.approvals.listForTask(taskId)).some((record) => record.state === "pending");
-      if (byToken !== undefined && (await resetRound(byToken))) return await refuse("conversation-reset", ROUND_RESET_NOTICE);
+      if (byToken !== undefined && (await resetRound(byToken))) return await refuse("conversation-reset", t("channel.approval.reset"));
       if (!decidability.decidable && decidability.reason === "cancelled")
-        return await refuse("cancelled", `Task ${taskId} is cancelled; there is nothing to decide.`);
+        return await refuse("cancelled", t("channel.approval.decide.cancelled", { taskId }));
       if (!decidability.decidable && decidability.reason === "settled-uncommitted")
         return await refuse("settled-uncommitted", `Task ${taskId}: ${undecidableRoundMessage(taskId, decidability, "approval")}.`);
       if (lingering && task.status !== "waiting")
-        return await refuse("not-waiting", `Task ${taskId} is ${task.status}; there is nothing to decide.`);
-      return await refuse("no-round", `Task ${taskId} has no pending approval.`);
+        return await refuse("not-waiting", t("channel.approval.decide.notWaiting", { taskId, status: task.status }));
+      return await refuse("no-round", t("channel.approval.decide.noRound", { taskId }));
     }
     // A person's round is decided by the operator alone (Allowed people).
-    if (!mayDecide(task, actor)) return await refuse("operator-decides", OPERATOR_DECIDES);
+    if (!mayDecide(task, actor)) return await refuse("operator-decides", t(OPERATOR_DECIDES));
     // A form fill whose values this chat did not show in full, or showed masked without a verified source, is
     // approved only in Tavi; one announced by email, only through its link. Rejecting stays open.
     if (command.approved) {
@@ -1288,13 +1305,13 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       if (formApproval === "none" || (formApproval === "link" && decidedVia !== "link")) {
         return await refuse(
           "form-not-shown",
-          `Task ${taskId}: this form fill can be approved only ${formApproval === "link" ? "through the link in its email, or " : ""}in Tavi (\`tavi approvals show ${taskId}\` or the approvals view in \`tavi ui\`), where every value is shown. You can still reject it here.`,
+          t(formApproval === "link" ? "channel.approval.decide.formLink" : "channel.approval.decide.formOnly", { taskId }),
         );
       }
     }
     // A token names one round: a later round of the same task is not it.
     if (byToken !== undefined && round.steps !== byToken.steps)
-      return await refuse("stale-token", `Round ${command.target} was already decided.`);
+      return await refuse("stale-token", t("channel.approval.decide.stale", { token: command.target ?? "" }));
     // Past its expiry the round is the sweep's to deny, even before the sweep runs.
     const record = await repositories.approvalRounds.get(taskId, round.steps);
     if (
@@ -1305,7 +1322,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       void sweepExpired().catch((error: unknown) =>
         deps.onDiagnostic?.("approval round expiry sweep failed", { error: errorMessage(error) }),
       );
-      return await refuse("expired", `Round ${record.token} expired and is rejected; the task goes on without it.`);
+      return await refuse("expired", t("channel.approval.decide.expired", { token: record.token }));
     }
     // In a DM linked to Home, a bare verb decides only a round announced to that DM.
     if (
@@ -1313,10 +1330,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       byToken === undefined &&
       (record?.connectionId !== announcedIn.connectionId || record?.conversationId !== announcedIn.conversationId)
     ) {
-      return await refuse(
-        "not-announced-here",
-        `Home's pending round was not asked in this chat. Name it by its token (shown where it was asked), or decide it in the app or with \`tavi approvals\`.`,
-      );
+      return await refuse("not-announced-here", t("channel.approval.decide.notHere"));
     }
     // An email's From can be forged: a reply decides only when Mailgun
     // authenticated its sender, and only a round a forged reply could not do
@@ -1325,33 +1339,21 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       // The round's token proves the reply answers the email that carried it;
       // a conversation's pending round is not enough when a From can be forged.
       if (byToken === undefined) {
-        return await refuse(
-          "reply-without-token",
-          "Reply to the approval email itself, keeping its subject line (`[tavi …]`), or decide it with a link in that email or `tavi approvals`.",
-        );
+        return await refuse("reply-without-token", t("channel.approval.decide.emailNoToken"));
       }
       if (command.approved && command.scope !== undefined && command.scope !== "once") {
-        return await refuse(
-          "reply-scope",
-          "An email reply can approve once only. Use a link in the approval email to approve for the chat or always.",
-        );
+        return await refuse("reply-scope", t("channel.approval.decide.emailScope"));
       }
       if (senderAuthentication !== "pass") {
-        return await refuse(
-          "unverified-sender",
-          "This reply could not be verified as coming from you (its sender did not pass SPF and DKIM). Decide it with a link in the approval email, or with `tavi approvals`.",
-        );
+        return await refuse("unverified-sender", t("channel.approval.decide.emailUnverified"));
       }
       const roundRisk = (await repositories.approvalRounds.get(taskId, round.steps))?.risk;
       if (roundRisk !== "low" && roundRisk !== "medium") {
-        return await refuse(
-          "reply-risk",
-          "An email reply can decide only a low- or medium-risk round. Use a link in the approval email, or `tavi approvals`.",
-        );
+        return await refuse("reply-risk", t("channel.approval.decide.emailRisk"));
       }
     }
     const workflow = deps.workflow();
-    if (workflow === undefined) return "Approvals cannot be decided here: no model connection is configured.";
+    if (workflow === undefined) return t("channel.approval.decide.noModel");
     // An email reply stays one call, even for a round that defaults wider.
     const scope: ApprovalScope | undefined = senderAuthentication === undefined ? command.scope : "once";
     try {
@@ -1376,15 +1378,21 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
         },
       });
       const stillPending = (await repositories.approvals.listForTask(taskId)).filter((record) => record.state === "pending").length;
-      return (
-        `Task ${taskId} ${command.approved ? `approved${await appliedScopeText(taskId, round.steps, scope)}` : "rejected"}: the run is now ${resumed.outcome.status}` +
-        (stillPending === 0 ? "." : `, with ${stillPending} approval(s) still pending.`)
-      );
+      const said = {
+        taskId,
+        scope: command.approved ? await appliedScopeText(taskId, round.steps, scope, t) : "",
+        status: resumed.outcome.status,
+        count: stillPending,
+        n: String(stillPending),
+      };
+      return command.approved
+        ? t(stillPending === 0 ? "channel.approval.decide.approved" : "channel.approval.decide.approvedPending", said)
+        : t(stillPending === 0 ? "channel.approval.decide.rejected" : "channel.approval.decide.rejectedPending", said);
     } catch (error) {
       // Link callers retain their claim when a dispatched admission has an
       // uncertain outcome, including a lost database acknowledgement.
       if (beforeAdmission !== undefined) throw error;
-      return await refuse("admission-failed", `Task ${taskId}: the decision could not be applied (${errorMessage(error)}).`);
+      return await refuse("admission-failed", t("channel.approval.decide.failed", { taskId, error: errorMessage(error) }));
     }
   };
 
@@ -1393,18 +1401,26 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
    * a wider scope than a call's verdict offered is applied as `once`, and the
    * person must not be told otherwise.
    */
-  const appliedScopeText = async (taskId: string, steps: number, requested: ApprovalScope | undefined): Promise<string> => {
+  const appliedScopeText = async (taskId: string, steps: number, requested: ApprovalScope | undefined, t: CoreT): Promise<string> => {
     const settled = (await repositories.approvalRounds.listEvents(taskId, steps)).find((event) => event.kind === "settled");
     const decisions = (settled?.detail?.["decisions"] ?? []) as readonly { readonly scope?: string }[];
     const applied = [...new Set(decisions.map((decision) => decision.scope ?? "once"))];
+    // A scope as a typed answer names it.
+    const word = (scope: string | undefined): string =>
+      scope === "session"
+        ? t("channel.approval.word.session")
+        : scope === "always"
+          ? t("channel.approval.word.always")
+          : (scope ?? t("channel.approval.word.once"));
+    const named = (scope: string | undefined): string => t("channel.approval.applied.scope", { scope: word(scope) });
     // No scope asked for: say what the round's default applied (a browser round's is the task).
-    if (requested === undefined) return applied.length === 1 && applied[0] !== "once" ? ` (${applied[0]})` : "";
+    if (requested === undefined) return applied.length === 1 && applied[0] !== "once" ? named(applied[0]) : "";
     const wanted = requested;
-    if (applied.length === 0) return wanted === "once" ? "" : ` (${wanted})`;
-    if (applied.length === 1 && applied[0] === wanted) return wanted === "once" ? "" : ` (${wanted})`;
+    if (applied.length === 0) return wanted === "once" ? "" : named(wanted);
+    if (applied.length === 1 && applied[0] === wanted) return wanted === "once" ? "" : named(wanted);
     return applied.length === 1 && applied[0] === "once"
-      ? ` once (${wanted} is not offered for this round)`
-      : ` (${applied.join(" and ")}; ${wanted} was not offered for every call)`;
+      ? t("channel.approval.applied.onceOnly", { scope: word(wanted) })
+      : t("channel.approval.applied.mixed", { scopes: applied.map(word).join(t("channel.approval.applied.and")), scope: word(wanted) });
   };
 
   const sweepExpired = async (): Promise<number> => {
@@ -1492,29 +1508,30 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     const data = event.interaction?.data ?? "";
     const press = pressOf(deps.messaging, event, { press: "a button press", message: "an approval's message" }, deps.onDiagnostic);
     const acknowledge = press.answer;
+    const t = await wordsOf(actor.workspaceId);
     // A press held in the inbox and replayed long after it was made decides
     // nothing — and answers nothing.
     if (press.tooOld(deps.now())) {
-      await acknowledge("This button press is too old to act on.");
+      await acknowledge(t("channel.button.tooOld"));
       return;
     }
     const questionPress = QUESTION_BUTTON.exec(data);
     if (questionPress !== null) {
-      await answerQuestionPress(actor, event, questionPress[1] ?? "", questionPress[2] ?? "", acknowledge);
+      await answerQuestionPress(actor, event, questionPress[1] ?? "", questionPress[2] ?? "", acknowledge, t);
       return;
     }
     // The data is only a key: the round, and who may decide it, are looked up
     // here, and the presser is checked against the task's principal.
     const match = ROUND_BUTTON.exec(data);
     if (match === null) {
-      await acknowledge("This button is no longer valid.");
+      await acknowledge(t("channel.button.invalid"));
       return;
     }
     const token = match[1] ?? "";
     const choice = match[2] ?? "";
     const round = await repositories.approvalRounds.getByToken(token);
     if (round === undefined || round.settledAt !== undefined) {
-      await acknowledge(round !== undefined && (await resetRound(round)) ? ROUND_RESET_NOTICE : "This round was already decided.");
+      await acknowledge(t(round !== undefined && (await resetRound(round)) ? "channel.approval.reset" : "channel.approval.alreadyDecided"));
       return;
     }
     // Checked before anything else happens, ❌ included: in a group chat any
@@ -1531,9 +1548,11 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       });
       const task = await repositories.tasks.get(round.taskId);
       await acknowledge(
-        task !== undefined && task.principalId === actor.principalId && operatorDecides(task)
-          ? OPERATOR_DECIDES
-          : "Only the person this chat belongs to can decide it.",
+        t(
+          task !== undefined && task.principalId === actor.principalId && operatorDecides(task)
+            ? OPERATOR_DECIDES
+            : "channel.approval.notYours",
+        ),
       );
       return;
     }
@@ -1541,7 +1560,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       const key = reasonKey(event);
       // A second ❌ for the round already asking for its reason asks nothing new.
       if ((await repositories.needDeliveries.getReason(key))?.token === token) {
-        await acknowledge('Waiting for your reason — reply in this chat, or send "-".');
+        await acknowledge(t("channel.approval.reasonWaiting"));
         return;
       }
       const windowMs = deps.reasonWindowMs ?? 120_000;
@@ -1570,12 +1589,12 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       timer.unref?.();
       reasonTimers.set(key, timer);
       const minutes = Math.max(1, Math.round(windowMs / 60_000));
-      await acknowledge("Why reject it? (optional) Reply in this chat.");
+      await acknowledge(t("channel.approval.reasonAsk"));
       await tell(
         actor,
         event,
         `reason-prompt:${token}:${event.interaction?.callbackId ?? event.providerEventId}`,
-        `Why reject it? (optional) Your next message here within ${plural(minutes, "minute")} is the reason the model reads — send "-" for none. With no reply, it is rejected without one.`,
+        t("channel.approval.reasonPrompt", { count: minutes, n: String(minutes) }),
       );
       return;
     }
@@ -1584,7 +1603,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     // longer than Telegram keeps a press answerable, and the presser's client
     // spins until it is answered.
     // The press answers the card it is under: no round token, which a chat's reader has no use for.
-    await acknowledge(`Approving${SCOPE_PRESS_WORDS[scope]}…`);
+    await acknowledge(t(SCOPE_PRESS_KEYS[scope]));
     // Not awaited: the poll loop that delivered this press must not wait for
     // the turn it resumes. The round key makes the decision safe to finish late.
     void decide({
@@ -1674,10 +1693,13 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     // Each delivery on its own: one connection's failure must not keep the
     // others showing live buttons.
     for (const delivery of deliveries) {
+      const owner = await repositories.tasks.get(delivery.taskId).catch(() => undefined);
       const receipt = questionReceipt(
         outcome,
         via === delivery.connectionId ? undefined : (deps.channelName?.(via) ?? via),
         at ?? deps.now(),
+        undefined,
+        await wordsOf(owner?.workspaceId),
       );
       let edited = false;
       if (delivery.providerMessageId !== undefined && deps.messaging.capabilitiesOf(delivery.connectionId)?.editOrProgress === true) {
@@ -1765,6 +1787,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     token: string,
     choice: string,
     acknowledge: (text: string) => Promise<void>,
+    t: CoreT,
   ): Promise<void> => {
     // The conversation's own task, or — for a question a scheduled, CLI or
     // delegated task sent to a named chat — the wait this owner sent it for.
@@ -1790,11 +1813,11 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       waiting.waitingOnWorkerTaskId !== undefined ||
       questionToken(waiting.waitId) !== token
     ) {
-      await acknowledge(closedQuestionText(sentWait ?? (await settledWaitOfToken(token))));
+      await acknowledge(closedQuestionText(sentWait ?? (await settledWaitOfToken(token)), t));
       return;
     }
     if (task.workspaceId !== actor.workspaceId || task.principalId !== actor.principalId) {
-      await acknowledge("Only the person this chat belongs to can answer it.");
+      await acknowledge(t("channel.question.notYours"));
       return;
     }
     const messageId = event.interaction?.messageId;
@@ -1821,14 +1844,14 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     if ((choice.startsWith("t") || choice === "ok") && delivery === undefined) {
       // Sent before deliveries were recorded, or its record failed: there is
       // nowhere to keep toggles, so the answer has to be typed.
-      await acknowledge("Reply in this chat with the numbers you choose, e.g. 1, 3.");
+      await acknowledge(t("channel.question.replyNumbers"));
       return;
     }
     if (choice.startsWith("t")) {
       const selected = new Set<number>(delivery?.selected ?? []);
       const index = Number(choice.slice(1));
       if (index > choices.options.length) {
-        await acknowledge("This button is no longer valid.");
+        await acknowledge(t("channel.button.invalid"));
         return;
       }
       if (selected.has(index)) selected.delete(index);
@@ -1842,13 +1865,15 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
         const option = choices.options[picked - 1];
         return option === undefined ? [] : [option.label];
       });
-      await acknowledge(names.length === 0 ? "Nothing selected" : clip(`Selected: ${names.join(", ")}`, 200));
-      if (shown !== undefined) await edit(shown, questionButtons(token, choices, selected));
+      await acknowledge(
+        names.length === 0 ? t("channel.question.nothingSelected") : clip(t("channel.question.selected", { names: names.join(", ") }), 200),
+      );
+      if (shown !== undefined) await edit(shown, questionButtons(token, choices, selected, t));
       return;
     }
     const picked = choice === "ok" ? [...(delivery?.selected ?? [])].sort((x, y) => x - y) : [Number(choice)];
     if (picked.length === 0) {
-      await acknowledge("Pick at least one option first.");
+      await acknowledge(t("channel.question.pickOne"));
       return;
     }
     const labels = picked.flatMap((index) => {
@@ -1856,19 +1881,19 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       return option === undefined ? [] : [option.label];
     });
     if (labels.length !== picked.length) {
-      await acknowledge("This button is no longer valid.");
+      await acknowledge(t("channel.button.invalid"));
       return;
     }
     // No message id: the pressed message is tavi's own question, not something the person wrote.
     const outcome: AgentWaitOutcome = { kind: "answered", replyText: labels.join(", "), answers: labels };
     if (!(await answerWait(actor, replyTargetOfEvent(event), task.taskId, waiting.waitId, outcome, event.connectionId))) {
-      await acknowledge(closedQuestionText(await repositories.agentWaits.get(waiting.waitId)));
+      await acknowledge(closedQuestionText(await repositories.agentWaits.get(waiting.waitId), t));
       return;
     }
-    await acknowledge(`Answered: ${clip(labels.join(", "), 150)}`);
+    await acknowledge(t("channel.question.answeredWith", { names: clip(labels.join(", "), 150) }));
     // A recorded delivery is edited with every other one; a question sent
     // before deliveries were recorded is edited through the pressed message.
-    if (delivery === undefined) await edit(`✅ Answered: ${labels.join(", ")}`);
+    if (delivery === undefined) await edit(`✅ ${t("channel.question.answeredWith", { names: labels.join(", ") })}`);
     else await onQuestionSettled({ waitId: waiting.waitId, outcome, via: event.connectionId });
   };
 
@@ -1888,8 +1913,11 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     const expiresAt = new Date(Number.isNaN(deadline) ? cap : Math.min(deadline, cap)).toISOString();
     // A multi-select question is one form with a box per option: a link per
     // option could only ever answer one of them.
-    if (choices.multiSelect)
-      return [`Choose: ${base}/i/${await mintLink({ taskId, kind: "question", waitId, choice: MULTI_SELECT_CHOICE, expiresAt })}`];
+    if (choices.multiSelect) {
+      const t = await wordsOf((await repositories.tasks.get(taskId))?.workspaceId);
+      const link = `${base}/i/${await mintLink({ taskId, kind: "question", waitId, choice: MULTI_SELECT_CHOICE, expiresAt })}`;
+      return [t("channel.question.choose", { link })];
+    }
     return await Promise.all(
       choices.options.map(
         async (option, index) =>

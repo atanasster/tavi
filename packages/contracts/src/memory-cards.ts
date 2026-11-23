@@ -6,7 +6,7 @@ import { MemoryRelatedSchema, MemoryScopeTargetSchema } from "./memory-ipc.js";
 import { coreEnglish, type CoreT } from "./locales/core.js";
 import { englishShortDayText } from "./reminders.js";
 import { navPath } from "./nav.js";
-import { englishOf } from "./text-ref.js";
+import { englishOf, renderTextRef } from "./text-ref.js";
 import type { CoreKey } from "./locales/core-en.js";
 
 /**
@@ -301,8 +301,6 @@ export const MemoryCardAnswerSchema = z.strictObject({
 });
 export type MemoryCardAnswer = z.infer<typeof MemoryCardAnswerSchema>;
 
-const plural = (count: number, one: string, many: string): string => `${count} ${count === 1 ? one : many}`;
-
 /** A card notice's stored words: how many things it holds, never what they are (invariant 22). */
 export function memoryCardNoticeText(
   input: { readonly count: number; readonly flush: boolean },
@@ -554,6 +552,11 @@ export function memoryCardPressData(token: string, op: MemoryCardPressOp): strin
 /** Where a channel card is opened: the owner knows no address for the canvas. */
 export const MEMORY_CARD_OPEN_HINT = `Open Tavi to review: ${englishOf(navPath("nav.route.center", "nav.center.identity"))}.`;
 
+/** `MEMORY_CARD_OPEN_HINT` in `t`'s words. */
+export function memoryCardOpenHint(t: CoreT = coreEnglish): string {
+  return t("channel.memory.card.openHint", { path: renderTextRef(navPath("nav.route.center", "nav.center.identity"), t) ?? "" });
+}
+
 /**
  * How a channel shows a card: `buttons` where it has interactions,
  * `text` with the `/memory` commands where it has none, `email` with no
@@ -581,58 +584,63 @@ export interface MemoryCardChannelMessage {
 export function memoryCardChannelMessage(
   card: Pick<MemoryCardAnswer, "title" | "items" | "forgotten" | "digest">,
   mode: MemoryCardChannelMode,
+  t: CoreT = coreEnglish,
 ): MemoryCardChannelMessage {
   const items = card.items;
   const waiting = items.filter((item) => item.state === "proposed");
   const plain = waiting.filter(memoryCardItemIsPlain);
   const saved = items.filter((item) => item.state === "saved");
-  const lines: string[] = [memoryCardHeading(card)];
+  const lines: string[] = [memoryCardHeading(card, t)];
   const [only] = items;
   // A digest is always a numbered list of titles, with *Review* for its Open, whatever it holds.
   const digest = card.digest !== undefined;
   const more = digest ? Math.max(0, (card.digest?.waiting ?? 0) - items.length - card.forgotten) : 0;
-  const open = digest ? "Review" : "Open";
+  const open = t(digest ? "channel.memory.button.review" : "channel.memory.button.open");
   if (items.length === 1 && only !== undefined && !digest) {
-    if (only.sensitive && only.state === "proposed") lines.push("1 sensitive item waiting — open Tavi to review");
+    if (only.sensitive && only.state === "proposed") lines.push(t("channel.memory.card.oneSensitive"));
     else if (only.state !== "forgotten") {
-      lines.push(memoryCardItemName(only));
+      lines.push(memoryCardItemName(only, t));
       if (!only.sensitive && only.excerpt !== null) lines.push(only.excerpt);
-      const read = only.state === "proposed" && !only.sensitive ? memoryCardProvenanceLine(only) : undefined;
+      const read = only.state === "proposed" && !only.sensitive ? memoryCardProvenanceLine(only, t) : undefined;
       if (read !== undefined) lines.push(read);
       if (only.state === "proposed" && only.updates !== undefined)
-        lines.push(`It ${memoryUpdatesLine(only.updates)} — open Tavi to replace it`);
+        lines.push(t("channel.memory.card.itReplace", { line: memoryUpdatesLine(only.updates, t) }));
       else if (only.state === "proposed" && only.mayUpdate !== undefined)
-        lines.push(`It ${memoryMayUpdateLine(only.mayUpdate)} — open Tavi to replace it`);
-      else if (only.state === "proposed" && only.tidyUp === true) lines.push("A tidy-up — open Tavi to compare it with what it replaces");
+        lines.push(t("channel.memory.card.itReplace", { line: memoryMayUpdateLine(only.mayUpdate, t) }));
+      else if (only.state === "proposed" && only.tidyUp === true) lines.push(t("channel.memory.card.tidyUp"));
     }
   } else {
     for (const item of items) {
-      const read = item.state === "proposed" && !item.sensitive ? memoryCardProvenanceLine(item) : undefined;
+      const read = item.state === "proposed" && !item.sensitive ? memoryCardProvenanceLine(item, t) : undefined;
       const suffix =
         item.state === "proposed"
           ? (item.sensitive
-              ? " — open Tavi to review"
+              ? t("channel.memory.review.openToReview")
               : item.updates !== undefined
-                ? ` — ${memoryUpdatesLine(item.updates)}, open Tavi to replace it`
+                ? t("channel.memory.review.replace", { line: memoryUpdatesLine(item.updates, t) })
                 : item.mayUpdate !== undefined
-                  ? ` — ${memoryMayUpdateLine(item.mayUpdate)}, open Tavi to replace it`
+                  ? t("channel.memory.review.replace", { line: memoryMayUpdateLine(item.mayUpdate, t) })
                   : item.tidyUp === true
-                    ? ` — ${MEMORY_TIDY_UP_LOOK}`
-                    : "") + (read === undefined ? "" : ` — ${read}; ${MEMORY_PROVENANCE_KEEP_ALONE}`)
-          : ` — ${memoryCardStateLabel(item.state).toLowerCase()}`;
-      lines.push(`${item.number}. ${item.state === "proposed" && item.sensitive ? "Sensitive item" : memoryCardItemName(item)}${suffix}`);
+                    ? ` — ${t("memory.card.tidyUpLook")}`
+                    : "") + (read === undefined ? "" : ` — ${read}; ${t("memory.card.keepAllLeavesIt")}`)
+          : ` — ${memoryCardStateLabel(item.state, t).toLowerCase()}`;
+      lines.push(
+        `${item.number}. ${item.state === "proposed" && item.sensitive ? t("memory.card.item.sensitive") : memoryCardItemName(item, t)}${suffix}`,
+      );
     }
-    if (card.forgotten > 0 && items.length > 0) lines.push(`Forgotten: ${plural(card.forgotten, "item", "items")}`);
-    if (more > 0 && waiting.length > 0) lines.push(`and ${more} more — Review`);
+    if (card.forgotten > 0 && items.length > 0)
+      lines.push(t("channel.memory.card.forgottenItems", { count: card.forgotten, n: String(card.forgotten) }));
+    if (more > 0 && waiting.length > 0) lines.push(t("channel.memory.card.more", { n: String(more) }));
   }
   if (mode === "email") {
-    if (waiting.length > 0) lines.push("Open Tavi to review.");
+    if (waiting.length > 0) lines.push(t("channel.memory.card.openEmail"));
     return { text: lines.join("\n"), buttons: [] };
   }
   if (mode === "text") {
     const hint = memoryCardCommands(items.filter(memoryCardItemKeepable), plain.length, digest);
     const [kept] = saved;
-    if (waiting.length === 0 && saved.length === 1 && kept !== undefined) hint.push(`/forget ${kept.number} undoes it`);
+    if (waiting.length === 0 && saved.length === 1 && kept !== undefined)
+      hint.push(t("channel.memory.card.forgetUndoes", { n: String(kept.number) }));
     if (hint.length > 0) lines.push(hint.join(" · "));
     return { text: lines.join("\n"), buttons: [] };
   }
@@ -642,16 +650,16 @@ export function memoryCardChannelMessage(
     if (only.state === "proposed") {
       // One proposed after the chat read a page is kept by its own *Keep*: the card says what the chat read.
       const ops: readonly (readonly [string, MemoryCardPressOp])[] = only.sensitive
-        ? [["Open", "o"]]
+        ? [[open, "o"]]
         : !memoryCardItemKeepable(only)
           ? [
-              ["Discard", "d"],
-              ["Open", "o"],
+              [t("channel.memory.button.discard"), "d"],
+              [open, "o"],
             ]
           : [
-              ["Keep", "k"],
-              ["Discard", "d"],
-              ["Open", "o"],
+              [t("channel.memory.button.keep"), "k"],
+              [t("channel.memory.button.discard"), "d"],
+              [open, "o"],
             ];
       return { text: lines.join("\n"), buttons: buttons(ops, only.token) };
     }
@@ -660,8 +668,8 @@ export function memoryCardChannelMessage(
         text: lines.join("\n"),
         buttons: buttons(
           [
-            ["Undo", "u"],
-            ["Open", "o"],
+            [t("channel.memory.button.undo"), "u"],
+            [open, "o"],
           ],
           only.token,
         ),
@@ -676,12 +684,12 @@ export function memoryCardChannelMessage(
       buttons: buttons(
         plain.length > 0
           ? [
-              ["Keep all", "K"],
-              ["Discard all", "D"],
+              [t("channel.memory.button.keepAll"), "K"],
+              [t("channel.memory.button.discardAll"), "D"],
               [open, "o"],
             ]
           : [
-              ["Discard all", "D"],
+              [t("channel.memory.button.discardAll"), "D"],
               [open, "o"],
             ],
         first.token,
@@ -692,7 +700,7 @@ export function memoryCardChannelMessage(
       text: lines.join("\n"),
       buttons: buttons(
         [
-          ["Undo", "U"],
+          [t("channel.memory.button.undo"), "U"],
           [open, "o"],
         ],
         first.token,

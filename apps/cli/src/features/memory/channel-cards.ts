@@ -4,10 +4,10 @@ import {
   MEMORY_CARD_OPEN_HINT,
   MEMORY_CARD_PRESS,
   MEMORY_PROMPT_KEEP_DAYS,
-  MEMORY_TIDY_UP_NEEDS_LOOK,
   memoryPendingProvidersNote,
   TaviError,
   memoryCardChannelMessage,
+  memoryCardOpenHint,
   memoryCommandReceiptKey,
   memoryKeptAllText,
   memoryProvenanceUntrusted,
@@ -26,9 +26,12 @@ import {
   type TaviErrorCode,
   disarmUrls,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
 
-import { decideMemoryRecord, discardAll, keepAllPlain, MEMORY_TIDY_STALE, type MemoryDecision } from "./bulk.js";
+import { channelWords, type WorkspaceLocaleOf } from "../channels/channel-words.js";
+
+import { decideMemoryRecord, discardAll, keepAllPlain, memoryDecisionWords, type MemoryDecision } from "./bulk.js";
 import { memoryCommand, type MemoryCommandDependencies } from "./owner.js";
 
 /**
@@ -71,7 +74,6 @@ export function memoryCardEffectId(noticeId: string, sendKey?: string): string {
 }
 
 const MAX_PRESS_AGE_MS = MEMORY_PROMPT_KEEP_DAYS * 86_400_000;
-const NOT_YOURS = "That memory doesn't exist, or isn't yours.";
 
 type ReplyTarget = NonNullable<InvocationContext["messagingReplyTo"]>;
 
@@ -100,6 +102,8 @@ export interface MemoryChannelCardDependencies {
   /** Whether a chat reads only its own notes (a group's): it never gets a card. */
   readonly reachOf: (taskId: string) => Promise<"chat-only" | undefined>;
   readonly memorySettings?: (workspaceId: string) => Promise<EffectiveMemorySettings>;
+  /** The workspace's language, which cards, buttons and receipts are said in; English without it. */
+  readonly localeOf?: WorkspaceLocaleOf;
   /**
    * The URLs a chat knows, as its replies' disarm
    * reads them: a proposal made after the chat read untrusted content goes
@@ -139,9 +143,11 @@ export interface MemoryChannelCards {
 }
 
 /** What a forget's answer adds when a channel message still shows the record. */
-export function memoryUnreachedNote(channels: readonly string[]): string | undefined {
+export function memoryUnreachedNote(channels: readonly string[], t: CoreT = coreEnglish): string | undefined {
   if (channels.length === 0) return undefined;
-  return `Earlier messages in ${channels.join(" and ")} may still show it.`;
+  const last = channels.at(-1) ?? "";
+  const names = channels.length === 1 ? last : t("channel.list.and", { items: channels.slice(0, -1).join(", "), last });
+  return t("channel.memory.card.unreached", { channels: names });
 }
 
 /**
@@ -165,6 +171,9 @@ export function disarmedMemoryCard<T extends Pick<MemoryCardAnswer, "items">>(ca
 
 export function createMemoryChannelCards(deps: MemoryChannelCardDependencies): MemoryChannelCards {
   const { repositories } = deps;
+  /** The workspace's words: its language, or English when it cannot be read. */
+  const wordsOf = (workspaceId: string): Promise<CoreT> =>
+    channelWords(deps.localeOf, workspaceId, (message, fields) => deps.log(message, fields));
   /** What `taskId`'s chat knows, for its cards' disarm; none when it cannot be read. */
   const knownOf = async (taskId: string | undefined): Promise<ReadonlySet<string>> => {
     if (taskId === undefined || deps.knownUrlsOf === undefined) return new Set();
@@ -237,6 +246,7 @@ export function createMemoryChannelCards(deps: MemoryChannelCardDependencies): M
     const message = memoryCardChannelMessage(
       disarmedMemoryCard(card, await knownOf((await repositories.transcripts.getNotice(input.noticeId))?.taskId)),
       mode,
+      await wordsOf(input.workspaceId),
     );
     try {
       return await deps.messaging.editMessage(input.connectionId, {
@@ -269,7 +279,7 @@ export function createMemoryChannelCards(deps: MemoryChannelCardDependencies): M
       if (mode === undefined || card === undefined || card.items.length === 0) return;
       const destination = destinationOf(target);
       if (destination === undefined) return;
-      const message = memoryCardChannelMessage(disarmedMemoryCard(card, await knownOf(taskId)), mode);
+      const message = memoryCardChannelMessage(disarmedMemoryCard(card, await knownOf(taskId)), mode, await wordsOf(workspaceId));
       const effectId = memoryCardEffectId(noticeId, sendKey);
       try {
         await deps.messaging.send({
@@ -350,7 +360,7 @@ export function createMemoryChannelCards(deps: MemoryChannelCardDependencies): M
       ...new Set(
         sent
           .filter(({ message }) => deps.messaging.capabilitiesOf(message.connectionId)?.editOrProgress !== true)
-          .map(({ message }) => deps.channelName(message.connectionId) ?? "another channel"),
+          .map(({ message }) => deps.channelName(message.connectionId) ?? coreEnglish("channel.memory.card.anotherChannel")),
       ),
     ];
     return {
@@ -367,6 +377,7 @@ export function createMemoryChannelCards(deps: MemoryChannelCardDependencies): M
     const match = MEMORY_CARD_PRESS.exec(event.interaction?.data ?? "");
     if (match === null) return false;
     const callbackId = event.interaction?.callbackId;
+    const t = await wordsOf(actor.workspaceId);
     const answer = async (text: string): Promise<void> => {
       if (callbackId === undefined) return;
       try {
@@ -380,26 +391,26 @@ export function createMemoryChannelCards(deps: MemoryChannelCardDependencies): M
     };
     // Never in a group, never on email (invariant 11): a card is sent to neither, so a press there is not one of ours.
     if (event.conversationKind === "group" || deps.isEmailConnection(event.connectionId)) {
-      await answer("Memory isn't decided in group chats or by email.");
+      await answer(t("channel.memory.card.groupOrEmail"));
       return true;
     }
     const row = await repositories.transcripts.memoryPromptByToken(match[1] ?? "");
     if (row === undefined) {
-      await answer("No longer available.");
+      await answer(t("channel.memory.card.gone"));
       return true;
     }
     // Only the person whose card it is (invariant 21): another's is "not found", as the commands say.
     if (actor.workspaceId !== row.workspaceId || actor.principalId !== row.principalId) {
-      await answer(NOT_YOURS);
+      await answer(t("channel.memory.notYours"));
       return true;
     }
     if (Date.parse(deps.now()) - Date.parse(row.createdAt) > MAX_PRESS_AGE_MS) {
-      await answer("This card is too old to act on — open Tavi to review.");
+      await answer(t("channel.memory.card.tooOld"));
       return true;
     }
     const op = match[2] ?? "o";
     if (op === "o") {
-      await answer(MEMORY_CARD_OPEN_HINT);
+      await answer(t === coreEnglish ? MEMORY_CARD_OPEN_HINT : memoryCardOpenHint(t));
       return true;
     }
     const target: ReplyTarget = {
@@ -427,22 +438,20 @@ export function createMemoryChannelCards(deps: MemoryChannelCardDependencies): M
       if (op === "k" || op === "d") {
         const record = await readRecord(row);
         if (record === undefined) {
-          await answer("Already forgotten.");
+          await answer(t("channel.memory.card.alreadyForgotten"));
           return true;
         }
         const outcome = await decide(row, record, op === "k" ? "approve" : "reject");
         await answer(
           outcome === "done"
-            ? op === "k"
-              ? "Kept."
-              : "Discarded."
+            ? t(op === "k" ? "channel.memory.card.kept" : "channel.memory.card.discarded")
             : outcome === "conflict"
-              ? "This needs a look: another value is kept for it — open Tavi to replace it."
+              ? t("channel.memory.card.conflict")
               : outcome === "tidy"
-                ? MEMORY_TIDY_UP_NEEDS_LOOK
+                ? t("memory.card.tidyUpNeedsLook")
                 : outcome === "stale"
-                  ? MEMORY_TIDY_STALE
-                  : `${outcome}.`,
+                  ? t("channel.memory.tidyStale")
+                  : `${memoryDecisionWords(outcome, t)}.`,
         );
         await settle();
         return true;
@@ -450,16 +459,16 @@ export function createMemoryChannelCards(deps: MemoryChannelCardDependencies): M
       if (op === "u") {
         const record = await readRecord(row);
         if (record === undefined) {
-          await answer("Already forgotten.");
+          await answer(t("channel.memory.card.alreadyForgotten"));
           return true;
         }
         if (record.status !== "approved") {
-          await answer(record.status === "proposed" ? "Not kept yet: nothing to undo." : "Nothing to undo.");
+          await answer(t(record.status === "proposed" ? "channel.memory.card.notKeptYet" : "channel.memory.card.nothingToUndo"));
           return true;
         }
         const { unreached, waiting } = await forgetOne(row, "undone from a memory card");
         await answer(
-          ["Forgotten.", memoryPendingProvidersNote(waiting), memoryUnreachedNote(unreached)]
+          [t("channel.memory.card.forgotten"), memoryPendingProvidersNote(waiting, t), memoryUnreachedNote(unreached, t)]
             .filter((part) => part !== undefined)
             .join(" "),
         );
@@ -478,7 +487,7 @@ export function createMemoryChannelCards(deps: MemoryChannelCardDependencies): M
       if (op === "U") {
         const saved = records.filter(({ record }) => record.status === "approved");
         if (saved.length === 0) {
-          await answer("Nothing to undo.");
+          await answer(t("channel.memory.card.nothingToUndo"));
           return true;
         }
         const unreached = new Set<string>();
@@ -489,7 +498,11 @@ export function createMemoryChannelCards(deps: MemoryChannelCardDependencies): M
           for (const provider of forgot.waiting) waiting.add(provider);
         }
         await answer(
-          [`Forgotten ${saved.length}.`, memoryPendingProvidersNote([...waiting].sort()), memoryUnreachedNote([...unreached])]
+          [
+            t("channel.memory.card.forgottenCount", { n: String(saved.length) }),
+            memoryPendingProvidersNote([...waiting].sort(), t),
+            memoryUnreachedNote([...unreached], t),
+          ]
             .filter((part) => part !== undefined)
             .join(" "),
         );
@@ -501,10 +514,10 @@ export function createMemoryChannelCards(deps: MemoryChannelCardDependencies): M
         const statuses = new Set(records.map(({ record }) => record.status));
         await answer(
           statuses.size === 1 && statuses.has("approved")
-            ? "Already kept."
+            ? `${t("channel.memory.already.kept")}.`
             : statuses.size === 1 && statuses.has("rejected")
-              ? "Already discarded."
-              : "Nothing here waits any more.",
+              ? `${t("channel.memory.already.discarded")}.`
+              : t("channel.memory.card.nothingWaits"),
         );
         return true;
       }
@@ -519,7 +532,7 @@ export function createMemoryChannelCards(deps: MemoryChannelCardDependencies): M
           waiting.map(({ record }) => record),
           decideListed("reject"),
         );
-        await answer(`Discarded ${discarded}.`);
+        await answer(t("channel.memory.card.discardedCount", { n: String(discarded) }));
         await settle();
         return true;
       }
@@ -529,7 +542,7 @@ export function createMemoryChannelCards(deps: MemoryChannelCardDependencies): M
         waiting.map(({ record }) => record),
         decideListed("approve"),
       );
-      await answer(`${memoryKeptAllText(kept.length, needsLook)}.`);
+      await answer(`${memoryKeptAllText(kept.length, needsLook, t)}.`);
       await settle();
       if (kept.length > 0) {
         // Its receipt: a *Saved · N* card of exactly what this press kept, whose Undo forgets those.
@@ -552,11 +565,11 @@ export function createMemoryChannelCards(deps: MemoryChannelCardDependencies): M
     } catch (error) {
       const failure = TaviError.from(error);
       if (failure.code === "NOT_FOUND") {
-        await answer(NOT_YOURS);
+        await answer(t("channel.memory.notYours"));
         return true;
       }
       deps.log("a memory card press failed", { connectionId: event.connectionId, reason: failure.message });
-      await answer("Something went wrong — open Tavi to review.");
+      await answer(t("channel.memory.card.failed"));
       return true;
     }
   };

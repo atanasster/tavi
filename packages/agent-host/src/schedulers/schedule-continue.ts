@@ -1,4 +1,4 @@
-import type { AdmissionResult, AdmitInput, ScheduleRecord, WorkflowInvokeOptions } from "@tavi/contracts";
+import { textRef, type AdmissionResult, type AdmitInput, type ScheduleRecord, type WorkflowInvokeOptions } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
 import { startRunBudget } from "./run-budget.js";
@@ -126,7 +126,7 @@ export async function continueScheduledTask(
         {
           identity: alertIdentity,
           kind: "run-outcome",
-          text: `Scheduled run "${schedule.name}" (task ${taskId}) could not carry on after its wait: ${detail}`,
+          text: textRef("channel.schedule.alert.carryOnFailed", { name: schedule.name, taskId, detail }),
         },
         deps,
       );

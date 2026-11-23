@@ -76,6 +76,8 @@ export interface HeartbeatCommandDependencies {
   };
   /** The operator principal a workspace is served for, or undefined for one this owner does not serve. */
   readonly principalOf: (workspaceId: string) => string | undefined;
+  /** Told what went wrong but did not stop an answer, such as a workspace's language that could not be read. */
+  readonly onDiagnostic?: (message: string, fields: Record<string, unknown>) => void;
   readonly options: HeartbeatOptions;
   /** The providers installed here; none offline, where no provider runs. */
   readonly providers: () => readonly HeartbeatInstalledProvider[];

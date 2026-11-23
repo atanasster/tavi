@@ -1,10 +1,6 @@
 import {
-  MEMORY_FORGET_UNREACHED,
   memoryPendingProvidersNote,
   MEMORY_CARD_ITEMS_MAX,
-  MEMORY_PROVENANCE_KEEP_ALONE,
-  MEMORY_TIDY_UP_LOOK,
-  MEMORY_TIDY_UP_NEEDS_LOOK,
   MemoryPayloadSchema,
   TaviError,
   memoryCardItemName,
@@ -31,11 +27,15 @@ import {
   type PersistencePort,
   type TaviErrorCode,
   type WorkspaceSettings,
-  englishOf,
+  localeOf,
   navPath,
+  renderTextRef,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 
-import { decideMemoryRecord, keepAllPlain, MEMORY_TIDY_STALE, type MemoryDecision } from "./bulk.js";
+import { channelWords, zonedClock, zonedShortDay } from "../channels/channel-words.js";
+
+import { decideMemoryRecord, keepAllPlain, memoryDecisionWords, type MemoryDecision } from "./bulk.js";
 import { memoryCommand, type MemoryCommandDependencies } from "./owner.js";
 
 /**
@@ -59,8 +59,8 @@ import { memoryCommand, type MemoryCommandDependencies } from "./owner.js";
 
 export const MEMORY_PLUGIN_ID = "tavi.memory";
 
-/** Where a memory is undone without a chat to number it in. */
-const MEMORY_CENTER_PLACE = englishOf(navPath("nav.route.center", "nav.center.identity"));
+/** Where a memory is undone without a chat to number it in, in `t`'s words. */
+const centerPlace = (t: CoreT): string => renderTextRef(navPath("nav.route.center", "nav.center.identity"), t) ?? "";
 
 export const MEMORY_COMMANDS: readonly ModCommandDeclaration[] = [
   { name: "remember", description: "Save your own words to memory: /remember <text>, with --chat for this chat only." },
@@ -74,27 +74,20 @@ export const MEMORY_COMMANDS: readonly ModCommandDeclaration[] = [
 ];
 
 /** The fixed answers: groups and email never take a memory command. */
-export const MEMORY_GROUP_ANSWER = "Memory isn't used in group chats.";
-export const MEMORY_EMAIL_ANSWER = "Memory commands aren't taken by email, where a sender can be forged. Open Tavi to review your memory.";
-export const MEMORY_PAUSE_REFUSAL = "Only the workspace owner can pause memory; /memory off turns it off for this chat.";
-const MEMORY_RESUME_REFUSAL = "Only the workspace owner can resume memory.";
+export const MEMORY_GROUP_ANSWER = coreEnglish("channel.memory.group");
+export const MEMORY_EMAIL_ANSWER = coreEnglish("channel.memory.email");
+export const MEMORY_PAUSE_REFUSAL = coreEnglish("channel.memory.pauseRefusal");
 /** Punctuation a clipped name was cut after: `jumper,…` reads as `jumper…`. */
 const CLIP_AFTER_PUNCTUATION = /[\s,;:–—-]+…$/;
 /** A messaging command whose place was not recorded: refused, as only a direct chat takes memory commands (invariant 11). */
-export const MEMORY_UNKNOWN_PLACE_ANSWER = "Memory commands are taken only in a direct chat. Open Tavi to review your memory.";
+export const MEMORY_UNKNOWN_PLACE_ANSWER = coreEnglish("channel.memory.unknownPlace");
 /** What every memory command but `/memory on | off | status` answers in a chat whose memory is off. */
-export const MEMORY_OFF_ANSWER = "Memory is off in this chat. /memory on turns it back on.";
+export const MEMORY_OFF_ANSWER = coreEnglish("channel.memory.off");
 /** The same in a private chat, whose memory stays off. */
-export const MEMORY_PRIVATE_ANSWER = "This is a private chat: memory stays off here. Start a new chat to use memory.";
+export const MEMORY_PRIVATE_ANSWER = coreEnglish("channel.memory.private");
 
-const MEMORY_USAGE = "Usage: /memory [status | review | keep <n…> | keep all | discard <n…> | off | on | pause | resume].";
-const REMEMBER_USAGE =
-  'Usage: /remember <text> — saved as you wrote it; --chat keeps it for this chat only, and "key: value" saves a preference.';
-const FORGET_USAGE = "Usage: /forget <words> to list matches, then /forget <n>; or /forget <memory id>.";
 /** `/forget <words>` lists at most this many matches. */
 const FORGET_MATCHES_MAX = 5;
-/** What a forget's answer says it cannot reach. */
-const FORGET_RECEIPT_TAIL = MEMORY_FORGET_UNREACHED;
 /** A preference typed as `key: value`: a lowercase key, dotted or not, then the value. */
 const PREFERENCE_LINE = /^([a-z][a-z0-9_-]*(?:\.[a-z0-9_-]+)*):\s+(\S[\s\S]*)$/;
 
@@ -121,7 +114,7 @@ export interface MemorySlashDependencies {
   readonly newId: (prefix: string) => string;
   readonly now: () => Date;
   /** Before a forget: which channels' messages still show the record and cannot be edited, said in the receipt. */
-  readonly channelNote?: (recordId: string) => Promise<string | undefined>;
+  readonly channelNote?: (recordId: string, t?: CoreT) => Promise<string | undefined>;
 }
 
 type CommandRun = (input: ModCommandInput) => Promise<ModCommandResult>;
@@ -135,16 +128,22 @@ interface CommandContext {
   readonly chatMode: ChatMemoryMode | undefined;
   readonly surface: string;
   readonly ipc: <T>(payload: MemoryPayload) => Promise<T>;
+  /** The workspace's words: every answer is said in its language. */
+  readonly t: CoreT;
 }
 
 /** The four commands, by name, each answering within the command budget. */
 export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Record<"remember" | "forget" | "memory" | "why", CommandRun>> {
   /** The context, or the fixed answer that refuses the command here. */
   const contextOf = async (envelope: ModEnvelope): Promise<CommandContext | ModCommandResult> => {
+    const t = await channelWords(
+      async (workspaceId) => localeOf((await deps.repositories.workspaceSettings.get(workspaceId)).settings),
+      envelope.workspaceId,
+    );
     const place = deps.placeOf(envelope);
-    if (place === "group") return { text: MEMORY_GROUP_ANSWER };
-    if (place === "email") return { text: MEMORY_EMAIL_ANSWER };
-    if (envelope.source === "messaging" && place !== "direct") return { text: MEMORY_UNKNOWN_PLACE_ANSWER };
+    if (place === "group") return { text: t("channel.memory.group") };
+    if (place === "email") return { text: t("channel.memory.email") };
+    if (envelope.source === "messaging" && place !== "direct") return { text: t("channel.memory.unknownPlace") };
     const task = await deps.repositories.tasks.get(envelope.taskId);
     const chatTaskId =
       task !== undefined &&
@@ -154,7 +153,7 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
       task.chatKind !== "run"
         ? task.taskId
         : undefined;
-    if (chatTaskId !== undefined && (await deps.reachOf?.(chatTaskId)) === "chat-only") return { text: MEMORY_GROUP_ANSWER };
+    if (chatTaskId !== undefined && (await deps.reachOf?.(chatTaskId)) === "chat-only") return { text: t("channel.memory.group") };
     const commandDeps: MemoryCommandDependencies = {
       memory: deps.memory,
       repositories: deps.repositories,
@@ -179,6 +178,7 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
       chatMode: chatTaskId === undefined ? undefined : task?.memoryMode,
       surface: envelope.channel ?? envelope.frontEnd ?? envelope.source,
       ipc,
+      t,
     };
   };
 
@@ -193,15 +193,16 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
       const context = await contextOf(envelope);
       if (!("ipc" in context)) return context;
       if (context.chatMode !== undefined && !inOffChat(args.trim()))
-        return { text: context.chatMode === "private" ? MEMORY_PRIVATE_ANSWER : MEMORY_OFF_ANSWER };
+        return { text: context.t(context.chatMode === "private" ? "channel.memory.private" : "channel.memory.off") };
       try {
         return { text: await body(context, args.trim()) };
       } catch (error) {
-        return { text: refusalText(TaviError.from(error)) };
+        return { text: refusalText(TaviError.from(error), context.t) };
       }
     };
 
-  const dateOf = async (workspaceId: string, iso: string): Promise<string> => memoryDateText(iso, await deps.timezoneOf(workspaceId));
+  const dateOf = async (context: CommandContext, iso: string): Promise<string> =>
+    memoryDateText(iso, await deps.timezoneOf(context.envelope.workspaceId), context.t);
 
   /** The sender's own waiting proposals, oldest first: never the shared scope, which the operator shares on purpose. */
   const waiting = async (context: CommandContext): Promise<readonly MemoryItem[]> => {
@@ -264,18 +265,21 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
   };
 
   /** A record's name as a command says it: its title, never a sensitive one's text. */
-  const nameOf = (record: MemoryItem): string =>
-    memoryCardItemName({
-      state: "proposed",
-      sensitive: record.redacted,
-      title: memoryCardTitleOf({
-        ...(record.title === null ? {} : { title: record.title }),
-        ...(record.body === null ? {} : { body: record.body }),
-      }),
-    }).replace(CLIP_AFTER_PUNCTUATION, "…");
+  const nameOf = (record: MemoryItem, t: CoreT): string =>
+    memoryCardItemName(
+      {
+        state: "proposed",
+        sensitive: record.redacted,
+        title: memoryCardTitleOf({
+          ...(record.title === null ? {} : { title: record.title }),
+          ...(record.body === null ? {} : { body: record.body }),
+        }),
+      },
+      t,
+    ).replace(CLIP_AFTER_PUNCTUATION, "…");
 
   /** A name closing a sentence: a full stop unless it already ends in one, a `?`, `!` or the clip's `…`. */
-  const sentenceOf = (record: MemoryItem): string => nameOf(record).replace(/([^….?!])$/, "$1.");
+  const sentenceOf = (record: MemoryItem, t: CoreT): string => nameOf(record, t).replace(/([^….?!])$/, "$1.");
 
   const readRecord = async (context: CommandContext, recordId: string): Promise<MemoryItem | undefined> => {
     try {
@@ -287,16 +291,17 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
   };
 
   const forgetOne = async (context: CommandContext, record: MemoryItem): Promise<string> => {
+    const { t } = context;
     // The note is optional: a failed read leaves it out of the answer.
-    const note = await deps.channelNote?.(record.recordId).catch(() => undefined);
+    const note = await deps.channelNote?.(record.recordId, t).catch(() => undefined);
     const receipt = await context.ipc<MemoryForgetAnswer>({
       action: "forget",
       recordId: record.recordId,
       reason: "forgotten with /forget",
     });
     // A provider that could not take the removal now is named, as the CLI's receipt does.
-    const waiting = memoryPendingProvidersNote(receipt?.pendingProviders);
-    return `Forgotten: ${sentenceOf(record)} ${FORGET_RECEIPT_TAIL}${waiting === undefined ? "" : ` ${waiting}`}${note === undefined ? "" : ` ${note}`}`;
+    const waiting = memoryPendingProvidersNote(receipt?.pendingProviders, t);
+    return `${t("channel.memory.forgotten", { name: sentenceOf(record, t) })} ${t("memory.forget.unreached")}${waiting === undefined ? "" : ` ${waiting}`}${note === undefined ? "" : ` ${note}`}`;
   };
 
   /** Keep or discard one waiting record, in the words a card would use when it was decided elsewhere. */
@@ -307,9 +312,9 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
     const words = args.split(/\s+/);
     const chatOnly = words.includes("--chat");
     const text = args.replace(/(^|\s)--chat(?=\s|$)/g, " ").trim();
-    if (text === "") return REMEMBER_USAGE;
-    if (chatOnly && context.chatTaskId === undefined)
-      return "--chat keeps it for a chat of yours: say something here first, then /remember again.";
+    const { t } = context;
+    if (text === "") return t("channel.memory.rememberUsage");
+    if (chatOnly && context.chatTaskId === undefined) return t("channel.memory.chatFirst");
     const preference = PREFERENCE_LINE.exec(text);
     const target = chatOnly && context.chatTaskId !== undefined ? (`chat:${context.chatTaskId}` as const) : ("personal" as const);
     const saved = await context.ipc<MemoryItem>({
@@ -322,20 +327,21 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
       ...(context.chatTaskId === undefined || chatOnly ? {} : { originTaskId: context.chatTaskId }),
     });
     await receipt(context, [saved.recordId]);
-    const said = `Saved (${memoryCardScopeLabel(saved.target)}): ${sentenceOf(saved)}`;
+    const said = { scope: memoryCardScopeLabel(saved.target, t), name: sentenceOf(saved, t) };
     // No chat yet, so nothing is numbered and no card is posted: the Center (or the id) undoes it.
     return context.chatTaskId === undefined
-      ? `${said} Undo it in ${MEMORY_CENTER_PLACE}, or with /forget ${saved.recordId}.`
-      : `${said} /forget 1 undoes it.`;
+      ? t("channel.memory.savedUndoCenter", { ...said, place: centerPlace(t), id: saved.recordId })
+      : t("channel.memory.savedUndo", said);
   });
 
   const forget: CommandRun = command(async (context, args) => {
-    if (args === "") return FORGET_USAGE;
+    const { t } = context;
+    if (args === "") return t("channel.memory.forgetUsage");
     if (/^\d{1,4}$/.test(args)) {
       const [{ row } = { row: undefined }] = await numbered(context, [Number(args)]);
-      if (row === undefined) return `Nothing is numbered ${args} here: /forget <words> lists matches to choose from.`;
+      if (row === undefined) return t("channel.memory.notNumbered", { n: args });
       const record = await readRecord(context, row.recordId);
-      return record === undefined ? `${args}: already forgotten.` : await forgetOne(context, record);
+      return record === undefined ? t("channel.memory.alreadyForgotten", { n: args }) : await forgetOne(context, record);
     }
     // One word that names a record of the sender's: that record.
     if (!/\s/.test(args)) {
@@ -343,11 +349,11 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
       if (record !== undefined && record.target !== "shared") return await forgetOne(context, record);
     }
     const found = await context.ipc<MemoryListAnswer>({ action: "list", query: args, limit: 20 });
-    if (found.coverage === "unavailable") return "Memory search is unavailable right now; try again, or forget by id.";
+    if (found.coverage === "unavailable") return t("channel.memory.searchUnavailable");
     const matches = found.records.filter((record) => record.target !== "shared").slice(0, FORGET_MATCHES_MAX);
-    if (matches.length === 0) return `Nothing you saved matches "${args}".`;
+    if (matches.length === 0) return t("channel.memory.noMatch", { words: args });
     const rows = await number(context, matches);
-    const names = matches.map(nameOf);
+    const names = matches.map((record) => nameOf(record, t));
     // Two notes that read alike (a wardrobe saved again) are told apart by when each was saved (QA 2060).
     const alike = names.map((name) => names.filter((other) => other === name).length > 1);
     const zone = alike.includes(true) ? await deps.timezoneOf(context.envelope.workspaceId) : undefined;
@@ -359,8 +365,8 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
         .at(-1);
     const savedOf = (record: MemoryItem, index: number): string => {
       if (zone === undefined || alike[index] !== true) return "";
-      const latest = newest(names[index] as string) === record.recordedAt ? ", the newest" : "";
-      return ` (saved ${memoryDateText(record.recordedAt, zone)} ${memoryClockText(record.recordedAt, zone)}${latest})`;
+      const when = { date: memoryDateText(record.recordedAt, zone, t), time: memoryClockText(record.recordedAt, zone) };
+      return t(newest(names[index] as string) === record.recordedAt ? "channel.memory.savedAtNewest" : "channel.memory.savedAt", when);
     };
     const lines = matches.map(
       (record, index) =>
@@ -368,94 +374,102 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
     );
     // Listed only: nothing is forgotten until a number or an id is named.
     return [
-      `${matches.length === 1 ? "1 match" : `${matches.length} matches`} — nothing forgotten yet:`,
+      t("channel.memory.matches", { count: matches.length, n: String(matches.length) }),
       ...lines,
-      rows === undefined ? `Forget one in ${MEMORY_CENTER_PLACE}, or with /forget <id>.` : "/forget <n> forgets one.",
+      rows === undefined ? t("channel.memory.forgetInCenter", { place: centerPlace(t) }) : t("channel.memory.forgetHint"),
     ].join("\n");
   });
 
   const status = async (context: CommandContext): Promise<string> => {
+    const { t } = context;
     const settings = await deps.memorySettings(context.envelope.workspaceId);
     const pending = await waiting(context);
     // The first settings — on or paused, capture, sensitive topics — and this chat's mode: one line says all.
     // Kinds kept without asking are named to the operator whenever there are any: they relax the approval gate,
     // and only the operator's own — never another sender's, whom auto-approve never covers.
     const operator = deps.operatorOf(context.envelope.workspaceId) === context.envelope.principalId;
-    const kept = !operator || settings.autoApprove.length === 0 ? "" : ` · kept without asking: ${settings.autoApprove.join(", ")}`;
-    const workspace = `${settings.enabled ? "Memory on" : "Memory paused by the workspace owner"} · capture ${settings.capture}${kept} · sensitive ${settings.sensitive}`;
+    const kept =
+      !operator || settings.autoApprove.length === 0 ? "" : t("channel.memory.status.kept", { kinds: settings.autoApprove.join(", ") });
+    const workspace = t("channel.memory.status.line", {
+      state: t(settings.enabled ? "channel.memory.status.on" : "channel.memory.status.paused"),
+      capture: settings.capture,
+      kept,
+      sensitive: settings.sensitive,
+    });
     const state =
       context.chatMode === "private"
-        ? `${workspace} · private chat: memory off here`
+        ? t("channel.memory.status.private", { workspace })
         : context.chatMode === "off"
-          ? `${workspace} · off in this chat (/memory on)`
+          ? t("channel.memory.status.off", { workspace })
           : workspace;
-    if (pending.length === 0) return `${state} · nothing waiting.`;
+    if (pending.length === 0) return t("channel.memory.status.nothing", { state });
     const oldest = pending
       .map((record) => record.expiresAt)
       .filter((at): at is string => at !== undefined)
       .sort()[0];
-    const expiry = oldest === undefined ? "" : `, the oldest expires ${await dateOf(context.envelope.workspaceId, oldest)}`;
-    return `${state} · ${pending.length} waiting${expiry} — /memory review lists them.`;
+    const expiry = oldest === undefined ? "" : t("channel.memory.status.oldest", { date: await dateOf(context, oldest) });
+    return t("channel.memory.status.waiting", { state, count: pending.length, n: String(pending.length), expiry });
   };
 
   const review = async (context: CommandContext): Promise<string> => {
+    const { t } = context;
     const pending = await waiting(context);
-    if (pending.length === 0) return "Nothing waiting to be remembered.";
+    if (pending.length === 0) return t("channel.memory.review.nothing");
     const listed = pending.slice(0, MEMORY_CARD_ITEMS_MAX);
     const rows = await number(context, listed);
     const lines: string[] = [];
     for (const [index, record] of listed.entries()) {
-      const expires = record.expiresAt === undefined ? "" : ` — expires ${await dateOf(context.envelope.workspaceId, record.expiresAt)}`;
+      const expires =
+        record.expiresAt === undefined ? "" : t("channel.memory.review.expires", { date: await dateOf(context, record.expiresAt) });
       // An update is replaced in the app, and a tidy-up compared there: neither is kept from here.
       const how = record.redacted
-        ? " — open Tavi to review"
+        ? t("channel.memory.review.openToReview")
         : record.updates !== undefined
-          ? ` — ${memoryUpdatesLine(record.updates)}, open Tavi to replace it`
+          ? t("channel.memory.review.replace", { line: memoryUpdatesLine(record.updates, t) })
           : record.mayUpdate !== undefined
-            ? ` — ${memoryMayUpdateLine(record.mayUpdate)}, open Tavi to replace it`
+            ? t("channel.memory.review.replace", { line: memoryMayUpdateLine(record.mayUpdate, t) })
             : record.supersedes !== undefined
-              ? ` — ${MEMORY_TIDY_UP_LOOK}`
+              ? ` — ${t("memory.card.tidyUpLook")}`
               : expires;
       // One proposed after its chat read untrusted content says what it read, and is kept on its own.
-      const read = record.redacted ? undefined : memoryProvenanceLine(record.provenance, { tidyUp: record.supersedes !== undefined });
+      const read = record.redacted ? undefined : memoryProvenanceLine(record.provenance, { tidyUp: record.supersedes !== undefined }, t);
       lines.push(
-        `${rows === undefined ? "-" : `${index + 1}.`} ${nameOf(record)}${how}${read === undefined ? "" : ` — ${read}; ${MEMORY_PROVENANCE_KEEP_ALONE}`}`,
+        `${rows === undefined ? "-" : `${index + 1}.`} ${nameOf(record, t)}${how}${read === undefined ? "" : ` — ${read}; ${t("memory.card.keepAllLeavesIt")}`}`,
       );
     }
-    const more = pending.length > listed.length ? [`and ${pending.length - listed.length} more — open Tavi to review`] : [];
-    const how =
-      rows === undefined
-        ? "Decide them in the app, or with tavi memory review."
-        : "/memory keep <n…> · /memory keep all · /memory discard <n…>";
-    return [`${pending.length} waiting:`, ...lines, ...more, how].join("\n");
+    const more = pending.length > listed.length ? [t("channel.memory.review.more", { n: String(pending.length - listed.length) })] : [];
+    const how = rows === undefined ? t("channel.memory.review.decideInApp") : t("channel.memory.review.commands");
+    return [t("channel.memory.review.heading", { count: pending.length, n: String(pending.length) }), ...lines, ...more, how].join("\n");
   };
 
   /** `/memory keep <n…>`, `discard <n…>`: each number's record, decided one by one. */
   const decideNumbers = async (context: CommandContext, decision: "approve" | "reject", words: readonly string[]): Promise<string> => {
+    const { t } = context;
     const numbers = words.map((word) => (/^\d{1,4}$/.test(word) ? Number(word) : Number.NaN));
-    if (numbers.length === 0 || numbers.some((n) => !Number.isInteger(n) || n < 1)) return MEMORY_USAGE;
+    if (numbers.length === 0 || numbers.some((n) => !Number.isInteger(n) || n < 1)) return t("channel.memory.usage");
     const lines: string[] = [];
     for (const { n, row } of await numbered(context, [...new Set(numbers)])) {
       const record = row === undefined ? undefined : await readRecord(context, row.recordId);
       if (row === undefined) {
-        lines.push(`${n}: nothing is numbered ${n} here — /memory review lists what waits.`);
+        lines.push(t("channel.memory.decide.notNumbered", { n: String(n) }));
         continue;
       }
       if (record === undefined) {
-        lines.push(`${n}: forgotten.`);
+        lines.push(t("channel.memory.decide.forgotten", { n: String(n) }));
         continue;
       }
       const outcome = await decide(context, record, decision);
+      const name = nameOf(record, t);
       lines.push(
         outcome === "done"
-          ? `${decision === "approve" ? "Kept" : "Discarded"}: ${nameOf(record)}.`
+          ? t(decision === "approve" ? "channel.memory.decide.kept" : "channel.memory.decide.discarded", { name })
           : outcome === "conflict"
-            ? `${n}: ${nameOf(record)} needs a look — another value is kept for it; open Tavi to replace it.`
+            ? t("channel.memory.decide.conflict", { n: String(n), name })
             : outcome === "tidy"
-              ? `${n}: ${nameOf(record)}: ${MEMORY_TIDY_UP_NEEDS_LOOK}`
+              ? `${n}: ${name}: ${t("memory.card.tidyUpNeedsLook")}`
               : outcome === "stale"
-                ? `${n}: ${nameOf(record)}: ${MEMORY_TIDY_STALE}`
-                : `${n}: ${outcome}.`,
+                ? `${n}: ${name}: ${t("channel.memory.tidyStale")}`
+                : `${n}: ${memoryDecisionWords(outcome, t)}.`,
       );
     }
     return lines.join("\n");
@@ -478,19 +492,21 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
       const record = await readRecord(context, row.recordId);
       if (record?.status === "proposed") listed.push(record);
     }
-    if (listed.length === 0) return "Nothing numbered here waits: /memory review lists what does.";
+    const { t } = context;
+    if (listed.length === 0) return t("channel.memory.keepAll.nothing");
     const { kept, needsLook } = await keepAllPlain(listed, (record) => decide(context, record, "approve"));
     await receipt(context, kept);
-    return `${memoryKeptAllText(kept.length, needsLook)}.${kept.length > 0 && context.chatTaskId !== undefined ? " Undo it from the Saved card." : ""}`;
+    return `${memoryKeptAllText(kept.length, needsLook, t)}.${kept.length > 0 && context.chatTaskId !== undefined ? ` ${t("channel.memory.keepAll.undo")}` : ""}`;
   };
 
   /** `/memory pause | resume`: the workspace's `memory.enabled`, the operator's alone (invariant 13). */
   const pause = async (context: CommandContext, paused: boolean): Promise<string> => {
+    const { t } = context;
     const { workspaceId, principalId } = context.envelope;
-    if (deps.operatorOf(workspaceId) !== principalId) return paused ? MEMORY_PAUSE_REFUSAL : MEMORY_RESUME_REFUSAL;
+    if (deps.operatorOf(workspaceId) !== principalId) return t(paused ? "channel.memory.pauseRefusal" : "channel.memory.resumeRefusal");
     const current = await deps.repositories.workspaceSettings.get(workspaceId);
     const next = applyMemoryPause(current.settings, paused);
-    if (next === undefined) return paused ? "Memory is already paused." : "Memory is already on.";
+    if (next === undefined) return t(paused ? "channel.memory.alreadyPaused" : "channel.memory.alreadyOn");
     await deps.repositories.workspaceSettings.set({
       workspaceId,
       settings: next,
@@ -498,53 +514,51 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
       actor: "operator:command",
       now: deps.now().toISOString(),
     });
-    return paused
-      ? "Memory paused for this workspace: nothing is recalled or captured until /memory resume. Nothing was deleted."
-      : "Memory resumed: recall and capture start again from the next answer.";
+    return t(paused ? "channel.memory.paused" : "channel.memory.resumed");
   };
 
   /** `/memory off | on`: this chat's memory, anyone's for their own chat. */
   const chatMode = async (context: CommandContext, on: boolean): Promise<string> => {
-    if (context.chatTaskId === undefined) return "There is no chat of yours here yet: say something first, then /memory off.";
-    if (context.chatMode === "private") return MEMORY_PRIVATE_ANSWER;
-    if (on && context.chatMode === undefined) return "Memory is already on in this chat.";
-    if (!on && context.chatMode === "off") return "Memory is already off in this chat.";
+    const { t } = context;
+    if (context.chatTaskId === undefined) return t("channel.memory.chat.noChat");
+    if (context.chatMode === "private") return t("channel.memory.private");
+    if (on && context.chatMode === undefined) return t("channel.memory.chat.alreadyOn");
+    if (!on && context.chatMode === "off") return t("channel.memory.chat.alreadyOff");
     await deps.repositories.tasks.setMemoryMode({ taskId: context.chatTaskId, mode: on ? "on" : "off", now: deps.now().toISOString() });
-    return on
-      ? "Memory on in this chat from the next answer. Nothing said while it was off will be remembered."
-      : "Memory off in this chat: nothing is recalled here, and nothing said here is remembered, until /memory on. Nothing was deleted.";
+    return t(on ? "channel.memory.chat.on" : "channel.memory.chat.off");
   };
 
   const memory: CommandRun = command(
     async (context, args) => {
+      const usage = context.t("channel.memory.usage");
       const [verb = "status", ...rest] = args.split(/\s+/).filter((word) => word !== "");
       switch (verb) {
         case "status":
-          return rest.length === 0 ? await status(context) : MEMORY_USAGE;
+          return rest.length === 0 ? await status(context) : usage;
         case "review":
-          return rest.length === 0 ? await review(context) : MEMORY_USAGE;
+          return rest.length === 0 ? await review(context) : usage;
         case "keep":
           return rest.length === 1 && rest[0] === "all" ? await keepAll(context) : await decideNumbers(context, "approve", rest);
         case "discard":
           return await decideNumbers(context, "reject", rest);
         case "pause":
         case "resume":
-          return rest.length === 0 ? await pause(context, verb === "pause") : MEMORY_USAGE;
+          return rest.length === 0 ? await pause(context, verb === "pause") : usage;
         case "off":
         case "on":
-          return rest.length === 0 ? await chatMode(context, verb === "on") : MEMORY_USAGE;
+          return rest.length === 0 ? await chatMode(context, verb === "on") : usage;
         default:
-          return MEMORY_USAGE;
+          return usage;
       }
     },
     (args) => ["", "status", "on", "off"].includes(args),
   );
 
   const why: CommandRun = command(async (context, args) => {
-    if (args !== "") return "Usage: /why — the memories the last answer used.";
-    if (context.chatTaskId === undefined) return "There is no answer of yours here yet.";
+    if (args !== "") return context.t("channel.memory.why.usage");
+    if (context.chatTaskId === undefined) return context.t("channel.memory.why.noAnswer");
     const answer = await context.ipc<MemoryWhyAnswer>({ action: "why", taskId: context.chatTaskId });
-    return await whyText(answer, (iso) => dateOf(context.envelope.workspaceId, iso));
+    return await whyText(answer, (iso) => dateOf(context, iso), context.t);
   });
 
   return { remember, forget, memory, why };
@@ -552,12 +566,12 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
 
 /** A time of day as the memory commands say it: in the workspace's `timeZone`, e.g. "14:02". */
 function memoryClockText(iso: string, timeZone: string): string {
-  return new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone }).format(new Date(iso));
+  return zonedClock(new Date(iso), timeZone);
 }
 
-/** A date as the memory commands say it: in the workspace's `timeZone`, e.g. "Sun 11 Oct". */
-export function memoryDateText(iso: string, timeZone: string): string {
-  return new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone }).format(new Date(iso));
+/** A date as the memory commands say it: in the workspace's `timeZone`, e.g. "Sun 11 Oct", in `t`'s words. */
+export function memoryDateText(iso: string, timeZone: string, t: CoreT = coreEnglish): string {
+  return zonedShortDay(new Date(iso), timeZone, t);
 }
 
 /**
@@ -565,63 +579,76 @@ export function memoryDateText(iso: string, timeZone: string): string {
  * those it only looked through, each with its date, source chat and id; a
  * sensitive one never by its text.
  */
-export async function whyText(answer: MemoryWhyAnswer, dateOf: (iso: string) => string | Promise<string>): Promise<string> {
-  if (answer.seq === undefined) return "Nothing answered here yet.";
+export async function whyText(
+  answer: MemoryWhyAnswer,
+  dateOf: (iso: string) => string | Promise<string>,
+  t: CoreT = coreEnglish,
+): Promise<string> {
+  if (answer.seq === undefined) return t("channel.memory.why.nothing");
   const used = answer.used;
   // A turn saved before answers recorded their memory: what it used is not known, which is not "none".
   if (used?.recorded === false) {
-    const when = answer.answeredAt === undefined ? "" : ` (${await dateOf(answer.answeredAt)})`;
-    return `Not recorded: this answer${when} is from before Tavi recorded which memories each answer used. The chat panel's Used here lists what the chat's turns were given.`;
+    return answer.answeredAt === undefined
+      ? t("channel.memory.why.notRecorded")
+      : t("channel.memory.why.notRecordedAt", { date: await dateOf(answer.answeredAt) });
   }
   const preferences =
     used === undefined || used.preferences === 0
       ? ""
-      : ` ${used.preferences === 1 ? "1 preference" : `${used.preferences} preferences`} applied.`;
+      : t("channel.memory.why.preferences", { count: used.preferences, n: String(used.preferences) });
   const count = used?.used ?? answer.records.length;
   const listed = used?.listed;
-  if (count === 0 && listed === undefined) return `The last answer used no memory.${preferences}`;
+  if (count === 0 && listed === undefined)
+    return preferences === "" ? t("channel.memory.why.none") : `${t("channel.memory.why.none")} ${preferences}`;
   /** One group of records: its lines, and what of it is forgotten since or past the names. */
   const group = async (records: readonly MemoryItem[], total: number, forgotten: number): Promise<string[]> => {
     const lines: string[] = [];
     for (const record of records) {
-      const name = memoryCardItemName({
-        state: "saved",
-        sensitive: record.redacted,
-        title: memoryCardTitleOf({
-          ...(record.title === null ? {} : { title: record.title }),
-          ...(record.body === null ? {} : { body: record.body }),
-        }),
-      });
-      const source = record.originTaskId === undefined ? "" : `, from chat ${record.originTaskId}`;
-      lines.push(`- ${name} — ${record.kind}, ${await dateOf(record.recordedAt)}${source} (${record.recordId})`);
+      const name = memoryCardItemName(
+        {
+          state: "saved",
+          sensitive: record.redacted,
+          title: memoryCardTitleOf({
+            ...(record.title === null ? {} : { title: record.title }),
+            ...(record.body === null ? {} : { body: record.body }),
+          }),
+        },
+        t,
+      );
+      const said = { name, kind: record.kind, date: await dateOf(record.recordedAt), id: record.recordId };
+      lines.push(
+        record.originTaskId === undefined
+          ? t("channel.memory.why.line", said)
+          : t("channel.memory.why.lineFrom", { ...said, chat: record.originTaskId }),
+      );
     }
-    if (forgotten > 0) lines.push(`- ${forgotten === 1 ? "1 more is" : `${forgotten} more are`} forgotten since, or not yours`);
+    if (forgotten > 0) lines.push(t("channel.memory.why.forgotten", { count: forgotten, n: String(forgotten) }));
     const named = records.length + forgotten;
-    if (total > named) lines.push(`- and ${total - named} more not listed`);
+    if (total > named) lines.push(t("channel.memory.why.notListed", { n: String(total - named) }));
     return lines;
   };
   const lines: string[] = [];
   if (count > 0) {
-    lines.push(`The answer used ${count === 1 ? "1 memory" : `${count} memories`}:`);
+    lines.push(t("channel.memory.why.used", { count, n: String(count) }));
     lines.push(...(await group(answer.records, used?.used ?? count, used?.forgotten ?? 0)));
   }
   if (listed !== undefined) {
-    lines.push(`${memoryListedHeading(listed.count, count)}:`);
+    lines.push(`${memoryListedHeading(listed.count, count, t)}:`);
     lines.push(...(await group(answer.listed ?? [], listed.count, listed.forgotten)));
   }
-  if (preferences !== "") lines.push(preferences.trim());
+  if (preferences !== "") lines.push(preferences);
   return lines.join("\n");
 }
 
 /** A refusal in the person's words: the service's message, never a stack. */
-function refusalText(error: TaviError): string {
+function refusalText(error: TaviError, t: CoreT): string {
   switch (error.code) {
     case "MEMORY_CONFLICT":
-      return "You already have a value for that preference: change it in the Center, or forget the old one first.";
+      return t("channel.memory.refusal.conflict");
     case "QUOTA_EXCEEDED":
-      return "Your memory is full: forget something first, or ask the workspace owner to raise limits.maxRecords.";
+      return t("channel.memory.refusal.full");
     case "NOT_FOUND":
-      return "That memory doesn't exist, or isn't yours.";
+      return t("channel.memory.notYours");
     default:
       return error.message;
   }

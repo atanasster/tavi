@@ -21,13 +21,14 @@ import {
   requestSources,
   requestTainted,
   disarmUrls,
-  approvalTitleOf,
   flaggedReasons,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { clip } from "@tavi/contracts/util";
 import { hostAndPathOf, trimTrailing } from "@tavi/contracts/url-text";
 import type { ApprovalRoundAnnouncement, ApprovalRoundSettlement } from "@tavi/agent-host/workflow";
 
+import { zonedClock, zonedShortDay } from "../channels/channel-words.js";
 import { formLines, type FormView } from "./form.js";
 
 /** What the channel approvals say: rounds, questions and their buttons, and the commands a person types. */
@@ -87,7 +88,27 @@ export function parseApprovalCommand(text: string): ApprovalCommand | null {
 const ROUND_TEXT_RESERVE = 700;
 /** The calls' budget when the channel's limit is not known. */
 const DEFAULT_ROUND_TEXT_BUDGET = 3_400;
-const RISK_MARK: Readonly<Record<RiskLevel, string>> = { low: "low", medium: "medium", high: "HIGH", critical: "CRITICAL" };
+const riskMark = (level: RiskLevel, t: CoreT): string => t(`channel.approval.risk.${level}`);
+
+/**
+ * The words a typed answer is written with, as help and cards name them: the
+ * verbs and scopes `parseApprovalCommand` takes.
+ */
+export function approvalWords(t: CoreT = coreEnglish): {
+  readonly approve: string;
+  readonly reject: string;
+  readonly session: string;
+  readonly always: string;
+  readonly reason: string;
+} {
+  return {
+    approve: t("channel.approval.word.approve"),
+    reject: t("channel.approval.word.reject"),
+    session: t("channel.approval.word.session"),
+    always: t("channel.approval.word.always"),
+    reason: t("channel.approval.reason"),
+  };
+}
 
 /**
  * The group a round is asked as — "use the browser" — when every call shares
@@ -107,11 +128,15 @@ export function roundGroup(requests: ApprovalRoundAnnouncement["requests"]): str
 export function groupName(
   group: string,
   requests: readonly { readonly display?: { readonly host?: string | undefined } | undefined }[] = [],
+  t: CoreT = coreEnglish,
 ): string {
-  return `the ${toolGroupLabel(
-    group,
-    requests.flatMap((request) => (request.display?.host === undefined ? [] : [request.display.host])),
-  )}`;
+  return t("channel.approval.groupName", {
+    label: toolGroupLabel(
+      group,
+      requests.flatMap((request) => (request.display?.host === undefined ? [] : [request.display.host])),
+      t,
+    ),
+  });
 }
 
 /** The scopes every call of a round allows: a round-wide decision can carry only those. */
@@ -147,8 +172,12 @@ export const ROUND_BUTTON = /^r:([a-z2-9]{8}):([osad])$/;
 export const BUTTON_SCOPES: Readonly<Record<string, ApprovalScope>> = { o: "once", s: "session", a: "always" };
 
 /** Buttons for a round: one per offered scope, then deny. Data is opaque and at most 12 bytes. */
-export function roundButtons(requests: ApprovalRoundAnnouncement["requests"], token: string): readonly (readonly OutboundButton[])[] {
-  return scopeButtons(roundScopes(requests), token, roundGroup(requests));
+export function roundButtons(
+  requests: ApprovalRoundAnnouncement["requests"],
+  token: string,
+  t: CoreT = coreEnglish,
+): readonly (readonly OutboundButton[])[] {
+  return scopeButtons(roundScopes(requests), token, roundGroup(requests), t);
 }
 
 /** The scopes a round's buttons and links offer: a grouped round has no one-call choice. */
@@ -156,34 +185,58 @@ export function offeredScopes(scopes: readonly ApprovalScope[], group: string | 
   return group === undefined ? scopes : scopes.filter((scope) => scope !== "once");
 }
 
-export function scopeButtons(scopes: readonly ApprovalScope[], token: string, group?: string): readonly (readonly OutboundButton[])[] {
+export function scopeButtons(
+  scopes: readonly ApprovalScope[],
+  token: string,
+  group?: string,
+  t: CoreT = coreEnglish,
+): readonly (readonly OutboundButton[])[] {
   const labels: Readonly<Record<ApprovalScope, string>> =
     group === undefined
-      ? { once: "✅ Once", session: "🔁 Session", always: "♾ Always" }
-      : { once: "✅ Once", session: "✅ Allow for this chat", always: "♾ Always allow" };
+      ? {
+          once: `✅ ${t("channel.approval.button.once")}`,
+          session: `🔁 ${t("channel.approval.button.session")}`,
+          always: `♾ ${t("channel.approval.button.always")}`,
+        }
+      : {
+          once: `✅ ${t("channel.approval.button.once")}`,
+          session: `✅ ${t("channel.approval.button.groupSession")}`,
+          always: `♾ ${t("channel.approval.button.groupAlways")}`,
+        };
+  // Only the labels follow the language: the data stays `r:<token>:<o|s|a|d>`.
   const approve = offeredScopes(scopes, group).map((scope) => ({ label: labels[scope], data: `r:${token}:${scope[0]}` }));
   // A round this chat may only reject (a form it did not show in full) is offered ❌ alone.
-  return [...(approve.length === 0 ? [] : [approve]), [{ label: "❌ Deny", data: `r:${token}:d` }]];
+  return [...(approve.length === 0 ? [] : [approve]), [{ label: `❌ ${t("channel.approval.button.deny")}`, data: `r:${token}:d` }]];
 }
 
-export const LINK_LABELS: Readonly<Record<ApprovalScope | "deny", string>> = {
-  once: "Approve once",
-  session: "Approve for the rest of this chat",
-  always: "Always allow (a workspace rule)",
-  deny: "Reject",
-};
+/** A link's label for each choice, in `t`'s words. */
+export function linkLabels(t: CoreT = coreEnglish): Readonly<Record<ApprovalScope | "deny", string>> {
+  return {
+    once: t("channel.approval.link.once"),
+    session: t("channel.approval.link.session"),
+    always: t("channel.approval.link.always"),
+    deny: t("channel.approval.link.deny"),
+  };
+}
+
+export const LINK_LABELS: Readonly<Record<ApprovalScope | "deny", string>> = linkLabels();
 
 /**
  * Said under every set of single-use links: a link is a bearer capability, so
  * whoever holds the message can use it (a critical round still asks for the PIN).
  */
-export const LINK_BEARER_NOTE = "Anyone with this message can use these links: do not forward it.";
+export const LINK_BEARER_NOTE = coreEnglish("channel.approval.link.bearer");
 
 /** A link's label; a grouped round's names the group. */
-export function linkLabel(choice: ApprovalScope | "deny", group: string | undefined, name: string | undefined): string {
-  if (group === undefined || choice === "deny" || choice === "once") return LINK_LABELS[choice];
-  const named = name ?? groupName(group);
-  return choice === "session" ? `Allow ${named} for this chat` : `Always allow ${named}, in every chat`;
+export function linkLabel(
+  choice: ApprovalScope | "deny",
+  group: string | undefined,
+  name: string | undefined,
+  t: CoreT = coreEnglish,
+): string {
+  if (group === undefined || choice === "deny" || choice === "once") return linkLabels(t)[choice];
+  const named = name ?? groupName(group, [], t);
+  return t(choice === "session" ? "channel.approval.link.groupSession" : "channel.approval.link.groupAlways", { name: named });
 }
 
 /** A round token in an email subject: `[tavi k3f9abcd]`. */
@@ -203,8 +256,8 @@ const printableLine = (text: string): string => text.replace(/[\u0000-\u001f\u00
  * A question email's subject: its token, so a reply that loses the
  * thread still names the question, and the header or the question's start.
  */
-export function questionSubject(waitId: string, question: string, choices: AskUserChoices | undefined): string {
-  return `[tavi ${questionToken(waitId)}] Question: ${subjectSafe(clip(choices?.header ?? question, 60))}`;
+export function questionSubject(waitId: string, question: string, choices: AskUserChoices | undefined, t: CoreT = coreEnglish): string {
+  return `[tavi ${questionToken(waitId)}] ${t("channel.question.subject", { what: subjectSafe(clip(choices?.header ?? question, 60)) })}`;
 }
 
 /**
@@ -212,40 +265,41 @@ export function questionSubject(waitId: string, question: string, choices: AskUs
  * day it is sent, the day too otherwise — a question that waits a day would
  * else read as due at a time already past.
  */
-function deadlineText(deadlineAt: string, now: string | undefined, timeZone?: string): string {
+function deadlineText(deadlineAt: string, now: string | undefined, timeZone?: string, t: CoreT = coreEnglish): string {
   const at = new Date(deadlineAt);
   if (Number.isNaN(at.getTime())) return "";
   const zone = usableZone(timeZone);
   const time = wallTime(at, zone);
+  // A machine date key, compared only: "2026-11-23".
   const dayOf = (date: Date): string => date.toLocaleDateString("en-CA", { timeZone: zone });
   const sameDay = now !== undefined && !Number.isNaN(new Date(now).getTime()) && dayOf(new Date(now)) === dayOf(at);
   if (sameDay) return time;
-  const day = at.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: zone });
-  return `${day}, ${time}`;
+  return t("channel.time.dayTime", { day: zonedShortDay(at, zone, t), time });
 }
 
 /** `zone` when the runtime knows it, else UTC: a chat's times follow the workspace's zone. */
 function usableZone(zone: string | undefined): string {
   if (zone === undefined || zone === "") return "UTC";
   try {
-    new Intl.DateTimeFormat("en-GB", { timeZone: zone });
+    new Intl.DateTimeFormat(undefined, { timeZone: zone });
     return zone;
   } catch {
     return "UTC";
   }
 }
 
-/** The time of day in `zone` with the zone's short name: `05:24 EET`, `03:24 UTC`. */
+/**
+ * The time of day in `zone` with the zone's short name: `05:24 EET`, `03:24 UTC`.
+ * The zone's name is an identifier, the same in every language: its `en-GB` abbreviation.
+ */
 function wallTime(at: Date, zone: string): string {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-    timeZone: zone,
-    timeZoneName: "short",
-  }).formatToParts(at);
-  const part = (type: Intl.DateTimeFormatPartTypes): string => parts.find((entry) => entry.type === type)?.value ?? "";
-  return `${part("hour")}:${part("minute")} ${zone === "UTC" ? "UTC" : part("timeZoneName")}`;
+  const name =
+    zone === "UTC"
+      ? "UTC"
+      : (new Intl.DateTimeFormat("en-GB", { timeZone: zone, timeZoneName: "short" })
+          .formatToParts(at)
+          .find((entry) => entry.type === "timeZoneName")?.value ?? "");
+  return `${zonedClock(at, zone)} ${name}`;
 }
 
 /** A question's button data: `q:<token>:<n>` picks option n, `t<n>` toggles it, `ok` submits a multi-select. */
@@ -269,24 +323,47 @@ export function renderQuestionText(
     /** The workspace's time zone, which the deadline is shown in; UTC when absent. */
     readonly timeZone?: string;
   } = {},
+  t: CoreT = coreEnglish,
 ): string {
   // Who asks, when it is not the chat's own task — a schedule's run.
-  const asks = extra.origin === undefined ? [] : [`⏸ ${printableLine(extra.origin)} asks:`];
+  const asks = extra.origin === undefined ? [] : [t("channel.question.asks", { origin: printableLine(extra.origin) })];
   // Why it is asked, and when it stops waiting — with what it then goes with.
-  const why = extra.context === undefined ? [] : [`Why: ${extra.context}`];
+  const why = extra.context === undefined ? [] : [t("channel.question.why", { context: extra.context })];
   const fallback = choices?.defaultOption === undefined ? undefined : choices.options[choices.defaultOption - 1]?.label;
-  const by = extra.deadlineAt === undefined ? "" : deadlineText(extra.deadlineAt, extra.now, extra.timeZone);
+  const by = extra.deadlineAt === undefined ? "" : deadlineText(extra.deadlineAt, extra.now, extra.timeZone, t);
   const until =
     by === "" && fallback === undefined
       ? []
-      : [`⌛ ${by === "" ? "If nobody answers" : `Answer by ${by}`}${fallback === undefined ? "" : ` (otherwise: ${fallback})`}`];
+      : [
+          `⌛ ${
+            by === ""
+              ? t("channel.question.untilOtherwise", { fallback: fallback ?? "" })
+              : fallback === undefined
+                ? t("channel.question.untilBy", { by })
+                : t("channel.question.untilByOtherwise", { by, fallback })
+          }`,
+        ];
   if (choices === undefined) return [...asks, question, ...why, ...until].join("\n");
   const lines = [...asks, choices.header === undefined ? `❓ ${question}` : `❓ ${choices.header} — ${question}`, ...why];
   choices.options.forEach((option, index) =>
-    lines.push(`${formatChoiceOption(option, index)}${choices.recommended === index + 1 ? " ★ recommended" : ""}`),
+    lines.push(
+      choices.recommended === index + 1
+        ? t("channel.question.recommended", { option: formatChoiceOption(option, index) })
+        : formatChoiceOption(option, index),
+    ),
   );
-  const how = choices.multiSelect ? "Reply with the numbers of your choices (e.g. 1 3)" : "Reply with a number";
-  lines.push(choices.allowOther ? `${how}, or with your own answer.` : `${how}.`, ...until);
+  lines.push(
+    t(
+      choices.multiSelect
+        ? choices.allowOther
+          ? "channel.question.howManyOwn"
+          : "channel.question.howMany"
+        : choices.allowOther
+          ? "channel.question.howOneOwn"
+          : "channel.question.howOne",
+    ),
+    ...until,
+  );
   return lines.join("\n");
 }
 
@@ -295,6 +372,7 @@ export function questionButtons(
   token: string,
   choices: AskUserChoices,
   selected: ReadonlySet<number> = new Set(),
+  t: CoreT = coreEnglish,
 ): readonly (readonly OutboundButton[])[] {
   if (!choices.multiSelect)
     return choices.options.map((option, index) => [{ label: clip(option.label, 60), data: `q:${token}:${index + 1}` }]);
@@ -302,7 +380,7 @@ export function questionButtons(
     ...choices.options.map((option, index) => [
       { label: `${selected.has(index + 1) ? "☑" : "☐"} ${clip(option.label, 56)}`, data: `q:${token}:t${index + 1}` },
     ]),
-    [{ label: "Done", data: `q:${token}:ok` }],
+    [{ label: t("channel.question.done"), data: `q:${token}:ok` }],
   ];
 }
 
@@ -338,10 +416,16 @@ export interface RoundTextOptions {
    * the typed answer names the round's token.
    */
   readonly buttons?: { readonly ownChat: boolean };
+  /** The workspace's words: the round is said in its language. English when absent. */
+  readonly t?: CoreT;
 }
 
 /** A tainted call's provenance line for a channel, disarmed and bounded; undefined for a clean one. */
-function provenanceLineOf(request: ApprovalRoundAnnouncement["requests"][number], personHosts: ReadonlySet<string>): string | undefined {
+function provenanceLineOf(
+  request: ApprovalRoundAnnouncement["requests"][number],
+  personHosts: ReadonlySet<string>,
+  t: CoreT,
+): string | undefined {
   const from = requestSources(request);
   if (from === undefined && !requestTainted(request)) return undefined;
   const onceOnly = (request.allowedScopes ?? ["once"]).every((scope) => scope === "once");
@@ -350,7 +434,10 @@ function provenanceLineOf(request: ApprovalRoundAnnouncement["requests"][number]
   const sourceHosts = new Set((from?.refs ?? []).flatMap((ref) => (ref.host === undefined ? [] : [ref.host.toLowerCase()])));
   const rearmable = new Set([...personHosts].filter((host) => sourceHosts.has(host)));
   // Clipped first, so a cut never falls inside a host put back.
-  return rearmPersonHosts(clip(disarmUrls(approvalProvenanceLine(from ?? { sources: [], refs: [] }, onceOnly), new Set()), 400), rearmable);
+  return rearmPersonHosts(
+    clip(disarmUrls(approvalProvenanceLine(from ?? { sources: [], refs: [] }, onceOnly, t), new Set()), 400),
+    rearmable,
+  );
 }
 
 /**
@@ -425,31 +512,24 @@ export function formOfDetail(detail: Readonly<Record<string, unknown>> | undefin
 }
 
 /** What a channel's chat is told when its turn waits on a review it cannot give there. */
-export function reviewNoticeText(requests: readonly { readonly toolName: string }[]): string {
+export function reviewNoticeText(requests: readonly { readonly toolName: string }[], t: CoreT = coreEnglish): string {
   const screenshots = requests.every((request) => request.toolName === "browser.capture");
-  const what =
-    requests.length === 1
-      ? screenshots
-        ? "The screenshot I took is"
-        : "A file I made is"
-      : `${requests.length} ${screenshots ? "screenshots" : "files"} I made are`;
-  return (
-    `📎 ${what} waiting for your review before I can use ${requests.length === 1 ? "it" : "them"}. ` +
-    "Review it in the Tavi app (the chat's Held files), or send a new message and I'll go on without it."
-  );
+  if (requests.length === 1) return `📎 ${t(screenshots ? "channel.review.screenshot" : "channel.review.file")}`;
+  return `📎 ${t(screenshots ? "channel.review.screenshots" : "channel.review.files", { n: String(requests.length) })}`;
 }
 
 /** How a card with buttons is answered: press one, or type the answer — the bare verb where it decides this round. */
-function pressLine(token: string, ownChat: boolean): string {
+function pressLine(token: string, ownChat: boolean, t: CoreT): string {
+  const words = approvalWords(t);
   return ownChat
-    ? 'Press a button below, or reply "approve", or "reject" with your reason.'
-    : `Press a button below, or reply "approve ${token}", or "reject ${token}" with your reason.`;
+    ? t("channel.approval.press.own", { approve: words.approve, reject: words.reject })
+    : t("channel.approval.press.token", { approve: words.approve, reject: words.reject, token });
 }
 
 /** The line that says when an announced round is rejected unless decided. */
-export const roundExpiryLine = (expiresAt: string, timeZone?: string): string => {
-  const by = deadlineText(expiresAt, undefined, timeZone);
-  return by === "" ? "If nobody decides it in time, it is rejected." : `⌛ Not decided by ${by}, it is rejected.`;
+export const roundExpiryLine = (expiresAt: string, timeZone?: string, t: CoreT = coreEnglish): string => {
+  const by = deadlineText(expiresAt, undefined, timeZone, t);
+  return by === "" ? t("channel.approval.expiryUnknown") : `⌛ ${t("channel.approval.expiry", { by })}`;
 };
 
 /** Text under a call's line, every line of it indented, so a multi-line detail (a form's fields) stays under its call. */
@@ -466,6 +546,8 @@ export function renderRoundText(
   expiresAt: string | undefined,
   options: RoundTextOptions = {},
 ): string {
+  const t = options.t ?? coreEnglish;
+  const words = approvalWords(t);
   const level = maxRisk(...round.requests.map((request) => request.risk?.level ?? "medium"));
   const group = roundGroup(round.requests);
   // A call asked after the chat read outside content is rated at least high (SECURITY-MODEL.md, taint):
@@ -473,11 +555,11 @@ export function renderRoundText(
   // alone made each high call so (`risk.raisedByTaint`), never one high for its own sake.
   const byTaint =
     level === "high" && round.requests.every((request) => request.risk?.level !== "high" || request.risk.raisedByTaint === true);
-  const risk = `${RISK_MARK[level]} risk${byTaint ? ", as the chat read outside content" : ""}`;
+  const risk = t(byTaint ? "channel.approval.riskByTaint" : "channel.approval.risk", { level: riskMark(level, t) });
   const headline =
     group === undefined
-      ? `🔐 Approval needed — ${round.requests.length === 1 ? "1 action" : `${round.requests.length} actions`}, ${risk}`
-      : `🔐 This task wants to use ${groupName(group, round.requests)} — ${risk}`;
+      ? `🔐 ${t("channel.approval.headline", { count: round.requests.length, n: String(round.requests.length), risk })}`
+      : `🔐 ${t("channel.approval.headlineGroup", { group: groupName(group, round.requests, t), risk })}`;
   const lines = [headline];
   // A message is bounded by its channel (`maxTextLength`); a round of up to
   // 64 calls lists what fits and says where the rest can be read.
@@ -490,7 +572,7 @@ export function renderRoundText(
   let shownCount = 0;
   const personHosts = options.personHosts ?? new Set<string>();
   for (const [index, request] of round.requests.entries()) {
-    const entry = [`${index + 1}. ${clip(approvalTitleOf(request), 220)}`];
+    const entry = [`${index + 1}. ${clip(titleOf(request, t), 220)}`];
     const form = request.display?.form;
     // A form's own table stands for its plain-text `command`, and is not clipped: every row or none.
     const shown =
@@ -498,23 +580,25 @@ export function renderRoundText(
     if (shown !== undefined && shown !== request.display?.title) entry.push(indented(clip(shown, 300)));
     // What approving for the chat covers, where that is offered.
     if (request.display?.forThisChat !== undefined && request.allowedScopes?.includes("session") === true)
-      entry.push(`   for this chat, approving covers: ${clip(request.display.forThisChat, 200)}`);
+      entry.push(`   ${t("channel.approval.forThisChat", { what: clip(request.display.forThisChat, 200) })}`);
     // What runs from standard input is part of the command, so the card shows it beside it.
     const stdin = request.display?.stdin;
-    if (stdin !== undefined)
+    if (stdin !== undefined) {
+      const text = clip(stdin.replace(/\r?\n/g, " ⏎ "), 300);
       entry.push(
-        `   stdin: ${clip(stdin.replace(/\r?\n/g, " ⏎ "), 300)}${stdin.length > 300 ? ` (${stdin.length} characters: \`tavi approvals list\` shows more)` : ""}`,
+        `   ${stdin.length > 300 ? t("channel.approval.stdinLong", { text, n: String(stdin.length) }) : t("channel.approval.stdin", { text })}`,
       );
+    }
     // Why it is asked, and from where, in one line: "⚠ after reading example[.]com, mail
     // from x[.]example — once only". Its hosts and any title are content's, so they are disarmed as every
     // tainted turn's outbound text is (a channel would link a bare domain), but a host the chat's people wrote.
-    const line = provenanceLineOf(request, personHosts);
+    const line = provenanceLineOf(request, personHosts, t);
     if (line !== undefined) entry.push(`   ${line}`);
     for (const reason of request.risk?.reasons ?? [])
       if (line === undefined || !isTaintReason(reason)) entry.push(`   ⚠ ${clip(reason, 160)}`);
     const size = entry.join("\n").length + 1;
     if (used + size > budget) {
-      lines.push(`…and ${round.requests.length - index} more — \`tavi approvals list\` shows every call.`);
+      lines.push(t("channel.approval.more", { n: String(round.requests.length - index) }));
       break;
     }
     lines.push(...entry);
@@ -528,41 +612,46 @@ export function renderRoundText(
   const email = options.email;
   // An email's buttons are its links, which it says how to use on its own.
   const buttons = email === undefined ? options.buttons : undefined;
+  const reject = t("channel.approval.answer.reject", { reject: words.reject, token, reason: words.reason });
   if (options.operatorDecides === true) {
-    lines.push("Waiting for the operator to approve or reject it; you will hear here once they have.");
+    lines.push(t("channel.approval.operatorDecides"));
   } else if (options.formApproval === "none") {
     // A value not shown here, or masked without a verified source, is decided where every value is shown.
-    lines.push(
-      `Reply: reject ${token} <reason> — this form fill can be approved only in Tavi: \`tavi approvals show ${round.taskId}\` or the approvals view in \`tavi ui\`.`,
-    );
+    lines.push(t("channel.approval.formNone", { reject: words.reject, token, reason: words.reason, taskId: round.taskId }));
   } else if (options.formApproval === "link") {
-    lines.push(
-      `A reply cannot approve a form fill: use a link below (its page shows the values), \`tavi approvals show ${round.taskId}\`, or the approvals view in \`tavi ui\`. Reply \`reject ${token} <reason>\` to reject it.`,
-    );
+    lines.push(t("channel.approval.formLink", { reject: words.reject, token, reason: words.reason, taskId: round.taskId }));
   } else if (email !== undefined && level !== "low" && level !== "medium") {
     // A reply cannot decide a high-risk round; without links nothing in the email can.
     lines.push(
-      email.links
-        ? `A reply cannot decide a ${RISK_MARK[level]}-risk round: use a link below, \`tavi approvals approve ${round.taskId}\`, or the approvals view in \`tavi ui\`.`
-        : `Decide it with \`tavi approvals approve ${round.taskId}\` (or \`reject\`), or in the approvals view of \`tavi ui\`: a reply cannot decide a ${RISK_MARK[level]}-risk round.`,
+      t(email.links ? "channel.approval.emailHighLinks" : "channel.approval.emailHighNoLinks", {
+        level: riskMark(level, t),
+        taskId: round.taskId,
+      }),
     );
   } else if (group !== undefined) {
     // One question for the group: approving allows it for the chat.
-    const name = groupName(group, round.requests);
-    const note = toolGroupScopeNote(group);
+    const name = groupName(group, round.requests, t);
+    const note = toolGroupScopeNote(group, t);
     if (note !== undefined) lines.push(note);
     const answers =
       email === undefined
         ? [
-            `approve ${token} (${name}, for this chat)`,
-            ...(roundScopes(round.requests).includes("always") ? [`approve ${token} always (${name}, in every chat)`] : []),
-            `reject ${token} <reason>`,
+            t("channel.approval.answer.groupChat", { approve: words.approve, token, name }),
+            ...(roundScopes(round.requests).includes("always")
+              ? [t("channel.approval.answer.groupAlways", { approve: words.approve, always: words.always, token, name })]
+              : []),
+            reject,
           ]
         : [
-            `approve ${token} (this call only: the next one asks again${email.links ? "; a link below allows it for the chat" : ""})`,
-            `reject ${token} <reason>`,
+            t(email.links ? "channel.approval.answer.emailOnceLinks" : "channel.approval.answer.emailOnce", {
+              approve: words.approve,
+              token,
+            }),
+            reject,
           ];
-    lines.push(buttons === undefined ? `Reply: ${answers.join(" · ")}` : pressLine(token, buttons.ownChat));
+    lines.push(
+      buttons === undefined ? t("channel.approval.reply", { answers: answers.join(" · ") }) : pressLine(token, buttons.ownChat, t),
+    );
   } else {
     // An email reply approves once only; a wider scope needs a link.
     const scopes = email === undefined ? roundScopes(round.requests) : (["once"] as const);
@@ -577,35 +666,46 @@ export function renderRoundText(
           .map((request) => request.scopeGroup ?? request.toolName),
       ),
     ];
-    const named = wholeTools.length > 3 ? `${wholeTools.slice(0, 3).join(", ")} or another listed tool` : wholeTools.join(" or ");
+    const named =
+      wholeTools.length > 3
+        ? t("channel.approval.tools.more", { tools: wholeTools.slice(0, 3).join(", ") })
+        : wholeTools.join(t("channel.approval.tools.or"));
+    const tools = clip(named, 200);
     // `always` for such a call — a grouped one, or a search — is a rule for any call of it, in every chat.
-    const scopeHint = (scope: ApprovalScope) =>
-      scope === "session" && wholeTools.length > 0
-        ? ` (any ${clip(named, 200)} call in this chat)`
+    const scoped = (scope: ApprovalScope): string => {
+      const said = { approve: words.approve, token, scope: scope === "always" ? words.always : words.session, tools };
+      return scope === "session" && wholeTools.length > 0
+        ? t("channel.approval.answer.scopedSession", said)
         : scope === "always" && wholeTools.length > 0
-          ? ` (any ${clip(named, 200)} call, in every chat)`
-          : "";
+          ? t("channel.approval.answer.scopedAlways", said)
+          : t("channel.approval.answer.scoped", said);
+    };
     const answers = [
-      `approve ${token}`,
-      ...scopes.filter((scope) => scope !== "once").map((scope) => `approve ${token} ${scope}${scopeHint(scope)}`),
-      `reject ${token} <reason>`,
+      t("channel.approval.answer.approve", { approve: words.approve, token }),
+      ...scopes.filter((scope) => scope !== "once").map(scoped),
+      reject,
     ];
-    if (buttons === undefined) lines.push(`Reply: ${answers.join(" · ")}`);
+    if (buttons === undefined) lines.push(t("channel.approval.reply", { answers: answers.join(" · ") }));
     else {
       // The buttons are one word each: what Session and Always cover is said here.
       if (wholeTools.length > 0) {
-        const any = `any ${clip(named, 200)} call`;
         const wide = [
-          ...(scopes.includes("session") ? [`Session allows ${any} in this chat.`] : []),
-          ...(scopes.includes("always") ? [`Always allows ${any}, in every chat.`] : []),
+          ...(scopes.includes("session") ? [t("channel.approval.wide.session", { tools })] : []),
+          ...(scopes.includes("always") ? [t("channel.approval.wide.always", { tools })] : []),
         ];
         if (wide.length > 0) lines.push(wide.join(" "));
       }
-      lines.push(pressLine(token, buttons.ownChat));
+      lines.push(pressLine(token, buttons.ownChat, t));
     }
   }
-  if (expiresAt !== undefined) lines.push(roundExpiryLine(expiresAt));
+  if (expiresAt !== undefined) lines.push(roundExpiryLine(expiresAt, undefined, t));
   return lines.join("\n");
+}
+
+/** A call's title as a line says it: `approvalTitleOf` in `t`'s words. */
+function titleOf(request: ApprovalRoundAnnouncement["requests"][number], t: CoreT): string {
+  const title = request.display?.title ?? request.summary;
+  return request.display?.destructive === true ? t("channel.approval.cannotUndo", { title }) : title;
 }
 
 /** A link's confirmation page, as the listener renders it. */
@@ -630,51 +730,65 @@ export interface LinkView {
  * What a settled question's message says under it. `via` names where it
  * was answered when that is not the message's own connection.
  */
-export function questionReceipt(outcome: AgentWaitOutcome, via: string | undefined, at: string, timeZone?: string): string {
-  const when = clockTime(at, timeZone);
+export function questionReceipt(
+  outcome: AgentWaitOutcome,
+  via: string | undefined,
+  at: string,
+  timeZone?: string,
+  t: CoreT = coreEnglish,
+): string {
+  const when = clockTime(at, timeZone, t);
   if (outcome.kind === "answered") {
     const answer =
       outcome.answers === undefined || outcome.answers.length === 0
         ? (outcome.other ?? outcome.replyText ?? "")
         : [...outcome.answers, ...(outcome.other === undefined ? [] : [outcome.other])].join(", ");
-    return `✅ ${clip(answer, 200)}${via === undefined ? "" : ` — answered via ${FRONT_END_NAMES[via] ?? via}${when}`}`;
+    return via === undefined
+      ? t("channel.question.answered", { answer: clip(answer, 200) })
+      : t("channel.question.answeredVia", { answer: clip(answer, 200), via: frontEndName(via, t), when });
   }
   if (outcome.kind === "wait-timeout") {
     // A question with a default went on with it.
     const fallback = outcome.answers?.[0];
-    return fallback === undefined
-      ? `⌛ No answer came in time${when}; the task went on without one.`
-      : `⌛ No answer came in time${when}; the task went with the default: ${clip(fallback, 200)}.`;
+    return `⌛ ${
+      fallback === undefined
+        ? t("channel.question.timeout", { when })
+        : t("channel.question.timeoutDefault", { when, fallback: clip(fallback, 200) })
+    }`;
   }
-  return `✖ This question was withdrawn${when}.`;
+  return `✖ ${t("channel.question.withdrawnAt", { when })}`;
 }
 
 /** What a press on a question that is no longer open is told. */
-export function closedQuestionText(wait: AgentWaitIntentRecord | undefined): string {
+export function closedQuestionText(wait: AgentWaitIntentRecord | undefined, t: CoreT = coreEnglish): string {
   if (wait?.settledOutcome?.kind === "wait-timeout") {
     const fallback = wait.settledOutcome.answers?.[0];
     return fallback === undefined
-      ? "This question expired without an answer."
-      : `This question expired; the task went with the default: ${clip(fallback, 150)}.`;
+      ? t("channel.question.closed.expired")
+      : t("channel.question.closed.expiredDefault", { fallback: clip(fallback, 150) });
   }
-  if (wait?.settledOutcome?.error?.code === "CONVERSATION_RESET") return "This conversation was reset, so this question was withdrawn.";
-  if (wait?.settledOutcome !== undefined && wait.settledOutcome.kind !== "answered") return "This question was withdrawn.";
-  return "This question was already answered.";
+  if (wait?.settledOutcome?.error?.code === "CONVERSATION_RESET") return t("channel.question.closed.reset");
+  if (wait?.settledOutcome !== undefined && wait.settledOutcome.kind !== "answered") return t("channel.question.closed.withdrawn");
+  return t("channel.question.closed.answered");
 }
 
 /** How a front end is named in a settlement notice, when the connection itself has no better name. */
-const FRONT_END_NAMES: Readonly<Record<string, string>> = {
-  cli: "the CLI",
-  ipc: "a terminal",
-  bridge: "the web app",
-  link: "an email link",
-  policy: "policy",
-};
+const FRONT_END_KEYS = {
+  cli: "channel.via.cli",
+  ipc: "channel.via.ipc",
+  bridge: "channel.via.bridge",
+  link: "channel.via.link",
+  policy: "channel.via.policy",
+} as const;
+
+/** A front end's or a connection's name, as a receipt says where it was decided. */
+const frontEndName = (via: string, t: CoreT): string =>
+  Object.hasOwn(FRONT_END_KEYS, via) ? t(FRONT_END_KEYS[via as keyof typeof FRONT_END_KEYS]) : via;
 
 /** The time of day a decision was made, as a chat shows it: ` at 05:24 EET`, ` at 14:02 UTC` without a zone. */
-const clockTime = (at: string, timeZone?: string): string => {
+const clockTime = (at: string, timeZone: string | undefined, t: CoreT): string => {
   const date = new Date(at);
-  return Number.isNaN(date.getTime()) ? "" : ` at ${wallTime(date, usableZone(timeZone))}`;
+  return Number.isNaN(date.getTime()) ? "" : t("channel.time.at", { time: wallTime(date, usableZone(timeZone)) });
 };
 
 /** How a settlement names its decision's place and person; each optional. */
@@ -683,10 +797,9 @@ export interface SettlementView {
   readonly timeZone?: string;
   /** Who decided, as the chat knows them: a bound person's name, "Tavi's owner"; the principal id when absent. */
   readonly decider?: string;
+  /** The workspace's words; English when absent. */
+  readonly t?: CoreT;
 }
-
-/** What each scope allowed, as a settlement says it. */
-const SCOPE_WORDS: Readonly<Record<ApprovalScope, string>> = { once: "", session: " for this chat", always: " in every chat" };
 
 export function settlementText(
   settlement: ApprovalRoundSettlement,
@@ -695,16 +808,25 @@ export function settlementText(
   at: string,
   view: SettlementView = {},
 ): string {
+  const t = view.t ?? coreEnglish;
   // No round token: a chat's reader has the card above it, and the token is only for typing.
-  const when = clockTime(at, view.timeZone);
-  if (expired) return `⌛ Not decided in time, so it was rejected${when}; the task goes on without it.`;
+  const when = clockTime(at, view.timeZone, t);
+  if (expired) return `⌛ ${t("channel.settle.expired", { when })}`;
   const approved = settlement.decisions.filter((decision) => decision.approved);
-  const who = view.decider ?? settlement.decisions[0]?.decidedBy ?? "Tavi's owner";
-  const via = FRONT_END_NAMES[channel] ?? channel;
+  const who = view.decider ?? settlement.decisions[0]?.decidedBy ?? t("channel.settle.owner");
+  const via = frontEndName(channel, t);
   if (approved.length === settlement.decisions.length) {
     const scopes = [...new Set(approved.map((decision) => decision.scope))];
-    return `✅ Approved${scopes.length === 1 ? SCOPE_WORDS[scopes[0] ?? "once"] : ""} by ${who} via ${via}${when}.`;
+    const scope = scopes.length === 1 ? (scopes[0] ?? "once") : "once";
+    return `✅ ${t(
+      scope === "session"
+        ? "channel.settle.approvedSession"
+        : scope === "always"
+          ? "channel.settle.approvedAlways"
+          : "channel.settle.approved",
+      { who, via, when },
+    )}`;
   }
-  if (approved.length === 0) return `❌ Rejected by ${who} via ${via}${when}.`;
-  return `☑️ Decided by ${who} via ${via}${when}: ${approved.length} of ${settlement.decisions.length} approved.`;
+  if (approved.length === 0) return `❌ ${t("channel.settle.rejected", { who, via, when })}`;
+  return `☑️ ${t("channel.settle.mixed", { who, via, when, approved: String(approved.length), total: String(settlement.decisions.length) })}`;
 }

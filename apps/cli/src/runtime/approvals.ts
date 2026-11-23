@@ -9,6 +9,7 @@ import { createHeartbeatButtons } from "../features/heartbeat/buttons.js";
 import { createReminderButtons } from "../features/reminders/delivery.js";
 import { isLocalConnectionId } from "@tavi/contracts";
 import { createChannelApprovals } from "../features/approvals/channel-approvals.js";
+import { workspaceLocaleOf } from "../features/channels/channel-words.js";
 import { hostsWrittenIn } from "../features/approvals/channel-approval-text.js";
 import { createConnectWaits } from "../features/apps/connect-waits.js";
 import { createMemoryChannelCards } from "../features/memory/channel-cards.js";
@@ -153,6 +154,7 @@ export function composeApprovals(composed: RunEventsContext) {
     },
     // A round's deadline and decision are shown in the workspace's zone, as its reminders are.
     timeZoneOf: workspaceZoneOf(persistencePort.repositories.workspaceSettings),
+    localeOf: workspaceLocaleOf(persistencePort.repositories.workspaceSettings),
     readPin: async () => (await secrets.getSecret(APPROVAL_PIN_CREDENTIAL_REF)) ?? undefined,
     // A person's rounds are the workspace operator's to decide (Allowed people).
     operatorOf: (workspaceId) => access.resolveWorkspace(workspaceId)?.principalId,
@@ -165,6 +167,7 @@ export function composeApprovals(composed: RunEventsContext) {
     messaging,
     now: () => clock.now(),
     onDiagnostic: (message, fields) => logger.warn(message, fields),
+    localeOf: workspaceLocaleOf(persistencePort.repositories.workspaceSettings),
   });
   late.reminderButtons = reminderButtons;
   // Open, Snooze and Don't tell me under a heartbeat item.
@@ -173,6 +176,7 @@ export function composeApprovals(composed: RunEventsContext) {
     messaging,
     now: () => clock.now(),
     onDiagnostic: (message, fields) => logger.warn(message, fields),
+    localeOf: workspaceLocaleOf(persistencePort.repositories.workspaceSettings),
   });
   late.heartbeatButtons = heartbeatButtons;
   // Memory cards on direct channels, and their buttons.
@@ -185,6 +189,7 @@ export function composeApprovals(composed: RunEventsContext) {
     channelName,
     reachOf: (taskId) => memoryReachOf(persistencePort.repositories, taskId),
     memorySettings,
+    localeOf: workspaceLocaleOf(persistencePort.repositories.workspaceSettings),
     // What the chat knows, for the disarm of a card's proposals made under taint.
     knownUrlsOf: async (taskId) => {
       const task = await persistencePort.repositories.tasks.get(taskId);

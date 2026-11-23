@@ -1,4 +1,4 @@
-import { type ScheduleRecord, scheduleMaxRunMinutes, tokenCountText } from "@tavi/contracts";
+import { type ScheduleRecord, type TextRef, scheduleMaxRunMinutes, textRef, tokenCountText } from "@tavi/contracts";
 
 import type { RunBudget, RunBudgetLimit } from "./run-budget.js";
 import { pauseIfFailing, sendAlert } from "./schedule-alerts.js";
@@ -32,17 +32,17 @@ export function carryBudget(
  * process counts it, since a run paused on a worker or an answer, or one another
  * owner runs, is not stopped by it.
  */
-export function overlapText(schedule: ScheduleRecord, deps: ScheduleSchedulerDependencies): string {
+export function overlapText(schedule: ScheduleRecord, deps: ScheduleSchedulerDependencies): TextRef {
   const inFlight = deps.inFlight;
   const budget = inFlight
     ?.tasksOf(schedule.scheduleId)
     .map((taskId) => inFlight.budgetOf(taskId))
     .find((kept) => kept !== undefined && !kept.spent);
-  const skipped = `Scheduled run "${schedule.name}" did not start:`;
-  const minutes = scheduleMaxRunMinutes(schedule);
-  if (budget === undefined) return `${skipped} the previous run is still going.`;
-  if (budget.counting) return `${skipped} the previous run is still going. It is stopped once it has worked ${minutes} minutes.`;
-  return `${skipped} the previous run is waiting on a worker or an answer; only the time it works counts toward its ${minutes}-minute limit.`;
+  const name = schedule.name;
+  const minutes = String(scheduleMaxRunMinutes(schedule));
+  if (budget === undefined) return textRef("channel.schedule.alert.overlap", { name });
+  if (budget.counting) return textRef("channel.schedule.alert.overlapCounting", { name, minutes });
+  return textRef("channel.schedule.alert.overlapWaiting", { name, minutes });
 }
 
 /** How a run stopped at its schedule's limit is recorded: its time, or its token ceiling (`budget` its spent one, when known). */
@@ -114,19 +114,26 @@ export async function stopOverrunRun(
         }
       : { scheduleId: schedule.scheduleId, fireTime: run.fireTime, taskId: run.taskId, minutes },
   });
-  const stopped = `Scheduled run "${schedule.name}"${run.taskId === undefined ? "" : ` (task ${run.taskId})`} was stopped:`;
+  const stopped =
+    run.taskId === undefined
+      ? textRef("channel.schedule.alert.stopped", { name: schedule.name })
+      : textRef("channel.schedule.alert.stoppedTask", { name: schedule.name, taskId: run.taskId });
   await sendAlert(
     schedule,
     overTokens
       ? {
           identity: run.alertIdentity,
           kind: "run-budget",
-          text: `${stopped} it used ${tokenCountText(spent.usedTokens)}, past its ceiling of ${ceiling}. Its next fire runs as usual.`,
+          text: textRef("channel.schedule.alert.overTokens", {
+            stopped,
+            tokens: textRef("schedule.tokens", { count: Math.round(spent.usedTokens) }),
+            ceiling: schedule.maxTokens === undefined ? "" : textRef("schedule.tokens", { count: Math.round(schedule.maxTokens) }),
+          }),
         }
       : {
           identity: run.alertIdentity,
           kind: "run-timeout",
-          text: `${stopped} it worked past its ${minutes}-minute limit. Its next fire runs as usual.`,
+          text: textRef("channel.schedule.alert.overTime", { stopped, minutes: String(minutes) }),
         },
     deps,
   );

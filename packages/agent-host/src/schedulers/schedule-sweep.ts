@@ -1,4 +1,4 @@
-import type { ScheduleRecord } from "@tavi/contracts";
+import { textRef, type ScheduleRecord } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
 import { pauseIfFailing, sendAlert } from "./schedule-alerts.js";
@@ -108,7 +108,7 @@ export async function sweepSchedules(
       }
       await sendAlert(
         schedule,
-        { identity: alertIdentity, kind: "fire-threw", text: `Scheduled run "${schedule.name}" could not be dispatched: ${detail}` },
+        { identity: alertIdentity, kind: "fire-threw", text: textRef("channel.schedule.alert.fireThrew", { name: schedule.name, detail }) },
         deps,
       );
       try {

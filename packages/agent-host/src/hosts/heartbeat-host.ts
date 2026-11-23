@@ -27,7 +27,11 @@ import {
   type RecordHeartbeatTickInput,
   type TurnHooksPort,
   textRef,
+  localDateTime,
+  storedWords,
+  type StoredWords,
 } from "@tavi/contracts";
+import type { CoreKey } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
 
 import {
@@ -398,7 +402,7 @@ export function startHeartbeatHost(
   const pause = async (
     state: HeartbeatState,
     reason: HeartbeatPauseReason,
-    message: string,
+    message: StoredWords,
     until?: string,
     alert = true,
   ): Promise<void> => {
@@ -425,7 +429,7 @@ export function startHeartbeatHost(
         ),
       );
     }
-    await deps.announcePause?.(state, reason, message);
+    await deps.announcePause?.(state, reason, storedWords(message).text);
   };
 
   /**
@@ -454,19 +458,13 @@ export function startHeartbeatHost(
   /** The day's budget is spent: it rests until its next window after tonight's reset, said once. */
   const restForBudget = async (state: HeartbeatState, timezone: string, now: Date): Promise<void> => {
     const until = budgetResumesAt(state, timezone, now);
-    const local = new Intl.DateTimeFormat("en-GB", {
-      timeZone: timezone,
-      weekday: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-      hourCycle: "h23",
-    }).format(new Date(until));
-    await pause(
-      state,
-      "budget",
-      `The heartbeat used today's budget, or has too little of it left for another check, and rests until ${local}.`,
-      until,
-    );
+    // "Thu 07:00", the weekday by key so the alert says it in its reader's language.
+    const parts = localDateTime(new Date(until), timezone);
+    const local = textRef("channel.heartbeat.alert.dayClock", {
+      weekday: textRef(`date.weekdayShort.${parts.weekday}` as CoreKey),
+      time: `${String(parts.hour).padStart(2, "0")}:${String(parts.minute).padStart(2, "0")}`,
+    });
+    await pause(state, "budget", textRef("channel.heartbeat.alert.budget", { time: local }), until);
   };
 
   /** Hand a check's signals back as new: it did not look at them (failed, declined, stopped). */
@@ -540,11 +538,7 @@ export function startHeartbeatHost(
     if (entry === undefined && deps.providers.reloading(state.config.providerId)) return await refuse("provider-reloading");
     if (entry === undefined) {
       // Never a silent switch to another provider: its data flows differ.
-      await pause(
-        state,
-        "provider",
-        `The heartbeat paused: its provider ${state.config.providerId} is not available. Use the built-in one, or pick another.`,
-      );
+      await pause(state, "provider", textRef("channel.heartbeat.alert.providerMissing", { providerId: state.config.providerId }));
       return { skipped: await skip(state, "provider-unavailable", wakeReason, "skipped", "provider") };
     }
     if (!(await deps.modelAvailable(state))) return await refuse("no-model");
@@ -927,16 +921,15 @@ export function startHeartbeatHost(
         await restForBudget(state, timezone, deps.now());
       } else if (raced === "withdrawn" && entry.dev !== true && !switched) {
         // Never a silent switch to another provider, and no waiting for the next check to find it gone.
-        await pause(
-          state,
-          "provider",
-          `The heartbeat paused: its provider ${state.config.providerId} stopped. Use the built-in one, or pick another.`,
-        );
+        await pause(state, "provider", textRef("channel.heartbeat.alert.providerStopped", { providerId: state.config.providerId }));
       } else if (failing) {
         await pause(
           state,
           "failures",
-          `The heartbeat failed ${HEARTBEAT_FAILURES_TO_PAUSE} times in a row (last: ${(result.reason ?? "unknown").replaceAll("-", " ")}) and paused; resume it once the cause is fixed (the log has the error).`,
+          textRef("channel.heartbeat.alert.failures", {
+            n: String(HEARTBEAT_FAILURES_TO_PAUSE),
+            reason: (result.reason ?? "unknown").replaceAll("-", " "),
+          }),
           undefined,
           await failureAlertDue(state, recorded),
         );

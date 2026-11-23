@@ -1,4 +1,13 @@
-import { englishOf, SCHEDULE_PAUSE_AFTER_FAILURES, textRef, type ScheduleRecord, type TextRef } from "@tavi/contracts";
+import {
+  SCHEDULE_PAUSE_AFTER_FAILURES,
+  storedWords,
+  storedWordsIn,
+  textRef,
+  type ScheduleRecord,
+  type StoredWords,
+  type TextRef,
+} from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 
 import type { ScheduleSchedulerDependencies } from "./schedule-dependencies.js";
 
@@ -50,14 +59,17 @@ export type ScheduleAlertKind =
  * The object parameter is deliberate: `kind` and `text` are both strings, so
  * positional arguments would let a caller swap them into a plausible-but-wrong
  * key without the compiler noticing.
+ *
+ * `text` is Tavi's words by key where it can be: the alert target reads it in
+ * its workspace's language (`channelWords`), and Home in its reader's.
  */
 export async function sendAlert(
   schedule: ScheduleRecord,
   alert: {
     readonly identity: string;
     readonly kind: ScheduleAlertKind;
-    readonly text: string;
-    readonly homeText?: string;
+    readonly text: StoredWords;
+    readonly homeText?: StoredWords;
     /** What Home reads, by key, where it is Tavi's words alone: Home says it in its reader's language. */
     readonly homeRef?: TextRef;
   },
@@ -75,7 +87,7 @@ export async function sendAlert(
       connectionId: target.connectionId,
       workspaceId: schedule.workspaceId,
       destination: { chatId: target.destination },
-      parts: [{ content: alert.text }],
+      parts: [{ content: storedWordsIn(alert.text, await alertWords(schedule, deps)) }],
     });
     // A provider *refusal* is a return value, not a throw, and the outbox stores
     // it as a resolved row: the next sweep replays that outcome without calling
@@ -102,6 +114,16 @@ export async function sendAlert(
   }
 }
 
+/** The words the alert target reads: its workspace's language, English when it has none or it cannot be read. */
+async function alertWords(schedule: ScheduleRecord, deps: ScheduleSchedulerDependencies): Promise<CoreT> {
+  try {
+    return (await deps.channelWords?.(schedule.workspaceId)) ?? coreEnglish;
+  } catch (error) {
+    deps.log({ level: "warn", message: "a schedule alert's language could not be read; it is sent in English", detail: { error } });
+    return coreEnglish;
+  }
+}
+
 /**
  * Post an alert into its schedule's person's Home, keyed as its send (`effectId`) so it is told once per cause
  * however often it is raised — except a round decided elsewhere, which stays in the log. `homeText`, when given, is
@@ -110,7 +132,7 @@ export async function sendAlert(
  */
 async function alertInHome(
   schedule: ScheduleRecord,
-  alert: { readonly kind: ScheduleAlertKind; readonly text: string; readonly homeText?: string; readonly homeRef?: TextRef },
+  alert: { readonly kind: ScheduleAlertKind; readonly text: StoredWords; readonly homeText?: StoredWords; readonly homeRef?: TextRef },
   effectId: string,
   deps: ScheduleSchedulerDependencies,
   nowhere: string,
@@ -118,12 +140,15 @@ async function alertInHome(
   // A round the person decided themselves is not news to them: it stays in
   // the run history and the log.
   if (alert.kind === "round-decided-elsewhere") return;
+  // Home is stored in English with its reference, if the words have one: it is said in its reader's language.
+  const home = storedWords(alert.homeText ?? alert.text);
+  const ref = alert.homeRef ?? home.ref;
   try {
     const posted =
       (await deps.alertHome?.(schedule, {
         sourceKey: effectId,
-        text: alert.homeText ?? alert.text,
-        ...(alert.homeRef === undefined ? {} : { ref: alert.homeRef }),
+        text: home.text,
+        ...(ref === undefined ? {} : { ref }),
       })) === true;
     if (!posted) deps.log({ level: "warn", message: nowhere, detail: { scheduleId: schedule.scheduleId, kind: alert.kind } });
   } catch (error) {
@@ -162,9 +187,7 @@ export async function pauseIfFailing(
     {
       identity: fire.alertIdentity,
       kind: "paused",
-      // The alert target reads the English: a chat app's messages follow the language in a later release.
-      text: englishOf(said),
-      homeRef: said,
+      text: said,
     },
     deps,
   );

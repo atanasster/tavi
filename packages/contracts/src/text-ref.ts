@@ -86,3 +86,9 @@ export type StoredWords = string | TextRef;
 export function storedWords(words: StoredWords): { readonly text: string; readonly ref?: TextRef } {
   return typeof words === "string" ? { text: words } : { text: englishOf(words), ref: words };
 }
+
+/** `words` said by `t`: a reference in its language, plain text as it is. */
+export function storedWordsIn(words: StoredWords, t: CoreT): string {
+  const stored = storedWords(words);
+  return localizedText(stored.text, stored.ref, t);
+}

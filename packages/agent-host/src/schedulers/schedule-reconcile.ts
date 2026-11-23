@@ -1,4 +1,4 @@
-import type { ScheduleRecord } from "@tavi/contracts";
+import { textRef, type ScheduleRecord } from "@tavi/contracts";
 
 import { pauseIfFailing, sendAlert } from "./schedule-alerts.js";
 import { recordFinished } from "./schedule-cadence.js";
@@ -103,7 +103,7 @@ export async function reconcileOrphanedFires(deps: ScheduleSchedulerDependencies
       {
         identity: fireTime,
         kind: "stale-dispatch",
-        text: `Schedule "${schedule.name}": the ${fireTime} fire started but never reported a result, and the next fire is already scheduled.`,
+        text: textRef("channel.schedule.alert.staleDispatchNext", { name: schedule.name, fireTime }),
       },
       deps,
     );

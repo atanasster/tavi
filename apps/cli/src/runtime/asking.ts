@@ -10,16 +10,11 @@ import {
 } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 import type { createWorkflowAdapter, WorkflowAdapterOptions } from "@tavi/agent-host/workflow";
-import {
-  LINK_BEARER_NOTE,
-  questionButtons,
-  questionSubject,
-  questionToken,
-  renderQuestionText,
-} from "../features/approvals/channel-approval-text.js";
+import { questionButtons, questionSubject, questionToken, renderQuestionText } from "../features/approvals/channel-approval-text.js";
 import { createInjectionDetector } from "@tavi/runtime";
 import { injectionClassifierFor } from "./injection-classifier.js";
 import { destinationAllowed, destinationRefusal } from "../features/channels/destination.js";
+import { channelWords, workspaceLocaleOf } from "../features/channels/channel-words.js";
 import type { RoutineCheckpointHost } from "../features/routines/workflow.js";
 import { createOwnerChatGrants } from "./chat-scope.js";
 import type { ApprovalsContext } from "./approvals.js";
@@ -136,18 +131,29 @@ export function composeAsking(composed: ApprovalsContext) {
       throw new TaviError("UNAVAILABLE", "This schedule has no alert destination to ask in");
     }
     destination = destination ?? (alert === undefined ? undefined : { connectionId: alert.connectionId, chatId: alert.destination });
-    const text = renderQuestionText(question, choices, {
-      ...(context === undefined ? {} : { context }),
-      ...(deadlineAt === undefined ? {} : { deadlineAt }),
-      ...(origin === undefined || origin.trim() === "" ? {} : { origin }),
-      now: clock.now(),
-    });
+    // Said in the workspace's language; English when it cannot be read.
+    const t = await channelWords(
+      workspaceLocaleOf(persistencePort.repositories.workspaceSettings),
+      invocation.workspaceId,
+      (message, fields) => logger.warn(message, fields),
+    );
+    const text = renderQuestionText(
+      question,
+      choices,
+      {
+        ...(context === undefined ? {} : { context }),
+        ...(deadlineAt === undefined ? {} : { deadlineAt }),
+        ...(origin === undefined || origin.trim() === "" ? {} : { origin }),
+        now: clock.now(),
+      },
+      t,
+    );
     // An email names the question in its subject, with its token.
     const subjectFor = (connection: string) =>
-      isEmailConnection(connection) ? { subject: questionSubject(waitId, question, choices) } : {};
+      isEmailConnection(connection) ? { subject: questionSubject(waitId, question, choices, t) } : {};
     const buttonsFor = (connection: string) =>
       choices !== undefined && messaging.capabilitiesOf(connection)?.interactions === true
-        ? { buttons: questionButtons(questionToken(waitId), choices) }
+        ? { buttons: questionButtons(questionToken(waitId), choices, new Set(), t) }
         : {};
     // Recorded after a send, so a press, a link page or an edit after a
     // restart still finds where the question went.
@@ -184,7 +190,7 @@ export function composeAsking(composed: ApprovalsContext) {
         choices === undefined ? [] : await channelApprovals.questionLinkLines({ taskId, waitId, choices, connectionId: connection });
       return lines.length === 0
         ? text
-        : `${text}\n\nOr open a link — each asks you to confirm, and works once. ${LINK_BEARER_NOTE}\n${lines.join("\n")}`;
+        : `${text}\n\n${t("channel.question.linkIntro", { note: t("channel.approval.link.bearer") })}\n${lines.join("\n")}`;
     };
     // Called with the wait's row already active,
     // and never on a resumed turn: `waitFor` returns the settled outcome

@@ -13,13 +13,14 @@ import {
   type HeartbeatTarget,
   type TellHeartbeatItem,
   disarmUrls,
-  englishOf,
+  localDateTime,
   noticeWordsOf,
-  storedWords,
+  storedWordsIn,
   textRef,
   type StoredWords,
   type TextRef,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
 
@@ -50,6 +51,8 @@ export interface HeartbeatMessage {
 
 /** What the owner does with a heartbeat's words: Home and the channels. */
 export interface HeartbeatDeliveryPort {
+  /** The words its channel messages are said in: the workspace's language; absent, English. */
+  words?(state: HeartbeatState): Promise<CoreT>;
   /** Post (or update, under the same key) a notice in the person's Home; false when Home is off. */
   notify(
     state: HeartbeatState,
@@ -219,8 +222,8 @@ function noticeSummary(row: HeartbeatLedgerRow): StoredWords {
 }
 
 /** An item as a channel message: its title, its body, and where it came from. */
-function itemText(row: HeartbeatLedgerRow): string {
-  return [row.title, row.body, `Sources: ${row.sources.map((source) => source.label).join(", ")}`]
+function itemText(row: HeartbeatLedgerRow, t: CoreT): string {
+  return [row.title, row.body, t("channel.heartbeat.sources", { list: row.sources.map((source) => source.label).join(", ") })]
     .filter((part): part is string => part !== undefined && part !== "")
     .join("\n\n");
 }
@@ -257,6 +260,19 @@ async function sendAll(
   return accepted;
 }
 
+/** The words the channel messages are said in; English when the port has none or they cannot be read. */
+async function wordsOf(port: HeartbeatDeliveryPort, state: HeartbeatState, log: HeartbeatDeliveryLog): Promise<CoreT> {
+  try {
+    return (await port.words?.(state)) ?? coreEnglish;
+  } catch (error) {
+    log("warn", "a heartbeat's language could not be read; its channel messages are in English", {
+      workspaceId: state.workspaceId,
+      error: errorMessage(error),
+    });
+    return coreEnglish;
+  }
+}
+
 export type HeartbeatDeliveryLog = (level: "info" | "warn", message: string, fields?: Record<string, unknown>) => void;
 
 /** A Home notice that could not be written is logged, never what stops the channel messages. */
@@ -285,6 +301,7 @@ export async function deliverHeartbeatItems(
   rows: readonly HeartbeatLedgerRow[],
   log: HeartbeatDeliveryLog,
 ): Promise<void> {
+  const t = rows.some((row) => row.urgency === "now") ? await wordsOf(port, state, log) : coreEnglish;
   for (const row of rows) {
     await notifyIn(
       port,
@@ -302,7 +319,7 @@ export async function deliverHeartbeatItems(
       state,
       (target) => ({
         effectId: itemEffect(state, target, row),
-        text: itemText(row),
+        text: itemText(row, t),
         subject: row.title,
         ...(row.buttonToken === undefined ? {} : { buttonToken: row.buttonToken }),
       }),
@@ -332,7 +349,8 @@ export async function deliverHeartbeatDigest(
   const rows = await deps.repository.digestItems({ ...scope, since: new Date(since).toISOString(), limit: HEARTBEAT_DIGEST_ITEMS });
   if (rows.length === 0) return 0;
   const titleRef = textRef("notice.heartbeat.digest.title", { count: rows.length, n: String(rows.length) });
-  const title = englishOf(titleRef);
+  const t = await wordsOf(port, state, log);
+  const title = storedWordsIn(titleRef, t);
   const lines = rows.map((row) => `• ${row.title}`);
   await notifyIn(
     port,
@@ -359,9 +377,10 @@ export async function deliverHeartbeatDigest(
   return rows.length;
 }
 
-/** "14:20" in the heartbeat's timezone. */
-function clock(at: Date, timezone: string): string {
-  return new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: timezone }).format(at);
+/** "14:20" in the heartbeat's timezone, 24-hour, the same in every language. */
+export function heartbeatClock(at: Date, timezone: string): string {
+  const parts = localDateTime(at, timezone);
+  return `${String(parts.hour).padStart(2, "0")}:${String(parts.minute).padStart(2, "0")}`;
 }
 
 /**
@@ -377,8 +396,9 @@ export async function retractHeartbeatItems(
   timezone: string,
   log: HeartbeatDeliveryLog,
 ): Promise<void> {
-  const time = clock(now, timezone);
-  const label = `Resolved · ${time}`;
+  const time = heartbeatClock(now, timezone);
+  const t = resolved.some((row) => row.urgency === "now") ? await wordsOf(port, state, log) : coreEnglish;
+  const label = t("channel.heartbeat.resolved", { time });
   for (const row of resolved) {
     await notifyIn(
       port,
@@ -393,7 +413,7 @@ export async function retractHeartbeatItems(
     if (row.urgency !== "now") continue;
     for (const target of state.config.targets) {
       try {
-        await port.edit(state, target, { effectId: itemEffect(state, target, row), text: `${label}\n\n${itemText(row)}` });
+        await port.edit(state, target, { effectId: itemEffect(state, target, row), text: `${label}\n\n${itemText(row, t)}` });
       } catch (error) {
         log("warn", "a heartbeat message could not be marked resolved", {
           workspaceId: state.workspaceId,
@@ -409,7 +429,7 @@ export async function retractHeartbeatItems(
 export async function deliverHeartbeatAlert(
   port: HeartbeatDeliveryPort,
   state: HeartbeatState,
-  alert: { readonly key: string; readonly title: StoredWords; readonly text: string },
+  alert: { readonly key: string; readonly title: StoredWords; readonly text: StoredWords },
   log: HeartbeatDeliveryLog,
 ): Promise<void> {
   await notifyIn(
@@ -418,13 +438,14 @@ export async function deliverHeartbeatAlert(
     { sourceKey: `heartbeat:alert:${alert.key}`, ...noticeWordsOf({ title: alert.title, summary: alert.text }) },
     log,
   );
-  const title = storedWords(alert.title).text;
+  const t = await wordsOf(port, state, log);
+  const title = storedWordsIn(alert.title, t);
   await sendAll(
     port,
     state,
     (target) => ({
       effectId: heartbeatEffectId(state.principalId, target, `alert:${alert.key}`),
-      text: `${title}\n\n${alert.text}`,
+      text: `${title}\n\n${storedWordsIn(alert.text, t)}`,
       subject: title,
     }),
     log,

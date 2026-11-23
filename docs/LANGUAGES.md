@@ -76,8 +76,16 @@ runs from before this release have no keys and show the English they were
 stored in, and so does anything a newer release stored that this one does not
 know. Some details inside a notice are still in English: why a server needs
 signing in again, and why a schedule's webhook or email trigger refused a
-call. The agent reads notices in English, and messages sent to a chat app stay
-in English for now.
+call. The agent reads notices in English.
+
+Messages Tavi sends to a chat app speak the workspace's language: approval
+requests with their buttons and receipts, questions and their choices, memory
+cards and the `/memory` and `/forget` answers, the heartbeat's items, digest,
+buttons and `/heartbeat` status, reminders with their Done and Snooze buttons,
+the answer to `/new`, a schedule's or routine's alert, a server notice, and the
+notice a busy group chat gets. Error details Tavi passes on as it got them (why
+a run failed, a provider's own message) stay as they were written. A workspace
+whose language can't be read is answered in English.
 
 On Discord, the `/tavi` command descriptions and the "Ask Tavi about this"
 message menu carry Bulgarian names, which Discord shows to people whose Discord

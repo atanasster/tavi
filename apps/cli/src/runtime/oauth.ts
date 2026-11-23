@@ -4,6 +4,7 @@ import { connectionOptIns } from "../features/channels/oauth.js";
 import { OpenRouterSignIns } from "../features/onboard/openrouter.js";
 import { errorMessage } from "@tavi/contracts/util";
 import { createRoomInvitations } from "../features/channels/group-pairing.js";
+import { workspaceLocaleOf } from "../features/channels/channel-words.js";
 import type { ConnectWaits } from "../features/apps/connect-waits.js";
 import { OAuthFlows, boundAccountOf } from "../features/oauth/flow.js";
 import { OAuthCallbackRouter } from "../features/oauth/core.js";
@@ -137,6 +138,7 @@ export function composeOauth(composed: ModelsContext) {
         .connectionsOf(late.messaging.providerOf(connectionId) ?? "")
         .find((connection) => connection.connectionId === connectionId)?.workspaceId,
     log: (message, fields) => logger.warn(message, fields),
+    localeOf: workspaceLocaleOf(persistencePort.repositories.workspaceSettings),
   });
   return {
     chatGptSignIns,
