@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "bg-workspace-bg-sleep",
+      "workspace": "bg",
+      "prompt": "Дай ми три кратки съвета как да спя по-добре.",
+      "promptLanguage": "bg",
+      "expect": "bg"
+    },
+    {
+      "id": "bg-workspace-bg-basil",
+      "workspace": "bg",
+      "prompt": "Как да опазя босилека на перваза жив през зимата?",
+      "promptLanguage": "bg",
+      "expect": "bg"
+    },
+    {
+      "id": "bg-workspace-en-sleep",
+      "workspace": "bg",
+      "prompt": "Give me three short tips for sleeping better.",
+      "promptLanguage": "en",
+      "expect": "en"
+    },
+    {
+      "id": "bg-workspace-en-basil",
+      "workspace": "bg",
+      "prompt": "How do I keep the basil on my windowsill alive through the winter?",
+      "promptLanguage": "en",
+      "expect": "en"
+    },
+    {
+      "id": "bg-workspace-neutral",
+      "workspace": "bg",
+      "prompt": "😴❓",
+      "promptLanguage": "neutral",
+      "expect": "bg"
+    },
+    {
+      "id": "en-workspace-bg-sleep",
+      "workspace": "en",
+      "prompt": "Дай ми три кратки съвета как да спя по-добре.",
+      "promptLanguage": "bg",
+      "expect": "bg"
+    },
+    {
+      "id": "en-workspace-bg-basil",
+      "workspace": "en",
+      "prompt": "Как да опазя босилека на перваза жив през зимата?",
+      "promptLanguage": "bg",
+      "expect": "bg"
+    },
+    {
+      "id": "en-workspace-en-sleep",
+      "workspace": "en",
+      "prompt": "Give me three short tips for sleeping better.",
+      "promptLanguage": "en",
+      "expect": "en"
+    },
+    {
+      "id": "en-workspace-neutral",
+      "workspace": "en",
+      "prompt": "😴❓",
+      "promptLanguage": "neutral",
+      "expect": "en"
+    }
+  ]
+}

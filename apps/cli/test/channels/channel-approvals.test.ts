@@ -1248,6 +1248,85 @@ describe("buttons", () => {
   });
 });
 
+describe("a round in a Bulgarian workspace", () => {
+  /** The Latin words left in `text` once the typed commands, the token, names and codes are taken out. */
+  const englishLeft = (text: string, allowed: readonly string[]): readonly string[] => {
+    const keep = new Set(["tavi", "utc", "eet", "eest", "memory", "propose", "conn", ...allowed.map((word) => word.toLowerCase())]);
+    return [...text.matchAll(/[A-Za-z]{3,}/g)].map((match) => match[0]).filter((word) => !keep.has(word.toLowerCase()));
+  };
+  const inBulgarian = async (runtime: TaviRuntime): Promise<void> => {
+    const repositories = runtime.store.asPort().repositories;
+    await repositories.workspaceSettings.set({
+      workspaceId: "default",
+      settings: { locale: "bg" },
+      expectedRevision: (await repositories.workspaceSettings.get("default")).revision,
+      actor: "operator",
+      now: "2026-01-01T00:00:00.000Z",
+    });
+  };
+
+  it("labels its buttons, answers a press and settles the round in Bulgarian, the buttons' data unchanged", async () => {
+    const { runtime, messages, answered, edited } = await harness([propose, { text: "готово" }], 60_000, true);
+    await inBulgarian(runtime);
+    const repositories = runtime.store.asPort().repositories;
+    await runtime.messaging.ingest(inbound("запомни"));
+    const taskId = (await repositories.messagingConversations.get("conn-a", "chat-1"))?.taskId ?? "";
+    const token = (await repositories.approvalRounds.get(taskId, 1))?.token ?? "";
+    const announcement = messages().find((message) => message.buttons !== undefined);
+    expect(announcement?.buttons?.flat().map((button) => button.data)).toEqual([`r:${token}:o`, `r:${token}:s`, `r:${token}:d`]);
+    for (const button of announcement?.buttons?.flat() ?? []) expect(englishLeft(button.label, [])).toEqual([]);
+    // The call's own title ("Run memory.propose") is the gate's display of it, stored with the approval in English.
+    expect(englishLeft(textOf(announcement as SentMessage).replaceAll(token, ""), ["Run"])).toEqual([]);
+
+    await runtime.messaging.ingest(press(`r:${token}:s`));
+    expect(answered.at(-1)?.text).toMatch(/\p{Script=Cyrillic}/u);
+    expect(englishLeft(answered.at(-1)?.text ?? "", [])).toEqual([]);
+    await waitFor(async () => (await repositories.tasks.get(taskId))?.status === "completed" && edited.length === 1);
+    // The settled round names who decided and where: a name and a connection, the rest in Bulgarian.
+    expect(englishLeft((edited[0]?.text ?? "").replaceAll(token, ""), ["Run", "Alice", "Smith"])).toEqual([]);
+    await runtime.close();
+  });
+
+  it("takes a decision typed in Bulgarian and replies in Bulgarian", async () => {
+    const { runtime, sent } = await harness([propose, { text: "готово" }]);
+    await inBulgarian(runtime);
+    const repositories = runtime.store.asPort().repositories;
+    await runtime.messaging.ingest(inbound("запомни, че небето е синьо"));
+    const taskId = (await repositories.messagingConversations.get("conn-a", "chat-1"))?.taskId ?? "";
+    const token = (await repositories.approvalRounds.get(taskId, 1))?.token ?? "";
+    await runtime.messaging.ingest(inbound(`одобри ${token} сесия`));
+    expect((await repositories.tasks.get(taskId))?.status).toBe("completed");
+    expect(await repositories.toolPolicy.listSessionGrants(taskId)).toHaveLength(1);
+    const reply = sent().at(-1) ?? "";
+    expect(reply).toContain(taskId);
+    expect(englishLeft(reply.replaceAll(taskId, ""), [])).toEqual([]);
+    // The run's state is said in Bulgarian, not as its code.
+    expect(reply).toContain("изпълнението вече приключи");
+    await runtime.close();
+  });
+
+  it("says in Bulgarian that a task no longer waiting has nothing to decide, its state in words", async () => {
+    const { runtime, sent } = await harness([{ text: "здравей" }]);
+    await inBulgarian(runtime);
+    const repositories = runtime.store.asPort().repositories;
+    await runtime.messaging.ingest(inbound("здравей"));
+    const taskId = (await repositories.messagingConversations.get("conn-a", "chat-1"))?.taskId ?? "";
+    expect((await repositories.tasks.get(taskId))?.status).toBe("completed");
+    // A lingering pending row on a completed task, as a crashed resume can leave behind (inserted directly, as the
+    // English case in messaging-inbound-admission-acceptance.test.ts does).
+    inspectDatabase(runtime.store)
+      .prepare(
+        `INSERT INTO tavi_approvals
+           (approval_id, task_id, admission_id, tool_id, call_id, steps, inputs, inputs_hash, state, decided_by, decided_at, note, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, 1, '{}', 'hash', 'pending', NULL, NULL, NULL, ?, ?)`,
+      )
+      .run("appr-stale", taskId, "adm-stale", "memory.propose", "c-stale", "2026-01-01T00:00:00.000Z", "2026-01-01T00:00:00.000Z");
+    await runtime.messaging.ingest(inbound("одобри"));
+    expect(sent().at(-1)).toBe(`Задача ${taskId} не чака решение: изпълнението приключи.`);
+    await runtime.close();
+  });
+});
+
 describe("renderQuestionText", () => {
   it("says why it asks, marks the recommended option, and when it stops waiting with what", () => {
     const choices = {

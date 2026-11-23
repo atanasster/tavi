@@ -1286,7 +1286,10 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       if (!decidability.decidable && decidability.reason === "settled-uncommitted")
         return await refuse("settled-uncommitted", `Task ${taskId}: ${undecidableRoundMessage(taskId, decidability, "approval")}.`);
       if (lingering && task.status !== "waiting")
-        return await refuse("not-waiting", t("channel.approval.decide.notWaiting", { taskId, status: task.status }));
+        return await refuse(
+          "not-waiting",
+          t("channel.approval.decide.notWaiting", { taskId, status: t(`channel.approval.status.${task.status}`) }),
+        );
       return await refuse("no-round", t("channel.approval.decide.noRound", { taskId }));
     }
     // A person's round is decided by the operator alone (Allowed people).
@@ -1381,7 +1384,8 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       const said = {
         taskId,
         scope: command.approved ? await appliedScopeText(taskId, round.steps, scope, t) : "",
-        status: resumed.outcome.status,
+        // The status in the reply's language: the code itself in English.
+        status: t(`channel.approval.status.${resumed.outcome.status}`),
         count: stillPending,
         n: String(stillPending),
       };

@@ -827,7 +827,8 @@ Every document in `docs/` (also indexed by reader in [docs/README.md](README.md)
 | [`evals/tool-selection/README.md`](../evals/tool-selection/README.md) | Evaluation suite | Offline `tools.search` and router-shortlist recall against a committed baseline, and the schema token budget of a default turn (`apps/cli/test/tools/tool-selection-eval.test.ts`, `tool-schema-budget.test.ts`). |
 | [`evals/compaction/README.md`](../evals/compaction/README.md) | Evaluation suite | Multi-rollover anchor survival regression gate (`packages/agent-host/test/compaction-quality.eval.test.ts`). |
 | [`evals/heartbeat/README.md`](../evals/heartbeat/README.md) | Evaluation suite | Heartbeat notify precision/recall, urgency agreement, and prompt-injection resistance across fixture worlds. |
-| [`evals/ideas/README.md`](../evals/ideas/README.md) | Evaluation suite | Built-in `tavi.ideasagent` rewording quality and groundedness across fixture worlds. |
+| [`evals/ideas/README.md`](../evals/ideas/README.md) | Evaluation suite | Built-in `tavi.ideasagent` rewording quality and groundedness across fixture worlds, English and Bulgarian. |
+| [`evals/reply-language/README.md`](../evals/reply-language/README.md) | Evaluation suite | Live reply language in `en` and `bg` workspaces for English, Bulgarian and wordless prompts, read from the answer's letters (`tests/reply-language-eval.test.ts`). |
 | [`evals/injection/README.md`](../evals/injection/README.md) | Evaluation suite | Prompt-injection fixture corpus and taint-gate / detector evaluation (`--tier0` and live tiers). |
 | [`evals/memory/README.md`](../evals/memory/README.md) | Evaluation suite | Memory recall, paraphrase, updates, expiry, preferences, capture, group isolation, and 200-turn prompt-cache gate. |
 | [`evals/pdf/README.md`](../evals/pdf/README.md) | Evaluation suite | PDF reading, OCR, and form-filling evaluation over generated fixtures. |

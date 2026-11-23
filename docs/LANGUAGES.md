@@ -208,6 +208,17 @@ words into a catalogue, lower the ratchet with:
 UPDATE_I18N_RATCHET=1 pnpm exec vitest run tests/i18n-catalogues.test.ts
 ```
 
+Two evals check the agent's language. `evals/reply-language` runs prompts in
+English, in Bulgarian and with no letters at all (emoji only), in workspaces set
+to `en` and `bg`. It checks that each reply is in the language the
+reply-language line asks for: Bulgarian unless the person writes in another
+language. The language is read from the reply's letters, so no judge model is
+needed. `evals/ideas` has a Bulgarian world of each kind; the rewording there
+must stay in Bulgarian and keep every `[placeholder]` the note leaves open,
+exactly as the catalogue writes it. Both cost model tokens and are run by hand
+(`node evals/reply-language/eval.ts --template …`). `pnpm test` checks their
+cases offline, and `node evals/ideas/eval.ts --offline` costs nothing.
+
 ### The overflow walk
 
 Bulgarian runs longer than English, so every screen is also checked in a real

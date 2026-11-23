@@ -68,6 +68,8 @@ async function fixture(
     home?: boolean;
     revoked?: readonly string[];
     modelReady?: { ready: boolean };
+    /** The workspace's language, which the fire's words, buttons and receipts speak. */
+    locale?: "bg";
   } = {},
 ) {
   const directory = directories.create("tavi-reminder-delivery-");
@@ -133,6 +135,7 @@ async function fixture(
   const homePosts: { text: string; taskId?: string }[] = [];
   const chatPosts: { taskId: string; text: string }[] = [];
   let now = T;
+  const locale = options.locale;
   const delivery = createReminderDelivery({
     repositories,
     messaging,
@@ -162,8 +165,14 @@ async function fixture(
       ? {}
       : { ownerAllowed: (_workspaceId: string, principalId: string) => !options.revoked?.includes(principalId) }),
     onDiagnostic: (message) => diagnostics.push(message),
+    ...(locale === undefined ? {} : { localeOf: async () => locale }),
   });
-  const buttons = createReminderButtons({ repositories, messaging, now: () => now });
+  const buttons = createReminderButtons({
+    repositories,
+    messaging,
+    now: () => now,
+    ...(locale === undefined ? {} : { localeOf: async () => locale }),
+  });
   let serial = 0;
   const create = async (
     overrides: Partial<Pick<Reminder, "principalId" | "prompt" | "deliverTo" | "originTaskId" | "text" | "label">> & {
@@ -649,6 +658,37 @@ describe("the buttons", () => {
 
       // Not a reminder's press: left to the approvals.
       expect(await buttons.handleInteraction(press("r:abcdefgh:o"))).toBe(false);
+    } finally {
+      await store.close();
+    }
+  });
+
+  it("are labelled, answered and settled in Bulgarian in a Bulgarian workspace, their data unchanged", async () => {
+    const { create, fire, fires, sent, buttons, press, answered, edited, store } = await fixture({ locale: "bg" });
+    try {
+      const reminder = await create({ text: "Изпий хапчетата" });
+      await fire(at(5));
+      const token = (await fires(reminder.reminderId))[0]?.token ?? "";
+      expect(sent[0]?.parts).toMatchObject([{ content: "⏰ Изпий хапчетата" }]);
+      expect(sent[0]?.buttons).toEqual([
+        [
+          { label: "✅ Готово", data: `m:${token}:d` },
+          { label: "⏰ Отложи с 10\u00a0мин", data: `m:${token}:s` },
+          { label: "⏰ Отложи с 1\u00a0ч", data: `m:${token}:h` },
+        ],
+      ]);
+
+      expect(await buttons.handleInteraction(press(`m:${token}:d`, { principalId: "bob" }))).toBe(true);
+      expect(answered.at(-1)?.text).toBe("Само човекът, за когото е напомнянето, може да ползва бутоните му.");
+      expect(await buttons.handleInteraction(press(`m:${token}:s`))).toBe(true);
+      expect(answered.at(-1)?.text).toBe("Отложено до 15:10.");
+      expect(edited.at(-1)).toEqual({ messageId: "m-1", text: "⏰ Изпий хапчетата\n\nОтложено до 15:10" });
+
+      await fire(at(605));
+      const followUp = (await fires(reminder.reminderId)).find((entry) => entry.fireAt === at(605));
+      expect(await buttons.handleInteraction(press(`m:${followUp?.token ?? ""}:d`))).toBe(true);
+      expect(answered.at(-1)?.text).toBe("Готово.");
+      expect(edited.at(-1)).toEqual({ messageId: "m-1", text: "⏰ Изпий хапчетата\n\nГотово ✓" });
     } finally {
       await store.close();
     }

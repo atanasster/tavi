@@ -24,6 +24,7 @@ apps/cli/ui-dist/
 evals/browser/results/
 evals/heartbeat/results/
 evals/ideas/results/
+evals/reply-language/results/
 evals/tool-choice/results/
 evals/skills/results/
 evals/injection/results/

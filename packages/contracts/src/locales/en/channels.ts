@@ -102,6 +102,14 @@ export const channels = {
   "channel.approval.decide.noTask": "There is nothing to approve or reject: this conversation has no task.",
   "channel.approval.decide.notYours": "There is no task {task} of yours to decide.",
   "channel.approval.decide.cancelled": "Task {taskId} is cancelled; there is nothing to decide.",
+  /** A task's status as a decision's reply names it (`{status}` below): the status code itself in English. */
+  "channel.approval.status.admitted": "admitted",
+  "channel.approval.status.running": "running",
+  "channel.approval.status.waiting": "waiting",
+  "channel.approval.status.completed": "completed",
+  "channel.approval.status.failed": "failed",
+  "channel.approval.status.stopped": "stopped",
+  "channel.approval.status.cancelled": "cancelled",
   "channel.approval.decide.notWaiting": "Task {taskId} is {status}; there is nothing to decide.",
   "channel.approval.decide.noRound": "Task {taskId} has no pending approval.",
   "channel.approval.decide.formOnly":
