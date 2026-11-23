@@ -12,6 +12,9 @@ import { DEFAULT_LOCALE, type Locale } from "@tavi/contracts/i18n";
 import { languageName } from "@tavi/contracts/locales/core";
 import { clip } from "@tavi/contracts/util";
 
+/** A stored built-in idea's words in a language, for the owner that shows it. */
+export { ideaWordsIn } from "@tavi/plugin-kit/ideas";
+
 /**
  * The built-in ideas provider, `tavi.ideasagent`. Without a model it keeps
  * the catalogue templates the host's

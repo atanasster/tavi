@@ -2042,6 +2042,7 @@ async function dispatchCommand(
           nextRunAt: async (workspaceId) => await runtime.ideas.host.nextAt(workspaceId),
           continueChat: runtime.ideas.continueChat,
           digestReachable: runtime.ideas.digestReachable,
+          ideaWords: runtime.ideas.ideaWords,
           chatTitle: async (workspaceId, taskId) => {
             const task = await repositories.tasks.get(taskId);
             // The operator's own chat only: anyone else's is never named to them.

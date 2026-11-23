@@ -721,6 +721,8 @@ export interface TaviRuntime {
     continueChat(workspaceId: string): Promise<{ readonly taskId: string; readonly title: string } | undefined>;
     /** Whether the operator has an authorized chat on a connection: where the weekly digest may go. */
     digestReachable(workspaceId: string, principalId: string, connectionId: string): Promise<boolean>;
+    /** A built-in idea's words in a language: a stored one is shown in the workspace's language now. */
+    readonly ideaWords: NonNullable<import("../features/ideas/owner.js").IdeasCommandDependencies["ideaWords"]>;
   };
   /**
    * Onboarding: the flows installed —

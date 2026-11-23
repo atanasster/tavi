@@ -29,8 +29,7 @@ import {
   textRef,
 } from "@tavi/contracts";
 import { clip, definedOnly } from "@tavi/contracts/util";
-import { DEFAULT_LOCALE } from "@tavi/contracts/i18n";
-import { ideaWordsIn } from "@tavi/plugin-kit/ideas";
+import { DEFAULT_LOCALE, type Locale } from "@tavi/contracts/i18n";
 import type { CoreKey, CoreT } from "@tavi/contracts/locales/core";
 
 import { refusalFrom, type IpcAnswer } from "../../shared/ipc-decisions.js";
@@ -48,6 +47,11 @@ import { channelWords, workspaceLocaleOf } from "../channels/channel-words.js";
  */
 export interface IdeasCommandDependencies {
   readonly repositories: Pick<PersistencePort["repositories"], "ideas" | "reminders" | "workspaceSettings">;
+  /**
+   * A built-in idea's words in `locale` (the catalogue's `ideaWordsIn`): one stored before a language change is shown
+   * in the new one. Absent, ideas are shown as stored.
+   */
+  readonly ideaWords?: (idea: Idea, locale: Locale) => Pick<Idea, "title" | "label" | "pitch" | "prompt">;
   /** The operator principal a workspace is served for, or undefined for one this owner does not serve. */
   readonly principalOf: (workspaceId: string) => string | undefined;
   readonly now: () => Date;
@@ -252,8 +256,10 @@ export async function ideasCommand(deps: IdeasCommandDependencies, payload: Idea
      * in the old one. One a provider wrote or reworded is shown as written.
      */
     const inLanguage = async (): Promise<(idea: Idea) => Idea> => {
+      const wordsOf = deps.ideaWords;
+      if (wordsOf === undefined) return (idea) => idea;
       const locale = await workspaceLocaleOf(deps.repositories.workspaceSettings)(workspaceId).catch(() => DEFAULT_LOCALE);
-      return (idea) => ({ ...idea, ...ideaWordsIn(idea, locale) });
+      return (idea) => ({ ...idea, ...wordsOf(idea, locale) });
     };
 
     switch (payload.action) {

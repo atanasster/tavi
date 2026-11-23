@@ -11,6 +11,7 @@ import { pruneMemoryVectors } from "../features/memory/vectors.js";
 import { BUILD_ID } from "../build-id.js";
 import { countCheckpoints, reconcileCheckpointReceipts, RECONCILIATION_TASK_LIMIT } from "./checkpoints.js";
 import { messagingProfileRules } from "./messaging-rules.js";
+import { builtinIdeaWords } from "./builtin-plugins.js";
 import type { TaviRuntime } from "./types.js";
 import type { ExternalPluginsContext } from "./external-plugins.js";
 
@@ -474,6 +475,7 @@ export async function composeLifecycle(composed: ExternalPluginsContext): Promis
       continueChat: ideasContinueChatOf,
       digestReachable: async (workspaceId, principalId, connectionId) =>
         (await reminderTargets.operatorTargets(workspaceId, principalId)).some((target) => target.connectionId === connectionId),
+      ideaWords: builtinIdeaWords,
     },
     onboarding: {
       providers: onboardingProviders,

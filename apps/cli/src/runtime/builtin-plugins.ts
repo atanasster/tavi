@@ -52,7 +52,7 @@ import { repeatEvery, startScheduleScheduler, type ScheduleSchedulerHandle } fro
 import { startReminderScheduler } from "@tavi/agent-host/reminder-scheduler";
 import { startHeartbeatHost } from "@tavi/agent-host/heartbeat-host";
 import { createBuiltinHeartbeatProvider } from "@tavi/plugin-defaults/heartbeat";
-import { createBuiltinIdeasProvider } from "@tavi/plugin-defaults/ideas";
+import { createBuiltinIdeasProvider, ideaWordsIn } from "@tavi/plugin-defaults/ideas";
 import { BUILTIN_ONBOARDING_PROVIDER_ID } from "@tavi/agent-host/onboarding-host";
 import { createBuiltinOnboardingProvider } from "@tavi/plugin-defaults/onboarding";
 import { ideasProviderViews } from "../features/ideas/owner.js";
@@ -120,6 +120,9 @@ const BUILTIN_IDEAS_HOST_ID = "tavi.ideas";
 const BUILTIN_HEARTBEAT_HOST_ID = "tavi.heartbeat";
 
 /** The built-in search activation and the built-in plugins the host composes. */
+/** The built-in ideas' words in a language, for the owner outside this module (only it imports the plugin packages). */
+export const builtinIdeaWords = ideaWordsIn;
+
 export function composeBuiltinPlugins(composed: ConversationsContext) {
   const {
     hybridRef,
@@ -1169,6 +1172,7 @@ export function composeBuiltinPlugins(composed: ConversationsContext) {
                     refresh: async (workspaceId) => await ideasHost.refresh(workspaceId),
                     nextRunAt: async (workspaceId) => await ideasHost.nextAt(workspaceId),
                     continueChat: ideasContinueChatOf,
+                    ideaWords: ideaWordsIn,
                     placeOf: (envelope) => memoryCommandPlaces.get(envelope),
                   }),
                 ),

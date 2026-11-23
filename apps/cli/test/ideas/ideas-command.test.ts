@@ -1,5 +1,5 @@
 import { IDEA_DEFAULT_SETTINGS, IDEA_SNOOZE_MS, IDEA_TTL_MS, TaviError, type IdeaDraft, type IdeasPayload } from "@tavi/contracts";
-import { catalogueIdea, IDEA_CATALOGUE } from "@tavi/plugin-kit/ideas";
+import { catalogueIdea, IDEA_CATALOGUE, ideaWordsIn } from "@tavi/plugin-kit/ideas";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -111,7 +111,7 @@ describe("ideas command", () => {
   });
 
   it("says a built-in idea stored before a language change in the new language, and a reworded one as written", async () => {
-    const { repositories, seed, call } = await fixture();
+    const { repositories, seed, call } = await fixture({ ideaWords: ideaWordsIn });
     const fares = IDEA_CATALOGUE.find((template) => template.key === "travel.fare-watch");
     if (fares === undefined) throw new Error("travel.fare-watch is not in the catalogue");
     const english = catalogueIdea(fares);
