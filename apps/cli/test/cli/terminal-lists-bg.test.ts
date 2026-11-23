@@ -195,7 +195,8 @@ describe("tavi schedules in a Bulgarian workspace", () => {
     expect(shown.stdout).toMatch(/^ {2}последно {7}никога$/m);
     expect(shown.stdout).toContain("30 минути работа (по подразбиране), после спира");
     expect(shown.stdout).toContain("  разрешено без надзор:\n    (нищо: всяко извикване, което иска разрешение, се отказва)");
-    expect(shown.stdout).toContain("последни пускания (Europe/Sofia):\n    (няма записани)");
+    // The history is listed in the workspace's zone, the host's here: UTC on CI.
+    expect(shown.stdout).toMatch(/^ {2}последни пускания \([^)]+\):\n {4}\(няма записани\)$/m);
     expect(shown.stdout).not.toMatch(/next fire|never|run limit/);
 
     const listed = await run(["schedules", "list"]);

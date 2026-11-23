@@ -127,7 +127,8 @@ describe("the reply-language eval", () => {
     await expect(parseArgs([])).rejects.toThrow(/--template/);
     await expect(parseArgs(["--template", "/a", "--data-dir", "/b"])).rejects.toThrow(/not both/);
     expect(await parseArgs(["--data-dir", "/nowhere", "--repeat", "1", "--case", "bg-workspace-neutral"])).toMatchObject({
-      data: { dataDir: "/nowhere" },
+      // Resolved as a path: `C:\\nowhere` on Windows.
+      data: { dataDir: resolve("/nowhere") },
       repeat: 1,
       only: ["bg-workspace-neutral"],
     });
