@@ -346,7 +346,10 @@ describe("declared dependency direction", () => {
         file,
       ).toEqual([]);
     }
-    expect(internal("apps/cli/src/features/video/tools.ts")).toEqual(["@tavi/contracts"]);
+    // The tools see contracts alone (its catalogue subpaths included), never an implementation.
+    const toolImports = internal("apps/cli/src/features/video/tools.ts");
+    expect(toolImports).toContain("@tavi/contracts");
+    expect(toolImports.filter((specifier) => specifier !== "@tavi/contracts" && !specifier.startsWith("@tavi/contracts/"))).toEqual([]);
   });
 
   it("keeps the sandbox modules replaceable: one owner module names them, everything else sees the ports", () => {

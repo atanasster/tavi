@@ -4,7 +4,7 @@
   where the slug is the template's key without its prefix (travel.fare-watch → fare-watch).
   tests/use-case-guides.test.ts checks the context box against the template:
   **Uses** is the capabilities in `requires`, in order, by their Idea card labels
-  (IDEA_CAPABILITY_LABELS), joined with " · "; **Asks first** is `asks` the same way, or
+  (`ideaCapabilityLabel`), joined with " · "; **Asks first** is `asks` the same way, or
   "Nothing — it only reads and suggests"; **Runs** is "Daily", "Weekly" or "When you ask";
   **Idea card** is the template's label in quotes and its key in code.
   Name the prompt, never a card: an idea card shows only once Tavi knows the topic, and in its own words.

@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { parseArgs } from "../apps/cli/src/cli/parse.js";
-import { IDEA_CAPABILITY_LABELS } from "../packages/contracts/src/ideas.js";
+import { type IdeaCapability, ideaCapabilityLabel } from "../packages/contracts/src/ideas.js";
 import { IDEA_CATALOGUE } from "../packages/plugin-kit/src/ideas/catalogue.js";
 import { type Guide, guidesRoot, imagesRoot, indexes, listGuides, stepImagePath } from "../scripts/docs/guides.mjs";
 
@@ -136,8 +136,7 @@ it("has one recipe page per Ideas template still to write, and none for anything
 });
 
 it("gives every recipe the context box of its Ideas template", () => {
-  const label = (capabilities: readonly (keyof typeof IDEA_CAPABILITY_LABELS)[]) =>
-    capabilities.map((capability) => IDEA_CAPABILITY_LABELS[capability]).join(" · ");
+  const label = (capabilities: readonly IdeaCapability[]) => capabilities.map((capability) => ideaCapabilityLabel(capability)).join(" · ");
   for (const guide of recipes) {
     const key = /\(`([^`]+)`\)/.exec(guide.context["Idea card"] ?? "")?.[1];
     const template = IDEA_CATALOGUE.find((candidate) => candidate.key === key);
