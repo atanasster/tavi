@@ -358,6 +358,8 @@
 .arg-origin { border-radius: var(--radius-2xs); padding: 0 var(--space-0-5); background: hsl(var(--secondary)); color: inherit; }
 .arg-origin-content { background: hsl(var(--warning) / var(--tint-strong)); }
 .arg-origin-person { background: hsl(var(--positive) / var(--tint-strong)); }
+/* Unmatched has no tint to set it off inside a card, so its padding would read as a space inside the quotes. */
+.arg-origin-unmatched { padding: 0; background: none; }
 /* The chat header's taint chip and its details. */
 .taint-chip-wrap { position: relative; display: inline-flex; align-items: center; min-width: 0; }
 .taint-chip { color: hsl(var(--warning)); }
