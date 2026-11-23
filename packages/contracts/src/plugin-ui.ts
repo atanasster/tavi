@@ -1,7 +1,9 @@
 import { z } from "zod";
 
+import { SUPPORTED_LOCALES } from "./i18n.js";
 import { coreEnglish, type CoreT } from "./locales/core.js";
 import { PLUGIN_ID_PATTERN, PluginVersionSchema } from "./plugin-ids.js";
+import { PLUGIN_MESSAGES_MAX, PluginMessageKeySchema, PluginMessageSchema } from "./plugin-messages.js";
 
 /**
  * UI plugins: what a plugin's
@@ -153,6 +155,20 @@ export type PluginUi = z.infer<typeof PluginUiSchema>;
 /** A plugin snapshot's sha256, as the registry records it: what a `/plugin-ui/` URL is keyed by. */
 export const PluginContentHashSchema = z.string().regex(/^[a-f0-9]{64}$/, "expected a sha256 hex digest");
 
+/** The language a canvas shows a contribution in: one Tavi has a pack for. */
+export const PluginUiLocaleSchema = z.enum(SUPPORTED_LOCALES);
+
+/**
+ * A contribution's own words in one language, as the host resolved them from
+ * the plugin's verified language packs (`locales/<lang>.json` `messages`): that
+ * language's message for each key, else its English pack's. A string with
+ * `{param}`s, or a plural object chosen by a count; held to a pack's own shape and bounds.
+ */
+export const PluginUiMessagesSchema = z
+  .record(PluginMessageKeySchema, PluginMessageSchema)
+  .refine((messages) => Object.keys(messages).length <= PLUGIN_MESSAGES_MAX, "too many messages");
+export type PluginUiMessages = z.infer<typeof PluginUiMessagesSchema>;
+
 /** One plugin's contributions the canvas may load: what `plugins ui` answers. */
 export const PluginUiEntrySchema = z.strictObject({
   pluginId: z.string().min(3).max(64).regex(PLUGIN_ID_PATTERN),
@@ -161,6 +177,13 @@ export const PluginUiEntrySchema = z.strictObject({
   version: PluginVersionSchema.optional(),
   contentHash: PluginContentHashSchema,
   ui: PluginUiSchema,
+  /**
+   * The language `messages` (and the overlaid `ui` titles) are in: the
+   * workspace's, for the canvas, when it is not English. Absent: English as installed.
+   */
+  locale: PluginUiLocaleSchema.optional(),
+  /** Its own words in `locale`, from its hash-verified language packs; absent when it has none. */
+  messages: PluginUiMessagesSchema.optional(),
 });
 export type PluginUiEntry = z.infer<typeof PluginUiEntrySchema>;
 
@@ -270,6 +293,10 @@ export interface ResolvedContribution {
   readonly contribution: PluginUiContribution;
   /** Where it shows: the operator's choice, else its manifest's. */
   readonly placements: readonly PluginUiPlacement[];
+  /** The language its entry was served in (`PluginUiEntry.locale`). */
+  readonly locale?: PluginUiEntry["locale"];
+  /** Its plugin's own words in `locale` (`PluginUiEntry.messages`), for its `init`. */
+  readonly messages?: PluginUiMessages;
 }
 
 /** A role whose chosen plugin could not fill it, so the built-in (or nothing) does. */
@@ -331,6 +358,8 @@ export function resolveContributions(
         placements: (override?.slots ?? contribution.placements).filter(
           (placement) => placement.slot !== "onboarding.step" || contribution.channels.length === 0,
         ),
+        ...(entry.locale === undefined ? {} : { locale: entry.locale }),
+        ...(entry.messages === undefined ? {} : { messages: entry.messages }),
       });
     }
   }
@@ -511,8 +540,14 @@ export const HostToPluginMessageSchema = z.discriminatedUnion("type", [
     size: z.strictObject({ width: Px, height: Px }),
     reducedMotion: z.boolean(),
     visible: z.boolean(),
+    /** The canvas's language. Absent from an older host: English. */
+    locale: PluginUiLocaleSchema.optional(),
+    /** The plugin's own words in `locale`, from its verified language packs; absent when it has none for it. */
+    messages: PluginUiMessagesSchema.optional(),
   }),
   z.strictObject({ abi: Abi, type: z.literal("theme"), theme: PluginUiThemeSchema }),
+  /** The canvas's language changed: the new one, and the plugin's words in it (absent: none, so its English). */
+  z.strictObject({ abi: Abi, type: z.literal("locale"), locale: PluginUiLocaleSchema, messages: PluginUiMessagesSchema.optional() }),
   z.strictObject({ abi: Abi, type: z.literal("size"), width: Px, height: Px }),
   z.strictObject({ abi: Abi, type: z.literal("visibility"), visible: z.boolean() }),
   z.strictObject({ abi: Abi, type: z.literal("context"), context: PluginUiContextSchema }),

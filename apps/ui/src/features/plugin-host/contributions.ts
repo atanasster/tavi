@@ -2,6 +2,7 @@ import { PluginUiAnswerSchema, WorkspaceSettingsAnswerSchema } from "@tavi/contr
 import { useEffect, useState } from "react";
 
 import { useResetOnChange } from "../../hooks/use-reset-on-change.js";
+import { useLocale } from "../../lib/i18n.js";
 import { ask, type Outcome, type SettingsClient } from "../../lib/ipc.js";
 import { resolveContributions, type ResolvedContribution, type RoleFallback } from "./slots.js";
 
@@ -38,9 +39,10 @@ async function loadPluginContributions(client: SettingsClient, workspaceId: stri
 
 /**
  * The contributions, for as long as `enabled` (the owner offers `plugins`):
- * read on mount, on a new workspace, and each time `revision` (the feed's
- * `plugin` count) moves. A failed read keeps what was shown, except that a
- * workspace change starts from nothing.
+ * read on mount, on a new workspace, each time `revision` (the feed's
+ * `plugin` count) moves, and when the canvas's language changes (the owner
+ * serves titles and each plugin's own words in it). A failed read keeps what
+ * was shown, except that a workspace change starts from nothing.
  */
 export function usePluginContributions(
   client: SettingsClient,
@@ -49,6 +51,7 @@ export function usePluginContributions(
   revision: number,
 ): PluginContributions {
   const [state, setState] = useState<PluginContributions>(NONE);
+  const locale = useLocale();
   useResetOnChange([workspaceId], () => setState(NONE));
   useEffect(() => {
     if (!enabled) {
@@ -63,6 +66,6 @@ export function usePluginContributions(
     return () => {
       current = false;
     };
-  }, [client, workspaceId, enabled, revision]);
+  }, [client, workspaceId, enabled, revision, locale]);
   return state;
 }

@@ -16,6 +16,7 @@ import { ToolEffectSchema } from "./tools.js";
 import { RouterFeatureSchema } from "./router.js";
 import { PluginContentHashSchema, PluginUiSchema, snapshotPath, type PluginUi } from "./plugin-ui.js";
 import { PLUGIN_ID_PATTERN, PluginVersionSchema } from "./plugin-ids.js";
+import { PLUGIN_MESSAGE_MAX_CHARS, PLUGIN_MESSAGES_MAX, PluginMessageKeySchema, PluginMessageSchema } from "./plugin-messages.js";
 import { RiskLevelSchema } from "./tool-policy.js";
 import { ChannelDescriptorSchema, type ChannelDescriptor } from "./channels.js";
 import { RoutineTemplateSchema } from "./routines.js";
@@ -79,9 +80,9 @@ export const PLUGIN_BOUNDS = {
   /** One language pack (`locales/<lang>.json`): its bytes, its manifest overlay's entries and its messages. */
   maxLocaleBytes: 64 * 1024,
   maxLocaleOverlayKeys: 500,
-  maxLocaleMessages: 1000,
+  maxLocaleMessages: PLUGIN_MESSAGES_MAX,
   /** One message, or one plural form of it. */
-  maxLocaleMessageChars: 2000,
+  maxLocaleMessageChars: PLUGIN_MESSAGE_MAX_CHARS,
 } as const;
 
 /** The newest manifest `schemaVersion` this Tavi reads; 3 adds `locales`. */
@@ -735,25 +736,11 @@ export type PluginManifest = z.infer<typeof PluginManifestSchema>;
 
 // ——— language packs ———
 
-const LocaleTextSchema = z.string().trim().min(1).max(PLUGIN_BOUNDS.maxLocaleMessageChars);
 /** The longest manifest field a pack translates (a channel's `setupHelp`); each path's own limit is `pluginLocaleProblems`'s. */
 const OVERLAY_TEXT_MAX = 4000;
 
-/** One of a plugin's own messages: a string with `{param}`s, or a plural object chosen by the count. */
-const PluginMessageSchema = z.union([
-  LocaleTextSchema,
-  z.strictObject({
-    zero: LocaleTextSchema.optional(),
-    one: LocaleTextSchema.optional(),
-    two: LocaleTextSchema.optional(),
-    few: LocaleTextSchema.optional(),
-    many: LocaleTextSchema.optional(),
-    other: LocaleTextSchema,
-  }),
-]);
-
-/** A message's key, as `ctx.t(key)` takes it. */
-export const PLUGIN_MESSAGE_KEY_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/;
+// A message's shape, key and bounds are shared with a UI contribution's words (`plugin-messages.ts`).
+export { PLUGIN_MESSAGE_KEY_PATTERN } from "./plugin-messages.js";
 
 /**
  * A plugin's language pack (`locales/<lang>.json`): `manifest`, the words of its
@@ -768,10 +755,7 @@ export const PluginLocaleFileSchema = z.strictObject({
     .refine((overlay) => Object.keys(overlay).length <= PLUGIN_BOUNDS.maxLocaleOverlayKeys, "too many manifest entries")
     .default({}),
   messages: z
-    .record(
-      z.string().regex(PLUGIN_MESSAGE_KEY_PATTERN, "a message key is letters, digits, dots, dashes and underscores"),
-      PluginMessageSchema,
-    )
+    .record(PluginMessageKeySchema, PluginMessageSchema)
     .refine((messages) => Object.keys(messages).length <= PLUGIN_BOUNDS.maxLocaleMessages, "too many messages")
     .default({}),
 });

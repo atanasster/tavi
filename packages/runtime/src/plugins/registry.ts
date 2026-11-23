@@ -69,7 +69,7 @@ import {
   type PluginMessages,
 } from "@tavi/contracts";
 import { definedOnly, errorMessage, nowTimestamp } from "@tavi/contracts/util";
-import type { Catalog, Locale } from "@tavi/contracts/i18n";
+import { SUPPORTED_LOCALES, type Catalog, type Locale } from "@tavi/contracts/i18n";
 
 export interface PluginFile {
   readonly relative: string;
@@ -433,6 +433,77 @@ export function readPluginMessages(directory: string, manifest: PluginManifest, 
   for (const [locale, pack] of Object.entries(verifiedLocalePacks(directory, manifest, contentHash)) as [Locale, PluginLocaleFile][])
     messages[locale] = pack.messages as Catalog;
   return messages;
+}
+
+/** `locale`'s pack messages, then English's for keys it lacks (bounded), for a UI contribution's `init`; `undefined` when neither carries any. */
+function uiMessagesIn(packs: PluginLocalePacks, locale: Locale): Catalog | undefined {
+  // The language's own keys first; English fills the rest only up to a pack's bound, which the UI holds them to.
+  const messages: Record<string, PluginLocaleFile["messages"][string]> = { ...packs[locale]?.messages };
+  let count = Object.keys(messages).length;
+  for (const [key, message] of Object.entries(packs.en?.messages ?? {})) {
+    if (count >= PLUGIN_BOUNDS.maxLocaleMessages) break;
+    if (Object.hasOwn(messages, key)) continue;
+    messages[key] = message;
+    count += 1;
+  }
+  // As checked, a pack's plural forms are never present as `undefined`.
+  return Object.keys(messages).length === 0 ? undefined : (messages as Catalog);
+}
+
+/**
+ * An installed version's own words in `locale`, as its UI contributions get
+ * them (`tavi.ui/1` `init` and `locale`): that language's pack messages, each
+ * key it lacks from the English pack's, read from its verified snapshot
+ * (`contentHash`) as `ctx.t`'s are. `undefined` when it has none.
+ */
+export function readPluginUiMessages(
+  directory: string,
+  manifest: PluginManifest,
+  contentHash: string,
+  locale: Locale,
+): Catalog | undefined {
+  return uiMessagesIn(verifiedLocalePacks(directory, manifest, contentHash), locale);
+}
+
+/**
+ * A built-in UI plugin's language packs and its words in `locale`, from its
+ * files in the canvas build (`<canvas>/plugins/<id>/locales/<lang>.json`), read
+ * in one read whose hash must be the `contentHash` the owner took at start —
+ * the bytes its `/plugin-ui/` address serves. A built-in has no installed
+ * manifest: each file is held to the pack schema and its byte limit, and one
+ * that is not is left out. A directory that no longer matches answers nothing.
+ */
+export function readBuiltinUiPacks(
+  directory: string,
+  contentHash: string,
+  locale: Locale,
+): { readonly pack: PluginLocaleFile | undefined; readonly messages: Catalog | undefined } {
+  const key = `builtin\u0000${directory}\u0000${contentHash}`;
+  let packs = verifiedPacks.get(key);
+  if (packs === undefined) {
+    let snapshot: ReturnType<typeof readPluginSnapshot> | undefined;
+    try {
+      snapshot = readPluginSnapshot(directory);
+    } catch {
+      snapshot = undefined;
+    }
+    if (snapshot === undefined || snapshot.hash !== contentHash) return { pack: undefined, messages: undefined };
+    const read: { [L in Locale]?: PluginLocaleFile } = {};
+    for (const language of SUPPORTED_LOCALES) {
+      const content = snapshot.files.get(`locales/${language}.json`);
+      if (content === undefined || content.length > PLUGIN_BOUNDS.maxLocaleBytes) continue;
+      try {
+        const parsed = PluginLocaleFileSchema.safeParse(JSON.parse(content.toString("utf8")));
+        if (parsed.success) read[language] = parsed.data;
+      } catch {
+        // Not JSON: left out, so English answers for it.
+      }
+    }
+    packs = read;
+    if (verifiedPacks.size >= MAX_CACHED_PACKS) verifiedPacks.clear();
+    verifiedPacks.set(key, packs);
+  }
+  return { pack: packs[locale], messages: uiMessagesIn(packs, locale) };
 }
 
 /**

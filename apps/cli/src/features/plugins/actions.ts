@@ -14,8 +14,10 @@ import {
 import { nowTimestamp } from "@tavi/contracts/util";
 import type { Locale } from "@tavi/contracts/i18n";
 import type { PluginLiveStatus, PluginRegistry } from "@tavi/runtime";
+import { builtCanvasDirectory } from "../../canvas-directory.js";
 import { inProcessAudit, type PluginAuditEntry } from "./audit.js";
 import { BUILTIN_CHANNELS } from "./catalog.js";
+import { localizedUiEntries } from "./localized.js";
 
 /**
  * One `plugins` action, shared by the owner's IPC handler and the
@@ -64,6 +66,11 @@ export interface PluginActionContext {
    * English for a person's screen. Absent: the English as installed.
    */
   readonly locale?: Locale | undefined;
+  /**
+   * The canvas build whose UI built-ins the owner hashed (`builtCanvasDirectory`), where a built-in's language packs
+   * are read for `ui` in `locale`. Absent: the built canvas beside the CLI.
+   */
+  readonly canvasDirectory?: string | undefined;
 }
 
 /** The workspace an enable that names none acts in: the owner's own. */
@@ -248,7 +255,11 @@ export async function runPluginAction(
       const asked = (entry: { readonly pluginId: string; readonly contentHash: string }) =>
         (input.pluginId === undefined || entry.pluginId === input.pluginId) &&
         (input.contentHash === undefined || entry.contentHash === input.contentHash);
-      const entries = pluginUiEntries(plugins).filter(asked);
+      // In the canvas's language, each with its plugin's own words for its frames (`tavi.ui/1` `init`).
+      const entries = localizedUiEntries(pluginUiEntries(plugins).filter(asked), context?.locale, {
+        snapshotDirectory: (pluginId, version) => registry.snapshotDirectory(pluginId, version),
+        canvasDirectory: context?.canvasDirectory === undefined ? builtCanvasDirectory() : context.canvasDirectory,
+      });
       const icons = pluginAppIconEntries(plugins).filter(asked);
       return { entries, ...(icons.length === 0 ? {} : { icons }) };
     }

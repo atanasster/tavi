@@ -9,7 +9,7 @@
 <script type="module" src="live.js"></script>
 </head>
 <body>
-<main class="view" aria-label="The agent's browser">
+<main class="view" aria-label="The agent's browser" data-view>
   <header class="chrome">
     <span class="chip" data-chip>Waiting</span>
     <span class="address">
@@ -17,7 +17,7 @@
       <span class="title" data-title></span>
     </span>
     <label class="switcher" data-switcher hidden>
-      <span class="visually-hidden">Session</span>
+      <span class="visually-hidden" data-session-label>Session</span>
       <select data-sessions></select>
     </label>
     <span class="actions">

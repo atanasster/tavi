@@ -19,6 +19,10 @@ import type { BrowserLiveFrame, BrowserLiveMessage, BrowserLiveSessionInfo, Plug
  *   polite region says each navigation and each hidden or ended state, never a
  *   frame; every control is reachable by keyboard; Escape and the panel's
  *   shortcut are forwarded to the canvas.
+ * - **Language.** Its words are `ENGLISH`'s, by key; `init` and `locale` bring
+ *   the canvas's language and the host-verified pack's words for it
+ *   (`locales/<lang>.json`), each key it lacks said in English. The chip's
+ *   `data-state` is a stable id, never its words.
  */
 
 const ABI = "tavi.ui/1";
@@ -28,10 +32,64 @@ const MAX_WIDTH = 960;
 const WATCH_STEP_PX = 64;
 /** `ended`'s reason when the session's task ended: kept open, not over (`BROWSER_LIVE_ENDED_TASK`). */
 const KEPT_REASON = "task-ended";
-/** What a kept session's view says, and announces. */
-const KEPT_NOTICE = "Tavi has finished; the page is kept.";
 
-type Chip = "Waiting" | "Live" | "Loading" | "Paused" | "Hidden — sensitive page" | "Ended" | "You're in control" | "Needs you";
+/** The status chip's states: its `data-state`, and the key of its words (`chip.<state>`). */
+export const CHIP_STATES = ["waiting", "live", "loading", "paused", "hidden", "ended", "operator", "requested"] as const;
+export type ChipState = (typeof CHIP_STATES)[number];
+
+/**
+ * The view's words in English, by key: what it says with no language pack, and
+ * for any key a pack lacks. `{name}`s are filled in. `locales/bg.json` carries the same keys.
+ */
+export const ENGLISH = {
+  "chip.waiting": "Waiting",
+  "chip.live": "Live",
+  "chip.loading": "Loading",
+  "chip.paused": "Paused",
+  "chip.hidden": "Hidden — sensitive page",
+  "chip.ended": "Ended",
+  "chip.operator": "You're in control",
+  "chip.requested": "Needs you",
+  "notice.kept": "Tavi has finished; the page is kept.",
+  "notice.ended": "This browser session has ended.",
+  "hidden.password-field.notice": "Hidden: this page has a password field.",
+  "hidden.password-field.said": "The page is hidden: it has a password field.",
+  "hidden.payment-field.notice": "Hidden: this page has a payment or one-time-code field.",
+  "hidden.payment-field.said": "The page is hidden: it has a payment or one-time-code field.",
+  "hidden.blocked-host.notice": "Hidden: this site is never shown.",
+  "hidden.blocked-host.said": "The page is hidden: its site is never shown.",
+  "hidden.other.notice": "Hidden: this page is not shown.",
+  "hidden.other.said": "The page is hidden.",
+  "say.navigated": "Now on {address}",
+  "say.navigatedTitled": "Now on {address}, {title}",
+  "say.pending": "Waiting for your approval to {action} here.",
+  "say.paused": "The live view is paused.",
+  "say.ended": "The browser session ended.",
+  "session.numbered": "Session {number}",
+  "session.subAgent": "sub-agent",
+  "session.ofAgent": "{where} ({agent})",
+  "view.label": "The agent's browser",
+  "view.title": "Browser",
+  "view.session": "Session",
+  "button.transcript": "Open in transcript",
+  "button.expand": "Expand",
+} as const;
+export type ViewerKey = keyof typeof ENGLISH;
+
+/** A message as a pack carries it: a string, or plural forms (the view counts nothing, so `other` is said). */
+type PackMessage = string | { readonly other: string };
+
+/** `key`'s words: the pack's when it has them, else English; each `{name}` filled from `params`, an unknown one kept. */
+export function wordsOf(
+  messages: Readonly<Record<string, PackMessage>> | undefined,
+  key: string,
+  english: string,
+  params: Readonly<Record<string, string | number>> = {},
+): string {
+  const found = messages !== undefined && Object.hasOwn(messages, key) ? messages[key] : undefined;
+  const template = typeof found === "string" ? found : typeof found?.other === "string" ? found.other : english;
+  return template.replace(/\{([A-Za-z0-9_]+)\}/g, (whole, name: string) => (Object.hasOwn(params, name) ? String(params[name]) : whole));
+}
 
 interface SessionView {
   info: BrowserLiveSessionInfo;
@@ -81,6 +139,8 @@ export function startViewer(env: ViewerEnvironment): { stop(): void } {
   const select = $<HTMLSelectElement>("sessions");
   const transcript = $<HTMLButtonElement>("transcript");
   const expand = $<HTMLButtonElement>("expand");
+  const main = $<HTMLElement>("view");
+  const sessionLabel = $<HTMLElement>("session-label");
   const stage = $<HTMLElement>("stage");
   const image = $<HTMLImageElement>("frame");
   const letter = $<HTMLElement>("letter");
@@ -113,17 +173,37 @@ export function startViewer(env: ViewerEnvironment): { stop(): void } {
     boxRect: undefined as { readonly x: number; readonly y: number; readonly width: number; readonly height: number } | undefined,
     /** The session ids and labels the switcher lists, so it is rebuilt only when they change. */
     listed: "",
+    /** The canvas's language and the pack's words for it, from `init` and `locale`. */
+    locale: "en",
+    messages: undefined as Readonly<Record<string, PackMessage>> | undefined,
   };
+  const t = (key: ViewerKey, params?: Readonly<Record<string, string | number>>): string =>
+    wordsOf(state.messages, key, ENGLISH[key], params);
   /** What the notice and the announcement say for each reason a page is not shown. */
-  const HIDDEN_TEXT: Readonly<Record<string, { readonly notice: string; readonly said: string }>> = {
-    "password-field": { notice: "Hidden: this page has a password field.", said: "The page is hidden: it has a password field." },
-    "payment-field": {
-      notice: "Hidden: this page has a payment or one-time-code field.",
-      said: "The page is hidden: it has a payment or one-time-code field.",
-    },
-    "blocked-host": { notice: "Hidden: this site is never shown.", said: "The page is hidden: its site is never shown." },
+  const hiddenText = (reason: string): { readonly notice: string; readonly said: string } => {
+    const known = reason === "password-field" || reason === "payment-field" || reason === "blocked-host" ? reason : "other";
+    return { notice: t(`hidden.${known}.notice`), said: t(`hidden.${known}.said`) };
   };
-  const hiddenText = (reason: string) => HIDDEN_TEXT[reason] ?? { notice: "Hidden: this page is not shown.", said: "The page is hidden." };
+  /** The words the page's own markup carries, said again in the canvas's language. */
+  const label = (): void => {
+    document.documentElement.lang = state.locale;
+    document.title = t("view.title");
+    main.setAttribute("aria-label", t("view.label"));
+    sessionLabel.textContent = t("view.session");
+    transcript.textContent = t("button.transcript");
+    expand.textContent = t("button.expand");
+  };
+  /** The language `init` or `locale` says: a known code and its words, else English. */
+  const setLanguage = (locale: unknown, messages: unknown): void => {
+    state.locale = typeof locale === "string" && /^[a-z]{2,3}$/.test(locale) ? locale : "en";
+    state.messages =
+      messages !== null && typeof messages === "object" && !Array.isArray(messages)
+        ? (messages as Readonly<Record<string, PackMessage>>)
+        : undefined;
+    // The switcher's labels are in words too: listed again.
+    state.listed = "";
+    label();
+  };
 
   const say = (text: string): void => {
     // The same sentence again is still news: cleared first.
@@ -132,8 +212,8 @@ export function startViewer(env: ViewerEnvironment): { stop(): void } {
   };
   const current = (): SessionView | undefined => (state.selected === undefined ? undefined : state.sessions.get(state.selected));
   const labelOf = (view: SessionView, index: number): string => {
-    const where = addressOf(view.info.url).host || `Session ${index + 1}`;
-    return view.info.taskId === state.taskId ? where : `${where} (${view.info.agent ?? "sub-agent"})`;
+    const where = addressOf(view.info.url).host || t("session.numbered", { number: index + 1 });
+    return view.info.taskId === state.taskId ? where : t("session.ofAgent", { where, agent: view.info.agent ?? t("session.subAgent") });
   };
 
   function render(): void {
@@ -151,28 +231,20 @@ export function startViewer(env: ViewerEnvironment): { stop(): void } {
       (view.info.state === "inactive" || view.ended === KEPT_REASON);
     const held = view?.info.control === "operator";
     const over = view !== undefined && !(kept && held) && (view.ended !== undefined || view.info.state !== "open");
-    let text: Chip = "Waiting";
+    let chipState: ChipState = "waiting";
     if (view !== undefined) {
-      if (over) text = "Ended";
+      if (over) chipState = "ended";
       // Who acts in the page shows to every watcher, not only the tab in control.
-      else if (view.info.control === "operator") text = "You're in control";
-      else if (view.info.control === "requested") text = "Needs you";
-      else if (view.hidden === "paused") text = "Paused";
-      else if (view.hidden !== undefined) text = "Hidden — sensitive page";
-      else if (view.loading) text = "Loading";
-      else if (view.frame?.source === "live") text = "Live";
+      else if (view.info.control === "operator") chipState = "operator";
+      else if (view.info.control === "requested") chipState = "requested";
+      else if (view.hidden === "paused") chipState = "paused";
+      else if (view.hidden !== undefined) chipState = "hidden";
+      else if (view.loading) chipState = "loading";
+      else if (view.frame?.source === "live") chipState = "live";
     }
-    chip.textContent = text;
-    chip.dataset["state"] =
-      text === "Live"
-        ? "live"
-        : text.startsWith("Hidden")
-          ? "hidden"
-          : text === "You're in control"
-            ? "operator"
-            : text === "Needs you"
-              ? "requested"
-              : "idle";
+    // The state is the stylesheet's and a test's to read; the words are the reader's, in their language.
+    chip.dataset["state"] = chipState;
+    chip.textContent = t(`chip.${chipState}`);
     // The outline says who acts: the agent's colour, or the person's while they hold the page.
     stage.dataset["control"] = view === undefined || over ? "none" : (view.info.control ?? "agent");
     const sensitive = view?.hidden !== undefined && view.hidden !== "paused";
@@ -186,14 +258,8 @@ export function startViewer(env: ViewerEnvironment): { stop(): void } {
     letter.textContent = letter.hidden ? "" : initial;
     notice.hidden = !sensitive && !over;
     notice.textContent =
-      sensitive && view?.hidden !== undefined
-        ? hiddenText(view.hidden).notice
-        : over
-          ? kept
-            ? KEPT_NOTICE
-            : "This browser session has ended."
-          : "";
-    image.alt = view?.info.title ?? (address.host === "" ? "The agent's browser" : address.host);
+      sensitive && view?.hidden !== undefined ? hiddenText(view.hidden).notice : over ? (kept ? t("notice.kept") : t("notice.ended")) : "";
+    image.alt = view?.info.title ?? (address.host === "" ? t("view.label") : address.host);
     transcript.disabled = (view?.callId ?? view?.info.openedByCallId) === undefined;
     // Expanding is the chat panel's: a tab is already large, and a Command Center tile opens its chat instead.
     expand.hidden = state.slot === "chat.panel.tab" || state.slot === "center.browser";
@@ -312,7 +378,12 @@ export function startViewer(env: ViewerEnvironment): { stop(): void } {
         view.info = { ...rest, url: message.url, ...(message.title === undefined ? {} : { title: message.title }) };
         if (message.sessionId === state.selected) {
           const where = addressOf(message.url);
-          say(`Now on ${where.host}${where.path}${message.title === undefined ? "" : `, ${message.title}`}`);
+          const shown = `${where.host}${where.path}`;
+          say(
+            message.title === undefined
+              ? t("say.navigated", { address: shown })
+              : t("say.navigatedTitled", { address: shown, title: message.title }),
+          );
         }
         break;
       }
@@ -325,7 +396,13 @@ export function startViewer(env: ViewerEnvironment): { stop(): void } {
           box.classList.toggle("pending", message.phase === "pending");
           if (message.phase === "pending" && message.box !== undefined) {
             placeBox(view, message.box, false);
-            say(`Waiting for your approval to ${message.action} here.`);
+            // A pack may say each action whole (`say.pending.<action>`); English names it in one sentence.
+            const own = `say.pending.${message.action}`;
+            say(
+              state.messages !== undefined && Object.hasOwn(state.messages, own)
+                ? wordsOf(state.messages, own, ENGLISH["say.pending"], { action: message.action })
+                : t("say.pending", { action: message.action }),
+            );
           }
           if (message.phase === "started" && message.box !== undefined) placeBox(view, message.box, message.action === "click");
           if (message.phase === "ended") {
@@ -357,14 +434,14 @@ export function startViewer(env: ViewerEnvironment): { stop(): void } {
         const was = view.hidden;
         view.hidden = message.reason;
         if (was !== message.reason && message.sessionId === state.selected)
-          say(message.reason === "paused" ? "The live view is paused." : hiddenText(message.reason).said);
+          say(message.reason === "paused" ? t("say.paused") : hiddenText(message.reason).said);
         break;
       }
       case "ended": {
         const view = ensure(message.sessionId);
         view.ended = message.reason;
         view.loading = false;
-        if (message.sessionId === state.selected) say(message.reason === KEPT_REASON ? KEPT_NOTICE : "The browser session ended.");
+        if (message.sessionId === state.selected) say(message.reason === KEPT_REASON ? t("notice.kept") : t("say.ended"));
         break;
       }
     }
@@ -400,6 +477,8 @@ export function startViewer(env: ViewerEnvironment): { stop(): void } {
         state.slot = typeof message["slot"] === "string" ? message["slot"] : undefined;
         state.reducedMotion = message["reducedMotion"] === true;
         state.live = Array.isArray(message["channels"]) && message["channels"].includes("browser.live");
+        // An older host sends no language: English, as the page is written.
+        setLanguage(message["locale"], message["messages"]);
         applyTheme(message["theme"]);
         render();
         watch();
@@ -407,6 +486,10 @@ export function startViewer(env: ViewerEnvironment): { stop(): void } {
       }
       case "theme":
         applyTheme(message["theme"]);
+        return;
+      case "locale":
+        setLanguage(message["locale"], message["messages"]);
+        render();
         return;
       case "context": {
         const context = message["context"] as { readonly taskId?: string } | undefined;

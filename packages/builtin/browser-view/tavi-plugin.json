@@ -1,4 +1,5 @@
 {
+  "schemaVersion": 3,
   "id": "tavi.browserview",
   "name": "Browser view",
   "description": "The live view of the agent's browser: pages loading, clicks and typing, as they happen.",
@@ -20,5 +21,6 @@
         "disclosure": "Receives live images of the pages the agent browses, and the address of each page."
       }
     ]
-  }
+  },
+  "locales": { "bg": "locales/bg.json" }
 }

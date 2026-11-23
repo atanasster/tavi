@@ -3,11 +3,19 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { PluginToHostMessageSchema, PluginUiSchema, type BrowserLiveMessage } from "@tavi/contracts";
+import {
+  HostToPluginMessageSchema,
+  PluginLocaleFileSchema,
+  PluginToHostMessageSchema,
+  PluginUiSchema,
+  pluginLocaleProblems,
+  type BrowserLiveMessage,
+  type PluginManifest,
+} from "@tavi/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BROWSER_VIEW_MANIFEST } from "../src/manifest.js";
-import { addressOf, startViewer } from "../src/live.js";
+import { CHIP_STATES, ENGLISH, addressOf, startViewer } from "../src/live.js";
 
 /**
  * The built-in browser view, driven as the
@@ -366,5 +374,116 @@ describe("the built-in browser view", () => {
     expect(page).not.toMatch(/<script\b[^>]*>[^<\s]/);
     expect(page).not.toMatch(/<style\b|\sstyle="|\son[a-z]+="/i);
     expect([...page.matchAll(/\s(?:src|href)="([^"]+)"/g)].map((match) => match[1])).toEqual(["plugin-base.css", "live.css", "live.js"]);
+  });
+});
+
+const bg = PluginLocaleFileSchema.parse(JSON.parse(readFileSync(join(root, "locales", "bg.json"), "utf8")));
+const params = (text: string): string[] => [...text.matchAll(/\{([A-Za-z0-9_]+)\}/g)].map((match) => match[1] ?? "").sort();
+
+describe("the built-in browser view's language", () => {
+  it("marks its chip with a stable state id, whatever the words", async () => {
+    const { post, live, $ } = viewer();
+    await post({ ...init, locale: "bg", messages: bg.messages });
+    expect($("chip").dataset["state"]).toBe("waiting");
+    await live({ kind: "session", sessionId: "s1", taskId: "t1", state: "open", url: "https://a.example/" });
+    await live(frame("s1"));
+    expect($("chip").dataset["state"]).toBe("live");
+    await live({ kind: "control", sessionId: "s1", state: "requested" });
+    expect($("chip").dataset["state"]).toBe("requested");
+    await live({ kind: "control", sessionId: "s1", state: "operator", controller: "you" });
+    expect($("chip").dataset["state"]).toBe("operator");
+    await live({ kind: "control", sessionId: "s1", state: "agent" });
+    await live({ kind: "hidden", sessionId: "s1", reason: "paused" });
+    expect($("chip").dataset["state"]).toBe("paused");
+    await live({ kind: "hidden", sessionId: "s1", reason: "payment-field" });
+    expect($("chip").dataset["state"]).toBe("hidden");
+    await live({ kind: "ended", sessionId: "s1", reason: "closed" });
+    expect($("chip").dataset["state"]).toBe("ended");
+    expect(CHIP_STATES.every((state) => `chip.${state}` in ENGLISH)).toBe(true);
+  });
+
+  it("speaks Bulgarian from the pack init brings: chips, notices, what it says, and its own buttons", async () => {
+    vi.useFakeTimers();
+    const { post, live, $ } = viewer();
+    const start = { ...init, locale: "bg", messages: bg.messages };
+    expect(HostToPluginMessageSchema.safeParse({ abi, ...start }).success).toBe(true);
+    await post(start);
+    expect($("chip").textContent).toBe("В очакване");
+    expect(document.documentElement.lang).toBe("bg");
+    expect(document.title).toBe("Браузър");
+    expect($("transcript").textContent).toBe("Отвори в записа на чата");
+    expect($("expand").textContent).toBe("Разгъни");
+    expect($("view").getAttribute("aria-label")).toBe("Браузърът на агента");
+    await live({ kind: "navigated", sessionId: "s1", url: "https://example.com/news", title: "Новини", epoch: 1 });
+    vi.advanceTimersByTime(100);
+    expect($("announce").textContent).toBe("Сега на example.com/news, Новини");
+    await live(frame("s1"));
+    expect($("chip").textContent).toBe("На живо");
+    await live({ kind: "action", sessionId: "s1", phase: "pending", action: "submit", box: { x: 1, y: 1, width: 5, height: 5 } });
+    vi.advanceTimersByTime(100);
+    expect($("announce").textContent).toBe("Чакам одобрението ти, за да изпратя формуляра тук.");
+    await live({ kind: "control", sessionId: "s1", state: "operator", controller: "you" });
+    expect($("chip").textContent).toBe("Ти управляваш");
+    await live({ kind: "control", sessionId: "s1", state: "requested" });
+    expect($("chip").textContent).toBe("Чака теб");
+    await live({ kind: "control", sessionId: "s1", state: "agent" });
+    await live({ kind: "hidden", sessionId: "s1", reason: "password-field" });
+    expect($("chip").textContent).toBe("Скрито — чувствителна страница");
+    expect($("notice").textContent).toBe("Скрито: на тази страница има поле за парола.");
+    vi.advanceTimersByTime(100);
+    expect($("announce").textContent).toBe("Страницата е скрита: на нея има поле за парола.");
+    await live({ kind: "ended", sessionId: "s1", reason: "task-ended" });
+    vi.advanceTimersByTime(100);
+    expect($("announce").textContent).toBe("Tavi приключи, а страницата остава отворена.");
+    // No English word of its own is left on screen.
+    for (const english of Object.values(ENGLISH)) if (!english.startsWith("{")) expect(document.body.textContent).not.toContain(english);
+  });
+
+  it("switches language on a `locale` message, and back to its English when the pack lacks a key or none is sent", async () => {
+    const { post, live, $ } = viewer();
+    await post(init);
+    expect($("chip").textContent).toBe("Waiting");
+    expect($("expand").textContent).toBe("Expand");
+    const switched = { type: "locale", locale: "bg", messages: { "chip.waiting": "В очакване" } };
+    expect(HostToPluginMessageSchema.safeParse({ abi, ...switched }).success).toBe(true);
+    await post(switched);
+    expect($("chip").textContent).toBe("В очакване");
+    // A key the pack lacks is said in English.
+    expect($("expand").textContent).toBe("Expand");
+    await live({ kind: "session", sessionId: "s1", taskId: "t1", state: "open", url: "https://a.example/" });
+    await live({ kind: "session", sessionId: "s2", taskId: "t2", state: "open" });
+    await post({ type: "locale", locale: "bg", messages: bg.messages });
+    expect([...($("sessions") as HTMLSelectElement).options].map((option) => option.textContent)).toEqual([
+      "a.example",
+      "Сесия 2 (помощник)",
+    ]);
+    await post({ type: "locale", locale: "en" });
+    expect($("chip").textContent).toBe("Waiting");
+    expect(document.documentElement.lang).toBe("en");
+    expect([...($("sessions") as HTMLSelectElement).options].map((option) => option.textContent)).toEqual([
+      "a.example",
+      "Session 2 (sub-agent)",
+    ]);
+  });
+
+  it("ships a Bulgarian pack whose keys and parameters are its English's, and whose manifest words fit its manifest", () => {
+    for (const [key, message] of Object.entries(bg.messages)) {
+      const text = typeof message === "string" ? message : message.other;
+      const own = key.startsWith("say.pending.") ? "say.pending" : key;
+      expect(Object.hasOwn(ENGLISH, own), key).toBe(true);
+      // A whole sentence for one action names no action.
+      if (own === key)
+        expect(
+          params(text).every((name) => params(ENGLISH[key as keyof typeof ENGLISH]).includes(name)),
+          key,
+        ).toBe(true);
+      expect(text).not.toMatch(/["']/);
+    }
+    for (const key of Object.keys(ENGLISH)) expect(Object.hasOwn(bg.messages, key), key).toBe(true);
+    // Checked as an installed plugin's pack is: every manifest path one a person reads.
+    const manifest = { config: {}, channels: [], ui: BROWSER_VIEW_MANIFEST.ui } as unknown as PluginManifest;
+    expect(pluginLocaleProblems(manifest, "bg", JSON.parse(readFileSync(join(root, "locales", "bg.json"), "utf8")))).toEqual([]);
+    expect(BROWSER_VIEW_MANIFEST.schemaVersion).toBe(3);
+    expect(BROWSER_VIEW_MANIFEST.locales).toEqual({ bg: "locales/bg.json" });
   });
 });

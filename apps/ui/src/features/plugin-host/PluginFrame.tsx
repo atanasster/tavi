@@ -11,16 +11,18 @@ import {
   type HostToPluginMessage,
   type PluginUiChannel,
   type PluginUiContext,
+  type PluginUiMessages,
   type PluginUiNavigation,
   type PluginUiPlacement,
   type PluginUiShortcut,
   type PluginUiSlot,
   type PluginUiTheme,
 } from "@tavi/contracts";
-import { createContext, useContext, useEffect, useRef, type CSSProperties } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, type CSSProperties } from "react";
 
 import { reportFlood } from "./floods.js";
 import { contributionKey, type ResolvedContribution } from "./slots.js";
+import { useLocale } from "../../lib/i18n.js";
 import { prefersReducedMotion } from "../../lib/motion.js";
 
 /**
@@ -44,6 +46,10 @@ import { prefersReducedMotion } from "../../lib/motion.js";
  *   `visibility` and `context` as they change. Hidden (the browser tab, the
  *   panel, the slot, the phone sheet at half), it is told so, and its watch
  *   ends after 2 s; shown again, the watch is opened again.
+ * - **Language.** `init` carries the canvas's language and the plugin's own
+ *   words in it (`messages`, from its hash-verified language packs, as the
+ *   owner served them with its entry); a change of language is sent as
+ *   `locale`. A plugin that ignores both keeps its own English.
  * - **Teardown.** Unmounting ends the watch: a parent that drops a revoked
  *   plugin's contribution tears it all down.
  */
@@ -88,6 +94,14 @@ function currentTheme(): PluginUiTheme {
   return { tokens, colorScheme: dark ? "dark" : "light" };
 }
 
+/** What a plugin is told of the language: the canvas's, and its words in it when its entry was served in that one. */
+function languageOf(
+  resolved: Pick<ResolvedContribution, "locale" | "messages">,
+  locale: ReturnType<typeof useLocale>,
+): { readonly locale: ReturnType<typeof useLocale>; readonly messages?: PluginUiMessages } {
+  return resolved.locale === locale && resolved.messages !== undefined ? { locale, messages: resolved.messages } : { locale };
+}
+
 /** The host's side of one frame: its state and what acts on it, for the frame's life. */
 interface FrameController {
   ready: boolean;
@@ -104,6 +118,8 @@ interface FrameController {
   shown: boolean;
   /** The plugin watches its `mod.state`: what it was last sent, by key. */
   modState: Readonly<Record<string, unknown>> | undefined;
+  /** The language (and words) it was last told, as JSON: a `locale` message is sent only when it changes. */
+  language: string;
   post(message: HostToPluginMessage): void;
   sendModState(): void;
   closeWatch(): void;
@@ -120,12 +136,14 @@ export const PluginFramesCoveredContext = createContext(false);
 
 export function PluginFrame(props: PluginFrameProps) {
   const covered = useContext(PluginFramesCoveredContext);
+  const locale = useLocale();
   const { resolved, context } = props;
   const visible = props.visible && !covered;
   const frame = useRef<HTMLIFrameElement>(null);
-  /** The latest props, for listeners registered once; `visible` as covering leaves it. */
-  const latest = useRef({ ...props, visible });
-  latest.current = { ...props, visible };
+  const language = languageOf(resolved, locale);
+  /** The latest props, for listeners registered once; `visible` as covering leaves it, and the language to tell. */
+  const latest = useRef({ ...props, visible, language });
+  latest.current = { ...props, visible, language };
   const controller = useRef<FrameController | undefined>(undefined);
   const channels = resolved.contribution.channels;
 
@@ -146,6 +164,7 @@ export function PluginFrame(props: PluginFrameProps) {
       hideTimer: undefined,
       shown: false,
       modState: undefined,
+      language: "",
       post(message) {
         const parsed = HostToPluginMessageSchema.safeParse(message);
         if (!parsed.success) return;
@@ -279,6 +298,7 @@ export function PluginFrame(props: PluginFrameProps) {
           state.seq = 0;
           state.ready = true;
           state.shown = shown();
+          state.language = JSON.stringify(current.language);
           state.post({
             abi: PLUGIN_UI_ABI,
             type: "init",
@@ -291,6 +311,7 @@ export function PluginFrame(props: PluginFrameProps) {
             size: size(),
             reducedMotion: prefersReducedMotion(),
             visible: state.shown,
+            ...current.language,
           });
           return;
         case "watch":
@@ -396,6 +417,16 @@ export function PluginFrame(props: PluginFrameProps) {
     state.closeWatch();
     state.visibility();
   }, [contextKey]);
+
+  // The canvas's language, or the plugin's words in it, changed: told once it is ready (`init` told it the first).
+  // Keyed by what it says, not by identity: a list read again carries equal words in new objects.
+  const languageKey = useMemo(() => JSON.stringify(languageOf(resolved, locale)), [locale, resolved.locale, resolved.messages]);
+  useEffect(() => {
+    const state = controller.current;
+    if (state === undefined || !state.ready || state.language === languageKey) return;
+    state.language = languageKey;
+    state.post({ abi: PLUGIN_UI_ABI, type: "locale", ...latest.current.language });
+  }, [languageKey]);
 
   // What its plugin published changed: sent on, while it watches. After the context effect, so a new chat's values follow its `context`, once.
   useEffect(() => controller.current?.sendModState(), [props.modState]);

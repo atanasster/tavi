@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   channelDisclosure,
+  HostToPluginMessageSchema,
   PluginManifestSchema,
+  PluginUiAnswerSchema,
   PluginUiSchema,
   UiPlacementsSettingSchema,
   UiRolesSettingSchema,
@@ -152,5 +154,62 @@ describe("the onboarding.step slot", () => {
       uiPlacements: { "acme.live/live": { slots: [{ slot: "onboarding.step" }, { slot: "chat.panel.top" }] } },
     });
     expect(contributions[0]?.placements.map((placement) => placement.slot)).toEqual(["chat.panel.top"]);
+  });
+});
+
+describe("a plugin's language over tavi.ui/1", () => {
+  const init = {
+    abi: "tavi.ui/1",
+    type: "init",
+    pluginId: "acme.live",
+    contributionId: "live",
+    slot: "chat.panel.top",
+    context: { workspaceId: "default" },
+    channels: [],
+    theme: { tokens: {}, colorScheme: "light" },
+    size: { width: 10, height: 10 },
+    reducedMotion: false,
+    visible: true,
+  };
+  const messages = { "chip.live": "На живо", days: { one: "{count} ден", other: "{count} дни" } };
+
+  it("takes init without a language, as an older host sends it, and with the language and the plugin's words", () => {
+    expect(HostToPluginMessageSchema.safeParse(init).success).toBe(true);
+    expect(HostToPluginMessageSchema.safeParse({ ...init, locale: "bg", messages }).success).toBe(true);
+    expect(HostToPluginMessageSchema.safeParse({ ...init, locale: "en" }).success).toBe(true);
+  });
+
+  it("holds the language to one Tavi speaks, and the words to a pack's keys, shapes and bounds", () => {
+    expect(HostToPluginMessageSchema.safeParse({ ...init, locale: "xx" }).success).toBe(false);
+    expect(HostToPluginMessageSchema.safeParse({ ...init, locale: "bg", messages: { "bad key": "x" } }).success).toBe(false);
+    expect(HostToPluginMessageSchema.safeParse({ ...init, locale: "bg", messages: { key: "" } }).success).toBe(false);
+    expect(HostToPluginMessageSchema.safeParse({ ...init, locale: "bg", messages: { key: { one: "x" } } }).success).toBe(false);
+    expect(HostToPluginMessageSchema.safeParse({ ...init, locale: "bg", messages: { key: "x".repeat(2001) } }).success).toBe(false);
+    const many = Object.fromEntries(Array.from({ length: 1001 }, (_, index) => [`k${String(index)}`, "x"]));
+    expect(HostToPluginMessageSchema.safeParse({ ...init, locale: "bg", messages: many }).success).toBe(false);
+  });
+
+  it("tells a change of language as a `locale` message, with or without words", () => {
+    expect(HostToPluginMessageSchema.safeParse({ abi: "tavi.ui/1", type: "locale", locale: "bg", messages }).success).toBe(true);
+    expect(HostToPluginMessageSchema.safeParse({ abi: "tavi.ui/1", type: "locale", locale: "en" }).success).toBe(true);
+    expect(HostToPluginMessageSchema.safeParse({ abi: "tavi.ui/1", type: "locale" }).success).toBe(false);
+    expect(HostToPluginMessageSchema.safeParse({ abi: "tavi.ui/1", type: "locale", locale: "bg", extra: 1 }).success).toBe(false);
+  });
+
+  it("serves an entry's language and words in `plugins ui`, and carries them to its resolved contributions", () => {
+    const entry = { pluginId: "acme.live", kind: "external", version: "1.0.0", contentHash: "a".repeat(64), ui, locale: "bg", messages };
+    const answer = PluginUiAnswerSchema.parse({ entries: [entry] });
+    const chosen = { uiRoles: { "browser-view": "acme.live" } } as const;
+    const [resolved] = resolveContributions(answer.entries, chosen).contributions;
+    expect(resolved?.locale).toBe("bg");
+    expect(resolved?.messages).toEqual(messages);
+    // Without them (English, or an older owner) the contribution has neither.
+    const english = resolveContributions(
+      PluginUiAnswerSchema.parse({ entries: [{ ...entry, locale: undefined, messages: undefined }] }).entries,
+      chosen,
+    );
+    expect(english.contributions).toHaveLength(1);
+    expect(english.contributions[0]).not.toHaveProperty("locale");
+    expect(english.contributions[0]).not.toHaveProperty("messages");
   });
 });

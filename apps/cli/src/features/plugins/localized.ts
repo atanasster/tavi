@@ -1,12 +1,18 @@
+import { join } from "node:path";
+
 import {
   localeOf,
+  PluginUiMessagesSchema,
+  PluginUiSchema,
   type ChannelDescriptor,
   type PluginManifest,
+  type PluginUi,
+  type PluginUiEntry,
   type PluginView,
   type WorkspaceSettingsRepositoryPort,
 } from "@tavi/contracts";
-import type { Locale } from "@tavi/contracts/i18n";
-import { localizedPluginManifest, readPluginManifest } from "@tavi/runtime";
+import type { Catalog, Locale } from "@tavi/contracts/i18n";
+import { localizedPluginManifest, readBuiltinUiPacks, readPluginManifest, readPluginUiMessages } from "@tavi/runtime";
 
 import { channelPluginOf, channelPluginVersionOf } from "../channels/catalog.js";
 import type { ExternalPluginLanguage } from "./external.js";
@@ -138,4 +144,61 @@ export async function pluginLanguage(
     },
     close,
   };
+}
+
+/** Where `localizedUiEntries` reads a plugin's packs: an installed version's snapshot, a built-in's files in the canvas build. */
+export interface UiPackSources {
+  readonly snapshotDirectory: (pluginId: string, version: string) => string;
+  /** The canvas build the owner hashed its UI built-ins from (`builtCanvasDirectory`); absent: no built-in is translated. */
+  readonly canvasDirectory: string | undefined;
+}
+
+/**
+ * The canvas's UI entries in `locale`: each with the language and its
+ * plugin's own words (`messages`) for its frames' `init` (`tavi.ui/1`), read
+ * only from files whose hash is the one the entry is served under. An
+ * installed version's `ui` titles were overlaid by the listing already; a
+ * built-in's are laid over here from its own pack (`ui.contributions.<id>.title`
+ * and `.disclosure`), kept English when the result would not be a valid `ui`
+ * block. English, or no language, answers `entries` as they are.
+ */
+export function localizedUiEntries(entries: readonly PluginUiEntry[], locale: Locale | undefined, sources: UiPackSources): PluginUiEntry[] {
+  if (locale === undefined || locale === "en") return [...entries];
+  return entries.map((entry) => {
+    let messages: Catalog | undefined;
+    let ui: PluginUi = entry.ui;
+    if (entry.kind === "external") {
+      if (entry.version === undefined) return { ...entry, locale };
+      const directory = sources.snapshotDirectory(entry.pluginId, entry.version);
+      let manifest: PluginManifest;
+      try {
+        manifest = readPluginManifest(directory);
+      } catch {
+        return { ...entry, locale };
+      }
+      messages = readPluginUiMessages(directory, manifest, entry.contentHash, locale);
+    } else {
+      if (sources.canvasDirectory === undefined) return { ...entry, locale };
+      const read = readBuiltinUiPacks(join(sources.canvasDirectory, "plugins", entry.pluginId), entry.contentHash, locale);
+      messages = read.messages;
+      ui = overlaidUi(entry.ui, read.pack?.manifest ?? {});
+    }
+    // Words the canvas would refuse are left out, never sent: one plugin's must not spoil the whole answer.
+    const fit = messages === undefined ? undefined : PluginUiMessagesSchema.safeParse(messages);
+    return { ...entry, ui, locale, ...(fit?.success === true ? { messages: fit.data } : {}) };
+  });
+}
+
+/** `ui` with a built-in pack's contribution titles and disclosures in place of its English; English when that would not parse. */
+function overlaidUi(ui: PluginUi, overlay: Readonly<Record<string, string>>): PluginUi {
+  if (Object.keys(overlay).length === 0) return ui;
+  const words = (id: string, field: "title" | "disclosure"): string | undefined =>
+    Object.hasOwn(overlay, `ui.contributions.${id}.${field}`) ? overlay[`ui.contributions.${id}.${field}`] : undefined;
+  const contributions = ui.contributions.map((contribution) => {
+    const title = words(contribution.id, "title");
+    const disclosure = contribution.disclosure === undefined ? undefined : words(contribution.id, "disclosure");
+    return { ...contribution, ...(title === undefined ? {} : { title }), ...(disclosure === undefined ? {} : { disclosure }) };
+  });
+  const parsed = PluginUiSchema.safeParse({ ...ui, contributions });
+  return parsed.success ? parsed.data : ui;
 }

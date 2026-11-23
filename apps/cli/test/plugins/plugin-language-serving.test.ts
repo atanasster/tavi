@@ -108,6 +108,10 @@ describe("a plugin's words served in the workspace's language", () => {
     expect(
       ui.ok && (ui.result as { entries: { ui: { contributions: { title: string }[] } }[] }).entries[0]?.ui.contributions[0]?.title,
     ).toBe("Прогноза");
+    // Its frames are told the language (it has no messages of its own to give them).
+    expect(ui.ok && (ui.result as { entries: { locale?: string; messages?: unknown }[] }).entries[0]).toMatchObject({ locale: "bg" });
+    const englishUi = await pluginsCommand(runtime, { action: "ui", pluginId: "acme.weather" }, "operator");
+    expect(englishUi.ok && (englishUi.result as { entries: object[] }).entries[0]).not.toHaveProperty("locale");
 
     const apps = async (locale?: "bg") =>
       await appsOwnerCommand(runtime, { action: "list", workspaceId: "default" }, "operator", locale === undefined ? {} : { locale });

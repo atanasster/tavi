@@ -71,6 +71,13 @@ plugin hears a language change at once (`ctx.locale`), with no restart.
 `tavi plugins validate` checks every pack as install does and counts, for each
 language, how many of the manifest's words and messages it translates;
 [Translating your plugin](PLUGINS.md#translating-your-plugin) is the author's guide.
+A plugin's canvas panels hear the language too: a panel is told the canvas's
+language and handed the plugin's own words in it when it starts, and a language
+change reaches an open panel at once, with no reload. The words come only from
+the approved version's files, or from what the canvas build shipped for a
+built-in. The built-in browser view speaks Bulgarian this way: its status chip,
+notices, buttons and what it announces to a screen reader. A plugin that
+ignores the language keeps its English.
 
 Errors Tavi's server sends the canvas for you to act on (a value it
 refuses, something that no longer exists, a change someone else saved first,
