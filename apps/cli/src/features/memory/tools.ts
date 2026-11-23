@@ -30,6 +30,7 @@ import { definedOnly, nowTimestamp } from "@tavi/contracts/util";
 import { holdsSecret, sensitiveTopicOf } from "@tavi/agent-host/workflow";
 import type { ToolRegistry } from "@tavi/runtime";
 
+import { cardWords } from "../approvals/card-words.js";
 import { memoryUnreachedNote } from "./channel-cards.js";
 
 /**
@@ -578,8 +579,10 @@ export function registerMemoryTools(registry: ToolRegistry, memory: MemoryServic
     assess: (input, context): CallAssessment => {
       const parsed = MemoryForgetInputSchema.safeParse(input);
       const recordId = parsed.success ? parsed.data.recordId : "";
+      // The card in the workspace's language; each refusal, which the model reads, in English.
+      const t = cardWords(context);
       const refuse = (hardDeny: string): CallAssessment => ({
-        display: { title: "Forget a memory", destructive: true },
+        display: { title: t("approval.card.memory.forget"), destructive: true },
         subjects: [],
         risk: "high",
         reasons: [],
@@ -594,17 +597,17 @@ export function registerMemoryTools(registry: ToolRegistry, memory: MemoryServic
       // Nothing is put in front of the person they cannot see: the card is the record's own words.
       if (shown === undefined) return refuse("Read the record with memory.get first, so the person sees what would be forgotten");
       if (shown.shared) return refuse("Shared workspace memory is changed by an explicit share, not from a chat");
-      const title = shown.sensitive ? "a sensitive memory" : (shown.title ?? "a memory");
-      const body = shown.sensitive ? "(sensitive: open Memory to read it)" : shown.body;
+      const title = shown.sensitive ? t("approval.card.memory.aSensitive") : (shown.title ?? t("approval.card.memory.aMemory"));
+      const body = shown.sensitive ? t("approval.card.memory.sensitiveBody") : shown.body;
       return {
         display: {
-          title: `Forget “${title}”`.slice(0, 300),
-          detail: `${body.slice(0, 1_700)}\n\nWhy: ${parsed.data.reason}`.slice(0, 2_000),
+          title: t("approval.card.memory.forgetTitled", { title }).slice(0, 300),
+          detail: `${body.slice(0, 1_700)}\n\n${t("approval.card.memory.why", { reason: parsed.data.reason })}`.slice(0, 2_000),
           destructive: true,
         },
         subjects: [recordId],
         risk: "high",
-        reasons: ["erases a memory for good"],
+        reasons: [t("approval.reason.memory.erases")],
         // Only the person decides, once: no grant or rule covers a forget, and no run nobody attends asks it.
         onceOnly: true,
         attendedOnly: true,

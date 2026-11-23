@@ -11,6 +11,7 @@ import {
 } from "../src/browser-history.js";
 import { isModelVisibleArtifact } from "../src/ports.js";
 import { BrowserListAnswerSchema, formatBrowserDuration, parseCommandPayload } from "../src/index.js";
+import { coreIn } from "../src/locales/core-server.js";
 
 /** Browser history's storage rules. */
 describe("scrubBrowserUrl", () => {
@@ -110,5 +111,13 @@ describe("formatBrowserDuration", () => {
     expect(formatBrowserDuration(18 * 60_000 + 59_000)).toBe("18 min");
     expect(formatBrowserDuration(125 * 60_000)).toBe("2 h 5 min");
     expect(formatBrowserDuration(120 * 60_000)).toBe("2 h");
+  });
+
+  it("says them in Bulgarian, with a no-break space before each unit", () => {
+    const bg = coreIn("bg");
+    expect(formatBrowserDuration(6_000, bg)).toBe("6\u00a0сек");
+    expect(formatBrowserDuration(60_000, bg)).toBe("1\u00a0мин");
+    expect(formatBrowserDuration(125 * 60_000, bg)).toBe("2\u00a0ч 5\u00a0мин");
+    expect(formatBrowserDuration(120 * 60_000, bg)).toBe("2\u00a0ч");
   });
 });

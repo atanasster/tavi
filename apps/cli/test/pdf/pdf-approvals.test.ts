@@ -145,6 +145,36 @@ describe("an email link's page", () => {
       server.close();
     }
   });
+
+  it("puts a blank field's name into its line as written, `$` patterns and all", async () => {
+    const dollars = { ...form, leftBlank: [{ field: "Sig$&nature $` $' $$", why: "signature" as const }] };
+    const approvals = {
+      describeLink: async () => ({
+        ok: true as const,
+        view: {
+          kind: "round" as const,
+          title: "Round",
+          body: "",
+          choiceLabel: "Approve $& once",
+          needsPin: false,
+          allowsNote: false,
+          forms: [maskedForm(dollars)],
+        },
+      }),
+    } as Pick<ChannelApprovals, "describeLink"> as ChannelApprovals;
+    const links = createApprovalLinkHandler(approvals, { publicUrl: "https://mail.example.test" });
+    const server = createServer((req, res) => void links(req, res));
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    try {
+      const page = await (await fetch(`http://127.0.0.1:${(server.address() as AddressInfo).port}/i/${"a".repeat(22)}`)).text();
+      expect(page).toMatch(/You sign or complete these yourself: Sig\$&[^<]*nature \$/);
+      expect(page).toContain("$$");
+      expect(page).toMatch(/Confirm: <strong>Approve \$&/);
+      expect(page).not.toContain("\u0000");
+    } finally {
+      server.close();
+    }
+  });
 });
 
 interface Harness {

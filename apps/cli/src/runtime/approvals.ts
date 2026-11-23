@@ -7,9 +7,10 @@ import { createPendingBrowserActions } from "../features/browser/pending-actions
 import { errorMessage } from "@tavi/contracts/util";
 import { createHeartbeatButtons } from "../features/heartbeat/buttons.js";
 import { createReminderButtons } from "../features/reminders/delivery.js";
-import { isLocalConnectionId } from "@tavi/contracts";
+import { connectNeedText, isLocalConnectionId, type ConnectRequest } from "@tavi/contracts";
+import type { CoreT } from "@tavi/contracts/locales/core";
 import { createChannelApprovals } from "../features/approvals/channel-approvals.js";
-import { workspaceLocaleOf } from "../features/channels/channel-words.js";
+import { channelWords, workspaceLocaleOf } from "../features/channels/channel-words.js";
 import { hostsWrittenIn } from "../features/approvals/channel-approval-text.js";
 import { createConnectWaits } from "../features/apps/connect-waits.js";
 import { createMemoryChannelCards } from "../features/memory/channel-cards.js";
@@ -53,11 +54,18 @@ export function composeApprovals(composed: RunEventsContext) {
     log: (level, message, fields) => logger[level](message, fields),
   });
   connectWaitsRef.current = connectWaits;
-  /** Tells the chat a task came from, in one text part: false when it has none, or the send was refused. */
-  const tellTaskChat = async (taskId: string, text: string, effectId: string): Promise<boolean> => {
+  /**
+   * Tells the chat a task came from, in one text part: false when it has none, or the send was refused. Words given
+   * as a function are said in the task's workspace's language.
+   */
+  const tellTaskChat = async (taskId: string, words: string | ((t: CoreT) => string), effectId: string): Promise<boolean> => {
     const target = await channelApprovals.replyTargetOf(taskId);
     const task = await persistencePort.repositories.tasks.get(taskId);
     if (target === undefined || task === undefined) return false;
+    const text =
+      typeof words === "string"
+        ? words
+        : words(await channelWords(workspaceLocaleOf(persistencePort.repositories.workspaceSettings), task.workspaceId));
     const destination = messaging.buildReplyDestination(target.connectionId, {
       externalConversationId: target.externalConversationId,
       externalSenderId: target.externalSenderId,
@@ -79,8 +87,16 @@ export function composeApprovals(composed: RunEventsContext) {
    * A connect need, told to the chat a task came from: Tavi's words only, no link and no token. Best effort,
    * as a handoff's notice is: the person can still connect from Tavi, so a failed send never ends the wait.
    */
-  const tellConnect = async (input: { readonly taskId: string; readonly waitId: string; readonly text: string }): Promise<void> => {
-    await tellTaskChat(input.taskId, input.text, `connect:${input.waitId}`).catch((error: unknown) =>
+  const tellConnect = async (input: {
+    readonly taskId: string;
+    readonly waitId: string;
+    readonly text: string;
+    readonly connect?: Pick<ConnectRequest, "appName" | "health">;
+  }): Promise<void> => {
+    // The app's need in the chat's workspace's language, when the wait says which app it is; else the English given.
+    const connect = input.connect;
+    const said = connect === undefined ? input.text : (t: CoreT) => connectNeedText(connect, t);
+    await tellTaskChat(input.taskId, said, `connect:${input.waitId}`).catch((error: unknown) =>
       logger.warn("a connect need could not be told to its chat", { taskId: input.taskId, error: errorMessage(error) }),
     );
   };

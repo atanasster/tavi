@@ -43,6 +43,8 @@ export function composeOauth(composed: ModelsContext) {
     now: () => Date.parse(clock.now()),
     descriptorOf: channelDescriptorOf,
     optInsOf,
+    // The callback page speaks the language of the workspace the sign-in is for.
+    localeOf: workspaceLocaleOf(persistencePort.repositories.workspaceSettings),
     connected: async ({ connectionId, workspaceId, accountIdentity, tokenRef }) => {
       // In one step, and never on a connection removed meanwhile.
       if (

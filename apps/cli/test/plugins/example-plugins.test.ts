@@ -1,8 +1,7 @@
-import { spawnSync } from "node:child_process";
 import { cpSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import type { InvocationContext, SandboxPort } from "@tavi/contracts";
+import type { InvocationContext } from "@tavi/contracts";
 import { temporaryDirectories } from "@tavi/test-support";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -12,6 +11,7 @@ import { EXIT, main } from "../../src/main.js";
 import { validatePlugin } from "../../src/features/plugins/validate.js";
 import { capture } from "../support/attached-owner.js";
 import { fixtureRuntimeOptions } from "../support/serve-fixture.js";
+import { directSandbox as direct } from "../support/direct-sandbox.js";
 
 /** The guide's example plugins (docs/MODS.md B.2 and B.3), as the examples folder ships them: validated, installed and called. */
 
@@ -28,23 +28,6 @@ const temp = () => {
   return path;
 };
 const context: InvocationContext = { workspaceId: "default", principalId: "operator", runId: "run-1", caller: "test" };
-
-/** Runs the command unconfined, as the sandbox would with everything allowed. */
-const direct: SandboxPort = {
-  capabilities: () => ({ available: true, platforms: ["darwin"] }),
-  run: async (_policy, command) => {
-    const run = spawnSync(command.command, [...(command.args ?? [])], { cwd: command.cwd, encoding: "utf8" });
-    return {
-      session: { sessionId: "s", state: "completed" },
-      exitCode: run.status,
-      stdout: run.stdout,
-      stderr: run.stderr,
-      truncated: false,
-    };
-  },
-  cancel: async () => {},
-  dispose: async () => {},
-};
 
 async function tavi(argv: readonly string[]) {
   const out = capture();

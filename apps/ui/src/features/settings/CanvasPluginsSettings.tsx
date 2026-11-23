@@ -49,7 +49,7 @@ interface CanvasData {
 
 async function loadCanvas(client: SettingsClient, workspaceId: string): Promise<Outcome<CanvasData>> {
   const [ui, settings] = await Promise.all([
-    ask<unknown>(client, "plugins", { action: "ui" }),
+    ask<unknown>(client, "plugins", { action: "ui", workspaceId }),
     ask<unknown>(client, "workspace-settings", { action: "get", workspaceId }),
   ]);
   if (!ui.ok) return ui;

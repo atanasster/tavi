@@ -40,9 +40,11 @@ import {
   SANDBOX_REQUEST_DOMAINS_MAX,
   UNPARSED_SUBJECT_PREFIX,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { clip } from "@tavi/contracts/util";
 
 import { sandboxArgv } from "../sandbox/command-line.js";
+import { cardKind, cardReason, cardWords } from "./card-words.js";
 import { folderFileDetail, type FolderFileReading } from "../folders/promotion.js";
 
 /**
@@ -1178,7 +1180,9 @@ function deletesHomeLexically(argvs: readonly (readonly string[])[], home: strin
  * the side chat's parent included, and a side chat's approval never does.
  * `session` stays — a grant is the side chat's own.
  */
-export function assessSandboxRun(input: unknown, context?: Pick<InvocationContext, "parentChatId" | "folder">): CallAssessment {
+export function assessSandboxRun(input: unknown, context?: Pick<InvocationContext, "parentChatId" | "folder" | "locale">): CallAssessment {
+  // Its card in the workspace's language; what it decides by, and every refusal, stays English.
+  const t = cardWords(context);
   const call = record(input);
   // What runs, read as `sandbox.run` runs it: a whole command line in `command` is its program and arguments (`sandboxArgv`).
   const argv = sandboxArgv(text(call["command"]) ?? "", Array.isArray(call["args"]) ? call["args"].map((arg) => text(arg) ?? "") : []);
@@ -1240,9 +1244,10 @@ export function assessSandboxRun(input: unknown, context?: Pick<InvocationContex
   if (stdin !== undefined && runners.length > 0) {
     if (runners.some((runner) => runner.kind === "shell")) {
       // Read where it runs, so a deletion of the working folder from `cwd` is refused as the same line would be.
+      // Read in English, as this line's own reasons are: the card says them all at the end.
       fromStdin = assessSandboxRun(
         { command: "sh", args: ["-c", stdin], ...(call["cwd"] === undefined ? {} : { cwd: call["cwd"] }) },
-        context,
+        context === undefined ? undefined : { ...context, locale: undefined },
       );
       stdinSubjects.push(...fromStdin.subjects);
     }
@@ -1308,9 +1313,11 @@ export function assessSandboxRun(input: unknown, context?: Pick<InvocationContex
   // Domains the run asks the person for (`requestDomains`, under `sandbox.network ask`): each its own subject, so an
   // approval for one never covers another, and a host the call names wrongly is shown as it was written.
   const requested = requestedDomainsOf(call["requestDomains"]);
-  if (requested.length > 0) {
+  const reaching = clip(requested.join(", "), 300);
+  const reach = requested.length === 0 ? undefined : `asks to reach ${reaching} for this run`;
+  if (reach !== undefined) {
     risk = maxRisk(risk, "high");
-    reasons.push(`asks to reach ${clip(requested.join(", "), 300)} for this run`);
+    reasons.push(reach);
   }
   // A host no run may ask for is refused before its card, and a program spelled as a domain's subject would let an
   // approval of the command later cover that domain.
@@ -1352,7 +1359,9 @@ export function assessSandboxRun(input: unknown, context?: Pick<InvocationContex
     display: {
       title: clip(
         // A card's title is plain text: the command in quotes, not Markdown backticks.
-        `Run “${clip(commands.join(" && "), 120)}” in the sandbox${requested.length === 0 ? "" : `, reaching ${requested.join(", ")}`}`,
+        requested.length === 0
+          ? t("approval.card.sandbox.run", { command: clip(commands.join(" && "), 120) })
+          : t("approval.card.sandbox.runReaching", { command: clip(commands.join(" && "), 120), domains: requested.join(", ") }),
         300,
       ),
       command: clip(shownArgv([command, ...args]), 4_000),
@@ -1360,10 +1369,10 @@ export function assessSandboxRun(input: unknown, context?: Pick<InvocationContex
       ...(widened.length === 0 ? {} : { forThisChat: clip(widened.join(", "), 600) }),
       ...(opaque.length > 0
         ? {
-            detail: `asked every time: it ${opaque.join("; ")}. Split into separate commands without these, it could be approved for good`,
+            detail: t("approval.card.sandbox.opaque", { reasons: opaque.map((reason) => cardReason(reason, t)).join("; ") }),
           }
         : commands.length > 1
-          ? { detail: `${commands.length} commands; each must be allowed on its own` }
+          ? { detail: t("approval.card.sandbox.commands", { count: commands.length }) }
           : {}),
     },
     // An opaque script also carries a subject no realistic allow glob covers.
@@ -1376,7 +1385,7 @@ export function assessSandboxRun(input: unknown, context?: Pick<InvocationContex
     // Deny and ask rules also match what runs as it would be spelled bare: `env curl x` as `curl x`.
     ...(spellings.length > 0 ? { forms: spellings } : {}),
     risk,
-    reasons,
+    reasons: reasons.map((reason) => (reason === reach ? t("approval.reason.reach", { domains: reaching }) : cardReason(reason, t))),
     // A host nobody granted is a person's to approve, for this call alone: no rule, chat grant or unattended run answers it.
     ...(requested.length > 0 ? { attendedOnly: true } : {}),
     ...(denied === undefined
@@ -1411,7 +1420,7 @@ function quoteWord(word: string): string {
   return /^[A-Za-z0-9_@%+=:,./-]+$/.test(word) ? word : `'${word.replace(/'/g, `'\\''`)}'`;
 }
 
-export function assessHttpRequest(input: unknown): CallAssessment {
+export function assessHttpRequest(input: unknown, t: CoreT = coreEnglish): CallAssessment {
   const call = record(input);
   const method = text(call["method"]) ?? "GET";
   const url = text(call["url"]) ?? "";
@@ -1425,21 +1434,21 @@ export function assessHttpRequest(input: unknown): CallAssessment {
   const reasons: string[] = [];
   // A DELETE removes what it names: it is rated high, as a credentialed change is.
   let risk: RiskLevel = method === "GET" ? "low" : method === "DELETE" ? "high" : "medium";
-  if (method !== "GET")
-    reasons.push(
-      method === "DELETE" ? "sends a DELETE request that removes remote data" : `sends a ${method} request that may change remote state`,
-    );
+  if (method !== "GET") reasons.push(method === "DELETE" ? t("approval.reason.httpDelete") : t("approval.reason.httpChange", { method }));
   if (credential !== undefined) {
     risk = maxRisk(risk, method === "GET" ? "medium" : "high");
-    reasons.push(`authenticates with credential ${credential}`);
+    reasons.push(t("approval.reason.credential", { credential }));
   }
   const body = text(call["body"]);
   return {
     display: {
-      title: clip(`${method} ${host}${credential === undefined ? "" : ` with credential ${credential}`}`, 300),
+      title: clip(
+        credential === undefined ? `${method} ${host}` : t("approval.card.http.withCredential", { method, host, credential }),
+        300,
+      ),
       command: clip(`${method} ${url}`, 4_000),
       host: clip(host, 300),
-      ...(body === undefined ? {} : { detail: clip(`Body: ${body}`, 2_000) }),
+      ...(body === undefined ? {} : { detail: clip(t("approval.card.http.body", { body }), 2_000) }),
     },
     // A credential is its own subject: a rule must cover spending it,
     // and the messaging profile's deny matches `credential:*`.
@@ -1461,12 +1470,13 @@ function hasHeaders(headers: unknown): boolean {
   return typeof headers === "object" && headers !== null && Object.keys(headers).length > 0;
 }
 
-export function assessMessagingSend(input: unknown, context?: Pick<InvocationContext, "messagingReplyTo">): CallAssessment {
+export function assessMessagingSend(input: unknown, context?: Pick<InvocationContext, "messagingReplyTo" | "locale">): CallAssessment {
+  const t = cardWords(context);
   const content = text(record(input)["content"]) ?? "";
   const artifactId = text(record(input)["artifactId"]);
   return {
     display: {
-      title: artifactId === undefined ? "Reply in this conversation" : clip(`Reply in this conversation with artifact ${artifactId}`, 300),
+      title: artifactId === undefined ? t("approval.card.reply") : clip(t("approval.card.replyArtifact", { artifactId }), 300),
       detail: clip(content, 2_000),
     },
     subjects: [],
@@ -1484,7 +1494,7 @@ export function assessMessagingSend(input: unknown, context?: Pick<InvocationCon
  * the chat may not read, or both or neither of `artifactId` and `path`, is
  * refused here.
  */
-export function assessMessagingSendTo(input: unknown, file?: FolderFileReading): CallAssessment {
+export function assessMessagingSendTo(input: unknown, file?: FolderFileReading, t: CoreT = coreEnglish): CallAssessment {
   const call = record(input);
   // The recipient as the call names it (`to`, or the older `chatId`): shown, and what a rule matches.
   const destination = `${text(call["connectionId"]) ?? "?"}:${text(call["to"]) ?? text(call["chatId"]) ?? "?"}`;
@@ -1492,13 +1502,18 @@ export function assessMessagingSendTo(input: unknown, file?: FolderFileReading):
   const byPath = isFile && text(call["path"]) !== undefined;
   const base: CallAssessment = {
     display: {
-      title: clip(isFile ? `Send artifact ${text(call["artifactId"]) ?? "?"} to ${destination}` : `Send a message to ${destination}`, 300),
+      title: clip(
+        isFile
+          ? t("approval.card.sendArtifact", { artifactId: text(call["artifactId"]) ?? "?", destination })
+          : t("approval.card.sendMessage", { destination }),
+        300,
+      ),
       destination: clip(destination, 300),
       detail: clip((isFile ? text(call["caption"]) : text(call["content"])) ?? "", 2_000),
     },
     subjects: [destination],
     risk: "medium",
-    reasons: ["sends a message to another conversation"],
+    reasons: [t("approval.reason.sendsElsewhere")],
   };
   if (!byPath) return base;
   if (text(call["artifactId"]) !== undefined) return { ...base, hardDeny: "messaging.send_to takes exactly one of artifactId and path" };
@@ -1515,10 +1530,10 @@ export function assessMessagingSendTo(input: unknown, file?: FolderFileReading):
     ...base,
     display: {
       ...base.display,
-      title: clip(`Send ${file.name} (${file.size} bytes) to ${destination}`, 300),
-      detail: clip(`${folderFileDetail(file)}${caption === undefined ? "" : `\nCaption: ${caption}`}`, 2_000),
+      title: clip(t("approval.card.sendFile", { name: file.name, size: String(file.size), destination }), 300),
+      detail: clip(`${folderFileDetail(file)}${caption === undefined ? "" : `\n${t("approval.card.caption", { caption })}`}`, 2_000),
     },
-    reasons: [...base.reasons, "sends a file from the chat's folder"],
+    reasons: [...base.reasons, t("approval.reason.sendsFile")],
     contentHash: file.sha256,
   };
 }
@@ -1552,13 +1567,13 @@ function hostAndPathOf(url: string): string {
   }
 }
 
-export function assessBrowserCreateSession(input: unknown): CallAssessment {
+export function assessBrowserCreateSession(input: unknown, t: CoreT = coreEnglish): CallAssessment {
   const url = text(record(input)["url"]);
   // Every session but a signed-out one opens the workspace's profile: under taint, that alone asks.
   const signedIn = record(input)["profile"] !== "ephemeral" ? { signedInProfile: true } : {};
   if (url === undefined)
     return {
-      display: { title: "Use the browser" },
+      display: { title: t("approval.card.browser.use") },
       subjects: [],
       risk: "low",
       reasons: [],
@@ -1570,20 +1585,22 @@ export function assessBrowserCreateSession(input: unknown): CallAssessment {
   // A navigation, judged by the known-URL rule under taint, fragment included.
   return {
     // The page, not only its site: two pages on one site are two questions, and must not read as one asked twice.
-    display: { title: clip(`Use the browser to open ${hostAndPathOf(url)}`, 300), host: clip(host, 300), command: clip(url, 4_000) },
-    subjects: [host],
-    risk: "medium",
-    reasons: [],
-    scopeGroup: BROWSER_SCOPE_GROUP,
-    urls: [url],
-    browserSteps: [{ kind: "navigate", url }],
+    ...pageOpening("approval.card.browser.open", url, host, t),
     ...signedIn,
   };
 }
 
-/** A browser call that reaches nothing new: a screenshot, closing the session. */
-export function assessBrowserSession(title: string): (input: unknown) => CallAssessment {
-  return () => ({ display: { title }, subjects: [], risk: "low", reasons: [], scopeGroup: BROWSER_SCOPE_GROUP });
+/** A browser call that reaches nothing new: a screenshot, closing the session; its title in the card's language. */
+export function assessBrowserSession(
+  title: "approval.card.browser.screenshot" | "approval.card.browser.close",
+): (input: unknown, context?: Pick<InvocationContext, "locale">) => CallAssessment {
+  return (_input, context) => ({
+    display: { title: cardWords(context)(title) },
+    subjects: [],
+    risk: "low",
+    reasons: [],
+    scopeGroup: BROWSER_SCOPE_GROUP,
+  });
 }
 
 /**
@@ -1666,11 +1683,12 @@ export function assessBrowserAct(
   file?: FolderFileReading,
   page?: string,
   dismissedDialog?: string,
+  t: CoreT = coreEnglish,
 ): CallAssessment {
   const call = record(input);
   const kind = text(call["kind"]) ?? "click";
   const assessment =
-    kind === "open_in_tab" ? assessBrowserOpenInTab(call, element) : assessBrowserActCall(input, element, page, dismissedDialog);
+    kind === "open_in_tab" ? assessBrowserOpenInTab(call, element, t) : assessBrowserActCall(input, element, page, dismissedDialog, t);
   // A stage profile's final step is refused, not asked: the person reviews and submits it themselves.
   if (element?.finalStep === true && ["click", "press", "submit", "open_in_tab"].includes(kind)) {
     return {
@@ -1706,10 +1724,17 @@ export function assessBrowserAct(
   return {
     ...assessment,
     display: {
-      title: clip(`Browser upload of ${file.name} (${file.size} bytes) on ${text(call["ref"]) ?? "an element"}`, 300),
+      title: clip(
+        t("approval.card.browser.upload", {
+          name: file.name,
+          size: String(file.size),
+          target: text(call["ref"]) ?? t("approval.card.browser.anElement"),
+        }),
+        300,
+      ),
       detail: clip(folderFileDetail(file), 2_000),
     },
-    reasons: [...assessment.reasons, "sends a file from the chat's folder to the page"],
+    reasons: [...assessment.reasons, t("approval.reason.uploadsFile")],
     contentHash: file.sha256,
   };
 }
@@ -1722,7 +1747,7 @@ export function assessBrowserAct(
  * it, or the one in `value`; the tools layer reads the destination's policy
  * (the allowlist, a refused scheme or private address) on top of this.
  */
-function assessBrowserOpenInTab(call: Readonly<Record<string, unknown>>, element: ObservedElement | undefined): CallAssessment {
+function assessBrowserOpenInTab(call: Readonly<Record<string, unknown>>, element: ObservedElement | undefined, t: CoreT): CallAssessment {
   const ref = text(call["ref"]);
   const value = text(call["value"]);
   const url = ref === undefined ? value : element?.href;
@@ -1734,11 +1759,11 @@ function assessBrowserOpenInTab(call: Readonly<Record<string, unknown>>, element
           ? "browser.act open_in_tab needs a link's ref or the URL to open in value"
           : `${ref} is not a link with an href in the session's latest observation: open_in_tab takes a link's ref, or the URL in value`
         : undefined;
-  const navigation = assessBrowserNavigate({ url: url ?? "" });
+  const navigation = assessBrowserNavigate({ url: url ?? "" }, t);
   const host = navigation.display.host ?? "";
   return {
     ...navigation,
-    display: { ...navigation.display, title: clip(`Open ${host} in a new browser tab`, 300) },
+    display: { ...navigation.display, title: clip(t("approval.card.browser.newTab", { host }), 300) },
     // A rule a person set on browser.navigate holds a new tab's navigation too.
     ruleAliases: ["browser.navigate"],
     ...(refusal === undefined ? {} : { hardDeny: refusal }),
@@ -1831,42 +1856,48 @@ export function commitsFormSubmit(element: ObservedElement | undefined): boolean
 const POSTING_LABEL =
   /(?<![\p{L}\p{N}_])(?:post|publish|reply|veröffentlichen|posten|antworten|publier|poster|répondre|publicar|responder|plaatsen|publiceren|beantwoorden|publicera|posta|svara|pubblica|pubblicare|rispondi|rispondere|opublikuj|odpowiedz|публикувай|отговори)(?![\p{L}\p{N}_])/iu;
 
-function commitHeadline(category: CommitCategory | undefined, label: string): string {
+function commitHeadline(category: CommitCategory | undefined, label: string, t: CoreT): string {
   switch (category) {
     case "pay":
-      return "Pays or orders";
+      return t("approval.card.browser.commit.pay");
     case "send":
-      return POSTING_LABEL.test(label) ? "Posts" : "Sends or submits";
+      return POSTING_LABEL.test(label) ? t("approval.card.browser.commit.post") : t("approval.card.browser.commit.send");
     case "account":
-      return "Registers or authorizes";
+      return t("approval.card.browser.commit.account");
     case "legal":
-      return "Accepts or approves";
+      return t("approval.card.browser.commit.legal");
     case "destructive":
-      return "Deletes or cancels";
+      return t("approval.card.browser.commit.destructive");
     case undefined:
-      return "Submits a form";
+      return t("approval.card.browser.commit.form");
   }
 }
 
 /** What a committing press can do, by what its label says: the card's reason, so a "Confirm" is not called a payment. */
-function commitConsequence(category: CommitCategory | undefined, label: string): string {
+function commitConsequence(category: CommitCategory | undefined, label: string, t: CoreT): string {
   switch (category) {
     case "pay":
-      return "can pay, book or order";
+      return t("approval.reason.commit.pay");
     case "send":
-      return POSTING_LABEL.test(label) ? "can post publicly" : "can send or submit something";
+      return POSTING_LABEL.test(label) ? t("approval.reason.commit.post") : t("approval.reason.commit.send");
     case "account":
-      return "can sign up, subscribe or authorize";
+      return t("approval.reason.commit.account");
     case "legal":
-      return "can accept or approve terms";
+      return t("approval.reason.commit.legal");
     case "destructive":
-      return "can delete or cancel";
+      return t("approval.reason.commit.destructive");
     case undefined:
-      return "sends its form";
+      return t("approval.reason.commit.form");
   }
 }
 
-function assessBrowserActCall(input: unknown, element?: ObservedElement, page?: string, dismissedDialog?: string): CallAssessment {
+function assessBrowserActCall(
+  input: unknown,
+  element: ObservedElement | undefined,
+  page: string | undefined,
+  dismissedDialog: string | undefined,
+  t: CoreT,
+): CallAssessment {
   const call = record(input);
   const kind = text(call["kind"]) ?? "click";
   // Enter in a form field submits it, as `submit` does: asked about the same way — with a modifier
@@ -1891,19 +1922,30 @@ function assessBrowserActCall(input: unknown, element?: ObservedElement, page?: 
   const dialogAccept = record(call["dialog"])["accept"] === true;
   const dialogCategory = dialogAccept ? (commitCategory(dismissedDialog ?? "") ?? "confirm") : undefined;
   const details = [
-    ...(typed === undefined || isSecretElement(element) ? [] : [`Value: ${typed}`]),
-    ...(dialogAccept && dismissedDialog !== undefined ? [`Dialog: ${dismissedDialog}`] : []),
+    ...(typed === undefined || isSecretElement(element) ? [] : [t("approval.card.browser.value", { value: typed })]),
+    ...(dialogAccept && dismissedDialog !== undefined ? [t("approval.card.browser.dialog", { text: dismissedDialog })] : []),
   ];
   const governed = kind === "submit" || kind === "upload" || kind === "download" || submitsByKey || submitsByClick || dialogAccept;
   const effectivePage = element?.frame ?? page;
   const pageHost = effectivePage === undefined ? "" : hostOf(effectivePage);
-  const commitTitle = submitsByClick && pageHost !== "" ? `${commitHeadline(category, label)} on ${pageHost}` : undefined;
+  const commitTitle =
+    submitsByClick && pageHost !== ""
+      ? t("approval.card.browser.commitOn", { headline: commitHeadline(category, label, t), host: pageHost })
+      : undefined;
   return {
     display: {
       title: clip(
         commitTitle ??
           // The element by what it shows (its text), never its internal ref (`el-2`), which says nothing to a person.
-          `Browser ${kind} on ${label.trim() !== "" ? `“${clip(label.replace(/\s+/g, " ").trim(), 80)}”` : (BROWSER_ACTION_KINDS as readonly string[]).includes(kind) && !browserActionNeedsRef(kind as BrowserActionKind) ? "the page" : "an element"}`,
+          t("approval.card.browser.act", {
+            kind: cardKind(kind, t),
+            target:
+              label.trim() !== ""
+                ? t("approval.card.quoted", { text: clip(label.replace(/\s+/g, " ").trim(), 80) })
+                : (BROWSER_ACTION_KINDS as readonly string[]).includes(kind) && !browserActionNeedsRef(kind as BrowserActionKind)
+                  ? t("approval.card.browser.thePage")
+                  : t("approval.card.browser.anElement"),
+          }),
         300,
       ),
       ...(commitTitle !== undefined ? { host: clip(pageHost, 300) } : {}),
@@ -1915,12 +1957,12 @@ function assessBrowserActCall(input: unknown, element?: ObservedElement, page?: 
     reasons: governed
       ? [
           submitsByClick
-            ? `presses ${JSON.stringify(clip(label, 80))}, which ${commitConsequence(category, label)}`
+            ? t("approval.reason.presses", { label: JSON.stringify(clip(label, 80)), consequence: commitConsequence(category, label, t) })
             : dialogAccept
-              ? `accepts a page dialog (${dialogCategory}), which can confirm or commit an action`
+              ? t("approval.reason.dialog", { category: dialogCategory ?? "" })
               : submitsByKey
-                ? "presses Enter, which can submit a form"
-                : `${kind}s through the browser`,
+                ? t("approval.reason.pressesEnter")
+                : cardReason(`${kind}s through the browser`, t),
         ]
       : [],
     // A submit, upload or download is its own question, never "the browser".
@@ -1982,6 +2024,7 @@ export function assessBrowserBatch(
   input: unknown,
   elementOf?: (sessionId: string, ref: string) => ObservedElement | undefined,
   pageOf?: (sessionId: string) => string | undefined,
+  t: CoreT = coreEnglish,
 ): CallAssessment {
   const call = record(input);
   const actions = Array.isArray(call["actions"]) ? call["actions"] : [];
@@ -1994,6 +2037,8 @@ export function assessBrowserBatch(
       sessionId === undefined || ref === undefined ? undefined : elementOf?.(sessionId, ref),
       undefined,
       page,
+      undefined,
+      t,
     );
   });
   const governed = assessed.some((assessment) => assessment.scopeGroup === undefined);
@@ -2010,18 +2055,29 @@ export function assessBrowserBatch(
     const ref = text(step["ref"]);
     const element = sessionId === undefined || ref === undefined ? undefined : elementOf?.(sessionId, ref);
     const label = element?.text?.replace(/\s+/g, " ").trim() ?? "";
-    const field = label === "" ? undefined : `“${clip(label, 60)}”`;
+    const field = label === "" ? undefined : t("approval.card.quoted", { text: clip(label, 60) });
+    const said = cardKind(kind, t);
     // What is written into the page: typed text, or the option picked; a scroll's direction is no value.
     const value = kind === "type" || kind === "select" ? (text(step["value"]) ?? text(step["text"])) : undefined;
     return {
-      title: field !== undefined ? `${kind} ${field}` : ref !== undefined ? `${kind} an element` : kind,
-      row: value === undefined || isSecretElement(element) ? undefined : `${field ?? `Step ${index + 1}`} ← ${clip(value, 200)}`,
+      title:
+        field !== undefined
+          ? `${said} ${field}`
+          : ref !== undefined
+            ? kind === "type"
+              ? t("approval.card.browser.batchTypeElement")
+              : t("approval.card.browser.batchStepElement", { kind: said })
+            : said,
+      row:
+        value === undefined || isSecretElement(element)
+          ? undefined
+          : `${field ?? t("approval.card.browser.batchStepNumber", { n: String(index + 1) })} ← ${clip(value, 200)}`,
     };
   });
   const rows = named.flatMap((step) => (step.row === undefined ? [] : [step.row]));
   return {
     display: {
-      title: clip(`Browser: ${named.map((step) => step.title).join(", ")}`, 300),
+      title: clip(t("approval.card.browser.batch", { steps: named.map((step) => step.title).join(", ") }), 300),
       ...(rows.length === 0 ? {} : { detail: clip(rows.join("\n"), 2_000) }),
     },
     subjects: [...new Set(kinds)],
@@ -2043,7 +2099,7 @@ export function assessBrowserBatch(
   };
 }
 
-export function assessBrowserNavigate(input: unknown): CallAssessment {
+export function assessBrowserNavigate(input: unknown, t: CoreT = coreEnglish): CallAssessment {
   const url = text(record(input)["url"]) ?? "";
   const host = hostOf(url);
   // The subject is the host, not the URL: a subject of the exact URL made
@@ -2052,8 +2108,22 @@ export function assessBrowserNavigate(input: unknown): CallAssessment {
   // allowlist is kept in, so a grant covers what the person was shown.
   // A navigation, judged by the known-URL rule under taint, fragment included.
   // The title names the page (its path and query), so cards for three records of one site are told apart.
+  return pageOpening("approval.card.browser.navigate", url, host, t);
+}
+
+/** A browser call that opens `url`, as its card names the page and it is held: by its host, under the browser's group. */
+function pageOpening(
+  title: "approval.card.browser.open" | "approval.card.browser.navigate",
+  url: string,
+  host: string,
+  t: CoreT,
+): CallAssessment {
   return {
-    display: { title: clip(`Open ${hostAndPathOf(url)} in the browser`, 300), host: clip(host, 300), command: clip(url, 4_000) },
+    display: {
+      title: clip(t(title, { page: hostAndPathOf(url) }), 300),
+      host: clip(host, 300),
+      command: clip(url, 4_000),
+    },
     subjects: [host],
     risk: "medium",
     reasons: [],
@@ -2068,14 +2138,15 @@ export function assessBrowserNavigate(input: unknown): CallAssessment {
  * that agent, so "Approve for this chat" lets the chat start more workers as
  * the same agent — within the tree's limits — not as any agent.
  */
-export function assessAgentsSpawn(input: unknown): CallAssessment {
+export function assessAgentsSpawn(input: unknown, context?: Pick<InvocationContext, "locale">): CallAssessment {
+  const t = cardWords(context);
   const call = record(input);
   const agent = text(call["agentDefinitionId"]) ?? "?";
   return {
-    display: { title: clip(`Start a worker as ${agent}`, 300), detail: clip(text(call["input"]) ?? "", 2_000) },
+    display: { title: clip(t("approval.card.worker", { agent }), 300), detail: clip(text(call["input"]) ?? "", 2_000) },
     subjects: [`agent:${agent}`],
     risk: "medium",
-    reasons: ["runs another agent with this chat's tools, within its limits"],
+    reasons: [t("approval.reason.worker")],
   };
 }
 
@@ -2121,15 +2192,44 @@ export function suspiciousSearchQuery(raw: string): string | undefined {
  * pasted it is asked once before it goes.
  */
 export function secretShapedSearchQuery(raw: string): string | undefined {
+  return secretQueryWords(raw, coreEnglish);
+}
+
+/** `secretShapedSearchQuery` in `t`'s words. */
+function secretQueryWords(raw: string, t: CoreT): string | undefined {
   const normalized = raw.normalize("NFKC");
   // A private key's armour too, which tool-output masking leaves to the key's own lines.
   const masked = [...redactToolText(normalized).masked, ...(/-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(normalized) ? ["private-key"] : [])];
-  return masked.length === 0
-    ? undefined
-    : `the query holds what looks like a secret (${[...new Set(masked)].join(", ")}): searching would send it to the search provider`;
+  return masked.length === 0 ? undefined : t("approval.reason.query.secretKinds", { kinds: [...new Set(masked)].join(", ") });
 }
 
-export function assessWebSearch(input: unknown): CallAssessment {
+/** A recency's name in `t`'s words ("week"); one it has no words for, as given. */
+function recencyValue(recency: string, t: CoreT): string {
+  switch (recency) {
+    case "day":
+    case "week":
+    case "month":
+    case "year":
+      return t(`approval.card.search.recencyValue.${recency}`);
+    default:
+      return recency;
+  }
+}
+
+/** "from the last week" in `t`'s words; a recency it has no words for, by its name. */
+function recencyWords(recency: string, t: CoreT): string {
+  switch (recency) {
+    case "day":
+    case "week":
+    case "month":
+    case "year":
+      return t(`approval.card.search.recency.${recency}`);
+    default:
+      return t("approval.card.search.recency", { recency });
+  }
+}
+
+export function assessWebSearch(input: unknown, t: CoreT = coreEnglish): CallAssessment {
   const call = record(input);
   const query = text(call["query"]) ?? "";
   const site = text(call["site"]);
@@ -2149,23 +2249,33 @@ export function assessWebSearch(input: unknown): CallAssessment {
   // under taint too: no query shapes what it allows.
   // A group (approved stays approved): allowing one search allows the task's
   // searches, rather than asking again for each rephrasing — the Sofia–Tampa run asked three times.
-  const narrowing = [site === undefined ? undefined : `on ${site}`, recency === undefined ? undefined : `from the last ${recency}`].filter(
-    (part): part is string => part !== undefined,
-  );
+  const narrowing = [
+    site === undefined ? undefined : t("approval.card.search.site", { site }),
+    recency === undefined ? undefined : recencyWords(recency, t),
+  ].filter((part): part is string => part !== undefined);
   return {
     display: {
-      title: clip(`Search the web for “${clip(query, 200)}”${narrowing.length === 0 ? "" : ` ${narrowing.join(", ")}`}`, 300),
+      title: clip(
+        narrowing.length === 0
+          ? t("approval.card.search", { query: clip(query, 200) })
+          : t("approval.card.searchNarrowed", { query: clip(query, 200), narrowing: narrowing.join(", ") }),
+        300,
+      ),
       detail: clip(
-        `Query: ${query}${site === undefined ? "" : `\nSite: ${site}`}${recency === undefined ? "" : `\nRecency: ${recency}`}`,
+        [
+          t("approval.card.search.query", { query }),
+          ...(site === undefined ? [] : [t("approval.card.search.siteLine", { site })]),
+          ...(recency === undefined ? [] : [t("approval.card.search.recencyLine", { recency: recencyValue(recency, t) })]),
+        ].join("\n"),
         2_000,
       ),
     },
     subjects: [],
     risk: "low",
     reasons: [
-      "sends the query to a search provider",
-      ...(secret === undefined ? [] : [secret]),
-      ...(suspicious === undefined || (secret !== undefined && /secret/.test(suspicious)) ? [] : [suspicious]),
+      t("approval.reason.search"),
+      ...(secret === undefined ? [] : [secretQueryWords(searched, t) ?? secret]),
+      ...(suspicious === undefined || (secret !== undefined && /secret/.test(suspicious)) ? [] : [cardReason(suspicious, t)]),
     ],
     alwaysAnyCall: true,
     scopeGroup: WEB_SCOPE_GROUP,
@@ -2183,17 +2293,22 @@ export interface ObservedDesktopNodeFacts {
   readonly title?: string | undefined;
 }
 
-export function assessDesktopObserve(input: unknown): CallAssessment {
+export function assessDesktopObserve(input: unknown, t: CoreT = coreEnglish): CallAssessment {
   const call = record(input);
   const app = text(call["app"]) ?? "focused application";
   const blocked = app !== "focused application" && isBlockedDesktopApp(app, app);
   // A screenshot of the screen is for a person watching: no unattended run takes one.
   const captures = call["capture"] === true;
   return {
-    display: { title: clip(`Observe desktop application ${app}`, 300) },
+    display: {
+      title: clip(
+        app === "focused application" ? t("approval.card.desktop.observeFocused") : t("approval.card.desktop.observe", { app }),
+        300,
+      ),
+    },
     subjects: [app],
     risk: blocked ? "high" : "low",
-    reasons: blocked ? [`${app} is a blocked desktop application`] : [],
+    reasons: blocked ? [t("approval.reason.desktop.blocked", { app })] : [],
     ...(blocked ? { hardDeny: `${app} is on the desktop application blocklist` } : {}),
     ...(captures ? { attendedOnly: true } : {}),
   };
@@ -2208,9 +2323,11 @@ export function assessDesktopAct(
   node?: ObservedDesktopNodeFacts,
   /** The workspace's grant tier for an app, as the gate reads it; absent, the built-in defaults. */
   tierOf: (bundleId: string, app: string) => DesktopAppGrantTier | undefined = defaultDesktopAppGrantTier,
+  t: CoreT = coreEnglish,
 ): CallAssessment {
   const call = record(input);
   const kind = text(call["kind"]) ?? "click";
+  const said = cardKind(kind, t);
   const app = node?.app ?? text(call["app"]) ?? "";
   const bundleId = node?.bundleId ?? app;
   const ref = text(call["ref"]);
@@ -2218,10 +2335,10 @@ export function assessDesktopAct(
 
   if ((app.length > 0 || bundleId.length > 0) && isBlockedDesktopApp(bundleId, app)) {
     return {
-      display: { title: clip(`Desktop ${kind} in ${app || bundleId}`, 300) },
+      display: { title: clip(t("approval.card.desktop.actIn", { kind: said, app: app || bundleId }), 300) },
       subjects: [app || bundleId],
       risk: "critical",
-      reasons: [`${app || bundleId} is a blocked desktop application`],
+      reasons: [t("approval.reason.desktop.blocked", { app: app || bundleId })],
       hardDeny: `${app || bundleId} is on the desktop application blocklist`,
       attendedOnly: true,
       askWhenTainted: true,
@@ -2231,10 +2348,10 @@ export function assessDesktopAct(
 
   if (node !== undefined && isDesktopCredentialNode(node)) {
     return {
-      display: { title: clip(`Desktop ${kind} on credential field`, 300) },
+      display: { title: clip(t("approval.card.desktop.credential", { kind: said }), 300) },
       subjects: [kind],
       risk: "critical",
-      reasons: ["targets a desktop credential or password field (AXSecureTextField)"],
+      reasons: [t("approval.reason.desktop.credential")],
       hardDeny: "acting on a desktop password or credential field (AXSecureTextField) is not allowed",
       attendedOnly: true,
       askWhenTainted: true,
@@ -2254,10 +2371,10 @@ export function assessDesktopAct(
     })
   ) {
     return {
-      display: { title: clip(`Desktop ${kind} on authentication dialog`, 300) },
+      display: { title: clip(t("approval.card.desktop.authDialog", { kind: said }), 300) },
       subjects: [kind],
       risk: "critical",
-      reasons: ["targets a system authentication dialog"],
+      reasons: [t("approval.reason.desktop.authDialog")],
       hardDeny: "acting on a system authentication dialog is not allowed",
       attendedOnly: true,
       askWhenTainted: true,
@@ -2269,10 +2386,10 @@ export function assessDesktopAct(
   // An app the workspace never granted is refused before anyone is asked: the gate would refuse it anyway.
   if (tier === undefined) {
     return {
-      display: { title: clip(`Desktop ${kind} in ${app || bundleId}`, 300) },
+      display: { title: clip(t("approval.card.desktop.actIn", { kind: said, app: app || bundleId }), 300) },
       subjects: [app || bundleId],
       risk: "high",
-      reasons: [`${app || bundleId} is not granted to this workspace`],
+      reasons: [t("approval.reason.desktop.notGranted", { app: app || bundleId })],
       hardDeny: `${app || bundleId} is not granted desktop control in this workspace: add it to desktop.grantedApps (tavi config set desktop.grantedApps)`,
       attendedOnly: true,
       askWhenTainted: true,
@@ -2281,10 +2398,10 @@ export function assessDesktopAct(
   }
   if (tier === "view-only") {
     return {
-      display: { title: clip(`Desktop ${kind} in ${app || bundleId}`, 300) },
+      display: { title: clip(t("approval.card.desktop.actIn", { kind: said, app: app || bundleId }), 300) },
       subjects: [app || bundleId],
       risk: "high",
-      reasons: ["browsers have a view-only desktop grant tier"],
+      reasons: [t("approval.reason.desktop.viewOnly")],
       hardDeny: `${app || bundleId} is a web browser (view-only on desktop); use the browser tools instead`,
       attendedOnly: true,
       askWhenTainted: true,
@@ -2299,10 +2416,10 @@ export function assessDesktopAct(
   });
   if (tier === "click-only" && !clickOnlyAllowed) {
     return {
-      display: { title: clip(`Desktop ${kind} in ${app || bundleId}`, 300) },
+      display: { title: clip(t("approval.card.desktop.actIn", { kind: said, app: app || bundleId }), 300) },
       subjects: [app || bundleId],
       risk: "high",
-      reasons: ["terminals and IDEs have a click-only desktop grant tier"],
+      reasons: [t("approval.reason.desktop.clickOnly")],
       hardDeny: `${app || bundleId} has a click-only desktop grant tier; only a plain left click or a scroll is allowed`,
       attendedOnly: true,
       askWhenTainted: true,
@@ -2329,23 +2446,30 @@ export function assessDesktopAct(
       : title.length > 0
         ? commitCategory(title)
         : undefined;
-  const reasons: string[] = ["controls a desktop application"];
+  const reasons: string[] = [t("approval.reason.desktop.controls")];
   if (commit !== undefined) {
     reasons.push(
       shortcut === undefined
-        ? `presses a ${commit} commit control ("${clip(title, 80)}")`
-        : `presses ${shortcut}, which can ${commit === "send" ? "send" : "delete"}`,
+        ? t("approval.reason.desktop.commit", { commit, label: clip(title, 80) })
+        : t(commit === "send" ? "approval.reason.desktop.shortcutSend" : "approval.reason.desktop.shortcutDelete", { shortcut }),
     );
   }
   if (tier === "warning") {
-    reasons.push(`${app || bundleId} is in the warning grant tier`);
+    reasons.push(t("approval.reason.desktop.warningTier", { app: app || bundleId }));
   }
 
   // The element as a person sees it: its label, else its kind ("the text area"), never its internal `ax-N` ref.
   const role = desktopRoleWords(node?.role);
-  const target = title.length > 0 ? `“${clip(title, 80)}”` : role !== undefined ? `the ${role}` : ref !== undefined ? "an element" : "";
-  const targetLabel = target === "" ? "" : ` ${kind === "type" ? "into" : "on"} ${target}`;
-  const appLabel = (app || bundleId).length > 0 ? ` in ${app || bundleId}` : "";
+  const target =
+    title.length > 0
+      ? t("approval.card.quoted", { text: clip(title, 80) })
+      : role !== undefined
+        ? t("approval.card.desktop.role", { role })
+        : ref !== undefined
+          ? t("approval.card.browser.anElement")
+          : "";
+  const targetLabel = target === "" ? "" : t(kind === "type" ? "approval.card.desktop.into" : "approval.card.desktop.on", { target });
+  const appLabel = (app || bundleId).length > 0 ? t("approval.card.desktop.in", { app: app || bundleId }) : "";
   // What is typed or pressed is what the person approves: on the card, not only under Details.
   const typedText = kind === "type" ? text(call["text"]) : undefined;
   const pressedKey =
@@ -2354,11 +2478,16 @@ export function assessDesktopAct(
           .filter((key) => key !== "")
           .join("+")
       : "";
-  const detail = typedText !== undefined ? `Text: ${typedText}` : pressedKey !== "" ? `Key: ${pressedKey}` : undefined;
+  const detail =
+    typedText !== undefined
+      ? t("approval.card.desktop.text", { text: typedText })
+      : pressedKey !== ""
+        ? t("approval.card.desktop.key", { key: pressedKey })
+        : undefined;
 
   return {
     display: {
-      title: clip(`Desktop ${kind}${targetLabel}${appLabel}`, 300),
+      title: clip(t("approval.card.desktop.title", { action: [said, targetLabel, appLabel].filter((part) => part !== "").join(" ") }), 300),
       ...(detail === undefined ? {} : { detail: clip(detail, 2_000) }),
     },
     // `commit` and `warning-tier` are what an approval of this card lets the gate pass, and nothing else.
@@ -2412,19 +2541,24 @@ export function approvedDesktopTarget(assessedSubjects: readonly string[] | unde
   return { ...(app === undefined ? {} : { app }), ...(commitLabel === undefined ? {} : { commitLabel }) };
 }
 
-export function assessDesktopComputerUse(input: unknown): CallAssessment {
+export function assessDesktopComputerUse(input: unknown, t: CoreT = coreEnglish): CallAssessment {
   const call = record(input);
   const app = text(call["app"]) ?? "";
   const goal = text(call["goal"]) ?? "";
   const blocked = app.length > 0 && isBlockedDesktopApp(app, app);
   return {
     display: {
-      title: clip(`Desktop computer use${app.length > 0 ? ` in ${app}` : ""}: ${clip(goal, 160)}`, 300),
+      title: clip(
+        app.length > 0
+          ? t("approval.card.desktop.computerUseIn", { app, goal: clip(goal, 160) })
+          : t("approval.card.desktop.computerUse", { goal: clip(goal, 160) }),
+        300,
+      ),
       detail: clip(goal, 2_000),
     },
     subjects: app.length > 0 ? [app] : ["desktop"],
     risk: "high",
-    reasons: ["runs a multi-step desktop computer-use loop"],
+    reasons: [t("approval.reason.desktop.computerUse")],
     attendedOnly: true,
     askWhenTainted: true,
     onceOnly: true,

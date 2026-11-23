@@ -25,6 +25,7 @@ import {
   englishOf,
   navPath,
 } from "@tavi/contracts";
+import { isLocale } from "@tavi/contracts/i18n";
 import { clip, errorMessage } from "@tavi/contracts/util";
 import {
   CLIENT_TIMEOUT,
@@ -563,7 +564,10 @@ export async function startUiBridge(options: UiBridgeOptions): Promise<UiBridge>
     const code = query.get("code")?.slice(0, 4096) ?? null;
     const error = query.get("error")?.slice(0, 256) ?? null;
     const iss = query.get("iss")?.slice(0, 512) ?? null;
-    let outcome: { readonly ok: boolean; readonly message: string } = { ok: false, message: "This sign-in link is no longer valid." };
+    let outcome: { readonly ok: boolean; readonly message: string; readonly locale?: string; readonly said?: string } = {
+      ok: false,
+      message: "This sign-in link is no longer valid.",
+    };
     if (state !== null) {
       const connection = await ownerConnection();
       if (connection === undefined)
@@ -582,9 +586,14 @@ export async function startUiBridge(options: UiBridgeOptions): Promise<UiBridge>
             },
             `ui.oauth.${requestCounter}`,
           );
-          const result = answer.ok ? (answer.result as { ok?: unknown; message?: unknown }) : undefined;
+          const result = answer.ok ? (answer.result as { ok?: unknown; message?: unknown; locale?: unknown; said?: unknown }) : undefined;
           if (result !== undefined && typeof result.ok === "boolean" && typeof result.message === "string")
-            outcome = { ok: result.ok, message: result.message };
+            // The workspace's language and words, when the owner sent them: the page checks the language before it speaks it.
+            outcome = {
+              ok: result.ok,
+              message: result.message,
+              ...(typeof result.locale === "string" && typeof result.said === "string" ? { locale: result.locale, said: result.said } : {}),
+            };
         } catch {
           outcome = {
             ok: false,
@@ -593,7 +602,11 @@ export async function startUiBridge(options: UiBridgeOptions): Promise<UiBridge>
         }
       }
     }
-    const page = oauthCallbackPage(outcome);
+    const page = oauthCallbackPage({
+      ok: outcome.ok,
+      message: outcome.message,
+      ...(isLocale(outcome.locale) ? { locale: outcome.locale, said: outcome.said } : {}),
+    });
     response.writeHead(page.status, page.headers);
     response.end(page.body);
   }

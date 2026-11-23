@@ -142,6 +142,8 @@ export const chat = {
   "chat.provenance.whyAsked": "Why am I asked?",
   "chat.provenance.sources": "What this chat read",
   "chat.provenance.origins": "Where this call's values come from",
+  "chat.provenance.openQuote": "“",
+  "chat.provenance.closeQuote": "”",
   "chat.call.risk.low": "low risk",
   "chat.call.risk.medium": "medium risk",
   "chat.call.risk.high": "high risk",

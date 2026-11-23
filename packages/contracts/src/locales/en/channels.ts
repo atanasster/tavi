@@ -416,6 +416,24 @@ export const channels = {
   "channel.conversation.alreadyAnswered": "That question was already answered: {answer}. To ask for something new, say it in other words.",
   "channel.conversation.noPlugin": "/{name}: no plugin answers it now.",
   "channel.room.flood": "I'm getting a lot of messages here, so I'm skipping some. I'll pick up again in a minute.",
+  /** Said once a day to a bound person whose mail the provider could not verify. */
+  "channel.mail.unverified":
+    "Your message arrived, but it could not be verified as coming from you (its sender authentication did not pass), so it was not acted on. If your mail provider is set up correctly this was not you; otherwise ask the operator to trust your unverified mail in Allowed people.",
+  /** A connection's test, when the person gave no words of their own. */
+  "channel.test.message": "This is a test message from Tavi: the connection works.",
+  // What a room is told when it is added, and when its context becomes `recent`.
+  "channel.room.intro.hello": "Hi, I'm Tavi, {owner}'s assistant. {who}.",
+  "channel.room.intro.operatorOnly": "I answer only {owner} here, when they {trigger}",
+  "channel.room.intro.known": "I answer people {owner} has told me about when they {trigger}",
+  "channel.room.intro.private":
+    "I never learn from this room for {owner}'s private use, and I never read messages from people Tavi doesn't know.",
+  "channel.room.intro.leaveOut": "If you'd rather be left out, ask {owner}.",
+  "channel.room.intro.ownerUnknown": "my owner",
+  "channel.room.context.reads": "From now on, {who}, I also read up to 20 of this room's messages before theirs, for context.",
+  "channel.room.context.operatorOnly": "when {owner} addresses me here",
+  "channel.room.context.known": "when someone {owner} has told me about addresses me here",
+  "channel.room.context.private":
+    "Messages from people Tavi doesn't know are left out, and nothing I read here is kept for {owner}'s private use.",
   "channel.schedule.alert.staleDispatchNext":
     'Schedule "{name}": the {fireTime} fire started but never reported a result, and the next fire is already scheduled.',
   "channel.schedule.alert.staleDispatch": 'Schedule "{name}": the {fireTime} fire started but never reported a result.',

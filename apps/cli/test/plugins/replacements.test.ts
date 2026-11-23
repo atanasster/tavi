@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import { createHmac } from "node:crypto";
 import { EventEmitter } from "node:events";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -18,7 +17,6 @@ import {
   type ModHookInput,
   type ModelRequest,
   type OnboardingFlow,
-  type SandboxPort,
   TaviError,
 } from "@tavi/contracts";
 import { GUARD_PLUGIN_ID } from "@tavi/plugin-guard/manifest";
@@ -59,6 +57,7 @@ import { appsOwnerCommand } from "../../src/server/config-commands.js";
 import type { TaviRuntime, TaviRuntimeOptions, TaviRuntimeOverrides } from "../../src/runtime/types.js";
 import { ROUTED, compose as composeRouted, run, scope, seed } from "../router/router-fixtures.js";
 import { fixtureRuntimeOptions } from "../support/serve-fixture.js";
+import { directSandbox as direct } from "../support/direct-sandbox.js";
 
 /**
  * Tier 4's reference replacements (examples/plugins/acme-*): each built-in a
@@ -105,23 +104,6 @@ async function replace(dataDirectory: string, builtin: string, example: string, 
   runtimes.splice(runtimes.indexOf(setup), 1);
   await setup.close();
 }
-
-/** Runs the command unconfined, as the sandbox would with everything allowed. */
-const direct: SandboxPort = {
-  capabilities: () => ({ available: true, platforms: ["darwin"] }),
-  run: async (_policy, command) => {
-    const run = spawnSync(command.command, [...(command.args ?? [])], { cwd: command.cwd, encoding: "utf8" });
-    return {
-      session: { sessionId: "s", state: "completed" },
-      exitCode: run.status,
-      stdout: run.stdout,
-      stderr: run.stderr,
-      truncated: false,
-    };
-  },
-  cancel: async () => {},
-  dispose: async () => {},
-};
 
 describe("the reference replacements", () => {
   it.each([

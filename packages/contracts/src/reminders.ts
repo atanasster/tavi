@@ -985,8 +985,9 @@ const READ_BACK_PARTS = (instant: Date, timezone: string) => {
   };
 };
 
-/** "Mon 5 Oct 10:00": an instant as a person reads it in `timezone`. */
-export function formatReminderTime(instant: Date, timezone: string, now: Date = new Date()): string {
+/** "Mon 5 Oct 10:00": an instant as a person reads it in `timezone`, in `t`'s words ("пн, 5 окт в 10:00"). */
+export function formatReminderTime(instant: Date, timezone: string, now: Date = new Date(), t: CoreT = coreEnglish): string {
+  if (t !== coreEnglish) return reminderTimeIn(instant, timezone, now, t, false);
   const parts = READ_BACK_PARTS(instant, timezone);
   // A date in another year says so: "Sun 27 Aug" alone reads as the coming one.
   const year = parts.year === READ_BACK_PARTS(now, timezone).year ? "" : ` ${parts.year}`;
@@ -1006,7 +1007,8 @@ const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
  * remind you Sun 20:00 and Mon 09:00". A notice within the coming week is
  * named by weekday; a later one by its date.
  */
-export function reminderReadBack(reminder: ReminderSchedule, now: Date): string {
+export function reminderReadBack(reminder: ReminderSchedule, now: Date, t: CoreT = coreEnglish): string {
+  if (t !== coreEnglish) return readBackIn(reminder, now, t);
   const { when, timezone } = reminder;
   const nearby = (instant: Date) => {
     const parts = READ_BACK_PARTS(instant, timezone);
@@ -1033,6 +1035,63 @@ export function reminderReadBack(reminder: ReminderSchedule, now: Date): string 
                 .join(", ")}`;
       const next = nextReminderFire(reminder, now);
       return `${days} at ${list([...when.times].sort())} ${timezone}${when.until === undefined ? "" : ` until ${when.until}`}${next === null ? "" : `; next ${formatReminderTime(next.at, timezone)}`}`;
+    }
+  }
+}
+
+/** An instant in `t`'s words: its weekday and time when `short`, else its date too, and its year when not `now`'s. */
+function reminderTimeIn(instant: Date, timezone: string, now: Date, t: CoreT, short: boolean): string {
+  const parts = READ_BACK_PARTS(instant, timezone);
+  const weekday = weekdayShort(
+    WEEKDAY_SHORT_KEYS.findIndex((key) => coreEnglish(key) === parts.weekday),
+    t,
+  );
+  if (short) return t("reminder.readBack.at", { day: weekday, time: parts.time });
+  const monthKey = MONTH_SHORT_KEYS[MONTH_NAMES.indexOf(parts.month as (typeof MONTH_NAMES)[number])];
+  const day = t("date.shortDay", { weekdayShort: weekday, day: parts.day, monthShort: monthKey === undefined ? "" : t(monthKey) });
+  return t("reminder.readBack.at", {
+    day: parts.year === READ_BACK_PARTS(now, timezone).year ? day : t("reminder.readBack.dayYear", { day, year: parts.year }),
+    time: parts.time,
+  });
+}
+
+/**
+ * `reminderReadBack` in `t`'s words, for a person reading it in the terminal:
+ * "пн, 5 окт в 10:00 Europe/Sofia; ще ти напомня нд в 20:00 и пн в 09:00".
+ */
+function readBackIn(reminder: ReminderSchedule, now: Date, t: CoreT): string {
+  const { when, timezone } = reminder;
+  const at = (instant: Date, short: boolean) => reminderTimeIn(instant, timezone, now, t, short);
+  const nearby = (instant: Date) => at(instant, instant.getTime() - now.getTime() < 6 * DAY_MS);
+  const list = (items: readonly string[]) =>
+    items.length <= 1 ? items.join("") : t("schedule.spec.listAnd", { items: items.slice(0, -1).join(", "), last: items.at(-1) ?? "" });
+  switch (when.kind) {
+    case "once":
+      return t("reminder.readBack.once", { time: at(new Date(when.at), false), timezone });
+    case "event": {
+      const notices = reminderNotices(new Date(when.at), when.notify, timezone).filter((notice) => notice.at.getTime() > now.getTime());
+      const time = at(new Date(when.at), false);
+      return notices.length === 0
+        ? t("reminder.readBack.eventNone", { time, timezone })
+        : t("reminder.readBack.event", { time, timezone, notices: list(notices.map((notice) => nearby(notice.at))) });
+    }
+    case "repeat": {
+      const weekdays = daysOfWeekText(when.daysOfWeek, t);
+      const days =
+        when.monthly !== undefined || when.yearly !== undefined
+          ? repeatDaysText(when, "sentence", t)
+          : weekdays === undefined
+            ? t("schedule.spec.everyDay")
+            : t("schedule.spec.everyWeekdays", { weekdays });
+      let text = t("reminder.readBack.repeat", { days, times: list([...when.times].sort()), timezone });
+      if (when.until !== undefined) {
+        const [year = "", month = "", day = ""] = when.until.split("-");
+        const monthKey = MONTH_SHORT_KEYS[Number(month) - 1];
+        const date = t("reminder.readBack.date", { day: String(Number(day)), monthShort: monthKey === undefined ? "" : t(monthKey), year });
+        text = t("schedule.spec.until", { spec: text, date });
+      }
+      const next = nextReminderFire(reminder, now);
+      return next === null ? text : t("reminder.readBack.next", { text, time: at(next.at, false) });
     }
   }
 }

@@ -3,6 +3,7 @@ import {
   DEFAULT_TAINT_MODE,
   INJECTION_DETECTOR_MODES,
   displaySafe,
+  ruleNoteIn,
   TAINT_MODES,
   type InjectionDetectorMode,
   type ListedSessionGrant,
@@ -11,7 +12,7 @@ import {
   type WorkspaceSettingsAnswer,
 } from "@tavi/contracts";
 
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
 import { workspaceSettingsActions } from "./workspace-api.js";
 import { permissionActions } from "./plugins-api.js";
@@ -114,7 +115,8 @@ export function PermissionsSettings({
     >
       <span className="rule-info">
         <span>
-          <span className={`badge ${RULE_TONES[rule.decision]}`}>{rule.decision}</span> <code>{rule.toolPattern}</code> — {describe(rule)}
+          <span className={`badge ${RULE_TONES[rule.decision]}`}>{t(RULE_DECISIONS[rule.decision])}</span> <code>{rule.toolPattern}</code> —{" "}
+          {describe(rule)}
           {/* A rule an app's page set holds in every workspace. */}
           {/* Every shipped rule holds everywhere: its list says so once. */}
           {rule.workspaceId === "*" && rule.source !== "shipped" ? (
@@ -132,7 +134,7 @@ export function PermissionsSettings({
         </span>
         {rule.note === undefined && rule.origin === undefined ? null : (
           <span className="muted">
-            {rule.note === undefined ? "" : sentence(rule.note)}
+            {rule.note === undefined ? "" : sentence(ruleNoteIn(rule.note, translateCore))}
             {rule.origin === undefined ? null : (
               <span className="rule-origin">
                 {rule.note === undefined ? (
@@ -304,6 +306,13 @@ export function PermissionsSettings({
     </section>
   );
 }
+
+/** A rule's decision as this page's paragraph names it. */
+const RULE_DECISIONS: Readonly<Record<ToolRule["decision"], UiKey>> = {
+  allow: "settings.permissions.decision.allow",
+  ask: "settings.permissions.decision.ask",
+  deny: "settings.permissions.decision.deny",
+};
 
 const RULE_TONES: Readonly<Record<ToolRule["decision"], string>> = {
   allow: "badge-ok",

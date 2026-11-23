@@ -2,7 +2,9 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
+  ChannelsPayloadSchema,
   PluginManifestSchema,
+  PluginsPayloadSchema,
   type ChannelDescriptor,
   type MessagingConnectorDefinition,
   type PluginIsolationPort,
@@ -225,6 +227,21 @@ describe("the owner's language cell", () => {
     expect(await canvasPluginLocale(repository, "default", true)).toBe("bg");
     expect(await canvasPluginLocale(repository, "default", false)).toBeUndefined();
     settings = {} as WorkspaceSettings;
+    expect(await canvasPluginLocale(repository, "default", true)).toBeUndefined();
+  });
+
+  it("reads the canvas's lists in the language of the workspace it names, not the default's", async () => {
+    // The canvas names its workspace on each list it reads; the owner's default stays the fallback.
+    expect(PluginsPayloadSchema.parse({ action: "list", workspaceId: "team" })).toEqual({ action: "list", workspaceId: "team" });
+    expect(PluginsPayloadSchema.parse({ action: "show", pluginId: "tavi.guard", workspaceId: "team" })).toMatchObject({
+      workspaceId: "team",
+    });
+    expect(PluginsPayloadSchema.parse({ action: "ui", workspaceId: "team" })).toMatchObject({ workspaceId: "team" });
+    expect(ChannelsPayloadSchema.parse({ action: "catalog", workspaceId: "team" })).toEqual({ action: "catalog", workspaceId: "team" });
+    expect(ChannelsPayloadSchema.parse({ action: "catalog" })).toEqual({ action: "catalog" });
+    const languages: Record<string, WorkspaceSettings> = { default: {} as WorkspaceSettings, team: { locale: "bg" } as WorkspaceSettings };
+    const repository = { get: async (workspaceId: string) => ({ settings: languages[workspaceId] ?? {} }) } as never;
+    expect(await canvasPluginLocale(repository, "team", true)).toBe("bg");
     expect(await canvasPluginLocale(repository, "default", true)).toBeUndefined();
   });
 });

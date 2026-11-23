@@ -24,11 +24,12 @@ import {
   type OnboardingStatus,
   type VoiceSetupStatus,
   type WorkspaceSettingsAnswer,
-  englishOf,
+  errorTextIn,
   navPath,
+  renderTextRef,
+  voiceMissingWords,
 } from "@tavi/contracts";
 import { DEFAULT_LOCALE, LOCALE_NAMES, SUPPORTED_LOCALES, isLocale } from "@tavi/contracts/i18n";
-import { errorMessage } from "@tavi/contracts/util";
 import { sleep, WSL1_UNSUPPORTED, WSL_KEEP_RUNNING, wslVersion, type WslVersion } from "@tavi/node-kit";
 
 import { FAST_MODEL_FAILED } from "@tavi/agent-host/onboarding-host";
@@ -207,7 +208,7 @@ export async function languageStep(context: Pick<StepContext, "transport" | "pro
   } catch (error) {
     // Ctrl-C or the input ending stops the run, as at every other question.
     if (error instanceof OnboardCancelled) throw error;
-    context.prompter.say(`${GLYPHS.failed} ${errorMessage(error)}`);
+    context.prompter.say(`${GLYPHS.failed} ${errorTextIn(error, wordsOf(context))}`);
   }
 }
 
@@ -318,7 +319,8 @@ export async function saveAbout(
       if (values.name !== undefined) await remember(context, "user.name", values.name, "Name");
       if (values.timezone !== undefined) await remember(context, "user.timezone", values.timezone, "Time zone");
     } catch (error) {
-      context.prompter.say(`Memory did not take them (${errorMessage(error)}); they are saved in the workspace's settings.`);
+      const t = wordsOf(context);
+      context.prompter.say(t("onboard.say.memoryRefused", { why: errorTextIn(error, t) }));
     }
   }
   await context.transport.request("onboarding", { action: "complete-step", workspaceId: context.workspaceId, step: "about" });
@@ -367,16 +369,17 @@ export async function aboutStep(context: StepContext): Promise<void> {
   }
   const memoryOn = settings.effective.memory?.enabled !== false;
   if (memoryOn && (values.name !== undefined || values.timezone !== undefined)) {
-    say(
-      context,
-      `Tavi will remember: ${[values.name === undefined ? undefined : `your name is ${values.name}`, values.timezone === undefined ? undefined : `you're in ${values.timezone}`].filter(Boolean).join(" · ")} (tavi memory list shows it; tavi memory forget removes it).`,
-    );
+    const facts = [
+      values.name === undefined ? undefined : t("onboard.say.yourName", { name: values.name }),
+      values.timezone === undefined ? undefined : t("onboard.say.yourZone", { zone: values.timezone }),
+    ].filter(Boolean);
+    say(context, t("onboard.say.willRemember", { facts: facts.join(" · ") }));
   }
   try {
     await saveAbout(context, values);
-    say(context, `${GLYPHS.done} About you saved`);
+    say(context, `${GLYPHS.done} ${t("onboard.say.aboutSaved")}`);
   } catch (error) {
-    say(context, `${GLYPHS.failed} ${errorMessage(error)}`);
+    say(context, `${GLYPHS.failed} ${errorTextIn(error, t)}`);
   }
 }
 
@@ -421,10 +424,7 @@ export async function tasksStep(context: StepContext): Promise<void> {
   });
   if (choice === "later") return doneAlready(context, "tasks") ? undefined : await skip(context, "tasks");
   if (choice === "connect") {
-    say(
-      context,
-      `${GLYPHS.todo} Todoist signs in through your browser: connect it on the Welcome page in tavi ui, or with\n${TODOIST_CONNECT_COMMANDS.map((line) => `  ${line}`).join("\n")}`,
-    );
+    say(context, `${GLYPHS.todo} ${t("onboard.say.todoistBrowser")}\n${TODOIST_CONNECT_COMMANDS.map((line) => `  ${line}`).join("\n")}`);
     return;
   }
   try {
@@ -438,16 +438,13 @@ export async function tasksStep(context: StepContext): Promise<void> {
       );
     if (choice === "tavi") {
       await context.transport.request("onboarding", { action: "complete-step", workspaceId: context.workspaceId, step: "tasks" });
-      say(context, `${GLYPHS.done} To-dos: Tavi's own list (tavi todos shows it)`);
+      say(context, `${GLYPHS.done} ${t("onboard.say.todosTavi")}`);
     } else {
       const label = printable(connected.find((item) => item.id === choice)?.label ?? choice);
-      say(
-        context,
-        `${GLYPHS.done} To-dos go to ${label}. Tavi's own list keeps only its own follow-ups; nothing is synced (tavi todos export, or ask in a chat to move them).`,
-      );
+      say(context, `${GLYPHS.done} ${t("onboard.say.todosApp", { app: label })}`);
     }
   } catch (error) {
-    say(context, `${GLYPHS.failed} ${errorMessage(error)}`);
+    say(context, `${GLYPHS.failed} ${errorTextIn(error, t)}`);
   }
 }
 
@@ -556,10 +553,14 @@ async function pairOn(
       ...(settings.settings.operatorName === undefined ? {} : { name: settings.settings.operatorName }),
     });
     const code = singleLine(pairing.code.length === 8 ? `${pairing.code.slice(0, 4)}-${pairing.code.slice(4)}` : pairing.code);
-    const to = pairing.account === undefined ? `Tavi on ${singleLine(descriptor.label)}` : `@${singleLine(pairing.account)}`;
-    const opens = singleLine(pairing.openLabel ?? descriptor.pairing?.openLabel ?? "open");
+    const t = wordsOf(context);
+    const to =
+      pairing.account === undefined
+        ? t("onboard.say.taviOn", { channel: singleLine(descriptor.label) })
+        : `@${singleLine(pairing.account)}`;
+    const opens = singleLine(pairing.openLabel ?? descriptor.pairing?.openLabel ?? t("onboard.say.open"));
     const deepLink = pairing.linkUrl === undefined ? "" : `; ${opens}: ${singleLine(pairing.linkUrl)}`;
-    say(context, `Send ${code} to ${to}${chat} within 10 minutes (or \`/link ${code}\`${deepLink}). Waiting…`);
+    say(context, t("onboard.say.sendCode", { code, to, chat, link: deepLink }));
     for (;;) {
       await context.system.sleep(2_000);
       const state = await context.transport.request<ChannelsPairingAnswer>("channels", {
@@ -589,7 +590,7 @@ async function pairOn(
             workspaceId: context.workspaceId,
             pairingId: pairing.pairingId,
           });
-          say(context, `${GLYPHS.done} Paired: messages from you on this chat reach Tavi. Strangers are never answered.`);
+          say(context, `${GLYPHS.done} ${t("onboard.say.paired")}`);
           return true;
         }
         await context.transport.request("channels", {
@@ -597,7 +598,7 @@ async function pairOn(
           workspaceId: context.workspaceId,
           pairingId: pairing.pairingId,
         });
-        say(context, "Not paired. Nobody else's messages are answered.");
+        say(context, t("onboard.say.notPaired"));
         return false;
       }
       // Expired, or the owner restarted and forgot it (codes live in its memory): a new one.
@@ -610,22 +611,24 @@ async function pairOn(
 
 export async function channelsStep(context: StepContext): Promise<void> {
   if (!context.transport.attached) {
-    say(
-      context,
-      `${GLYPHS.todo} Channels — pairing needs a running owner: start \`tavi serve\` in another terminal, then run \`tavi onboard\` again.`,
-    );
+    say(context, `${GLYPHS.todo} ${wordsOf(context)("onboard.say.channelsNeedOwner")}`);
     return;
   }
   // The terminal adds a channel set up with secrets alone; one featured otherwise (a company's Slack) is set up with its own command.
   const featured = context.flowStep?.featured;
   const descriptor = featuredChannel(await channelCatalog(context.transport), featured);
   if (descriptor === undefined) {
-    const title = context.flowStep?.title ?? "Channels";
+    const t = wordsOf(context);
+    const title = context.flowStep?.title ?? t("cli.onboard.step.channels");
     say(
       context,
       featured === undefined || featured.length === 0
-        ? `${GLYPHS.todo} ${title} — none of the channels this setup offers is installed here.`
-        : `${GLYPHS.todo} ${title} — ${featured.map((kind) => `\`tavi channels add ${kind}\``).join(" or ")}, then pair yourself in ${englishOf(navPath("nav.route.settings", "nav.settings.channels"))}.`,
+        ? `${GLYPHS.todo} ${t("onboard.say.noChannel", { title })}`
+        : `${GLYPHS.todo} ${t("onboard.say.addChannel", {
+            title,
+            commands: featured.map((kind) => `\`tavi channels add ${kind}\``).join(t("onboard.say.or")),
+            path: renderTextRef(navPath("nav.route.settings", "nav.settings.channels"), t) ?? "",
+          })}`,
     );
     return;
   }
@@ -646,7 +649,10 @@ export async function channelsStep(context: StepContext): Promise<void> {
     const own = context.status.steps.find((step) => step.kind === "channels")?.createdRef;
     const added = await addChannel(context.transport, context.workspaceId, descriptor, secrets, own);
     if (added.problem === undefined) {
-      say(context, `${GLYPHS.done} ${label} connected${added.detail === undefined ? "" : `: ${added.detail}`}`);
+      say(
+        context,
+        `${GLYPHS.done} ${added.detail === undefined ? t("onboard.say.channelConnected", { label }) : t("onboard.say.channelConnectedDetail", { label, detail: added.detail })}`,
+      );
       await pairOn(context, descriptor, added.connectionId, added.setup);
       return;
     }
@@ -703,21 +709,21 @@ export async function serviceStep(context: StepContext): Promise<void> {
   const system = context.system;
   const own = context.status.steps.find((step) => step.kind === "service")?.createdRef;
   const place = unitPlace(system, own ?? DEFAULT_SERVICE_LABEL);
+  const said = wordsOf(context);
   if (place === undefined) {
+    say(context, `${GLYPHS.unavailable} ${said(system.platform === "win32" ? "onboard.say.serviceWindows" : "onboard.say.serviceOther")}`);
+    return;
+  }
+  // English is node-kit's own words for WSL, as the doctor and `tavi service` say them.
+  if (system.wsl === 1) {
     say(
       context,
-      system.platform === "win32"
-        ? `${GLYPHS.unavailable} Keep it running — tavi serve does not run on Windows yet: keep the owner running under WSL2. \`tavi service unit --kind task\` writes the logon task for when it does (docs/WINDOWS.md).`
-        : `${GLYPHS.unavailable} Keep it running — a service unit is for macOS, Linux and Windows.`,
+      `${GLYPHS.unavailable} ${said("onboard.say.serviceWsl1", { why: said === coreEnglish ? WSL1_UNSUPPORTED : said("onboard.say.wsl1") })}`,
     );
     return;
   }
-  if (system.wsl === 1) {
-    say(context, `${GLYPHS.unavailable} Keep it running — ${WSL1_UNSUPPORTED}`);
-    return;
-  }
   // However serve is kept running, WSL stops it with the distribution.
-  if (system.wsl === 2) say(context, WSL_KEEP_RUNNING);
+  if (system.wsl === 2) say(context, said === coreEnglish ? WSL_KEEP_RUNNING : said("onboard.say.wslKeepRunning"));
   const existing = await system.readText(place.path);
   const ours = existing !== undefined && own === place.label && unitNamesDataDirectory(existing, system.dataDirectory);
   if (ours && context.mode === "setup") {
@@ -733,7 +739,7 @@ export async function serviceStep(context: StepContext): Promise<void> {
     if (choice === "remove" && (await context.prompter.confirm({ label: t("cli.onboard.ask.removeService"), default: false }))) {
       for (const [command, args] of place.unload) await system.run(command, args);
       await system.remove(place.path);
-      say(context, `${GLYPHS.done} Removed. Start \`tavi serve\` yourself when you want channels and schedules.`);
+      say(context, `${GLYPHS.done} ${t("onboard.say.removed")}`);
     }
     return;
   }
@@ -757,15 +763,12 @@ export async function serviceStep(context: StepContext): Promise<void> {
   if (choice === "later") return doneAlready(context, "service") ? undefined : await skip(context, "service");
   if (choice === "self") {
     await context.transport.request("onboarding", { action: "confirm-service", workspaceId: context.workspaceId, mode: "self-managed" });
-    say(context, `${GLYPHS.done} You run it yourself`);
+    say(context, `${GLYPHS.done} ${t("onboard.say.runYourself")}`);
     return;
   }
   // Never over a unit this flow did not write: another data directory's, or one written by hand.
   if (existing !== undefined && !ours) {
-    say(
-      context,
-      `${place.path} already exists and is not one this setup wrote. It is left as it is: choose "I run it myself", or remove it first.`,
-    );
+    say(context, t("onboard.say.unitExists", { path: place.path, option: t("cli.onboard.ask.runItMyself") }));
     return;
   }
   await context.transport.request("onboarding", { action: "created", workspaceId: context.workspaceId, step: "service", ref: place.label });
@@ -780,51 +783,51 @@ export async function serviceStep(context: StepContext): Promise<void> {
       ...(place.kind === "systemd" ? { systemd: { scope: "user" } } : {}),
     }),
   );
-  say(context, `${GLYPHS.done} Wrote ${place.path}`);
+  say(context, `${GLYPHS.done} ${t("onboard.say.wrote", { path: place.path })}`);
   const loadLine = commandLine(place.load);
   if (context.transport.attached) {
     // `serve` owns the data directory: a service started beside this one would fail and restart in a loop.
     say(
       context,
-      `Stop this tavi serve first (Ctrl-C in its terminal), then run:\n  ${loadLine}${place.linger === undefined ? "" : `\n  ${place.linger}   (so it keeps running after you log out)`}`,
+      `${t("onboard.say.stopServeFirst", { load: loadLine })}${place.linger === undefined ? "" : t("onboard.say.lingerNote", { command: place.linger })}`,
     );
     return;
   }
   if (!(await context.prompter.confirm({ label: t("cli.onboard.ask.startNow"), default: true }))) {
-    say(context, `Start it later with:\n  ${loadLine}${place.linger === undefined ? "" : `\n  ${place.linger}`}`);
+    say(context, `${t("onboard.say.startLater", { load: loadLine })}${place.linger === undefined ? "" : `\n  ${place.linger}`}`);
     return;
   }
   for (const [command, args] of place.load) {
     const ran = await system.run(command, args);
     if (ran.code !== 0) {
-      say(context, `${GLYPHS.failed} ${[command, ...args].join(" ")} failed: ${ran.output.trim().slice(0, 300)}`);
+      say(
+        context,
+        `${GLYPHS.failed} ${t("onboard.say.commandFailed", { command: [command, ...args].join(" "), output: ran.output.trim().slice(0, 300) })}`,
+      );
       return;
     }
   }
   // Up to 10 s for the owner it started to answer, told apart from one that is not the service.
-  const linger = place.linger === undefined ? "" : `. To keep it running after you log out: ${place.linger}`;
+  const linger = place.linger === undefined ? "" : t("onboard.say.lingerTail", { command: place.linger });
   if (system.ownerIsService === undefined) {
-    say(context, `${GLYPHS.done} Started${linger}`);
+    say(context, `${GLYPHS.done} ${t("onboard.say.started", { linger })}`);
     return;
   }
   for (let waited = 0; waited <= 10_000; waited += 500) {
     // Unknown is not `true`: the step does not say it runs as a service.
     const answer = await system.ownerIsService().catch(() => undefined);
     if (answer === true) {
-      say(context, `${GLYPHS.done} Running as a service${linger}`);
+      say(context, `${GLYPHS.done} ${t("onboard.say.runningService", { linger })}`);
       return;
     }
     if (answer === false) {
-      say(
-        context,
-        `${GLYPHS.todo} An owner answers, but not as the service: another tavi serve holds this data directory. Stop it, and the service takes over.`,
-      );
+      say(context, `${GLYPHS.todo} ${t("onboard.say.notService")}`);
       return;
     }
     await system.sleep(500);
   }
   const log = place.kind === "launchd" ? `launchctl print gui/$(id -u)/${place.label}` : `journalctl --user -u ${place.label}`;
-  say(context, `${GLYPHS.failed} The service was started, but no owner answered within 10 seconds. Its log says why: ${log}`);
+  say(context, `${GLYPHS.failed} ${t("onboard.say.noOwnerAnswered", { log })}`);
 }
 
 // ------------------------------------------------------------------ web search
@@ -849,20 +852,17 @@ function voiceProgress(job: NonNullable<VoiceSetupStatus["job"]>): string {
  */
 export async function voiceStep(context: StepContext): Promise<void> {
   const step = context.status.steps.find((candidate) => candidate.kind === "voice");
-  if (step?.state === "unavailable") return say(context, `${GLYPHS.unavailable} Voice messages — ${step.detail}`);
-  if (!context.transport.attached)
-    return say(
-      context,
-      `${GLYPHS.todo} Voice messages — set up by the running owner: start tavi serve, then tavi setup voice (or by hand: brew install whisper-cpp ffmpeg)`,
-    );
-  const voice = await context.transport.request<VoiceSetupStatus>("models", { action: "voice-status" });
-  if (voice.ready) return say(context, `${GLYPHS.done} Voice messages: transcribed on this computer`);
   const t = wordsOf(context);
-  const missing = voice.missing.join(", ");
+  if (step?.state === "unavailable")
+    return say(context, `${GLYPHS.unavailable} ${t("onboard.say.voiceUnavailable", { detail: step.detail })}`);
+  if (!context.transport.attached) return say(context, `${GLYPHS.todo} ${t("onboard.say.voiceNeedsOwner")}`);
+  const voice = await context.transport.request<VoiceSetupStatus>("models", { action: "voice-status" });
+  if (voice.ready) return say(context, `${GLYPHS.done} ${t("onboard.say.voiceReady")}`);
+  const missing = voiceMissingWords(voice.missing, t);
   if (!voice.automatic) {
     // Asked all the same, so a no is a skip here as anywhere: the commands are what a yes gets.
     if (!(await begin(context, "voice", t("cli.onboard.ask.voiceByHand", { missing })))) return;
-    say(context, "Run these, then tavi setup voice again:");
+    say(context, t("onboard.say.runThese"));
     for (const command of voice.commands) say(context, `  ${command}`);
     return;
   }
@@ -884,12 +884,14 @@ export async function voiceStep(context: StepContext): Promise<void> {
     await context.system.sleep(1_000);
     current = await context.transport.request<VoiceSetupStatus>("models", { action: "voice-status" });
   }
-  if (current.ready) return say(context, `${GLYPHS.done} Voice messages: transcribed on this computer`);
-  if (current.job?.state === "running")
-    return say(context, `${GLYPHS.todo} Voice messages — still setting up on the owner; tavi doctor says when it is ready`);
-  say(context, `${GLYPHS.failed} Voice messages were not set up: ${current.job?.message ?? `still missing ${current.missing.join(", ")}`}`);
+  if (current.ready) return say(context, `${GLYPHS.done} ${t("onboard.say.voiceReady")}`);
+  if (current.job?.state === "running") return say(context, `${GLYPHS.todo} ${t("onboard.say.voiceStill")}`);
+  say(
+    context,
+    `${GLYPHS.failed} ${t("onboard.say.voiceFailed", { why: current.job?.message ?? t("onboard.say.stillMissing", { missing: current.missing.join(", ") }) })}`,
+  );
   if (current.commands.length > 0) {
-    say(context, "  To set them up by hand:");
+    say(context, `  ${t("onboard.say.byHand")}`);
     for (const command of current.commands) say(context, `  ${command}`);
   }
 }
@@ -927,10 +929,10 @@ export async function searchStep(context: StepContext): Promise<void> {
       : undefined;
   try {
     await addSearch(context.transport, kind, key, baseUrl);
-    say(context, `${GLYPHS.done} Web search: ${kind}`);
-    say(context, searchAllowedNotice(kind));
+    say(context, `${GLYPHS.done} ${t("onboard.say.searchOn", { kind })}`);
+    say(context, searchAllowedNotice(kind, t));
   } catch (error) {
-    say(context, `${GLYPHS.failed} ${kind} was not added: ${errorMessage(error)}`);
+    say(context, `${GLYPHS.failed} ${t("onboard.say.searchFailed", { kind, why: errorTextIn(error, t) })}`);
   }
 }
 
@@ -939,10 +941,14 @@ export async function searchStep(context: StepContext): Promise<void> {
  * asking, by the allow rule every workspace is seeded with
  * (`seeded-web-search`), and how to be asked each time or stop searching.
  */
-export function searchAllowedNotice(kind: (typeof WEB_SEARCH_KINDS)[number]): string {
+export function searchAllowedNotice(kind: (typeof WEB_SEARCH_KINDS)[number], t: CoreT = coreEnglish): string {
   return [
-    `Searches go to ${kind} without asking; a query that looks like a key or token still asks first, and so does a chat that read a web page or an email before a search that could carry private data out.`,
-    `To be asked before every search: tavi permissions rm ${WEB_SEARCH_ALLOW_RULE_ID} (or remove it in ${englishOf(navPath("nav.route.settings", "nav.settings.permissions"))}). To stop searching: tavi search disable ${kind}.`,
+    t("onboard.say.searchAllowed", { kind }),
+    t("onboard.say.searchAsk", {
+      kind,
+      rule: WEB_SEARCH_ALLOW_RULE_ID,
+      path: renderTextRef(navPath("nav.route.settings", "nav.settings.permissions"), t) ?? "",
+    }),
   ].join("\n");
 }
 
@@ -996,10 +1002,10 @@ export async function ideasStep(context: StepContext): Promise<string | undefine
   if (context.transport.attached && settings?.settings.enabled === true && !fastFailed) {
     // Best effort: the refresh only brings the first ideas sooner.
     await context.transport.request("ideas", { action: "refresh", workspaceId: context.workspaceId }).catch(() => undefined);
-    say(context, "Personal ideas will be in `tavi ideas` in a minute.");
+    say(context, wordsOf(context)("onboard.say.ideasSoon"));
   } else if (!context.transport.attached && settings?.settings.enabled !== false && !fastFailed) {
     // Offline no run starts here: the owner's first scheduled run brings them.
-    say(context, "Personal ideas start once `tavi serve` runs; `tavi ideas` shows them.");
+    say(context, wordsOf(context)("onboard.say.ideasLater"));
   }
   if (prompts.length === 0) return undefined;
   const t = wordsOf(context);

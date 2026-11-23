@@ -2,6 +2,7 @@ import {
   NOTICE_NOTE_MAX_NOTICES,
   NOTICE_SUMMARY_MAX,
   homeChatOn,
+  localeOf,
   normaliseUntrustedText,
   isTopicConversationKey,
   isTrustedPublic,
@@ -27,6 +28,7 @@ import {
   type WorkflowPort,
 } from "@tavi/contracts";
 import { clip, errorMessage } from "@tavi/contracts/util";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 
 import { sideChatSeedLabel } from "../../server/side-chat-seed.js";
 import { channelLabelOf } from "../channels/catalog.js";
@@ -482,7 +484,10 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
 
     async postEarlierChats(home) {
       // With `chat.home` off there is no Home to post into.
-      if (!(await homeOn(home.workspaceId))) return;
+      const settings = (await deps.repositories.workspaceSettings.get(home.workspaceId)).settings;
+      if (!homeChatOn(settings)) return;
+      // A chat with no title is named in the workspace's language, as the titles around it are the person's own words.
+      const untitled = coreIn(localeOf(settings))("pastChats.search.untitled");
       // A chat from a messaging conversation is not listed: its title is a group's or a sender's words.
       // Nor is a run: it is no chat the person had.
       // Nor is a private chat.
@@ -498,7 +503,7 @@ export function createChatNotices(deps: ChatNoticeDependencies): ChatNotices {
         )
         .slice(0, EARLIER_CHATS_LISTED);
       if (chats.length === 0) return;
-      const lines = chats.map((chat) => `${clip(chat.title ?? "", 80, { squeeze: true }) || "Untitled chat"} (${chat.taskId})`);
+      const lines = chats.map((chat) => `${clip(chat.title ?? "", 80, { squeeze: true }) || untitled} (${chat.taskId})`);
       await post({
         taskId: home.taskId,
         kind: "earlier-chats",

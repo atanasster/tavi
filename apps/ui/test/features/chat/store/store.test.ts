@@ -3821,7 +3821,7 @@ describe("plugins' slash commands", () => {
     store.submit("/tally now");
     await settle();
     expect(fake.requests.filter((request) => request.command === "plugin-commands").map((request) => request.payload)).toEqual([
-      { action: "list" },
+      { action: "list", workspaceId: "default" },
       { action: "run", workspaceId: "default", name: "tally", args: "now" },
     ]);
     expect(fake.runs).toEqual([]);
@@ -3930,7 +3930,7 @@ describe("plugins' slash commands", () => {
     store.submit("/tally reset", { asPrompt: true });
     await settle();
     expect(fake.requests.filter((request) => request.command === "plugin-commands").map((request) => request.payload)).toEqual([
-      { action: "list" },
+      { action: "list", workspaceId: "default" },
     ]);
     expect(fake.runs.map((run) => (run.payload as { prompt: string }).prompt)).toEqual(["/tally reset"]);
     store.dispose();
@@ -3948,7 +3948,7 @@ describe("plugins' slash commands", () => {
     store.subscribe(() => undefined)();
     await settle();
     expect(fake.requests.filter((request) => request.command === "plugin-commands").map((request) => request.payload)).toEqual([
-      { action: "list" },
+      { action: "list", workspaceId: "default" },
     ]);
     store.submit("/remember I prefer metric units");
     await settle();

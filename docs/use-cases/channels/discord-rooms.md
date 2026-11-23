@@ -11,16 +11,16 @@ Discord is a plugin built in Tavi's repository, installed like any other. From t
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../assets/use-cases/channels/discord-rooms/01-install-the-discord-plugin-dark.svg">
-  <img src="../../assets/use-cases/channels/discord-rooms/01-install-the-discord-plugin.svg" alt="tavi plugins install: discord.channel 0.1.2 installed as proposed, with the approve command that runs it in Tavi's own process">
+  <img src="../../assets/use-cases/channels/discord-rooms/01-install-the-discord-plugin.svg" alt="tavi plugins install: discord.channel 0.1.3 installed as proposed, with the approve command that runs it in Tavi's own process">
 </picture>
 
 ## 2. Approve it and turn it on
 
-A channel cannot run as a sandboxed worker, so its approval must say so: run `tavi plugins approve discord.channel 0.1.2 --in-process`, then `tavi plugins enable discord.channel`, and restart `tavi serve` so it loads the plugin. `tavi plugins show discord.channel` lists the hosts it reaches, all Discord's own.
+A channel cannot run as a sandboxed worker, so its approval must say so: run `tavi plugins approve discord.channel 0.1.3 --in-process`, then `tavi plugins enable discord.channel`, and restart `tavi serve` so it loads the plugin. `tavi plugins show discord.channel` lists the hosts it reaches, all Discord's own.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../assets/use-cases/channels/discord-rooms/02-approve-it-and-turn-it-on-dark.svg">
-  <img src="../../assets/use-cases/channels/discord-rooms/02-approve-it-and-turn-it-on.svg" alt="tavi plugins approve: discord.channel 0.1.2 approved, running unsandboxed in the owner's process">
+  <img src="../../assets/use-cases/channels/discord-rooms/02-approve-it-and-turn-it-on.svg" alt="tavi plugins approve: discord.channel 0.1.3 approved, running unsandboxed in the owner's process">
 </picture>
 
 ## 3. Create your bot

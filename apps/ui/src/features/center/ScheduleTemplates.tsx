@@ -1,7 +1,7 @@
 import type { ScheduleSpec } from "@tavi/contracts";
 
 import { Button } from "../../ui/Button.js";
-import { useT } from "../../lib/i18n.js";
+import { translateNow, useT } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
 import type { RoutineStart } from "../routines/RoutineForms.js";
 import type { ScheduleDraft } from "./PlainSchedules.js";
@@ -11,8 +11,8 @@ import type { ReminderStart } from "./Reminders.js";
 type ScheduleStart = Omit<ScheduleDraft, "spec"> & { readonly cadence: Omit<ScheduleSpec, "timezone"> };
 
 /**
- * Something to start from when nothing is scheduled: which form it opens, filled with what. Its button reads in the
- * page's language; what it fills in is written to the owner, so it stays as it is.
+ * Something to start from when nothing is scheduled: which form it opens, filled with what. Its button and what it
+ * fills in read in the page's language; once the form is saved, the words are the person's own and stay as saved.
  */
 export type ScheduleTemplate = { readonly id: string; readonly title: UiKey } & (
   | { readonly kind: "schedule"; readonly schedule: ScheduleStart }
@@ -22,15 +22,15 @@ export type ScheduleTemplate = { readonly id: string; readonly title: UiKey } & 
 
 const WEEKDAYS = [1, 2, 3, 4, 5];
 
-const SCHEDULE_TEMPLATES: readonly ScheduleTemplate[] = [
+/** The templates, said in the page's language when they are read: the page remounts its views on a change of language. */
+const scheduleTemplates = (): readonly ScheduleTemplate[] => [
   {
     id: "morning-inbox-brief",
     title: "center.templates.morningInbox",
     kind: "schedule",
     schedule: {
-      name: "Morning inbox brief",
-      prompt:
-        "Read my unread email and messages since yesterday. Put anything urgent first, then what needs a reply from me today, then what can wait. Keep it short.",
+      name: translateNow("center.templates.morningInbox.name"),
+      prompt: translateNow("center.templates.morningInbox.prompt"),
       cadence: { at: "07:30", daysOfWeek: WEEKDAYS },
       missedRunPolicy: "run-once-if-missed-within-6h",
       autoApproveTools: [],
@@ -42,9 +42,8 @@ const SCHEDULE_TEMPLATES: readonly ScheduleTemplate[] = [
     title: "center.templates.weeklyDigest",
     kind: "routine",
     routine: {
-      name: "Weekly research digest",
-      objective:
-        "Each week, find the most important new papers, releases and news about large language models, and say in a line why each matters",
+      name: translateNow("center.templates.weeklyDigest.name"),
+      objective: translateNow("center.templates.weeklyDigest.objective"),
       cadence: { at: "08:00", daysOfWeek: [1] },
     },
   },
@@ -52,15 +51,15 @@ const SCHEDULE_TEMPLATES: readonly ScheduleTemplate[] = [
     id: "daily-stretch",
     title: "center.templates.dailyStretch",
     kind: "reminder",
-    reminder: { text: "Stand up and stretch", repeat: { at: "15:00" } },
+    reminder: { text: translateNow("center.templates.dailyStretch.text"), repeat: { at: "15:00" } },
   },
   {
     id: "end-of-day-wrap-up",
     title: "center.templates.endOfDay",
     kind: "schedule",
     schedule: {
-      name: "End-of-day wrap-up",
-      prompt: "Look over today's chats and tasks: what I finished, what is still open, and the first thing to pick up tomorrow.",
+      name: translateNow("center.templates.endOfDay.name"),
+      prompt: translateNow("center.templates.endOfDay.prompt"),
       cadence: { at: "18:00", daysOfWeek: WEEKDAYS },
       missedRunPolicy: "skip",
       autoApproveTools: [],
@@ -90,11 +89,13 @@ export function ScheduleTemplates({
   const t = useT();
   return (
     <div className="center-chips" role="group" aria-label={t("center.templates.label")}>
-      {SCHEDULE_TEMPLATES.filter((template) => template.kind !== "reminder" || reminders).map((template) => (
-        <Button key={template.id} size="sm" onClick={() => onPick(template)}>
-          {t(template.title)}
-        </Button>
-      ))}
+      {scheduleTemplates()
+        .filter((template) => template.kind !== "reminder" || reminders)
+        .map((template) => (
+          <Button key={template.id} size="sm" onClick={() => onPick(template)}>
+            {t(template.title)}
+          </Button>
+        ))}
     </div>
   );
 }

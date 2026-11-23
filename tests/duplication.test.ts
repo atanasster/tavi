@@ -22,8 +22,8 @@ import { afterAll, describe, expect, it } from "vitest";
  * raise one only for a reviewed reason. The scan takes about a second once the
  * jscpd binary has run once.
  */
-const SOURCE_CLONE_CEILING = 118;
-const TEST_CLONE_CEILING = 908;
+const SOURCE_CLONE_CEILING = 95;
+const TEST_CLONE_CEILING = 905;
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const directories = temporaryDirectories({ prefix: "tavi-jscpd-" });

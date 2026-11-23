@@ -64,7 +64,12 @@ import {
   MEMORY_EMBEDDING_DISCLOSURE_REASON,
   MEMORY_EMBEDDING_PERSONAL_DISCLOSURE_REASON,
   MEMORY_PORT_CONFORMANCE,
+  keyedError,
+  textRef,
+  type TextRef,
+  type TextRefParams,
 } from "@tavi/contracts";
+import type { CoreKey } from "@tavi/contracts/locales/core";
 import { connectionLocality } from "@tavi/agent-host/task-summarizer";
 import { hybridNearMatch, hybridSearch, MEMORY_VECTOR_FAILURES_MAX, type HybridRecallDependencies } from "../features/memory/vectors.js";
 import type { MemoryOverride, MemoryOverrideDependencies, MemoryServicePort, ModelConfigPort as ModelConfigService } from "@tavi/contracts";
@@ -96,9 +101,7 @@ export function workspaceSettingsCommand(
       // As `system-prompt`: a setting in a workspace this owner does not serve
       // would be a success with no effect.
       if (deps.knownWorkspace !== undefined && !deps.knownWorkspace(workspaceId)) {
-        throw new TaviError("NOT_FOUND", `workspace ${workspaceId} is not configured on this owner`, {
-          details: { workspaceId },
-        });
+        throw keyedError("NOT_FOUND", "error.settings.unknownWorkspace", { workspace: workspaceId }, { details: { workspaceId } });
       }
       const settings = deps.repositories.workspaceSettings;
       // A page may raise `security.taint`, never lower it: lowering widens what runs unasked (a page only tightens).
@@ -111,9 +114,7 @@ export function workspaceSettingsCommand(
             ? (workspaceSettingValue("securityTaint", required(input.value, "a value", "workspace-settings set")) as TaintMode)
             : taintModeOf({});
         if (taintModeRank(asked) < taintModeRank(taintModeOf(record.settings))) {
-          throw new TaviError("NOT_AUTHORIZED", `a page can only raise security.taint; lower it with \`tavi permissions taint ${asked}\``, {
-            details: { key: input.key },
-          });
+          throw keyedError("NOT_AUTHORIZED", "error.settings.taintLower", { mode: asked }, { details: { key: input.key } });
         }
         checkedRevision = input.expectedRevision ?? record.revision;
       }
@@ -312,11 +313,7 @@ export async function memoryRetrievalDisclosure(
 ): Promise<MemoryRetrievalCheck & { readonly model: string }> {
   const bound = (await modelConfig.listRoleBindings(workspaceId)).some((binding) => binding.role === "embedding");
   if (!bound) {
-    throw new TaviError(
-      "NOT_CONFIGURED",
-      `Hybrid recall needs an embedding model: bind one with \`tavi models set-role embedding --connection <id> --model <id>\`, then turn hybrid on`,
-      { details: { workspaceId, role: "embedding" } },
-    );
+    throw keyedError("NOT_CONFIGURED", "error.settings.needsEmbedding", undefined, { details: { workspaceId, role: "embedding" } });
   }
   const resolution = await modelConfig.resolveRole({ workspaceId, role: "embedding" });
   const locality = connectionLocality(resolution.connection);
@@ -419,12 +416,11 @@ export async function applyWorkspaceSetting(
     // A section read before another change (a provider switch, say) is a conflict, as the write would be:
     // compared before the provider check below, so a stale section is not mistaken for a provider change.
     if (input.expectedRevision !== undefined && input.expectedRevision !== current.revision) {
-      throw new TaviError(
+      throw keyedError(
         "CONFLICT",
-        `The settings for workspace ${input.workspaceId} changed since they were read (expected revision ${input.expectedRevision}, current revision ${current.revision})`,
-        {
-          details: { expectedRevision: input.expectedRevision, currentRevision: current.revision },
-        },
+        "error.settings.conflict",
+        { workspace: input.workspaceId, expected: String(input.expectedRevision), current: String(current.revision) },
+        { details: { expectedRevision: input.expectedRevision, currentRevision: current.revision } },
       );
     }
     // Hybrid recall sends memory text and queries to the embedding connection: shown and accepted first when remote.
@@ -444,11 +440,7 @@ export async function applyWorkspaceSetting(
       (sentProvider !== undefined && sentProvider !== (stored?.provider ?? BUILTIN_MEMORY_PROVIDER_ID)) ||
       (sentEgress !== undefined && egressOf(sentEgress) !== egressOf(stored?.providerEgress))
     ) {
-      throw new TaviError(
-        "INVALID_INPUT",
-        "The memory provider and its egress change only with tavi memory set-provider and tavi memory egress (or the Center's Provider), which say what they send first",
-        { details: { key: input.key } },
-      );
+      throw keyedError("INVALID_INPUT", "error.settings.providerVerbs", undefined, { details: { key: input.key } });
     }
     const asked: MemorySettings = {
       ...rest,
@@ -458,22 +450,14 @@ export async function applyWorkspaceSetting(
     const hybrid = asked.retrieval === "hybrid";
     const wantsPersonal = input.retrievalPersonal === true;
     if (wantsPersonal && !hybrid) {
-      throw new TaviError(
-        "INVALID_INPUT",
-        "Personal memory is embedded only with hybrid recall: tavi memory config retrieval hybrid --include-personal",
-        { details: { key: input.key } },
-      );
+      throw keyedError("INVALID_INPUT", "error.settings.personalNeedsHybrid", undefined, { details: { key: input.key } });
     }
     let accepted = hybrid ? stored?.retrievalConnection : undefined;
     // Personal memory's opt-in: kept while hybrid stays on, unless turned off.
     let personal = hybrid && input.retrievalPersonal !== false ? stored?.retrievalPersonal : undefined;
     if (hybrid && (stored?.retrieval !== "hybrid" || input.confirmed === true || wantsPersonal)) {
       if (input.retrievalCheck === undefined)
-        throw new TaviError(
-          "UNAVAILABLE",
-          "Hybrid recall cannot be checked here: turn it on from the Center or `tavi memory config retrieval hybrid`",
-          { details: { key: input.key } },
-        );
+        throw keyedError("UNAVAILABLE", "error.settings.hybridUnchecked", undefined, { details: { key: input.key } });
       const check = await input.retrievalCheck();
       // Asking for personal memory where hybrid was already accepted for this connection says only what is new.
       const covered = stored?.retrieval === "hybrid" && stored.retrievalConnection === check.connectionId;
@@ -485,7 +469,18 @@ export async function applyWorkspaceSetting(
           : covered
             ? check.personalDisclosure
             : `${check.disclosure} ${check.personalDisclosure}`;
+        // The English message is the check's own words; the key says the same in the workspace's language.
+        const shared = textRef("memory.disclosure.embedding", { connection: check.connectionId, count: check.records });
+        const personalRef = textRef("memory.disclosure.personalEmbedding", { connection: check.connectionId, count: check.personal });
+        const disclosureRef: TextRef = !wantsPersonal
+          ? shared
+          : covered
+            ? personalRef
+            : textRef("error.settings.disclosures", { first: shared, second: personalRef });
         throw new TaviError("APPROVAL_REQUIRED", `${disclosure} Confirm to turn ${wantsPersonal && covered ? "it" : "hybrid recall"} on.`, {
+          i18n: textRef(wantsPersonal && covered ? "error.settings.confirmIt" : "error.settings.confirmHybrid", {
+            disclosure: disclosureRef,
+          }),
           details: {
             key: input.key,
             reason: wantsPersonal ? MEMORY_EMBEDDING_PERSONAL_DISCLOSURE_REASON : MEMORY_EMBEDDING_DISCLOSURE_REASON,
@@ -530,18 +525,17 @@ export async function applyWorkspaceSetting(
     next = { ...current.settings, [input.key]: value };
     // The DM link makes DMs turns of Home: with no Home it would mean nothing.
     if (input.key === "homeDmLink" && !homeChatOn(next)) {
-      throw new TaviError("INVALID_INPUT", "chat.home-dm links your DMs to Home, which is off in this workspace: turn chat.home on first", {
-        details: { key: input.key },
-      });
+      throw keyedError("INVALID_INPUT", "error.settings.homeDmOff", undefined, { details: { key: input.key } });
     }
     if (input.key === "homeDmLink" && Array.isArray(value)) {
       for (const identity of value as readonly HomeDmIdentity[]) {
         const descriptor = channelDescriptorOf(input.connectionProviders?.get(identity.connectionId));
         // Only a known chat channel's connection has one-to-one conversations to link, and the sender must be an id there.
         if (descriptor?.kind !== "chat" || channelIdentity(identity.senderId, descriptor.sender) === undefined) {
-          throw new TaviError(
+          throw keyedError(
             "INVALID_INPUT",
-            `${formatHomeDmIdentity(identity)} is not a sender id on a chat channel's connection this data directory knows; use <connection>:<sender id> such as my-chat:123456789, with a connection saved in Settings or one the person has messaged`,
+            "error.settings.notSender",
+            { identity: formatHomeDmIdentity(identity) },
             { details: { key: input.key } },
           );
         }
@@ -567,6 +561,14 @@ export async function applyWorkspaceSetting(
   }
 }
 
+/** A value refused for `key`, by its key: the English is what the terminal always printed. */
+const refused = (message: CoreKey, params: TextRefParams, key: WorkspaceSettingKey): TaviError =>
+  keyedError("INVALID_INPUT", message, params, { details: { key } });
+
+/** "a or b" for two choices, said in the reader's language; a longer list joined as English writes it. */
+const eitherOf = (choices: readonly string[]): string | TextRef =>
+  choices.length === 2 ? textRef("error.settings.or", { first: choices[0] as string, second: choices[1] as string }) : choices.join(" or ");
+
 /**
  * The stored form of `value` for `key`, or a refusal that names what was typed:
  * a zone in its canonical spelling, `on`/`off` as a boolean, and
@@ -577,34 +579,19 @@ function workspaceSettingValue(key: WorkspaceSettingKey, value: string): Workspa
     case "timezone": {
       const timezone = canonicalTimeZone(value);
       if (timezone === undefined) {
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${JSON.stringify(value)} is not an IANA time zone; use a name such as Europe/Berlin or America/New_York`,
-          { details: { key } },
-        );
+        throw refused("error.settings.timezone", { value: JSON.stringify(value) }, key);
       }
       return timezone;
     }
     case "operatorName": {
       const name = OperatorNameSchema.safeParse(value);
-      if (!name.success)
-        throw new TaviError(
-          "INVALID_INPUT",
-          `operator.name takes one line of up to ${String(OPERATOR_NAME_MAX)} characters, such as "Robin"`,
-          { details: { key } },
-        );
+      if (!name.success) throw refused("error.settings.operatorName", { max: String(OPERATOR_NAME_MAX) }, key);
       return name.data;
     }
     case "locale": {
       const locale = LocaleSchema.safeParse(value);
       if (!locale.success)
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${JSON.stringify(value)} is not a language Tavi speaks; use one of ${LocaleSchema.options.join(", ")}`,
-          {
-            details: { key },
-          },
-        );
+        throw refused("error.settings.locale", { value: JSON.stringify(value), locales: LocaleSchema.options.join(", ") }, key);
       return locale.data;
     }
     case "activitySummaries":
@@ -616,37 +603,29 @@ function workspaceSettingValue(key: WorkspaceSettingKey, value: string): Workspa
     case "videoEnabled":
     case "redactToolResults": {
       const on = parseOnOff(value);
-      if (on === undefined) throw new TaviError("INVALID_INPUT", `${JSON.stringify(value)} is not on or off`, { details: { key } });
+      if (on === undefined) throw refused("error.settings.onOff", { value: JSON.stringify(value) }, key);
       return on;
     }
     case "homeDmLink": {
       const parsed = parseHomeDmLink(value);
       if ("invalid" in parsed) {
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${JSON.stringify(parsed.invalid)} is not a DM identity; use <connection>:<sender id> such as my-chat:123456789 (a comma-separated list), or off`,
-          { details: { key } },
-        );
+        throw refused("error.settings.homeDm", { value: JSON.stringify(parsed.invalid) }, key);
       }
       return [...parsed.identities];
     }
     case "desktopGrantedApps": {
       const parsed = parseDesktopGrantedApps(value);
       if ("invalid" in parsed)
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${JSON.stringify(parsed.invalid)} is not an app; use a comma-separated list of bundle ids or app names, such as "com.apple.TextEdit,Notes", or none`,
-          { details: { key } },
-        );
+        throw refused("error.settings.desktopApps", { value: JSON.stringify(parsed.invalid), example: '"com.apple.TextEdit,Notes"' }, key);
       return [...parsed.apps];
     }
     case "browserNoThumbnailHosts": {
       const parsed = parseNoThumbnailHosts(value);
       if ("invalid" in parsed) {
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${JSON.stringify(parsed.invalid)} is not a host or *.domain; use a comma-separated list such as "mail.example.com,*.bank", or none`,
-          { details: { key } },
+        throw refused(
+          "error.settings.thumbnailHosts",
+          { value: JSON.stringify(parsed.invalid), example: '"mail.example.com,*.bank"' },
+          key,
         );
       }
       return [...parsed.hosts];
@@ -659,42 +638,41 @@ function workspaceSettingValue(key: WorkspaceSettingKey, value: string): Workspa
       try {
         raw = JSON.parse(value);
       } catch {
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${key} takes a JSON object, such as ${key === "uiRoles" ? '{"browser-view":"acme.browserview"}' : key === "memory" ? '{"enabled":false}' : '{"acme.browserview/live":"hidden"}'}`,
-          { details: { key } },
+        throw refused(
+          "error.settings.jsonObject",
+          {
+            key,
+            example:
+              key === "uiRoles"
+                ? '{"browser-view":"acme.browserview"}'
+                : key === "memory"
+                  ? '{"enabled":false}'
+                  : '{"acme.browserview/live":"hidden"}',
+          },
+          key,
         );
       }
       const parsed = WorkspaceSettingsSchema.shape[key].safeParse(raw);
       if (!parsed.success) {
         const issue = parsed.error.issues[0];
         const where = issue === undefined || issue.path.length === 0 ? "" : `${issue.path.join(".")}: `;
-        throw new TaviError("INVALID_INPUT", `${key} is not valid: ${where}${issue?.message ?? "unknown problem"}`, { details: { key } });
+        throw refused("error.settings.notValid", { key, where, issue: issue?.message ?? textRef("error.settings.unknownProblem") }, key);
       }
       return parsed.data;
     }
     case "securityTaint": {
       const mode = TaintModeSchema.safeParse(value.trim().toLowerCase());
-      if (!mode.success)
-        throw new TaviError("INVALID_INPUT", `${JSON.stringify(value)} is not a taint mode; use off, observe or enforce`, {
-          details: { key },
-        });
+      if (!mode.success) throw refused("error.settings.taint", { value: JSON.stringify(value) }, key);
       return mode.data;
     }
     case "securityInjectionDetector": {
       const mode = InjectionDetectorModeSchema.safeParse(value.trim().toLowerCase());
-      if (!mode.success)
-        throw new TaviError("INVALID_INPUT", `${JSON.stringify(value)} is not an injection detector mode; use off, patterns or model`, {
-          details: { key },
-        });
+      if (!mode.success) throw refused("error.settings.injection", { value: JSON.stringify(value) }, key);
       return mode.data;
     }
     case "sandboxNetwork": {
       const mode = SandboxNetworkModeSchema.safeParse(value.trim().toLowerCase());
-      if (!mode.success)
-        throw new TaviError("INVALID_INPUT", `${JSON.stringify(value)} is not a sandbox network mode; use granted or ask`, {
-          details: { key },
-        });
+      if (!mode.success) throw refused("error.settings.sandboxNetwork", { value: JSON.stringify(value) }, key);
       return mode.data;
     }
     case "mcpServers":
@@ -702,12 +680,7 @@ function workspaceSettingValue(key: WorkspaceSettingKey, value: string): Workspa
       // A comma-separated list of MCP server ids, or none.
       const ids = value.trim().toLowerCase() === "none" ? [] : [...new Set(csvList(value))];
       const parsed = WorkspaceSettingsSchema.shape[key].safeParse(ids);
-      if (!parsed.success)
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${JSON.stringify(value)} is not a list of MCP server ids; use a comma-separated list such as mcp.docs,mcp.home, or none`,
-          { details: { key } },
-        );
+      if (!parsed.success) throw refused("error.settings.mcpIds", { value: JSON.stringify(value) }, key);
       return parsed.data;
     }
     case "sandboxDomains": {
@@ -715,15 +688,14 @@ function workspaceSettingValue(key: WorkspaceSettingKey, value: string): Workspa
       const entries = value.trim().toLowerCase() === "none" ? [] : csvList(value);
       const invalid = entries.find((entry) => normalizeSandboxGrant(entry) === undefined);
       if (invalid !== undefined)
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${JSON.stringify(invalid)} is not a domain sandbox.run may reach; use a comma-separated list such as "pypi.org,*.pythonhosted.org,api.example.com:443" (or @registries), or none`,
-          { details: { key } },
+        throw refused(
+          "error.settings.sandboxDomain",
+          { value: JSON.stringify(invalid), example: '"pypi.org,*.pythonhosted.org,api.example.com:443"' },
+          key,
         );
       const domains = [...new Set(entries.map((entry) => normalizeSandboxGrant(entry) ?? entry))];
       const parsed = WorkspaceSettingsSchema.shape[key].safeParse(domains);
-      if (!parsed.success)
-        throw new TaviError("INVALID_INPUT", `sandbox.domains holds at most ${String(SANDBOX_DOMAINS_MAX)} domains`, { details: { key } });
+      if (!parsed.success) throw refused("error.settings.sandboxMax", { max: String(SANDBOX_DOMAINS_MAX) }, key);
       return parsed.data;
     }
     case "browserSessionIdleMinutes":
@@ -737,91 +709,72 @@ function workspaceSettingValue(key: WorkspaceSettingKey, value: string): Workspa
             : [1, MAX_BROWSER_DOWNLOAD_MAX_MIB];
       const number = parseWholeNumberIn(value, min, max);
       if (number === undefined)
-        throw new TaviError("INVALID_INPUT", `${JSON.stringify(value)} is not a whole number from ${String(min)} to ${String(max)}`, {
-          details: { key },
-        });
+        throw refused("error.settings.wholeNumber", { value: JSON.stringify(value), min: String(min), max: String(max) }, key);
       return number;
     }
     case "videoKeepDays": {
       const days = parseVideoKeepDays(value);
       if (days === undefined)
-        throw new TaviError("INVALID_INPUT", `${JSON.stringify(value)} is not a number of days from 1 to ${String(MAX_VIDEO_KEEP_DAYS)}`, {
-          details: { key },
-        });
+        throw refused("error.settings.videoDays", { value: JSON.stringify(value), max: String(MAX_VIDEO_KEEP_DAYS) }, key);
       return days;
     }
     case "browserVisionEngine": {
       const parsed = BrowserVisionEngineSchema.safeParse(value.trim());
       if (!parsed.success)
-        throw new TaviError("INVALID_INPUT", `${JSON.stringify(value)} is not a vision engine: ${BROWSER_VISION_ENGINES.join(" or ")}`, {
-          details: { key },
-        });
+        throw refused("error.settings.vision", { value: JSON.stringify(value), engines: eitherOf(BROWSER_VISION_ENGINES) }, key);
       return parsed.data;
     }
     case "toolDeferral": {
       const parsed = ToolDeferralSchema.safeParse(value.trim());
       if (!parsed.success)
-        throw new TaviError("INVALID_INPUT", `${JSON.stringify(value)} is not a tool deferral: ${TOOL_DEFERRALS.join(", ")}`, {
-          details: { key },
-        });
+        throw refused("error.settings.deferral", { value: JSON.stringify(value), deferrals: TOOL_DEFERRALS.join(", ") }, key);
       return parsed.data;
     }
     case "tasksHome": {
       const parsed = TasksHomeSchema.safeParse(value.trim());
-      if (!parsed.success)
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${JSON.stringify(value)} is not a task home: tavi, or mcp:<server> (for example mcp:todoist)`,
-          {
-            details: { key },
-          },
-        );
+      if (!parsed.success) throw refused("error.settings.tasksHome", { value: JSON.stringify(value) }, key);
       return parsed.data;
     }
     case "promptLayout": {
       const parsed = PromptLayoutSchema.safeParse(value.trim());
       if (!parsed.success)
-        throw new TaviError("INVALID_INPUT", `${JSON.stringify(value)} is not a prompt layout: ${PROMPT_LAYOUTS.join(" or ")}`, {
-          details: { key },
-        });
+        throw refused("error.settings.promptLayout", { value: JSON.stringify(value), layouts: eitherOf(PROMPT_LAYOUTS) }, key);
       return parsed.data;
     }
     case "keptModelRequests": {
       const count = parseKeptModelRequests(value);
       if (count === undefined)
-        throw new TaviError("INVALID_INPUT", `${JSON.stringify(value)} is not a count from 0 to ${MAX_KEPT_MODEL_REQUESTS}`, {
-          details: { key },
-        });
+        throw refused("error.settings.keptRequests", { value: JSON.stringify(value), max: String(MAX_KEPT_MODEL_REQUESTS) }, key);
       return count;
     }
     case "maxOutputTokens": {
       const tokens = parseMaxOutputTokens(value);
       if (tokens === undefined)
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${JSON.stringify(value)} is not a number of tokens from ${MIN_MAX_OUTPUT_TOKENS} to ${MAX_MAX_OUTPUT_TOKENS}`,
-          { details: { key } },
+        throw refused(
+          "error.settings.maxTokens",
+          { value: JSON.stringify(value), min: String(MIN_MAX_OUTPUT_TOKENS), max: String(MAX_MAX_OUTPUT_TOKENS) },
+          key,
         );
       return tokens;
     }
     case "scheduledMonthlyTokenBudget": {
       const tokens = parseScheduledMonthlyTokenBudget(value);
       if (tokens === undefined)
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${JSON.stringify(value)} is not a number of tokens from ${MIN_SCHEDULED_MONTHLY_TOKEN_BUDGET} to ${MAX_SCHEDULED_MONTHLY_TOKEN_BUDGET}; unset it for no budget`,
-          { details: { key } },
+        throw refused(
+          "error.settings.budget",
+          {
+            value: JSON.stringify(value),
+            min: String(MIN_SCHEDULED_MONTHLY_TOKEN_BUDGET),
+            max: String(MAX_SCHEDULED_MONTHLY_TOKEN_BUDGET),
+          },
+          key,
         );
       return tokens;
     }
     case "activitySummaryModel": {
       const target = parseSettingModelTarget(value);
       if (target === undefined) {
-        throw new TaviError(
-          "INVALID_INPUT",
-          `${JSON.stringify(value)} is not <connection>/<model>, for example openrouter/openai/gpt-4.1-mini`,
-          { details: { key } },
-        );
+        throw refused("error.settings.modelTarget", { value: JSON.stringify(value) }, key);
       }
       return target;
     }

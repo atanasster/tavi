@@ -14,6 +14,8 @@ export const workers = {
   "workers.tree.using": "Using {tool}",
   "workers.tree.nodeNeeds": "Needs {needs}",
   "workers.tree.cancel": "Cancel {id}",
+  /** Why the person cancelled a worker, stored with the cancellation in their words. */
+  "workers.tree.cancelReason": "Cancelled from canvas agent tree",
   "workers.tree.dismiss": "Dismiss {id}",
   "workers.tree.under": { one: "{count} agent under it", other: "{count} agents under it" },
 

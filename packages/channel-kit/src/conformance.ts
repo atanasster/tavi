@@ -12,6 +12,8 @@ import {
   type MessagingConnectorInstance,
   type OutboundMessage,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 
 /**
  * The conformance suite every messaging channel connector passes
@@ -426,6 +428,45 @@ export function describeGroupChannelConformance(name: string, subject: GroupChan
       said.push(fake.instance.status(), events);
       expect(JSON.stringify(said)).not.toContain(fake.secret);
       await fake.instance.stop();
+    });
+  });
+}
+
+/** Every key of a descriptor that holds words a person reads: what a language changes. */
+const READ_TEXT = ["label", "help", "description", "summary", "says", "setupHelp", "openLabel", "name"];
+
+/** A descriptor with every text a person reads left out: what runs. */
+const behaviourOf = (value: unknown): unknown =>
+  JSON.parse(JSON.stringify(value, (key, field: unknown) => (READ_TEXT.includes(key) ? undefined : field)));
+
+export interface DescriptorLanguageSubject {
+  /** The descriptor as it always was, in English. */
+  readonly english: ChannelDescriptor;
+  /** The descriptor said in `t`'s words; English when none is given. */
+  readonly descriptor: (t?: CoreT) => ChannelDescriptor;
+  /** The channel's own Bulgarian words, checked in the Bulgarian descriptor. */
+  readonly says: (bg: ChannelDescriptor) => void;
+}
+
+/**
+ * A builtin channel's setup words in Bulgarian, for channel setup and
+ * Connected apps: its descriptor is English byte for byte by default, and in
+ * Bulgarian is valid, says its description in Bulgarian and changes nothing
+ * that runs.
+ */
+export function describeDescriptorInBulgarian(subject: DescriptorLanguageSubject): void {
+  describe("the descriptor in Bulgarian", () => {
+    it("is English byte for byte by default", () => {
+      expect(subject.descriptor()).toEqual(subject.english);
+      expect(subject.descriptor(coreEnglish)).toEqual(subject.english);
+    });
+
+    it("says its setup in Bulgarian and changes nothing that runs", () => {
+      const bg = subject.descriptor(coreIn("bg"));
+      expect(ChannelDescriptorSchema.safeParse(bg).success).toBe(true);
+      expect(bg.description).toMatch(/\p{Script=Cyrillic}/u);
+      subject.says(bg);
+      expect(behaviourOf(bg)).toEqual(behaviourOf(subject.english));
     });
   });
 }

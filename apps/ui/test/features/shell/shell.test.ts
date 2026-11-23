@@ -1,5 +1,5 @@
 import { initialRunState, type RunState } from "@tavi/client/browser";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   needsCount,
@@ -14,6 +14,8 @@ import {
   headerStatusLabel,
 } from "../../../src/features/shell/shell.js";
 import { formatElapsed } from "../../../src/lib/time.js";
+import { setLocale } from "../../../src/lib/i18n.js";
+import { rowTitle } from "../../../src/features/center/model.js";
 import type { CanvasRun } from "../../../src/features/chat/store/types.js";
 
 /**
@@ -407,4 +409,27 @@ it("shows a chat working once its approval was given, though a list polled befor
   };
   expect(directoryRows(state, "default")[0]).toMatchObject({ status: "working", needs: [] });
   expect(shellState(state, undefined).needs).toBe(0);
+});
+
+describe("Home's stored title", () => {
+  afterEach(async () => {
+    await setLocale("en");
+  });
+
+  it("is said in the page's language, a rename as the reader wrote it", async () => {
+    const runs = [run("ui-1", { prompt: "Find the best flights" }, { taskId: "home-1", status: "completed" })];
+    const home = { taskId: "home-1", title: "Home", titleSource: "home", counts: {}, needs: [] } as never;
+    const directory = { rows: [home], needs: [], loading: false, needsTruncated: false };
+    expect(shellState({ connection: "ready", runs, home: "home-1", directory }, undefined).current?.title).toBe("Home");
+    expect(rowTitle(home)).toBe("Home");
+    await setLocale("bg");
+    expect(shellState({ connection: "ready", runs, home: "home-1", directory }, undefined).current?.title).toBe("Начало");
+    expect(rowTitle(home)).toBe("Начало");
+    // The reader called it Home themselves: their word, as written.
+    const renamed = { taskId: "home-1", title: "Home", titleSource: "reader", counts: {}, needs: [] } as never;
+    expect(rowTitle(renamed)).toBe("Home");
+    expect(
+      shellState({ connection: "ready", runs, home: "home-1", directory: { ...directory, rows: [renamed] } }, undefined).current?.title,
+    ).toBe("Home");
+  });
 });

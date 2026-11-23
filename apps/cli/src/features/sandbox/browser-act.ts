@@ -3,6 +3,7 @@ import { definedOnly } from "@tavi/contracts/util";
 import type { ToolRegistry } from "@tavi/runtime";
 
 import { assessBrowserAct } from "../approvals/call-assessors.js";
+import { cardWords } from "../approvals/card-words.js";
 import { awaitingReview } from "../folders/promotion.js";
 import {
   type BrowserToolContext,
@@ -112,7 +113,7 @@ export function registerBrowserAct(registry: ToolRegistry, ctx: BrowserToolConte
     inputSchema: BrowserActInputSchema,
     assess: (input, context) => {
       const call = input as { readonly sessionId?: unknown; readonly ref?: unknown; readonly kind?: unknown; readonly path?: unknown };
-      if (call?.kind === "open_in_tab") return opensInTab(ctx, input);
+      if (call?.kind === "open_in_tab") return opensInTab(ctx, input, cardWords(context));
       // An upload by path: the card shows the file as it is now.
       const file =
         call?.kind === "upload" && typeof call.path === "string" ? ctx.options.promotion?.describe(call.path, context) : undefined;
@@ -125,6 +126,7 @@ export function registerBrowserAct(registry: ToolRegistry, ctx: BrowserToolConte
           file,
           typeof call?.sessionId === "string" ? pageOf(ctx, call.sessionId) : undefined,
           typeof call?.sessionId === "string" ? dismissedDialogOf(ctx, call.sessionId) : undefined,
+          cardWords(context),
         ),
         input,
       );

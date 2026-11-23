@@ -17,6 +17,7 @@ import { Trajectory } from "../../../src/features/chat/Trajectory.js";
 import type { CanvasRun, CanvasState, CanvasStore } from "../../../src/features/chat/store/types.js";
 import { WorkspaceProvider } from "../../../src/features/shell/Workspace.js";
 import { InWorkspace } from "../../support/workspace.js";
+import { taskRow as row } from "../../support/rows.js";
 
 /** The chat and run view, rendered from states the reducer produces. */
 
@@ -900,19 +901,6 @@ it("renders durable task details and trajectory when there are no stream events"
   expect(trajectory).toContain("openrouter/openai/gpt-4.1-mini");
   expect(trajectory).toContain("Duration not recorded");
   expect(trajectory).not.toContain("0 tool calls");
-});
-
-const row = (taskId: string, title: string, extra: Partial<TaskListRow> = {}): TaskListRow => ({
-  taskId,
-  workspaceId: "default",
-  status: "completed",
-  origin: "web",
-  title,
-  createdAt: "2026-10-04T08:00:00Z",
-  updatedAt: "2026-10-04T09:00:00Z",
-  needs: [],
-  counts: { admissions: 1, tools: null },
-  ...extra,
 });
 
 /** The sidebar over a Home, its side chat, an ordinary chat, a run and a worker — or over `only` those rows. */

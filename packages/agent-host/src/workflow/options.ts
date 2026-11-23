@@ -50,6 +50,7 @@ import type {
   TaskOrigin,
   ToolRegistryPort,
   TurnHooksPort,
+  ConnectRequest,
 } from "@tavi/contracts";
 import type { Locale } from "@tavi/contracts/i18n";
 import type { WorkspacePromptSettingsPort } from "../prompts/system-prompt.js";
@@ -428,7 +429,14 @@ export interface WorkflowAdapterOptions {
    * Tells the chat a task came from that it waits for an app to be connected: Tavi's
    * words only, never a link or a token. Absent, or for a task with no such chat, nothing is sent.
    */
-  readonly tellConnect?: (input: { readonly taskId: string; readonly waitId: string; readonly text: string }) => Promise<void>;
+  readonly tellConnect?: (input: {
+    readonly taskId: string;
+    readonly waitId: string;
+    /** The need in English. */
+    readonly text: string;
+    /** The app it is about, so the chat is told in its workspace's language. */
+    readonly connect?: Pick<ConnectRequest, "appName" | "health">;
+  }) => Promise<void>;
   /**
    * Delivers an `ask_user` question to the operator.
    *

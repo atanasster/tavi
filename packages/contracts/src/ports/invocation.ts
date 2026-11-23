@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { ChatFolder } from "../chat-folders.js";
+import type { Locale } from "../i18n.js";
 import type { ContentLabel } from "../content-label.js";
 import type { RunIdSchema, WorkspaceIdSchema } from "../ids.js";
 import type { ChatMemoryMode, FrontEnd, TurnChannel } from "../task-origins.js";
@@ -128,6 +129,12 @@ export interface InvocationContext {
    * `InvocationContextSchema`.
    */
   readonly heldConnectionId?: string | undefined;
+  /**
+   * The workspace's language, set by the gate only on the context it gives a tool's `assess`, so the approval card
+   * it writes (its title, detail and reasons) is said in it. Never stored with the turn, never what the model
+   * reads, and not mirrored in `InvocationContextSchema`; absent: English.
+   */
+  readonly locale?: Locale | undefined;
   /**
    * The front end this turn was typed in, on the owner's local connection:
    * `web` through `tavi ui`'s bridge, `ipc` from another

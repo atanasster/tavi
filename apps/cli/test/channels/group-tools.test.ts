@@ -291,4 +291,15 @@ describe("the group tools", () => {
     await expect(call("messaging.create_event", { ...event, end: event.start })).rejects.toThrow(/end after it starts/);
     await expect(call("messaging.create_event", { ...event, title: "x".repeat(41) })).rejects.toThrow(/40 characters/);
   });
+
+  it("says a poll's card in the workspace's language, its question and answers as written", () => {
+    const { assess } = fixture();
+    expect(assess("messaging.create_poll", { ...poll, multiSelect: true }, { locale: "bg" })?.display).toEqual({
+      title: "Пусни анкета в този чат",
+      detail: "Which game on Saturday?\n• Valheim\n• Helldivers 2\nОтворена за 24\u00a0ч, може повече от един отговор",
+    });
+    expect(assess("messaging.create_poll", { ...poll, multiSelect: true })?.display.detail).toContain(
+      "Open for 24 h, more than one answer allowed",
+    );
+  });
 });

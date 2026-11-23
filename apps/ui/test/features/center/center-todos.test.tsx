@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { dueText, Todos, todosByList } from "../../../src/features/center/Todos.js";
 import type { SettingsClient } from "../../../src/lib/ipc.js";
+import { setLocale } from "../../../src/lib/i18n.js";
 import { InWorkspace } from "../../support/workspace.js";
 import { clickSettled as click, mountSettled as mount, settle, unmountAll } from "../../support/dom.js";
 
@@ -58,6 +59,21 @@ describe("the to-do list", () => {
     expect(dueText(rent, "Europe/Berlin")).toBe("due Mon 5 Oct");
     expect(dueText(plumber, "Europe/Berlin")).toBe("due Fri 2 Oct 17:00");
     expect(dueText(milk, "Europe/Berlin")).toBeUndefined();
+  });
+
+  it("names the default list in the page's language, and a list the person named as they wrote it", async () => {
+    await setLocale("bg");
+    try {
+      const { client } = owner([milk, rent]);
+      const page = await mount(
+        <InWorkspace client={client} workspaceId="default">
+          <Todos revision={0} />
+        </InWorkspace>,
+      );
+      expect([...page.querySelectorAll(".center-todo-list h3")].map((heading) => heading.textContent)).toEqual(["groceries", "Входящи"]);
+    } finally {
+      await setLocale("en");
+    }
   });
 
   it("ticks a to-do off, and adds one", async () => {

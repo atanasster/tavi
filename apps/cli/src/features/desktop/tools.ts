@@ -38,6 +38,7 @@ import {
   assessDesktopObserve,
   type ObservedDesktopNodeFacts,
 } from "../approvals/call-assessors.js";
+import { cardWords } from "../approvals/card-words.js";
 import { type ComputerAction, computerAdapterFor, scaleComputerPointerAction } from "../computer-use/index.js";
 import { normalisedLeaves } from "../browser/vision.js";
 
@@ -415,7 +416,7 @@ export function registerDesktopTools(registry: ToolRegistry, options: DesktopToo
     untrustedOutput: true,
     outputSource: "web",
     outputConfidentiality: "personal",
-    assess: (input) => assessDesktopObserve(input),
+    assess: (input, context) => assessDesktopObserve(input, cardWords(context)),
     handler: async ({ input, context, signal, contextLabel }) =>
       await serialized(context, async () => {
         if (signal.aborted) throw new TaviError("CANCELLED", "desktop.observe was cancelled");
@@ -505,6 +506,7 @@ export function registerDesktopTools(registry: ToolRegistry, options: DesktopToo
         input,
         findNodeFactsInTree(treeFor(context.workspaceId, app), ref),
         tierOf === undefined ? undefined : (bundleId, name) => tierOf(context.workspaceId, bundleId, name),
+        cardWords(context),
       );
       // A call missing a field for its kind is refused before any card: the card would name an action that never runs.
       const parsed = DesktopActSchema.safeParse(input);
@@ -585,7 +587,7 @@ export function registerDesktopTools(registry: ToolRegistry, options: DesktopToo
       outputConfidentiality: "personal",
       assess: (input, context) => {
         options.noteRun?.(context.workspaceId, context.runId);
-        return assessDesktopComputerUse(input);
+        return assessDesktopComputerUse(input, cardWords(context));
       },
       handler: async ({ input, context, signal, executionPolicy, contextLabel }) =>
         fromApp(

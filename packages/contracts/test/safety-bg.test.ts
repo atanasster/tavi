@@ -31,7 +31,17 @@ import {
 import type { SourceKind } from "../src/content-label.js";
 import { memoryProvenanceLine } from "../src/memory.js";
 import { routineProvenanceLine } from "../src/routines.js";
-import { toolGroupScopeNote, type GateReason } from "../src/tool-policy.js";
+import {
+  PROPOSAL_ALLOW_RULE_NOTE,
+  REMINDER_ALLOW_RULE_NOTE,
+  SHIPPED_TOOL_RULES,
+  TODO_ALLOW_RULE_NOTE,
+  WEB_SEARCH_ALLOW_RULE_NOTE,
+  ruleNoteIn,
+  toolGroupScopeNote,
+  type GateReason,
+} from "../src/tool-policy.js";
+import { coreEnglish } from "../src/locales/core.js";
 
 const bg = createTranslator({ en: CORE_EN, bg: CORE_BG }, "bg");
 
@@ -154,5 +164,24 @@ describe("provenance lines in Bulgarian", () => {
     expect(toolGroupScopeNote("browser.*")).toBe(
       "Opening another site asks again, and no approval opens this machine or a private network address.",
     );
+  });
+
+  it("says each note Tavi writes on its rules in Bulgarian, and leaves the owner's own note as written", () => {
+    const notes = [
+      ...SHIPPED_TOOL_RULES.map((rule) => rule.note ?? ""),
+      REMINDER_ALLOW_RULE_NOTE,
+      TODO_ALLOW_RULE_NOTE,
+      WEB_SEARCH_ALLOW_RULE_NOTE,
+      PROPOSAL_ALLOW_RULE_NOTE,
+      coreEnglish("permissions.note.messagingAllow"),
+      coreEnglish("permissions.note.messagingLifted"),
+    ];
+    for (const note of notes) {
+      expect(ruleNoteIn(note, coreEnglish)).toBe(note);
+      expect(ruleNoteIn(note, bg)).not.toBe(note);
+    }
+    expect(ruleNoteIn(REMINDER_ALLOW_RULE_NOTE, bg)).toMatch(/^Напомнянията не искат одобрение/);
+    expect(ruleNoteIn("serve --allow", bg)).toBe("serve --allow");
+    expect(ruleNoteIn("my own words", bg)).toBe("my own words");
   });
 });

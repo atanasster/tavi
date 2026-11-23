@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { ToolCard, TranscriptEntry } from "@tavi/client/browser";
+import type { ToolCard } from "@tavi/client/browser";
 import { act, useRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -8,6 +8,7 @@ import { Transcript } from "../../../src/features/transcript/Transcript.js";
 import { EntryBoundary, OpenChatContext, TOOL_RENDERERS } from "../../../src/features/transcript/ToolCards.js";
 import { markdownReady } from "../../../src/ui/Markdown.js";
 import { click, mount, rerender } from "../../support/dom.js";
+import { textEntry as text, toolCard as card } from "../../support/rows.js";
 
 /**
  * The two parts of the transcript's drawing that need a DOM: an entry that throws taking only its
@@ -19,17 +20,6 @@ import { click, mount, rerender } from "../../support/dom.js";
 afterEach(() => {
   vi.restoreAllMocks();
 });
-
-const card = (callId: string, over: Partial<ToolCard> = {}): ToolCard => ({
-  kind: "tool",
-  key: callId,
-  attemptId: "a",
-  callId,
-  toolName: "sandbox.run",
-  status: "completed",
-  ...over,
-});
-const text = (key: string, body: string): TranscriptEntry => ({ kind: "text", key, attemptId: "a", blockId: key, text: body });
 
 describe("an entry that cannot be rendered", () => {
   it("takes its own row and nothing else", async () => {

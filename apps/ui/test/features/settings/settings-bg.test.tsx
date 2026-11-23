@@ -1,27 +1,21 @@
 // @vitest-environment jsdom
 import { act } from "react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { ChannelDescriptor } from "@tavi/contracts";
 
 import { ChannelsSettings } from "../../../src/features/settings/ChannelsSettings.js";
 import { lifecycleNotice, type BrowsedModel } from "../../../src/features/settings/models-api.js";
-import { setLocale, translateNow } from "../../../src/lib/i18n.js";
+import { translateNow } from "../../../src/lib/i18n.js";
 import type { SettingsClient } from "../../../src/lib/ipc.js";
-import { mount, unmountAll } from "../../support/dom.js";
+import { mount } from "../../support/dom.js";
 import { InWorkspace } from "../../support/workspace.js";
+import { inBulgarian } from "../../support/bulgarian.js";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 /** Settings in Bulgarian: the model lifecycle clauses, a counted plural, the units, and a pairing with someone else. */
 
-beforeEach(async () => {
-  await setLocale("bg");
-});
-
-afterEach(async () => {
-  unmountAll();
-  await setLocale("en");
-});
+inBulgarian();
 
 const model = (lifecycle: BrowsedModel["lifecycle"]): BrowsedModel => ({
   connectionId: "openai",

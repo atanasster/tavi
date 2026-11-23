@@ -1,24 +1,18 @@
 // @vitest-environment jsdom
 import type { ClientResponse } from "@tavi/client/browser";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { setLocale } from "../../src/lib/i18n.js";
 import { ask, refusal, type SettingsClient } from "../../src/lib/ipc.js";
 import { Failure, LoadError } from "../../src/ui/Parts.js";
-import { mount, unmountAll } from "../support/dom.js";
+import { mount } from "../support/dom.js";
+import { inBulgarian } from "../support/bulgarian.js";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 /** An owner's refusal with a key is said in the page's language; one without a key, or with a key this page does not know, in its English. */
 
-beforeEach(async () => {
-  await setLocale("bg");
-});
-
-afterEach(async () => {
-  unmountAll();
-  await setLocale("en");
-});
+inBulgarian();
 
 const answering = (response: ClientResponse): SettingsClient => ({ request: () => Promise.resolve(response) });
 

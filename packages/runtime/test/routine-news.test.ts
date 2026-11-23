@@ -13,6 +13,7 @@ import {
 } from "@tavi/contracts";
 import { ToolRegistry, routineResearchTools, canonicalRoutineJson, routineDeliveryTime, routineHash } from "@tavi/runtime";
 import { printThemeCss } from "@tavi/contracts/print-theme";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { temporaryDirectories } from "@tavi/test-support";
 import { RoutineExecutionService } from "../src/routines/runs.js";
 import { RoutineService } from "../src/routines/service.js";
@@ -39,7 +40,13 @@ class DrainedDelivery extends RoutineDeliveryService {
 function fixture(
   mode: "production" | "preview" = "production",
   templateVersion: "news-v1" | "llm-releases-v1" | "trends-v1" = "news-v1",
-  routine: { readonly name?: string; readonly objective?: string; readonly instructions?: string; readonly evaluated?: boolean } = {},
+  routine: {
+    readonly name?: string;
+    readonly objective?: string;
+    readonly instructions?: string;
+    readonly evaluated?: boolean;
+    readonly language?: "en" | "bg";
+  } = {},
 ) {
   const dir = directories.create("routine-news-");
   const store = new SqliteStore({ databasePath: ":memory:", inMemory: true, artifactsDirectory: dir });
@@ -51,7 +58,7 @@ function fixture(
     now: () => now,
     nextOccurrence: () => "2026-09-21T06:00:00.000Z",
   });
-  const defaults = routineDefaults("Europe/Sofia");
+  const defaults = routineDefaults("Europe/Sofia", routine.language);
   const created = routines.create(
     scope,
     RoutineCreateSchema.parse({
@@ -199,6 +206,15 @@ it.each([
   const report = f.news.select(scope, f.run.runId, f.selection, f.now);
   expect(report.coverage).toMatchObject({ fetched: 1, failed: 1 });
   expect(report.coverage.gaps).toContain("1 source requests failed");
+});
+it("says a Bulgarian report's title and coverage caveats in Bulgarian", () => {
+  const f = fixture("production", "llm-releases-v1", { language: "bg" });
+  const url = "https://example.com/partial";
+  f.news.capture(f.fence, "web_fetch", { url }, mediated(url, 404, false));
+  const report = f.news.select(scope, f.run.runId, f.selection, f.now);
+  expect(report.title).toBe(coreIn("bg")("routine.report.llmNews"));
+  expect(report.coverage.gaps).toContain("1 обръщение към източник не успя");
+  expect(report.coverage.gaps.join(" ")).not.toMatch(/[A-Za-z]{4,}/);
 });
 it("records a complete mediated fetch as fetched evidence", () => {
   const f = fixture();

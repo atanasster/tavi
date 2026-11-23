@@ -1,5 +1,9 @@
 /** The `core` words for the calendar's words: weekdays, months and day patterns, in English. */
 export const date = {
+  "browser.duration.seconds": "{seconds} s",
+  "browser.duration.minutes": "{minutes} min",
+  "browser.duration.hours": "{hours} h",
+  "browser.duration.hoursMinutes": "{hours} h {minutes} min",
   "date.weekday.0": "Sunday",
   "date.weekday.1": "Monday",
   "date.weekday.2": "Tuesday",

@@ -26,6 +26,7 @@ import {
   RHUMB_CREDENTIAL_REF,
   type ModelLifecycle,
   lifecycleByModel,
+  errorTextIn,
 } from "@tavi/contracts";
 import { definedOnly, errorMessage } from "@tavi/contracts/util";
 import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
@@ -367,7 +368,7 @@ async function keyFor(deps: OnboardDependencies, choice: ModelChoice, headless: 
         return key;
       } catch (error) {
         if (error instanceof OnboardCancelled) throw error;
-        deps.prompter.say(`${GLYPHS.failed} ${errorMessage(error)}`);
+        deps.prompter.say(`${GLYPHS.failed} ${errorTextIn(error, t)}`);
       }
     }
   }
@@ -468,19 +469,22 @@ async function proveRoles(
   readonly fast?: OnboardingVerifyAnswer["results"][number] | undefined;
 }> {
   const say = (text: string) => deps.prompter.say(text);
-  say(`Checking ${roles.main} with one short request…`);
+  const t = wordsOf(deps);
+  say(t("onboard.say.checkingModel", { model: roles.main }));
   const main = await verified(deps, run.workspaceId, "main", connectionId, roles.main);
   const fast =
     main?.ok === true && roles.fast !== undefined ? await verified(deps, run.workspaceId, "fast", connectionId, roles.fast) : undefined;
   for (const result of [main, fast]) {
     if (result === undefined) continue;
-    if (result.ok)
+    if (result.ok) {
+      const line = t(result.role === "main" ? "onboard.say.mainReady" : "onboard.say.fastReady", { model: result.model });
+      say(`${GLYPHS.done} ${result.advice === undefined ? line : t("onboard.say.withAdvice", { line, advice: result.advice })}`);
+    } else
       say(
-        `${GLYPHS.done} ${result.role === "main" ? "Inference ready" : "Fast model ready"}: ${result.model}${result.advice === undefined ? "" : ` — ${result.advice}`}`,
-      );
-    else
-      say(
-        `${GLYPHS.failed} ${result.role === "main" ? "The model" : "The fast model"} ${result.model} failed: ${result.advice ?? result.errorCode ?? "unknown"}`,
+        `${GLYPHS.failed} ${t(result.role === "main" ? "onboard.say.mainFailed" : "onboard.say.fastFailed", {
+          model: result.model,
+          why: result.advice ?? result.errorCode ?? t("onboard.say.unknown"),
+        })}`,
       );
   }
   if (main?.ok === true || !working) {
@@ -506,7 +510,8 @@ async function proveRoles(
 async function chatGptModelStep(deps: OnboardDependencies, run: OnboardRun, current: OnboardingStatus): Promise<void> {
   const say = (text: string) => deps.prompter.say(text);
   if (deps.signInWithChatGpt === undefined) return;
-  say("Signing in with ChatGPT in your browser. It uses your ChatGPT plan's allowance; ChatGPT Settings → Usage shows and limits it.");
+  const t = wordsOf(deps);
+  say(t("onboard.say.chatGptSigningIn"));
   let answer: OnboardingConnectAnswer;
   try {
     const credential = await deps.signInWithChatGpt();
@@ -516,14 +521,14 @@ async function chatGptModelStep(deps: OnboardDependencies, run: OnboardRun, curr
       60_000,
     );
   } catch (error) {
-    say(`${GLYPHS.failed} ${errorMessage(error)}`);
+    say(`${GLYPHS.failed} ${errorTextIn(error, t)}`);
     return;
   }
-  say(`${GLYPHS.done} Signed in with ChatGPT (${String(answer.models.length)} models)`);
+  say(`${GLYPHS.done} ${t("onboard.say.chatGptSignedIn", { n: String(answer.models.length), count: answer.models.length })}`);
   const roles = await pickModels(deps, "chatgpt", answer.models, undefined);
   const working = current.steps.find((step) => step.kind === "model")?.state === "done";
   const { main } = await proveRoles(deps, run, answer.connectionId, roles, working);
-  if (main?.ok !== true && working) say("Your previous model is still the default.");
+  if (main?.ok !== true && working) say(t("onboard.say.previousDefault"));
 }
 
 /** A model set up but not checked yet (`tavi models add`): one short request, if the person wants it, and its result. */
@@ -538,9 +543,11 @@ async function checkModel(deps: OnboardDependencies, workspaceId: string, step: 
   const result =
     answer instanceof Error || answer === null || typeof answer !== "object" ? undefined : (answer as OnboardingVerifyAnswer).results[0];
   if (result === undefined)
-    deps.prompter.say(`${GLYPHS.todo} It could not be checked now: ${answer instanceof Error ? errorMessage(answer) : "no answer"}`);
-  else if (result.ok) deps.prompter.say(`${GLYPHS.done} ${name} answered`);
-  else deps.prompter.say(`${GLYPHS.todo} ${result.advice ?? "It did not answer as expected"}`);
+    deps.prompter.say(
+      `${GLYPHS.todo} ${t("onboard.say.notCheckedNow", { why: answer instanceof Error ? errorTextIn(answer, t) : t("onboard.say.noAnswer") })}`,
+    );
+  else if (result.ok) deps.prompter.say(`${GLYPHS.done} ${t("onboard.say.answered", { name })}`);
+  else deps.prompter.say(`${GLYPHS.todo} ${result.advice ?? t("onboard.say.unexpected")}`);
 }
 
 /**
@@ -573,7 +580,7 @@ async function modelStep(
     choice = { preset: named, ...(headless.baseUrl === undefined ? {} : { baseUrl: headless.baseUrl }) };
   } else {
     say("");
-    say("Tavi needs one model to answer you.");
+    say(wordsOf(deps)("onboard.say.needsModel"));
     const detected = await detect({
       env: deps.env,
       fetch: deps.fetch,
@@ -598,9 +605,7 @@ async function modelStep(
   const { connectionId, exists } = await connectionIdFor(deps, current, choice, baseUrl, inUse);
   // Beside one that is already there: said, so a second connection is never a surprise.
   if (connectionId !== choice.preset.id)
-    deps.prompter.say(
-      `A connection or key named ${choice.preset.id} is already there (in use, or added outside setup), so this one is added beside it as ${connectionId}; setup never changes one it did not make.`,
-    );
+    deps.prompter.say(wordsOf(deps)("onboard.say.besideIt", { id: choice.preset.id, connection: connectionId }));
   await deps.transport.request("onboarding", { action: "created", workspaceId: run.workspaceId, step: "model", ref: connectionId });
   let key = await keyFor(deps, choice, headless);
   const store = async () => {
@@ -632,7 +637,9 @@ async function modelStep(
         )
       ).models.map((entry) => entry.modelId);
     } catch (error) {
-      say(`${GLYPHS.failed} ${choice.preset.name} could not list its models: ${errorMessage(error)}`);
+      say(
+        `${GLYPHS.failed} ${wordsOf(deps)("onboard.say.cannotList", { provider: choice.preset.name, why: errorTextIn(error, wordsOf(deps)) })}`,
+      );
       if (
         headless !== undefined ||
         attempt > 2 ||
@@ -651,7 +658,7 @@ async function modelStep(
       return;
     }
     if (headless !== undefined) throw new StepOpen(`The model step is not done: ${main?.advice ?? "verify failed"}`, "--key-file");
-    if (working) say("Your previous model is still the default.");
+    if (working) say(wordsOf(deps)("onboard.say.previousDefault"));
     const options: ChoiceOption[] = [
       // A local server takes no key: there is none to change.
       ...(choice.preset.localOnly ? [] : [{ value: "key", label: wordsOf(deps)("cli.onboard.ask.enterKey") }]),
@@ -694,7 +701,7 @@ export async function offerRhumbKey(
     await deps.transport.request("credentials", { action: "set", reference: RHUMB_CREDENTIAL_REF, value: key });
     deps.prompter.say(`${GLYPHS.done} ${t("cli.onboard.say.rhumbStored")}`);
   } catch (error) {
-    deps.prompter.say(`${GLYPHS.failed} ${t("cli.onboard.say.rhumbNotStored", { why: errorMessage(error) })}`);
+    deps.prompter.say(`${GLYPHS.failed} ${t("cli.onboard.say.rhumbNotStored", { why: errorTextIn(error, t) })}`);
   }
 }
 
@@ -744,12 +751,12 @@ export interface OnboardOutcome {
 }
 
 /** A step this surface does not walk (`tavi setup apps`): the canvas does it, and the command that does it now. */
-const elsewhereLine = (title: string, kind: OnboardingStepKind): string =>
-  `${GLYPHS.todo} ${title} — this one is done in tavi ui, or now with: ${STEP_COMMANDS[kind]}`;
+const elsewhereLine = (title: string, kind: OnboardingStepKind, t: CoreT = coreEnglish): string =>
+  `${GLYPHS.todo} ${t("onboard.say.elsewhere", { title, command: STEP_COMMANDS[kind] })}`;
 
 function elsewhere(deps: OnboardDependencies, kind: OnboardingStepKind, flowStep: OnboardingFlowStep | undefined): void {
   if (STEP_COMMANDS[kind] === "") return;
-  deps.prompter.say(elsewhereLine(flowStep?.title ?? kind, kind));
+  deps.prompter.say(elsewhereLine(flowStep?.title ?? kind, kind, wordsOf(deps)));
 }
 
 /** A step this terminal flow leaves to another surface or command: said with what does it. */
@@ -887,7 +894,13 @@ export async function runOnboard(deps: OnboardDependencies, run: OnboardRun): Pr
     }
     // A first run is welcomed; a run that picks up what is left, or one step (`tavi setup service`), says what it is.
     if (run.headless === undefined)
-      say(run.step !== undefined ? "Setup" : run.mode === "onboard" && !firstAsk(current) ? "Setup — what is left" : flow.flow.title);
+      say(
+        run.step !== undefined
+          ? wordsOf(deps)("onboard.say.setup")
+          : run.mode === "onboard" && !firstAsk(current)
+            ? wordsOf(deps)("onboard.say.setupLeft")
+            : flow.flow.title,
+      );
     // The language comes first, so every later question can be asked in it: on a first run, and in a full `tavi setup`.
     if (run.headless === undefined && run.step === undefined && (run.mode === "setup" || firstAsk(current)))
       await languageStep({ transport: deps.transport, prompter: deps.prompter, workspaceId: run.workspaceId });
@@ -997,7 +1010,7 @@ export async function runOnboard(deps: OnboardDependencies, run: OnboardRun): Pr
           !current.steps.some((step) => step.kind === flowStep.kind) &&
           STEP_COMMANDS[flowStep.kind] !== ""
         )
-          say(elsewhereLine(flowStep.title, flowStep.kind));
+          say(elsewhereLine(flowStep.title, flowStep.kind, t));
       }
     }
     // A headless run's required step left open names the flag it needs.
@@ -1008,7 +1021,7 @@ export async function runOnboard(deps: OnboardDependencies, run: OnboardRun): Pr
     return result(current.complete ? ONBOARD_EXIT.ok : ONBOARD_EXIT.open, current);
   } catch (error) {
     if (error instanceof OnboardCancelled) {
-      say("\nStopped. What was set up is kept; `tavi onboard` picks up from here.");
+      say(wordsOf(deps)("onboard.say.stopped"));
       return { exit: ONBOARD_EXIT.cancelled };
     }
     if (error instanceof StepOpen) {

@@ -35,6 +35,7 @@ export const takeover = {
   "takeover.stop.run": "Спри изпълнението",
   "takeover.stop.chat": "Спри чата",
   "takeover.stop.failed": "Не успях да спра работата.",
+  "takeover.stop.reason": "Спряно, докато ти управляваше браузъра",
 
   "takeover.picker.label": "Избери опция",
   "takeover.chooser.files": "Страницата иска файлове. Отиват към нея оттук и Tavi не пази копие.",

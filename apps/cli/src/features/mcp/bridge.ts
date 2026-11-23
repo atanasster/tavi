@@ -5,6 +5,7 @@ import {
   TOOL_MEDIA_KEY,
   TaviError,
   joinLabels,
+  localeOf,
   mcpSearchLineSetting,
   maxRisk,
   mcpServerAllowed,
@@ -30,6 +31,9 @@ import {
   WorkflowWaitSuspend,
   type WorkspaceSettings,
 } from "@tavi/contracts";
+import { DEFAULT_LOCALE } from "@tavi/contracts/i18n";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { definedOnly, errorMessage, isRecord } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
 import type { ElicitResult, ReadResourceResult } from "@modelcontextprotocol/client";
@@ -730,6 +734,7 @@ export class McpBridge {
           const result = await this.#callAsking({
             pluginId,
             serverName: input.serverName,
+            workspaceId: context.workspaceId,
             tool: tool.name,
             args: serverArguments(form, args),
             signal,
@@ -820,6 +825,21 @@ export class McpBridge {
     }
   }
 
+  /** The workspace's words for a server's question; English when it names none or its settings cannot be read. */
+  async #wordsOf(workspaceId: string | undefined): Promise<CoreT> {
+    if (workspaceId === undefined) return coreEnglish;
+    try {
+      const locale = localeOf(await this.#options.workspaceSettings(workspaceId));
+      return locale === DEFAULT_LOCALE ? coreEnglish : coreIn(locale);
+    } catch (error) {
+      this.#options.log?.("the workspace's language could not be read; a server's question is asked in English", {
+        workspaceId,
+        error: errorMessage(error),
+      });
+      return coreEnglish;
+    }
+  }
+
   /**
    * One call whose server may ask its person a question.
    * The question is the task's: `ask` suspends the task until it is answered
@@ -837,6 +857,8 @@ export class McpBridge {
   async #callAsking(call: {
     readonly pluginId: string;
     readonly serverName: string;
+    /** The workspace the call runs in: its question is framed in that workspace's language. */
+    readonly workspaceId?: string;
     readonly tool: string;
     readonly args: unknown;
     readonly signal: AbortSignal;
@@ -881,7 +903,7 @@ export class McpBridge {
     const elicit: McpElicit = async (request, era) => {
       const current = session.run;
       if (current.ask === undefined) return { action: "decline" };
-      const plan = planElicitation(call.serverName, request, era);
+      const plan = planElicitation(call.serverName, request, era, await this.#wordsOf(call.workspaceId));
       if (plan.kind === "decline") {
         this.#options.log?.("mcp question declined", { pluginId: call.pluginId, tool: call.tool, reason: plan.reason });
         return { action: "decline" };

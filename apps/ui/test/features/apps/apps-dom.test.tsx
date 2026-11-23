@@ -11,6 +11,7 @@ import { delay } from "../../../src/lib/delay.js";
 import type { SettingsClient } from "../../../src/lib/ipc.js";
 import { InWorkspace } from "../../support/workspace.js";
 import { clickSettled as click, mountSettled as mount, rerender, settle, unmountAll } from "../../support/dom.js";
+import { calendarAccount, calendarReach } from "../../support/apps.js";
 
 /** Settings → Connected apps: what the page shows, and what each control asks the owner. */
 
@@ -98,27 +99,8 @@ const app = (extra: Partial<ConnectableApp> = {}): ConnectableApp => ({
       canSetHere: ["ask", "block"],
     },
   ],
-  egress: { hosts: ["calendar.example.com"], lan: false, anyNetwork: false },
-  credentials: [{ name: "sign-in", raw: false }],
-  settings: [],
-  trust: { output: "untrusted", source: "mcp", confidentiality: "personal" },
-  accounts: [
-    {
-      accountId: "mcp.cal",
-      label: "you@example.com",
-      identity: "you@example.com",
-      owner: { kind: "owner" },
-      health: "ready",
-      grantedScopes: [],
-      missingScopes: [],
-      signedInAt: NOW,
-      expiresWeekly: false,
-      workspaces: ["default"],
-      people: false,
-      sharing: "personal",
-      readOnly: false,
-    },
-  ],
+  ...calendarReach,
+  accounts: [calendarAccount],
   health: "ready",
   repairs: [],
   warnings: [],

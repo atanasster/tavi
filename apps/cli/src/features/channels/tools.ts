@@ -20,6 +20,7 @@ import type { ToolRegistry } from "@tavi/runtime";
 
 import { allowedTargetsOf, destinationAllowed, destinationRefusal, type DestinationChannels } from "./destination.js";
 import { assessMessagingSend, assessMessagingSendTo } from "../approvals/call-assessors.js";
+import { cardWords } from "../approvals/card-words.js";
 import { awaitingReview, type FolderPromotion } from "../folders/promotion.js";
 
 /**
@@ -426,7 +427,7 @@ export function registerMessagingTools(
       let unresolved: string | undefined;
       if (typeof call?.person === "string") {
         const refuse = (why: string): CallAssessment => ({
-          ...assessMessagingSendTo(input),
+          ...assessMessagingSendTo(input, undefined, cardWords(context)),
           hardDeny: clip(`messaging.send_to refused: ${why}`, 500),
         });
         if (call.to !== undefined || call.chatId !== undefined) return refuse("give one of `to`, `chatId` and `person`");
@@ -444,6 +445,7 @@ export function registerMessagingTools(
       const read = assessMessagingSendTo(
         call,
         call?.kind === "file" && typeof call.path === "string" ? options.promotion?.describe(call.path, context) : undefined,
+        cardWords(context),
       );
       const assessed = labelledPerson(read, person, unresolved);
       const given =

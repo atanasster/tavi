@@ -5,6 +5,7 @@ import { CORE_BG } from "../src/locales/core-bg.js";
 import { navPathIn, strayMenuPaths } from "../src/locales/core.js";
 import { CORE_EN } from "../src/locales/core-en.js";
 import { coreIn } from "../src/locales/core-server.js";
+import { nav } from "../src/locales/en/nav.js";
 
 /**
  * Menu paths in messages ("Settings → Models") come from the nav's own labels, the keys the canvas's routes,
@@ -13,35 +14,8 @@ import { coreIn } from "../src/locales/core-server.js";
 
 const bg = coreIn("bg");
 
-/** The canvas's nav labels in English, as its route tables showed them before they read these keys. */
-const CANVAS_LABELS: Readonly<Record<NavKey, string>> = {
-  "nav.route.chat": "Chat",
-  "nav.route.ideas": "Ideas",
-  "nav.route.center": "Center",
-  "nav.route.settings": "Settings",
-  "nav.route.commandCenter": "Command Center",
-  "nav.settings.general": "General",
-  "nav.settings.apps": "Connected apps",
-  "nav.settings.models": "Models",
-  "nav.settings.search": "Web search",
-  "nav.settings.systemPrompt": "System prompt",
-  "nav.settings.credentials": "Credentials",
-  "nav.settings.channels": "Channels",
-  "nav.settings.people": "Allowed people",
-  "nav.settings.plugins": "Plugins",
-  "nav.settings.permissions": "Permissions",
-  "nav.settings.ideas": "Ideas",
-  "nav.center.activity": "Activity",
-  "nav.center.approvals": "Approvals",
-  "nav.center.schedule": "Schedule",
-  "nav.center.heartbeat": "Heartbeat",
-  "nav.center.identity": "Soul & memory",
-  "nav.center.browser": "Browser",
-  "nav.center.waitingOnYou": "Waiting on you",
-  "nav.center.servers": "Servers",
-};
-
-const NAV_KEYS = Object.keys(CANVAS_LABELS) as NavKey[];
+/** The canvas's places: the English nav catalogue's keys, less its path templates. */
+const NAV_KEYS = Object.keys(nav).filter((key) => !key.startsWith("nav.path.")) as NavKey[];
 
 function forms(message: string | { readonly [form: string]: string | undefined }): readonly string[] {
   return typeof message === "string" ? [message] : Object.values(message).filter((form): form is string => form !== undefined);
@@ -51,7 +25,14 @@ describe("menu paths from the nav's labels", () => {
   it("has a key for each of the canvas's places, its English the canvas's label", () => {
     const navKeys = Object.keys(CORE_EN).filter((key) => key.startsWith("nav.") && !key.startsWith("nav.path."));
     expect(navKeys.sort()).toEqual([...NAV_KEYS].sort());
-    for (const key of NAV_KEYS) expect(CORE_EN[key], key).toBe(CANVAS_LABELS[key]);
+    for (const key of NAV_KEYS) expect(CORE_EN[key], key).toBe(nav[key]);
+    expect([CORE_EN["nav.route.settings"], CORE_EN["nav.settings.models"], CORE_EN["nav.center.heartbeat"]]).toEqual([
+      "Settings",
+      "Models",
+      "Heartbeat",
+    ]);
+    expect(CORE_EN["nav.route.commandCenter"]).toBe("Command Center");
+    expect(CORE_EN["nav.center.waitingOnYou"]).toBe("Waiting on you");
   });
 
   it("keeps the canvas's Bulgarian labels", () => {
@@ -101,10 +82,14 @@ describe("menu paths from the nav's labels", () => {
   });
 
   it("writes no path in a core message that the nav does not have", () => {
+    // Another product's menus, named as that product shows them: not Tavi's nav.
+    const elsewhere = ["ChatGPT Settings → Usage", "Settings → Integrations → Developer"];
     for (const words of [CORE_EN, CORE_BG]) {
       const stray = Object.entries(words as Readonly<Record<string, string | Readonly<Record<string, string>>>>)
         .filter(([key]) => !key.startsWith("nav."))
-        .flatMap(([key, message]) => forms(message).flatMap((form) => strayMenuPaths(form, words).map((path) => `${key}: ${path}`)));
+        .flatMap(([key, message]) =>
+          forms(message).flatMap((form) => strayMenuPaths(form, words, elsewhere).map((path) => `${key}: ${path}`)),
+        );
       expect(stray).toEqual([]);
     }
   });

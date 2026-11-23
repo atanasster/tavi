@@ -1,6 +1,6 @@
 {
   "name": "@tavi/plugin-discord",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "license": "MIT",
   "author": "atanasster",
@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "@tavi/contracts": "workspace:*",
+    "@tavi/domain-kit": "workspace:*",
     "@tavi/test-support": "workspace:*",
     "@types/ws": "catalog:",
     "tsdown": "catalog:",

@@ -11,7 +11,7 @@ import {
   type PluginView,
   type WorkspaceSettingsRepositoryPort,
 } from "@tavi/contracts";
-import type { Catalog, Locale } from "@tavi/contracts/i18n";
+import { DEFAULT_LOCALE, type Catalog, type Locale } from "@tavi/contracts/i18n";
 import { localizedPluginManifest, readBuiltinUiPacks, readPluginManifest, readPluginUiMessages } from "@tavi/runtime";
 
 import { coreIn } from "@tavi/contracts/locales/core-server";
@@ -109,17 +109,31 @@ export function localizedChannelDescriptors(
 
 /**
  * Each workspace's language, answered at once for a reader that cannot wait
- * (a tool's `assess`): `seed`'s is read up front; another workspace's is read
- * on its first ask, which meanwhile answers `seed`'s. Every workspace asked
- * about is read again after each write to workspace settings (`onWrite`).
- * `close` stops following writes.
+ * (a tool's `assess`): `seed`'s and, where the repository lists them, every
+ * stored workspace's are read up front, so a workspace's first call is already
+ * in its own language. A workspace with no stored settings has no language
+ * set: English. Where nothing is listed, another workspace's is read on its
+ * first ask, which meanwhile answers `seed`'s. Every workspace is read again
+ * after each write to workspace settings (`onWrite`). `close` stops following
+ * writes.
  */
 export async function workspaceLocales(
-  settings: Pick<WorkspaceSettingsRepositoryPort, "get">,
+  settings: Pick<WorkspaceSettingsRepositoryPort, "get"> & Partial<Pick<WorkspaceSettingsRepositoryPort, "list">>,
   seed: string,
   onWrite: (listener: (operation: string) => void) => () => void,
 ): Promise<{ readonly of: (workspaceId: string) => Locale; readonly close: () => void }> {
   const known = new Map<string, Locale>([[seed, localeOf((await settings.get(seed)).settings)]]);
+  const listed = async (): Promise<boolean> => {
+    if (settings.list === undefined) return false;
+    try {
+      for (const record of await settings.list()) known.set(record.workspaceId, localeOf(record.settings));
+      return true;
+    } catch {
+      // Unlisted: each workspace is read on its first ask instead.
+      return false;
+    }
+  };
+  const everyStored = await listed();
   const reading = new Set<string>();
   const read = (workspaceId: string): void => {
     if (reading.has(workspaceId)) return;
@@ -134,13 +148,16 @@ export async function workspaceLocales(
   const close = onWrite((operation) => {
     if (!operation.startsWith("repository.workspaceSettings.") || /\.(get|list)$/.test(operation)) return;
     for (const workspaceId of known.keys()) read(workspaceId);
+    // A workspace's first settings write adds its row: listed again, it is known before its first call.
+    if (everyStored) void listed();
   });
   return {
     of: (workspaceId) => {
       const locale = known.get(workspaceId);
       if (locale !== undefined) return locale;
       read(workspaceId);
-      return known.get(seed) ?? "en";
+      // Every stored workspace was listed: one not among them has no language set.
+      return everyStored ? DEFAULT_LOCALE : (known.get(seed) ?? DEFAULT_LOCALE);
     },
     close,
   };
@@ -232,6 +249,21 @@ export function localizedUiEntries(entries: readonly PluginUiEntry[], locale: Lo
     const fit = messages === undefined ? undefined : PluginUiMessagesSchema.safeParse(messages);
     return { ...entry, ui, locale, ...(fit?.success === true ? { messages: fit.data } : {}) };
   });
+}
+
+/**
+ * A UI built-in's listing (Settings → Plugins) in `locale`: its description and
+ * its frames' titles and disclosures from its own pack in the canvas build,
+ * read only under the hash the owner started with; as listed otherwise.
+ */
+export function builtinUiViewIn(view: PluginView, locale: Locale | undefined, canvasDirectory: string | undefined): PluginView {
+  if (locale === undefined || locale === DEFAULT_LOCALE || canvasDirectory === undefined) return view;
+  if (view.kind !== "builtin" || view.ui === undefined || view.uiContentHash === undefined) return view;
+  const { pack } = readBuiltinUiPacks(join(canvasDirectory, "plugins", view.id), view.uiContentHash, locale);
+  const words = pack?.manifest;
+  if (words === undefined) return view;
+  const description = Object.hasOwn(words, "description") ? words["description"] : undefined;
+  return { ...view, ...(description === undefined ? {} : { description }), ui: overlaidUi(view.ui, words) };
 }
 
 /** `ui` with a built-in pack's contribution titles and disclosures in place of its English; English when that would not parse. */

@@ -11,7 +11,9 @@ import {
   type PersistencePort,
   navPath,
   renderTextRef,
+  errorTextIn,
 } from "@tavi/contracts";
+import { coreEnglish } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
 import { digestPicked, ideaOfDigestReply } from "@tavi/agent-host/ideas-host";
 
@@ -28,9 +30,7 @@ import { ideasCommand, type IdeasCommandDependencies } from "./owner.js";
  * (not now, mute, pin…) is the Ideas tab's and `tavi ideas`'.
  */
 
-export const IDEAS_COMMANDS: readonly ModCommandDeclaration[] = [
-  { name: "ideas", description: "Things I can do for you: your top ideas, or refresh to look for new ones." },
-];
+export const IDEAS_COMMANDS: readonly ModCommandDeclaration[] = [{ name: "ideas", description: coreEnglish("command.ideas.ideas") }];
 
 /** Where a channel command was typed: a direct chat, a group, an email thread, or a place the owner could not tell. */
 export type IdeasCommandPlace = "direct" | "group" | "email" | undefined;
@@ -54,7 +54,7 @@ export function ideasSlashCommand(
     const workspaceId = envelope.workspaceId;
     if (words.length === 1 && typedWord(words[0], IDEAS_WORDS) === "refresh") {
       const answer = await ideasCommand(deps, { action: "refresh", workspaceId });
-      if (!answer.ok) return { text: answer.error.message };
+      if (!answer.ok) return { text: errorTextIn(answer.error, t) };
       const status = "status" in answer.result ? answer.result.status : undefined;
       return {
         text: status === "busy" ? t("channel.ideas.busy") : status === "queued" ? t("channel.ideas.queued") : t("channel.ideas.looking"),
@@ -62,7 +62,7 @@ export function ideasSlashCommand(
     }
     if (words.length > 0) return { text: USAGE };
     const answer = await ideasCommand(deps, { action: "list", workspaceId });
-    if (!answer.ok) return { text: answer.error.message };
+    if (!answer.ok) return { text: errorTextIn(answer.error, t) };
     if (!("ideas" in answer.result)) return { text: USAGE };
     // Off, the tab shows no cards: neither does this, whatever is still stored.
     if (answer.result.enabled === false)

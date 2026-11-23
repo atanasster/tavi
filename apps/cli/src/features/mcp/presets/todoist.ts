@@ -1,4 +1,5 @@
 import type { RiskLevel, ToolEffect } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 
 import type { McpPreset } from "./index.js";
 
@@ -15,49 +16,53 @@ import type { McpPreset } from "./index.js";
  * comments and reminders open-world, so those are suggested `external`.
  * `delete-object` removes a task, a project, a section or a comment for good,
  * so it keeps a `high` floor. Walked end to end against the live server with
- * an API token (`todoist-token`) on 9 Nov 2026.
+ * an API token (`todoist-token`) on 9 Nov 2026. Its words a person reads are `t`'s (English by default).
  */
-export const TODOIST_PRESET: McpPreset = {
-  id: "todoist",
-  /** When the template and its tool list were last checked against Doist's published server. */
-  checked: "2026-10-27",
-  withdrawnIf: "Doist ends the hosted Todoist MCP server, or changes its address, its sign-in, or its tools' annotations",
-  name: "Todoist",
-  description: "Your Todoist tasks and projects, through Doist's official hosted MCP server: Tavi's task home when you keep tasks there.",
-  // One Todoist: the token preset is the other way into this server, and adding one switches the other.
-  wayInto: "todoist",
-  config: {},
-  block: {
-    transport: "http",
-    url: { value: "https://ai.todoist.net/mcp" },
-    auth: "oauth",
-    exposure: "auto",
-  },
-  app: {
+export function todoistPreset(t: CoreT = coreEnglish): McpPreset {
+  return {
     id: "todoist",
+    /** When the template and its tool list were last checked against Doist's published server. */
+    checked: "2026-10-27",
+    withdrawnIf: "Doist ends the hosted Todoist MCP server, or changes its address, its sign-in, or its tools' annotations",
     name: "Todoist",
-    summary: "Add, find, change and complete your Todoist tasks, asking before anything is deleted.",
-    category: "tasks",
-    publisher: "Doist",
-    accountScope: "owner",
-    dataClass: "personal",
-    scopes: [],
-    tools: {
-      "add-tasks": { title: "Add tasks" },
-      "find-tasks": { title: "Find tasks" },
-      "find-tasks-by-date": { title: "Find tasks by date" },
-      "update-tasks": { title: "Change tasks" },
-      "complete-tasks": { title: "Complete tasks" },
-      "uncomplete-tasks": { title: "Reopen tasks" },
-      "find-projects": { title: "Find projects" },
-      "get-overview": { title: "Overview" },
-      "delete-object": { title: "Delete", says: "Deletes a task, project, section or comment for good" },
+    description: t("mcp.preset.todoist.description"),
+    // One Todoist: the token preset is the other way into this server, and adding one switches the other.
+    wayInto: "todoist",
+    config: {},
+    block: {
+      transport: "http",
+      url: { value: "https://ai.todoist.net/mcp" },
+      auth: "oauth",
+      exposure: "auto",
     },
-    auth: { kind: "oauth", client: "registration", scopes: [], stepUp: [] },
-  },
-  floors: (tool: { readonly name: string; readonly effect: ToolEffect }): { readonly minRisk?: RiskLevel } | undefined =>
-    tool.name === "delete-object" && tool.effect !== "read-only" ? { minRisk: "high" } : undefined,
-};
+    app: {
+      id: "todoist",
+      name: "Todoist",
+      summary: t("mcp.preset.todoist.summary"),
+      category: "tasks",
+      publisher: "Doist",
+      accountScope: "owner",
+      dataClass: "personal",
+      scopes: [],
+      tools: {
+        "add-tasks": { title: t("mcp.preset.todoist.tool.addTasks") },
+        "find-tasks": { title: t("mcp.preset.todoist.tool.findTasks") },
+        "find-tasks-by-date": { title: t("mcp.preset.todoist.tool.findTasksByDate") },
+        "update-tasks": { title: t("mcp.preset.todoist.tool.updateTasks") },
+        "complete-tasks": { title: t("mcp.preset.todoist.tool.completeTasks") },
+        "uncomplete-tasks": { title: t("mcp.preset.todoist.tool.uncompleteTasks") },
+        "find-projects": { title: t("mcp.preset.todoist.tool.findProjects") },
+        "get-overview": { title: t("mcp.preset.todoist.tool.getOverview") },
+        "delete-object": { title: t("mcp.preset.todoist.tool.deleteObject"), says: t("mcp.preset.todoist.tool.deleteObject.says") },
+      },
+      auth: { kind: "oauth", client: "registration", scopes: [], stepUp: [] },
+    },
+    floors: (tool: { readonly name: string; readonly effect: ToolEffect }): { readonly minRisk?: RiskLevel } | undefined =>
+      tool.name === "delete-object" && tool.effect !== "read-only" ? { minRisk: "high" } : undefined,
+  };
+}
+
+export const TODOIST_PRESET: McpPreset = todoistPreset();
 
 /**
  * The same hosted server reached with the person's own Todoist API token
@@ -67,46 +72,49 @@ export const TODOIST_PRESET: McpPreset = {
  * than sign in through the browser. Same tools, same floors; the token reaches
  * the whole account, so it is stored encrypted and never shown again.
  */
-export const TODOIST_TOKEN_PRESET: McpPreset = {
-  ...TODOIST_PRESET,
-  id: "todoist-token",
-  checked: "2026-11-09",
-  withdrawnIf:
-    "Doist ends the hosted Todoist MCP server, changes its address, stops accepting a personal API token as a Bearer header, or changes its tools' annotations",
-  name: "Todoist (API token)",
-  description:
-    "Your Todoist tasks and projects through Doist's official hosted MCP server, reached with your own Todoist API token instead of a sign-in.",
-  config: {
-    apiToken: {
-      type: "credential",
-      required: true,
-      label: "Your Todoist API token",
-      description: "Your Todoist API token (Todoist → Settings → Integrations → Developer)",
-    },
-  },
-  block: {
-    transport: "http",
-    url: { value: "https://ai.todoist.net/mcp" },
-    headers: { Authorization: { prefix: "Bearer ", setting: "apiToken" } },
-    auth: "headers",
-    exposure: "auto",
-  },
-  app: {
+export function todoistTokenPreset(t: CoreT = coreEnglish): McpPreset {
+  const signIn = todoistPreset(t);
+  return {
+    ...signIn,
     id: "todoist-token",
-    name: "Todoist (API token)",
-    summary:
-      "Todoist with your own API token instead of a sign-in: add, find, change and complete tasks, asking before anything is deleted.",
-    category: "tasks",
-    publisher: "Doist",
-    accountScope: "owner",
-    dataClass: "personal",
-    scopes: [],
-    tools: TODOIST_PRESET.app?.tools ?? {},
-  },
-  keySteps: [
-    {
-      text: "In Todoist, open Settings → Integrations → Developer and copy your API token. It reaches your whole account: keep it to yourself, and issue a new one there to cut Tavi off.",
-      link: { label: "Open Todoist's settings", url: "https://app.todoist.com/app/settings/integrations/developer" },
+    checked: "2026-11-09",
+    withdrawnIf:
+      "Doist ends the hosted Todoist MCP server, changes its address, stops accepting a personal API token as a Bearer header, or changes its tools' annotations",
+    name: t("mcp.preset.todoistToken.name"),
+    description: t("mcp.preset.todoistToken.description"),
+    config: {
+      apiToken: {
+        type: "credential",
+        required: true,
+        label: t("mcp.preset.todoistToken.apiToken.label"),
+        description: t("mcp.preset.todoistToken.apiToken.description"),
+      },
     },
-  ],
-};
+    block: {
+      transport: "http",
+      url: { value: "https://ai.todoist.net/mcp" },
+      headers: { Authorization: { prefix: "Bearer ", setting: "apiToken" } },
+      auth: "headers",
+      exposure: "auto",
+    },
+    app: {
+      id: "todoist-token",
+      name: t("mcp.preset.todoistToken.name"),
+      summary: t("mcp.preset.todoistToken.summary"),
+      category: "tasks",
+      publisher: "Doist",
+      accountScope: "owner",
+      dataClass: "personal",
+      scopes: [],
+      tools: signIn.app?.tools ?? {},
+    },
+    keySteps: [
+      {
+        text: t("mcp.preset.todoistToken.keyStep"),
+        link: { label: t("mcp.preset.todoistToken.keyStep.link"), url: "https://app.todoist.com/app/settings/integrations/developer" },
+      },
+    ],
+  };
+}
+
+export const TODOIST_TOKEN_PRESET: McpPreset = todoistTokenPreset();

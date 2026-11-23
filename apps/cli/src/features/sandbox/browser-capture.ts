@@ -19,7 +19,7 @@ export function registerBrowserCapture(registry: ToolRegistry, ctx: BrowserToolC
     effect: "external",
     requiredPermissions: ["tools.invoke"],
     inputSchema: BrowserCaptureInputSchema,
-    assess: (input) => onPageHost(ctx, assessBrowserSession("Take a screenshot of the page")(input), input),
+    assess: (input, context) => onPageHost(ctx, assessBrowserSession("approval.card.browser.screenshot")(input, context), input),
     // A screenshot of a page shows its author's text to a vision model.
     untrustedOutput: true,
     // Every browser read is personal: sessions share the persistent profile, with the person's cookies.

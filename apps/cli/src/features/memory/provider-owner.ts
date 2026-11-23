@@ -4,6 +4,7 @@ import {
   TaviError,
   describeMemoryDeclaration,
   effectiveMemorySettings,
+  localeOf,
   memoryPersonalDisclosure,
   withMemoryEgress,
   withMemoryProvider,
@@ -12,8 +13,12 @@ import {
   type MemoryProviderAnswer,
   type MemoryProviderInfo,
   type MemorySettings,
+  type WorkspaceSettings,
   type WorkspaceSettingsRepositoryPort,
 } from "@tavi/contracts";
+import { DEFAULT_LOCALE } from "@tavi/contracts/i18n";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 
 import type { MemoryProviderSync } from "./provider-sync.js";
 import { readMemoryProviderStatus, type InstalledMemoryProvider, type MemoryProviderRegistry } from "./providers.js";
@@ -41,25 +46,35 @@ export interface MemoryProviderCommandDependencies {
 
 type ProviderPayload = Extract<MemoryPayload, { readonly action: "provider" | "set-provider" | "egress" }>;
 
-const FIELD_TEXT: Record<MemoryEgressField, string> = {
-  records: "approved memories of this workspace (never sensitive ones; personal memory only with its own switch), now and as they change",
-  conversation: "what you say: each recall's query and the chat spans it drafts proposals from",
-  personal: "",
+/** The words a workspace's disclosures are said in: its language. */
+const wordsOf = (settings: WorkspaceSettings): CoreT => {
+  const locale = localeOf(settings);
+  return locale === DEFAULT_LOCALE ? coreEnglish : coreIn(locale);
 };
 
 /** What turning one switch on sends, for the selected provider. */
-function memoryEgressDisclosure(installed: Pick<InstalledMemoryProvider, "id" | "declaration">, field: MemoryEgressField): string {
+function memoryEgressDisclosure(
+  installed: Pick<InstalledMemoryProvider, "id" | "declaration">,
+  field: MemoryEgressField,
+  t: CoreT = coreEnglish,
+): string {
   const what =
-    field === "personal" ? memoryPersonalDisclosure(installed.id) : `Turning ${field} on sends ${installed.id} your ${FIELD_TEXT[field]}.`;
-  return `${describeMemoryDeclaration(installed.declaration)} ${what}`;
+    field === "personal"
+      ? memoryPersonalDisclosure(installed.id, t)
+      : t("memory.egress.turnOn", {
+          field,
+          provider: installed.id,
+          what: t(field === "records" ? "memory.egress.records" : "memory.egress.conversation"),
+        });
+  return `${describeMemoryDeclaration(installed.declaration, t)} ${what}`;
 }
 
 /** What choosing an external provider means: its declaration, and that it receives nothing until a switch is on. */
-function memoryProviderDisclosure(installed: Pick<InstalledMemoryProvider, "id" | "declaration">): string {
-  return `${describeMemoryDeclaration(installed.declaration)} Every switch starts off: tavi memory egress records|conversation|personal on turns each on, after saying what it sends.`;
+function memoryProviderDisclosure(installed: Pick<InstalledMemoryProvider, "id" | "declaration">, t: CoreT = coreEnglish): string {
+  return `${describeMemoryDeclaration(installed.declaration, t)} ${t("memory.egress.switchesOff")}`;
 }
 
-function info(installed: InstalledMemoryProvider): MemoryProviderInfo {
+function info(installed: InstalledMemoryProvider, t: CoreT): MemoryProviderInfo {
   // Guarded as doctor reads it: a null answer, a throwing getter or a promise is "not ready", never a failed answer after a committed write.
   const status = readMemoryProviderStatus(installed.provider);
   return {
@@ -68,7 +83,7 @@ function info(installed: InstalledMemoryProvider): MemoryProviderInfo {
     index: installed.declaration.index,
     capabilities: [...installed.declaration.capabilities],
     receives: [...installed.declaration.receives],
-    ...(installed.kind === "plugin" ? { disclosure: describeMemoryDeclaration(installed.declaration) } : {}),
+    ...(installed.kind === "plugin" ? { disclosure: describeMemoryDeclaration(installed.declaration, t) } : {}),
     ...(status === undefined ? {} : { ready: status.ready }),
     ...(status?.indexed === undefined ? {} : { indexed: status.indexed }),
   };
@@ -80,6 +95,7 @@ export async function memoryProviderAnswer(
   note?: string,
 ): Promise<MemoryProviderAnswer> {
   const record = await deps.settings.get(workspaceId);
+  const t = wordsOf(record.settings);
   const choice = await deps.providers.choice(workspaceId);
   return {
     workspaceId,
@@ -88,8 +104,11 @@ export async function memoryProviderAnswer(
     serving: choice.provider?.id ?? "none",
     ...(choice.fallback === undefined ? {} : { fallback: choice.fallback }),
     egress: choice.egress,
-    personalDisclosure: memoryPersonalDisclosure(choice.chosen),
-    providers: deps.providers.list().map(info).slice(0, 64),
+    personalDisclosure: memoryPersonalDisclosure(choice.chosen, t),
+    providers: deps.providers
+      .list()
+      .map((installed) => info(installed, t))
+      .slice(0, 64),
     pendingRemovals: await deps.sync.pendingRemovals(),
     ...(note === undefined ? {} : { note }),
   };
@@ -114,10 +133,12 @@ export async function memoryProviderCommand(
       now: deps.now(),
     });
   };
-  const confirm = (disclosure: string): void => {
+  /** The disclosure in English for the error's message, and in the workspace's language for what is shown before confirming. */
+  const t = wordsOf(current.settings);
+  const confirm = (disclose: (t: CoreT) => string): void => {
     if (payload.confirmed === true) return;
-    throw new TaviError("APPROVAL_REQUIRED", `${disclosure} Confirm to go on.`, {
-      details: { reason: MEMORY_PROVIDER_DISCLOSURE_REASON, disclosure },
+    throw new TaviError("APPROVAL_REQUIRED", `${disclose(coreEnglish)} Confirm to go on.`, {
+      details: { reason: MEMORY_PROVIDER_DISCLOSURE_REASON, disclosure: disclose(t) },
     });
   };
 
@@ -135,7 +156,7 @@ export async function memoryProviderCommand(
           details: { providerId },
         });
       }
-      if (before.provider !== providerId) confirm(memoryProviderDisclosure(installed));
+      if (before.provider !== providerId) confirm((words) => memoryProviderDisclosure(installed, words));
     }
     if (before.provider === providerId) return await memoryProviderAnswer(deps, workspaceId);
     await write(withMemoryProvider(section, providerId));
@@ -178,7 +199,7 @@ export async function memoryProviderCommand(
     (payload.field === "records" && after.providerEgress.records && !before.providerEgress.records) ||
     (payload.field === "conversation" && after.providerEgress.conversation && !before.providerEgress.conversation) ||
     (payload.field === "personal" && after.providerEgress.includePersonal && !before.providerEgress.includePersonal);
-  if (widened && installed !== undefined) confirm(memoryEgressDisclosure(installed, payload.field));
+  if (widened && installed !== undefined) confirm((words) => memoryEgressDisclosure(installed, payload.field, words));
   await write(next);
   const narrowed =
     (before.providerEgress.records && !after.providerEgress.records) ||

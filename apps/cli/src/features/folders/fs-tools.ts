@@ -29,9 +29,12 @@ import {
   type HostFileIdentity,
   type InvocationContext,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { clip, errorMessage, textPageEnd } from "@tavi/contracts/util";
 import { openNoFollow, openNoFollowSync, sameIdentity, sha256Hex, windowsPathRefusal, type FileIdentity } from "@tavi/node-kit";
 import { credentialFiles, credentialHomes, persistenceLocations, windowsProtectedPlaces, type ToolRegistry } from "@tavi/runtime";
+
+import { cardWords } from "../approvals/card-words.js";
 
 /**
  * Workspace file tools, confined per call to the invoking chat's working
@@ -983,7 +986,7 @@ export function folderSaver(options: FsToolOptions): FolderSaver {
       const real = resolveConfined(path, scope, "write");
       if (typeof real === "string" && lstatSync(real, { throwIfNoEntry: false }) !== undefined)
         return refusal(path, verb, `${scope.shown(real)} already exists; nothing is overwritten, so name a new file`);
-      return assessChangeSync(scope, path, () => undefined, verb);
+      return assessChangeSync(scope, path, () => undefined, verb, cardWords(context));
     },
     save: async (path, bytes, context, contextLabel, assessedSubjects) => {
       const scope = confinementFor(shared, context);
@@ -1155,7 +1158,7 @@ export function registerFsTools(registry: ToolRegistry, options: FsToolOptions):
     } catch (error) {
       return refusal(path, verb, errorMessage(error));
     }
-    return assessChangeSync(scope, path, next, verb);
+    return assessChangeSync(scope, path, next, verb, cardWords(context));
   };
 
   registry.register({
@@ -1558,6 +1561,7 @@ function assessChangeSync(
   path: string,
   next: (current: string | undefined) => string | undefined,
   verb: string,
+  t: CoreT = coreEnglish,
 ): CallAssessment {
   const real = resolveConfined(path, scope, "write");
   if (typeof real !== "string") return refusal(path, verb, real.message);
@@ -1566,7 +1570,7 @@ function assessChangeSync(
   // The verdict records it whole, and the handler writes only the target it names.
   if (subject.length > MAX_SUBJECT_CHARS) return refusal(path, verb, `its path is longer than ${MAX_SUBJECT_CHARS} characters`);
   const subjects = [subject];
-  const title = clip(`${verb} ${shownPath}`, MAX_LABEL_CHARS);
+  const title = clip(changeTitle(verb, shownPath, t), MAX_LABEL_CHARS);
   const attachment = scope.rwAttachmentOf(real);
   const host = !scope.inManagedFolder(real);
   // A deny or ask rule matches a spelling the filesystem folds to the same name.
@@ -1578,13 +1582,13 @@ function assessChangeSync(
   };
   const sideHost = host && scope.sideChat;
   const where = [
-    ...(attachment === undefined ? [] : [clip(`writes into the attached folder "${attachment.label}"`, MAX_LABEL_CHARS)]),
-    ...(sideHost ? ["a side chat's standing rule for this file would also apply in its parent chat"] : []),
+    ...(attachment === undefined ? [] : [clip(t("approval.reason.fs.attached", { label: attachment.label }), MAX_LABEL_CHARS)]),
+    ...(sideHost ? [t("approval.reason.fs.sideChat")] : []),
   ];
   // What a tool runs on its own from a folder: shown, and approved, one write at a time. Read on the resolved path, so a
   // folder attached from inside one (`repo/.claude/skills`) is no way around it.
   const runsOnItsOwn = host && protectedProjectFile(real);
-  if (runsOnItsOwn) where.push("a file git, a shell, an editor or a package manager runs on its own: approved for this write only");
+  if (runsOnItsOwn) where.push(t("approval.reason.fs.runsOnItsOwn"));
   const floor = sideHost || runsOnItsOwn ? "high" : "medium";
   let size: number | undefined;
   try {
@@ -1596,7 +1600,7 @@ function assessChangeSync(
     size = undefined;
   }
   if (size !== undefined && size > MAX_READ_BYTES) {
-    const reason = `replaces an existing ${size}-byte file (too large to show a diff)`;
+    const reason = t("approval.reason.fs.replacesLarge", { size: String(size) });
     return { display: { title, detail: reason }, subjects, risk: "high", reasons: [reason, ...where], onceOnly: true, ...held };
   }
   let current: string | undefined;
@@ -1608,11 +1612,11 @@ function assessChangeSync(
     }
   }
   const after = next(current);
-  const reasons = [current === undefined ? "creates a file" : "changes a file", ...where];
+  const reasons = [current === undefined ? t("approval.reason.fs.creates") : t("approval.reason.fs.changes"), ...where];
   const once = runsOnItsOwn ? { onceOnly: true } : {};
   if (after === undefined) return { display: { title }, subjects, risk: floor, reasons, ...held, ...once };
   const diff = clipDiff(unifiedDiff(shownPath, current ?? "", after), MAX_DIFF_CHARS);
-  if (diff.truncated) reasons.push("the diff is too long to show whole");
+  if (diff.truncated) reasons.push(t("approval.reason.fs.diffTooLong"));
   // What was not shown cannot be approved for later: a partly-shown write is decided once.
   return {
     display: { title, detail: diff.text },
@@ -1623,6 +1627,20 @@ function assessChangeSync(
     ...held,
     ...once,
   };
+}
+
+/** A change's card title, `verb` and path, in `t`'s words: "Write notes.md", "Save the response to data.json". */
+function changeTitle(verb: string, path: string, t: CoreT): string {
+  switch (verb) {
+    case "Write":
+      return t("approval.card.fs.write", { path });
+    case "Edit":
+      return t("approval.card.fs.edit", { path });
+    case "Save the response to":
+      return t("approval.card.fs.save", { path });
+    default:
+      return `${verb} ${path}`;
+  }
 }
 
 /**

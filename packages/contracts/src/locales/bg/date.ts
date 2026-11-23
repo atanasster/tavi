@@ -4,6 +4,10 @@ import type { date as en } from "../en/date.js";
 
 /** The `core` words for the calendar's words: weekdays, months and day patterns, in Bulgarian. */
 export const date = {
+  "browser.duration.seconds": "{seconds} сек",
+  "browser.duration.minutes": "{minutes} мин",
+  "browser.duration.hours": "{hours} ч",
+  "browser.duration.hoursMinutes": "{hours} ч {minutes} мин",
   "date.weekday.0": "неделя",
   "date.weekday.1": "понеделник",
   "date.weekday.2": "вторник",

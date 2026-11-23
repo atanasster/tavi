@@ -20,6 +20,7 @@ import {
   type VideoResult,
 } from "@tavi/contracts";
 
+import { cardWords } from "../approvals/card-words.js";
 import { analyzerAssessment, hearWindow } from "./tools.js";
 
 /**
@@ -154,7 +155,12 @@ export function registerAudioTools(registry: ToolRegistryPort, options: AudioToo
       const span = parsed.success
         ? Math.max(1, Math.min(AUDIO_WINDOW_SEC, (parsed.data.to ?? (parsed.data.from ?? 0) + AUDIO_WINDOW_SEC) - (parsed.data.from ?? 0)))
         : AUDIO_WINDOW_SEC;
-      return analyzerAssessment(options.analyzers, { capability: "transcribe", audioSec: span }, context, "Transcribe the audio's speech");
+      return analyzerAssessment(
+        options.analyzers,
+        { capability: "transcribe", audioSec: span },
+        context,
+        cardWords(context)("approval.card.video.transcribeAudio"),
+      );
     },
     handler: async ({ input, context, signal, assessedSubjects }) => {
       const parsed = AudioTranscribeInputSchema.parse(input);

@@ -57,4 +57,22 @@ describe("the plugin change kind", () => {
       store.close();
     }
   });
+
+  it("bumps one workspace's settings kind on every write of its settings, so an open page re-reads its language", () => {
+    const { store, workspaceSettings, changed } = fixture();
+    try {
+      changed("a");
+      changed("b");
+      const write = (workspaceId: string, settings: Record<string, unknown>, expectedRevision: number) =>
+        workspaceSettings.set({ workspaceId, settings, expectedRevision, actor: "operator", now: "2026-10-03T00:00:00.000Z" });
+      write("a", { locale: "bg" }, 0);
+      expect(changed("a")).toContain("settings");
+      expect(changed("b")).not.toContain("settings");
+      write("a", { locale: "en" }, 1);
+      expect(changed("a")).toEqual(["settings"]);
+      expect(changed("a")).toEqual([]);
+    } finally {
+      store.close();
+    }
+  });
 });

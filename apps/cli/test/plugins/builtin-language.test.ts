@@ -1,6 +1,7 @@
 import { coreIn } from "@tavi/contracts/locales/core-server";
 import { renderBriefHtml, type DailyBrief } from "@tavi/plugin-collectors";
 import type { PluginView } from "@tavi/contracts";
+import { delay } from "@tavi/test-support";
 import { describe, expect, it, vi } from "vitest";
 
 import { BUILTIN_CHANNELS, BUILTIN_PLUGINS, builtinChannelDescriptorIn, builtinViewIn } from "../../src/features/plugins/catalog.js";
@@ -130,12 +131,36 @@ describe("each workspace's language, for a reader that cannot wait", () => {
     await vi.waitFor(() => expect(languages.of("other")).toBe("bg"));
     stored.set("default", "bg");
     listener?.("repository.workspaceSettings.get");
-    await new Promise((settle) => setTimeout(settle, 5));
+    await delay(5);
     expect(languages.of("default")).toBe("en");
     listener?.("repository.workspaceSettings.put");
     await vi.waitFor(() => expect(languages.of("default")).toBe("bg"));
     expect(languages.of("other")).toBe("bg");
     languages.close();
     expect(closed).toBe(true);
+  });
+
+  it("answers a Bulgarian workspace's first call in Bulgarian, and a workspace saved later once it is saved", async () => {
+    const stored = new Map<string, "en" | "bg">([
+      ["default", "en"],
+      ["team", "bg"],
+    ]);
+    const settings = {
+      get: async (workspaceId: string) => ({ workspaceId, settings: { locale: stored.get(workspaceId) } }),
+      list: async () => [...stored].map(([workspaceId, locale]) => ({ workspaceId, settings: { locale } })),
+    } as never;
+    let listener: ((operation: string) => void) | undefined;
+    const languages = await workspaceLocales(settings, "default", (heard) => {
+      listener = heard;
+      return () => undefined;
+    });
+    // Listed up front: the flight card on the team's first call is Bulgarian, not the default's English.
+    expect(languages.of("team")).toBe("bg");
+    // Never saved: no language set, so English, whatever the default speaks.
+    expect(languages.of("fresh")).toBe("en");
+    stored.set("later", "bg");
+    listener?.("repository.workspaceSettings.set");
+    await vi.waitFor(() => expect(languages.of("later")).toBe("bg"));
+    languages.close();
   });
 });

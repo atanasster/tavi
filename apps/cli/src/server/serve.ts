@@ -16,6 +16,8 @@ import type {
 } from "@tavi/contracts";
 import { MOD_COMMAND_TEXT_MAX_CHARS, maskPluginText } from "@tavi/contracts";
 import { channelsCommand } from "../features/channels/owner.js";
+import { channelWords, workspaceLocaleOf } from "../features/channels/channel-words.js";
+import { commandsIn } from "../features/plugins/command-words.js";
 import { canvasPluginLocale, localizedChannelDescriptors, pluginSnapshots } from "../features/plugins/localized.js";
 import { runtimeLifecycleReport, startLifecycleSync, syncRuntimeModelLifecycle } from "../features/models/lifecycle-sync.js";
 import { previewReplace, replaceModel } from "../features/models/replace.js";
@@ -85,6 +87,7 @@ import {
   type SubscribeResult,
   type TaskLabelAnswer,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { definedOnly, errorMessage, isRecord, nowTimestamp } from "@tavi/contracts/util";
 import { isPipeEndpoint, newPipeEndpoint, prefixedId, protectPipe } from "@tavi/node-kit";
 import {
@@ -1037,6 +1040,8 @@ function channelsDependencies(runtime: TaviRuntime): Parameters<typeof channelsC
     forgetNotes: (principalId, taskIds) => runtime.forgetSenderNotes(principalId, taskIds),
     countNotes: (taskIds) => runtime.countChatNotes(taskIds),
     operatorOf: (workspaceId) => runtime.access.resolveWorkspace(workspaceId)?.principalId,
+    // A room's introduction and a test message are said in their workspace's language.
+    localeOf: workspaceLocaleOf(runtime.store.asPort().repositories.workspaceSettings),
     // Started and read by the channels' flows; a callback reaches whichever sign-in owns its state.
     oauth: {
       start: (input) => runtime.oauthFlows.start(input),
@@ -1126,8 +1131,10 @@ function configDependencies(
     videoBinaries: runtime.videoBinaries,
     videoStatus: () => videoStatusDocument(runtime),
     voice: runtime.voiceSetup,
-    lifecycleSync: () => syncRuntimeModelLifecycle(runtime),
-    lifecycleReport: () => runtimeLifecycleReport(runtime),
+    lifecycleSync: async (workspaceId) =>
+      syncRuntimeModelLifecycle(runtime, { t: await channelWords(workspaceLocaleOf(repositories.workspaceSettings), workspaceId) }),
+    lifecycleReport: async (workspaceId) =>
+      runtimeLifecycleReport(runtime, await channelWords(workspaceLocaleOf(repositories.workspaceSettings), workspaceId)),
     replaceModel: (from, to, workspaceId, confirmed) =>
       confirmed ? replaceModel(runtime, from, to, workspaceId) : previewReplace(runtime, from, to, workspaceId),
     target,
@@ -1372,6 +1379,10 @@ async function dispatchCommand(
         });
       }
       const workspaceId = approvalsInput.workspaceId ?? DEFAULT_WORKSPACE_ID;
+      // The canvas reads the inbox's labels (where a round was asked, what its chat read) in the workspace's language;
+      // a terminal's list and `--format json` keep them English.
+      const inboxWords = async (): Promise<CoreT> =>
+        connection?.viaBridge() === true ? await channelWords(workspaceLocaleOf(repositories.workspaceSettings), workspaceId) : coreEnglish;
       if (approvalsInput.action === "answer") {
         // A question answered from the web or a terminal, whichever
         // channel its task started from.
@@ -1407,6 +1418,7 @@ async function dispatchCommand(
             ...(approvalsInput.limit === undefined ? {} : { limit: approvalsInput.limit }),
           },
           runtime.channelName,
+          await inboxWords(),
         );
         return { ok: true, result: needs };
       }
@@ -1441,7 +1453,7 @@ async function dispatchCommand(
             taskId,
           }),
         });
-        return { ok: true, result: withChannels(history, runtime.channelName) };
+        return { ok: true, result: withChannels(history, runtime.channelName, await inboxWords()) };
       }
       // The queue an operator needs to see *while* the daemon runs, without
       // stopping `serve` to look at it. `list` is the read-only half;
@@ -1462,13 +1474,14 @@ async function dispatchCommand(
       const lasting = new Map(
         await Promise.all(taskIds.map(async (taskId) => [taskId, await lastingChat(repositories, taskId).catch(() => false)] as const)),
       );
+      const listedWords = await inboxWords();
       const listed: ApprovalsListResult = {
         // Projected, never the whole `TaskRecord` or the call's input: the
         // prompt, the final text and the input are unbounded enough to
         // overflow the IPC frame. A card reads the
         // call's one-line headline instead.
         rows: pending.rows.map((row) => ({
-          ...approvalListRowOf(row, runtime.channelName),
+          ...approvalListRowOf(row, runtime.channelName, listedWords),
           ...(lasting.get(row.taskId) === true ? { lastingChat: true as const } : {}),
         })),
         truncated: pending.truncated,
@@ -1802,10 +1815,14 @@ async function dispatchCommand(
     },
     channels: async (value) => {
       try {
-        // The canvas's channel setup reads a plugin channel's words in the workspace's language.
+        // The canvas's channel setup reads a plugin channel's words in the language of the workspace it shows.
         const locale =
           value.action === "catalog"
-            ? await canvasPluginLocale(repositories.workspaceSettings, DEFAULT_WORKSPACE_ID, connection?.viaBridge() === true)
+            ? await canvasPluginLocale(
+                repositories.workspaceSettings,
+                value.workspaceId ?? DEFAULT_WORKSPACE_ID,
+                connection?.viaBridge() === true,
+              )
             : undefined;
         const dependencies = channelsDependencies(runtime);
         const snapshotOf =
@@ -1869,9 +1886,13 @@ async function dispatchCommand(
     },
     plugins: async (value) => {
       // Operator-only (CLI or canvas), never a tool: plugin code runs with the owner's privileges.
-      // The canvas reads a plugin's words in the workspace's language; the terminal's listing stays English.
+      // The canvas reads a plugin's words in the language of the workspace it shows; the terminal's listing stays English.
       const fromCanvas = connection?.viaBridge() === true;
-      const locale = await canvasPluginLocale(repositories.workspaceSettings, DEFAULT_WORKSPACE_ID, fromCanvas);
+      const locale = await canvasPluginLocale(
+        repositories.workspaceSettings,
+        ("workspaceId" in value ? value.workspaceId : undefined) ?? DEFAULT_WORKSPACE_ID,
+        fromCanvas,
+      );
       return await pluginsCommand(runtime, value, operatorActor(fromCanvas), locale);
     },
     mcp: async (value) => {
@@ -2246,7 +2267,11 @@ async function dispatchCommand(
     "plugin-commands": async (value) => {
       // Plugins' slash commands: listed for a front end's help, and run — answered by the plugin, never a turn.
       const payload = value;
-      if (payload.action === "list") return { ok: true, result: { commands: runtime.turnHooks.commands() } satisfies PluginCommandsAnswer };
+      // Tavi's own commands are described in the language of the listing's workspace (the owner's default when absent).
+      if (payload.action === "list") {
+        const t = await channelWords(workspaceLocaleOf(repositories.workspaceSettings), payload.workspaceId ?? DEFAULT_WORKSPACE_ID);
+        return { ok: true, result: { commands: commandsIn(runtime.turnHooks.commands(), t) } satisfies PluginCommandsAnswer };
+      }
       const workspaceId = payload.workspaceId ?? "default";
       const principalId = runtime.access.resolveWorkspace(workspaceId)?.principalId;
       if (principalId === undefined)

@@ -12,6 +12,21 @@ export const plugins = {
   "plugins.catalog.tavi.tools": "Списъкът с инструменти, които Tavi дава на моделите.",
   "plugins.catalog.tavi.access": "Правилата за достъп до работното пространство и проверката на разрешенията.",
   "plugins.catalog.tavi.clock": "Общият часовник.",
+  "mods.reads.everyTool": "всеки инструмент",
+  "mods.reads.fromSources": "от {sources}",
+  "mods.reads.onChannels": "в {channels}",
+  "mods.reads.scope": " (ходовете {where})",
+  "mods.reads.everyWorkspace": "Вижда това във всяко работно пространство.",
+  "mods.reads.toolInput": "Вижда входа на {tools}{scope} и може да откаже извикването.",
+  "mods.reads.toolResult": "Вижда и може да промени изхода на {tools}{scope}.",
+  "mods.reads.prompt": "Чете всяка заявка и всяко съобщение, което получаваш{scope}, и може да добави към него или да го изпусне.{trusted}",
+  "mods.reads.everyChannel": ", във всеки канал",
+  "mods.reads.trustedContext": "Каквото добавя, е контекст с доверие: не отбелязва чата като съдържащ непроверено съдържание.",
+  "mods.reads.modelStep": "Вижда всяко извикване на модела, когато започва: стъпката и модела му{scope}.",
+  "mods.reads.turn": "Вижда кога всеки ход започва и свършва и колко токена е похарчил{scope}.",
+  "mods.reads.heartbeatTick": "Вижда кога тръгва всяка проверка на пулса и как е приключила.",
+  "mods.reads.heartbeatItem":
+    "Вижда ключа, заглавието, спешността, източниците и ключовете на сигналите на всеки елемент от пулса, с часа на проверката и часовата ти зона, и може да го задържи завинаги или да го остави за обобщението.",
   "plugins.catalog.tavi.router":
     "Доставчикът на маршрутизация Jev (TypeSafe). Маршрутизацията е изключена, докато не я настроиш с `tavi router`.",
   "plugins.catalog.tavi.models": "Връзките с модели (включват се, когато има настроена връзка с модел).",
@@ -103,7 +118,7 @@ export const plugins = {
   "plugins.onboarding.ideas.research.label": "Проучи тема",
   "plugins.onboarding.ideas.research.prompt": "Проучи тема за мен и ми дай кратко обобщение с източници. Първо ме попитай коя тема.",
   "plugins.onboarding.ideas.remind.label": "Напомни ми по-късно",
-  "plugins.onboarding.ideas.remind.prompt": "Напомни ми утре в 9:00 да проверя какво те попитах днес.",
+  "plugins.onboarding.ideas.remind.prompt": "Напомни ми утре в 9:00 да проверя какво те попитах днес.",
   "plugins.onboarding.done.title": "Готово, можеш да започваш",
   "plugins.onboarding.done.body": "Питай Tavi каквото искаш. Пропуснатите стъпки остават в списъка на „Начало“ и в tavi onboard.",
 
@@ -196,4 +211,10 @@ export const plugins = {
   "plugins.collectors.brief.noNews": "Няма новини, които да съвпадат с ключовите думи на проекта.",
   "plugins.collectors.brief.noMetrics": "За този проект не бяха събрани показатели.",
   "plugins.collectors.brief.dataQuality": "Качество на данните",
+  "plugins.command.suspended":
+    "/{name} от {pluginId} е изключена: проваляше се твърде често и остава спряна до рестарт на сървъра на Tavi.",
+  "plugins.command.tooMany": "Твърде много команди наведнъж: опитай /{name} пак след малко.",
+  "plugins.command.gone": "/{name}: {pluginId} вече не работи.",
+  "plugins.command.failed": "/{name} от {pluginId} се провали.",
+  "plugins.command.timedOut": "/{name} от {pluginId} се провали: времето ѝ изтече.",
 } as const satisfies CatalogFor<typeof en>;

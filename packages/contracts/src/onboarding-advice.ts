@@ -451,3 +451,34 @@ export function suggestRoles(
   const fast = fasts.find((model) => model !== main);
   return { ...(main === undefined ? {} : { main }), ...(fast === undefined ? {} : { fast }), candidates };
 }
+
+/** What voice setup reports missing (`VoiceSetupStatus.missing`) that has words of its own; FFmpeg and whisper.cpp are names, said as they are. */
+const VOICE_PART_KEYS: Readonly<Record<string, CoreKey>> = {
+  "a speech model": "onboarding.voice.part.model",
+  "analyzers.json naming the model": "onboarding.voice.part.analyzers",
+};
+
+/**
+ * Voice setup's missing parts as one message: the part with words of its own
+ * (a speech model, or the configuration naming it) as a key with the parts
+ * before and after it, or the parts as reported when every one is a name.
+ */
+export function voiceMissingText(
+  missing: readonly string[],
+): string | { readonly key: CoreKey; readonly params: { readonly before: string; readonly after: string } } {
+  const at = missing.findIndex((part) => Object.hasOwn(VOICE_PART_KEYS, part));
+  const key = at < 0 ? undefined : VOICE_PART_KEYS[missing[at] ?? ""];
+  if (key === undefined) return missing.join(", ");
+  const before = missing.slice(0, at);
+  const after = missing.slice(at + 1);
+  return {
+    key,
+    params: { before: before.length > 0 ? `${before.join(", ")}, ` : "", after: after.length > 0 ? `, ${after.join(", ")}` : "" },
+  };
+}
+
+/** Voice setup's missing parts said by `t`: "whisper.cpp, a speech model" in English. */
+export function voiceMissingWords(missing: readonly string[], t: CoreT = coreEnglish): string {
+  const text = voiceMissingText(missing);
+  return typeof text === "string" ? text : t(text.key, text.params);
+}

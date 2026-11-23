@@ -320,6 +320,31 @@ describe("the Models page", () => {
     expect(document.querySelector(".modal")).toBeNull();
   });
 
+  it("names each role in Bulgarian, never its English id", async () => {
+    await setLocale("bg");
+    try {
+      const fake = owner({
+        connections: [local],
+        roles: { workspaceDefault: { target: { connectionId: "local", model: "a" } }, resolved: [], roles: [] },
+      });
+      await mount(
+        <InWorkspace client={fake.client} workspaceId="default">
+          <ModelBrowser />
+        </InWorkspace>,
+      );
+      expect([...document.querySelectorAll(".role-name")].map((name) => name.textContent)).toEqual([
+        "По подразбиране",
+        "основен",
+        "извличане",
+        "сбиване",
+        "бърз",
+        "ембединги",
+      ]);
+    } finally {
+      await setLocale("en");
+    }
+  });
+
   it("edits a role's primary and ordered fallbacks in one picker, and resets it to the default", async () => {
     const main = {
       workspaceId: "default",

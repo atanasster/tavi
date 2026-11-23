@@ -17,6 +17,7 @@ import { hostAndPathOf } from "./url-text.js";
 // Acyclic: argument-provenance.ts imports only zod, content-label.ts and terminal-text.ts.
 import { ARG_PROVENANCE_LIMITS, ArgOriginSchema } from "./argument-provenance.js";
 import { ToolEffectSchema, ToolIdSchema, ToolSinkSchema, type ToolEffect, type ToolSink } from "./tools.js";
+import { coreEnglish, type CoreKey, type CoreT } from "./locales/core.js";
 import { originCovers, TASK_ORIGINS } from "./task-origins.js";
 import { SourceStatusSchema, type SourceStatus } from "./pdf.js";
 import { ApprovalDisplaySchema, clipDisplay, displayHides, type ApprovalDisplay, cardText, clipText } from "./approval-card.js";
@@ -28,7 +29,6 @@ import {
   type SkillCeiling,
   type SkillCeilingSummary,
 } from "./skill-ceiling.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
 
 /**
  * Tool policy.
@@ -859,6 +859,34 @@ export const MEMORY_PROPOSE_ALLOW_RULE_ID = "seeded-memory-propose";
 export const SKILLS_PROPOSE_ALLOW_RULE_ID = "seeded-skills-propose";
 export const PROPOSAL_ALLOW_RULE_NOTE =
   "A proposal needs no approval: it only files a suggestion, and its card is where you keep or discard it. Remove it to be asked each time.";
+
+/** The notes Tavi writes on its own rules, by the key that says each one. */
+const RULE_NOTE_KEYS: readonly CoreKey[] = [
+  "permissions.note.sandboxReadOnly",
+  "permissions.note.messagingSend",
+  "permissions.note.askUser",
+  "permissions.note.browserVision",
+  "permissions.note.browserSubmit",
+  "permissions.note.browserUpload",
+  "permissions.note.browserDownload",
+  "permissions.note.reminders",
+  "permissions.note.todos",
+  "permissions.note.webSearch",
+  "permissions.note.proposal",
+  "permissions.note.messagingLifted",
+  "permissions.note.messagingAllow",
+];
+const RULE_NOTES = new Map(RULE_NOTE_KEYS.map((key) => [coreEnglish(key), key] as const));
+
+/**
+ * A rule's note in `t`'s words when Tavi wrote it (a shipped or seeded rule's,
+ * stored in English); the owner's own note, or one this build does not know,
+ * as it was written.
+ */
+export function ruleNoteIn(note: string, t: CoreT): string {
+  const key = RULE_NOTES.get(note);
+  return key === undefined ? note : t(key);
+}
 
 /**
  * The allow rules for `memory.propose` and `skills.propose` the owner seeds

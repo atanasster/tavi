@@ -1,9 +1,23 @@
-import { spawn, type ChildProcess } from "node:child_process";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
-import type { RunnerData } from "../template.js";
+import type { LiveRunnerOptions, RunSummary } from "../runner.js";
+
+// What a template may hold and each run's private copy are shared with the memory eval, and the runner's scaffold
+// with the other live evals (`node` runs the .ts; the types come from it too).
+const {
+  chosenById,
+  liveRun,
+  liveRunnerOptions,
+  parseRunnerFlags,
+  reportHead,
+  repositoryRoot,
+  runnerData,
+  runWhenMain,
+  summarizeStream,
+  withRunData,
+  writeReport,
+} = (await import(new URL("../runner.ts", import.meta.url).href)) as typeof import("../runner.js");
 
 /**
  * The heartbeat eval: fixture worlds — signals,
@@ -218,61 +232,9 @@ export function parseReport(text: string): { readonly items: readonly ReportedIt
   }
 }
 
-/** What one `tavi run --format json` stream says: its answer, status, tool calls and tokens. */
-export interface RunSummary {
-  readonly status: "completed" | "failed" | "unknown";
-  readonly finalText: string;
-  readonly toolCalls: number;
-  readonly tokens?: number;
-  readonly cacheReadTokens?: number;
-  readonly timedOut?: true;
-}
-
-export function summarizeStream(ndjson: string): RunSummary {
-  let status: RunSummary["status"] = "unknown";
-  let finalText = "";
-  let streamed = "";
-  let toolCalls = 0;
-  let tokens: number | undefined;
-  let cacheReadTokens: number | undefined;
-  for (const line of ndjson.split("\n")) {
-    if (!line.startsWith("{")) continue;
-    let event: Record<string, unknown>;
-    try {
-      event = JSON.parse(line) as Record<string, unknown>;
-    } catch {
-      continue;
-    }
-    const metrics = (typeof event["metrics"] === "object" && event["metrics"] !== null ? event["metrics"] : {}) as {
-      readonly totalTokens?: unknown;
-      readonly cacheReadTokens?: unknown;
-    };
-    switch (event["kind"]) {
-      case "text.delta":
-        if (typeof event["text"] === "string") streamed += event["text"];
-        break;
-      case "tool.started":
-        toolCalls += 1;
-        break;
-      case "task.completed":
-      case "task.failed":
-        status = event["kind"] === "task.completed" ? "completed" : "failed";
-        if (typeof metrics.totalTokens === "number") tokens = (tokens ?? 0) + metrics.totalTokens;
-        if (typeof metrics.cacheReadTokens === "number") cacheReadTokens = (cacheReadTokens ?? 0) + metrics.cacheReadTokens;
-        if (typeof event["finalText"] === "string") finalText = event["finalText"];
-        break;
-      default:
-        break;
-    }
-  }
-  return {
-    status,
-    finalText: finalText === "" ? streamed : finalText,
-    toolCalls,
-    ...(tokens === undefined ? {} : { tokens }),
-    ...(cacheReadTokens === undefined ? {} : { cacheReadTokens }),
-  };
-}
+// A run's stream is read the runner's way, shared with the other live evals (`evals/runner.ts`).
+export type { RunSummary };
+export { summarizeStream };
 
 export interface WorldResult {
   readonly id: string;
@@ -429,155 +391,40 @@ export function formatReport(report: EvalReport): string {
 
 // ------------------------------------------------------------------ the runner
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
-
-// What a template may hold and each run's private copy are shared with the memory eval (`node` runs the .ts; the types come from it too).
-const { runnerData, withTemplateCopies } = (await import(
-  new URL("../template.ts", import.meta.url).href
-)) as typeof import("../template.js");
-
-export interface RunnerOptions {
+/** A fresh copy of the template per run (`data`), or, opted into, one existing directory every run writes into. */
+export interface RunnerOptions extends LiveRunnerOptions {
   readonly worldsPath: string;
-  readonly only: readonly string[];
-  readonly connectionId?: string;
-  readonly model?: string;
-  /** A fresh copy of the template per run, or, opted into, one existing directory every run writes into. */
-  readonly data: RunnerData;
-  readonly label?: string;
-  readonly outDir: string;
-  readonly timeoutMs: number;
-  readonly repeat: number;
 }
 
 /** The runner's options; a run without `--template` or `--data-dir` is refused, so it never writes into the default data directory. */
 export function parseArgs(argv: readonly string[]): RunnerOptions {
-  let worldsPath = join(repositoryRoot, "evals", "heartbeat", "worlds.json");
-  const only: string[] = [];
-  let connectionId: string | undefined;
-  let model: string | undefined;
-  let template: string | undefined;
-  let dataDir: string | undefined;
-  let label: string | undefined;
-  let outDir = join(repositoryRoot, "evals", "heartbeat", "results");
-  let timeoutSeconds = 180;
-  let repeat = 1;
-  for (let index = 0; index < argv.length; index += 1) {
-    const flag = argv[index];
-    const value = (): string => {
-      const next = argv[index + 1];
-      if (next === undefined) throw new Error(`${flag} needs a value`);
-      index += 1;
-      return next;
-    };
-    switch (flag) {
-      case "--worlds":
-        worldsPath = resolve(value());
-        break;
-      case "--world":
-        only.push(...value().split(","));
-        break;
-      case "--connection":
-        connectionId = value();
-        break;
-      case "--model":
-        model = value();
-        break;
-      case "--template":
-        template = value();
-        break;
-      case "--data-dir":
-        dataDir = value();
-        break;
-      case "--label":
-        label = value();
-        break;
-      case "--out":
-        outDir = resolve(value());
-        break;
-      case "--timeout-s":
-        timeoutSeconds = Number(value());
-        break;
-      case "--repeat":
-        repeat = Number(value());
-        break;
-      default:
-        throw new Error(`unknown option ${String(flag)}`);
-    }
-  }
-  if (!Number.isInteger(timeoutSeconds) || timeoutSeconds <= 0) throw new Error("--timeout-s must be a positive whole number");
-  if (!Number.isInteger(repeat) || repeat <= 0) throw new Error("--repeat must be a positive whole number");
-  const data = runnerData(template, dataDir, "evals/heartbeat/README.md");
-  return {
-    worldsPath,
-    only,
-    ...(connectionId === undefined ? {} : { connectionId }),
-    ...(model === undefined ? {} : { model }),
-    data,
-    ...(label === undefined ? {} : { label }),
-    outDir,
-    timeoutMs: timeoutSeconds * 1000,
-    repeat,
-  };
+  const flags = parseRunnerFlags(argv, {
+    fileFlag: "--worlds",
+    file: join(repositoryRoot, "evals", "heartbeat", "worlds.json"),
+    onlyFlag: "--world",
+    outDir: join(repositoryRoot, "evals", "heartbeat", "results"),
+    timeoutSeconds: 180,
+    repeat: 1,
+  });
+  return { worldsPath: flags.file, ...liveRunnerOptions(flags, runnerData(flags.template, flags.dataDir, "evals/heartbeat/README.md")) };
 }
-
-/** The `tavi run` children still running, stopped by an interrupt. */
-const running = new Set<ChildProcess>();
 
 /** One `tavi run --format json --approval deny` in `dataDir`, to its end. */
 function taviRun(prompt: string, dataDir: string, options: RunnerOptions): Promise<RunSummary> {
-  return new Promise((resolvePromise, reject) => {
-    const child = spawn(
-      process.execPath,
-      [
-        join(repositoryRoot, "scripts", "tavi.mjs"),
-        "run",
-        "--format",
-        "json",
-        "--approval",
-        "deny",
-        "--data-dir",
-        dataDir,
-        ...(options.connectionId === undefined ? [] : ["--connection", options.connectionId]),
-        ...(options.model === undefined ? [] : ["--model", options.model]),
-        prompt,
-      ],
-      { cwd: repositoryRoot, stdio: ["ignore", "pipe", "pipe"] },
-    );
-    running.add(child);
-    let out = "";
-    let timedOut = false;
-    child.stdout.setEncoding("utf8");
-    child.stdout.on("data", (chunk: string) => {
-      out += chunk;
-    });
-    child.stderr.setEncoding("utf8");
-    child.stderr.on("data", (chunk: string) => process.stderr.write(chunk));
-    const timer = setTimeout(() => {
-      timedOut = true;
-      child.kill("SIGTERM");
-    }, options.timeoutMs);
-    child.on("error", reject);
-    child.on("close", () => {
-      running.delete(child);
-      clearTimeout(timer);
-      resolvePromise({ ...summarizeStream(out), ...(timedOut ? { timedOut: true as const } : {}) });
-    });
-  });
+  return liveRun(prompt, dataDir, options, summarizeStream);
 }
 
 async function main(argv: readonly string[]): Promise<number> {
   const options = parseArgs(argv);
-  const file = parseWorldFile(JSON.parse(readFileSync(options.worldsPath, "utf8")));
-  const unknown = options.only.filter((id) => !file.worlds.some((world) => world.id === id));
-  if (unknown.length > 0) throw new Error(`no such world: ${unknown.join(", ")}`);
-  const worlds = options.only.length === 0 ? file.worlds : file.worlds.filter((world) => options.only.includes(world.id));
+  const worlds = chosenById(parseWorldFile(JSON.parse(readFileSync(options.worldsPath, "utf8"))).worlds, options.only, "world");
   const startedAt = new Date();
   const results: WorldResult[] = [];
-  const runWorlds = async (dataDirFor: (name: string) => string, done: (dataDir: string) => void = () => undefined): Promise<void> => {
+  const log = (message: string): void => void process.stderr.write(`[heartbeat eval] ${message}\n`);
+  await withRunData(options.data, { prefix: "the-", log }, async (dataDirFor, done) => {
     let runs = 0;
     for (const world of worlds) {
       for (let run = 1; run <= options.repeat; run += 1) {
-        process.stderr.write(`[heartbeat eval] ${world.id}${options.repeat === 1 ? "" : ` #${run}`}…\n`);
+        log(`${world.id}${options.repeat === 1 ? "" : ` #${run}`}…`);
         runs += 1;
         const dataDir = dataDirFor(`r${runs}`);
         try {
@@ -589,36 +436,11 @@ async function main(argv: readonly string[]): Promise<number> {
         }
       }
     }
-  };
-  const { data } = options;
-  if ("dataDir" in data) await runWorlds(() => data.dataDir);
-  else
-    await withTemplateCopies(
-      data.template,
-      { prefix: "the-", commands: running, log: (message) => process.stderr.write(`[heartbeat eval] ${message}\n`) },
-      (copy) => runWorlds(copy, (dataDir) => rmSync(dataDir, { recursive: true, force: true })),
-    );
-  const report: EvalReport = {
-    ...(options.label === undefined ? {} : { label: options.label }),
-    startedAt: startedAt.toISOString(),
-    ...(options.connectionId === undefined ? {} : { connection: options.connectionId }),
-    ...(options.model === undefined ? {} : { model: options.model }),
-    summary: summarize(results),
-    results,
-  };
-  mkdirSync(options.outDir, { recursive: true });
-  const path = join(options.outDir, `${startedAt.toISOString().replaceAll(":", "-").replace(".", "-")}.json`);
-  writeFileSync(path, `${JSON.stringify(report, null, 2)}\n`);
+  });
+  const report: EvalReport = { ...reportHead(options, startedAt), summary: summarize(results), results };
+  const path = writeReport(options.outDir, startedAt, report);
   process.stdout.write(`${formatReport(report)}\n\nreport: ${path}\n`);
   return report.summary.passed === report.summary.worlds ? 0 : 1;
 }
 
-if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main(process.argv.slice(2)).then(
-    (code) => process.exit(code),
-    (error: unknown) => {
-      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-      process.exit(2);
-    },
-  );
-}
+runWhenMain(import.meta.url, main);

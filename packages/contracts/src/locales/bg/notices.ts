@@ -48,13 +48,15 @@ export const notices = {
     "Рутина „{name}“: пускането ѝ за {due} изтече, преди да завърши (сървърът на Tavi беше заспал, спрян или зает), затова няма доклад. Следващото пускане по график ще опита пак.",
   "notice.routine.credentialGrace.text":
     "Рутината „{name}“ е на пауза: ключът ѝ за модела или търсенето се отхвърля от над {hours} ч. Поправи ключа в настройките и я пусни отново. {resume}",
-  "notice.routine.failures.text":
-    "Рутината „{name}“ е на пауза след {n} неуспешни пускания поред; историята на пусканията ѝ казва защо. {resume}",
+  "notice.routine.failures.text": {
+    one: "Рутината „{name}“ е на пауза след {n} неуспешно пускане; историята на пусканията ѝ казва защо. {resume}",
+    other: "Рутината „{name}“ е на пауза след {n} неуспешни пускания поред; историята на пусканията ѝ казва защо. {resume}",
+  },
   "notice.routine.delivery.title": "Доставката на рутината „{name}“ е на пауза",
   "notice.routine.delivery.text":
     "Рутина „{name}“: доставката до „{label}“ е на пауза, защото {why}. Проучването продължава, а докладите остават в приложението. {fix}.",
   "notice.routine.delivery.why.credentials": "данните за достъп на канала ѝ липсват от над {hours} ч",
-  "notice.routine.delivery.why.failures": "{n} изпращания поред не успяха",
+  "notice.routine.delivery.why.failures": { one: "{n} изпращане не успя", other: "{n} изпращания поред не успяха" },
   "notice.routine.delivery.fix.credentials": "Свържи канала отново и доставката ще продължи сама",
   "notice.routine.delivery.fix.failures":
     "Поправи канала, после пусни доставката отново от доставките на пускането в {path} или пусни рутината отново",
@@ -62,9 +64,9 @@ export const notices = {
   "notice.scheduledBudget.summary":
     "Графиците и рутините ти са използвали {usage} за {month}. Нищо не е спряно. Промени бюджета с `tavi config set scheduled.monthlyTokenBudget <tokens>` или дай на един график собствен таван с `tavi schedules update <name> --max-tokens <n>`.",
   "notice.mcp.drift.title": "{plugin}: инструментите му се промениха",
-  "notice.mcp.drift.withheld": "{n} променени и задържани ({names})",
-  "notice.mcp.drift.added": "{n} нови, чакат преглед",
-  "notice.mcp.drift.removed": "{n} премахнати",
+  "notice.mcp.drift.withheld": { one: "{n} променен и задържан ({names})", other: "{n} променени и задържани ({names})" },
+  "notice.mcp.drift.added": { one: "{n} нов, чака преглед", other: "{n} нови, чакат преглед" },
+  "notice.mcp.drift.removed": { one: "{n} премахнат", other: "{n} премахнати" },
   "notice.mcp.drift.instructions": "инструкциите му се промениха (нищо не е задържано; прочети ги при прегледа)",
   "notice.mcp.drift.list": "{first}; {rest}",
   "notice.mcp.drift.summary": "{parts}. Прегледай ги с `tavi mcp review {plugin}`.",

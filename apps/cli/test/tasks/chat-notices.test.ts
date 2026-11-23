@@ -44,7 +44,7 @@ import { inspectDatabase, SqliteStore } from "../support/database-fixture.js";
 
 const AT = "2026-10-04T08:00:00.000Z";
 
-async function fixture(options: { readonly homeOn?: boolean; readonly reminderHome?: boolean } = {}) {
+async function fixture(options: { readonly homeOn?: boolean; readonly reminderHome?: boolean; readonly locale?: "bg" } = {}) {
   const store = await SqliteStore.open({ databasePath: ":memory:", inMemory: true });
   const repositories = store.asPort().repositories;
   const task = async (
@@ -93,7 +93,11 @@ async function fixture(options: { readonly homeOn?: boolean; readonly reminderHo
       reminders: {
         get: async () => (options.reminderHome === true ? { deliverTo: { kind: "home" } } : { deliverTo: { kind: "app" } }),
       } as never,
-      workspaceSettings: { get: async () => ({ settings: { homeChat: options.homeOn === true } }) } as never,
+      workspaceSettings: {
+        get: async () => ({
+          settings: { homeChat: options.homeOn === true, ...(options.locale === undefined ? {} : { locale: options.locale }) },
+        }),
+      } as never,
     },
     homeOf: async (_workspaceId, principalId) =>
       (await repositories.tasks.get("home-1"))?.principalId === principalId ? "home-1" : undefined,
@@ -266,6 +270,14 @@ describe("posting notices", () => {
       summary: "Plan the trip (chat-a)\nUntitled chat (chat-b)",
     });
     expect(noticeLine(earlier!)).toBe("◆ Earlier chats — Plan the trip (chat-a); Untitled chat (chat-b)");
+  });
+
+  it("names a chat with no title in the workspace's language on a Bulgarian Home", async () => {
+    const { repositories, task, notices } = await fixture({ homeOn: true, locale: "bg" });
+    await task("home-1", { chatKind: "home" });
+    await notices.postEarlierChats({ taskId: "home-1", workspaceId: "w1", principalId: "alice" });
+    const [earlier] = await repositories.transcripts.notices("home-1", { limit: 10 });
+    expect(earlier?.summary).toBe("Plan the trip (chat-a)\nЧат без заглавие (chat-b)");
   });
 
   it("posts nothing into a stored Home while chat.home is off: the schedule reports as before and the reminder is said in the app", async () => {

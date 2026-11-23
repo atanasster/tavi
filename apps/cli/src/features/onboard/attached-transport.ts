@@ -1,6 +1,7 @@
 import {
   TaviError,
   TaviErrorCodeSchema,
+  TextRefSchema,
   type ChannelsPayload,
   type CredentialsPayload,
   type HeartbeatPayload,
@@ -52,12 +53,19 @@ export interface OnboardTransport {
 export const answerOf = <T>(
   answer:
     | IpcAnswer<unknown>
-    | { readonly ok: boolean; readonly result?: unknown; readonly error?: { readonly code: string; readonly message: string } },
+    | {
+        readonly ok: boolean;
+        readonly result?: unknown;
+        readonly error?: { readonly code: string; readonly message: string; readonly i18n?: unknown };
+      },
 ): T => {
   if (answer.ok) return answer.result as T;
   const code = TaviErrorCodeSchema.safeParse(answer.error?.code);
+  // A keyed refusal keeps its key, so onboarding says it in the workspace's language.
+  const i18n = TextRefSchema.safeParse(answer.error?.i18n);
   throw new TaviError(code.success ? code.data : "UNAVAILABLE", answer.error?.message ?? "the command was refused", {
     details: { code: answer.error?.code },
+    ...(i18n.success && i18n.data !== undefined ? { i18n: i18n.data } : {}),
   });
 };
 

@@ -8,13 +8,14 @@ import {
   type McpPresetId,
   type PluginConfigField,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 
 import type { PresetRules } from "../review.js";
 
-import { GOOGLE_MAPS_PRESET } from "./google-maps.js";
-import { HOMEASSISTANT_PRESET } from "./homeassistant.js";
-import { HOSTED_PRESETS } from "./hosted.js";
-import { TODOIST_PRESET, TODOIST_TOKEN_PRESET } from "./todoist.js";
+import { GOOGLE_MAPS_PRESET, googleMapsPreset } from "./google-maps.js";
+import { HOMEASSISTANT_PRESET, homeAssistantPreset } from "./homeassistant.js";
+import { HOSTED_PRESETS, hostedPresets } from "./hosted.js";
+import { TODOIST_PRESET, TODOIST_TOKEN_PRESET, todoistPreset, todoistTokenPreset } from "./todoist.js";
 
 /**
  * Presets: reviewed templates for a vendor's own server, shipped only while
@@ -68,8 +69,24 @@ const PRESETS: Readonly<Partial<Record<McpPresetId, McpPreset>>> = {
 /** The presets this build ships (the manifest may name a later one). */
 export const AVAILABLE_PRESETS: readonly McpPresetId[] = MCP_PRESET_IDS.filter((id) => PRESETS[id] !== undefined);
 
-export function presetOf(id: McpPresetId | undefined): McpPreset | undefined {
-  return id === undefined ? undefined : PRESETS[id];
+/**
+ * A preset, its words a person reads (summary, tools, settings, key steps) in `t`'s language: English, the reviewed
+ * template a manifest is written from, without one. What the model reads of a server is never a preset's words.
+ */
+export function presetOf(id: McpPresetId | undefined, t: CoreT = coreEnglish): McpPreset | undefined {
+  if (id === undefined) return undefined;
+  if (t === coreEnglish || PRESETS[id] === undefined) return PRESETS[id];
+  return presetsIn(t)[id];
+}
+
+function presetsIn(t: CoreT): Readonly<Partial<Record<McpPresetId, McpPreset>>> {
+  return {
+    homeassistant: homeAssistantPreset(t),
+    "google-maps": googleMapsPreset(t),
+    todoist: todoistPreset(t),
+    "todoist-token": todoistTokenPreset(t),
+    ...Object.fromEntries(hostedPresets(t).map((preset) => [preset.id, preset])),
+  };
 }
 
 /** The other presets that are ways into the same server as this one: adding this one switches a server added by them. */

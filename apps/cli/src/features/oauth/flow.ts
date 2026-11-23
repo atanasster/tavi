@@ -1,6 +1,19 @@
 import { randomUUID } from "node:crypto";
 
-import { keyedError, TaviError, type ChannelDescriptor, type OAuth2Spec, englishOf, navPath } from "@tavi/contracts";
+import {
+  DEFAULT_WORKSPACE_ID,
+  errorTextIn,
+  keyedError,
+  TaviError,
+  type ChannelDescriptor,
+  type OAuth2Spec,
+  englishOf,
+  navPath,
+  renderTextRef,
+} from "@tavi/contracts";
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from "@tavi/contracts/i18n";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { errorMessage } from "@tavi/contracts/util";
 import { securityHeaders } from "@tavi/node-kit";
 
@@ -17,7 +30,7 @@ import {
 } from "../channels/oauth.js";
 import { channelSecretRef } from "../channels/settings.js";
 import { createLocalCredentialStore, serializeCredentialAction } from "../credentials/store.js";
-import { pastedCallback, providerRefusal } from "./core.js";
+import { pastedCallback, providerRefusal, type OAuthCallbackOutcome } from "./core.js";
 import { pkceChallenge, randomToken } from "./pkce.js";
 
 /**
@@ -116,7 +129,12 @@ export interface OAuthFlowDependencies {
   readonly signedInAccount?: (connectionId: string) => Promise<string | undefined>;
   /** A sign-in through the public address started or ended: whether the ingress listens follows it. */
   readonly onPublicFlowsChanged?: () => void;
+  /** A workspace's language: the callback page speaks the language of the workspace the sign-in is for. Absent, English. */
+  readonly localeOf?: (workspaceId: string) => Promise<Locale>;
 }
+
+/** The words a callback page is said in. */
+const wordsIn = (locale: Locale): CoreT => (locale === DEFAULT_LOCALE ? coreEnglish : coreIn(locale));
 
 /** A request the provider must answer within `timeoutMs`. */
 function fetchWithin(fetchImpl: typeof fetch, url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
@@ -403,29 +421,48 @@ export class OAuthFlows {
     readonly code?: string;
     readonly error?: string;
     readonly iss?: string;
-  }): Promise<{ readonly ok: boolean; readonly message: string }> {
+  }): Promise<OAuthCallbackOutcome> {
     const flow = this.#byState.get(input.state);
     // Used once: gone before anything is awaited, so a replay of the redirect finds nothing.
     this.#byState.delete(input.state);
+    // The page speaks the language of the workspace the sign-in is for; a link that names no sign-in, the default workspace's.
+    const locale = await this.#localeOf(flow?.workspaceId ?? DEFAULT_WORKSPACE_ID);
+    const t = wordsIn(locale);
+    /** `said` beside the English, only for a workspace not in English. */
+    const said = (text: string): { readonly locale?: Locale; readonly said?: string } =>
+      locale === DEFAULT_LOCALE ? {} : { locale, said: text };
     if (flow === undefined || this.#deps.now() >= flow.expiresAt)
       return {
         ok: false,
         message: `This sign-in link is no longer valid. Start again from ${englishOf(navPath("nav.route.settings", "nav.settings.channels"))}.`,
+        ...said(t("page.oauth.linkInvalid", { path: renderTextRef(navPath("nav.route.settings", "nav.settings.channels"), t) ?? "" })),
       };
     try {
-      return await this.#answer(flow, input);
+      const answer = await this.#answer(flow, input, t);
+      return { ok: answer.ok, message: answer.message, ...said(answer.said ?? answer.message) };
     } finally {
       if (isPublic(flow)) this.#deps.onPublicFlowsChanged?.();
     }
   }
 
+  /** A workspace's language, English when it cannot be read. */
+  async #localeOf(workspaceId: string): Promise<Locale> {
+    try {
+      return (await this.#deps.localeOf?.(workspaceId)) ?? DEFAULT_LOCALE;
+    } catch {
+      return DEFAULT_LOCALE;
+    }
+  }
+
+  /** The outcome in English, as the flow keeps it, and `said`: the same in `t`'s words where Tavi has them. */
   async #answer(
     flow: Flow,
     input: { readonly code?: string; readonly error?: string; readonly iss?: string },
-  ): Promise<{ readonly ok: boolean; readonly message: string }> {
-    const fail = (detail: string): { readonly ok: false; readonly message: string } => {
+    t: CoreT,
+  ): Promise<{ readonly ok: boolean; readonly message: string; readonly said?: string }> {
+    const fail = (detail: string, said?: string): { readonly ok: false; readonly message: string; readonly said?: string } => {
       flow.outcome = { state: "failed", detail };
-      return { ok: false, message: detail };
+      return { ok: false, message: detail, ...(said === undefined ? {} : { said }) };
     };
     const descriptor = this.#deps.descriptorOf(flow.providerId);
     const refused = {
@@ -437,17 +474,23 @@ export class OAuthFlows {
     // RFC 9207: a provider that names itself in its redirect must name itself, or the answer came from another one.
     const issuer = descriptor === undefined ? undefined : oauthSpecOf(descriptor)?.issuer;
     if (issuer !== undefined && input.iss !== issuer)
-      return fail(`${refused.provider} did not answer this sign-in: the redirect names another issuer. Nothing was connected.`);
-    if (input.error !== undefined) return fail(providerRefusal(input.error, refused));
-    if (input.code === undefined || input.code === "") return fail("The provider sent no authorization code.");
+      return fail(
+        `${refused.provider} did not answer this sign-in: the redirect names another issuer. Nothing was connected.`,
+        t("page.oauth.otherIssuer", { provider: descriptor?.app?.publisher ?? t("page.oauth.theProvider") }),
+      );
+    if (input.error !== undefined)
+      return fail(providerRefusal(input.error, refused), input.error === "access_denied" ? t("page.oauth.accessDenied") : undefined);
+    if (input.code === undefined || input.code === "") return fail("The provider sent no authorization code.", t("page.oauth.noCode"));
     try {
       const accountIdentity = await this.#complete(flow, input.code);
       flow.outcome = { state: "connected", accountIdentity };
-      return { ok: true, message: `Connected as ${accountIdentity}.` };
+      return { ok: true, message: `Connected as ${accountIdentity}.`, said: t("page.oauth.connectedAs", { account: accountIdentity }) };
     } catch (error) {
       const message = errorMessage(error);
       // The token endpoint names a redirect the client does not list, or a client it does not know, as the callback would.
-      return fail(/redirect_uri_mismatch|invalid_client|unauthorized_client/.test(message) ? providerRefusal(message, refused) : message);
+      if (/redirect_uri_mismatch|invalid_client|unauthorized_client/.test(message)) return fail(providerRefusal(message, refused));
+      // A refusal Tavi keyed is said in the page's language; any other is passed on as it was written.
+      return fail(message, errorTextIn(error, t) === message ? undefined : errorTextIn(error, t));
     }
   }
 
@@ -626,13 +669,22 @@ function escapeHtml(text: string): string {
  * no token or code in it — only whether it worked. The page that opened the
  * sign-in learns the outcome through its own `oauth-status`.
  */
-export function oauthCallbackPage(outcome: { readonly ok: boolean; readonly message: string }): {
+export function oauthCallbackPage(outcome: {
+  readonly ok: boolean;
+  readonly message: string;
+  readonly locale?: Locale | undefined;
+  readonly said?: string | undefined;
+}): {
   readonly status: number;
   readonly headers: Record<string, string>;
   readonly body: string;
 } {
-  const title = outcome.ok ? "Connected" : "Not connected";
-  const body = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${title}</title>${SERVED_PAGE_STYLE}</head><body><h1>${title}</h1><p>${escapeHtml(outcome.message)}</p><p>You can close this window and go back to Tavi.</p></body></html>`;
+  // Only a language this build speaks: an outcome relayed over IPC is checked, never trusted to name one.
+  const locale = outcome.locale !== undefined && SUPPORTED_LOCALES.includes(outcome.locale) ? outcome.locale : DEFAULT_LOCALE;
+  const t = wordsIn(locale);
+  const title = escapeHtml(t(outcome.ok ? "page.oauth.connected" : "page.oauth.notConnected"));
+  const message = locale === DEFAULT_LOCALE || typeof outcome.said !== "string" ? outcome.message : outcome.said;
+  const body = `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${title}</title>${SERVED_PAGE_STYLE}</head><body><h1>${title}</h1><p>${escapeHtml(message)}</p><p>${escapeHtml(t("page.oauth.close"))}</p></body></html>`;
   return {
     status: outcome.ok ? 200 : 400,
     headers: {

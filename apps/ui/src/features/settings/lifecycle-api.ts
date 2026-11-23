@@ -1,4 +1,11 @@
-import { RHUMB_CREDENTIAL_REF, type ModelReplacements, type ModelUse, type ModelUseKind, type ReplacementKind } from "@tavi/contracts";
+import {
+  type MODEL_ROLES,
+  RHUMB_CREDENTIAL_REF,
+  type ModelReplacements,
+  type ModelUse,
+  type ModelUseKind,
+  type ReplacementKind,
+} from "@tavi/contracts";
 
 import type { UiKey } from "../../locales/en.js";
 import { translateNow } from "../../lib/i18n.js";
@@ -101,6 +108,19 @@ interface ReplaceAnswer {
   readonly failed?: readonly { readonly use: ModelUseRow; readonly error: string }[];
 }
 
+/** A role's name in the reader's language: its id in English ("main"), a word of its own in Bulgarian ("основен"). */
+const ROLE_NAMES = {
+  main: "settings.modelsPage.role.main",
+  extraction: "settings.modelsPage.role.extraction",
+  compaction: "settings.modelsPage.role.compaction",
+  fast: "settings.modelsPage.role.fast",
+  embedding: "settings.modelsPage.role.embedding",
+} as const satisfies Readonly<Record<(typeof MODEL_ROLES)[number], UiKey>>;
+
+/** A role's name; a role this page does not know reads as its id. */
+export const modelRoleName = (role: string): string =>
+  Object.hasOwn(ROLE_NAMES, role) ? translateNow(ROLE_NAMES[role as (typeof MODEL_ROLES)[number]]) : role;
+
 /** A place a model is used, in words, as the replace dialog lists it. */
 function useInWords(use: ModelUseRow): string {
   const detail = use.detail ?? "";
@@ -112,9 +132,9 @@ function useInWords(use: ModelUseRow): string {
     case "workspace-default":
       return translateNow("settings.lifecycle.where.workspaceDefault");
     case "role":
-      return translateNow("settings.lifecycle.where.role", { detail });
+      return translateNow("settings.lifecycle.where.role", { detail: modelRoleName(detail) });
     case "role-fallback":
-      return translateNow("settings.lifecycle.where.roleFallback", { detail });
+      return translateNow("settings.lifecycle.where.roleFallback", { detail: modelRoleName(detail) });
     case "routine":
       return translateNow("settings.lifecycle.where.routine", { detail });
     case "routine-fallback":

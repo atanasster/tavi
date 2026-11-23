@@ -4,7 +4,13 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import type { LiveRunnerOptions } from "../runner.js";
 import type { RunnerData } from "../template.js";
+
+// The runner's scaffold is shared with the other live evals (`node` runs the .ts; the types come from it too).
+const { chosenById, liveRunnerOptions, parseRunnerFlags, runWhenMain, writeReport } = (await import(
+  new URL("../runner.ts", import.meta.url).href
+)) as typeof import("../runner.js");
 
 /**
  * The live file-and-sandbox action eval (plan G3): small tasks a model does
@@ -386,86 +392,22 @@ export function formatSummary(summary: FsSummary, results: readonly CaseResult[]
 
 // ------------------------------------------------------------------ the live runner
 
-export interface RunnerOptions {
+export interface RunnerOptions extends LiveRunnerOptions {
   readonly casesPath: string;
-  readonly only: readonly string[];
-  readonly connectionId?: string;
-  readonly model?: string;
-  readonly data: RunnerData;
-  readonly label?: string;
-  readonly outDir: string;
-  readonly timeoutMs: number;
-  readonly repeat: number;
 }
 
 /** The runner's options; a run without `--template` or `--data-dir` is refused, so it never writes into the default data directory. */
 export function parseArgs(argv: readonly string[], runnerData: (template?: string, dataDir?: string) => RunnerData): RunnerOptions {
-  let casesPath = join(here, "cases.json");
-  const only: string[] = [];
-  let connectionId: string | undefined;
-  let model: string | undefined;
-  let template: string | undefined;
-  let dataDir: string | undefined;
-  let label: string | undefined;
-  let outDir = join(here, "results");
-  let timeoutSeconds = 300;
-  let repeat = 1;
-  for (let index = 0; index < argv.length; index += 1) {
-    const flag = argv[index];
-    const value = (): string => {
-      const next = argv[index + 1];
-      if (next === undefined) throw new Error(`${flag} needs a value`);
-      index += 1;
-      return next;
-    };
-    switch (flag) {
-      case "--cases":
-        casesPath = resolve(value());
-        break;
-      case "--case":
-        only.push(...value().split(","));
-        break;
-      case "--connection":
-        connectionId = value();
-        break;
-      case "--model":
-        model = value();
-        break;
-      case "--template":
-        template = value();
-        break;
-      case "--data-dir":
-        dataDir = value();
-        break;
-      case "--label":
-        label = value();
-        break;
-      case "--out":
-        outDir = resolve(value());
-        break;
-      case "--timeout-s":
-        timeoutSeconds = Number(value());
-        break;
-      case "--repeat":
-        repeat = Number(value());
-        break;
-      default:
-        throw new Error(`unknown option ${String(flag)}`);
-    }
-  }
-  if (!Number.isInteger(timeoutSeconds) || timeoutSeconds <= 0) throw new Error("--timeout-s must be a positive whole number");
-  if (!Number.isInteger(repeat) || repeat < 1 || repeat > 20) throw new Error("--repeat must be a whole number from 1 to 20");
-  return {
-    casesPath,
-    only,
-    ...(connectionId === undefined ? {} : { connectionId }),
-    ...(model === undefined ? {} : { model }),
-    data: runnerData(template, dataDir),
-    ...(label === undefined ? {} : { label }),
-    outDir,
-    timeoutMs: timeoutSeconds * 1000,
-    repeat,
-  };
+  const flags = parseRunnerFlags(argv, {
+    fileFlag: "--cases",
+    file: join(here, "cases.json"),
+    onlyFlag: "--case",
+    outDir: join(here, "results"),
+    timeoutSeconds: 300,
+    repeat: 1,
+    maxRepeat: 20,
+  });
+  return { casesPath: flags.file, ...liveRunnerOptions(flags, runnerData(flags.template, flags.dataDir)) };
 }
 
 const targetArgs = (options: RunnerOptions): string[] => [
@@ -569,10 +511,7 @@ async function main(argv: readonly string[]): Promise<number> {
     new URL("../template.ts", import.meta.url).href
   )) as typeof import("../template.js");
   const options = parseArgs(argv, (template, dataDir) => runnerData(template, dataDir, "evals/fs/README.md"));
-  const file = parseCasesFile(JSON.parse(readFileSync(options.casesPath, "utf8")));
-  const unknown = options.only.filter((id) => !file.cases.some((entry) => entry.id === id));
-  if (unknown.length > 0) throw new Error(`no such case: ${unknown.join(", ")}`);
-  const cases = options.only.length === 0 ? file.cases : file.cases.filter((entry) => options.only.includes(entry.id));
+  const cases = chosenById(parseCasesFile(JSON.parse(readFileSync(options.casesPath, "utf8"))).cases, options.only, "case");
   const startedAt = new Date();
   const results: CaseResult[] = [];
   // The folders the chats work in: a private scratch folder, the owner's one --fs-root. Real path: the owner compares it.
@@ -623,19 +562,9 @@ async function main(argv: readonly string[]): Promise<number> {
     summary,
     results,
   };
-  mkdirSync(options.outDir, { recursive: true });
-  const path = join(options.outDir, `${startedAt.toISOString().replaceAll(":", "-").replace(".", "-")}.json`);
-  writeFileSync(path, `${JSON.stringify(report, null, 2)}\n`);
+  const path = writeReport(options.outDir, startedAt, report);
   process.stdout.write(`${formatSummary(summary, results)}\n\nreport: ${path}\n`);
   return summary.failing.length === 0 ? 0 : 1;
 }
 
-if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main(process.argv.slice(2)).then(
-    (code) => process.exit(code),
-    (error: unknown) => {
-      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-      process.exit(2);
-    },
-  );
-}
+runWhenMain(import.meta.url, main);

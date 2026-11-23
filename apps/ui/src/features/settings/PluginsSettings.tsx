@@ -33,7 +33,18 @@ import { useTimeZone, useWorkspace } from "../shell/Workspace.js";
 import { when } from "../../lib/time.js";
 import { InstallPluginModal, PluginSettingsModal } from "./PluginModals.js";
 import { Command } from "../../ui/Command.js";
+import { codeLabel } from "../../lib/format.js";
+import type { UiKey } from "../../locales/en.js";
 import { LIVE_POLL_MS, usePoll } from "../../hooks/use-poll.js";
+
+/** What a hook's failure does, as its line says it; a rule this page does not know reads as it arrives. */
+const FAILURE_RULES: Readonly<Record<string, UiKey>> = {
+  skip: "settings.plugins.failure.skip",
+  drop: "settings.plugins.failure.drop",
+  ask: "settings.plugins.failure.ask",
+  deny: "settings.plugins.failure.deny",
+  withhold: "settings.plugins.failure.withhold",
+};
 
 type PluginVersionView = PluginView["versions"][number];
 
@@ -101,9 +112,9 @@ function isolationBadge(plugin: PluginView): "worker" | "UNSANDBOXED" | undefine
  */
 function HookActivity({ pluginId }: { readonly pluginId: string }) {
   const t = useT();
-  const { client } = useWorkspace();
+  const { client, workspaceId } = useWorkspace();
   const timeZone = useTimeZone();
-  const { data, error } = useLoaded(() => pluginActions.show(client, pluginId));
+  const { data, error } = useLoaded(() => pluginActions.show(client, pluginId, workspaceId));
   if (error !== undefined)
     return (
       <Failure as="span" alert={false}>
@@ -189,7 +200,7 @@ export function PluginsSettings({
 }) {
   const t = useT();
   const { client } = useWorkspace();
-  const { data, error, loading, reload } = useLoaded(() => pluginActions.list(client));
+  const { data, error, loading, reload } = useLoaded(() => pluginActions.list(client, workspaceId));
   const { busy, note, tone, run, say } = useAction(reload);
   /** `work`, and once the owner accepted it, `pluginId`'s status lines off the chats. */
   const turnsOff =
@@ -297,7 +308,7 @@ export function PluginsSettings({
             <span key={`hook:${index}`} className="muted">
               {t(hook.contextTrusted === true ? "settings.plugins.hookTrusted" : "settings.plugins.hook", {
                 event: hook.event,
-                onFailure: hook.onFailure,
+                onFailure: codeLabel(FAILURE_RULES, hook.onFailure),
               })}{" "}
               {withCode(hook.disclosure)} {withCode(hook.reads)}
             </span>
@@ -379,7 +390,7 @@ export function PluginsSettings({
                   {" "}
                   {t(hook.contextTrusted === true ? "settings.plugins.hookTrusted" : "settings.plugins.hook", {
                     event: hook.event,
-                    onFailure: hook.onFailure,
+                    onFailure: codeLabel(FAILURE_RULES, hook.onFailure),
                   })}{" "}
                   {withCode(hook.disclosure.replace(/\.+$/, ""))}. {withCode(hook.reads)}
                 </span>

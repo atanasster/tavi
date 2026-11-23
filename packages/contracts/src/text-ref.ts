@@ -49,10 +49,25 @@ export function isCoreKey(key: string): key is CoreKey {
   return Object.hasOwn(CORE_EN, key);
 }
 
+/** How a key said by code rather than by its template is said: undefined falls back to its template. */
+type ComputedSaying = (params: TextRefParams, t: CoreT) => string | undefined;
+const computedSayings = new Map<string, ComputedSaying>();
+
+/**
+ * Says `key` with `say`, from its stored parameters, wherever a reference to it is read: for words a template cannot
+ * hold (a schedule's cadence, composed from many keys). The key's own template, over the English stored beside the
+ * data, is what a reader without `say`, or one `say` cannot read, shows.
+ */
+export function sayTextRefWith(key: CoreKey, say: ComputedSaying): void {
+  computedSayings.set(key, say);
+}
+
 /** `ref` said by `t`, its nested references first; undefined when a key in it is not one this build knows. */
 export function renderTextRef(ref: TextRef, t: CoreT = coreEnglish): string | undefined {
   if (!isCoreKey(ref.key)) return undefined;
   if (ref.params === undefined) return t(ref.key);
+  const computed = computedSayings.get(ref.key)?.(ref.params, t);
+  if (computed !== undefined) return computed;
   const params: { [name: string]: string | number } = {};
   for (const [name, value] of Object.entries(ref.params)) {
     if (typeof value !== "object") params[name] = value;

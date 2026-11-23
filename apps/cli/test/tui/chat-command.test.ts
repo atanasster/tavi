@@ -357,7 +357,7 @@ describe("tavi chat over a scripted owner", () => {
   const chatOver = (
     client: ScriptedClient,
     extra: Record<string, string> = {},
-    deps: { readonly answerSettleMs?: number; readonly workerPollMs?: number } = {},
+    deps: { readonly answerSettleMs?: number; readonly workerPollMs?: number; readonly languagePollMs?: number } = {},
   ) => {
     // Wide enough that no line these tests look for wraps.
     const tty = fakeTty({ rows: 24, columns: 200 });
@@ -378,6 +378,36 @@ describe("tavi chat over a scripted owner", () => {
         request.command !== "workspace-settings" &&
         !(request.command === "plugin-commands" && (request.payload as { action?: string }).action === "list"),
     );
+  /**
+   * One pending round, `approval-a` on call `call-a`, as the chat attaching to its task replays it: the run's start and
+   * the round, a write of notes.md unless `round` says otherwise.
+   */
+  const pendingRound = (round: Record<string, unknown> = {}): ScriptedClient["subscribed"] => ({
+    result: { replayed: 2, resync: false, truncated: false, roundsAnsweredBy: "client" },
+    events: [
+      event(0, "run.started", { threadId: "thread-1", workspaceId: "default" }),
+      event(1, "approval.required", {
+        callId: "call-a",
+        toolName: "fs.write",
+        summary: "Write notes.md?",
+        input: {},
+        steps: 1,
+        approvalId: "approval-a",
+        effect: "mutating",
+        ...round,
+      }),
+    ],
+  });
+  /** That round's pending row, as `approvals` answers it. */
+  const pendingRows =
+    (toolId = "fs.write", steps = 1) =>
+    () => ({
+      ok: true as const,
+      result: {
+        rows: [{ record: { approvalId: "approval-a", taskId: "task-1", callId: "call-a", toolId, steps, createdAt: AT }, task: {} }],
+        truncated: false,
+      },
+    });
   /** A task's record, as `tasks { taskId }` answers it, settled on `result`. */
   const recorded = (result: unknown) => ({
     ok: true,
@@ -584,34 +614,9 @@ describe("tavi chat over a scripted owner", () => {
 
   it("takes a plugin's command typed while a round is offered, rather than its keys as a decision", async () => {
     const client = new ScriptedClient();
-    client.subscribed = {
-      result: { replayed: 2, resync: false, truncated: false, roundsAnsweredBy: "client" },
-      events: [
-        event(0, "run.started", { threadId: "thread-1", workspaceId: "default" }),
-        event(1, "approval.required", {
-          callId: "call-a",
-          toolName: "fs.write",
-          summary: "Write notes.md?",
-          input: {},
-          steps: 1,
-          approvalId: "approval-a",
-          effect: "mutating",
-        }),
-      ],
-    };
+    client.subscribed = pendingRound();
     client.answers = {
-      approvals: () => ({
-        ok: true,
-        result: {
-          rows: [
-            {
-              record: { approvalId: "approval-a", taskId: "task-1", callId: "call-a", toolId: "fs.write", steps: 1, createdAt: AT },
-              task: {},
-            },
-          ],
-          truncated: false,
-        },
-      }),
+      approvals: pendingRows(),
       "plugin-commands": (payload) =>
         (payload as { action: string }).action === "list"
           ? { ok: true, result: { commands: [{ name: "tally", pluginId: "acme.tally", description: "Counts." }] } }
@@ -657,6 +662,11 @@ describe("tavi chat over a scripted owner", () => {
         (request) => request.command === "plugin-commands" && (request.payload as { action: string }).action === "list",
       ).length;
     expect(lists()).toBe(1);
+    // The listing names the chat's workspace, whose language Tavi's own commands are described in.
+    expect(client.requests.find((request) => request.command === "plugin-commands")?.payload).toEqual({
+      action: "list",
+      workspaceId: "default",
+    });
     // The owner restarts with another plugin; the line was cleared while the chat followed nothing.
     commands = [{ name: "tally", pluginId: "acme.tally", description: "Counts." }];
     client.become("reconnecting");
@@ -676,34 +686,9 @@ describe("tavi chat over a scripted owner", () => {
 
   it("sends one decision for two keys in one chunk, and one abort for two Escs", async () => {
     const client = new ScriptedClient();
-    client.subscribed = {
-      result: { replayed: 2, resync: false, truncated: false, roundsAnsweredBy: "client" },
-      events: [
-        event(0, "run.started", { threadId: "thread-1", workspaceId: "default" }),
-        event(1, "approval.required", {
-          callId: "call-a",
-          toolName: "fs.write",
-          summary: "Write notes.md?",
-          input: {},
-          steps: 1,
-          approvalId: "approval-a",
-          effect: "mutating",
-        }),
-      ],
-    };
+    client.subscribed = pendingRound();
     client.answers = {
-      approvals: () => ({
-        ok: true,
-        result: {
-          rows: [
-            {
-              record: { approvalId: "approval-a", taskId: "task-1", callId: "call-a", toolId: "fs.write", steps: 1, createdAt: AT },
-              task: {},
-            },
-          ],
-          truncated: false,
-        },
-      }),
+      approvals: pendingRows(),
       // Never answered in time for the second key: the first must hold it off by itself.
       approve: () => ({ ok: true, result: {} }),
     };
@@ -808,21 +793,7 @@ describe("tavi chat over a scripted owner", () => {
 
   it("takes a pane command while a round is offered — its keys never decide the round — and Esc drops it", async () => {
     const client = new ScriptedClient();
-    client.subscribed = {
-      result: { replayed: 2, resync: false, truncated: false, roundsAnsweredBy: "client" },
-      events: [
-        event(0, "run.started", { threadId: "thread-1", workspaceId: "default" }),
-        event(1, "approval.required", {
-          callId: "call-a",
-          toolName: "fs.write",
-          summary: "Write notes.md?",
-          input: {},
-          steps: 1,
-          approvalId: "approval-a",
-          effect: "mutating",
-        }),
-      ],
-    };
+    client.subscribed = pendingRound();
     const row = {
       record: { approvalId: "approval-a", taskId: "task-1", callId: "call-a", toolId: "fs.write", steps: 1, createdAt: AT },
       task: {},
@@ -919,18 +890,7 @@ describe("tavi chat over a scripted owner", () => {
       ],
     };
     client.answers = {
-      approvals: () => ({
-        ok: true,
-        result: {
-          rows: [
-            {
-              record: { approvalId: "approval-a", taskId: "task-1", callId: "call-a", toolId: "fs.write", steps: 1, createdAt: AT },
-              task: {},
-            },
-          ],
-          truncated: false,
-        },
-      }),
+      approvals: pendingRows(),
       // The task is not in the chat's workspace: the owner refuses its mailbox, not the agents.
       agents: (payload) =>
         (payload as { taskId?: string }).taskId === undefined
@@ -1008,37 +968,17 @@ describe("tavi chat over a scripted owner", () => {
   it("offers a round's scopes as keys and sends them, and takes a rejection's reason after N", async () => {
     for (const keys of ["s", "a", "N"] as const) {
       const client = new ScriptedClient();
-      client.subscribed = {
-        result: { replayed: 2, resync: false, truncated: false, roundsAnsweredBy: "client" },
-        events: [
-          event(0, "run.started", { threadId: "thread-1", workspaceId: "default" }),
-          event(1, "approval.required", {
-            callId: "call-a",
-            toolName: "sandbox.run",
-            summary: "Run `make test` in the sandbox",
-            input: { command: "make", args: ["test"] },
-            steps: 1,
-            approvalId: "approval-a",
-            effect: "external",
-            risk: { level: "medium", reasons: ["this plugin asks for approval before its tools run"], tainted: false },
-            display: { title: "Run `make test` in the sandbox", command: "make test" },
-            allowedScopes: ["once", "session", "always"],
-          }),
-        ],
-      };
+      client.subscribed = pendingRound({
+        toolName: "sandbox.run",
+        summary: "Run `make test` in the sandbox",
+        input: { command: "make", args: ["test"] },
+        effect: "external",
+        risk: { level: "medium", reasons: ["this plugin asks for approval before its tools run"], tainted: false },
+        display: { title: "Run `make test` in the sandbox", command: "make test" },
+        allowedScopes: ["once", "session", "always"],
+      });
       client.answers = {
-        approvals: () => ({
-          ok: true,
-          result: {
-            rows: [
-              {
-                record: { approvalId: "approval-a", taskId: "task-1", callId: "call-a", toolId: "sandbox.run", steps: 1, createdAt: AT },
-                task: {},
-              },
-            ],
-            truncated: false,
-          },
-        }),
+        approvals: pendingRows("sandbox.run"),
         tasks: () => ({
           ok: true,
           result: { found: true, task: { taskId: "task-1", workspaceId: "default", status: "waiting" }, admissions: [] },
@@ -1071,35 +1011,9 @@ describe("tavi chat over a scripted owner", () => {
 
   it("ignores a scope a round does not offer, and cancels a rejection with Esc without aborting the turn", async () => {
     const client = new ScriptedClient();
-    client.subscribed = {
-      result: { replayed: 2, resync: false, truncated: false, roundsAnsweredBy: "client" },
-      events: [
-        event(0, "run.started", { threadId: "thread-1", workspaceId: "default" }),
-        event(1, "approval.required", {
-          callId: "call-a",
-          toolName: "fs.write",
-          summary: "Write notes.md?",
-          input: {},
-          steps: 1,
-          approvalId: "approval-a",
-          effect: "mutating",
-          allowedScopes: ["once"],
-        }),
-      ],
-    };
+    client.subscribed = pendingRound({ allowedScopes: ["once"] });
     client.answers = {
-      approvals: () => ({
-        ok: true,
-        result: {
-          rows: [
-            {
-              record: { approvalId: "approval-a", taskId: "task-1", callId: "call-a", toolId: "fs.write", steps: 1, createdAt: AT },
-              task: {},
-            },
-          ],
-          truncated: false,
-        },
-      }),
+      approvals: pendingRows(),
       tasks: () => ({
         ok: true,
         result: { found: true, task: { taskId: "task-1", workspaceId: "default", status: "waiting" }, admissions: [] },
@@ -1119,37 +1033,11 @@ describe("tavi chat over a scripted owner", () => {
 
   it("speaks the workspace's language: Bulgarian chrome, д approves as y does, and a key the round does not offer is ignored", async () => {
     const client = new ScriptedClient();
-    client.subscribed = {
-      result: { replayed: 2, resync: false, truncated: false, roundsAnsweredBy: "client" },
-      events: [
-        event(0, "run.started", { threadId: "thread-1", workspaceId: "default" }),
-        event(1, "approval.required", {
-          callId: "call-a",
-          toolName: "fs.write",
-          summary: "Write notes.md?",
-          input: {},
-          steps: 4,
-          approvalId: "approval-a",
-          effect: "mutating",
-          allowedScopes: ["once"],
-        }),
-      ],
-    };
+    client.subscribed = pendingRound({ steps: 4, allowedScopes: ["once"] });
     client.answers = {
       "workspace-settings": () => ({ ok: true, result: { settings: { locale: "bg" }, effective: {} } }),
       approve: () => ({ ok: false, error: { code: "CONFLICT", message: "round 4 is no longer pending" } }),
-      approvals: () => ({
-        ok: true,
-        result: {
-          rows: [
-            {
-              record: { approvalId: "approval-a", taskId: "task-1", callId: "call-a", toolId: "fs.write", steps: 4, createdAt: AT },
-              task: {},
-            },
-          ],
-          truncated: false,
-        },
-      }),
+      approvals: pendingRows("fs.write", 4),
     };
     const { tty, done } = chatOver(client, { attach: "task-1" });
     await waitFor(() => tty.output().includes("д — одобри, н — откажи, Н — откажи с причина"));
@@ -1169,39 +1057,37 @@ describe("tavi chat over a scripted owner", () => {
     await done;
   });
 
+  it("switches to Bulgarian mid-chat when the workspace's language changes, without a restart", async () => {
+    const client = new ScriptedClient();
+    client.subscribed = pendingRound({ steps: 4, allowedScopes: ["once"] });
+    let locale = "en";
+    client.answers = {
+      "workspace-settings": () => ({ ok: true, result: { settings: { locale }, effective: {} } }),
+      approvals: pendingRows("fs.write", 4),
+    };
+    const { tty, done } = chatOver(client, { attach: "task-1" }, { languagePollMs: 20 });
+    await waitFor(() => tty.output().includes("y approves it"));
+    expect(tty.output()).not.toContain("д — одобри");
+    // `tavi config set workspace.locale bg` elsewhere: the open chat hears it on its next read.
+    locale = "bg";
+    await waitFor(() => tty.output().includes("д — одобри"));
+    tty.type(CTRL_C);
+    await done;
+  });
+
   it("grants in Bulgarian what the English keys grant: ч the session, в always, Н a rejection with its reason", async () => {
     for (const keys of ["ч", "в", "Н"] as const) {
       const client = new ScriptedClient();
-      client.subscribed = {
-        result: { replayed: 2, resync: false, truncated: false, roundsAnsweredBy: "client" },
-        events: [
-          event(0, "run.started", { threadId: "thread-1", workspaceId: "default" }),
-          event(1, "approval.required", {
-            callId: "call-a",
-            toolName: "sandbox.run",
-            summary: "Run `make test` in the sandbox",
-            input: { command: "make", args: ["test"] },
-            steps: 1,
-            approvalId: "approval-a",
-            effect: "external",
-            allowedScopes: ["once", "session", "always"],
-          }),
-        ],
-      };
+      client.subscribed = pendingRound({
+        toolName: "sandbox.run",
+        summary: "Run `make test` in the sandbox",
+        input: { command: "make", args: ["test"] },
+        effect: "external",
+        allowedScopes: ["once", "session", "always"],
+      });
       client.answers = {
         "workspace-settings": () => ({ ok: true, result: { settings: { locale: "bg" }, effective: {} } }),
-        approvals: () => ({
-          ok: true,
-          result: {
-            rows: [
-              {
-                record: { approvalId: "approval-a", taskId: "task-1", callId: "call-a", toolId: "sandbox.run", steps: 1, createdAt: AT },
-                task: {},
-              },
-            ],
-            truncated: false,
-          },
-        }),
+        approvals: pendingRows("sandbox.run"),
         tasks: () => ({
           ok: true,
           result: { found: true, task: { taskId: "task-1", workspaceId: "default", status: "waiting" }, admissions: [] },
@@ -2182,34 +2068,9 @@ describe("tavi chat over a scripted owner", () => {
 
   it("keeps a form's keys its own while a round is offered: none decides the round", async () => {
     const client = new ScriptedClient();
-    client.subscribed = {
-      result: { replayed: 2, resync: false, truncated: false, roundsAnsweredBy: "client" },
-      events: [
-        event(0, "run.started", { threadId: "thread-1", workspaceId: "default" }),
-        event(1, "approval.required", {
-          callId: "call-a",
-          toolName: "fs.write",
-          summary: "Write notes.md?",
-          input: {},
-          steps: 1,
-          approvalId: "approval-a",
-          effect: "mutating",
-        }),
-      ],
-    };
+    client.subscribed = pendingRound();
     client.answers = {
-      approvals: () => ({
-        ok: true,
-        result: {
-          rows: [
-            {
-              record: { approvalId: "approval-a", taskId: "task-1", callId: "call-a", toolId: "fs.write", steps: 1, createdAt: AT },
-              task: {},
-            },
-          ],
-          truncated: false,
-        },
-      }),
+      approvals: pendingRows(),
       approve: () => ({ ok: true, result: {} }),
       credentials: () => ({ ok: true, result: { stored: "yandex" } }),
     };
@@ -2298,18 +2159,7 @@ describe("tavi chat over a scripted owner", () => {
       return original(taskId, options);
     };
     client.answers = {
-      approvals: () => ({
-        ok: true,
-        result: {
-          rows: [
-            {
-              record: { approvalId: "approval-a", taskId: "task-1", callId: "call-a", toolId: "fs.write", steps: 1, createdAt: AT },
-              task: {},
-            },
-          ],
-          truncated: false,
-        },
-      }),
+      approvals: pendingRows(),
       approve: () => ({ ok: true, result: {} }),
     };
     const tty = fakeTty({ rows: 24, columns: 200 });

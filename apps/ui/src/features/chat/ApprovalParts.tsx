@@ -106,14 +106,15 @@ export function Provenance({ request }: { readonly request: PendingRound["reques
         <ul className="arg-origins list-reset meta-sm" aria-label={t("chat.provenance.origins")}>
           {origins.map((origin) => (
             <li key={`${origin.path}:${origin.value}`}>
-              {/* Quoted, as the terminal says it: the value is the call's, the words after it where it came from. */}“
+              {/* Quoted, as the terminal says it: the value is the call's, the words after it where it came from. */}
+              {t("chat.provenance.openQuote")}
               <mark
                 className={`arg-origin arg-origin-${origin.from}`}
                 title={neutralizedText(origin.path, ARG_PROVENANCE_LIMITS.maxPathChars)}
               >
                 {neutralizedText(origin.value, ORIGIN_VALUE_CHARS)}
               </mark>
-              ” {argOriginWords(origin, translateCore)}
+              {t("chat.provenance.closeQuote")} {argOriginWords(origin, translateCore)}
             </li>
           ))}
         </ul>

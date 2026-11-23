@@ -12,6 +12,7 @@ import type { SettingsClient } from "../../../src/lib/ipc.js";
 import { ViewBoundary } from "../../../src/ui/ViewBoundary.js";
 import { InWorkspace } from "../../support/workspace.js";
 import { mount, settle, unmountAll } from "../../support/dom.js";
+import { inspectorAnswer, inspectorPage } from "../../support/routines.js";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 /** Schedule, where the routines live, with its address held in state, as the router holds it. */
@@ -221,25 +222,11 @@ describe("the run inspector", () => {
 
   it("says why a failed run failed, and that an older one's reason was not kept", async () => {
     const shown = async (data: Record<string, unknown>, status = "failed") => {
+      const inspect = { run: { ...run, status, data: { ...run.data, ...data } }, publication: null, deliveries: [], attempts: [] };
       const client: SettingsClient = {
-        request: async (_command, raw) => {
-          const action = (raw as Record<string, unknown>)["action"];
-          const result =
-            action === "inspect"
-              ? { run: { ...run, status, data: { ...run.data, ...data } }, publication: null, deliveries: [], attempts: [] }
-              : action === "ledger"
-                ? { events: [] }
-                : action === "sources"
-                  ? { sources: [], nextAfterSourceId: null }
-                  : {};
-          return { ok: true, result } as never;
-        },
+        request: async (_command, raw) => ({ ok: true, result: inspectorAnswer(raw, inspect) }) as never,
       };
-      const page = await mount(
-        <InWorkspace client={client} workspaceId="default">
-          <RunInspector timeZone="UTC" routineId="routine" routineName="LLM news" runId="run" onBack={() => {}} onFollow={async () => {}} />
-        </InWorkspace>,
-      );
+      const page = await mount(inspectorPage(client));
       return page.querySelector(".run-failure")?.textContent;
     };
     expect(await shown({ failureDetail: "Required research did not complete: Routine model budget exhausted" })).toBe(
@@ -316,13 +303,7 @@ describe("the run inspector", () => {
               }
             : command === "approvals" && input["action"] === "answer"
               ? { taskId: "task-run", waitId: "w1", answers: ["Hold"] }
-              : input["action"] === "inspect"
-                ? { run: live, publication: null, deliveries: [], attempts: [] }
-                : input["action"] === "ledger"
-                  ? { events: [] }
-                  : input["action"] === "sources"
-                    ? { sources: [], nextAfterSourceId: null }
-                    : {};
+              : inspectorAnswer(input, { run: live, publication: null, deliveries: [], attempts: [] });
         return { ok: true, result } as never;
       },
     };

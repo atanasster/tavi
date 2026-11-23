@@ -12,7 +12,6 @@ import {
   schedulePrecheckSentence,
   scheduleWatchSentence,
   scheduleFinished,
-  SCHEDULE_FINISHED_TEXT,
   SCHEDULE_EVENT_MAX_TOKENS,
   scheduleWebhookPath,
   type ScheduleRecord,
@@ -37,6 +36,8 @@ import {
   writeSchedule,
 } from "./actions.js";
 import { definedOnly, errorMessage } from "@tavi/contracts/util";
+import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
+import { ownerWords, storeWords } from "../../shared/terminal-words.js";
 import { prefixedId } from "@tavi/node-kit";
 import { attachToRunningTask } from "../run/attached.js";
 import { fireFinalText } from "../run/client-events.js";
@@ -131,12 +132,15 @@ async function schedulesOnOwner(options: ResolvedDataDirectory<SchedulesCommandO
         emitJson(io, result);
         return EXIT.ok;
       }
+      // Text speaks the workspace's language; `--format json` stays English.
+      const t = options.format === "json" ? coreEnglish : await ownerWords(client, options.workspaceId);
       switch (options.action) {
         case "list": {
           const listed = result as { readonly schedules: readonly Omit<ScheduleRecord, "prompt">[]; readonly truncated: boolean };
           if (options.format === "json") emitJson(io, listed.schedules);
-          else for (const schedule of listed.schedules) io.stdout(scheduleLine(schedule));
-          if (listed.truncated) io.stderr(`note: the owner lists the first ${listed.schedules.length} schedules\n`);
+          else for (const schedule of listed.schedules) io.stdout(scheduleLine(schedule, t));
+          if (listed.truncated)
+            io.stderr(t("cli.schedules.note.truncated", { count: listed.schedules.length, n: String(listed.schedules.length) }));
           return EXIT.ok;
         }
         case "agenda": {
@@ -157,10 +161,10 @@ async function schedulesOnOwner(options: ResolvedDataDirectory<SchedulesCommandO
           return EXIT.ok;
         }
         case "show":
-          emit(io, options.format, result as ScheduleShowResult, scheduleShowText);
+          emit(io, options.format, result as ScheduleShowResult, (policy) => scheduleShowText(policy, t));
           return EXIT.ok;
         case "remove":
-          emit(io, options.format, result as { readonly removed: string }, scheduleRemovedText);
+          emit(io, options.format, result as { readonly removed: string }, (value) => scheduleRemovedText(value, t));
           return EXIT.ok;
         case "webhook":
           emit(io, options.format, result as ScheduleWebhookAnswer, scheduleWebhookText);
@@ -196,12 +200,12 @@ async function schedulesOnOwner(options: ResolvedDataDirectory<SchedulesCommandO
         case "add":
         case "update":
           // As the offline write prints it: its cadence, then the same notes.
-          emit(io, options.format, result as ScheduleRecord, scheduleWrittenLine);
-          io.stderr(scheduleWriteNotes(result as ScheduleRecord));
+          emit(io, options.format, result as ScheduleRecord, (value) => scheduleWrittenLine(value, t));
+          io.stderr(scheduleWriteNotes(result as ScheduleRecord, t));
           io.stderr(maxTokensWarning(options.maxTokens));
           return EXIT.ok;
         default:
-          emit(io, options.format, result as ScheduleRecord, scheduleStateLine);
+          emit(io, options.format, result as ScheduleRecord, (value) => scheduleStateLine(value, t));
           return EXIT.ok;
       }
     },
@@ -231,6 +235,8 @@ export async function schedulesCommand(options: ResolvedDataDirectory<SchedulesC
 
     return await withStorePreservingOwnership(options.dataDirectory, async (store) => {
       const schedules = store.asPort().repositories.schedules;
+      // Text speaks the workspace's language; `--format json` stays English.
+      const t = options.format === "json" ? coreEnglish : await storeWords(store, options.workspaceId);
       if (options.action === "agenda") {
         const agenda = await scheduleAgenda(store.asPort().repositories, schedulePayload(options), new Date());
         const specs =
@@ -265,14 +271,14 @@ export async function schedulesCommand(options: ResolvedDataDirectory<SchedulesC
           emitJson(io, all);
           return EXIT.ok;
         }
-        for (const schedule of all) io.stdout(scheduleLine(schedule));
+        for (const schedule of all) io.stdout(scheduleLine(schedule, t));
         return EXIT.ok;
       }
 
       if (options.action === "add" || options.action === "update") {
         const created = await writeSchedule(store.asPort().repositories, schedulePayload(options), new Date());
-        emit(io, options.format, created, scheduleWrittenLine);
-        io.stderr(scheduleWriteNotes(created));
+        emit(io, options.format, created, (value) => scheduleWrittenLine(value, t));
+        io.stderr(scheduleWriteNotes(created, t));
         io.stderr(maxTokensWarning(options.maxTokens));
         return EXIT.ok;
       }
@@ -285,7 +291,7 @@ export async function schedulesCommand(options: ResolvedDataDirectory<SchedulesC
       }
 
       if (options.action === "show") {
-        emit(io, options.format, await scheduleShow(store.asPort().repositories, schedule), scheduleShowText);
+        emit(io, options.format, await scheduleShow(store.asPort().repositories, schedule), (policy) => scheduleShowText(policy, t));
         return EXIT.ok;
       }
 
@@ -319,7 +325,7 @@ export async function schedulesCommand(options: ResolvedDataDirectory<SchedulesC
 
       if (options.action === "remove") {
         await schedules.remove(schedule.scheduleId);
-        emit(io, options.format, { removed: schedule.scheduleId }, scheduleRemovedText);
+        emit(io, options.format, { removed: schedule.scheduleId }, (value) => scheduleRemovedText(value, t));
         return EXIT.ok;
       }
 
@@ -328,7 +334,7 @@ export async function schedulesCommand(options: ResolvedDataDirectory<SchedulesC
         // a mutating command that prints an empty line leaves the operator
         // unable to tell whether it did anything, let alone when it will run)
         const updated = await setScheduleEnabled(schedules, schedule, options.action === "enable", new Date());
-        emit(io, options.format, updated, scheduleStateLine);
+        emit(io, options.format, updated, (value) => scheduleStateLine(value, t));
         return EXIT.ok;
       }
 
@@ -349,51 +355,110 @@ export async function schedulesCommand(options: ResolvedDataDirectory<SchedulesC
  * left implicit in the stored allowlist, so that an operator
  * can see what an unattended run is permitted to do without reading the schema.
  */
-function scheduleShowText(policy: ScheduleShowResult): string {
-  return [
-    `schedule ${policy.scheduleId} (${policy.name})`,
-    `  fires       ${cadenceReadBack(policy.spec)}`,
-    `  state       ${policy.enabled ? "enabled" : scheduleFinished(policy.spec, new Date()) ? SCHEDULE_FINISHED_TEXT : policy.pausedReason === undefined ? "disabled" : schedulePausedText(policy)}`,
-    `  next fire   ${nextRunText(policy)}`,
+function scheduleShowText(policy: ScheduleShowResult, t: CoreT = coreEnglish): string {
+  const zone = policy.timezone;
+  const rows: [CoreKey, string][] = [
+    ["cli.schedules.label.fires", cadenceReadBack(policy.spec, t)],
+    [
+      "cli.schedules.label.state",
+      policy.enabled
+        ? t("cli.schedules.state.enabled")
+        : scheduleFinished(policy.spec, new Date())
+          ? t("schedule.finished")
+          : policy.pausedReason === undefined
+            ? t("cli.schedules.state.disabled")
+            : (schedulePausedText(policy, new Date(), t) ?? ""),
+    ],
+    ["cli.schedules.label.next", nextRunText(policy, t)],
     // `lastOutcome` is `null` for a schedule that has never run, not
     // `undefined` — testing only for `undefined` printed "never (null)".
-    `  last run    ${policy.lastRunAt === null ? "never" : fireTimeText(policy.lastRunAt, policy.timezone)}${policy.lastOutcome === null ? "" : ` (${lastOutcomeText(policy.lastOutcome, policy.timezone)})`}`,
-    `  failures    ${policy.consecutiveFailures} consecutive`,
-    `  prompt      ${policy.prompt}`,
-    `  missed      ${policy.missedRunPolicy}`,
-    `  runs as     ${policy.agentId ?? "(the base instructions)"}`,
-    `  alert       ${policy.alert === undefined ? "none" : `${policy.alert.connectionId} -> ${policy.alert.destination}`}`,
-    `  questions   ${policy.humanCheckpoints === "ask-with-default" ? "may ask in the alert destination, with a default taken if nobody answers before the next fire" : "never asks"}`,
-    `  delivers    ${policy.deliverTo === "home" ? "its result into Home, as a notice" : "only what the run sends itself"}`,
-    `  notifies    ${scheduleNotifyText(policy.notify)}; failures always`,
-    `  run limit   ${scheduleMaxRunMinutes(policy)} minutes of work${policy.maxRunMinutes === undefined ? " (the default)" : ""}, then stopped`,
-    `  tokens      ${policy.maxTokens === undefined ? `no ceiling${policy.webhook === undefined && policy.emailTrigger === undefined ? "" : `; ${tokenCountText(SCHEDULE_EVENT_MAX_TOKENS)} for a run a webhook or email starts`}` : `${tokenCountText(policy.maxTokens)} a run, its workers included, then stopped`}`,
-    `  folder      ${policy.folder === undefined ? "each run's own" : policy.folder}`,
-    `  pre-check   ${schedulePrecheckSentence(policy.precheck)}${policy.precheckState === undefined ? "" : ` (last read ${fireTimeText(policy.precheckState.checkedAt, policy.timezone)})`}`,
-    ...(policy.watch === true ? [`  watcher     ${scheduleWatchSentence(policy) ?? ""}`] : []),
-    `  email       ${scheduleEmailTriggerSentence(policy.emailTrigger)}`,
-    `  webhook     ${policy.webhook === undefined ? "off" : `on at ${policy.webhookUrl ?? scheduleWebhookPath(policy.scheduleId)} (secret made ${fireTimeText(policy.webhook.since, policy.timezone)})`}`,
-    "  may call unattended:",
+    [
+      "cli.schedules.label.last",
+      `${policy.lastRunAt === null ? t("cli.schedules.never") : fireTimeText(policy.lastRunAt, zone, t)}${policy.lastOutcome === null ? "" : ` (${lastOutcomeText(policy.lastOutcome, zone, t)})`}`,
+    ],
+    [
+      "cli.schedules.label.failures",
+      t("cli.schedules.consecutive", { count: policy.consecutiveFailures, n: String(policy.consecutiveFailures) }),
+    ],
+    ["cli.schedules.label.prompt", policy.prompt],
+    ["cli.schedules.label.missed", missedWord(policy.missedRunPolicy, t)],
+    ["cli.schedules.label.runsAs", policy.agentId ?? t("cli.schedules.baseInstructions")],
+    [
+      "cli.schedules.label.alert",
+      policy.alert === undefined ? t("cli.schedules.none") : `${policy.alert.connectionId} -> ${policy.alert.destination}`,
+    ],
+    [
+      "cli.schedules.label.questions",
+      t(policy.humanCheckpoints === "ask-with-default" ? "cli.schedules.questions.ask" : "cli.schedules.questions.never"),
+    ],
+    ["cli.schedules.label.delivers", t(policy.deliverTo === "home" ? "cli.schedules.delivers.home" : "cli.schedules.delivers.self")],
+    ["cli.schedules.label.notifies", t("cli.schedules.notifies", { notify: scheduleNotifyText(policy.notify, t) })],
+    [
+      "cli.schedules.label.runLimit",
+      t("cli.schedules.runLimit", {
+        count: scheduleMaxRunMinutes(policy),
+        n: String(scheduleMaxRunMinutes(policy)),
+        default: policy.maxRunMinutes === undefined ? t("cli.schedules.runLimit.default") : "",
+      }),
+    ],
+    [
+      "cli.schedules.label.tokens",
+      policy.maxTokens === undefined
+        ? `${t("cli.schedules.tokens.none")}${policy.webhook === undefined && policy.emailTrigger === undefined ? "" : t("cli.schedules.tokens.events", { tokens: tokenCountText(SCHEDULE_EVENT_MAX_TOKENS, t) })}`
+        : t("cli.schedules.tokens.set", { tokens: tokenCountText(policy.maxTokens, t) }),
+    ],
+    ["cli.schedules.label.folder", policy.folder === undefined ? t("cli.schedules.folder.own") : policy.folder],
+    [
+      "cli.schedules.label.precheck",
+      `${schedulePrecheckSentence(policy.precheck, t)}${policy.precheckState === undefined ? "" : t("cli.schedules.precheck.read", { time: fireTimeText(policy.precheckState.checkedAt, zone, t) })}`,
+    ],
+    ...(policy.watch === true ? [["cli.schedules.label.watcher", scheduleWatchSentence(policy, t) ?? ""] as [CoreKey, string]] : []),
+    ["cli.schedules.label.email", scheduleEmailTriggerSentence(policy.emailTrigger, t)],
+    [
+      "cli.schedules.label.webhook",
+      policy.webhook === undefined
+        ? t("cli.schedules.webhook.off")
+        : t("cli.schedules.webhook.on", {
+            url: policy.webhookUrl ?? scheduleWebhookPath(policy.scheduleId),
+            time: fireTimeText(policy.webhook.since, zone, t),
+          }),
+    ],
+  ];
+  // The labels line up: English pads each to 12, as before; a longer label in another language widens the column.
+  const width = Math.max(12, ...rows.map(([key]) => t(key).length + 2));
+  return [
+    t("cli.schedules.show.title", { id: policy.scheduleId, name: policy.name }),
+    ...rows.map(([key, value]) => `  ${t(key).padEnd(width)}${value}`),
+    `  ${t("cli.schedules.mayCall")}`,
     ...(policy.autoApproveTools.length === 0
-      ? ["    (nothing — every gated tool call is denied)"]
+      ? [`    ${t("cli.schedules.mayCall.nothing")}`]
       : policy.autoApproveTools.map((pattern) => `    ${pattern}`)),
-    `  recent fires (${policy.timezone}):`,
-    ...(policy.recentFires.length === 0 ? ["    (none recorded)"] : fireLines(policy.recentFires, policy.timezone, "    ")),
+    `  ${t("cli.schedules.recentFires", { timezone: zone })}`,
+    ...(policy.recentFires.length === 0 ? [`    ${t("cli.schedules.noneRecorded")}`] : fireLines(policy.recentFires, zone, "    ", t)),
   ].join("\n");
 }
 
+/** A missed-run policy in `t`'s words; English says the stored code, as before. */
+function missedWord(policy: string, t: CoreT): string {
+  if (policy === "skip") return t("cli.schedules.missed.skip");
+  if (policy === "run-once-if-missed-within-6h") return t("cli.schedules.missed.catchUp");
+  return policy;
+}
+
 /** A stored outcome as the terminal says it: the scheduler's mark for a fire being handed to its run is never a result. */
-function lastOutcomeText(outcome: string, timezone: string): string {
+function lastOutcomeText(outcome: string, timezone: string, t: CoreT): string {
   const due = /^dispatching the (\S+) fire$/.exec(outcome)?.[1];
-  return due === undefined ? outcome : `running (fire due ${fireTimeText(due, timezone)})`;
+  return due === undefined ? outcome : t("cli.schedules.running", { time: fireTimeText(due, timezone, t) });
 }
 
 /**
  * A schedule's next run in its own zone, as its read-back says it ("Wed 28 Oct
  * 07:00"): "-" when it is paused or not armed.
  */
-function nextRunText(schedule: Pick<ScheduleRecord, "enabled" | "nextRunAt" | "spec">): string {
-  return schedule.enabled && schedule.nextRunAt !== null ? formatReminderTime(new Date(schedule.nextRunAt), schedule.spec.timezone) : "-";
+function nextRunText(schedule: Pick<ScheduleRecord, "enabled" | "nextRunAt" | "spec">, t: CoreT): string {
+  return schedule.enabled && schedule.nextRunAt !== null
+    ? formatReminderTime(new Date(schedule.nextRunAt), schedule.spec.timezone, new Date(), t)
+    : "-";
 }
 
 /**
@@ -401,22 +466,30 @@ function nextRunText(schedule: Pick<ScheduleRecord, "enabled" | "nextRunAt" | "s
  * each without its prompt. Its cadence and next run are in its zone, as the
  * schedule's read-back says them, with how many fires in a row have failed.
  */
-function scheduleLine(schedule: Omit<ScheduleRecord, "prompt">): string {
+function scheduleLine(schedule: Omit<ScheduleRecord, "prompt">, t: CoreT): string {
+  const state = schedule.enabled
+    ? t("cli.schedules.state.enabled")
+    : scheduleFinished(schedule.spec, new Date())
+      ? t("cli.schedules.state.finished")
+      : schedule.pausedReason === undefined
+        ? t("cli.schedules.state.disabled")
+        : t("cli.schedules.state.paused", { reason: schedule.pausedReason });
+  const last = schedule.lastOutcome === null ? t("cli.schedules.never") : lastOutcomeText(schedule.lastOutcome, schedule.spec.timezone, t);
   return (
-    `${schedule.scheduleId}\t${schedule.name}\t${whenText(schedule)}\t` +
-    `${schedule.enabled ? "enabled" : scheduleFinished(schedule.spec, new Date()) ? "finished" : schedule.pausedReason === undefined ? "disabled" : `paused:${schedule.pausedReason}`}\tnext=${nextRunText(schedule)}\tfailures=${schedule.consecutiveFailures}\t` +
-    `last=${schedule.lastOutcome === null ? "never" : lastOutcomeText(schedule.lastOutcome, schedule.spec.timezone)}\n`
+    `${schedule.scheduleId}\t${schedule.name}\t${whenText(schedule, t)}\t` +
+    `${state}\t${t("cli.schedules.list.next", { time: nextRunText(schedule, t) })}\t${t("cli.schedules.list.failures", { n: String(schedule.consecutiveFailures) })}\t` +
+    `${t("cli.schedules.list.last", { outcome: last })}\n`
   );
 }
 
 /** When a schedule runs, as `list` and `add` say it: a watcher by what it watches, any other by its cadence. */
-function whenText(schedule: Pick<ScheduleRecord, "spec" | "precheck" | "watch">): string {
-  return (schedule.watch === true ? scheduleWatchSentence(schedule) : undefined) ?? cadenceReadBack(schedule.spec);
+function whenText(schedule: Pick<ScheduleRecord, "spec" | "precheck" | "watch">, t: CoreT): string {
+  return (schedule.watch === true ? scheduleWatchSentence(schedule, t) : undefined) ?? cadenceReadBack(schedule.spec, t);
 }
 
 /** `tavi schedules add|update|watch`'s text (`emit` ends the line): the id, when it runs, its state and its next run. */
-function scheduleWrittenLine(value: ScheduleRecord): string {
-  return `${value.scheduleId}\t${value.name}\t${whenText(value)}\t${value.enabled ? "enabled" : "disabled"}\tnext=${nextRunText(value)}`;
+function scheduleWrittenLine(value: ScheduleRecord, t: CoreT): string {
+  return `${value.scheduleId}\t${value.name}\t${whenText(value, t)}\t${t(value.enabled ? "cli.schedules.state.enabled" : "cli.schedules.state.disabled")}\t${t("cli.schedules.list.next", { time: nextRunText(value, t) })}`;
 }
 
 /** Each schedule's spec by its id: what the agenda says a plain schedule's cadence with. */
@@ -425,34 +498,26 @@ function scheduleSpecs(schedules: readonly Pick<ScheduleRecord, "scheduleId" | "
 }
 
 /** The notes `schedules add|update` print on stderr, offline or on an owner, after the schedule. */
-function scheduleWriteNotes(created: Pick<ScheduleRecord, "name" | "alert" | "autoApproveTools">): string {
+function scheduleWriteNotes(created: Pick<ScheduleRecord, "name" | "alert" | "autoApproveTools">, t: CoreT): string {
   // The allowlist is a tool-name list, not a capability boundary: a
   // `read-only` tool never raises an approval, so it runs whatever this says.
   // Saying so at creation is the only place the operator
   // can still change their mind; a schedule with no allowlist has nothing to say it of.
-  const allowlist =
-    created.autoApproveTools.length === 0
-      ? ""
-      : "note: this allowlist governs only the calls that would otherwise need approval. Read-only tools run " +
-        "whatever it says, and `sandbox.run` is granted by naming it (or by `--allow '*'`, which is refused " +
-        "precisely because it is easy to type without meaning it).\n";
+  const allowlist = created.autoApproveTools.length === 0 ? "" : t("cli.schedules.note.allowlist", { allowAll: "`--allow '*'`" });
   // With no alert target a failed, missed or refused fire is told in its
   // person's Home instead (AUTOMATION.md), and only logged while Home is off.
   // `schedules show` prints "alert none" only if someone thinks to look.
-  return created.alert !== undefined
-    ? allowlist
-    : `${allowlist}note: ${created.name} has no alert target, so a failed or missed run is posted to your Home as a notice ` +
-        "(only logged while Home is off). Add --alert-connection <id> --alert-destination <chat-id> to be told in a chat instead.\n";
+  return created.alert !== undefined ? allowlist : `${allowlist}${t("cli.schedules.note.noAlert", { name: created.name })}`;
 }
 
 /** `tavi schedules enable|disable`'s text (`emit` ends the line): the id, the new state and the next run in its zone. */
-function scheduleStateLine(value: ScheduleRecord): string {
-  return `${value.scheduleId}\t${value.name}\t${value.enabled ? "enabled" : "disabled"}\tnext=${nextRunText(value)}`;
+function scheduleStateLine(value: ScheduleRecord, t: CoreT): string {
+  return `${value.scheduleId}\t${value.name}\t${t(value.enabled ? "cli.schedules.state.enabled" : "cli.schedules.state.disabled")}\t${t("cli.schedules.list.next", { time: nextRunText(value, t) })}`;
 }
 
 /** `tavi schedules remove`'s text. */
-function scheduleRemovedText(value: { readonly removed: string }): string {
-  return `removed ${value.removed}`;
+function scheduleRemovedText(value: { readonly removed: string }, t: CoreT): string {
+  return t("cli.schedules.removed", { id: value.removed });
 }
 
 /**

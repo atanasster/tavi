@@ -39,6 +39,7 @@ import {
 } from "../features/channels/catalog.js";
 import { createServer, type IncomingMessage, type RequestListener, type Server, type ServerResponse } from "node:http";
 import { registerGroupTools } from "../features/channels/group-tools.js";
+import { channelWords, workspaceLocaleOf } from "../features/channels/channel-words.js";
 import { isHeartbeatPress } from "../features/heartbeat/buttons.js";
 import { isReminderPress } from "../features/reminders/delivery.js";
 import { createLocalConnectorDefinition, type LocalConnectorInstance } from "@tavi/plugin-local/connector";
@@ -126,17 +127,13 @@ export async function composeChannels(composed: OauthContext) {
       });
       if (destination === undefined) return;
       const sender = sha256Hex(event.externalSenderId).slice(0, 16);
+      const t = await channelWords(workspaceLocaleOf(persistencePort.repositories.workspaceSettings), actor.workspaceId);
       await messaging.send({
         effectId: `unverified:${event.connectionId}:${sender}:${clock.now().slice(0, 10)}`,
         connectionId: event.connectionId,
         workspaceId: actor.workspaceId,
         destination,
-        parts: [
-          {
-            content:
-              "Your message arrived, but it could not be verified as coming from you (its sender authentication did not pass), so it was not acted on. If your mail provider is set up correctly this was not you; otherwise ask the operator to trust your unverified mail in Allowed people.",
-          },
-        ],
+        parts: [{ content: t("channel.mail.unverified") }],
       });
     },
   });

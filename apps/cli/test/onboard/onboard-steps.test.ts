@@ -4,6 +4,7 @@ import { PassThrough } from "node:stream";
 import { stripVTControlCharacters } from "node:util";
 
 import { ONBOARDING_ABI, type OnboardingStatus } from "@tavi/contracts";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { temporaryDirectories, partialFake, delay } from "@tavi/test-support";
 import { render } from "ink";
 import { createElement } from "react";
@@ -687,6 +688,14 @@ describe("the voice step", () => {
     expect(written()).toContain("Installing whisper-cpp with Homebrew");
     expect(written()).toContain("Downloading Whisper's base model 50%");
     expect(written()).toContain("Voice messages: transcribed on this computer");
+  });
+
+  it("names the missing speech model in Bulgarian when it asks in Bulgarian", async () => {
+    const owner = scripted({ "models:voice-status": missing });
+    const { context: step, written } = context(owner.transport, ["n"], system());
+    await voiceStep({ ...step, prompter: { ...step.prompter, words: () => coreIn("bg") } });
+    expect(written()).toContain("whisper.cpp, модел за реч");
+    expect(written()).not.toContain("a speech model");
   });
 
   it("on a no marks the step skipped and installs nothing", async () => {

@@ -35,8 +35,8 @@ export const RESERVED_CHANNEL_CONNECTION_IDS: ReadonlySet<string> = new Set(["p"
 const SettingValue = z.union([z.string().max(2048), z.number(), z.boolean()]);
 
 export const ChannelsPayloadSchema = z.discriminatedUnion("action", [
-  /** Every channel this owner can configure, by its descriptor. */
-  z.object({ action: z.literal("catalog") }).strict(),
+  /** Every channel this owner can configure, by its descriptor; its words in `workspaceId`'s language (the owner's `default` when absent). */
+  z.object({ action: z.literal("catalog"), workspaceId: WorkspaceId.optional() }).strict(),
   /** A workspace's connections, with status, and the owner's ingress. */
   z.object({ action: z.literal("list"), workspaceId: WorkspaceId }).strict(),
   /**

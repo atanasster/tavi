@@ -1,6 +1,6 @@
 import type { Server } from "node:http";
 
-import { TaviError, type OnboardingConnectAnswer } from "@tavi/contracts";
+import { keyedError, type OnboardingConnectAnswer } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
 import { readJsonBody } from "../../shared/json-body.js";
@@ -72,15 +72,10 @@ async function exchangeOpenRouterCode(input: {
     body: JSON.stringify({ code: input.code, code_verifier: input.verifier, code_challenge_method: "S256" }),
     signal: AbortSignal.timeout(30_000),
   });
-  if (!response.ok)
-    throw new TaviError(
-      "NOT_AUTHORIZED",
-      `OpenRouter did not issue a key (HTTP ${String(response.status)}); sign in again, or paste a key instead`,
-    );
+  if (!response.ok) throw keyedError("NOT_AUTHORIZED", "onboard.signIn.noKeyIssued", { status: String(response.status) });
   // A body that is not JSON is checked below like any unexpected answer.
   const body = (await readJsonBody(response).catch(() => undefined)) as { readonly key?: unknown } | null | undefined;
-  if (typeof body?.key !== "string" || body.key.trim() === "")
-    throw new TaviError("UNAVAILABLE", "OpenRouter answered without a key; sign in again, or paste a key instead");
+  if (typeof body?.key !== "string" || body.key.trim() === "") throw keyedError("UNAVAILABLE", "onboard.signIn.noKey");
   return body.key.trim();
 }
 
@@ -191,10 +186,10 @@ export async function signInWithOpenRouterHere(options: TerminalSignInOptions): 
   // Awaited or raced elsewhere: this only keeps an early rejection from going unhandled.
   stopped.catch(() => undefined);
   const timer = setTimeout(
-    () => ended.abort(new TaviError("CANCELLED", "The sign-in timed out")),
+    () => ended.abort(keyedError("CANCELLED", "onboard.signIn.timedOut")),
     options.timeoutMs ?? OPENROUTER_SIGN_IN_TTL_MS,
   );
-  const outer = () => ended.abort(new TaviError("CANCELLED", "The sign-in was cancelled"));
+  const outer = () => ended.abort(keyedError("CANCELLED", "onboard.signIn.cancelled"));
   if (options.signal?.aborted === true) outer();
   else options.signal?.addEventListener("abort", outer, { once: true });
   try {
@@ -259,11 +254,9 @@ export async function signInWithOpenRouterHere(options: TerminalSignInOptions): 
     let ok = false;
     try {
       if (callback.code === undefined)
-        throw new TaviError(
+        throw keyedError(
           "NOT_AUTHORIZED",
-          callback.error === "access_denied"
-            ? "You didn't allow access. Nothing was connected."
-            : "OpenRouter did not sign you in. Nothing was connected.",
+          callback.error === "access_denied" ? "onboard.signIn.accessDenied" : "onboard.signIn.openRouterNotSignedIn",
         );
       const key = await exchangeOpenRouterCode({
         code: callback.code,

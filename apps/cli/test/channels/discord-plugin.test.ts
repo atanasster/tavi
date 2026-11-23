@@ -46,11 +46,11 @@ describe("discord.channel installed from its bundle", () => {
     const installed = await tavi(["plugins", "install", bundle, ...dir]);
     expect(installed.code, installed.stderr).toBe(EXIT.ok);
     // A channel cannot be a worker: an approval that does not say so is refused, with what to say.
-    const refused = await tavi(["plugins", "approve", "discord.channel", "0.1.2", ...dir]);
+    const refused = await tavi(["plugins", "approve", "discord.channel", "0.1.3", ...dir]);
     expect(refused.code).not.toBe(EXIT.ok);
     expect(refused.stderr).toContain("approve it with --in-process");
     for (const argv of [
-      ["plugins", "approve", "discord.channel", "0.1.2", "--in-process"],
+      ["plugins", "approve", "discord.channel", "0.1.3", "--in-process"],
       ["plugins", "enable", "discord.channel"],
     ]) {
       const answer = await tavi([...argv, ...dir]);

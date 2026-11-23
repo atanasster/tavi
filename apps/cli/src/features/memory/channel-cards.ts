@@ -23,8 +23,8 @@ import {
   type MemoryPromptRow,
   type MessagingServicePort,
   type PersistencePort,
-  type TaviErrorCode,
   disarmUrls,
+  taviErrorOf,
 } from "@tavi/contracts";
 import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
@@ -202,7 +202,7 @@ export function createMemoryChannelCards(deps: MemoryChannelCardDependencies): M
       },
       { ...payload, workspaceId } as MemoryPayload,
     );
-    if (!answer.ok) throw new TaviError(answer.error.code as TaviErrorCode, answer.error.message);
+    if (!answer.ok) throw taviErrorOf(answer.error);
     return answer.result as T;
   };
 

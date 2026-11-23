@@ -6,7 +6,7 @@
     "packages": []
   },
   "id": "discord.channel",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "name": "Discord",
   "description": "Discord as a channel: DMs with your bot, and the server channels you list as rooms. Built on Discord's official bot API (Gateway and REST).",
   "entry": "index.mjs",

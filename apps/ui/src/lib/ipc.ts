@@ -1,5 +1,5 @@
 import type { ClientResponse, TaviClient } from "@tavi/client/browser";
-import { localizedText, type IpcCommand, type TextRef } from "@tavi/contracts";
+import { errorTextIn, type IpcCommand, type TextRef } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
 import { translateCore, translateNow } from "./i18n.js";
@@ -123,9 +123,12 @@ export function mapOutcome<T, U>(outcome: Outcome<T>, change: (value: T) => U): 
   return outcome.ok ? { ok: true, value: change(outcome.value) } : outcome;
 }
 
-/** An owner's refusal in the page's language: its key's words when it has one this page knows, else its English message. */
+/**
+ * An owner's refusal in the page's language: its key's words when it has one this page knows, its English message
+ * when the key is one it does not, and an unkeyed one framed in the page's language around its English (`errorTextIn`).
+ */
 export function errorWords(error: { readonly message: string; readonly i18n?: TextRef | undefined }): string {
-  return localizedText(error.message, error.i18n, translateCore);
+  return errorTextIn(error, translateCore);
 }
 
 /** A raw response's refusal in words: the owner's (`errorWords`), else `fallback`. */

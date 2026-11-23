@@ -9,6 +9,7 @@ import { LOOPBACK_ORIGIN_PATTERN } from "./mcp-ipc.js";
 import { MCP_PRESET_IDS } from "./mcp-manifest.js";
 import type { PluginConfigField } from "./plugin-registry.js";
 import { snapshotPath } from "./plugin-ui.js";
+import { TextRefSchema } from "./text-ref.js";
 import type { ProviderDeclaration } from "./provider-config.js";
 import { RiskLevelSchema } from "./tool-policy.js";
 import { ToolEffectSchema, ToolSinkSchema } from "./tools.js";
@@ -363,6 +364,12 @@ export const AppRepairSchema = z.strictObject({
   detail: z.string().max(300),
   /** The same fix, as a command. */
   cli: z.string().max(200),
+  /**
+   * The title and the detail by key, beside their English, so the canvas says them in its language. Absent from
+   * an owner before them, and for a detail that is a server's own words (why it failed), shown as it is.
+   */
+  titleRef: TextRefSchema.optional(),
+  detailRef: TextRefSchema.optional(),
 });
 export type AppRepair = z.infer<typeof AppRepairSchema>;
 

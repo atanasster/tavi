@@ -7,6 +7,7 @@ import type { PluginView } from "@tavi/contracts";
 
 import type { SettingsClient } from "../../../src/lib/ipc.js";
 import { PluginsSettings } from "../../../src/features/settings/PluginsSettings.js";
+import { setLocale } from "../../../src/lib/i18n.js";
 import { announced, freshAnnouncer } from "../../announced.js";
 import { InWorkspace } from "../../support/workspace.js";
 import { button, click, mount, unmountAll } from "../../support/dom.js";
@@ -456,7 +457,7 @@ describe("Plugins settings", () => {
     const toggle = byAria(view, "Hook activity for acme.tally");
     expect(toggle?.getAttribute("aria-expanded")).toBe("false");
     await click(toggle);
-    expect(sent.at(-1)).toEqual({ action: "show", pluginId: "acme.tally" });
+    expect(sent.at(-1)).toEqual({ action: "show", pluginId: "acme.tally", workspaceId: "default" });
     expect(toggle?.getAttribute("aria-expanded")).toBe("true");
     expect(view.textContent).toContain(
       "Hook activity: 2 decisions, 1 failure. Older rows were pruned: only the newest 10000 decisions and 500 failures are kept, and counted.",
@@ -471,11 +472,37 @@ describe("Plugins settings", () => {
     // A plugin with no activity shows nothing more.
     const before = view.textContent;
     await click(byAria(view, "Hook activity for acme.quiet"));
-    expect(sent.at(-1)).toEqual({ action: "show", pluginId: "acme.quiet" });
+    expect(sent.at(-1)).toEqual({ action: "show", pluginId: "acme.quiet", workspaceId: "default" });
     expect(view.textContent).toBe(before);
     // Closed, it is gone.
     await click(toggle);
     expect(view.textContent).not.toContain("Hook activity: 2 decisions");
+  });
+
+  it("says in Bulgarian what a hook's failure does, never its rule id", async () => {
+    const guard: PluginView = {
+      ...base,
+      id: "acme.guard",
+      kind: "external",
+      runsOwnerCode: true,
+      name: "Guard",
+      enabled: true,
+      core: false,
+      mods: [{ event: "tool.check", onFailure: "ask", disclosure: "Checks tool calls.", reads: "Every tool." }],
+    };
+    const client: SettingsClient = { request: async () => ({ ok: true, result: { plugins: [guard] } }) as ClientResponse };
+    await setLocale("bg");
+    try {
+      const view = await mount(
+        <InWorkspace client={client} timeZone="Europe/Sofia">
+          <PluginsSettings />
+        </InWorkspace>,
+      );
+      expect(view.textContent).toContain("Кука tool.check (при грешка: пита)");
+      expect(view.textContent).not.toContain("при грешка: ask");
+    } finally {
+      await setLocale("en");
+    }
   });
 
   it("shows a tool's trusted output on the plugin and on a version awaiting review; the untrusted default says nothing", async () => {

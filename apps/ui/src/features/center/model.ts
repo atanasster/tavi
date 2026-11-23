@@ -155,8 +155,9 @@ export function previewText(text: string): string {
   );
 }
 
-/** What a row is called: its title, else the start of its prompt, else its id. */
-export function rowTitle(row: Pick<TaskListRow, "title" | "promptPreview" | "taskId">): string {
+/** What a row is called: its title, else the start of its prompt, else its id. Home's own title, stored in English, in the page's language. */
+export function rowTitle(row: Pick<TaskListRow, "title" | "titleSource" | "promptPreview" | "taskId">): string {
+  if (row.titleSource === "home") return translateNow("shell.session.home");
   // A chat with no title and no prompt to name it by: never its task id, which says nothing to a person.
   return row.title || row.promptPreview || translateNow("shell.session.untitled");
 }

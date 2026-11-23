@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateA
 import type { ChatNotice } from "@tavi/contracts";
 
 import { isPhone } from "../../hooks/page.js";
+import { translateNow } from "../../lib/i18n.js";
 import type { HeartbeatItemView } from "../center/HeartbeatItem.js";
 import type { ChatPanelTab } from "../chat-panel/tabs.js";
 import type { CanvasRun, CanvasStore } from "../chat/store/types.js";
@@ -98,9 +99,9 @@ export function useChatNavigation({
     navigate((page) => ({ ...page, route: "chat", taskId: undefined }));
   };
   const doHeartbeatItem = (item: HeartbeatItemView): void =>
-    heartbeatTurn({ prompt: `Do it: ${item.title}`, itemId: item.itemId, action: "do" });
+    heartbeatTurn({ prompt: translateNow("center.heartbeatItem.doItPrompt", { title: item.title }), itemId: item.itemId, action: "do" });
   const chatAboutHeartbeatItem = (item: HeartbeatItemView): void =>
-    heartbeatTurn({ prompt: `Chat about this: ${item.title}`, itemId: item.itemId, action: "chat" });
+    heartbeatTurn({ prompt: translateNow("center.heartbeatItem.chatPrompt", { title: item.title }), itemId: item.itemId, action: "chat" });
   /** A task another route names (a routine's run, a schedule's fire, an Activity row), opened in the chat. */
   const follow = async (taskId: string): Promise<void> => {
     await store.openTask(taskId);

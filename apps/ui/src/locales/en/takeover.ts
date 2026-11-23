@@ -31,6 +31,8 @@ export const takeover = {
   "takeover.stop.run": "Stop the run",
   "takeover.stop.chat": "Stop the chat",
   "takeover.stop.failed": "The agent could not be stopped.",
+  /** Why the person stopped a chat while driving the browser, stored with the cancellation in their words. */
+  "takeover.stop.reason": "Stopped from the browser takeover",
 
   "takeover.picker.label": "Choose an option",
   "takeover.chooser.files": "The page asks for files. They go to the page from here, and Tavi keeps no copy.",

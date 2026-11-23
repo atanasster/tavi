@@ -9,6 +9,7 @@ import type { SettingsClient } from "../../../src/lib/ipc.js";
 import { TaintChip, TaintChipView } from "../../../src/features/chat/TaintChip.js";
 import { InWorkspace } from "../../support/workspace.js";
 import { mount, rerender, unmountAll } from "../../support/dom.js";
+import { setLocale } from "../../../src/lib/i18n.js";
 
 /**
  * UNTRUSTED-CONTENT U4 in the canvas: an approval card says why it asks, in
@@ -136,6 +137,26 @@ describe("the approval card's provenance", () => {
       ],
     ]);
     expect(shown.querySelector("b")).toBeNull();
+  });
+
+  it("quotes a value the way Bulgarian does", async () => {
+    await setLocale("bg");
+    try {
+      const shown = await mount(
+        <Provenance
+          request={request({
+            gateReason: "tainted-payload",
+            sources: ["web"],
+            principals: [],
+            refs: [webRef()],
+            argOrigins: [{ path: "to", value: "alice@home.example", from: "person" }],
+          })}
+        />,
+      );
+      expect(shown.querySelector(".arg-origins li")?.textContent).toBe("\u201ealice@home.example\u201c от твоето съобщение");
+    } finally {
+      await setLocale("en");
+    }
   });
 
   it("neutralizes an argument's path in its tooltip", async () => {

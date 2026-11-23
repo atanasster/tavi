@@ -16,7 +16,7 @@ export function registerBrowserClose(registry: ToolRegistry, ctx: BrowserToolCon
     effect: "read-only",
     requiredPermissions: ["tools.invoke"],
     inputSchema: BrowserSessionInputSchema,
-    assess: assessBrowserSession("Close the browser"),
+    assess: assessBrowserSession("approval.card.browser.close"),
     handler: async ({ input, context, signal }) => {
       if (signal.aborted) throw new TaviError("CANCELLED", "browser.close was cancelled");
       const parsed = BrowserSessionInputSchema.safeParse(input);

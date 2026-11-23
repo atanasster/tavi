@@ -1,4 +1,5 @@
 import type { McpArgFloor, RiskLevel, ToolEffect } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 
 import type { McpPreset } from "./index.js";
 
@@ -60,60 +61,65 @@ const TURN_FLOOR: McpArgFloor = {
 /** A tool's intent or script name, without Home Assistant's `<api>__` prefix. */
 const baseName = (name: string): string => name.slice(name.lastIndexOf("__") + 2);
 
-export const HOMEASSISTANT_PRESET: McpPreset = {
-  id: "homeassistant",
-  /** When the template and its annotations were last checked against Home Assistant; the end-to-end run is in docs/MCP.md. */
-  checked: "2026-10-14",
-  withdrawnIf:
-    "Home Assistant removes or renames its Model Context Protocol Server integration, its address or token handling changes, or its tools' names no longer carry the domains the floors read",
-  name: "Home Assistant",
-  description: "Control exposed entities through Home Assistant's MCP server.",
-  config: {
-    url: {
-      type: "string",
-      required: true,
-      label: "Its MCP address",
-      description: "e.g. http://homeassistant.local:8123/api/mcp",
-    },
-    token: {
-      type: "credential",
-      required: true,
-      label: "A long-lived access token",
-      description: "A long-lived access token (Profile → Security)",
-    },
-  },
-  block: {
-    transport: "http",
-    url: { setting: "url" },
-    headers: { Authorization: { prefix: "Bearer ", setting: "token" } },
-    network: { lan: true },
-    auth: "headers",
-    exposure: "auto",
-  },
-  app: {
+/** Home Assistant's preset; its words a person reads are `t`'s (English by default). */
+export function homeAssistantPreset(t: CoreT = coreEnglish): McpPreset {
+  return {
     id: "homeassistant",
+    /** When the template and its annotations were last checked against Home Assistant; the end-to-end run is in docs/MCP.md. */
+    checked: "2026-10-14",
+    withdrawnIf:
+      "Home Assistant removes or renames its Model Context Protocol Server integration, its address or token handling changes, or its tools' names no longer carry the domains the floors read",
     name: "Home Assistant",
-    summary: "Ask about and control the devices you expose to Assist.",
-    category: "home",
-    publisher: "Home Assistant",
-    accountScope: "owner",
-    scopes: [],
-    tools: {
-      intent__HassTurnOn: { title: "Turn on", says: "Asked every time unless it is a light, a switch, a fan, media or climate" },
-      intent__HassTurnOff: { title: "Turn off", says: "Asked every time unless it is a light, a switch, a fan, media or climate" },
-      intent__HassToggle: { title: "Toggle" },
-      intent__GetLiveContext: { title: "Read device states" },
+    description: t("mcp.preset.homeassistant.description"),
+    config: {
+      url: {
+        type: "string",
+        required: true,
+        label: t("mcp.preset.homeassistant.url.label"),
+        description: t("mcp.preset.homeassistant.url.description"),
+      },
+      token: {
+        type: "credential",
+        required: true,
+        label: t("mcp.preset.homeassistant.token.label"),
+        description: t("mcp.preset.homeassistant.token.description"),
+      },
     },
-  },
-  floors: (tool: {
-    readonly name: string;
-    readonly effect: ToolEffect;
-  }): { readonly minRisk?: RiskLevel; readonly argFloors?: readonly McpArgFloor[] } | undefined => {
-    if (tool.effect === "read-only") return undefined;
-    const intent = baseName(tool.name);
-    if (tool.name.startsWith("intent__") && TARGETING_INTENTS.has(intent)) return { argFloors: [TURN_FLOOR] };
-    if (REVIEWED_WRITES.has(intent) && !tool.name.startsWith("script__")) return undefined;
-    // A script runs whatever it was written to; an intent not reviewed here may reach a cover, a valve or a lock.
-    return { minRisk: "critical" };
-  },
-};
+    block: {
+      transport: "http",
+      url: { setting: "url" },
+      headers: { Authorization: { prefix: "Bearer ", setting: "token" } },
+      network: { lan: true },
+      auth: "headers",
+      exposure: "auto",
+    },
+    app: {
+      id: "homeassistant",
+      name: "Home Assistant",
+      summary: t("mcp.preset.homeassistant.summary"),
+      category: "home",
+      publisher: "Home Assistant",
+      accountScope: "owner",
+      scopes: [],
+      tools: {
+        intent__HassTurnOn: { title: t("mcp.preset.homeassistant.tool.turnOn"), says: t("mcp.preset.homeassistant.tool.turn.says") },
+        intent__HassTurnOff: { title: t("mcp.preset.homeassistant.tool.turnOff"), says: t("mcp.preset.homeassistant.tool.turn.says") },
+        intent__HassToggle: { title: t("mcp.preset.homeassistant.tool.toggle") },
+        intent__GetLiveContext: { title: t("mcp.preset.homeassistant.tool.getLiveContext") },
+      },
+    },
+    floors: (tool: {
+      readonly name: string;
+      readonly effect: ToolEffect;
+    }): { readonly minRisk?: RiskLevel; readonly argFloors?: readonly McpArgFloor[] } | undefined => {
+      if (tool.effect === "read-only") return undefined;
+      const intent = baseName(tool.name);
+      if (tool.name.startsWith("intent__") && TARGETING_INTENTS.has(intent)) return { argFloors: [TURN_FLOOR] };
+      if (REVIEWED_WRITES.has(intent) && !tool.name.startsWith("script__")) return undefined;
+      // A script runs whatever it was written to; an intent not reviewed here may reach a cover, a valve or a lock.
+      return { minRisk: "critical" };
+    },
+  };
+}
+
+export const HOMEASSISTANT_PRESET: McpPreset = homeAssistantPreset();

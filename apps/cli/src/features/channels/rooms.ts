@@ -10,11 +10,13 @@ import {
   type PersistencePort,
   type RoomTrigger,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
 
 import type { ChannelHost } from "@tavi/runtime";
 
 import { channelDescriptorOf } from "./catalog.js";
+import { channelWords, type WorkspaceLocaleOf } from "./channel-words.js";
 import type { RoomInvitations } from "./group-pairing.js";
 
 /**
@@ -35,6 +37,8 @@ export interface ChannelRoomsDependencies {
   readonly roomInvitations?: Pick<RoomInvitations, "list" | "settle"> | undefined;
   /** The workspace's operator, whose agent the introduction says this is. */
   readonly operatorOf?: ((workspaceId: string) => string | undefined) | undefined;
+  /** The workspace's language, which a room's introduction is said in; English without it. */
+  readonly localeOf?: WorkspaceLocaleOf | undefined;
   readonly now: () => string;
 }
 
@@ -46,26 +50,24 @@ type RoomsPayload = Extract<ChannelsPayload, { readonly action: "rooms" }>;
  * private use, that it never reads people it does not know, and how to be
  * left out.
  */
-export function roomIntroduction(owner: string, room: Pick<ChannelRoomRecord, "trigger" | "members">): string {
+export function roomIntroduction(owner: string, room: Pick<ChannelRoomRecord, "trigger" | "members">, t: CoreT = coreEnglish): string {
+  const trigger = triggerInWords(room.trigger, t);
   const who =
     room.members === "operator-only"
-      ? `I answer only ${owner} here, when they ${triggerInWords(room.trigger)}`
-      : `I answer people ${owner} has told me about when they ${triggerInWords(room.trigger)}`;
+      ? t("channel.room.intro.operatorOnly", { owner, trigger })
+      : t("channel.room.intro.known", { owner, trigger });
   return [
-    `Hi, I'm Tavi, ${owner}'s assistant. ${who}.`,
-    `I never learn from this room for ${owner}'s private use, and I never read messages from people Tavi doesn't know.`,
-    `If you'd rather be left out, ask ${owner}.`,
+    t("channel.room.intro.hello", { owner, who }),
+    t("channel.room.intro.private", { owner }),
+    t("channel.room.intro.leaveOut", { owner }),
   ].join("\n");
 }
 
 /** What a room is told once its context becomes `recent`: what more the agent reads there, and what it never does. */
-export function roomContextIntroduction(owner: string, room: Pick<ChannelRoomRecord, "members">): string {
+export function roomContextIntroduction(owner: string, room: Pick<ChannelRoomRecord, "members">, t: CoreT = coreEnglish): string {
   const who =
-    room.members === "operator-only" ? `when ${owner} addresses me here` : `when someone ${owner} has told me about addresses me here`;
-  return [
-    `From now on, ${who}, I also read up to 20 of this room's messages before theirs, for context.`,
-    `Messages from people Tavi doesn't know are left out, and nothing I read here is kept for ${owner}'s private use.`,
-  ].join("\n");
+    room.members === "operator-only" ? t("channel.room.context.operatorOnly", { owner }) : t("channel.room.context.known", { owner });
+  return [t("channel.room.context.reads", { who }), t("channel.room.context.private", { owner })].join("\n");
 }
 
 /** A room's `context`, refused on a channel that cannot read a room's recent messages. */
@@ -83,13 +85,23 @@ function checkedContext(
 }
 
 /** The name the introduction gives its owner: what the operator is called on this connection, else "my owner". */
-async function ownerName(deps: ChannelRoomsDependencies, workspaceId: string, connectionId: string): Promise<string> {
+async function ownerName(deps: ChannelRoomsDependencies, workspaceId: string, connectionId: string, t: CoreT): Promise<string> {
   const operator = deps.operatorOf?.(workspaceId);
-  if (operator === undefined) return "my owner";
+  if (operator === undefined) return t("channel.room.intro.ownerUnknown");
   const binding = (await deps.repositories.messagingIdentityBindings.list(workspaceId)).find(
     (candidate) => candidate.connectionId === connectionId && candidate.principalId === operator && candidate.displayName !== undefined,
   );
-  return binding?.displayName ?? "my owner";
+  return binding?.displayName ?? t("channel.room.intro.ownerUnknown");
+}
+
+/** What a room is told (`say`), in its workspace's language, naming the workspace's owner. */
+async function roomWords(
+  deps: ChannelRoomsDependencies,
+  room: ChannelRoomRecord,
+  say: (owner: string, room: ChannelRoomRecord, t: CoreT) => string,
+): Promise<string> {
+  const t = await channelWords(deps.localeOf, room.workspaceId);
+  return say(await ownerName(deps, room.workspaceId, room.connectionId, t), room, t);
 }
 
 /** Refuses what needs the open connection's connector when it is not open (no owner runs it, or it failed). */
@@ -306,7 +318,7 @@ async function introduceContext(deps: ChannelRoomsDependencies, room: ChannelRoo
       connectionId: room.connectionId,
       workspaceId: room.workspaceId,
       destination,
-      parts: [{ content: roomContextIntroduction(await ownerName(deps, room.workspaceId, room.connectionId), room) }],
+      parts: [{ content: await roomWords(deps, room, roomContextIntroduction) }],
     })
     .catch((error: unknown) => ({ status: "rejected" as const, parts: [{ error: errorMessage(error) }] }));
   if (outcome.status === "accepted") return undefined;
@@ -349,7 +361,7 @@ async function introduce(deps: ChannelRoomsDependencies, room: ChannelRoomRecord
         connectionId: room.connectionId,
         workspaceId: room.workspaceId,
         destination,
-        parts: [{ content: roomIntroduction(await ownerName(deps, room.workspaceId, room.connectionId), room) }],
+        parts: [{ content: await roomWords(deps, room, roomIntroduction) }],
       })
       .catch((error: unknown) => {
         // Refused before dispatch (the connection not open, the message invalid): nothing went out. Anything else may have.

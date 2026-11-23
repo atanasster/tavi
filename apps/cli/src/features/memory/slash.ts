@@ -25,11 +25,12 @@ import {
   type ModCommandResult,
   type ModEnvelope,
   type PersistencePort,
-  type TaviErrorCode,
   type WorkspaceSettings,
   localeOf,
   navPath,
   renderTextRef,
+  taviErrorOf,
+  errorTextIn,
 } from "@tavi/contracts";
 import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 
@@ -64,14 +65,10 @@ export const MEMORY_PLUGIN_ID = "tavi.memory";
 const centerPlace = (t: CoreT): string => renderTextRef(navPath("nav.route.center", "nav.center.identity"), t) ?? "";
 
 export const MEMORY_COMMANDS: readonly ModCommandDeclaration[] = [
-  { name: "remember", description: "Save your own words to memory: /remember <text>, with --chat for this chat only." },
-  { name: "forget", description: "Forget a memory: /forget <words> lists matches, /forget <n> forgets one." },
-  {
-    name: "memory",
-    description:
-      "Your memory: status, review, keep <n…> | keep all, discard <n…>, off | on for this chat, and pause | resume (the workspace owner).",
-  },
-  { name: "why", description: "The memories the last answer used." },
+  { name: "remember", description: coreEnglish("command.memory.remember") },
+  { name: "forget", description: coreEnglish("command.memory.forget") },
+  { name: "memory", description: coreEnglish("command.memory.memory") },
+  { name: "why", description: coreEnglish("command.memory.why") },
 ];
 
 /** Any of `/remember`'s chat flags as a word of its own, to take out of the text saved. */
@@ -176,7 +173,7 @@ export function memorySlashCommands(deps: MemorySlashDependencies): Readonly<Rec
       const parsed = MemoryPayloadSchema.safeParse({ ...payload, workspaceId: envelope.workspaceId });
       if (!parsed.success) throw new TaviError("INVALID_INPUT", parsed.error.issues[0]?.message ?? "That is not a memory this can save");
       const answer = await memoryCommand(commandDeps, parsed.data);
-      if (!answer.ok) throw new TaviError(answer.error.code as TaviErrorCode, answer.error.message);
+      if (!answer.ok) throw taviErrorOf(answer.error);
       return answer.result as T;
     };
     return {
@@ -661,7 +658,7 @@ function refusalText(error: TaviError, t: CoreT): string {
     case "NOT_FOUND":
       return t("channel.memory.notYours");
     default:
-      return error.message;
+      return errorTextIn(error, t);
   }
 }
 

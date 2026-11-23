@@ -19,7 +19,6 @@ import {
   memoryScopeTarget,
   type MemoryActor,
   type MemoryForgetAnswer,
-  type TaviErrorCode,
   type MemoryGetAnswer,
   memoryUsedCount,
   type MemoryItem,
@@ -62,6 +61,7 @@ import {
   type WorkspaceSettingsRepositoryPort,
   keyedError,
   textRef,
+  taviErrorOf,
 } from "@tavi/contracts";
 import { definedOnly } from "@tavi/contracts/util";
 import { operatorActor } from "../../server/config-commands.js";
@@ -839,7 +839,7 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
         /** The `memory` command again, as this same reader: each decision is its own compare-and-set. */
         const run = async (inner: MemoryPayload): Promise<unknown> => {
           const answer = await memoryCommand(deps, { ...inner, workspaceId } as MemoryPayload);
-          if (!answer.ok) throw new TaviError(answer.error.code as TaviErrorCode, answer.error.message);
+          if (!answer.ok) throw taviErrorOf(answer.error);
           return answer.result;
         };
         const read = async (recordId: string): Promise<MemoryItem | undefined> => {
@@ -877,7 +877,7 @@ export async function memoryCommand(deps: MemoryCommandDependencies, payload: Me
         // The Center's bulk Keep / Discard over the proposals it lists, under the one rule (features/memory/bulk.ts).
         const run = async (inner: MemoryPayload): Promise<unknown> => {
           const answer = await memoryCommand(deps, { ...inner, workspaceId } as MemoryPayload);
-          if (!answer.ok) throw new TaviError(answer.error.code as TaviErrorCode, answer.error.message);
+          if (!answer.ok) throw taviErrorOf(answer.error);
           return answer.result;
         };
         const read = async (recordId: string): Promise<MemoryItem | undefined> => {

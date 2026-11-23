@@ -2,13 +2,19 @@ import { cpSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { BUILTIN_BROWSER_VIEW_PLUGIN, PluginUiAnswerSchema, PluginUiEntrySchema, type PluginUiEntry } from "@tavi/contracts";
+import {
+  BUILTIN_BROWSER_VIEW_PLUGIN,
+  PluginUiAnswerSchema,
+  PluginUiEntrySchema,
+  type PluginUiEntry,
+  type PluginView,
+} from "@tavi/contracts";
 import { BROWSER_VIEW_MANIFEST } from "@tavi/plugin-browser-view/manifest";
 import { hashPluginDirectory } from "@tavi/runtime";
 import { temporaryDirectories } from "@tavi/test-support";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { localizedUiEntries } from "../../src/features/plugins/localized.js";
+import { builtinUiViewIn, localizedUiEntries } from "../../src/features/plugins/localized.js";
 
 /**
  * What a UI plugin's frames are told of the language: each canvas entry
@@ -134,5 +140,23 @@ describe("a UI plugin's words for its frames", () => {
     });
     expect(stale?.ui).toEqual(BROWSER_VIEW_MANIFEST.ui);
     expect(stale).not.toHaveProperty("messages");
+  });
+
+  it("lists the built-in browser view in Settings → Plugins in its Bulgarian pack's words", () => {
+    const { canvas, entry } = canvasWithBrowserView();
+    const view = {
+      id: BUILTIN_BROWSER_VIEW_PLUGIN,
+      kind: "builtin",
+      description: BROWSER_VIEW_MANIFEST.description,
+      ui: BROWSER_VIEW_MANIFEST.ui,
+      uiContentHash: entry.contentHash,
+    } as unknown as PluginView;
+    const shown = builtinUiViewIn(view, "bg", canvas);
+    expect(shown.description).toMatch(/^Браузърът на агента на живо/);
+    expect(shown.ui?.contributions[0]?.disclosure).toMatch(/^Получава изображения на живо/);
+    // Another hash than the build's, or English: as listed.
+    const stale = { ...view, uiContentHash: "0".repeat(64) } as PluginView;
+    expect(builtinUiViewIn(stale, "bg", canvas)).toEqual(stale);
+    expect(builtinUiViewIn(view, "en", canvas)).toEqual(view);
   });
 });

@@ -1,3 +1,5 @@
+import { coreIn } from "@tavi/contracts/locales/core-server";
+import { coreEnglish } from "@tavi/contracts/locales/core";
 import { RHUMB_CREDENTIAL_REF, type ModelCatalogEntry, type ModelConnection, type ModelLifecycleEntry } from "@tavi/contracts";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
@@ -137,6 +139,17 @@ describe("the model lifecycle sync", () => {
       ["openai", "gpt-5", "warning"],
     ]);
     expect(lifecycleSyncLogLine(report)).toContain("openai/gpt-5 retires on 2026-12-11");
+  });
+
+  it("says the warnings in the asking workspace's language, and English by default", async () => {
+    const { sources, call } = harness();
+    const result = await syncModelLifecycle(sources, call, NOW);
+    const bg = coreIn("bg");
+    const said = lifecycleSyncReport(result, undefined, bg).warnings.find((warning) => warning.connectionId === "openai")?.says;
+    expect(said).toEqual([bg("model.lifecycle.retiresOn", { date: "2026-12-11" })]);
+    expect(lifecycleSyncReport(result).warnings.find((warning) => warning.connectionId === "openai")?.says).toEqual([
+      coreEnglish("model.lifecycle.retiresOn", { date: "2026-12-11" }),
+    ]);
   });
 
   it("asks Rhumb for a replacement per kind of use, once per catalog version, beside the provider's redirect", async () => {

@@ -11,6 +11,7 @@ import {
   type MessagingSetup,
   type ToolRule,
 } from "@tavi/contracts";
+import type { CoreT } from "@tavi/contracts/locales/core";
 import { hostAllowed } from "@tavi/runtime";
 
 import { signsInByCode } from "../../channels/oauth.js";
@@ -48,6 +49,8 @@ export interface ChannelSourceInput {
   readonly rules?: readonly ToolRule[];
   /** A running connection's setup notes, from its last probe. */
   readonly setupOf?: (connectionId: string) => MessagingSetup | undefined;
+  /** The workspace's words: Tavi's steps for a provider's shared client are said in them (English without). */
+  readonly t?: CoreT;
 }
 
 /**
@@ -192,7 +195,7 @@ export function channelApps(input: ChannelSourceInput): ConnectableApp[] {
     const oauth = descriptor.auth.kind === "oauth2";
     const repairs: AppRepair[] = [];
     const provider = presentation?.provider;
-    const setup = provider === undefined || !oauth ? undefined : clientSetupOf(provider);
+    const setup = provider === undefined || !oauth ? undefined : clientSetupOf(provider, input.t);
     const receiveSetting = descriptor.settings.some((field) => field.key === "receive" && field.type === "boolean");
     const accounts = records.map((record) => {
       const health = channelAccountHealth(record, oauth, input.statusOf?.(record.connectionId));

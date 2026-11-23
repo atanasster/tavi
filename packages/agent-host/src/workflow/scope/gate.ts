@@ -250,12 +250,15 @@ export function createGateScope(scope: OfferScope) {
     if (definition === undefined) return undefined;
     let assessment: CallAssessment | undefined;
     if (definition.assess !== undefined) {
+      // The card is said in the workspace's language: the assessor is told it; the model never reads the card.
+      const locale = await options.workspaceLocale?.(invocation.workspaceId).catch(() => undefined);
+      const assessedIn = locale === undefined || locale === "en" ? invocation : { ...invocation, locale };
       try {
         // The definition's own schema, which is what dispatch validates with.
         // Input it refuses is never dispatched, so it needs no reading.
         const normalized = z.safeParse(definition.inputSchema, call.input);
         // The call's own context: the chat's folder is on it, resolved at this admission.
-        if (normalized.success) assessment = definition.assess(normalized.data, invocation);
+        if (normalized.success) assessment = definition.assess(normalized.data, assessedIn);
         // The pages it types into: what they show next may hold what was typed.
         const sessionId =
           normalized.success && typeof normalized.data === "object" && normalized.data !== null

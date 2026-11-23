@@ -1,4 +1,5 @@
 import {
+  localeOf,
   BUILTIN_HEARTBEAT_PROVIDER_ID,
   DEFAULT_WORKSPACE_ID,
   HEARTBEAT_ABI,
@@ -47,6 +48,9 @@ import {
   keyedError,
 } from "@tavi/contracts";
 import { zodIssues } from "@tavi/contracts/zod-util";
+import { DEFAULT_LOCALE } from "@tavi/contracts/i18n";
+import { coreEnglish } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { z } from "zod";
 
 import type { HeartbeatProviderStates } from "@tavi/agent-host/heartbeat-host";
@@ -311,7 +315,11 @@ export async function heartbeatCommand(deps: HeartbeatCommandDependencies, paylo
     const now = deps.now();
     const stamp = now.toISOString();
     const scope = { workspaceId, principalId };
-    const timezone = (await deps.repositories.workspaceSettings.get(workspaceId)).settings.timezone ?? hostTimeZone();
+    const workspaceSettings = (await deps.repositories.workspaceSettings.get(workspaceId)).settings;
+    const timezone = workspaceSettings.timezone ?? hostTimeZone();
+    // A plugin provider's disclosure is said in the workspace's language.
+    const locale = localeOf(workspaceSettings);
+    const t = locale === DEFAULT_LOCALE ? coreEnglish : coreIn(locale);
 
     const view = async (state?: HeartbeatState, offering = false): Promise<HeartbeatGetAnswer> => {
       const current = state ?? (await heartbeats.get(workspaceId, principalId));
@@ -334,12 +342,15 @@ export async function heartbeatCommand(deps: HeartbeatCommandDependencies, paylo
           receives: provider.receives,
           ...(provider.kind === "plugin"
             ? {
-                disclosure: describeHeartbeatDeclaration({
-                  abi: HEARTBEAT_ABI,
-                  receives: [...provider.receives],
-                  usesTurns: provider.usesTurns,
-                  maxTickSeconds: provider.maxTickSeconds,
-                }),
+                disclosure: describeHeartbeatDeclaration(
+                  {
+                    abi: HEARTBEAT_ABI,
+                    receives: [...provider.receives],
+                    usesTurns: provider.usesTurns,
+                    maxTickSeconds: provider.maxTickSeconds,
+                  },
+                  t,
+                ),
               }
             : {}),
         })),

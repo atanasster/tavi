@@ -1,3 +1,4 @@
+import type { Locale } from "@tavi/contracts/i18n";
 import { definedOnly } from "@tavi/contracts/util";
 import { openerShowsUrl, openUrl, type OpenUrlOptions } from "@tavi/node-kit";
 
@@ -22,6 +23,10 @@ export interface OAuthCallbackInput {
 export interface OAuthCallbackOutcome {
   readonly ok: boolean;
   readonly message: string;
+  /** The language of the workspace the sign-in is for, when it is not English: the callback page speaks it. */
+  readonly locale?: Locale;
+  /** `message` in `locale`, for the callback page; absent, the page shows `message`. */
+  readonly said?: string;
   /** Refused because it signed in as another account than the one it reconnects. */
   readonly conflict?: true;
 }

@@ -27,7 +27,7 @@ import { DEFAULT_LOCALE, isLocale } from "@tavi/contracts/i18n";
 import type { CoreKey, CoreT } from "@tavi/contracts/locales/core";
 import { coreIn } from "@tavi/contracts/locales/core-server";
 import { printThemeCss } from "@tavi/contracts/print-theme";
-import { nowTimestamp, plural } from "@tavi/contracts/util";
+import { nowTimestamp } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
 import { canonicalRoutineJson, routineHash } from "./service.js";
 import { hostRefusal } from "../host-policy.js";
@@ -35,6 +35,8 @@ import { egressHostRefusal } from "../fetch-tool.js";
 import { PUBLISHER_REGISTRY_REVIEWED_AT, PUBLISHER_REGISTRY_VERSION, mayCorroborate, publisherIdentity } from "../publisher-registry.js";
 import { ROUTINE_CLUSTERING, materialChangeFingerprint, syndicationVerdict } from "./clustering.js";
 import { routineRunSnapshotSql, type RoutineExecutionService } from "./runs.js";
+/** The window's caveat when an earlier gap lies past the recovery window: English, as the window is read; said in the report's language there. */
+const UNCOVERED_GAP = "An earlier uncovered interval exceeds the saved recovery window";
 const normalized = (text: string) => text.replace(/\s+/g, " ").trim().toLowerCase();
 /** Words whose period ends an abbreviation, not a sentence: "Acme Inc. said", "Dr. Lee", "Jan. 5", "A vs. B". */
 const ABBREVIATIONS = new Set(
@@ -412,7 +414,7 @@ export class RoutineNewsService {
       from: new Date(from).toISOString(),
       to: now,
       hours: (Date.parse(now) - from) / 3_600_000,
-      gaps: desired < cutoff ? ["An earlier uncovered interval exceeds the saved recovery window"] : [],
+      gaps: desired < cutoff ? [UNCOVERED_GAP] : [],
       ...(reported.size === 0 ? {} : { reported: [...reported.values()].reverse() }),
     };
   }
@@ -462,7 +464,10 @@ export class RoutineNewsService {
     let rejected = 0;
     let duplicates = 0;
     const suppressions: { releaseIdentity: string; reason: string }[] = [];
-    const gaps: string[] = [...window.gaps];
+    // The report's own caveats are said in its language, as its headings are; English as they always were.
+    const language = run.snapshot.report.language;
+    const t = coreIn(isLocale(language) ? language : DEFAULT_LOCALE);
+    const gaps: string[] = window.gaps.map((gap) => (gap === UNCOVERED_GAP ? t("reports.news.gap.uncovered") : gap));
     // An `llm-releases-v1` story is a release: every claim names it, the story is titled by it, and the LLM
     // benchmarks its claims name are part of what it says. A plugin template keeps those rules, except that a
     // topic template's story (a trends digest's) is named by its label, which its claims need not repeat.
@@ -473,8 +478,7 @@ export class RoutineNewsService {
     const namesRelease = releases && template?.storyIsTopic !== true;
     const name = this.runs.routines.get(scope, run.routineId).routine.name;
     const clustering = this.clustering;
-    if (clustering === null)
-      gaps.push(`Near-duplicate clustering is unavailable; deduplication fell back to ${releases ? "release" : "story"} identity`);
+    if (clustering === null) gaps.push(t(releases ? "reports.news.gap.noClusteringRelease" : "reports.news.gap.noClusteringStory"));
     // Provenance for the policy actually in force, so a reader can tell which
     // threshold and which registry produced a report. It is the run's own until
     // a production publication copies it into the routine's state: a preview
@@ -494,8 +498,8 @@ export class RoutineNewsService {
         name,
         run.runId,
       );
-    if (coverage?.failures) gaps.push(`${coverage.failures} source requests failed`);
-    if (fetched.some((source) => source.publishedAt === null)) gaps.push("Some fetched pages have no verifiable publication date");
+    if (coverage?.failures) gaps.push(t("reports.news.gap.failures", { count: coverage.failures, n: String(coverage.failures) }));
+    if (fetched.some((source) => source.publishedAt === null)) gaps.push(t("reports.news.gap.undated"));
     const select = (hours: number): RoutineNewsStory[] => {
       const stories: RoutineNewsStory[] = [];
       const seen = new Set<string>();
@@ -617,7 +621,7 @@ export class RoutineNewsService {
       duplicates = 0;
       stories = select(hours);
     }
-    if (rejected > 0) gaps.push(`${plural(rejected, "proposed story", "proposed stories")} lacked eligible fetched support`);
+    if (rejected > 0) gaps.push(t("reports.news.gap.unsupported", { count: rejected, n: String(rejected) }));
     if (gaps.length > 0 && run.snapshot.report.partialSources === "fail")
       throw new TaviError("INVALID_INPUT", "Source coverage policy requires complete eligible evidence");
     const used = new Set(stories.flatMap((story) => story.sourceIds));
@@ -628,7 +632,7 @@ export class RoutineNewsService {
       revision: run.revision,
       generatedAt: now,
       mode: run.mode,
-      title: routineReportTitle(run.snapshot, name),
+      title: routineReportTitle(run.snapshot, name, t),
       stories,
       suppressions,
       sources: fetched

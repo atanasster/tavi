@@ -15,4 +15,14 @@ export const reports = {
   /** The same, in a plugin template's own word for its sources. */
   "reports.news.fetchedAs": "{count} {word}.",
   "reports.news.widened": "Window widened within the saved limit.",
+  /** The report's caveats about its own coverage, said in the report's language. */
+  "reports.news.gap.uncovered": "An earlier uncovered interval exceeds the saved recovery window",
+  "reports.news.gap.noClusteringRelease": "Near-duplicate clustering is unavailable; deduplication fell back to release identity",
+  "reports.news.gap.noClusteringStory": "Near-duplicate clustering is unavailable; deduplication fell back to story identity",
+  "reports.news.gap.failures": { other: "{n} source requests failed" },
+  "reports.news.gap.undated": "Some fetched pages have no verifiable publication date",
+  "reports.news.gap.unsupported": {
+    one: "{n} proposed story lacked eligible fetched support",
+    other: "{n} proposed stories lacked eligible fetched support",
+  },
 } as const;

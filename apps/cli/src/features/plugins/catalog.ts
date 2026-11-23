@@ -128,7 +128,7 @@ export function builtinViewIn(view: PluginView, t: CoreT): PluginView {
   return {
     ...view,
     ...(Object.hasOwn(CORE_EN, key) ? { description: t(key as CoreKey) } : {}),
-    ...(mods === undefined || view.mods === undefined ? {} : { mods: modHookViewsOf(mods(t)) }),
+    ...(mods === undefined || view.mods === undefined ? {} : { mods: modHookViewsOf(mods(t), t) }),
   };
 }
 

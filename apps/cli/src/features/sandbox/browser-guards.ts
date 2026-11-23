@@ -1,6 +1,7 @@
 import { type BrowserActGuard, type CallAssessment, TaviError, urlIsFinalStep } from "@tavi/contracts";
 import { hostAllowed, isIpLiteralHost } from "@tavi/runtime";
 
+import type { CoreT } from "@tavi/contracts/locales/core";
 import { assessBrowserAct, commitsFormSubmit, exemptAsSearch } from "../approvals/call-assessors.js";
 import { listedExactly, literalAddressRefusal, resolvedAddressRefusal } from "../browser/address-guard.js";
 import { hostAllowedWithPort } from "../http/tools.js";
@@ -372,11 +373,11 @@ export function tabDestinationOf(ctx: BrowserToolContext, input: unknown): strin
  * it leaves: a grant for the browser on that host covers it as it covers a
  * navigate there, and nothing else.
  */
-export function opensInTab(ctx: BrowserToolContext, input: unknown): CallAssessment {
+export function opensInTab(ctx: BrowserToolContext, input: unknown, t?: CoreT): CallAssessment {
   const call = input as { readonly sessionId?: unknown; readonly ref?: unknown } | null;
   const element =
     typeof call?.sessionId === "string" && typeof call.ref === "string" ? elementOf(ctx, call.sessionId, call.ref) : undefined;
-  const assessed = assessBrowserAct(input, element);
+  const assessed = assessBrowserAct(input, element, undefined, undefined, undefined, t);
   const url = tabDestinationOf(ctx, input);
   if (url === undefined || assessed.hardDeny !== undefined) return assessed;
   const destined = withDestination(ctx, assessed, { sessionId: call?.sessionId, url });

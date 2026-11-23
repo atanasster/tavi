@@ -38,5 +38,24 @@
     "within": "div.connection-info",
     "locale": "qps",
     "why": "A connection's name and host are one unbreakable word each beside the actions at tablet width under qps; Bulgarian fits."
+  },
+  {
+    "kind": "wrapped",
+    "selector": "button.button-bare.center-nav-item",
+    "locale": "qps",
+    "why": "A settings rail item wraps its name rather than cutting it; only the stretched qps words ('Системни···· инструкции·····') make two lines, Bulgarian keeps one at every width."
+  },
+  {
+    "kind": "wrapped",
+    "selector": "button.button-bare.session",
+    "locale": "qps",
+    "why": "A chat row wraps its title and preview rather than cutting them; only the stretched qps 'Начало' with its preview makes two lines, Bulgarian keeps one."
+  },
+  {
+    "kind": "wrapped",
+    "selector": "button.chip",
+    "within": "ul.heartbeat-suggestions",
+    "locale": "qps",
+    "why": "A heartbeat suggestion is a sentence on a chip and wraps by design; only the stretched qps words make it two lines at 375, Bulgarian keeps one."
   }
 ]

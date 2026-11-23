@@ -1,4 +1,5 @@
 import {
+  localizedText,
   signsIn,
   type AppAccess,
   type AppCategory,
@@ -9,7 +10,7 @@ import {
   type ConnectableApp,
 } from "@tavi/contracts";
 
-import { translateNow } from "../../lib/i18n.js";
+import { translateCore, translateNow } from "../../lib/i18n.js";
 import { localDay } from "../../lib/time.js";
 import type { UiKey } from "../../locales/en.js";
 
@@ -183,6 +184,16 @@ export function isolationWords(app: ConnectableApp): string {
 /** The tunnel a person on another computer runs, to sign in through this page. */
 export function tunnelCommand(port: string): string {
   return `ssh -L ${port}:127.0.0.1:${port} <this server>`;
+}
+
+/** A repair's button, in the page's language when the owner sent its key; else its English. */
+export function repairTitle(repair: Pick<AppRepair, "title" | "titleRef">): string {
+  return localizedText(repair.title, repair.titleRef, translateCore);
+}
+
+/** A repair's cause, in the page's language when the owner sent its key; a server's own words as they are. */
+export function repairDetail(repair: Pick<AppRepair, "detail" | "detailRef">): string {
+  return localizedText(repair.detail, repair.detailRef, translateCore);
 }
 
 /** Whether the app's summary and access text are its author's own words, not Tavi's: shown as such. */

@@ -10,6 +10,7 @@ import {
   describeOnboardingDeclaration,
   describePluginApps,
   describePluginTool,
+  modHookReadsLine,
   describePluginUiContribution,
   describeRouterDeclaration,
   heartbeatHookDecisionText,
@@ -44,9 +45,9 @@ describe("connect words in Bulgarian", () => {
 
   it("says a room's trigger with „или“ before the last", () => {
     expect(triggerInWords(["mention", "reply", "command"], bg)).toBe(
-      "ме споменат, отговорят на някое мое съобщение или използват някоя от командите ми",
+      "при споменаване, при отговор на мое съобщение или при използване на моя команда",
     );
-    expect(triggerInWords(["mention"], bg)).toBe("ме споменат");
+    expect(triggerInWords(["mention"], bg)).toBe("при споменаване");
   });
 
   it("says each lifecycle warning as a clause", () => {
@@ -83,7 +84,16 @@ describe("connect words in Bulgarian", () => {
       describePluginUiContribution({ id: "view", role: "browser-view", placements: [{ slot: "browser.view" }], channels: [] } as never, bg),
     ).toBe("view (роля browser-view) → browser.view; без канали");
     expect(describePluginTool({ id: "acme.weather.forecast", effect: "read-only", output: "trusted", attendedOnly: true }, bg)).toBe(
-      "acme.weather.forecast (read-only, резултат с доверие, човек решава за всяко извикване)",
+      "acme.weather.forecast (само за четене, резултат с доверие, човек решава за всяко извикване)",
+    );
+    expect(describePluginTool({ id: "acme.mail.send", effect: "external" }, bg)).toBe("acme.mail.send (излиза навън)");
+    expect(describePluginTool({ id: "acme.notes.add", effect: "mutating" }, bg)).toBe("acme.notes.add (променя данни)");
+    expect(describePluginTool({ id: "acme.odd", effect: "sideways" }, bg)).toBe("acme.odd (sideways)");
+    expect(modHookReadsLine({ event: "tool.check", match: { tools: ["sandbox.run"] } }, bg)).toBe(
+      "Вижда входа на `sandbox.run` и може да откаже извикването. Вижда това във всяко работно пространство.",
+    );
+    expect(modHookReadsLine({ event: "prompt.submit" }, bg)).toBe(
+      "Чете всяка заявка и всяко съобщение, което получаваш, във всеки канал, и може да добави към него или да го изпусне. Вижда това във всяко работно пространство.",
     );
     expect(
       describeRouterDeclaration(

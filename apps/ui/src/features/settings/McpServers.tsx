@@ -13,6 +13,8 @@ import {
 } from "./plugins-api.js";
 import { BusyFieldset, Failure, LoadState, Notice } from "../../ui/Parts.js";
 import { reviewStateLabel } from "../../lib/format.js";
+import type { UiKey } from "../../locales/en.js";
+import { effectLabel } from "../chat/ApprovalParts.js";
 import { Select } from "../../ui/Select.js";
 import { Modal } from "../../ui/Modal.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
@@ -32,6 +34,13 @@ import { withParts } from "../../ui/with-parts.js";
 
 const EFFECTS = ["read-only", "mutating", "external"] as const;
 const FLOORS = ["low", "medium", "high", "critical"] as const;
+/** A risk floor as its picker names it; the lowest is no floor at all. */
+const FLOOR_KEYS = {
+  low: "settings.mcp.review.floorNone",
+  medium: "settings.mcp.review.floorMedium",
+  high: "settings.mcp.review.floorHigh",
+  critical: "settings.mcp.review.floorCritical",
+} as const satisfies Readonly<Record<(typeof FLOORS)[number], UiKey>>;
 
 /**
  * Where a Center notice links: Connected apps with `?review=<id>`, which opens that server's app and its review.
@@ -548,7 +557,9 @@ export function McpReviewModal({
                           {current === undefined ? <option value="">{t("settings.mcp.review.choose")}</option> : null}
                           {EFFECTS.map((effect) => (
                             <option key={effect} value={effect}>
-                              {effect === tool.suggestedEffect ? t("settings.mcp.review.suggested", { effect }) : effect}
+                              {effect === tool.suggestedEffect
+                                ? t("settings.mcp.review.suggested", { effect: effectLabel(effect) })
+                                : effectLabel(effect)}
                             </option>
                           ))}
                         </Select>
@@ -565,7 +576,7 @@ export function McpReviewModal({
                         >
                           {FLOORS.map((floor) => (
                             <option key={floor} value={floor}>
-                              {floor === "low" ? t("settings.mcp.review.floorNone") : floor}
+                              {t(FLOOR_KEYS[floor])}
                             </option>
                           ))}
                         </Select>

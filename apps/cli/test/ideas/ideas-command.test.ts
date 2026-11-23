@@ -88,6 +88,27 @@ describe("ideas command", () => {
     expect((await call({ action: "chips", limit: 1 }))["chips"]).toHaveLength(1);
   });
 
+  it("offers its own chips in the workspace's language: the label, and the prompt the person sends", async () => {
+    const { repositories, call } = await fixture({
+      census: async () => ["web", "reminders", "travel"],
+      continueChat: async () => ({ taskId: "task-1", title: "Бюджет за пътуването" }),
+    });
+    await repositories.workspaceSettings.set({
+      workspaceId: "default",
+      settings: { locale: "bg" },
+      expectedRevision: (await repositories.workspaceSettings.get("default")).revision,
+      actor: "operator",
+      now: NOW.toISOString(),
+    });
+    expect(await call({ action: "chips" })).toEqual({
+      chips: [
+        { taskId: "task-1", label: "Продължи: Бюджет за пътуването", prompt: "Да продължим „Бюджет за пътуването“." },
+        { label: "Търси в мрежата", prompt: "Потърси в мрежата за [тема] и обобщи какво намираш." },
+        { label: "Намери полети", prompt: "Намери най-евтините полети от [откъде] до [докъде] около [дати]." },
+      ],
+    });
+  });
+
   it("with no ideas to offer, chips for what Tavi can do here; Continue first for a recent chat; never more than three", async () => {
     let latest: { taskId: string; title: string } | undefined;
     const { seed, call } = await fixture({ census: async () => ["memory", "pdf", "web", "reminders"], continueChat: async () => latest });

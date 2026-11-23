@@ -5,6 +5,7 @@ import { ToolPatternSchema } from "./tool-policy.js";
 import { TASK_ORIGINS, type FrontEnd } from "./task-origins.js";
 import type { ModelUsage } from "./model.js";
 import type { Locale } from "./i18n.js";
+import { coreEnglish, type CoreT } from "./locales/core.js";
 import type { AdmissionKind, ChatKind } from "./ports/tasks.js";
 import type { ChatFolder, ChatFolderMode, ChatFolderPrimaryKind } from "./chat-folders.js";
 
@@ -159,39 +160,49 @@ export function modFailureRuleOf(hook: Pick<ModHookDeclaration, "event" | "onFai
 /**
  * What a hook can read, in Tavi's words rather than the author's: shown
  * beside the disclosure at approval, so a hook with no match is
- * seen to read everything it is offered.
+ * seen to read everything it is offered. Said by `t` (English by default).
  */
-export function modHookReadsLine(hook: Pick<ModHookDeclaration, "event" | "match" | "contextTrusted">): string {
-  const tools = hook.match?.tools === undefined ? "every tool" : hook.match.tools.map((pattern) => `\`${pattern}\``).join(", ");
+export function modHookReadsLine(hook: Pick<ModHookDeclaration, "event" | "match" | "contextTrusted">, t: CoreT = coreEnglish): string {
+  const tools =
+    hook.match?.tools === undefined ? t("mods.reads.everyTool") : hook.match.tools.map((pattern) => `\`${pattern}\``).join(", ");
   const where = [
-    hook.match?.sources === undefined ? undefined : `from ${hook.match.sources.join(", ")}`,
-    hook.match?.channels === undefined ? undefined : `on ${hook.match.channels.join(", ")}`,
+    hook.match?.sources === undefined ? undefined : t("mods.reads.fromSources", { sources: hook.match.sources.join(", ") }),
+    hook.match?.channels === undefined ? undefined : t("mods.reads.onChannels", { channels: hook.match.channels.join(", ") }),
   ]
     .filter((part) => part !== undefined)
     .join(" ");
-  const scope = where.length === 0 ? "" : ` (turns ${where})`;
+  const scope = where.length === 0 ? "" : t("mods.reads.scope", { where });
   // A match has no workspace: the hook sees every workspace's turns it covers (invariant 9).
-  return `${readsOf(hook, tools, where, scope)} It sees this in every workspace.`;
+  return `${readsOf(hook, tools, where, scope, t)} ${t("mods.reads.everyWorkspace")}`;
 }
 
-function readsOf(hook: Pick<ModHookDeclaration, "event" | "contextTrusted">, tools: string, where: string, scope: string): string {
+function readsOf(
+  hook: Pick<ModHookDeclaration, "event" | "contextTrusted">,
+  tools: string,
+  where: string,
+  scope: string,
+  t: CoreT,
+): string {
   switch (hook.event) {
     case "tool.check":
     case "tool.call":
-      return `Sees the input of ${tools}${scope}, and can refuse the call.`;
+      return t("mods.reads.toolInput", { tools, scope });
     case "tool.result":
-      return `Sees and can change the output of ${tools}${scope}.`;
+      return t("mods.reads.toolResult", { tools, scope });
     case "prompt.submit":
-      return `Reads every prompt and every message you receive${where.length === 0 ? ", on every channel" : scope}, and can add to it or drop it.${hook.contextTrusted === true ? " What it adds is trusted context: it does not mark the chat as holding untrusted content." : ""}`;
+      return t("mods.reads.prompt", {
+        scope: where.length === 0 ? t("mods.reads.everyChannel") : scope,
+        trusted: hook.contextTrusted === true ? ` ${t("mods.reads.trustedContext")}` : "",
+      });
     case "model.step":
-      return `Sees each model call as it starts: its step and its model${scope}.`;
+      return t("mods.reads.modelStep", { scope });
     case "turn.start":
     case "turn.complete":
-      return `Sees when each turn starts and ends, and its token usage${scope}.`;
+      return t("mods.reads.turn", { scope });
     case "heartbeat.tick":
-      return "Sees when each heartbeat check runs and how it ended.";
+      return t("mods.reads.heartbeatTick");
     case "heartbeat.item":
-      return "Sees each heartbeat item's key, title, urgency, sources and signal keys, with the check's time and your timezone, and can hold it back for good or make it wait for the summary.";
+      return t("mods.reads.heartbeatItem");
   }
 }
 
@@ -207,13 +218,13 @@ export interface PluginModHookView {
   readonly contextTrusted?: true;
 }
 
-export function modHookViewsOf(mods: ModsDeclaration): readonly PluginModHookView[] {
+export function modHookViewsOf(mods: ModsDeclaration, t: CoreT = coreEnglish): readonly PluginModHookView[] {
   return mods.hooks.map((hook) => ({
     event: hook.event,
     ...(hook.match === undefined ? {} : { match: hook.match }),
     onFailure: modFailureRuleOf(hook),
     disclosure: hook.disclosure,
-    reads: modHookReadsLine(hook),
+    reads: modHookReadsLine(hook, t),
     ...(hook.contextTrusted === true ? { contextTrusted: true as const } : {}),
   }));
 }
@@ -524,7 +535,8 @@ export interface PluginCommandView {
 
 /** `plugin-commands` over IPC: the commands plugins added, and running one. */
 export const PluginCommandsPayloadSchema = z.discriminatedUnion("action", [
-  z.strictObject({ action: z.literal("list") }),
+  /** `workspaceId`: the chat's workspace, whose language Tavi's own commands are described in (the owner's `default` when absent). */
+  z.strictObject({ action: z.literal("list"), workspaceId: z.string().min(1).max(128).optional() }),
   z.strictObject({
     action: z.literal("run"),
     workspaceId: z.string().min(1).max(128).optional(),

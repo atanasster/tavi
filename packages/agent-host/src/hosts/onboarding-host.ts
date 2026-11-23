@@ -29,6 +29,7 @@ import {
   type CoreText,
   withAvailableFeatured,
   type VerifyAdviceCode,
+  voiceMissingText,
 } from "@tavi/contracts";
 import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
 import { coreIn } from "@tavi/contracts/locales/core-server";
@@ -366,7 +367,7 @@ function liveStep(
       return {
         state: "todo",
         ...(voice.missing.length > 0
-          ? said("onboarding.voice.missing", { missing: voice.missing.join(", ") })
+          ? said("onboarding.voice.missing", { count: voice.missing.length, missing: voiceMissingText(voice.missing) })
           : said("onboarding.voice.todo")),
       };
     }

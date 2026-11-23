@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
-import type { ToolCard, TranscriptEntry } from "@tavi/client/browser";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Transcript } from "../../../src/features/transcript/Transcript.js";
 import { EntryBoundary } from "../../../src/features/transcript/ToolCards.js";
 import { setLocale } from "../../../src/lib/i18n.js";
 import { mount, unmountAll } from "../../support/dom.js";
+import { textEntry as text, toolCard as card } from "../../support/rows.js";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -20,17 +20,6 @@ afterEach(async () => {
   vi.restoreAllMocks();
   await setLocale("en");
 });
-
-const card = (callId: string, over: Partial<ToolCard> = {}): ToolCard => ({
-  kind: "tool",
-  key: callId,
-  attemptId: "a",
-  callId,
-  toolName: "sandbox.run",
-  status: "completed",
-  ...over,
-});
-const text = (key: string, body: string): TranscriptEntry => ({ kind: "text", key, attemptId: "a", blockId: key, text: body });
 
 describe("the transcript in Bulgarian", () => {
   it("says a tool card's status and what it was given", async () => {

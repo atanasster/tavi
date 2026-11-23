@@ -18,7 +18,11 @@ import {
   type ToolRule,
   type WorkspaceSettings,
   type AppsCatalogAnswer,
+  localeOf,
 } from "@tavi/contracts";
+import { DEFAULT_LOCALE } from "@tavi/contracts/i18n";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 
 import { readPluginManifest, readPluginSiteProfiles } from "@tavi/runtime";
 
@@ -164,6 +168,12 @@ export function snapshotSiteNotes(
   };
 }
 
+/** The words a workspace's apps are said in: its language's, English for English or none. */
+function appWords(settings: WorkspaceSettings): CoreT {
+  const locale = localeOf(settings);
+  return locale === DEFAULT_LOCALE ? coreEnglish : coreIn(locale);
+}
+
 /** Every app the workspace holds, worst health first, then by name. */
 export async function projectApps(context: AppsContext, workspaceId: string): Promise<ConnectableApp[]> {
   const views = await context.views();
@@ -204,6 +214,7 @@ export async function projectApps(context: AppsContext, workspaceId: string): Pr
       grants,
       now: context.now(),
       refused: parseRefused(await context.getMeta(APPS_REFUSED_SETTING)),
+      t: appWords(settings),
     }),
     ...channelApps({
       connections,
@@ -215,6 +226,7 @@ export async function projectApps(context: AppsContext, workspaceId: string): Pr
       rules,
       ...(context.channelStatus === undefined ? {} : { statusOf: context.channelStatus }),
       ...(context.channelSetup === undefined ? {} : { setupOf: context.channelSetup }),
+      t: appWords(settings),
     }),
     ...pluginApps({
       views,
@@ -317,10 +329,13 @@ export async function appsCatalog(
   input: { readonly query: string; readonly cursor?: string | undefined; readonly workspaceId: string },
 ): Promise<AppsCatalogAnswer> {
   const apps = await projectApps(context, input.workspaceId);
+  // A preset's name and summary in the workspace's language; a search finds it by its English words too.
+  const t = appWords(await context.workspaceSettings(input.workspaceId));
   const presetEntries: CatalogEntry[] = [];
   for (const id of AVAILABLE_PRESETS) {
-    const preset = presetOf(id);
-    if (preset === undefined || !matches(input.query, preset.name, preset.description)) continue;
+    const preset = presetOf(id, t);
+    const english = presetOf(id);
+    if (preset === undefined || !matches(input.query, preset.name, preset.description, english?.name, english?.description)) continue;
     const installed = apps.find((app) => app.source.preset === id);
     const badges: CatalogBadge[] = ["tavi-preset"];
     if (preset.app?.auth?.kind === "oauth" && preset.app.auth.provider !== undefined) badges.push("own-client");

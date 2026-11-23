@@ -110,8 +110,8 @@ describe("relative days, times and spans in Bulgarian", () => {
     expect(durationText(45_000, { seconds: true })).toBe(`45${NBSP}сек`);
     expect(durationText(125 * 60_000)).toBe(`2${NBSP}ч 5${NBSP}мин`);
     expect(durationText(27 * 3_600_000, { days: true })).toBe(`1${NBSP}д 3${NBSP}ч`);
-    expect(formatElapsed(1_400)).toBe(`1,4${NBSP}с`);
-    expect(formatElapsed(125_000)).toBe(`2${NBSP}мин 05${NBSP}с`);
+    expect(formatElapsed(1_400)).toBe(`1,4${NBSP}сек`);
+    expect(formatElapsed(125_000)).toBe(`2${NBSP}мин 05${NBSP}сек`);
     expect(formatElapsed(3_720_000)).toBe(`1${NBSP}ч 02${NBSP}мин`);
     expect(formatDuration(340)).toBe(`340${NBSP}мс`);
     expect(formatDuration(1_200)).toBe(`1,2${NBSP}сек`);

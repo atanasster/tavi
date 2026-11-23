@@ -32,6 +32,7 @@ import {
   type ModCommandResult,
   type PluginCommandView,
 } from "@tavi/contracts";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { errorMessage, isRecord } from "@tavi/contracts/util";
 
 /**
@@ -361,14 +362,17 @@ export class TurnHookRegistry implements TurnHooksPort {
   async runCommand(name: string, input: Omit<ModCommandInput, "signal" | "locale">): Promise<ModCommandResult | undefined> {
     const command = this.#commands.find((candidate) => this.#typedName(candidate) === name);
     if (command === undefined) return undefined;
+    // Its refusals in the language of the workspace it was typed in.
+    const t = coreIn(input.envelope.locale);
+    const said = { name, pluginId: command.pluginId };
     if (this.#suspended.has(command.pluginId) || this.#commandsSuspended.has(command.pluginId)) {
-      return { text: `/${name} from ${command.pluginId} is off: it failed too often and is suspended until the owner restarts.` };
+      return { text: t("plugins.command.suspended", said) };
     }
     // At most a few a second for one person on one front end or channel; the rest are refused, never counted as failures.
     const sender = `${input.envelope.workspaceId}\u0000${input.envelope.principalId}\u0000${input.envelope.channel ?? input.envelope.source}`;
     const at = this.#now();
     const recent = (this.#commandRuns.get(sender) ?? []).filter((when) => at - when < 1_000);
-    if (recent.length >= MOD_COMMANDS_PER_SECOND) return { text: `Too many commands at once: try /${name} again in a moment.` };
+    if (recent.length >= MOD_COMMANDS_PER_SECOND) return { text: t("plugins.command.tooMany", { name }) };
     this.#commandRuns.set(sender, [...recent, at]);
     // Once many senders are tracked, those quiet for a second are forgotten, so the map stays small.
     if (this.#commandRuns.size > 256)
@@ -395,13 +399,13 @@ export class TurnHookRegistry implements TurnHooksPort {
           command.lifetime.signal.addEventListener("abort", onGone, { once: true });
         }),
       ]);
-      if (command.lifetime.signal.aborted) return { text: `/${name}: ${command.pluginId} is no longer running.` };
+      if (command.lifetime.signal.aborted) return { text: t("plugins.command.gone", said) };
       const parsed = ModCommandResultSchema.safeParse(answer);
       if (!parsed.success) throw new HookShapeError(`its /${command.name} answer is not { text }`);
       return parsed.data;
     } catch (error) {
       // A command whose plugin stopped while it ran is not its failure.
-      if (command.lifetime.signal.aborted) return { text: `/${name}: ${command.pluginId} is no longer running.` };
+      if (command.lifetime.signal.aborted) return { text: t("plugins.command.gone", said) };
       const kind: TurnHookFailureKind = error instanceof HookTimeout ? "timeout" : error instanceof HookShapeError ? "shape" : "throw";
       // Counted toward the plugin's command breaker only: a failing command never suspends its hooks.
       this.#reportFailure(
@@ -415,7 +419,7 @@ export class TurnHookRegistry implements TurnHooksPort {
         },
         "commands",
       );
-      return { text: `/${name} from ${command.pluginId} failed${kind === "timeout" ? ": it ran out of time" : ""}.` };
+      return { text: t(kind === "timeout" ? "plugins.command.timedOut" : "plugins.command.failed", said) };
     } finally {
       clearTimeout(timer);
       command.lifetime.signal.removeEventListener("abort", onWithdrawn);

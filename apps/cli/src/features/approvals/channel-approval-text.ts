@@ -273,8 +273,6 @@ export function linkLabels(t: CoreT = coreEnglish): Readonly<Record<ApprovalScop
   };
 }
 
-export const LINK_LABELS: Readonly<Record<ApprovalScope | "deny", string>> = linkLabels();
-
 /**
  * Said under every set of single-use links: a link is a bearer capability, so
  * whoever holds the message can use it (a critical round still asks for the PIN).

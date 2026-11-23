@@ -28,10 +28,14 @@ import { BUILTIN_CHANNELS } from "../plugins/catalog.js";
  * A pending row in `approvals list`'s shape: the `record` and `task` every
  * client already reads, and the inbox's fields beside them. The chat a round
  * was announced in is named as a person reads it (`channelName`: only the
- * owner knows its connections' names).
+ * owner knows its connections' names), in `t`'s language.
  */
-export function approvalListRowOf(row: PendingApprovalRow, channelName?: (connectionId: string) => string | undefined): ApprovalListRow {
-  const provenance = pendingProvenance(row);
+export function approvalListRowOf(
+  row: PendingApprovalRow,
+  channelName?: (connectionId: string) => string | undefined,
+  t: CoreT = coreEnglish,
+): ApprovalListRow {
+  const provenance = pendingProvenance(row, t);
   return {
     record: {
       // The row's own id and round: a client addresses a row
@@ -60,7 +64,7 @@ export function approvalListRowOf(row: PendingApprovalRow, channelName?: (connec
     allowedScopes: row.allowedScopes,
     ...(row.announcedIn === undefined
       ? {}
-      : { announcedIn: { ...row.announcedIn, channel: approvalChannelLabel(row.announcedIn.connectionId, channelName) } }),
+      : { announcedIn: { ...row.announcedIn, channel: approvalChannelLabel(row.announcedIn.connectionId, channelName, t) } }),
     ...(row.label === undefined ? {} : { label: row.label }),
     ...(provenance === undefined ? {} : { provenance }),
   };
@@ -71,21 +75,22 @@ export function approvalListRowOf(row: PendingApprovalRow, channelName?: (connec
  * "⚠ after reading news.example — once only"; undefined for a round of
  * a chat that read none.
  */
-export function pendingProvenance(row: Pick<PendingApprovalRow, "label" | "allowedScopes">): string | undefined {
+export function pendingProvenance(row: Pick<PendingApprovalRow, "label" | "allowedScopes">, t: CoreT = coreEnglish): string | undefined {
   if (row.label === undefined) return undefined;
-  return approvalProvenanceLine(row.label, row.allowedScopes.length === 1 && row.allowedScopes[0] === "once");
+  return approvalProvenanceLine(row.label, row.allowedScopes.length === 1 && row.allowedScopes[0] === "once", t);
 }
 
 /** The history with each approval's `via` named as a person reads it; only the owner knows its connections' names. */
 export function withChannels(
   result: ApprovalsHistoryResult,
   channelName?: (connectionId: string) => string | undefined,
+  t: CoreT = coreEnglish,
 ): ApprovalsHistoryResult {
   return {
     ...result,
     items: result.items.map((item) =>
       (item.kind === "approval" || item.kind === "question") && item.via !== undefined
-        ? { ...item, channel: approvalChannelLabel(item.via, channelName) }
+        ? { ...item, channel: approvalChannelLabel(item.via, channelName, t) }
         : item,
     ),
   };
@@ -160,6 +165,7 @@ export async function listNeeds(
   repositories: Pick<PersistencePort["repositories"], "approvalInbox">,
   input: { readonly workspaceId: string; readonly taskId?: string; readonly rootTaskId?: string; readonly limit?: number },
   channelName?: (connectionId: string) => string | undefined,
+  t: CoreT = coreEnglish,
 ): Promise<NeedsAnswer> {
   const limit = Math.min(input.limit ?? 200, NEEDS_MAX_LIMIT);
   const scope = { workspaceId: input.workspaceId, limit, ...(input.taskId === undefined ? {} : { taskId: input.taskId }) };
@@ -172,7 +178,7 @@ export async function listNeeds(
   const named = (row: PendingApprovalRow): PendingApprovalRow =>
     row.announcedIn === undefined
       ? row
-      : { ...row, announcedIn: { ...row.announcedIn, channel: approvalChannelLabel(row.announcedIn.connectionId, channelName) } };
+      : { ...row, announcedIn: { ...row.announcedIn, channel: approvalChannelLabel(row.announcedIn.connectionId, channelName, t) } };
   return {
     needs: needsOf({
       approvals: approvals.rows.map(named),
@@ -180,7 +186,7 @@ export async function listNeeds(
         ...question,
         deliveries: question.deliveries.map((delivery) => ({
           ...delivery,
-          channel: approvalChannelLabel(delivery.connectionId, channelName),
+          channel: approvalChannelLabel(delivery.connectionId, channelName, t),
         })),
       })),
       reviews: waits.reviews,

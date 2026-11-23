@@ -5,12 +5,15 @@ import { localDate, todayIn } from "../../lib/time.js";
 import type { UiKey } from "../../locales/en.js";
 
 /** One-tap lines the instructions can take, each a thing the built-in signals see. */
-export const HEARTBEAT_SUGGESTIONS: readonly string[] = [
-  "Approvals or questions waiting more than an hour",
-  "Reminders and events in the next 2 hours",
-  "Scheduled runs that fail",
-  "Channels that need signing in again",
+const HEARTBEAT_SUGGESTION_KEYS: readonly UiKey[] = [
+  "center.heartbeatOptions.suggest.needs",
+  "center.heartbeatOptions.suggest.upcoming",
+  "center.heartbeatOptions.suggest.failedRuns",
+  "center.heartbeatOptions.suggest.channels",
 ];
+
+/** The suggested lines in the reader's language: added to the instructions as the person's own words. */
+export const heartbeatSuggestions = (): readonly string[] => HEARTBEAT_SUGGESTION_KEYS.map((key) => translateNow(key));
 export const TELL_LABELS: Readonly<Record<(typeof HEARTBEAT_TELL_ME)[number], UiKey>> = {
   "urgent-now": "center.heartbeatOptions.tell.urgentNow",
   "everything-now": "center.heartbeatOptions.tell.everythingNow",

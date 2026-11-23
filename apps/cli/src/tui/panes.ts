@@ -102,7 +102,7 @@ export function agentsPane(
   lines.push(
     mailbox.pending.length === 0
       ? t("tui.pane.mailbox.empty", { task: mailbox.taskId })
-      : t("tui.pane.mailbox.waiting", { task: mailbox.taskId, count }),
+      : t("tui.pane.mailbox.waiting", { task: mailbox.taskId, count: mailbox.pending.length, n: count }),
   );
   for (const envelope of mailbox.pending) {
     // Undelivered past its expiry: listed still, and said to be expired.

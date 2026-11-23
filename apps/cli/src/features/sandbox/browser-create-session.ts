@@ -2,6 +2,7 @@ import { TOOL_MEDIA_KEY, TaviError } from "@tavi/contracts";
 import type { ToolRegistry } from "@tavi/runtime";
 
 import { assessBrowserCreateSession } from "../approvals/call-assessors.js";
+import { cardWords } from "../approvals/card-words.js";
 import { chatOf } from "../browser/session-input.js";
 import { type BrowserToolContext, noteApprovedHost, withCancelOnAbort } from "./browser-context.js";
 import {
@@ -28,11 +29,13 @@ export function registerBrowserCreateSession(registry: ToolRegistry, ctx: Browse
     effect: "mutating",
     requiredPermissions: ["tools.invoke"],
     inputSchema: BrowserCreateSessionInputSchema,
-    assess: (input) => {
+    assess: (input, context) => {
+      const t = cardWords(context);
       const url = (input as { readonly url?: unknown }).url;
       // Refused before anyone is asked: allowing it could not make it open.
-      if (typeof url === "string" && !opensFromNothing(url)) return { ...assessBrowserCreateSession(input), hardDeny: NEEDS_ABSOLUTE_URL };
-      return withDestination(ctx, assessBrowserCreateSession(input), input);
+      if (typeof url === "string" && !opensFromNothing(url))
+        return { ...assessBrowserCreateSession(input, t), hardDeny: NEEDS_ABSOLUTE_URL };
+      return withDestination(ctx, assessBrowserCreateSession(input, t), input);
     },
     // With a `url`, the page's text reaches the model.
     untrustedOutput: true,

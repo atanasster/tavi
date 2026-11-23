@@ -532,7 +532,9 @@ describe("projecting MCP servers", () => {
       kind: "finish-setup",
       accountId: "mcp.gmaps",
       title: "Finish setting up Google Maps",
+      titleRef: { key: "app.repair.finishSetup", params: { app: "Google Maps" } },
       detail: "It needs your Maps API key.",
+      detailRef: { key: "app.repair.needs", params: { settings: "your Maps API key" } },
       cli: "tavi credentials set plugins.mcp.gmaps.apiKey --file … && tavi plugins config mcp.gmaps --set apiKey=plugins.mcp.gmaps.apiKey",
     });
     // Data and privacy names it so too, not by its config key (QA 2104).
@@ -593,7 +595,9 @@ describe("projecting MCP servers", () => {
       kind: "finish-setup",
       accountId: "mcp.todoist",
       title: "Finish setting up Todoist (API token)",
+      titleRef: { key: "app.repair.finishSetup", params: { app: "Todoist (API token)" } },
       detail: "Its server refused your Todoist API token: check it and paste it again.",
+      detailRef: { key: "app.repair.keyRefused", params: { key: "your Todoist API token" } },
       cli: "tavi credentials set plugins.mcp.todoist.apiToken --file … && tavi mcp probe mcp.todoist",
     });
     // A setting changed since, or a probe since, is not what was refused.

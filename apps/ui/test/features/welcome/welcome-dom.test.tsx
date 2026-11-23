@@ -3,7 +3,6 @@ import {
   defaultHeartbeatConfig,
   effectiveMemorySettings,
   HEARTBEAT_PRODUCTION_OPTIONS,
-  ONBOARDING_ABI,
   type OnboardingFlowAnswer,
   type OnboardingStatus,
 } from "@tavi/contracts";
@@ -17,6 +16,7 @@ import { Welcome } from "../../../src/features/welcome/Welcome.js";
 import { addSearchProvider, redirectedThisSession, WELCOME_REDIRECT_KEY } from "../../../src/features/welcome/onboarding-api.js";
 import { pick, selected } from "../../pick.js";
 import { flush, settledBy, unmountAll } from "../../support/dom.js";
+import { WELCOME_FLOW } from "../../support/onboarding.js";
 
 /**
  * Setup's Welcome: the stepper and its
@@ -74,34 +74,7 @@ function Routed(props: {
   );
 }
 
-const FLOW: OnboardingFlowAnswer = {
-  providerId: "tavi.onboarding",
-  flow: {
-    abi: ONBOARDING_ABI,
-    version: 1,
-    title: "Welcome to Tavi",
-    steps: [
-      {
-        id: "model",
-        kind: "model",
-        title: "Choose the model Tavi thinks with",
-        body: "Tavi needs one model.",
-        optional: false,
-        featured: ["openrouter", "openai"],
-        recommended: "openrouter",
-      },
-      {
-        id: "about",
-        kind: "about",
-        title: "About you",
-        body: "Your name and time zone.",
-        optional: true,
-        about: { fields: ["name", "timezone"] },
-      },
-    ],
-    done: { title: "You're set up", body: "Ask Tavi anything." },
-  },
-};
+const FLOW = WELCOME_FLOW;
 
 function status(model: "todo" | "done"): OnboardingStatus {
   return {

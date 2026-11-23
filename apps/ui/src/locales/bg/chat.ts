@@ -146,6 +146,8 @@ export const chat = {
   "chat.provenance.whyAsked": "Защо питам?",
   "chat.provenance.sources": "Какво прочете този чат",
   "chat.provenance.origins": "Откъде идват стойностите в това извикване",
+  "chat.provenance.openQuote": "„",
+  "chat.provenance.closeQuote": "“",
   "chat.call.risk.low": "нисък риск",
   "chat.call.risk.medium": "среден риск",
   "chat.call.risk.high": "висок риск",

@@ -4,8 +4,8 @@
 <text x="440" y="23" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="13" fill="#52605a">tavi plugins install</text>
 <line x1="0" y1="36" x2="880" y2="36" stroke="#d9e0dc"/>
 <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
-<text x="20" y="70.0" xml:space="preserve"><tspan fill="#132620">installed discord.channel@0.1.2 (proposed); approve it with `tavi plugins approve discord.channel 0.</tspan></text>
-<text x="20" y="89.0" xml:space="preserve"><tspan fill="#132620">1.1 --in-process` (it cannot run as a confined worker, so it runs unsandboxed in the owner's process</tspan></text>
+<text x="20" y="70.0" xml:space="preserve"><tspan fill="#132620">installed discord.channel@0.1.3 (proposed); approve it with `tavi plugins approve discord.channel 0.</tspan></text>
+<text x="20" y="89.0" xml:space="preserve"><tspan fill="#132620">1.3 --in-process` (it cannot run as a confined worker, so it runs unsandboxed in the owner's process</tspan></text>
 <text x="20" y="108.0" xml:space="preserve"><tspan fill="#132620">)</tspan></text>
 </g>
 </svg>

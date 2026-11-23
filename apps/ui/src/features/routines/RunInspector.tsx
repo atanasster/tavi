@@ -210,7 +210,7 @@ export function RunInspector({
                 onRevoke={() =>
                   void change(
                     "revoke-grant",
-                    { action: "revoke_grant", runId, reason: "Revoked from the run inspector" },
+                    { action: "revoke_grant", runId, reason: t("routines.inspector.revokeReason") },
                     t("routines.inspector.revokeDone"),
                   )
                 }

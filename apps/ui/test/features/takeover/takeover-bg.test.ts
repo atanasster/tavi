@@ -2,7 +2,7 @@ import { BROWSER_LIVE_UPLOAD_MAX_BYTES, type IdeaRun } from "@tavi/contracts";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { lastLooked, runNote } from "../../../src/features/ideas/ideas-api.js";
-import { stopLabel } from "../../../src/features/takeover/context.js";
+import { stopLabel, stopTakenOverTask } from "../../../src/features/takeover/context.js";
 import { uploadRefusal } from "../../../src/features/takeover/input.js";
 import { setLocale } from "../../../src/lib/i18n.js";
 
@@ -54,5 +54,17 @@ describe("takeover and ideas helpers in Bulgarian", () => {
     await setLocale("en");
     expect(stopLabel("worker", true)).not.toBe("Спри работата");
     expect(lastLooked(undefined, "UTC")).not.toBe("Още няма търсене.");
+  });
+
+  it("stores the person's reason for stopping a chat in their language", async () => {
+    const asked: Record<string, unknown>[] = [];
+    await stopTakenOverTask(
+      async (command, payload) => {
+        asked.push({ command, ...payload });
+        return command === "abort" ? { ok: false, error: { code: "NOT_RUNNING", message: "idle" } } : { ok: true };
+      },
+      { taskId: "task-1", workspaceId: "default", isHome: false },
+    );
+    expect(asked).toContainEqual({ command: "cancel", taskId: "task-1", reason: "Спряно, докато ти управляваше браузъра" });
   });
 });

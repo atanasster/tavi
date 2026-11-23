@@ -9,6 +9,7 @@ import {
   type ModCommandResult,
   navPath,
   renderTextRef,
+  errorTextIn,
 } from "@tavi/contracts";
 import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 
@@ -28,7 +29,7 @@ import { heartbeatCommand, type HeartbeatCommandDependencies } from "./owner.js"
  */
 
 export const HEARTBEAT_COMMANDS: readonly ModCommandDeclaration[] = [
-  { name: "heartbeat", description: "Your heartbeat: its status, pause [2h], resume, or now to check at once." },
+  { name: "heartbeat", description: coreEnglish("command.heartbeat.heartbeat") },
 ];
 
 /** How `/heartbeat` is used, and where its settings change. */
@@ -97,7 +98,7 @@ export function heartbeatSlashCommand(deps: HeartbeatCommandDependencies): (inpu
     if (extra.length > 0) return { text: USAGE };
     /** The heartbeat after an action, as one line, or the owner's refusal in its words. */
     const said = (answer: Awaited<ReturnType<typeof heartbeatCommand>>): ModCommandResult => {
-      if (!answer.ok) return { text: answer.error.message };
+      if (!answer.ok) return { text: errorTextIn(answer.error, t) };
       return "config" in answer.result ? { text: statusLine(answer.result, t) } : { text: USAGE };
     };
     switch (verb) {
@@ -114,7 +115,7 @@ export function heartbeatSlashCommand(deps: HeartbeatCommandDependencies): (inpu
       case "now": {
         if (amount !== undefined) return { text: USAGE };
         const answer = await heartbeatCommand(deps, { action: "run-now", ...scope });
-        if (!answer.ok) return { text: answer.error.message };
+        if (!answer.ok) return { text: errorTextIn(answer.error, t) };
         return {
           text:
             "status" in answer.result && answer.result.status === "started"

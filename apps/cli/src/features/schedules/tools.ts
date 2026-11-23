@@ -50,12 +50,15 @@ import {
   type ToolDefinition,
   DisplayNameSchema,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { definedOnly } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
 import type { ToolRegistry } from "@tavi/runtime";
 
 import { UsageError } from "../../cli/argv.js";
 import { OFFER_READ_REUSE_MS, recentRead } from "../../shared/recent-read.js";
+import { cardWords } from "../approvals/card-words.js";
+import { reminderWhenText } from "../reminders/delivery.js";
 import { parseReminderMonthly, parseReminderYearly } from "../reminders/parse.js";
 import { composeSpec, fireTimeText, resolveSchedule, setScheduleEnabled, writeSchedule, type ScheduleFireNow } from "./actions.js";
 import type { ScheduleWebhookIds } from "./webhook.js";
@@ -251,8 +254,8 @@ const HOST_WORDED: ReadonlySet<ScheduleFireReason> = new Set([
 ]);
 
 /** When a cadence runs, in words: "every day at 07:00 (Europe/Sofia)", "every Mon–Fri at 07:00 and 19:00 (Europe/Sofia)". */
-export function cadenceReadBack(spec: ScheduleSpec): string {
-  return scheduleSpecText(spec);
+export function cadenceReadBack(spec: ScheduleSpec, t: CoreT = coreEnglish): string {
+  return scheduleSpecText(spec, "sentence", t);
 }
 
 /** A write's cadence fields as the payload names them (`untilDate` for the spec's `until`). */
@@ -300,18 +303,18 @@ function precheckOf(text: string): string | undefined {
 }
 
 /** What a card says of a write's pre-check: what it reads before each run, or that it is removed. */
-function precheckLine(value: unknown): string {
+function precheckLine(value: unknown, t: CoreT): string {
   if (typeof value !== "string") return "";
   const parsed = parseSchedulePrecheck(value);
   if (!parsed.ok) return "";
   return parsed.precheck === null
-    ? "Removes the pre-check: every run goes ahead"
-    : `Checks first: ${schedulePrecheckSentence(parsed.precheck)}`;
+    ? t("approval.card.schedule.removesPrecheck")
+    : t("approval.card.schedule.checksFirst", { check: schedulePrecheckSentence(parsed.precheck, t) });
 }
 
-/** Where a schedule's results go, as its card says it. */
-function deliveryText(deliverTo: "home" | "none" | undefined): string {
-  return deliverTo === "home" ? "Posts each run's result to Home" : "Posts nothing to Home: only what each run sends itself";
+/** Where a schedule's results go, as its card (and, in English, a tool's answer) says it. */
+function deliveryText(deliverTo: "home" | "none" | undefined, t: CoreT = coreEnglish): string {
+  return deliverTo === "home" ? t("approval.card.schedule.deliverHome") : t("approval.card.schedule.deliverNone");
 }
 
 /**
@@ -443,44 +446,45 @@ export function registerScheduleTools(registry: ToolRegistry, options: ScheduleT
    * whatever a rule or an earlier grant says: the handler goes on only with its approval.
    */
   /** What a card says of the schedule it addresses: what runs, where results go, the tools it uses without asking. */
-  const scheduleDetail = (existing: ScheduleRecord | undefined): string =>
+  const scheduleDetail = (existing: ScheduleRecord | undefined, t: CoreT): string =>
     existing === undefined
       ? ""
       : [
-          `Runs: ${existing.prompt}`,
-          deliveryText(existing.deliverTo),
-          existing.autoApproveTools.length === 0 ? "" : `Uses without asking: ${existing.autoApproveTools.join(", ")}`,
+          t("approval.card.schedule.runs", { prompt: existing.prompt }),
+          deliveryText(existing.deliverTo, t),
+          existing.autoApproveTools.length === 0 ? "" : t("approval.card.schedule.uses", { tools: existing.autoApproveTools.join(", ") }),
         ]
           .filter((line) => line !== "")
           .join("\n")
           .slice(0, 2_000);
   /** The card of a pause or a delete: it only narrows what runs, so a medium card naming the schedule and what it runs. */
   const narrowCard =
-    (verb: string, reason: string) =>
+    (
+      title: "approval.card.schedule.pause" | "approval.card.schedule.delete",
+      reason: "approval.reason.schedule.pause" | "approval.reason.schedule.delete",
+    ) =>
     (input: unknown, context: InvocationContext | undefined): CallAssessment => {
+      const t = cardWords(context);
       const parsed = RefSchema.safeParse(input);
       const reference = parsed.success ? parsed.data.schedule : "";
       const existing = knownSchedule(context?.workspaceId, reference);
       return {
-        display: { title: `${verb} schedule ${existing?.name ?? reference}`.slice(0, 300), detail: scheduleDetail(existing) },
+        display: { title: t(title, { name: existing?.name ?? reference }).slice(0, 300), detail: scheduleDetail(existing, t) },
         subjects: [],
         risk: "medium",
-        reasons: [reason],
+        reasons: [t(reason)],
       };
     };
-  const armCard = (title: string, reason: string, existing: ScheduleRecord | undefined): CallAssessment => {
+  const armCard = (title: string, reason: string, existing: ScheduleRecord | undefined, t: CoreT): CallAssessment => {
     const writing = existing === undefined ? [] : armedWritingTools(existing);
     return {
       display: {
         title: title.slice(0, 300),
-        detail: scheduleDetail(existing),
+        detail: scheduleDetail(existing, t),
       },
       subjects: [],
       risk: writing.length > 0 ? "high" : "medium",
-      reasons: [
-        reason,
-        ...(writing.length === 0 ? [] : [`lets each run use ${writing.join(", ")} without asking, which can change or send things`]),
-      ],
+      reasons: [reason, ...(writing.length === 0 ? [] : [t("approval.reason.schedule.letsUse", { tools: writing.join(", ") })])],
       askWhenTainted: true,
       ...(existing === undefined || writing.length === 0
         ? {}
@@ -497,6 +501,7 @@ export function registerScheduleTools(registry: ToolRegistry, options: ScheduleT
     fields: Record<string, unknown>,
     existing: ScheduleRecord | undefined,
     zone: string | undefined,
+    t: CoreT,
   ): string | undefined => {
     const asked = CadenceFieldsSchema.safeParse(fields);
     if (!asked.success) return undefined;
@@ -509,17 +514,20 @@ export function registerScheduleTools(registry: ToolRegistry, options: ScheduleT
       return undefined;
     }
     const parsed = ScheduleSpecSchema.safeParse(
-      composeSpec({ action: "update", ...payload, timezone: timezone ?? "the workspace's zone" }, existing?.spec),
+      composeSpec({ action: "update", ...payload, timezone: timezone ?? t("approval.card.schedule.workspaceZone") }, existing?.spec),
     );
     if (!parsed.success) return undefined;
     const spec = parsed.data;
-    if (timezone === undefined) return cadenceReadBack(spec);
+    const cadence = scheduleSpecText(spec, "sentence", t);
+    if (timezone === undefined) return cadence;
     try {
       const next = nextOccurrence(spec, options.now());
-      return `${cadenceReadBack(spec)}; ${next === undefined ? "no run left" : `next ${formatReminderTime(next, spec.timezone)}`}`;
+      return next === undefined
+        ? t("approval.card.schedule.noRunLeft", { cadence })
+        : t("approval.card.schedule.next", { cadence, time: reminderWhenText(next, spec.timezone, t) });
     } catch {
       // A zone the write refuses: the card says what was asked, and the call is refused when it runs.
-      return cadenceReadBack(spec);
+      return cadence;
     }
   };
 
@@ -531,8 +539,9 @@ export function registerScheduleTools(registry: ToolRegistry, options: ScheduleT
    * still says every day it runs, and the tools it keeps.
    */
   const assess =
-    (title: (input: Record<string, unknown>, existing: ScheduleRecord | undefined) => string, change: boolean) =>
+    (title: (input: Record<string, unknown>, existing: ScheduleRecord | undefined, t: CoreT) => string, change: boolean) =>
     (input: unknown, context: InvocationContext | undefined): CallAssessment => {
+      const t = cardWords(context);
       const fields = (typeof input === "object" && input !== null ? input : {}) as Record<string, unknown>;
       const workspaceId = context?.workspaceId;
       const existing = change && typeof fields["schedule"] === "string" ? knownSchedule(workspaceId, fields["schedule"]) : undefined;
@@ -540,26 +549,30 @@ export function registerScheduleTools(registry: ToolRegistry, options: ScheduleT
       const kept = existing === undefined ? [] : keepsWritingTools(existing, fields);
       const writing = [...writingPatterns(patterns, options.tools()), ...kept];
       const workspaceZone = workspaceId === undefined ? undefined : options.workspaceTimezoneSync?.(workspaceId);
-      const when = whenItRuns(fields, existing, workspaceZone);
+      const when = whenItRuns(fields, existing, workspaceZone, t);
       const asked = fields["deliverTo"] === "home" || fields["deliverTo"] === "none" ? fields["deliverTo"] : undefined;
       const deliverTo = change ? (asked ?? existing?.deliverTo) : chatDeliverTo(patterns, asked);
       return {
         display: {
-          title: title(fields, existing).slice(0, 300),
+          title: title(fields, existing, t).slice(0, 300),
           detail: [
-            when === undefined ? "" : `When: ${when}`,
-            !change || fields["deliverTo"] !== undefined || existing !== undefined ? deliveryText(deliverTo) : "",
-            typeof fields["maxRunMinutes"] === "number" ? `Stops a run after ${fields["maxRunMinutes"]} minutes of work` : "",
+            when === undefined ? "" : t("approval.card.schedule.when", { when }),
+            !change || fields["deliverTo"] !== undefined || existing !== undefined ? deliveryText(deliverTo, t) : "",
+            typeof fields["maxRunMinutes"] === "number"
+              ? t("approval.card.schedule.stopsAfter", { count: fields["maxRunMinutes"], n: String(fields["maxRunMinutes"]) })
+              : "",
             typeof fields["maxTokens"] === "number"
-              ? `Stops a run once it uses more than ${tokenCountText(fields["maxTokens"])}`
+              ? t("approval.card.schedule.stopsTokens", { tokens: tokenCountText(fields["maxTokens"], t) })
               : fields["maxTokens"] === null
-                ? "Removes the token ceiling"
+                ? t("approval.card.schedule.removesCeiling")
                 : "",
-            asNotify(fields["notify"]) === undefined ? "" : `Tells you ${scheduleNotifyText(asNotify(fields["notify"]))}`,
-            precheckLine(fields["precheck"]),
-            typeof fields["prompt"] === "string" ? `Runs: ${fields["prompt"]}` : "",
-            patterns.length === 0 ? "" : `Uses without asking: ${patterns.join(", ")}`,
-            kept.length === 0 ? "" : `Keeps using without asking: ${existing?.autoApproveTools.join(", ") ?? ""}`,
+            asNotify(fields["notify"]) === undefined
+              ? ""
+              : t("approval.card.schedule.tells", { when: scheduleNotifyText(asNotify(fields["notify"]), t) }),
+            precheckLine(fields["precheck"], t),
+            typeof fields["prompt"] === "string" ? t("approval.card.schedule.runs", { prompt: fields["prompt"] }) : "",
+            patterns.length === 0 ? "" : t("approval.card.schedule.uses", { tools: patterns.join(", ") }),
+            kept.length === 0 ? "" : t("approval.card.schedule.keeps", { tools: existing?.autoApproveTools.join(", ") ?? "" }),
           ]
             .filter((line) => line !== "")
             .join("\n")
@@ -568,8 +581,8 @@ export function registerScheduleTools(registry: ToolRegistry, options: ScheduleT
         subjects: [],
         risk: writing.length > 0 ? "high" : "medium",
         reasons: [
-          "An unattended run does this at each time it fires",
-          ...(writing.length === 0 ? [] : [`lets each run use ${writing.join(", ")} without asking, which can change or send things`]),
+          t("approval.reason.schedule.unattended"),
+          ...(writing.length === 0 ? [] : [t("approval.reason.schedule.letsUse", { tools: writing.join(", ") })]),
         ],
         // A run's words come from the chat: under taint, or with a tool that writes, it is approved once, never for good.
         askWhenTainted: true,
@@ -595,7 +608,13 @@ export function registerScheduleTools(registry: ToolRegistry, options: ScheduleT
     effect: "mutating",
     requiredPermissions: ["tools.invoke"],
     inputSchema: CreateSchema,
-    assess: assess((fields) => `Schedule ${String(fields["name"] ?? "a prompt")}`, false),
+    assess: assess(
+      (fields, _existing, t) =>
+        fields["name"] === undefined || fields["name"] === null
+          ? t("approval.card.schedule.createAny")
+          : t("approval.card.schedule.create", { name: String(fields["name"]) }),
+      false,
+    ),
     offered,
     handler: async ({ input, context }) => {
       const parsed = CreateSchema.parse(input);
@@ -725,7 +744,10 @@ export function registerScheduleTools(registry: ToolRegistry, options: ScheduleT
     effect: "mutating",
     requiredPermissions: ["tools.invoke"],
     inputSchema: UpdateSchema,
-    assess: assess((fields, existing) => `Change schedule ${existing?.name ?? String(fields["schedule"] ?? "")}`, true),
+    assess: assess(
+      (fields, existing, t) => t("approval.card.schedule.change", { name: existing?.name ?? String(fields["schedule"] ?? "") }),
+      true,
+    ),
     offered,
     handler: async ({ input, context, approvedContentHash }) => {
       const parsed = UpdateSchema.parse(input);
@@ -792,9 +814,15 @@ export function registerScheduleTools(registry: ToolRegistry, options: ScheduleT
             const parsed = RefSchema.safeParse(input);
             const reference = parsed.success ? parsed.data.schedule : "";
             const existing = knownSchedule(context?.workspaceId, reference);
-            return armCard(`Resume schedule ${existing?.name ?? reference}`, "An unattended run does this at each time it fires", existing);
+            const t = cardWords(context);
+            return armCard(
+              t("approval.card.schedule.resume", { name: existing?.name ?? reference }),
+              t("approval.reason.schedule.unattended"),
+              existing,
+              t,
+            );
           }
-        : narrowCard("Pause", "It stops running until resumed; its settings stay"),
+        : narrowCard("approval.card.schedule.pause", "approval.reason.schedule.pause"),
       offered,
       handler: async ({ input, context, approvedContentHash }) => {
         const parsed = RefSchema.parse(input);
@@ -821,10 +849,12 @@ export function registerScheduleTools(registry: ToolRegistry, options: ScheduleT
       const parsed = RefSchema.safeParse(input);
       const reference = parsed.success ? parsed.data.schedule : "";
       const existing = knownSchedule(context?.workspaceId, reference);
+      const t = cardWords(context);
       return armCard(
-        `Run schedule ${existing?.name ?? reference} now`,
-        "An unattended run does now what the schedule does at its time",
+        t("approval.card.schedule.runNow", { name: existing?.name ?? reference }),
+        t("approval.reason.schedule.unattendedNow"),
         existing,
+        t,
       );
     },
     offered,
@@ -861,7 +891,7 @@ export function registerScheduleTools(registry: ToolRegistry, options: ScheduleT
     requiredPermissions: ["tools.invoke"],
     inputSchema: RefSchema,
     annotations: { destructive: true, idempotent: true },
-    assess: narrowCard("Delete", "It is deleted for good, with its history"),
+    assess: narrowCard("approval.card.schedule.delete", "approval.reason.schedule.delete"),
     offered,
     handler: async ({ input, context }) => {
       const parsed = RefSchema.parse(input);

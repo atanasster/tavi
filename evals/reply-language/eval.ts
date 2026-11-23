@@ -1,13 +1,31 @@
-import { type ChildProcess, spawn } from "node:child_process";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
-import type { RunSummary } from "../heartbeat/eval.js";
-import type { RunnerData } from "../template.js";
+import type { LiveRunnerOptions, RunSummary } from "../runner.js";
 
-// What reads as Bulgarian is shared with the ideas eval (`node` runs the .ts; the types come from it too).
-const { BULGARIAN_AT, cyrillicShare } = (await import(new URL("../language.ts", import.meta.url).href)) as typeof import("../language.js");
+// What reads as Bulgarian is shared with the ideas eval, and the runner's scaffold with the other live evals
+// (`node` runs the .ts; the types come from it too).
+const [
+  { BULGARIAN_AT, cyrillicShare },
+  {
+    chosenById,
+    liveRun,
+    liveRunnerOptions,
+    parseRunnerFlags,
+    reportHead,
+    repositoryRoot,
+    runnerData,
+    running,
+    runWhenMain,
+    summarizeStream,
+    withRunData,
+    writeReport,
+  },
+] = await Promise.all([
+  import(new URL("../language.ts", import.meta.url).href) as Promise<typeof import("../language.js")>,
+  import(new URL("../runner.ts", import.meta.url).href) as Promise<typeof import("../runner.js")>,
+]);
 
 /**
  * The reply-language eval: whether the agent answers in the language the
@@ -196,93 +214,25 @@ export function formatSummary(summary: EvalSummary, runs: readonly CaseRun[], la
 
 // ------------------------------------------------------------------ the runner
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
-
-export interface RunnerOptions {
+export interface RunnerOptions extends LiveRunnerOptions {
   readonly casesPath: string;
-  readonly only: readonly string[];
-  readonly connectionId?: string;
-  readonly model?: string;
-  readonly data: RunnerData;
-  readonly label?: string;
-  readonly outDir: string;
-  readonly timeoutMs: number;
-  readonly repeat: number;
 }
 
 /** The runner's options: `--template` or `--data-dir`, so it never writes into the default data directory. */
 export async function parseArgs(argv: readonly string[]): Promise<RunnerOptions> {
-  let casesPath = join(repositoryRoot, "evals", "reply-language", "cases.json");
-  const only: string[] = [];
-  let connectionId: string | undefined;
-  let model: string | undefined;
-  let template: string | undefined;
-  let dataDir: string | undefined;
-  let label: string | undefined;
-  let outDir = join(repositoryRoot, "evals", "reply-language", "results");
-  let timeoutSeconds = 120;
-  let repeat = 3;
-  for (let index = 0; index < argv.length; index += 1) {
-    const flag = argv[index];
-    const value = (): string => {
-      const next = argv[index + 1];
-      if (next === undefined) throw new Error(`${flag} needs a value`);
-      index += 1;
-      return next;
-    };
-    switch (flag) {
-      case "--cases":
-        casesPath = resolve(value());
-        break;
-      case "--case":
-        only.push(...value().split(","));
-        break;
-      case "--connection":
-        connectionId = value();
-        break;
-      case "--model":
-        model = value();
-        break;
-      case "--template":
-        template = value();
-        break;
-      case "--data-dir":
-        dataDir = value();
-        break;
-      case "--label":
-        label = value();
-        break;
-      case "--out":
-        outDir = resolve(value());
-        break;
-      case "--timeout-s":
-        timeoutSeconds = Number(value());
-        break;
-      case "--repeat":
-        repeat = Number(value());
-        break;
-      default:
-        throw new Error(`unknown option ${String(flag)}`);
-    }
-  }
-  if (!Number.isInteger(timeoutSeconds) || timeoutSeconds <= 0) throw new Error("--timeout-s must be a positive whole number");
-  if (!Number.isInteger(repeat) || repeat <= 0) throw new Error("--repeat must be a positive whole number");
-  const { runnerData } = (await import(new URL("../template.ts", import.meta.url).href)) as typeof import("../template.js");
+  const flags = parseRunnerFlags(argv, {
+    fileFlag: "--cases",
+    file: join(repositoryRoot, "evals", "reply-language", "cases.json"),
+    onlyFlag: "--case",
+    outDir: join(repositoryRoot, "evals", "reply-language", "results"),
+    timeoutSeconds: 120,
+    repeat: 3,
+  });
   return {
-    casesPath,
-    only,
-    ...(connectionId === undefined ? {} : { connectionId }),
-    ...(model === undefined ? {} : { model }),
-    data: runnerData(template, dataDir, "evals/reply-language/README.md"),
-    ...(label === undefined ? {} : { label }),
-    outDir,
-    timeoutMs: timeoutSeconds * 1000,
-    repeat,
+    casesPath: flags.file,
+    ...liveRunnerOptions(flags, runnerData(flags.template, flags.dataDir, "evals/reply-language/README.md")),
   };
 }
-
-/** The `tavi` children still running, stopped by an interrupt. */
-const running = new Set<ChildProcess>();
 
 /**
  * The workspace's language for a case, in `dataDir`: `tavi config set workspace.locale bg`, or for English
@@ -309,33 +259,17 @@ function setLocale(language: ReplyLanguage, dataDir: string, timeoutMs: number):
 }
 
 /** One run of `prompt` in `dataDir`, read for its answer. */
-async function taviRun(prompt: string, dataDir: string, options: RunnerOptions): Promise<RunSummary> {
-  const [{ taviRunJson }, { summarizeStream }] = await Promise.all([
-    import(new URL("../template.ts", import.meta.url).href) as Promise<typeof import("../template.js")>,
-    import(new URL("../heartbeat/eval.ts", import.meta.url).href) as Promise<typeof import("../heartbeat/eval.js")>,
-  ]);
-  const { stdout, timedOut } = await taviRunJson({
-    repositoryRoot,
-    prompt,
-    dataDir,
-    ...(options.connectionId === undefined ? {} : { connectionId: options.connectionId }),
-    ...(options.model === undefined ? {} : { model: options.model }),
-    timeoutMs: options.timeoutMs,
-    running,
-  });
-  return { ...summarizeStream(stdout), ...(timedOut ? { timedOut: true as const } : {}) };
+function taviRun(prompt: string, dataDir: string, options: RunnerOptions): Promise<RunSummary> {
+  return liveRun(prompt, dataDir, options, summarizeStream);
 }
 
 async function main(argv: readonly string[]): Promise<number> {
   const options = await parseArgs(argv);
-  const file = parseCasesFile(JSON.parse(readFileSync(options.casesPath, "utf8")));
-  const unknown = options.only.filter((id) => !file.cases.some((entry) => entry.id === id));
-  if (unknown.length > 0) throw new Error(`no such case: ${unknown.join(", ")}`);
-  const cases = options.only.length === 0 ? file.cases : file.cases.filter((entry) => options.only.includes(entry.id));
+  const cases = chosenById(parseCasesFile(JSON.parse(readFileSync(options.casesPath, "utf8"))).cases, options.only, "case");
   const startedAt = new Date();
   const runs: CaseRun[] = [];
   const log = (message: string): void => void process.stderr.write(`[reply-language eval] ${message}\n`);
-  const runCases = async (dataDirFor: (name: string) => string, done: (dataDir: string) => void): Promise<void> => {
+  await withRunData(options.data, { prefix: "lang-", log }, async (dataDirFor, done) => {
     let count = 0;
     for (const entry of cases)
       for (let repeat = 1; repeat <= options.repeat; repeat += 1) {
@@ -349,41 +283,11 @@ async function main(argv: readonly string[]): Promise<number> {
           done(dataDir);
         }
       }
-  };
-  const { data } = options;
-  if ("dataDir" in data)
-    await runCases(
-      () => data.dataDir,
-      () => undefined,
-    );
-  else {
-    const { withTemplateCopies } = (await import(new URL("../template.ts", import.meta.url).href)) as typeof import("../template.js");
-    await withTemplateCopies(data.template, { prefix: "lang-", commands: running, log }, (copy) =>
-      runCases(copy, (dataDir) => rmSync(dataDir, { recursive: true, force: true })),
-    );
-  }
+  });
   const summary = summarize(runs);
-  const report = {
-    ...(options.label === undefined ? {} : { label: options.label }),
-    startedAt: startedAt.toISOString(),
-    ...(options.connectionId === undefined ? {} : { connection: options.connectionId }),
-    ...(options.model === undefined ? {} : { model: options.model }),
-    summary,
-    runs,
-  };
-  mkdirSync(options.outDir, { recursive: true });
-  const path = join(options.outDir, `${startedAt.toISOString().replaceAll(":", "-").replace(".", "-")}.json`);
-  writeFileSync(path, `${JSON.stringify(report, null, 2)}\n`);
+  const path = writeReport(options.outDir, startedAt, { ...reportHead(options, startedAt), summary, runs });
   process.stdout.write(`${formatSummary(summary, runs, options.label)}\n\nreport: ${path}\n`);
   return summary.failing.length === 0 ? 0 : 1;
 }
 
-if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main(process.argv.slice(2)).then(
-    (code) => process.exit(code),
-    (error: unknown) => {
-      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-      process.exit(2);
-    },
-  );
-}
+runWhenMain(import.meta.url, main);

@@ -1,15 +1,14 @@
-import { spawnSync } from "node:child_process";
 import { realpathSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { SandboxPort } from "@tavi/contracts";
 import { temporaryDirectories } from "@tavi/test-support";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { LINUX_PROBE_READ_PATHS, probeReadPaths } from "../../src/features/plugins/probe-paths.js";
 import { renderPluginValidation, validatePlugin } from "../../src/features/plugins/validate.js";
 import { withOwnerSandbox } from "../../src/features/sandbox/host.js";
+import { directSandbox as direct } from "../support/direct-sandbox.js";
 
 /** Whether `register` can run confined here: macOS, and Linux once its live probe says usable. */
 async function isConfiningSandboxSupported(): Promise<boolean> {
@@ -29,23 +28,6 @@ const CONFINES = await isConfiningSandboxSupported();
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const dirs = temporaryDirectories();
 afterEach(() => dirs.cleanup());
-
-/** Runs the command unconfined, as the sandbox would with everything allowed: the comparison is what is under test here. */
-const direct: SandboxPort = {
-  capabilities: () => ({ available: true, platforms: ["darwin"] }),
-  run: async (_policy, command) => {
-    const run = spawnSync(command.command, [...(command.args ?? [])], { cwd: command.cwd, encoding: "utf8" });
-    return {
-      session: { sessionId: "s", state: "completed" },
-      exitCode: run.status,
-      stdout: run.stdout,
-      stderr: run.stderr,
-      truncated: false,
-    };
-  },
-  cancel: async () => {},
-  dispose: async () => {},
-};
 
 /** A plugin folder: `mods` its mods block (null: none), `declarations` the rest of its manifest's. */
 function plugin(

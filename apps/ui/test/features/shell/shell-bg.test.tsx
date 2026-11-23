@@ -1,24 +1,17 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { Bar } from "../../../src/features/shell/Bar.js";
 import { KeySheet } from "../../../src/features/shell/KeySheet.js";
-import { setLocale } from "../../../src/lib/i18n.js";
-import { mount, unmountAll } from "../../support/dom.js";
+import { mount } from "../../support/dom.js";
 import { InWorkspace } from "../../support/workspace.js";
+import { inBulgarian } from "../../support/bulgarian.js";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 /** The shell in Bulgarian: the header's routes, its count of chats that need you, and the keyboard sheet. */
 
-beforeEach(async () => {
-  await setLocale("bg");
-});
-
-afterEach(async () => {
-  unmountAll();
-  await setLocale("en");
-});
+inBulgarian();
 
 const noop = () => undefined;
 

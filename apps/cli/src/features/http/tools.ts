@@ -16,6 +16,7 @@ import { readBoundedBody, sha256Hex } from "@tavi/node-kit";
 import { type ToolRegistry, pinnedFetch } from "@tavi/runtime";
 
 import { assessHttpRequest } from "../approvals/call-assessors.js";
+import { cardWords } from "../approvals/card-words.js";
 import type { FolderSaver } from "../folders/fs-tools.js";
 
 /**
@@ -374,7 +375,7 @@ export function registerHttpTools(registry: ToolRegistry, base: HttpToolOptions)
     // person is asked to approve it, with the same reason — an approval could
     // not have made it succeed.
     assess: (input: unknown, context: InvocationContext): CallAssessment => {
-      const assessment = saveAssessed(assessHttpRequest(input), input, context);
+      const assessment = saveAssessed(assessHttpRequest(input, cardWords(context)), input, context);
       const refusal = requestRefusal(input, options);
       if (refusal === undefined) return assessment;
       // A site off the list is one the person can still allow: in the browser, while `tavi.browser` registers it.

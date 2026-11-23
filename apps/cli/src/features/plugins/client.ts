@@ -25,7 +25,10 @@ import {
   WorkspaceSettingsAnswerSchema,
   TaviError,
   DEFAULT_WORKSPACE_ID,
+  isCoreKey,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
+import { ownerWords, storeWords } from "../../shared/terminal-words.js";
 import { zodIssues } from "@tavi/contracts/zod-util";
 import { PluginRegistry } from "@tavi/runtime";
 import { pluginChannelPurgePreview, rememberedAccount, schedulePluginChannelPurges } from "../channels/purge.js";
@@ -37,7 +40,7 @@ import { builtCanvasDirectory } from "../../canvas-directory.js";
 import type { PluginsCommandOptions, PluginsUiOptions } from "./parse.js";
 import { fittedText, pageWidth, terminalText } from "../../shared/terminal-text.js";
 import { mcpRemovalDeps, removeMcpServer } from "../mcp/remove.js";
-import { errorMessage, nowTimestamp, plural } from "@tavi/contracts/util";
+import { errorMessage, nowTimestamp } from "@tavi/contracts/util";
 import { minuteUtc } from "../../shared/minute-utc.js";
 import { prefixedId } from "@tavi/node-kit";
 import { join, resolve } from "node:path";
@@ -135,163 +138,249 @@ export async function pluginsUiCommand(options: ResolvedDataDirectory<PluginsUiO
 }
 
 /** One declared hook: its event and match, how it fails, the author's words and Tavi's own line. */
-function describeModHook(hook: PluginModHookView): string {
+function describeModHook(hook: PluginModHookView, t: CoreT = coreEnglish): string {
   const match = [
-    hook.match?.tools === undefined ? undefined : `tools ${hook.match.tools.join(",")}`,
-    hook.match?.sources === undefined ? undefined : `from ${hook.match.sources.join(",")}`,
-    hook.match?.channels === undefined ? undefined : `on ${hook.match.channels.join(",")}`,
+    hook.match?.tools === undefined ? undefined : t("cli.plugins.hook.tools", { tools: hook.match.tools.join(",") }),
+    hook.match?.sources === undefined ? undefined : t("cli.plugins.hook.from", { sources: hook.match.sources.join(",") }),
+    hook.match?.channels === undefined ? undefined : t("cli.plugins.hook.on", { channels: hook.match.channels.join(",") }),
   ]
     .filter((part) => part !== undefined)
     .join("; ");
   // A prompt.submit hook whose context the manifest declares trusted says so at approval.
-  return `${hook.event}${match === "" ? "" : ` [${match}]`}${hook.contextTrusted === true ? " [trusted context]" : ""} (fails: ${hook.onFailure}): ${hook.disclosure} — ${hook.reads}`;
+  return t("cli.plugins.hook.line", {
+    event: hook.event,
+    match: match === "" ? "" : ` [${match}]`,
+    trusted: hook.contextTrusted === true ? t("cli.plugins.hook.trusted") : "",
+    onFailure: hook.onFailure,
+    disclosure: hook.disclosure,
+    reads: hook.reads,
+  });
 }
 
 /** Where an external plugin's code runs: `worker`, or `UNSANDBOXED` beside the owner (approved so, or before workers). */
-function isolationTag(plugin: PluginView): readonly string[] {
+function isolationTag(plugin: PluginView, t: CoreT): readonly string[] {
   if (plugin.kind !== "external" || !plugin.runsOwnerCode || (plugin.activeVersion === undefined && plugin.isolation === undefined))
     return [];
-  return [plugin.isolation === "process" ? "worker" : "UNSANDBOXED"];
+  return [t(plugin.isolation === "process" ? "cli.plugins.tag.worker" : "cli.plugins.tag.unsandboxed")];
 }
 
 /** Where one version's code runs and what it reaches, for `plugins show`: what `--format json` gives as its fields. */
-function pluginVersionIsolationLines(version: PluginView["versions"][number]): readonly string[] {
+function pluginVersionIsolationLines(version: PluginView["versions"][number], t: CoreT): readonly string[] {
   if (!version.runsOwnerCode || version.mcp !== undefined) return [];
   const where =
     version.isolation === "process"
-      ? "runs as a confined worker"
+      ? t("cli.plugins.version.worker")
       : version.isolation === "in-process"
-        ? "runs UNSANDBOXED in the owner's process (approved so)"
+        ? t("cli.plugins.version.inProcess")
         : version.reviewState === "approved"
-          ? "runs UNSANDBOXED in the owner's process (approved before workers; approve it again to choose)"
+          ? t("cli.plugins.version.legacy")
           : undefined;
   return [
     ...(where === undefined ? [] : [where]),
-    ...(version.workerRefusal === undefined ? [] : [`cannot be a worker: ${version.workerRefusal}`]),
-    ...(version.networkDomains === undefined ? [] : [`network domains: ${version.networkDomains.join(", ") || "none"}`]),
-    ...(version.rawSecrets === undefined ? [] : [`raw secrets (a worker holds their real values): ${version.rawSecrets.join(", ")}`]),
+    ...(version.workerRefusal === undefined ? [] : [t("cli.plugins.version.workerRefusal", { reason: version.workerRefusal })]),
+    ...(version.networkDomains === undefined
+      ? []
+      : [t("cli.plugins.version.networkDomains", { domains: version.networkDomains.join(", ") || t("cli.plugins.none") })]),
+    ...(version.rawSecrets === undefined ? [] : [t("cli.plugins.version.rawSecrets", { names: version.rawSecrets.join(", ") })]),
   ];
 }
 
+/** A plugin's phase in `t`'s words; one this release does not know reads as it arrives. */
+const PHASE_KEYS: Readonly<Record<NonNullable<PluginView["phase"]>, CoreKey>> = {
+  registered: "cli.plugins.phase.registered",
+  starting: "cli.plugins.phase.starting",
+  ready: "cli.plugins.phase.ready",
+  stopping: "cli.plugins.phase.stopping",
+  stopped: "cli.plugins.phase.stopped",
+  failed: "cli.plugins.phase.failed",
+  not_composed: "cli.plugins.phase.notComposed",
+  verified: "cli.plugins.phase.verified",
+  degraded: "cli.plugins.phase.degraded",
+};
+const phaseWord = (phase: string, t: CoreT): string =>
+  Object.hasOwn(PHASE_KEYS, phase) ? t(PHASE_KEYS[phase as keyof typeof PHASE_KEYS]) : phase;
+
+/** The words of a code a key names (`cli.plugins.kind.builtin`), or the code itself when none does. */
+const codeWord = (prefix: string, code: string, t: CoreT): string => {
+  const key = `${prefix}.${code}`;
+  return isCoreKey(key) ? t(key) : code;
+};
+
+/** A tool's effect as its badge says it; English the raw id, as before. */
+const EFFECT_KEYS: Readonly<Record<string, CoreKey>> = {
+  "read-only": "plugin.tool.effect.readOnly",
+  mutating: "plugin.tool.effect.mutating",
+  external: "plugin.tool.effect.external",
+};
+const effectWord = (effect: string, t: CoreT): string =>
+  t === coreEnglish || !Object.hasOwn(EFFECT_KEYS, effect) ? effect : t(EFFECT_KEYS[effect] as CoreKey);
+
 /** Text for one plugin row: id, kind, state, version, and the owner's phase when attached. */
-function pluginLine(plugin: PluginView): string {
-  const state = plugin.enabled ? "enabled" : "disabled";
-  const version = plugin.kind === "builtin" ? "built-in" : (plugin.activeVersion ?? plugin.versions.at(-1)?.version ?? "-");
+function pluginLine(plugin: PluginView, t: CoreT = coreEnglish): string {
+  const state = t(plugin.enabled ? "cli.plugins.state.enabled" : "cli.plugins.state.disabled");
+  const version = plugin.kind === "builtin" ? t("cli.plugins.builtIn") : (plugin.activeVersion ?? plugin.versions.at(-1)?.version ?? "-");
   const pending = plugin.versions.filter((version) => version.reviewState === "proposed").map((version) => version.version);
   // Each field is cleaned on its own: terminalText strips control characters, tabs included.
   const fields = [
     plugin.id,
-    `${plugin.kind}${plugin.core ? " (core)" : ""}${plugin.dev === true ? " (dev)" : ""}`,
+    `${codeWord("cli.plugins.kind", plugin.kind, t)}${plugin.core ? t("cli.plugins.list.core") : ""}${plugin.dev === true ? t("cli.plugins.list.dev") : ""}`,
     state,
     version,
-    ...(plugin.phase === undefined ? [] : [plugin.phase]),
-    ...(pending.length === 0 ? [] : [`awaiting review: ${pending.join(", ")}`]),
-    ...(plugin.error === undefined ? [] : [`error: ${plugin.error}`]),
-    ...isolationTag(plugin),
+    ...(plugin.phase === undefined ? [] : [phaseWord(plugin.phase, t)]),
+    ...(pending.length === 0 ? [] : [t("cli.plugins.list.awaiting", { versions: pending.join(", ") })]),
+    ...(plugin.error === undefined ? [] : [t("cli.plugins.error", { error: plugin.error })]),
+    ...isolationTag(plugin, t),
   ];
   return `${fields.map(terminalText).join("\t")}\n`;
 }
 
 /** The owner's phase for `show`, in words: one not composed says whether a restart would load it. */
-function phaseText(plugin: PluginView): string {
+function phaseText(plugin: PluginView, t: CoreT): string {
   if (plugin.phase === undefined) return "";
-  if (plugin.phase !== "not_composed") return `, ${plugin.phase} in the running owner`;
-  return plugin.enabled ? ", not loaded yet (restart `tavi serve` to load it)" : ", not loaded in the running owner";
+  if (plugin.phase !== "not_composed") return t("cli.plugins.phase.running", { phase: phaseWord(plugin.phase, t) });
+  return t(plugin.enabled ? "cli.plugins.phase.notLoadedYet" : "cli.plugins.phase.notLoaded");
 }
 
-/** `tavi plugins show`'s text for one plugin, its long lines cut at spaces to the terminal's `columns` (80 in a pipe). */
-export function pluginDetail(plugin: PluginView, columns: number | undefined = undefined): string {
+/**
+ * `tavi plugins show`'s text for one plugin, its long lines cut at spaces to the terminal's `columns` (80 in a pipe),
+ * in `t`'s words.
+ */
+export function pluginDetail(plugin: PluginView, columns: number | undefined = undefined, t: CoreT = coreEnglish): string {
+  const none = t("cli.plugins.none");
   const lines = [
     `${plugin.name} (${plugin.id})`,
-    `kind: ${plugin.kind}${plugin.core ? ", core" : ""}${plugin.dev === true ? ", dev: loaded unapproved by tavi serve --dev-plugin, reloaded on save" : ""}`,
-    `state: ${plugin.enabled ? "enabled" : "disabled"}${phaseText(plugin)}`,
+    t("cli.plugins.show.kind", {
+      kind: codeWord("cli.plugins.kind", plugin.kind, t),
+      core: plugin.core ? t("cli.plugins.show.core") : "",
+      dev: plugin.dev === true ? t("cli.plugins.show.dev") : "",
+    }),
+    t("cli.plugins.show.state", {
+      state: t(plugin.enabled ? "cli.plugins.state.enabled" : "cli.plugins.state.disabled"),
+      phase: phaseText(plugin, t),
+    }),
   ];
-  if (plugin.description !== "") lines.push(`description: ${plugin.description}`);
-  if (plugin.error !== undefined) lines.push(`error: ${plugin.error}`);
+  if (plugin.description !== "") lines.push(t("cli.plugins.show.description", { text: plugin.description }));
+  if (plugin.error !== undefined) lines.push(t("cli.plugins.error", { error: plugin.error }));
   if (plugin.kind !== "builtin") {
-    lines.push(`active version: ${plugin.activeVersion ?? "none"}`);
+    lines.push(t("cli.plugins.show.activeVersion", { version: plugin.activeVersion ?? none }));
     if (plugin.directory !== undefined)
-      lines.push(plugin.dev === true ? `files: ${plugin.directory}` : `files: ${plugin.directory}/<version>`);
-    lines.push("versions:");
+      lines.push(t(plugin.dev === true ? "cli.plugins.show.files" : "cli.plugins.show.filesVersioned", { path: plugin.directory }));
+    lines.push(t("cli.plugins.show.versions"));
     for (const version of plugin.versions) {
       // A dev plugin's folder is loaded as it is: nothing was installed, approved or reviewed.
       if (plugin.dev === true) {
         lines.push(
-          `  ${version.version}\tdev\tloaded from ${plugin.directory ?? "its folder"}\truns UNSANDBOXED in the owner's process (--dev-plugin)`,
+          `  ${version.version}\t${t("cli.plugins.version.dev")}\t${t("cli.plugins.version.loadedFrom", { folder: plugin.directory ?? t("cli.plugins.version.itsFolder") })}\t${t("cli.plugins.version.devUnsandboxed")}`,
         );
       } else {
         lines.push(
-          `  ${version.version}\t${version.reviewState}\tsha256 ${version.contentHash.slice(0, 16)}…\tinstalled ${minuteUtc(version.installedAt)}`,
+          `  ${version.version}\t${codeWord("cli.plugins.review", version.reviewState, t)}\tsha256 ${version.contentHash.slice(0, 16)}…\t${t("cli.plugins.version.installed", { at: minuteUtc(version.installedAt) })}`,
         );
-        for (const line of pluginVersionIsolationLines(version)) lines.push(`    ${line}`);
+        for (const line of pluginVersionIsolationLines(version, t)) lines.push(`    ${line}`);
       }
       for (const capability of version.capabilities ?? [])
-        lines.push(`    provider ${capability.id} (${capability.kind}): ${capability.disclosure}`);
+        lines.push(
+          `    ${t("cli.plugins.version.provider", { id: capability.id, kind: capability.kind, disclosure: capability.disclosure })}`,
+        );
       // A channel's review: what it may do, and every address it reaches.
       for (const channel of version.channels ?? []) {
-        lines.push(`    channel ${channel.providerId} (${channel.label}, ${channel.kind}): ${channel.disclosure}`);
+        lines.push(
+          `    ${t("cli.plugins.version.channel", { id: channel.providerId, label: channel.label, kind: channel.kind, disclosure: channel.disclosure })}`,
+        );
         for (const endpoint of channel.endpoints) lines.push(`      ${endpoint}`);
       }
       for (const pkg of version.provenance?.packages ?? [])
-        lines.push(`    package ${pkg.name}@${pkg.version}, ${pkg.license}, ${pkg.integrity}`);
+        lines.push(
+          `    ${t("cli.plugins.version.package", { name: pkg.name, version: pkg.version, license: pkg.license, integrity: pkg.integrity })}`,
+        );
       // An MCP server's launch spec: the exact command or address first.
       if (version.mcp !== undefined) for (const line of mcpBlockLines(version.mcp)) lines.push(`    mcp ${line}`);
       // Each version's own declarations: a review decides on these, not the running version's.
       if (version !== pluginRunningVersion(plugin)) {
         lines.push(
-          `    declares tools: ${version.tools.map((tool) => describePluginTool(tool)).join(", ") || "none"}; settings: ${Object.keys(version.configFields).join(", ") || "none"}`,
+          `    ${t("cli.plugins.version.declares", {
+            tools: version.tools.map((tool) => describePluginTool(tool, t)).join(", ") || none,
+            settings: Object.keys(version.configFields).join(", ") || none,
+          })}`,
         );
-        for (const hook of version.mods ?? []) lines.push(`    hook ${describeModHook(hook)}`);
-        for (const command of version.commands ?? []) lines.push(`    command /${command.name}: ${command.description}`);
-        if (version.router !== undefined) lines.push(`    ${describeRouterDeclaration(version.router)}`);
-        for (const line of describePluginHeartbeat(version)) lines.push(`    ${line}`);
-        if (version.memory !== undefined) lines.push(`    ${describeMemoryDeclaration(version.memory)}`);
-        if (version.ideas !== undefined) lines.push(`    ${describeIdeasDeclaration(version.ideas)}`);
-        if (version.onboarding !== undefined) lines.push(`    ${describeOnboardingDeclaration(version.onboarding)}`);
-        for (const contribution of version.ui?.contributions ?? []) lines.push(`    ui ${describePluginUiContribution(contribution)}`);
-        for (const line of version.apps === undefined ? [] : describePluginApps(version.apps)) lines.push(`    ${line}`);
+        for (const hook of version.mods ?? []) lines.push(`    ${t("cli.plugins.version.hook", { hook: describeModHook(hook, t) })}`);
+        for (const command of version.commands ?? [])
+          lines.push(`    ${t("cli.plugins.version.command", { name: command.name, description: command.description })}`);
+        if (version.router !== undefined) lines.push(`    ${describeRouterDeclaration(version.router, t)}`);
+        for (const line of describePluginHeartbeat(version, t)) lines.push(`    ${line}`);
+        if (version.memory !== undefined) lines.push(`    ${describeMemoryDeclaration(version.memory, t)}`);
+        if (version.ideas !== undefined) lines.push(`    ${describeIdeasDeclaration(version.ideas, t)}`);
+        if (version.onboarding !== undefined) lines.push(`    ${describeOnboardingDeclaration(version.onboarding, t)}`);
+        for (const contribution of version.ui?.contributions ?? [])
+          lines.push(`    ${t("cli.plugins.version.ui", { contribution: describePluginUiContribution(contribution, t) })}`);
+        for (const line of version.apps === undefined ? [] : describePluginApps(version.apps, t)) lines.push(`    ${line}`);
       }
     }
     const running = pluginRunningVersion(plugin);
-    if (running?.router !== undefined) lines.push(describeRouterDeclaration(running.router));
-    if (running !== undefined) lines.push(...describePluginHeartbeat(running));
-    if (running?.memory !== undefined) lines.push(describeMemoryDeclaration(running.memory));
-    if (running?.ideas !== undefined) lines.push(describeIdeasDeclaration(running.ideas));
-    if (running?.onboarding !== undefined) lines.push(describeOnboardingDeclaration(running.onboarding));
-    if (plugin.uiOnly === true) lines.push("runs no owner code: it only adds to the web canvas");
-    if (plugin.kind === "mcp") lines.push("runs no owner code: an MCP server, run out of process; its tools are reviewed with `tavi mcp`");
-    lines.push(plugin.tools.length === 0 ? "tools: none" : "tools:");
+    if (running?.router !== undefined) lines.push(describeRouterDeclaration(running.router, t));
+    if (running !== undefined) lines.push(...describePluginHeartbeat(running, t));
+    if (running?.memory !== undefined) lines.push(describeMemoryDeclaration(running.memory, t));
+    if (running?.ideas !== undefined) lines.push(describeIdeasDeclaration(running.ideas, t));
+    if (running?.onboarding !== undefined) lines.push(describeOnboardingDeclaration(running.onboarding, t));
+    if (plugin.uiOnly === true) lines.push(t("cli.plugins.show.uiOnly"));
+    if (plugin.kind === "mcp") lines.push(t("cli.plugins.show.mcpOnly"));
+    lines.push(t(plugin.tools.length === 0 ? "cli.plugins.show.toolsNone" : "cli.plugins.show.tools"));
     for (const tool of plugin.tools)
-      lines.push(`  ${tool.id}\t${tool.effect}${pluginToolOutputNote(tool.output)}${pluginToolDeclarationNote(tool)}\t${tool.description}`);
+      lines.push(
+        `  ${tool.id}\t${effectWord(tool.effect, t)}${pluginToolOutputNote(tool.output, t)}${pluginToolDeclarationNote(tool, t)}\t${tool.description}`,
+      );
     for (const instance of plugin.instances ?? [])
-      lines.push(`instance ${instance.id}: ${instance.factory}, workspace ${instance.workspaceId}, account ${instance.accountId}`);
-    lines.push(Object.keys(plugin.configFields).length === 0 ? "settings: none" : "settings:");
+      lines.push(
+        t("cli.plugins.show.instance", {
+          id: instance.id,
+          factory: instance.factory,
+          workspace: instance.workspaceId,
+          account: instance.accountId,
+        }),
+      );
+    lines.push(t(Object.keys(plugin.configFields).length === 0 ? "cli.plugins.show.settingsNone" : "cli.plugins.show.settings"));
     for (const [key, field] of Object.entries(plugin.configFields)) {
       const value = plugin.config[key];
       lines.push(
-        `  ${key}\t${field.type}${field.required === true ? ", required" : ""}\t${value === undefined ? "(unset)" : JSON.stringify(value)}${field.description === undefined ? "" : `\t${field.description}`}`,
+        `  ${key}\t${field.type}${field.required === true ? t("cli.plugins.setting.required") : ""}\t${value === undefined ? t("cli.plugins.setting.unset") : JSON.stringify(value)}${field.description === undefined ? "" : `\t${field.description}`}`,
       );
     }
   }
   // A built-in's as an external's (tavi.guard): its commands, its hooks into the turn — what the author says each
   // does, and what Tavi says it can read — what they decided, and how long they take.
   if (plugin.commands !== undefined) {
-    lines.push("commands:");
+    lines.push(t("cli.plugins.show.commands"));
     for (const command of plugin.commands) lines.push(`  /${command.name}\t${command.description}`);
   }
   if (plugin.mods !== undefined) {
-    lines.push("hooks:");
-    for (const hook of plugin.mods) lines.push(`  ${describeModHook(hook)}`);
+    lines.push(t("cli.plugins.show.hooks"));
+    for (const hook of plugin.mods) lines.push(`  ${describeModHook(hook, t)}`);
     for (const latency of plugin.hookLatency ?? [])
       lines.push(
-        `  ${latency.event}: median ${latency.medianMs} ms, worst ${latency.worstMs} ms over its last ${latency.samples === 1 ? "call" : `${String(latency.samples)} calls`}`,
+        `  ${t("cli.plugins.show.latency", {
+          event: latency.event,
+          median: String(latency.medianMs),
+          worst: String(latency.worstMs),
+          count: latency.samples,
+          n: String(latency.samples),
+        })}`,
       );
   }
   // A plugin with commands only has activity too: its commands' failures.
   const activity = plugin.hookActivity;
   if (activity !== undefined) {
     lines.push(
-      `hook activity: ${plural(activity.decisions, "decision")}, ${plural(activity.failures, "failure")}${activity.pruned === true ? ` (older rows were pruned: only the newest ${MAX_PLUGIN_HOOK_DECISIONS} decisions and ${MAX_PLUGIN_HOOK_FAILURES} failures are kept)` : ""}`,
+      t("cli.plugins.show.activity", {
+        decisions: t("cli.plugins.activity.decisions", { count: activity.decisions, n: String(activity.decisions) }),
+        failures: t("cli.plugins.activity.failures", { count: activity.failures, n: String(activity.failures) }),
+        pruned:
+          activity.pruned === true
+            ? t("cli.plugins.activity.pruned", {
+                decisions: String(MAX_PLUGIN_HOOK_DECISIONS),
+                failures: String(MAX_PLUGIN_HOOK_FAILURES),
+              })
+            : "",
+      }),
     );
     for (const event of activity.recent)
       lines.push(
@@ -300,13 +389,14 @@ export function pluginDetail(plugin: PluginView, columns: number | undefined = u
   }
   // The web canvas contributions in effect, their channels and what they are told to disclose.
   if (plugin.ui !== undefined) {
-    lines.push("ui:");
-    for (const contribution of plugin.ui.contributions) lines.push(`  ${describePluginUiContribution(contribution)}`);
+    lines.push(t("cli.plugins.show.ui"));
+    for (const contribution of plugin.ui.contributions) lines.push(`  ${describePluginUiContribution(contribution, t)}`);
   }
   // The prose lines (the description, every network domain) go on indented, not where the terminal breaks a word;
   // the rest (a path, a hook, a tool, a disclosure) stays one line, whole, for a reader to copy and a script to read.
   const width = pageWidth(columns);
-  const wrapped = (line: string) => (/^\s*(description|network domains): /.test(line) ? fittedText(line, width, "  ") : line);
+  const prose = [t("cli.plugins.show.description", { text: "" }), t("cli.plugins.version.networkDomains", { domains: "" })];
+  const wrapped = (line: string) => (prose.some((lead) => line.trimStart().startsWith(lead)) ? fittedText(line, width, "  ") : line);
   return `${lines.map((line) => wrapped(line.split("\t").map(terminalText).join("\t"))).join("\n")}\n`;
 }
 
@@ -347,13 +437,15 @@ export async function pluginsCommand(options: ResolvedDataDirectory<PluginsComma
   }
   const payload: PluginsPayload = parsed.data;
   // The CLI never sends `ui` (the bridge's own action), so its answer is never one.
-  const render = (answer: Exclude<PluginAnswer, PluginUiAnswer>): number => {
+  // `list` and `show` speak the default workspace's language in text; JSON and the other actions stay English.
+  const worded = options.format !== "json" && (options.action === "list" || options.action === "show");
+  const render = (answer: Exclude<PluginAnswer, PluginUiAnswer>, t: CoreT = coreEnglish): number => {
     if ("plugins" in answer) {
-      print(answer, answer.plugins.map(pluginLine).join(""));
+      print(answer, answer.plugins.map((plugin) => pluginLine(plugin, t)).join(""));
       return EXIT.ok;
     }
     if ("plugin" in answer) {
-      print(answer.plugin, pluginDetail(answer.plugin, io.columns));
+      print(answer.plugin, pluginDetail(answer.plugin, io.columns, t));
       return EXIT.ok;
     }
     if ("audit" in answer) {
@@ -393,7 +485,8 @@ export async function pluginsCommand(options: ResolvedDataDirectory<PluginsComma
     label: `tavi plugins ${options.action}`,
     mutates: options.action !== "list" && options.action !== "show",
     build: () => payload,
-    render: (result) => render(result as Exclude<PluginAnswer, PluginUiAnswer>),
+    render: async (result, client) =>
+      render(result as Exclude<PluginAnswer, PluginUiAnswer>, worded ? await ownerWords(client) : coreEnglish),
     offline: async (store) => {
       const registry = new PluginRegistry({ client: store, directory: join(options.dataDirectory, "plugins"), builtins: BUILTIN_PLUGINS });
       return render(
@@ -433,6 +526,7 @@ export async function pluginsCommand(options: ResolvedDataDirectory<PluginsComma
           channelPluginPreview: async (providerIds) =>
             await pluginChannelPurgePreview({ repositories: store.asPort().repositories }, providerIds),
         })) as Exclude<PluginAnswer, PluginUiAnswer>,
+        worded ? await storeWords(store) : coreEnglish,
       );
     },
     failed: (error) => {

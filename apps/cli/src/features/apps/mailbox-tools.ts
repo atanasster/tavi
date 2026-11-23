@@ -13,11 +13,13 @@ import {
   type ToolHandler,
   type ToolOfferContext,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
 import type { ToolRegistration, ToolRegistry } from "@tavi/runtime";
 import { z } from "zod";
 
+import { cardWords } from "../approvals/card-words.js";
 import { guardedBy, serialRefresh, signInLapse } from "./account-tools.js";
 import { mailboxCan, mailboxToolPrefix } from "./mailbox-catalog.js";
 
@@ -129,27 +131,45 @@ export function draftContentHash(draftId: string, draft: DraftRecord): string {
 }
 
 /** A reply's line on its card: the message it answers, in the sender's words, on one line. */
-function replyLine(draft: Pick<DraftRecord, "replyTo" | "replyingTo">): string {
+function replyLine(draft: Pick<DraftRecord, "replyTo" | "replyingTo">, t: CoreT): string {
   if (draft.replyTo === undefined) return "";
-  const said = [draft.replyingTo?.from, draft.replyingTo?.subject === undefined ? undefined : `"${draft.replyingTo.subject}"`]
+  const said = [
+    draft.replyingTo?.from,
+    draft.replyingTo?.subject === undefined ? undefined : t("approval.card.mail.quotedSubject", { subject: draft.replyingTo.subject }),
+  ]
     .filter((part) => part !== undefined)
     .join(", ");
-  return `\nIn reply to: ${said === "" ? "an earlier message in its thread" : said.replace(/\s+/g, " ").slice(0, 200)}`;
+  return `\n${t("approval.card.mail.inReplyTo", { message: said === "" ? t("approval.card.mail.earlierInThread") : said.replace(/\s+/g, " ").slice(0, 200) })}`;
+}
+
+type SentDraft = Pick<DraftRecord, "from" | "to" | "cc" | "subject" | "body" | "firstTime" | "replyTo" | "replyingTo">;
+
+/** A send's card as `t` says it, whether or not it fits. */
+function sendCardIn(draft: SentDraft, t: CoreT): { readonly title: string; readonly destination: string; readonly detail: string } {
+  const title = t("approval.card.mail.sendFrom", { subject: draft.subject, from: draft.from });
+  const destination = [...draft.to, ...draft.cc].join(", ");
+  const flagged = draft.firstTime.length === 0 ? "" : `\n${t("approval.card.mail.firstTime", { addresses: draft.firstTime.join(", ") })}`;
+  const detail = `${t("approval.card.mail.to", { to: draft.to.join(", ") })}${draft.cc.length === 0 ? "" : `\n${t("approval.card.mail.cc", { cc: draft.cc.join(", ") })}`}${replyLine(draft, t)}${flagged}\n\n${draft.body}`;
+  return { title, destination, detail };
+}
+
+/** Whether a card holds every word of its draft. */
+function fits(card: { readonly title: string; readonly destination: string; readonly detail: string }): boolean {
+  return card.title.length <= CARD.title && card.destination.length <= CARD.destination && card.detail.length <= CARD.detail;
 }
 
 /**
  * A send's approval card: the draft whole, or undefined when it does not fit
- * the card, so no one approves a send they were shown only part of.
+ * the card, so no one approves a send they were shown only part of. Whether
+ * it fits is judged on the English card, as the handler judges it again; a
+ * card in `t`'s words that would not hold the draft whole is shown in English.
  */
-function sendCard(
-  draft: Pick<DraftRecord, "from" | "to" | "cc" | "subject" | "body" | "firstTime" | "replyTo" | "replyingTo">,
-): ApprovalDisplay | undefined {
-  const title = `Send "${draft.subject}" from ${draft.from}`;
-  const destination = [...draft.to, ...draft.cc].join(", ");
-  const flagged = draft.firstTime.length === 0 ? "" : `\nFirst time writing to: ${draft.firstTime.join(", ")}`;
-  const detail = `To: ${draft.to.join(", ")}${draft.cc.length === 0 ? "" : `\nCc: ${draft.cc.join(", ")}`}${replyLine(draft)}${flagged}\n\n${draft.body}`;
-  if (title.length > CARD.title || destination.length > CARD.destination || detail.length > CARD.detail) return undefined;
-  return { title, destination, detail };
+function sendCard(draft: SentDraft, t: CoreT = coreEnglish): ApprovalDisplay | undefined {
+  const english = sendCardIn(draft, coreEnglish);
+  if (!fits(english)) return undefined;
+  if (t === coreEnglish) return english;
+  const said = sendCardIn(draft, t);
+  return fits(said) ? said : english;
 }
 
 export interface MailboxToolsHandle {
@@ -235,34 +255,40 @@ export function registerMailboxTools(registry: ToolRegistry, options: MailboxToo
   };
 
   /** A label change's card: what changes, on which messages, each by the sender and subject a read showed. */
-  const labelCard = (connectionId: string, input: z.infer<typeof LabelSchema>): ApprovalDisplay => {
+  const labelCard = (connectionId: string, input: z.infer<typeof LabelSchema>, t: CoreT): ApprovalDisplay => {
     const ids = [...new Set(input.ids)];
     const changes = [
       ...(input.add ?? []).map((name) => `+${name}`),
       ...(input.remove ?? []).map((name) => `-${name}`),
-      ...(input.archive === true ? ["archive"] : []),
-      ...(input.read === true ? ["mark read"] : input.read === false ? ["mark unread"] : []),
+      ...(input.archive === true ? [t("approval.card.mail.archive")] : []),
+      ...(input.read === true ? [t("approval.card.mail.markRead")] : input.read === false ? [t("approval.card.mail.markUnread")] : []),
     ].join(", ");
     const lines: string[] = [];
     let length = 0;
     for (const [index, id] of ids.entries()) {
       const message = seen.get(`${connectionId}\u0000${id}`);
-      const shown = [message?.from, message?.subject === undefined ? undefined : `"${message.subject}"`]
+      const shown = [
+        message?.from,
+        message?.subject === undefined ? undefined : t("approval.card.mail.quotedSubject", { subject: message.subject }),
+      ]
         .filter((part) => part !== undefined)
         .join(", ");
       // A message no search or read showed is named by its id alone: the card never guesses what it is.
-      const said = shown === "" ? `${id} (not read here)` : shown;
+      const said = shown === "" ? t("approval.card.notRead", { id }) : shown;
       const line = `• ${said.replace(/\s+/g, " ").slice(0, 120)}`;
       // What does not fit is counted, never cut mid-line.
       if (length + line.length + 40 > CARD.detail) {
-        lines.push(`…and ${String(ids.length - index)} more`);
+        lines.push(t("approval.card.mail.more", { n: String(ids.length - index) }));
         break;
       }
       lines.push(line);
       length += line.length + 1;
     }
     return {
-      title: `${changes} on ${ids.length === 1 ? "1 message" : `${String(ids.length)} messages`}`.slice(0, CARD.title),
+      title: t("approval.card.mail.labelsOn", {
+        changes,
+        messages: t("approval.card.mail.messages", { count: ids.length }),
+      }).slice(0, CARD.title),
       detail: lines.join("\n"),
     };
   };
@@ -376,7 +402,8 @@ export function registerMailboxTools(registry: ToolRegistry, options: MailboxToo
               inputSchema: LabelSchema,
               ...mailboxLabels,
               offered: offered("read"),
-              assess: (input): CallAssessment => {
+              assess: (input, context): CallAssessment => {
+                const t = cardWords(context);
                 const parsed = LabelSchema.safeParse(input);
                 const bulk = !parsed.success || new Set(parsed.data.ids).size > 1;
                 const empty = parsed.success ? emptyLabelChange(parsed.data) : undefined;
@@ -384,11 +411,11 @@ export function registerMailboxTools(registry: ToolRegistry, options: MailboxToo
                   ...(empty === undefined ? {} : { hardDeny: empty }),
                   subjects: [],
                   risk: bulk ? "high" : "medium",
-                  reasons: [bulk ? "changes the labels of several messages at once" : "changes a message's labels"],
+                  reasons: [bulk ? t("approval.reason.mail.labelsBulk") : t("approval.reason.mail.labels")],
                   // Many messages at once, or a change asked for after reading mail, is approved for this call only.
                   ...(bulk ? { onceOnly: true } : {}),
                   askWhenTainted: true,
-                  display: parsed.success ? labelCard(connectionId, parsed.data) : { title: "Change the labels of messages" },
+                  display: parsed.success ? labelCard(connectionId, parsed.data, t) : { title: t("approval.card.mail.labels") },
                 };
               },
               handler: async ({ input, context, signal, executionPolicy, ask }) => {
@@ -429,14 +456,17 @@ export function registerMailboxTools(registry: ToolRegistry, options: MailboxToo
         inputSchema: DraftSchema,
         ...mailboxLabels,
         offered: offered("read"),
-        assess: (input) => {
+        assess: (input, context) => {
+          const t = cardWords(context);
           const parsed = DraftSchema.safeParse(input);
           return {
             subjects: [],
             risk: "medium",
-            reasons: ["writes a draft in the mailbox"],
+            reasons: [t("approval.reason.mail.draft")],
             display: {
-              title: parsed.success ? `Draft "${parsed.data.subject}" to ${parsed.data.to.join(", ")}`.slice(0, 300) : "Draft an email",
+              title: parsed.success
+                ? t("approval.card.mail.draft", { subject: parsed.data.subject, to: parsed.data.to.join(", ") }).slice(0, 300)
+                : t("approval.card.mail.draftAny"),
             },
           };
         },
@@ -504,6 +534,7 @@ export function registerMailboxTools(registry: ToolRegistry, options: MailboxToo
       ...mailboxLabels,
       offered: offered("send"),
       assess: (input, context): CallAssessment => {
+        const t = cardWords(context);
         const parsed = SendSchema.safeParse(input);
         const draft = parsed.success ? drafts.get(parsed.data.draftId) : undefined;
         if (!parsed.success || draft === undefined || draft.workspaceId !== context.workspaceId || draft.connectionId !== connectionId) {
@@ -511,31 +542,31 @@ export function registerMailboxTools(registry: ToolRegistry, options: MailboxToo
           return {
             subjects: [],
             risk: "high",
-            reasons: ["sends an email"],
+            reasons: [t("approval.reason.mail.send")],
             onceOnly: true,
             attendedOnly: true,
-            display: { title: "Send a draft Tavi did not make here" },
+            display: { title: t("approval.card.mail.sendUnknown") },
           };
         }
-        const card = sendCard(draft);
+        const card = sendCard(draft, t);
         // Only a person who saw the card answers it: a run nobody attends denies it, whatever its approve-all.
         // A draft the card cannot hold whole carries no content to approve: its send is refused.
         if (card === undefined)
           return {
             subjects: [],
             risk: "high",
-            reasons: ["sends an email"],
+            reasons: [t("approval.reason.mail.send")],
             onceOnly: true,
             attendedOnly: true,
             display: {
-              title: `Send "${draft.subject}"`.slice(0, CARD.title),
-              detail: `Too long to show whole here, so it is not sent: send it yourself from ${label}'s Drafts.`,
+              title: t("approval.card.mail.send", { subject: draft.subject }).slice(0, CARD.title),
+              detail: t("approval.card.mail.tooLong", { label }),
             },
           };
         return {
           subjects: [],
           risk: "high",
-          reasons: ["sends an email from the person's address"],
+          reasons: [t("approval.reason.mail.sendFrom")],
           onceOnly: true,
           attendedOnly: true,
           contentHash: draftContentHash(parsed.data.draftId, draft),

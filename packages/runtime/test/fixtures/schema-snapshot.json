@@ -3008,6 +3008,24 @@
     },
     {
       "type": "trigger",
+      "name": "tavi_workspace_settings_center_settings_delete",
+      "tbl_name": "tavi_workspace_settings",
+      "sql": "CREATE TRIGGER tavi_workspace_settings_center_settings_delete AFTER DELETE ON tavi_workspace_settings BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version) VALUES (OLD.workspace_id, 'settings', 1)\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_workspace_settings_center_settings_insert",
+      "tbl_name": "tavi_workspace_settings",
+      "sql": "CREATE TRIGGER tavi_workspace_settings_center_settings_insert AFTER INSERT ON tavi_workspace_settings BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version) VALUES (NEW.workspace_id, 'settings', 1)\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
+      "name": "tavi_workspace_settings_center_settings_update",
+      "tbl_name": "tavi_workspace_settings",
+      "sql": "CREATE TRIGGER tavi_workspace_settings_center_settings_update AFTER UPDATE ON tavi_workspace_settings BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version) VALUES (NEW.workspace_id, 'settings', 1)\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
+    },
+    {
+      "type": "trigger",
       "name": "tavi_workspace_settings_center_update",
       "tbl_name": "tavi_workspace_settings",
       "sql": "CREATE TRIGGER tavi_workspace_settings_center_update AFTER UPDATE ON tavi_workspace_settings\nWHEN (CASE WHEN json_valid(NEW.settings_json) THEN json_extract(NEW.settings_json, '$.uiRoles') END) IS NOT (CASE WHEN json_valid(OLD.settings_json) THEN json_extract(OLD.settings_json, '$.uiRoles') END)\n  OR (CASE WHEN json_valid(NEW.settings_json) THEN json_extract(NEW.settings_json, '$.uiPlacements') END) IS NOT (CASE WHEN json_valid(OLD.settings_json) THEN json_extract(OLD.settings_json, '$.uiPlacements') END) BEGIN\n  INSERT INTO tavi_center_versions (scope, kind, version) VALUES (NEW.workspace_id, 'plugin', 1)\n  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;\nEND"
@@ -3165,6 +3183,10 @@
       },
       {
         "migration_id": "0032_stored_text_keys",
+        "applied_at": "<timestamp>"
+      },
+      {
+        "migration_id": "0033_settings_center_kind",
         "applied_at": "<timestamp>"
       }
     ]

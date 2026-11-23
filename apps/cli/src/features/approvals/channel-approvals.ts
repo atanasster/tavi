@@ -1,6 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 
 import {
+  DEFAULT_WORKSPACE_ID,
   type ApprovalRoundDeliveryRecord,
   APPROVAL_EXPIRED_DECIDER,
   TaviError,
@@ -27,8 +28,13 @@ import {
   type OutboundButton,
   type PersistencePort,
   type WorkflowPort,
+  renderTextRef,
+  textRef,
+  TextRefSchema,
 } from "@tavi/contracts";
 import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
+import { DEFAULT_LOCALE, type Locale } from "@tavi/contracts/i18n";
 import { clip, definedOnly, errorMessage } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
 import type { ApprovalRoundAnnouncement, ApprovalRoundSettlement, ReviewAnnouncement } from "@tavi/agent-host/workflow";
@@ -44,7 +50,7 @@ import {
   formDetail,
   formOfDetail,
   groupName,
-  LINK_LABELS,
+  linkLabels,
   linkLabel,
   type LinkView,
   offeredScopes,
@@ -147,6 +153,8 @@ const SCOPE_PRESS_KEYS = {
 /** A round `/new` withdrew: its settle event's `detail.reason`, and what it says where it was asked. */
 const ROUND_RESET_REASON = "conversation-reset";
 const ROUND_RESET_NOTICE = coreEnglish("channel.approval.reset");
+/** Its key, stored beside the English: a notice sent again later is said in the workspace's language then. */
+const ROUND_RESET_NOTICE_REF = textRef("channel.approval.reset");
 
 /** A question link's `choice` for a multi-select question's one form link. */
 const MULTI_SELECT_CHOICE = "*";
@@ -252,12 +260,20 @@ export interface ChannelApprovals {
   /** What a link's page shows, without spending it (a GET must never decide: link scanners follow links). */
   readonly describeLink: (
     token: string,
-  ) => Promise<{ readonly ok: true; readonly view: LinkView } | { readonly ok: false; readonly message: string }>;
+  ) => Promise<
+    | { readonly ok: true; readonly view: LinkView; readonly locale?: Locale }
+    | { readonly ok: false; readonly message: string; readonly locale?: Locale }
+  >;
   /** Spend a link and do what it says (the page's POST). */
   readonly useLink: (
     token: string,
     form: { readonly pin?: string; readonly note?: string; readonly picks?: readonly number[] },
-  ) => Promise<{ readonly ok: boolean; readonly message: string }>;
+  ) => Promise<{ readonly ok: boolean; readonly message: string; readonly locale?: Locale }>;
+  /**
+   * The language a link's page speaks when it reads no link (a refused method or form): the default workspace's.
+   * Absent from the answers above when it is English, so an English page's answers are as before.
+   */
+  readonly linkLocale: () => Promise<Locale | undefined>;
   /**
    * The reason a ❌ press asked for: `true` when this message was it (and
    * the round is now rejected with it), so the caller admits nothing.
@@ -300,7 +316,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     const sender = await bindings.senderOf(via, principalId);
     const name = sender === undefined ? undefined : (await bindings.get(via, sender))?.displayName;
     if (name !== undefined && name.trim() !== "") return name;
-    return deps.operatorOf?.(workspaceId) === principalId ? "Tavi's owner" : undefined;
+    return deps.operatorOf?.(workspaceId) === principalId ? (await wordsOf(workspaceId))("channel.settle.owner") : undefined;
   };
   const { repositories } = deps;
   const ttlMs = deps.roundTtlMs ?? DEFAULT_CHANNEL_ROUND_TTL_MS;
@@ -1064,7 +1080,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
           kind: "settled",
           via,
           ...(actor === undefined ? {} : { actor }),
-          detail: { reason: ROUND_RESET_REASON, notice: ROUND_RESET_NOTICE },
+          detail: { reason: ROUND_RESET_REASON, notice: ROUND_RESET_NOTICE, noticeRef: ROUND_RESET_NOTICE_REF },
           at,
         });
         const replyTarget = await settledReplyTarget(round);
@@ -1156,7 +1172,10 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       )
         continue;
       try {
-        await notify(round, notice, settled?.via ?? "ipc", replyTarget);
+        // A notice stored with its key is said in the workspace's language now; an older one, as it was stored.
+        const ref = TextRefSchema.safeParse(settled?.detail?.["noticeRef"]);
+        const said = ref.success ? (renderTextRef(ref.data, await wordsOf(round.workspaceId)) ?? notice) : notice;
+        await notify(round, said, settled?.via ?? "ipc", replyTarget);
       } catch (error) {
         deps.onDiagnostic?.("a decided round's outcome could not be shown again", {
           taskId: round.taskId,
@@ -1932,17 +1951,40 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     );
   };
 
+  /** A workspace's language for a page, English when it cannot be read; the default workspace's for a link that names none. */
+  const pageLocaleOf = async (workspaceId: string | undefined): Promise<Locale> => {
+    try {
+      return (await deps.localeOf?.(workspaceId ?? DEFAULT_WORKSPACE_ID)) ?? DEFAULT_LOCALE;
+    } catch (error) {
+      deps.onDiagnostic?.("the workspace's language could not be read; a link's page is in English", {
+        workspaceId,
+        error: errorMessage(error),
+      });
+      return DEFAULT_LOCALE;
+    }
+  };
+  /** A link's page language: its task's workspace's, else the default workspace's. */
+  const linkPageLocale = async (link: ApprovalLinkRecord | undefined): Promise<Locale> =>
+    await pageLocaleOf(link === undefined ? undefined : (await repositories.tasks.get(link.taskId))?.workspaceId);
+  const wordsIn = (locale: Locale): CoreT => (locale === DEFAULT_LOCALE ? coreEnglish : coreIn(locale));
+  /** `locale` beside an answer, only when it is not English: an English page's answers are as before. */
+  const localeField = (locale: Locale): { readonly locale?: Locale } => (locale === DEFAULT_LOCALE ? {} : { locale });
+
   /** What a link would do, or why it does nothing — read, never spent. */
   const readLink = async (
     token: string,
-  ): Promise<{ readonly link: ApprovalLinkRecord; readonly view: LinkView } | { readonly refusal: string }> => {
+  ): Promise<
+    ({ readonly link: ApprovalLinkRecord; readonly view: LinkView } | { readonly refusal: string }) & { readonly locale: Locale }
+  > => {
     const link = /^[A-Za-z0-9_-]{16,64}$/.test(token) ? await repositories.approvalLinks.get(sha256Hex(token)) : undefined;
-    if (link === undefined) return { refusal: "This link is not valid." };
-    if (link.usedAt !== undefined) return { refusal: "This link was already used." };
-    if (Date.parse(link.expiresAt) <= Date.parse(deps.now())) return { refusal: "This link has expired." };
+    const locale = await linkPageLocale(link);
+    const t = wordsIn(locale);
+    if (link === undefined) return { refusal: t("page.link.invalid"), locale };
+    if (link.usedAt !== undefined) return { refusal: t("page.link.used"), locale };
+    if (Date.parse(link.expiresAt) <= Date.parse(deps.now())) return { refusal: t("page.link.expired"), locale };
     if (link.kind === "round") {
       const round = link.steps === undefined ? undefined : await repositories.approvalRounds.get(link.taskId, link.steps);
-      if (round === undefined || round.settledAt !== undefined) return { refusal: "This round was already decided." };
+      if (round === undefined || round.settledAt !== undefined) return { refusal: t("page.link.roundDecided"), locale };
       const announcedDetail = (await repositories.approvalRounds.listEvents(link.taskId, round.steps)).find(
         (event) => event.kind === "announced",
       )?.detail;
@@ -1951,11 +1993,12 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       const choice = link.choice as ApprovalScope | "deny";
       return {
         link,
+        locale,
         view: {
           kind: "round",
-          title: `Round ${round.token} of task ${link.taskId}`,
+          title: t("page.link.roundTitle", { token: round.token, taskId: link.taskId }),
           body: typeof announced === "string" ? announced : "",
-          choiceLabel: LINK_LABELS[choice] ?? link.choice,
+          choiceLabel: linkLabels(t)[choice] ?? link.choice,
           needsPin: round.risk === "critical",
           allowsNote: choice === "deny",
           ...(linkForms === undefined ? {} : { forms: linkForms }),
@@ -1966,15 +2009,16 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     const multi = link.choice === MULTI_SELECT_CHOICE && waiting?.choices?.multiSelect === true ? waiting.choices.options : undefined;
     const option = waiting?.choices?.options[Number(link.choice) - 1];
     if (waiting === undefined || waiting.state !== "active" || (option === undefined && multi === undefined))
-      return { refusal: "This question was already answered." };
+      return { refusal: t("page.link.questionAnswered"), locale };
     const body = (await repositories.needDeliveries.listForWait(waiting.waitId))[0]?.text ?? "";
     return {
       link,
+      locale,
       view: {
         kind: "question",
-        title: `A question from task ${link.taskId}`,
+        title: t("page.link.questionTitle", { taskId: link.taskId }),
         body,
-        choiceLabel: option?.label ?? "Send my choices",
+        choiceLabel: option?.label ?? t("page.link.sendChoices"),
         needsPin: false,
         allowsNote: false,
         ...(multi === undefined ? {} : { options: multi }),
@@ -1984,24 +2028,23 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
 
   const describeLink: ChannelApprovals["describeLink"] = async (token) => {
     const read = await readLink(token);
-    return "refusal" in read ? { ok: false, message: read.refusal } : { ok: true, view: read.view };
+    return "refusal" in read
+      ? { ok: false, message: read.refusal, ...localeField(read.locale) }
+      : { ok: true, view: read.view, ...localeField(read.locale) };
   };
 
   const useLink: ChannelApprovals["useLink"] = async (token, form) => {
     const read = await readLink(token);
-    if ("refusal" in read) return { ok: false, message: read.refusal };
+    const said = localeField(read.locale);
+    const t = wordsIn(read.locale);
+    if ("refusal" in read) return { ok: false, message: read.refusal, ...said };
     const { link, view } = read;
     const spentAt = deps.now();
     let consumed = false;
     if (view.needsPin && link.kind === "round" && link.steps !== undefined) {
       // A critical round asks for something the email alone does not carry.
       const pin = await deps.readPin?.();
-      if (pin === undefined)
-        return {
-          ok: false,
-          message:
-            "This round is critical: decide it with `tavi approvals`, or set a PIN with `tavi credentials set approvals.pin` to decide such rounds here.",
-        };
+      if (pin === undefined) return { ok: false, message: t("page.link.critical"), ...said };
       // Compared as digests: equal lengths, so neither the PIN nor its length leaks through timing.
       const digest = (value: string) => createHash("sha256").update(value, "utf8").digest();
       const attempt = await repositories.approvalLinks.consumeWithPin({
@@ -2009,30 +2052,24 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
         at: spentAt,
         pinMatches: timingSafeEqual(digest(form.pin ?? ""), digest(pin)),
       });
-      if (attempt.status === "unavailable")
-        return {
-          ok: false,
-          message: "This link was already used, or too many wrong PINs were tried. Decide the round with `tavi approvals`.",
-        };
+      if (attempt.status === "unavailable") return { ok: false, message: t("page.link.pinUnavailable"), ...said };
       if (attempt.status === "wrong-pin")
         return {
           ok: false,
-          message:
-            attempt.remaining === 0
-              ? "Too many wrong PINs: this email's links no longer work. Decide the round with `tavi approvals`."
-              : `That PIN is not correct. The link was not used (${attempt.remaining} tries left).`,
+          message: attempt.remaining === 0 ? t("page.link.pinLocked") : t("page.link.pinWrong", { count: attempt.remaining }),
+          ...said,
         };
       consumed = true;
     }
     if (!consumed && !(await repositories.approvalLinks.consume(link.tokenHash, spentAt)))
-      return { ok: false, message: "This link was already used or has expired." };
+      return { ok: false, message: t("page.link.usedOrExpired"), ...said };
     let dispatched = false;
     try {
-      const result = await applyLink(link, form, () => {
+      const result = await applyLink(link, form, t, () => {
         dispatched = true;
       });
       if (!result.ok) await repositories.approvalLinks.release(link.tokenHash, spentAt);
-      return result;
+      return { ...result, ...said };
     } catch (error) {
       // Reads and refusal-audit writes cannot apply the decision. Once its
       // admission/settlement is dispatched, a failure may hide a committed write.
@@ -2044,16 +2081,17 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
   const applyLink = async (
     link: ApprovalLinkRecord,
     form: { readonly note?: string; readonly picks?: readonly number[] },
+    t: CoreT,
     beforeDispatch: () => void,
   ): Promise<{ readonly ok: boolean; readonly message: string }> => {
     const task = await repositories.tasks.get(link.taskId);
-    if (task === undefined) return { ok: false, message: "The task is gone." };
+    if (task === undefined) return { ok: false, message: t("page.link.taskGone") };
     // The link's bearer is the person the email went to: the task's owner.
     const actor: MemoryActor = { workspaceId: task.workspaceId, principalId: task.principalId, caller: "link", authority: "operator" };
     if (link.kind === "round") {
       const steps = link.steps;
       const round = steps === undefined ? undefined : await repositories.approvalRounds.get(link.taskId, steps);
-      if (round === undefined) return { ok: false, message: "This round was already decided." };
+      if (round === undefined) return { ok: false, message: t("page.link.roundDecided") };
       const choice = link.choice as ApprovalScope | "deny";
       const note = form.note?.trim().slice(0, 500);
       const answer = await decide(
@@ -2071,7 +2109,7 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
         beforeDispatch,
       );
       const decided = (await repositories.approvalRounds.get(link.taskId, round.steps))?.settledAt !== undefined;
-      return { ok: decided, message: answer ?? "Nothing to decide." };
+      return { ok: decided, message: answer ?? t("page.link.nothingToDecide") };
     }
     const waitId = link.waitId;
     const waiting = waitId === undefined ? undefined : await repositories.agentWaits.get(waitId);
@@ -2081,9 +2119,9 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       const option = options[pick - 1];
       return option === undefined ? [] : [option.label];
     });
-    if (waiting === undefined || options.length === 0) return { ok: false, message: "This question was already answered." };
+    if (waiting === undefined || options.length === 0) return { ok: false, message: t("page.link.questionAnswered") };
     // Refused before anything is spent for good: `useLink` releases the link.
-    if (labels.length === 0 || labels.length !== picks.length) return { ok: false, message: "Choose at least one of the options." };
+    if (labels.length === 0 || labels.length !== picks.length) return { ok: false, message: t("page.link.chooseOne") };
     const outcome: AgentWaitOutcome = { kind: "answered", replyText: labels.join(", "), answers: labels };
     const answered = await answerQuestion({
       actor,
@@ -2094,8 +2132,8 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
       beforeSettlement: beforeDispatch,
     });
     return answered
-      ? { ok: true, message: `Answered: ${labels.join(", ")}` }
-      : { ok: false, message: "This question was already answered." };
+      ? { ok: true, message: t("page.link.answered", { labels: labels.join(", ") }) }
+      : { ok: false, message: t("page.link.questionAnswered") };
   };
 
   const recordToolResults: ChannelApprovals["recordToolResults"] = async ({ taskId, steps, results }) => {
@@ -2135,5 +2173,9 @@ export function createChannelApprovals(deps: ChannelApprovalDependencies): Chann
     questionLinkLines,
     describeLink,
     useLink,
+    linkLocale: async () => {
+      const locale = await pageLocaleOf(undefined);
+      return locale === DEFAULT_LOCALE ? undefined : locale;
+    },
   };
 }

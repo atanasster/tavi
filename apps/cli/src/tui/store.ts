@@ -1047,7 +1047,7 @@ export class ChatStore {
         // Only the diff's own lines are counted: a cut diff's closing note is none.
         const more = lines.slice(TERMINAL_DIFF_LINES).filter((line) => /^[ +\-@]/.test(line)).length;
         if (lines.length > TERMINAL_DIFF_LINES)
-          this.#line(more === 0 ? t("tui.card.diffRest") : t("tui.card.diffMore", { n: String(more) }), "notice");
+          this.#line(more === 0 ? t("tui.card.diffRest") : t("tui.card.diffMore", { count: more, n: String(more) }), "notice");
       }
       // Why it is asked, and from where, as the canvas shows it: Tavi's words first, a page's claim after.
       for (const line of provenanceLines(request, t)) this.#line(`      ${line}`, "notice");

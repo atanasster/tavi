@@ -1,4 +1,5 @@
 import type { AppCategory, RiskLevel } from "@tavi/contracts";
+import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
 
 import type { McpPreset } from "./index.js";
 
@@ -20,23 +21,25 @@ function hosted(
     readonly publisher: string;
     readonly url: string;
     readonly category: AppCategory;
-    readonly summary: string;
+    /** Its summary's key: `t` says it. */
+    readonly summary: CoreKey;
     /** A floor on every tool that changes something, for an account that moves money. */
     readonly writeFloor?: RiskLevel;
   },
+  t: CoreT,
 ): McpPreset {
   return {
     id,
     checked: "2026-11-08",
     withdrawnIf: `${app.publisher} ends its hosted MCP server, changes its address, or stops registering clients itself`,
     name: app.name,
-    description: `Your ${app.name} account, through ${app.publisher}'s official hosted MCP server: one sign-in, no client of your own.`,
+    description: t("mcp.preset.hosted.description", { name: app.name, publisher: app.publisher }),
     config: {},
     block: { transport: "http", url: { value: app.url }, auth: "oauth", exposure: "auto" },
     app: {
       id,
       name: app.name,
-      summary: app.summary,
+      summary: t(app.summary),
       category: app.category,
       publisher: app.publisher,
       accountScope: "owner",
@@ -49,46 +52,76 @@ function hosted(
   };
 }
 
-const LINEAR_PRESET = hosted("linear", {
-  name: "Linear",
-  publisher: "Linear",
-  url: "https://mcp.linear.app/mcp",
-  category: "tasks",
-  summary: "Find, create and update your Linear issues and projects.",
-});
+const LINEAR_PRESET = (t: CoreT): McpPreset =>
+  hosted(
+    "linear",
+    {
+      name: "Linear",
+      publisher: "Linear",
+      url: "https://mcp.linear.app/mcp",
+      category: "tasks",
+      summary: "mcp.preset.linear.summary",
+    },
+    t,
+  );
 
-const NOTION_PRESET = hosted("notion", {
-  name: "Notion",
-  publisher: "Notion",
-  url: "https://mcp.notion.com/mcp",
-  category: "notes",
-  summary: "Search, read and write the Notion pages and databases you share with it.",
-});
+const NOTION_PRESET = (t: CoreT): McpPreset =>
+  hosted(
+    "notion",
+    {
+      name: "Notion",
+      publisher: "Notion",
+      url: "https://mcp.notion.com/mcp",
+      category: "notes",
+      summary: "mcp.preset.notion.summary",
+    },
+    t,
+  );
 
-const SENTRY_PRESET = hosted("sentry", {
-  name: "Sentry",
-  publisher: "Sentry",
-  url: "https://mcp.sentry.dev/mcp",
-  category: "dev",
-  summary: "Look into your Sentry issues, events and projects.",
-});
+const SENTRY_PRESET = (t: CoreT): McpPreset =>
+  hosted(
+    "sentry",
+    {
+      name: "Sentry",
+      publisher: "Sentry",
+      url: "https://mcp.sentry.dev/mcp",
+      category: "dev",
+      summary: "mcp.preset.sentry.summary",
+    },
+    t,
+  );
 
-const STRIPE_PRESET = hosted("stripe", {
-  name: "Stripe",
-  publisher: "Stripe",
-  url: "https://mcp.stripe.com",
-  category: "business",
-  summary: "Look up and manage your Stripe customers, payments and invoices.",
-  writeFloor: "high",
-});
+const STRIPE_PRESET = (t: CoreT): McpPreset =>
+  hosted(
+    "stripe",
+    {
+      name: "Stripe",
+      publisher: "Stripe",
+      url: "https://mcp.stripe.com",
+      category: "business",
+      summary: "mcp.preset.stripe.summary",
+      writeFloor: "high",
+    },
+    t,
+  );
 
-const FIGMA_PRESET = hosted("figma", {
-  name: "Figma",
-  publisher: "Figma",
-  url: "https://mcp.figma.com/mcp",
-  category: "files",
-  summary: "Read your Figma designs: their frames, components and variables.",
-});
+const FIGMA_PRESET = (t: CoreT): McpPreset =>
+  hosted(
+    "figma",
+    {
+      name: "Figma",
+      publisher: "Figma",
+      url: "https://mcp.figma.com/mcp",
+      category: "files",
+      summary: "mcp.preset.figma.summary",
+    },
+    t,
+  );
+
+/** Every hosted preset in Discover's order, its words a person reads in `t`'s language (English by default). */
+export function hostedPresets(t: CoreT = coreEnglish): readonly McpPreset[] {
+  return [LINEAR_PRESET(t), NOTION_PRESET(t), SENTRY_PRESET(t), STRIPE_PRESET(t), FIGMA_PRESET(t)];
+}
 
 /** Every hosted preset, in Discover's order. */
-export const HOSTED_PRESETS: readonly McpPreset[] = [LINEAR_PRESET, NOTION_PRESET, SENTRY_PRESET, STRIPE_PRESET, FIGMA_PRESET];
+export const HOSTED_PRESETS: readonly McpPreset[] = hostedPresets();

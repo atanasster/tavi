@@ -207,6 +207,7 @@ export const routines = {
   "routines.inspector.headline": "Заглавие",
   "routines.inspector.configuration": "Непроменима конфигурация на пускането и инструкции на проучвателя",
   "routines.inspector.authority": "Права за проучване",
+  "routines.inspector.revokeReason": "Отнето от прегледа на пускането",
   "routines.inspector.revokeDone": "Разрешението е отнето; следващото изтегляне и всяка чакаща доставка за това пускане ще бъдат отказани",
   "routines.inspector.noGrant": "Това пускане няма трайно разрешение.",
   "routines.inspector.attempts": "Опити",

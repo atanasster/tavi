@@ -113,12 +113,30 @@ export interface ViewerEnvironment {
   readonly decode?: (src: string) => Promise<void>;
 }
 
+/**
+ * Control characters, direction marks and characters that render as nothing (the soft hyphen, the
+ * Hangul fillers, the tag block): a path that decodes to one is shown encoded, so it cannot hide or
+ * reorder the address.
+ */
+const UNSAFE_IN_PATH =
+  /[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u115f\u1160\u180e\u200b-\u200f\u2028-\u202e\u2060-\u2069\u3164\ufeff\uffa0\ufff9-\ufffb\u{e0000}-\u{e007f}]|\u034f/u;
+
+/** A path as its words ("/wiki/Връх", not "/wiki/%D0%92…"); as it came when it does not decode, or decodes to a hidden mark. */
+function readablePath(path: string): string {
+  try {
+    const decoded = decodeURI(path);
+    return UNSAFE_IN_PATH.test(decoded) ? path : decoded;
+  } catch {
+    return path;
+  }
+}
+
 /** The host and path of a scrubbed URL, for the address line; the whole string when it is not one. */
 export function addressOf(url: string | undefined): { readonly host: string; readonly path: string } {
   if (url === undefined) return { host: "", path: "" };
   try {
     const parsed = new URL(url);
-    return { host: parsed.host, path: parsed.pathname === "/" ? "" : parsed.pathname };
+    return { host: parsed.host, path: parsed.pathname === "/" ? "" : readablePath(parsed.pathname) };
   } catch {
     return { host: url, path: "" };
   }

@@ -142,7 +142,7 @@ export function ChannelsStep(props: ConnectStepProps) {
   const t = useT();
   const read = useCallback(async (): Promise<Outcome<ChannelsLoaded>> => {
     const [catalog, list, people] = await Promise.all([
-      channels<ChannelsCatalogAnswer>(client, { action: "catalog" }),
+      channels<ChannelsCatalogAnswer>(client, { action: "catalog", workspaceId }),
       channels<ChannelsListAnswer>(client, { action: "list", workspaceId }),
       channels<ChannelsPeopleAnswer>(client, { action: "people", workspaceId }),
     ]);

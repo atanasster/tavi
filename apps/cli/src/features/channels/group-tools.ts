@@ -16,6 +16,7 @@ import {
 import { clip } from "@tavi/contracts/util";
 import type { ToolRegistry } from "@tavi/runtime";
 
+import { cardWords } from "../approvals/card-words.js";
 import { UNKNOWN_AUTHOR_TEXT } from "./inbound-turn.js";
 
 /**
@@ -173,18 +174,19 @@ export function registerGroupTools(registry: ToolRegistry, messaging: MessagingS
     offered: (context) => offeredIn(context, "polls"),
     assess: (input, context): CallAssessment => {
       const call = CreatePollInputSchema.safeParse(input);
+      const t = cardWords(context);
       const detail = call.success
         ? [
             call.data.question,
             ...call.data.answers.map((answer) => `• ${answer}`),
-            `${call.data.hours === undefined ? "Open for a day" : `Open for ${String(call.data.hours)} h`}${call.data.multiSelect ? ", more than one answer allowed" : ""}`,
+            `${call.data.hours === undefined ? t("approval.card.poll.openDay") : t("approval.card.poll.openHours", { hours: String(call.data.hours) })}${call.data.multiSelect ? t("approval.card.poll.multiSelect") : ""}`,
           ].join("\n")
         : "";
       return {
-        display: { title: "Post a poll in this chat", detail: clip(detail, 2_000) },
+        display: { title: t("approval.card.poll.post"), detail: clip(detail, 2_000) },
         subjects: [],
         risk: "medium",
-        reasons: ["everyone in the conversation sees it"],
+        reasons: [t("approval.reason.poll.seen")],
         attendedOnly: true,
         ...(inGroup(context) ? { groupDestination: true } : {}),
       };
@@ -298,10 +300,10 @@ export function registerGroupTools(registry: ToolRegistry, messaging: MessagingS
     inputSchema: EndPollInputSchema,
     offered: (context) => offeredIn(context, "polls"),
     assess: (_input, context): CallAssessment => ({
-      display: { title: "End a poll in this chat" },
+      display: { title: cardWords(context)("approval.card.poll.end") },
       subjects: [],
       risk: "medium",
-      reasons: ["everyone in the conversation sees it closed"],
+      reasons: [cardWords(context)("approval.reason.poll.closed")],
       attendedOnly: true,
       ...(inGroup(context) ? { groupDestination: true } : {}),
     }),
@@ -342,11 +344,12 @@ export function registerGroupTools(registry: ToolRegistry, messaging: MessagingS
             ...(call.data.description === undefined ? [] : [call.data.description]),
           ].join("\n")
         : "";
+      const t = cardWords(context);
       return {
-        display: { title: "Create an event for this chat", detail: clip(detail, 2_000) },
+        display: { title: t("approval.card.event.create"), detail: clip(detail, 2_000) },
         subjects: [],
         risk: "medium",
-        reasons: ["every member is told of it"],
+        reasons: [t("approval.reason.event.told")],
         attendedOnly: true,
         ...(inGroup(context) ? { groupDestination: true } : {}),
       };

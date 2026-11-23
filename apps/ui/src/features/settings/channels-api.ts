@@ -28,7 +28,7 @@ export interface Loaded {
 /** The page's data, with the people allowed: required on Allowed people, and only shown elsewhere. */
 export async function load(client: SettingsClient, workspaceId: string, peopleRequired: boolean): Promise<Outcome<Loaded>> {
   const [catalog, list, bound] = await Promise.all([
-    request<ChannelsCatalogAnswer>(client, { action: "catalog" }),
+    request<ChannelsCatalogAnswer>(client, { action: "catalog", workspaceId }),
     request<ChannelsListAnswer>(client, { action: "list", workspaceId }),
     request<ChannelsPeopleAnswer>(client, { action: "people", workspaceId }),
   ]);

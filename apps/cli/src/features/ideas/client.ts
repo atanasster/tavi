@@ -1,4 +1,6 @@
 import { emit } from "../../cli/output.js";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+import { ownerWords, pageIn, storeWords } from "../../shared/terminal-words.js";
 import { EXIT, configRefusalExit, reportCommandFailure } from "../../cli/exit.js";
 import type { IdeasCommandOptions } from "./parse.js";
 import { terminalText } from "../../shared/terminal-text.js";
@@ -14,7 +16,9 @@ import type { ResolvedDataDirectory } from "../../cli/store.js";
  * `refresh` is refused because no ideas host runs there.
  */
 export async function ideasCliCommand(options: ResolvedDataDirectory<IdeasCommandOptions>, io: CliIo): Promise<number> {
-  const print = (result: unknown): number => {
+  // Text is said in the workspace's language, read only when text is printed; JSON stays as the owner answered.
+  const textual = options.format !== "json";
+  const print = (result: unknown, t: CoreT = coreEnglish): number => {
     // Read through the answer's schema: an owner of another version answering another shape is said, not printed half-right.
     const parsed = ideasAnswerSchema(options).safeParse(result);
     if (!parsed.success) {
@@ -23,7 +27,7 @@ export async function ideasCliCommand(options: ResolvedDataDirectory<IdeasComman
       );
       return EXIT.unavailable;
     }
-    emit(io, options.format, parsed.data, () => ideasResultText(options, parsed.data, io.columns));
+    emit(io, options.format, parsed.data, () => pageIn(t, ideasResultText(options, parsed.data, io.columns, t), io.columns));
     return EXIT.ok;
   };
   const codes = { NOT_FOUND: EXIT.usage };
@@ -32,7 +36,7 @@ export async function ideasCliCommand(options: ResolvedDataDirectory<IdeasComman
     mutates: ideasMutates(options),
     codes,
     build: async () => ideasPayload(options),
-    render: (result) => print(result),
+    render: async (result, client) => print(result, textual ? await ownerWords(client, options.workspaceId) : coreEnglish),
     offline: async (store) => {
       const answer = await runIdeasAction(
         { repositories: store.asPort().repositories, principalOf: () => "operator", now: () => new Date() },
@@ -42,7 +46,7 @@ export async function ideasCliCommand(options: ResolvedDataDirectory<IdeasComman
         io.stderr(`${terminalText(answer.error.message)}\n`);
         return answer.error.code === "NOT_FOUND" ? codes.NOT_FOUND : configRefusalExit(answer.error.code);
       }
-      return print(answer.result);
+      return print(answer.result, textual ? await storeWords(store, options.workspaceId) : coreEnglish);
     },
     failed: (error) => reportCommandFailure(error, io, "ideas command failed"),
   });

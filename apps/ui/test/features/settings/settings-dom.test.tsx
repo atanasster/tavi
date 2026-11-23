@@ -3,6 +3,7 @@ import { act } from "react";
 import { describe, expect, it } from "vitest";
 
 import type { ClientResponse } from "@tavi/client/browser";
+import { REMINDER_ALLOW_RULE_NOTE, type ToolRule } from "@tavi/contracts";
 
 import type { Outcome, SettingsClient } from "../../../src/lib/ipc.js";
 import { CredentialsSettings } from "../../../src/features/settings/CredentialsSettings.js";
@@ -14,6 +15,7 @@ import type { WebSearchFormValues } from "../../../src/features/settings/search-
 import { close, offered, open, pick, selected } from "../../pick.js";
 import { InWorkspace } from "../../support/workspace.js";
 import { button, click, mount, unmountAll } from "../../support/dom.js";
+import { setLocale } from "../../../src/lib/i18n.js";
 
 /** The settings views' behaviour in a DOM: what a click, a key or a keystroke does. */
 
@@ -281,6 +283,45 @@ it("offers Remove only for an operator allow rule, since a page may not remove a
     .map((row) => row.querySelector("code:nth-of-type(2)")?.textContent);
   expect(removable).toEqual(["cmd-a1"]);
   expect(page.textContent).toContain("tavi permissions rm");
+});
+
+it("says a rule's decision, and a note Tavi wrote, in Bulgarian; the owner's own note as written", async () => {
+  const rule = (ruleId: string, decision: ToolRule["decision"], note: string): ToolRule => ({
+    ruleId,
+    workspaceId: "default",
+    toolPattern: "reminders.*",
+    decision,
+    source: "operator",
+    createdBy: "me",
+    createdVia: "cli",
+    createdAt: "2026-01-01T00:00:00Z",
+    note,
+  });
+  const client: SettingsClient = {
+    request: (_command, payload) =>
+      Promise.resolve({
+        ok: true,
+        result:
+          (payload as { action: string }).action === "rules"
+            ? { rules: [rule("r1", "allow", REMINDER_ALLOW_RULE_NOTE), rule("r2", "deny", "my own words")] }
+            : { grants: [] },
+      }),
+  };
+  await setLocale("bg");
+  try {
+    const page = await mount(
+      <InWorkspace client={client} workspaceId="default">
+        <PermissionsSettings />
+      </InWorkspace>,
+    );
+    const badges = [...page.querySelectorAll("li.row .badge")].map((badge) => badge.textContent);
+    expect(badges).toEqual(["разреши", "откажи"]);
+    expect(page.textContent).toContain("Напомнянията не искат одобрение");
+    expect(page.textContent).not.toContain("Reminders need no approval");
+    expect(page.textContent).toContain("My own words");
+  } finally {
+    await setLocale("en");
+  }
 });
 
 it("marks what a rule's matcher would hide", async () => {

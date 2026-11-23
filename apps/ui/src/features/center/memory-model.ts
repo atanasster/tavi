@@ -9,7 +9,8 @@ import type {
 } from "@tavi/contracts";
 
 import { decimal, formatBytes } from "../../lib/format.js";
-import { translateNow } from "../../lib/i18n.js";
+import { coreEnglish, type CoreKey } from "@tavi/contracts/locales/core";
+import { translateCore, translateNow } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
 import { saidLabels } from "./model.js";
 
@@ -125,10 +126,72 @@ export function otherPeopleLine(others: MemoryListAnswer["otherPeople"], people:
     : translateNow("center.memoryModel.otherPeople.people", { count: total, people: others.length, who });
 }
 
+/** A layer's words as a `core` key: what the owner writes in English, said by `t`. */
+type LayerWords = readonly [CoreKey, Record<string, string>?];
+
+/** The key a layer's label is written with, by its kind and what it names. */
+function labelWords(layer: SystemPromptLayer): LayerWords | undefined {
+  switch (layer.kind) {
+    case "base":
+      if (layer.source === "workspace")
+        return layer.revision === undefined
+          ? ["prompt.layer.workspace"]
+          : ["prompt.layer.workspaceRevision", { revision: String(layer.revision) }];
+      if (layer.source === "explicit") return ["prompt.layer.explicit"];
+      return layer.templateVersion === undefined
+        ? ["prompt.layer.shipped"]
+        : ["prompt.layer.shippedVersion", { version: layer.templateVersion }];
+    case "persona":
+      return layer.name === undefined ? undefined : ["prompt.layer.persona", { name: layer.name }];
+    case "chat":
+      return layer.revision === undefined ? undefined : ["prompt.layer.chat", { revision: String(layer.revision) }];
+    case "facts":
+      return ["prompt.layer.facts"];
+    case "context":
+      return ["prompt.layer.context"];
+    default:
+      return undefined;
+  }
+}
+
+/** The details the owner writes for a layer, each with its key. */
+const DETAIL_KEYS: readonly CoreKey[] = [
+  "prompt.layer.replacedWorkspace",
+  "prompt.layer.replacedExplicit",
+  "prompt.layer.personaBlank",
+  "prompt.layer.personaDisabled",
+  "prompt.layer.chatCleared",
+  "prompt.layer.factsDetail",
+  "prompt.layer.contextDetail",
+];
+
+/**
+ * `written` in the reader's language when it is what `words` says in English;
+ * else as the owner wrote it (an older or newer owner's words).
+ */
+function said(written: string, words: LayerWords | undefined): string {
+  if (words === undefined) return written;
+  const [key, params] = words;
+  return coreEnglish(key, params) === written ? translateCore(key, params) : written;
+}
+
+/** A layer's label in the reader's language: "Shipped default (tavi-default-5)" is "Вградените инструкции (tavi-default-5)". */
+export function layerLabel(layer: SystemPromptLayer): string {
+  return said(layer.label, labelWords(layer));
+}
+
+/** A layer's detail in the reader's language, when the owner wrote it; a sample rendering is shown as it is. */
+export function layerDetail(layer: SystemPromptLayer): string | undefined {
+  const detail = layer.detail;
+  if (detail === undefined || layer.sample === true) return detail;
+  const key = DETAIL_KEYS.find((candidate) => coreEnglish(candidate) === detail);
+  return key === undefined ? detail : translateCore(key);
+}
+
 /** Where a layer's text comes from, in a line under its label. */
 export function layerSource(layer: SystemPromptLayer): string {
   if (layer.generated) return translateNow("center.memoryModel.layer.generated");
-  if (!layer.active && layer.detail !== undefined) return layer.detail;
+  if (!layer.active && layer.detail !== undefined) return layerDetail(layer) ?? layer.detail;
   switch (layer.kind) {
     case "base":
       return translateNow(
@@ -141,7 +204,7 @@ export function layerSource(layer: SystemPromptLayer): string {
     case "persona":
       return translateNow("center.memoryModel.layer.persona");
     default:
-      return layer.detail ?? "";
+      return layerDetail(layer) ?? "";
   }
 }
 

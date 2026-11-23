@@ -559,6 +559,25 @@ describe("onboarding in the workspace's language", () => {
     expect(voiceOf("Some other reason")).toEqual({ kind: "voice", state: "unavailable", detail: "Some other reason" });
   });
 
+  it("names what voice messages are missing in Bulgarian, the tools by their own names", () => {
+    const voiceOf = (missing: readonly string[]) =>
+      deriveStatus(facts({ order: ["model", "voice"], voice: { supported: true, ready: false, missing } })).steps.find(
+        (entry) => entry.kind === "voice",
+      );
+    const both = voiceOf(["whisper.cpp", "a speech model"]);
+    expect(both?.detail).toBe("Missing: whisper.cpp, a speech model");
+    expect(onboardingStepDetail(both ?? { detail: "" }, coreIn("bg"))).toBe("Липсват: whisper.cpp, модел за реч");
+    const model = voiceOf(["a speech model"]);
+    expect(model?.detail).toBe("Missing: a speech model");
+    expect(onboardingStepDetail(model ?? { detail: "" }, coreIn("bg"))).toBe("Липсва: модел за реч");
+    const named = voiceOf(["analyzers.json naming the model"]);
+    expect(named?.detail).toBe("Missing: analyzers.json naming the model");
+    expect(onboardingStepDetail(named ?? { detail: "" }, coreIn("bg"))).toBe("Липсва: analyzers.json с името на модела");
+    const tools = voiceOf(["FFmpeg", "whisper.cpp"]);
+    expect(tools?.detail).toBe("Missing: FFmpeg, whisper.cpp");
+    expect(onboardingStepDetail(tools ?? { detail: "" }, coreIn("bg"))).toBe("Липсват: FFmpeg, whisper.cpp");
+  });
+
   it("leaves a detail that is only data without a key", () => {
     const status = deriveStatus(facts({ about: { operatorName: "Ада", namePreference: true } }));
     expect(status.steps.find((entry) => entry.kind === "about")).toEqual({ kind: "about", state: "done", detail: "Ада" });

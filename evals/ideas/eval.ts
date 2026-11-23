@@ -1,13 +1,18 @@
-import { spawn, type ChildProcess } from "node:child_process";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
-import type { RunSummary } from "../heartbeat/eval.js";
+import type { RunSummary } from "../runner.js";
 import type { RunnerData } from "../template.js";
 
-// What reads as Bulgarian is shared with the reply-language eval (`node` runs the .ts; the types come from it too).
-const { BULGARIAN_AT, cyrillicShare } = (await import(new URL("../language.ts", import.meta.url).href)) as typeof import("../language.js");
+// What reads as Bulgarian is shared with the reply-language eval, and the runner's scaffold with the other live
+// evals (`node` runs the .ts; the types come from it too).
+const [
+  { BULGARIAN_AT, cyrillicShare },
+  { chosenById, liveRun, parseRunnerFlags, repositoryRoot, runnerData, runWhenMain, summarizeStream, withRunData, writeReport },
+] = await Promise.all([
+  import(new URL("../language.ts", import.meta.url).href) as Promise<typeof import("../language.js")>,
+  import(new URL("../runner.ts", import.meta.url).href) as Promise<typeof import("../runner.js")>,
+]);
 
 /**
  * The ideas eval: fixture worlds — ideas,
@@ -476,8 +481,6 @@ export function parseJudgement(text: string): boolean | undefined {
 
 // ------------------------------------------------------------------ the runner
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
-
 export interface RunnerOptions {
   readonly worldsPath: string;
   readonly only: readonly string[];
@@ -493,143 +496,57 @@ export interface RunnerOptions {
 
 /** The runner's options: live needs `--template` or `--data-dir`, so it never writes into the default data directory. */
 export async function parseArgs(argv: readonly string[]): Promise<RunnerOptions> {
-  let worldsPath = join(repositoryRoot, "evals", "ideas", "worlds.json");
-  const only: string[] = [];
   let offline = false;
   let judge = false;
-  let connectionId: string | undefined;
-  let model: string | undefined;
-  let template: string | undefined;
-  let dataDir: string | undefined;
-  let label: string | undefined;
-  let outDir = join(repositoryRoot, "evals", "ideas", "results");
-  let timeoutSeconds = 180;
-  for (let index = 0; index < argv.length; index += 1) {
-    const flag = argv[index];
-    const value = (): string => {
-      const next = argv[index + 1];
-      if (next === undefined) throw new Error(`${flag} needs a value`);
-      index += 1;
-      return next;
-    };
-    switch (flag) {
-      case "--worlds":
-        worldsPath = resolve(value());
-        break;
-      case "--world":
-        only.push(...value().split(","));
-        break;
-      case "--offline":
-        offline = true;
-        break;
-      case "--judge":
-        judge = true;
-        break;
-      case "--connection":
-        connectionId = value();
-        break;
-      case "--model":
-        model = value();
-        break;
-      case "--template":
-        template = value();
-        break;
-      case "--data-dir":
-        dataDir = value();
-        break;
-      case "--label":
-        label = value();
-        break;
-      case "--out":
-        outDir = resolve(value());
-        break;
-      case "--timeout-s":
-        timeoutSeconds = Number(value());
-        break;
-      default:
-        throw new Error(`unknown option ${String(flag)}`);
-    }
-  }
-  if (!Number.isInteger(timeoutSeconds) || timeoutSeconds <= 0) throw new Error("--timeout-s must be a positive whole number");
+  const flags = parseRunnerFlags(argv, {
+    fileFlag: "--worlds",
+    file: join(repositoryRoot, "evals", "ideas", "worlds.json"),
+    onlyFlag: "--world",
+    outDir: join(repositoryRoot, "evals", "ideas", "results"),
+    timeoutSeconds: 180,
+    extra: (flag) => {
+      if (flag === "--offline") offline = true;
+      else if (flag === "--judge") judge = true;
+      else return false;
+      return true;
+    },
+  });
   if (offline && judge) throw new Error("--judge needs a model: it does not go with --offline");
   const base = {
-    worldsPath,
-    only,
+    worldsPath: flags.file,
+    only: flags.only,
     offline,
     judge,
-    ...(connectionId === undefined ? {} : { connectionId }),
-    ...(model === undefined ? {} : { model }),
-    ...(label === undefined ? {} : { label }),
-    outDir,
-    timeoutMs: timeoutSeconds * 1000,
+    ...(flags.connectionId === undefined ? {} : { connectionId: flags.connectionId }),
+    ...(flags.model === undefined ? {} : { model: flags.model }),
+    ...(flags.label === undefined ? {} : { label: flags.label }),
+    outDir: flags.outDir,
+    timeoutMs: flags.timeoutMs,
   };
   if (offline) return base;
-  const { runnerData } = (await import(new URL("../template.ts", import.meta.url).href)) as typeof import("../template.js");
-  return { ...base, data: runnerData(template, dataDir, "evals/ideas/README.md") };
+  return { ...base, data: runnerData(flags.template, flags.dataDir, "evals/ideas/README.md") };
 }
 
-const running = new Set<ChildProcess>();
-
 /** One `tavi run --format json --approval deny` in `dataDir`, to its end. */
-async function taviRun(prompt: string, dataDir: string, options: RunnerOptions): Promise<RunSummary> {
-  const { summarizeStream } = (await import(
-    new URL("../heartbeat/eval.ts", import.meta.url).href
-  )) as typeof import("../heartbeat/eval.js");
-  return await new Promise((resolvePromise, reject) => {
-    const child = spawn(
-      process.execPath,
-      [
-        join(repositoryRoot, "scripts", "tavi.mjs"),
-        "run",
-        "--format",
-        "json",
-        "--approval",
-        "deny",
-        "--data-dir",
-        dataDir,
-        ...(options.connectionId === undefined ? [] : ["--connection", options.connectionId]),
-        ...(options.model === undefined ? [] : ["--model", options.model]),
-        prompt,
-      ],
-      { cwd: repositoryRoot, stdio: ["ignore", "pipe", "pipe"] },
-    );
-    running.add(child);
-    let out = "";
-    let timedOut = false;
-    child.stdout.setEncoding("utf8");
-    child.stdout.on("data", (chunk: string) => {
-      out += chunk;
-    });
-    child.stderr.setEncoding("utf8");
-    child.stderr.on("data", (chunk: string) => process.stderr.write(chunk));
-    const timer = setTimeout(() => {
-      timedOut = true;
-      child.kill("SIGTERM");
-    }, options.timeoutMs);
-    child.on("error", reject);
-    child.on("close", () => {
-      running.delete(child);
-      clearTimeout(timer);
-      resolvePromise({ ...summarizeStream(out), ...(timedOut ? { timedOut: true as const } : {}) });
-    });
-  });
+function taviRun(prompt: string, dataDir: string, options: RunnerOptions): Promise<RunSummary> {
+  return liveRun(prompt, dataDir, options, summarizeStream);
 }
 
 async function main(argv: readonly string[]): Promise<number> {
   const options = await parseArgs(argv);
-  const file = parseWorldFile(JSON.parse(readFileSync(options.worldsPath, "utf8")));
-  const unknown = options.only.filter((id) => !file.worlds.some((world) => world.id === id));
-  if (unknown.length > 0) throw new Error(`no such world: ${unknown.join(", ")}`);
-  const worlds = options.only.length === 0 ? file.worlds : file.worlds.filter((world) => options.only.includes(world.id));
+  const worlds = chosenById(parseWorldFile(JSON.parse(readFileSync(options.worldsPath, "utf8"))).worlds, options.only, "world");
   const startedAt = new Date();
   const results: WorldResult[] = [];
   if (options.offline) {
     for (const world of worlds) results.push(scoreWorld(world, undefined, true));
   } else {
-    const live = async (dataDirFor: (name: string) => string, done: (dataDir: string) => void = () => undefined): Promise<void> => {
+    const data = options.data;
+    if (data === undefined) throw new Error("a live run needs --template or --data-dir");
+    const log = (message: string): void => void process.stderr.write(`[ideas eval] ${message}\n`);
+    await withRunData(data, { prefix: "ide-", log }, async (dataDirFor, done) => {
       let runs = 0;
       for (const world of worlds) {
-        process.stderr.write(`[ideas eval] ${world.id}…\n`);
+        log(`${world.id}…`);
         const dataDir = dataDirFor(`r${(runs += 1)}`);
         try {
           const run = await taviRun(livePrompt(world), dataDir, options);
@@ -652,18 +569,7 @@ async function main(argv: readonly string[]): Promise<number> {
           done(dataDir);
         }
       }
-    };
-    const data = options.data;
-    if (data === undefined) throw new Error("a live run needs --template or --data-dir");
-    if ("dataDir" in data) await live(() => data.dataDir);
-    else {
-      const { withTemplateCopies } = (await import(new URL("../template.ts", import.meta.url).href)) as typeof import("../template.js");
-      await withTemplateCopies(
-        data.template,
-        { prefix: "ide-", commands: running, log: (message) => process.stderr.write(`[ideas eval] ${message}\n`) },
-        (copy) => live(copy, (dataDir) => rmSync(dataDir, { recursive: true, force: true })),
-      );
-    }
+    });
   }
   const report = {
     ...(options.label === undefined ? {} : { label: options.label }),
@@ -673,19 +579,9 @@ async function main(argv: readonly string[]): Promise<number> {
     summary: summarize(results),
     results,
   };
-  mkdirSync(options.outDir, { recursive: true });
-  const path = join(options.outDir, `${startedAt.toISOString().replaceAll(":", "-").replace(".", "-")}.json`);
-  writeFileSync(path, `${JSON.stringify(report, null, 2)}\n`);
+  const path = writeReport(options.outDir, startedAt, report);
   process.stdout.write(`${formatReport(report)}\n\nreport: ${path}\n`);
   return report.summary.passed === report.summary.worlds ? 0 : 1;
 }
 
-if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main(process.argv.slice(2)).then(
-    (code) => process.exit(code),
-    (error: unknown) => {
-      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-      process.exit(2);
-    },
-  );
-}
+runWhenMain(import.meta.url, main);

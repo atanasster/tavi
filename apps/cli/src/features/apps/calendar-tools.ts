@@ -13,10 +13,12 @@ import {
   type ToolHandler,
   type ToolOfferContext,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
 import type { ToolRegistration, ToolRegistry } from "@tavi/runtime";
 import { z } from "zod";
 
+import { cardWords } from "../approvals/card-words.js";
 import { guardedBy, serialRefresh, signInLapse } from "./account-tools.js";
 import { mailboxToolPrefix } from "./mailbox-catalog.js";
 
@@ -120,9 +122,9 @@ const RespondSchema = z.strictObject({ calendarId: CALENDAR, eventId: EVENT_ID, 
 const DeleteSchema = z.strictObject({ calendarId: CALENDAR, eventId: EVENT_ID, notify: NOTIFY });
 
 /** When, on one line: a date-time as given, or an all-day date. */
-function whenText(when: z.infer<typeof WHEN> | undefined): string {
+function whenText(when: z.infer<typeof WHEN> | undefined, t: CoreT = coreEnglish): string {
   if (when === undefined) return "";
-  return when.dateTime ?? `${when.date ?? ""} (all day)`;
+  return when.dateTime ?? t("approval.card.calendar.allDay", { date: when.date ?? "" });
 }
 
 /** The fields of an event a card shows: those a call gives. */
@@ -138,13 +140,15 @@ interface EventShown {
  * What an event is made or changed to, as its card shows it: each field given, and whom it emails. A change with
  * `notify` emails the event's attendees whether or not the call names them; a new event, only those it invites.
  */
-function eventDetail(input: EventShown, notify: boolean, change: boolean): string {
+function eventDetail(input: EventShown, notify: boolean, change: boolean, t: CoreT): string {
   const lines = [
-    ...(input.start === undefined ? [] : [`Starts: ${whenText(input.start)}`]),
-    ...(input.end === undefined ? [] : [`Ends: ${whenText(input.end)}`]),
-    ...(input.location === undefined ? [] : [`Where: ${input.location}`]),
-    ...(input.attendees === undefined || input.attendees.length === 0 ? [] : [`Attendees: ${input.attendees.join(", ")}`]),
-    emailsAttendees(input, notify, change) ? "Google emails the event's attendees about it." : "Nobody is emailed.",
+    ...(input.start === undefined ? [] : [t("approval.card.calendar.starts", { when: whenText(input.start, t) })]),
+    ...(input.end === undefined ? [] : [t("approval.card.calendar.ends", { when: whenText(input.end, t) })]),
+    ...(input.location === undefined ? [] : [t("approval.card.calendar.where", { location: input.location })]),
+    ...(input.attendees === undefined || input.attendees.length === 0
+      ? []
+      : [t("approval.card.calendar.attendees", { attendees: input.attendees.join(", ") })]),
+    emailsAttendees(input, notify, change) ? t("approval.card.calendar.emails") : t("approval.card.calendar.nobody"),
     ...(input.description === undefined ? [] : ["", input.description]),
   ];
   return lines.join("\n").slice(0, CARD.detail);
@@ -185,7 +189,7 @@ export function registerCalendarTools(registry: ToolRegistry, options: CalendarT
   const { providerId, label, kit } = options.channel;
   const registered = new Map<string, { readonly identity: string; readonly withdraw: () => void }>();
   /** Events a list, search or read showed, by account, calendar and id: a card names each by its title and start. */
-  const seen = new Map<string, string>();
+  const seen = new Map<string, { readonly summary: string | undefined; readonly start: string | undefined }>();
   const keyOf = (connectionId: string, calendarId: string, eventId: string): string => `${connectionId}\u0000${calendarId}\u0000${eventId}`;
   const saw = (connectionId: string, events: readonly CalendarEvent[]): void => {
     for (const event of events) {
@@ -193,12 +197,22 @@ export function registerCalendarTools(registry: ToolRegistry, options: CalendarT
       seen.delete(key);
       if (seen.size >= MAX_SEEN) seen.delete(seen.keys().next().value as string);
       const start = event.start?.dateTime ?? event.start?.date;
-      seen.set(key, `"${event.summary ?? "(no title)"}"${start === undefined ? "" : ` at ${start}`}`.replace(/\s+/g, " ").slice(0, 200));
+      seen.set(key, { summary: event.summary, start });
     }
   };
   /** An event as a card names it: as a read showed it, else by its id alone; the card never guesses what it is. */
-  const named = (connectionId: string, calendarId: string, eventId: string): string =>
-    seen.get(keyOf(connectionId, calendarId, eventId)) ?? `${eventId} (not read here)`;
+  const named = (connectionId: string, calendarId: string, eventId: string, t: CoreT): string => {
+    const event = seen.get(keyOf(connectionId, calendarId, eventId));
+    if (event === undefined) return t("approval.card.notRead", { id: eventId });
+    const summary = event.summary ?? t("approval.card.calendar.noTitle");
+    return (
+      event.start === undefined
+        ? t("approval.card.calendar.namedNoStart", { summary })
+        : t("approval.card.calendar.named", { summary, start: event.start })
+    )
+      .replace(/\s+/g, " ")
+      .slice(0, 200);
+  };
 
   /** The account as it stands now, if this person may use its calendar here; asked live, so a stale registration offers nothing. */
   const live = async (
@@ -365,18 +379,27 @@ export function registerCalendarTools(registry: ToolRegistry, options: CalendarT
         inputSchema: CreateSchema,
         ...calendarLabels,
         offered,
-        assess: (input): CallAssessment => {
+        assess: (input, context): CallAssessment => {
+          const t = cardWords(context);
           const parsed = CreateSchema.safeParse(input);
           if (!parsed.success)
-            return { subjects: [], risk: "medium", reasons: ["adds an event"], display: { title: "Add an event to the calendar" } };
+            return {
+              subjects: [],
+              risk: "medium",
+              reasons: [t("approval.reason.calendar.add")],
+              display: { title: t("approval.card.calendar.add") },
+            };
           const emails = emailsAttendees(parsed.data, parsed.data.notify, false);
           return {
             subjects: [],
             risk: emails ? "high" : "medium",
-            reasons: [emails ? "adds an event and emails its attendees" : "adds an event to the calendar"],
+            reasons: [emails ? t("approval.reason.calendar.addEmails") : t("approval.reason.calendar.addCalendar")],
             ...(emails ? { onceOnly: true } : {}),
             askWhenTainted: true,
-            display: card(`Add "${parsed.data.summary}" to ${identity}'s calendar`, eventDetail(parsed.data, parsed.data.notify, false)),
+            display: card(
+              t("approval.card.calendar.addTitled", { summary: parsed.data.summary, identity }),
+              eventDetail(parsed.data, parsed.data.notify, false, t),
+            ),
           };
         },
         handler: async ({ input, context, signal, executionPolicy, ask }) => {
@@ -400,19 +423,27 @@ export function registerCalendarTools(registry: ToolRegistry, options: CalendarT
         inputSchema: UpdateSchema,
         ...calendarLabels,
         offered,
-        assess: (input): CallAssessment => {
+        assess: (input, context): CallAssessment => {
+          const t = cardWords(context);
           const parsed = UpdateSchema.safeParse(input);
           if (!parsed.success)
-            return { subjects: [], risk: "medium", reasons: ["changes an event"], display: { title: "Change an event" } };
+            return {
+              subjects: [],
+              risk: "medium",
+              reasons: [t("approval.reason.calendar.change")],
+              display: { title: t("approval.card.calendar.change") },
+            };
           return {
             subjects: [],
             risk: parsed.data.notify ? "high" : "medium",
-            reasons: [parsed.data.notify ? "changes an event and emails its attendees" : "changes an event"],
+            reasons: [parsed.data.notify ? t("approval.reason.calendar.changeEmails") : t("approval.reason.calendar.change")],
             ...(parsed.data.notify ? { onceOnly: true } : {}),
             askWhenTainted: true,
             display: card(
-              `Change ${parsed.data.summary === undefined ? "an event" : `"${parsed.data.summary}"`} on ${identity}'s calendar`,
-              `Event: ${named(connectionId, parsed.data.calendarId, parsed.data.eventId)}\n${eventDetail(parsed.data, parsed.data.notify, true)}`,
+              parsed.data.summary === undefined
+                ? t("approval.card.calendar.changeOn", { identity })
+                : t("approval.card.calendar.changeTitledOn", { summary: parsed.data.summary, identity }),
+              `${t("approval.card.calendar.event", { event: named(connectionId, parsed.data.calendarId, parsed.data.eventId, t) })}\n${eventDetail(parsed.data, parsed.data.notify, true, t)}`,
             ),
           };
         },
@@ -438,19 +469,23 @@ export function registerCalendarTools(registry: ToolRegistry, options: CalendarT
         inputSchema: RespondSchema,
         ...calendarLabels,
         offered,
-        assess: (input): CallAssessment => {
+        assess: (input, context): CallAssessment => {
+          const t = cardWords(context);
           const parsed = RespondSchema.safeParse(input);
           return {
             subjects: [],
             risk: "medium",
-            reasons: ["answers an invitation, which tells its organizer"],
+            reasons: [t("approval.reason.calendar.answers")],
             askWhenTainted: true,
             display: parsed.success
               ? card(
-                  `Answer ${parsed.data.response} as ${identity}`,
-                  `Event: ${named(connectionId, parsed.data.calendarId, parsed.data.eventId)}\nGoogle tells the organizer.`,
+                  t("approval.card.calendar.answerAs", {
+                    response: t(`approval.card.calendar.response.${parsed.data.response}`),
+                    identity,
+                  }),
+                  `${t("approval.card.calendar.event", { event: named(connectionId, parsed.data.calendarId, parsed.data.eventId, t) })}\n${t("approval.card.calendar.tellsOrganizer")}`,
                 )
-              : { title: "Answer an invitation" },
+              : { title: t("approval.card.calendar.answer") },
           };
         },
         handler: async ({ input, context, signal, executionPolicy, ask }) => {
@@ -468,20 +503,21 @@ export function registerCalendarTools(registry: ToolRegistry, options: CalendarT
         inputSchema: DeleteSchema,
         ...calendarLabels,
         offered,
-        assess: (input): CallAssessment => {
+        assess: (input, context): CallAssessment => {
+          const t = cardWords(context);
           const parsed = DeleteSchema.safeParse(input);
           return {
             subjects: [],
             risk: "high",
-            reasons: ["deletes an event"],
+            reasons: [t("approval.reason.calendar.deletes")],
             onceOnly: true,
             askWhenTainted: true,
             display: parsed.success
               ? card(
-                  `Delete an event from ${identity}'s calendar`,
-                  `Event: ${named(connectionId, parsed.data.calendarId, parsed.data.eventId)}\n${parsed.data.notify ? "Google emails its attendees a cancellation." : "Nobody is emailed."}`,
+                  t("approval.card.calendar.deleteFrom", { identity }),
+                  `${t("approval.card.calendar.event", { event: named(connectionId, parsed.data.calendarId, parsed.data.eventId, t) })}\n${parsed.data.notify ? t("approval.card.calendar.cancellation") : t("approval.card.calendar.nobody")}`,
                 )
-              : { title: "Delete an event" },
+              : { title: t("approval.card.calendar.delete") },
           };
         },
         handler: async ({ input, context, signal, executionPolicy, ask }) => {

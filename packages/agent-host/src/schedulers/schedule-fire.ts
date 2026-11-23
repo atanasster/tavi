@@ -12,6 +12,7 @@ import {
   lateRunNote,
   nextOccurrence,
   scheduleSpecEnds,
+  scheduleSpecRef,
   scheduleSpecText,
   untrustedLabel,
   textRef,
@@ -170,7 +171,7 @@ async function fireOnce(
       {
         identity: manualId ?? fireTime,
         kind: "spec-disabled",
-        text: textRef("channel.schedule.alert.specDisabled", { name: schedule.name, spec: scheduleSpecText(schedule.spec) }),
+        text: textRef("channel.schedule.alert.specDisabled", { name: schedule.name, spec: scheduleSpecRef(schedule.spec) }),
       },
       deps,
     );

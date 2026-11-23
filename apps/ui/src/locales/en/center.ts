@@ -49,7 +49,7 @@ export const center = {
   "center.activity.openWithPanel": "Open with its panel",
   "center.activity.loadingFollowUps": "Loading follow-ups…",
   "center.activity.laterFollowUps": "Later follow-ups are in the chat.",
-  "center.activity.delegated": "+{count} delegated",
+  "center.activity.delegated": { other: "+{count} delegated" },
   "center.activity.loadingWorkers": "Loading workers…",
   "center.activity.moreWorkers": "More workers are in the chat's Agents tab.",
   "center.inboxModel.scopeButton.once": "Allow once",
@@ -253,6 +253,7 @@ export const center = {
   "center.onboarding.continue": "Continue setup",
   "center.onboarding.dismiss": "Dismiss",
   "center.todos.due": "due {when}",
+  "center.todos.inbox": "inbox",
   "center.todos.title": "To-dos",
   "center.todos.hint": "ask in any chat: “add milk to my list”",
   "center.todos.empty": "Nothing on your list.",
@@ -600,6 +601,17 @@ export const center = {
   "center.templates.weeklyDigest": "Weekly research digest",
   "center.templates.dailyStretch": "Daily stretch reminder",
   "center.templates.endOfDay": "End-of-day wrap-up",
+  // What a template fills its form with: the person's own words once they save it.
+  "center.templates.morningInbox.name": "Morning inbox brief",
+  "center.templates.morningInbox.prompt":
+    "Read my unread email and messages since yesterday. Put anything urgent first, then what needs a reply from me today, then what can wait. Keep it short.",
+  "center.templates.weeklyDigest.name": "Weekly research digest",
+  "center.templates.weeklyDigest.objective":
+    "Each week, find the most important new papers, releases and news about large language models, and say in a line why each matters",
+  "center.templates.dailyStretch.text": "Stand up and stretch",
+  "center.templates.endOfDay.name": "End-of-day wrap-up",
+  "center.templates.endOfDay.prompt":
+    "Look over today's chats and tasks: what I finished, what is still open, and the first thing to pick up tomorrow.",
 
   "center.plainSchedules.resumed": "{name} resumed.",
   "center.plainSchedules.paused": "{name} paused.",
@@ -842,6 +854,10 @@ export const center = {
   "center.reminderNotify.blocked": "Notifications are blocked for this site in the browser's settings",
   "center.reminderNotify.turnOn": "Turn on notifications",
 
+  "center.heartbeatOptions.suggest.needs": "Approvals or questions waiting more than an hour",
+  "center.heartbeatOptions.suggest.upcoming": "Reminders and events in the next 2 hours",
+  "center.heartbeatOptions.suggest.failedRuns": "Scheduled runs that fail",
+  "center.heartbeatOptions.suggest.channels": "Channels that need signing in again",
   "center.heartbeatOptions.tell.urgentNow": "Urgent things right away; the rest quietly here and in a summary when your next window opens",
   "center.heartbeatOptions.tell.everythingNow": "Everything as it happens (still at most the hourly limit)",
   "center.heartbeatOptions.tell.digestOnly": "Only the summary when your next window opens",
@@ -959,6 +975,9 @@ export const center = {
   "center.heartbeatItem.quoted": "“{title}”",
   "center.heartbeatItem.doIt": "Do it",
   "center.heartbeatItem.chat": "Chat about this",
+  /** What the person is shown as having said, pressing *Do it* or *Chat about this* (the owner seeds the turn itself). */
+  "center.heartbeatItem.doItPrompt": "Do it: {title}",
+  "center.heartbeatItem.chatPrompt": "Chat about this: {title}",
   "center.heartbeatItem.snooze": "Snooze for a day",
   "center.heartbeatItem.mute": "Don't tell me about this",
   "center.heartbeatItem.useful": "Useful",

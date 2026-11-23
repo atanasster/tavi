@@ -16,7 +16,7 @@ import { CenterPage } from "../../../src/features/center/Center.js";
 import { offeredSections } from "../../../src/features/center/CenterNav.js";
 import { Heartbeat } from "../../../src/features/center/Heartbeat.js";
 import { HeartbeatPill } from "../../../src/features/center/HeartbeatPill.js";
-import { HEARTBEAT_SUGGESTIONS } from "../../../src/features/center/heartbeat-options.js";
+import { heartbeatSuggestions } from "../../../src/features/center/heartbeat-options.js";
 import { heartbeatEstimate, logLine } from "../../../src/features/center/heartbeat-api.js";
 import { HeartbeatItemCard, itemReceipt, type HeartbeatItemView } from "../../../src/features/center/HeartbeatItem.js";
 import { NoticeCards } from "../../../src/features/chat/Notices.js";
@@ -268,7 +268,7 @@ describe("Center → Heartbeat", () => {
     expect(page.querySelector('[aria-label="Pause"]')).toBeNull();
     expect(page.querySelector(".heartbeat-status")).toBeNull();
     expect(page.textContent).toContain("Nothing yet");
-    for (const suggestion of HEARTBEAT_SUGGESTIONS) expect(page.textContent).toContain(suggestion);
+    for (const suggestion of heartbeatSuggestions()) expect(page.textContent).toContain(suggestion);
     await click(heartbeatSwitch(page));
     expect(run.sent.at(-1)).toEqual({ action: "set", workspaceId: "default", revision: 0, changes: { enabled: true } });
     expect(heartbeatSwitch(page)?.getAttribute("aria-checked")).toBe("true");
@@ -283,11 +283,11 @@ describe("Center → Heartbeat", () => {
       </InWorkspace>,
     );
     expect(page.querySelector(".heartbeat-lines")?.textContent).toContain("Tell me if a payment fails");
-    await click(button(page, `+ ${HEARTBEAT_SUGGESTIONS[0]}`));
+    await click(button(page, `+ ${heartbeatSuggestions()[0]}`));
     expect(run.sent.at(-1)).toMatchObject({
       action: "set-instructions",
       revision: 3,
-      text: `Tell me if a payment fails\n${HEARTBEAT_SUGGESTIONS[0]}\n`,
+      text: `Tell me if a payment fails\n${heartbeatSuggestions()[0]}\n`,
     });
     await click(button(page, "Edit"));
     await type(page.querySelector("textarea"), "Watch the Globex renewal");

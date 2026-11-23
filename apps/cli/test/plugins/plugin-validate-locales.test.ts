@@ -1,8 +1,6 @@
-import { spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { SandboxPort } from "@tavi/contracts";
 import { temporaryDirectories } from "@tavi/test-support";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -10,29 +8,13 @@ import { EXIT, main } from "../../src/main.js";
 import { renderPluginValidation, validatePlugin } from "../../src/features/plugins/validate.js";
 import { pluginLocaleReportOnDisk } from "../../src/features/plugins/validate-locales.js";
 import { capture } from "../support/attached-owner.js";
+import { directSandbox as direct } from "../support/direct-sandbox.js";
 
 /** `tavi plugins validate` on a plugin's language packs: every pack's problems as install finds them, and what each translates. */
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const dirs = temporaryDirectories();
 afterEach(() => dirs.cleanup());
-
-/** Runs the command unconfined, as the sandbox would with everything allowed. */
-const direct: SandboxPort = {
-  capabilities: () => ({ available: true, platforms: ["darwin"] }),
-  run: async (_policy, command) => {
-    const run = spawnSync(command.command, [...(command.args ?? [])], { cwd: command.cwd, encoding: "utf8" });
-    return {
-      session: { sessionId: "s", state: "completed" },
-      exitCode: run.status,
-      stdout: run.stdout,
-      stderr: run.stderr,
-      truncated: false,
-    };
-  },
-  cancel: async () => {},
-  dispose: async () => {},
-};
 
 /** A schemaVersion 3 plugin with a tool, a setting and a channel-free manifest, its `packs` written under `locales/`. */
 function plugin(

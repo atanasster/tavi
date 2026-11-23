@@ -48,6 +48,7 @@ import {
 } from "@tavi/contracts";
 import type { CoreKey } from "@tavi/contracts/locales/core";
 
+import { cardWords } from "../approvals/card-words.js";
 import { folderFileLabel, type FolderFile } from "../folders/fs-tools.js";
 
 /**
@@ -130,11 +131,16 @@ export function analyzerAssessment(
   if (manifest === undefined || manifest.local) return { display: { title }, subjects: [], risk: "low", reasons: [] };
   const where =
     manifest.attribution.url === undefined ? manifest.attribution.name : `${manifest.attribution.name} (${manifest.attribution.url})`;
+  // The card in the workspace's language; `title` comes already said in it.
+  const t = cardWords(context);
   return {
-    display: { title: `${title} with ${manifest.id}`, destination: `${where}: the frames or audio it is handed leave this machine` },
+    display: {
+      title: t("approval.card.video.with", { title, analyzer: manifest.id }),
+      destination: t("approval.card.video.leaves", { where }),
+    },
     subjects: [`${REMOTE_ANALYZER_SUBJECT}${manifest.id}`],
     risk: "medium",
-    reasons: [`${manifest.id} is a remote analyser: what it is handed is sent off this machine`],
+    reasons: [t("approval.reason.video.remote", { analyzer: manifest.id })],
     effect: "external",
     sink: "network",
     attendedOnly: true,
@@ -669,12 +675,12 @@ export function registerVideoTools(registry: ToolRegistryPort, options: VideoToo
     assess: (input, context): CallAssessment => {
       const parsed = VideoFramesInputSchema.safeParse(input);
       if (!parsed.success || !parsed.data.ocr)
-        return { display: { title: "Look at the video's frames" }, subjects: [], risk: "low", reasons: [] };
+        return { display: { title: cardWords(context)("approval.card.video.frames") }, subjects: [], risk: "low", reasons: [] };
       return analyzerAssessment(
         options.analyzers,
         { capability: "ocr", frames: parsed.data.mode === "at" ? (parsed.data.at?.length ?? 1) : parsed.data.count },
         context,
-        "Read the text in the video's frames",
+        cardWords(context)("approval.card.video.ocr"),
       );
     },
     handler: async ({ input, context, signal, assessedSubjects }) => {
@@ -793,7 +799,7 @@ export function registerVideoTools(registry: ToolRegistryPort, options: VideoToo
         options.analyzers,
         { capability: "pose", frames: Math.max(1, Math.min(POSE_CHUNK_FRAMES, Math.round(fps * Math.max(1, span)))) },
         context,
-        "Measure the movement in the video",
+        cardWords(context)("approval.card.video.pose"),
       );
     },
     handler: async ({ input, context, signal, assessedSubjects }) => {
@@ -1176,7 +1182,12 @@ export function registerVideoTools(registry: ToolRegistryPort, options: VideoToo
       const span = parsed.success
         ? Math.max(1, Math.min(TRANSCRIBE_WINDOW_SEC, (parsed.data.to ?? TRANSCRIBE_WINDOW_SEC) - (parsed.data.from ?? 0)))
         : TRANSCRIBE_WINDOW_SEC;
-      return analyzerAssessment(options.analyzers, { capability: "transcribe", audioSec: span }, context, "Transcribe the video's speech");
+      return analyzerAssessment(
+        options.analyzers,
+        { capability: "transcribe", audioSec: span },
+        context,
+        cardWords(context)("approval.card.video.transcribe"),
+      );
     },
     handler: async ({ input, context, signal, assessedSubjects }) => {
       await requireEnabled(context);

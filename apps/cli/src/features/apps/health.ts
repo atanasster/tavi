@@ -1,4 +1,15 @@
-import { worseHealth, type AppHealth, type AppRepair, type MessagingConnectionRecord, type McpNoticeKind } from "@tavi/contracts";
+import {
+  renderTextRef,
+  textRef,
+  worseHealth,
+  type AppHealth,
+  type AppRepair,
+  type MessagingConnectionRecord,
+  type McpNoticeKind,
+  type TextRef,
+  type TextRefParams,
+} from "@tavi/contracts";
+import type { CoreKey } from "@tavi/contracts/locales/core";
 
 /**
  * One closed health vocabulary for every source, each
@@ -59,9 +70,43 @@ export type SettingFields = Readonly<Record<string, { readonly label?: string | 
 /** A label inside a sentence: "Your Maps API key" → "your Maps API key". */
 const inSentence = (label: string): string => label.replace(/^Your /, "your ");
 
+/**
+ * A repair's words by key: the English it has always shown, cut to its line, beside the key the canvas says in its
+ * language. The English is the key's own template, so it reads as before.
+ */
+function said(key: CoreKey, params: TextRefParams | undefined, max: number): { readonly text: string; readonly ref: TextRef } {
+  const ref = textRef(key, params);
+  return { text: (renderTextRef(ref) ?? key).slice(0, max), ref };
+}
+
+/** A repair's title (its button) by key. */
+function titled(key: CoreKey, params?: TextRefParams): { readonly title: string; readonly titleRef: TextRef } {
+  const words = said(key, params, 120);
+  return { title: words.text, titleRef: words.ref };
+}
+
+/** A repair's detail (its cause) by key. */
+function detailed(key: CoreKey, params?: TextRefParams): { readonly detail: string; readonly detailRef: TextRef } {
+  const words = said(key, params, 300);
+  return { detail: words.text, detailRef: words.ref };
+}
+
+/** "Review Calendar's tools", or "Review notes' tools" for a name ending in s. */
+const possessiveKey = (name: string, key: "app.repair.reviewTools" | "app.repair.fixSettings"): CoreKey =>
+  /s$/i.test(name) ? `${key}S` : key;
+
+/** "a and b and c", each by its label, as one nested reference. */
+function andList(words: readonly string[]): string | TextRef {
+  const [first, ...rest] = words;
+  return rest.length === 0 ? (first ?? "") : textRef("app.repair.and", { first: first ?? "", rest: andList(rest) });
+}
+
 /** "It needs your Maps API key and city.": each missing setting by its label, else its key. */
-function missingWords(missing: readonly string[], fields: SettingFields | undefined): string {
-  return `It needs ${missing.map((key) => inSentence(fields?.[key]?.label ?? key)).join(" and ")}.`.slice(0, 300);
+function missingWords(
+  missing: readonly string[],
+  fields: SettingFields | undefined,
+): { readonly detail: string; readonly detailRef: TextRef } {
+  return detailed("app.repair.needs", { settings: andList(missing.map((key) => inSentence(fields?.[key]?.label ?? key))) });
 }
 
 /** A command, or a shorter one when it would not fit a repair's line. */
@@ -75,9 +120,6 @@ function settingFix(pluginId: string, key: string, fields: SettingFields | undef
   return fitted(`tavi credentials set ${ref} --file … && ${name}`, name);
 }
 
-/** An app's name as its owner: "notes'" for a name ending in s, else "Calendar's". */
-const possessive = (name: string): string => (/s$/i.test(name) ? `${name}'` : `${name}'s`);
-
 /** The one repair a non-ready account offers, in Tavi's words, with the same fix as a command. */
 export function mcpAccountRepair(appName: string, health: AppHealth, facts: McpAccountFacts): AppRepair | undefined {
   const id = facts.pluginId;
@@ -89,41 +131,41 @@ export function mcpAccountRepair(appName: string, health: AppHealth, facts: McpA
       return {
         kind: "retry",
         ...account,
-        title: `${appName} stopped working`,
-        detail: (facts.reason ?? (facts.state === "backing-off" ? "restarting after a failure" : "it failed repeatedly")).slice(0, 300),
+        ...titled("app.repair.stopped", { app: appName }),
+        // A server's own reason is shown as it said it.
+        ...(facts.reason !== undefined
+          ? { detail: facts.reason.slice(0, 300) }
+          : detailed(facts.state === "backing-off" ? "app.repair.restarting" : "app.repair.failedRepeatedly")),
         cli: `tavi mcp probe ${id}`,
       };
     case "needs-sign-in":
       return {
         kind: "sign-in",
         ...account,
-        title: `Sign in to ${appName} again`,
-        detail: (facts.learnedWeekly === true ? WEEKLY_LEARNED_DETAIL : (facts.reason ?? "its sign-in expired or was revoked")).slice(
-          0,
-          300,
-        ),
+        ...titled("app.repair.signInAgain", { app: appName }),
+        ...(facts.learnedWeekly === true
+          ? detailed("app.repair.weeklyLearned")
+          : facts.reason !== undefined
+            ? { detail: facts.reason.slice(0, 300) }
+            : detailed("app.repair.signInLapsed")),
         cli: `tavi mcp login ${id}`,
       };
     case "needs-access":
       return {
         kind: "grant-access",
         ...account,
-        title: `Allow ${appName} the access it needs`,
-        detail:
-          (facts.missingScopes ?? []).length > 0
-            ? "Its sign-in left out some of the access it asked for; sign in again and allow all of it."
-            : "It asks for access it was not granted.",
+        ...titled("app.repair.allowAccess", { app: appName }),
+        ...detailed((facts.missingScopes ?? []).length > 0 ? "app.repair.scopesLeftOut" : "app.repair.accessNotGranted"),
         cli: `tavi mcp login ${id}`,
       };
     case "needs-review":
       return {
         kind: "review-tools",
         ...account,
-        title: `Review ${possessive(appName)} tools`,
-        detail:
-          facts.pendingVersions.length > 0
-            ? `Version ${facts.pendingVersions.join(", ")} waits for your review.`
-            : `${String(Math.max(facts.waitingTools, 1))} of its tools are new or changed and won't be used until you review them.`,
+        ...titled(possessiveKey(appName, "app.repair.reviewTools"), { app: appName }),
+        ...(facts.pendingVersions.length > 0
+          ? detailed("app.repair.versionWaits", { versions: facts.pendingVersions.join(", ") })
+          : detailed("app.repair.toolsWaiting", { count: Math.max(facts.waitingTools, 1), n: String(Math.max(facts.waitingTools, 1)) })),
         cli: `tavi mcp show ${id}`,
       };
     case "not-set-up":
@@ -131,52 +173,49 @@ export function mcpAccountRepair(appName: string, health: AppHealth, facts: McpA
         return {
           kind: "finish-setup",
           ...account,
-          title: `Finish setting up ${appName}`,
-          detail: missingWords(facts.missingSettings, facts.fields),
+          ...titled("app.repair.finishSetup", { app: appName }),
+          ...missingWords(facts.missingSettings, facts.fields),
           cli: settingFix(id, facts.missingSettings[0] as string, facts.fields),
         };
       if (facts.refusedKey !== undefined)
         return {
           kind: "finish-setup",
           ...account,
-          title: `Finish setting up ${appName}`,
-          detail: `Its server refused ${inSentence(facts.refusedKey.label)}: check it and paste it again.`.slice(0, 300),
+          ...titled("app.repair.finishSetup", { app: appName }),
+          ...detailed("app.repair.keyRefused", { key: inSentence(facts.refusedKey.label) }),
           cli: fitted(`tavi credentials set ${facts.refusedKey.ref} --file … && tavi mcp probe ${id}`, `tavi mcp probe ${id}`),
         };
       if (facts.oauth && !facts.signedIn)
         return {
           kind: "sign-in",
           ...account,
-          title: `Sign in to ${appName}`,
-          detail: "It has not been signed in yet.",
+          ...titled("app.repair.signIn", { app: appName }),
+          ...detailed("app.repair.notSignedIn"),
           cli: `tavi mcp login ${id}`,
         };
       return {
         kind: "review-tools",
         ...account,
-        title: `Review ${appName}`,
-        detail: "It has no approved version yet.",
+        ...titled("app.repair.review", { app: appName }),
+        ...detailed("app.repair.noVersion"),
         cli: `tavi mcp show ${id}`,
       };
     case "paused":
       return {
         kind: "enable",
         ...account,
-        title: `Turn ${appName} on`,
-        detail: "It is turned off; its tools aren't offered.",
+        ...titled("app.repair.turnOn", { app: appName }),
+        ...detailed("app.repair.offNoTools"),
         cli: `tavi plugins enable ${id}`,
       };
     case "off":
-      return { kind: "cli-only", ...account, title: "Turn MCP on", detail: "Every MCP app is off.", cli: "tavi mcp on" };
+      return { kind: "cli-only", ...account, ...titled("app.repair.mcpOn"), ...detailed("app.repair.mcpOff"), cli: "tavi mcp on" };
   }
 }
 
 /** How long an app in Testing stays signed in, and how early Tavi reminds. */
 const WEEKLY_SIGN_IN_MS = 7 * 86_400_000;
 const SIGN_IN_REMINDER_MS = 86_400_000;
-
-const WEEKLY_LEARNED_DETAIL =
-  "It was signed out 7 days after signing in, as an app in Testing is. Tavi now expects a weekly sign-in and reminds you a day before.";
 
 /** When a weekly sign-in is next due. */
 export function nextWeeklySignIn(signedInAt: string): string {
@@ -190,10 +229,10 @@ export function weeklySignInReminder(appName: string, accountId: string, nextSig
   return {
     kind: "sign-in",
     accountId,
-    title: (due ? `Sign in to ${appName} again` : `Sign in to ${appName} again by ${nextSignInBy.slice(0, 10)}`).slice(0, 120),
-    detail: due
-      ? "Its weekly sign-in is due: its provider signs an app in Testing out every 7 days."
-      : "Its provider signs an app in Testing out every 7 days; signing in again now keeps it working.",
+    ...(due
+      ? titled("app.repair.signInAgain", { app: appName })
+      : titled("app.repair.signInAgainBy", { app: appName, date: nextSignInBy.slice(0, 10) })),
+    ...detailed(due ? "app.repair.weeklyDue" : "app.repair.weeklySoon"),
     cli: `tavi mcp login ${accountId}`,
   };
 }
@@ -240,15 +279,15 @@ export function channelAccountRepair(appName: string, health: AppHealth, connect
         return {
           kind: "sign-in",
           ...account,
-          title: `Paste a new ${appName} token`.slice(0, 120),
-          detail: "Its token was refused: it was revoked or reset at the provider.",
+          ...titled("app.repair.pasteToken", { app: appName }),
+          ...detailed("app.repair.tokenRefused"),
           cli: `tavi channels secret ${connectionId} ${secretKey} --file …`,
         };
       return {
         kind: "sign-in",
         ...account,
-        title: `Reconnect ${appName}`,
-        detail: "Its sign-in expired or was revoked.",
+        ...titled("app.repair.reconnect", { app: appName }),
+        ...detailed("app.repair.signInLapsedSentence"),
         cli: `tavi channels connect ${connectionId}`,
       };
     case "needs-access":
@@ -256,39 +295,39 @@ export function channelAccountRepair(appName: string, health: AppHealth, connect
         return {
           kind: "grant-access",
           ...account,
-          title: `Fix ${possessive(appName)} settings at its provider`.slice(0, 120),
-          detail: "The provider refused a setting the channel needs, such as an intent or a permission turned off for its bot.",
+          ...titled(possessiveKey(appName, "app.repair.fixSettings"), { app: appName }),
+          ...detailed("app.repair.providerRefused"),
           cli: `tavi channels test ${connectionId} --to …`,
         };
       return {
         kind: "grant-access",
         ...account,
-        title: `Reconnect ${appName}`,
-        detail: "It asks for access it was not granted.",
+        ...titled("app.repair.reconnect", { app: appName }),
+        ...detailed("app.repair.accessNotGranted"),
         cli: `tavi channels connect ${connectionId}`,
       };
     case "not-set-up":
       return {
         kind: "sign-in",
         ...account,
-        title: `Connect ${appName}`,
-        detail: "It has not been signed in yet.",
+        ...titled("app.repair.connect", { app: appName }),
+        ...detailed("app.repair.notSignedIn"),
         cli: `tavi channels connect ${connectionId}`,
       };
     case "paused":
       return {
         kind: "enable",
         ...account,
-        title: `Turn ${appName} on`,
-        detail: "The connection is turned off.",
+        ...titled("app.repair.turnOn", { app: appName }),
+        ...detailed("app.repair.connectionOff"),
         cli: `tavi channels enable ${connectionId}`,
       };
     default:
       return {
         kind: "retry",
         ...account,
-        title: `${appName} stopped working`,
-        detail: "The connection failed.",
+        ...titled("app.repair.stopped", { app: appName }),
+        ...detailed("app.repair.connectionFailed"),
         cli: `tavi channels test ${connectionId}`,
       };
   }
@@ -325,32 +364,32 @@ export function pluginRepair(
       return {
         kind: "review-tools",
         ...account,
-        title: `Review ${appName}`,
-        detail: "A version waits for your review.",
+        ...titled("app.repair.review", { app: appName }),
+        ...detailed("app.repair.aVersionWaits"),
         cli: `tavi plugins show ${pluginId}`,
       };
     case "not-set-up":
       return {
         kind: "finish-setup",
         ...account,
-        title: `Finish setting up ${appName}`,
-        detail: missingSettings.length > 0 ? missingWords(missingSettings, fields) : "It has no approved version yet.",
+        ...titled("app.repair.finishSetup", { app: appName }),
+        ...(missingSettings.length > 0 ? missingWords(missingSettings, fields) : detailed("app.repair.noVersion")),
         cli: missingSettings.length > 0 ? settingFix(pluginId, missingSettings[0] as string, fields) : `tavi plugins show ${pluginId}`,
       };
     case "paused":
       return {
         kind: "enable",
         ...account,
-        title: `Turn ${appName} on`,
-        detail: "It is turned off.",
+        ...titled("app.repair.turnOn", { app: appName }),
+        ...detailed("app.repair.off"),
         cli: `tavi plugins enable ${pluginId}`,
       };
     default:
       return {
         kind: "retry",
         ...account,
-        title: `${appName} stopped working`,
-        detail: "It failed to load or start.",
+        ...titled("app.repair.stopped", { app: appName }),
+        ...detailed("app.repair.failedToStart"),
         cli: `tavi plugins show ${pluginId}`,
       };
   }

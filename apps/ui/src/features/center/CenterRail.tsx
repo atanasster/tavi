@@ -9,6 +9,7 @@ import { appsPath, centerPath, schedulePath, type CenterSection } from "../shell
 import { mcpReviewPath } from "../settings/McpServers.js";
 import type { Outcome } from "../../lib/ipc.js";
 import { WAITING_ANCHOR } from "./Inbox.js";
+import { repairDetail, repairTitle } from "../apps/model.js";
 import { tasksInWindow, tasksToday } from "./model.js";
 import { localDate, localTime, nearDay } from "../../lib/time.js";
 import { Empty } from "../../ui/Empty.js";
@@ -117,8 +118,8 @@ function AppRepairLink({
         <Icon name="plug" size="sm" />
       </span>
       <span className="center-need-text">
-        <span className="center-need-title">{item.title}</span>
-        <span className="center-need-detail meta-sm">{state.said ?? item.detail}</span>
+        <span className="center-need-title">{repairTitle(item)}</span>
+        <span className="center-need-detail meta-sm">{state.said ?? repairDetail(item)}</span>
       </span>
     </>
   );

@@ -26,7 +26,7 @@ const NONE: PluginContributions = { contributions: [], fallbacks: [], error: und
 /** One read of both answers, resolved. */
 async function loadPluginContributions(client: SettingsClient, workspaceId: string): Promise<Outcome<Omit<PluginContributions, "error">>> {
   const [ui, settings] = await Promise.all([
-    ask<unknown>(client, "plugins", { action: "ui" }),
+    ask<unknown>(client, "plugins", { action: "ui", workspaceId }),
     ask<unknown>(client, "workspace-settings", { action: "get", workspaceId }),
   ]);
   if (!ui.ok) return ui;

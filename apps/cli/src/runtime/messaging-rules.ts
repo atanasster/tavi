@@ -7,6 +7,7 @@ import {
   type InvocationContext,
   isLocalConnectionId,
 } from "@tavi/contracts";
+import { coreEnglish } from "@tavi/contracts/locales/core";
 
 /**
  * What a task started from a chat is held back from, unless the owner allows
@@ -37,8 +38,8 @@ export function messagingProfileRules(allowed: readonly string[], liftedInOwnCha
       createdAt: "2026-09-27T00:00:00.000Z",
       origin: "messaging" as const,
       note: liftedInOwnChats.includes(entry.toolPattern)
-        ? "messaging profile: lifted in your own one-to-one chats by serve --messaging-allow-tool"
-        : "messaging profile: allow with serve --messaging-allow-tool",
+        ? coreEnglish("permissions.note.messagingLifted")
+        : coreEnglish("permissions.note.messagingAllow"),
     }));
 }
 

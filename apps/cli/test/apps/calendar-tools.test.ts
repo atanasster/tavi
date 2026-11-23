@@ -171,4 +171,28 @@ describe("using the calendar", () => {
       details: { signIn: true },
     });
   });
+
+  it("says an event's card in the workspace's language, the event's own words as they are", async () => {
+    const { registry } = await tools(new Set(["gmail-1"]));
+    const bulgarian = { workspaceId: "default", principalId: "operator", runId: "task-1", caller: "test", locale: "bg" as const };
+    const assess = (id: string, input: unknown) => registry.get(id)?.assess?.(input, bulgarian);
+    const created = assess("gmail.gmail_1.create_event", {
+      summary: "Tavi test",
+      start: { date: "2026-11-10" },
+      end: { date: "2026-11-11" },
+      location: "Room 2",
+      attendees: ["ana@example.com"],
+      notify: true,
+    });
+    expect(created?.display).toEqual({
+      title: "Добави „Tavi test“ в календара на me@gmail.com",
+      detail:
+        "Начало: 2026-11-10 (цял ден)\nКрай: 2026-11-11 (цял ден)\nМясто: Room 2\nУчастници: ana@example.com\nGoogle ще изпрати имейл на участниците за това.",
+    });
+    expect(created?.reasons).toEqual(["добавя събитие и изпраща имейл на участниците"]);
+    expect(assess("gmail.gmail_1.respond_to_event", { eventId: "ev1", response: "declined" })?.display).toEqual({
+      title: "Отговори „отказвам“ като me@gmail.com",
+      detail: "Събитие: ev1 (не е прочетено тук)\nGoogle уведомява организатора.",
+    });
+  });
 });

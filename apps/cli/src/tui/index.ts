@@ -45,6 +45,7 @@ import {
   type PluginCommandView,
   parsePluginCommandLine,
   FolderViewSchema,
+  errorTextIn,
 } from "@tavi/contracts";
 import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { errorMessage, nowTimestamp } from "@tavi/contracts/util";
@@ -80,7 +81,7 @@ import {
   type Pane,
 } from "./panes.js";
 import { ChatStore, FRAME_MS, MAX_FPS, pendingRoundsOf, plainEmphasis } from "./store.js";
-import { wordsOfSettingsAnswer } from "../shared/terminal-words.js";
+import { localeOfSettingsAnswer, wordsIn } from "../shared/terminal-words.js";
 import { GLYPHS, divider } from "./theme.js";
 
 /**
@@ -190,6 +191,8 @@ const CHATS_PANE_LIMIT = 20;
 
 /** A request that threw, as the refusal the handlers read. */
 const failedOf = (error: unknown) => ({ ok: false as const, error: { code: "FAILED", message: errorMessage(error) } });
+/** Why the owner would not follow a chat, in the chat's language: its refusal (`errorTextIn`), else that it refused. */
+const refusedIn = (error: unknown, t: CoreT): string => (error === undefined ? t("tui.chat.refusedFollow") : errorTextIn(error, t));
 
 /**
  * A replay's pace: this many events a frame (about 7,500 a second), so Ink
@@ -209,10 +212,14 @@ export interface ChatDeps {
   readonly answerSettleMs?: number;
   /** How often the chat shown's workers' open questions are read; 5 s by default. */
   readonly workerPollMs?: number;
+  /** How often the workspace's language is read again, so a change made elsewhere reaches an open chat; 10 s by default. */
+  readonly languagePollMs?: number;
 }
 
 /** How often the chat shown's workers' open questions are read. */
 const WORKER_POLL_MS = 5_000;
+/** How often the workspace's language is read again. */
+const LANGUAGE_POLL_MS = 10_000;
 
 /**
  * A notice as one line: its title, its summary on one line, and the
@@ -408,7 +415,9 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
     const settings = await owner
       .request("workspace-settings", { action: "get", workspaceId: options.workspaceId }, { timeoutMs: READ_TIMEOUT_MS })
       .catch(failedOf);
-    store.words(wordsOfSettingsAnswer(settings.ok ? settings.result : undefined));
+    /** The language the chat speaks: read as it starts, then again on a cadence (`languagePollMs`). */
+    let speaking = localeOfSettingsAnswer(settings.ok ? settings.result : undefined);
+    store.words(wordsIn(speaking));
     /** Whether the owner has gone, said as what could not be done: an action checks it before it starts. */
     const ownerGone = (what: string): boolean => {
       if (owner.state !== "closed") return false;
@@ -446,7 +455,9 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
     let pluginCommands: readonly PluginCommandView[] = [];
     /** Plugins' slash commands, as the owner lists them now; an owner without them lists none. */
     const readCommands = async (): Promise<void> => {
-      const listed = await owner.request("plugin-commands", { action: "list" }, { timeoutMs: READ_TIMEOUT_MS }).catch(failedOf);
+      const listed = await owner
+        .request("plugin-commands", { action: "list", workspaceId: options.workspaceId }, { timeoutMs: READ_TIMEOUT_MS })
+        .catch(failedOf);
       pluginCommands = listed.ok
         ? ((listed.result as { readonly commands?: readonly PluginCommandView[] } | undefined)?.commands ?? [])
         : [];
@@ -677,7 +688,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         )
         .catch(failedOf);
       const card = answer.ok ? MemoryCardAnswerSchema.safeParse(answer.result) : undefined;
-      return card?.success === true ? memoryCardLine(card.data) : noticeLine(notice, t);
+      return card?.success === true ? memoryCardLine(card.data, t) : noticeLine(notice, t);
     };
     /**
      * What a turn that just ended here used, as one dim line: read from its saved turn, the
@@ -701,7 +712,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       if (memorySeenCount(used) === 0) return;
       // Under the answer: its streamed text is committed first, or the line would print above it.
       store.flush();
-      store.note(memoryUsedLine(memoryUsedCount(used), memoryUsedCount(used?.listed)), "tool");
+      store.note(memoryUsedLine(memoryUsedCount(used), memoryUsedCount(used?.listed), t), "tool");
     };
     /** The newest page of a chat's saved history, printed as its turns were; a failed read prints nothing. */
     const showSaved = async (taskId: string, mine: number): Promise<void> => {
@@ -750,7 +761,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
           }
           // What the answer used, dim: `/why` names them.
           const used = saved.turn.memoryUsed;
-          if (memorySeenCount(used) > 0) store.note(memoryUsedLine(memoryUsedCount(used), memoryUsedCount(used?.listed)), "tool");
+          if (memorySeenCount(used) > 0) store.note(memoryUsedLine(memoryUsedCount(used), memoryUsedCount(used?.listed), t), "tool");
         }
         printNotices(Number.POSITIVE_INFINITY);
         store.flush();
@@ -925,7 +936,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
         },
         onEnd: (error) => {
           if (mine !== generation) return;
-          if (error !== undefined) store.fail(errorMessage(error));
+          if (error !== undefined) store.fail(errorTextIn(error, t));
           store.end();
         },
       };
@@ -956,8 +967,8 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       const mine = generation;
       if (from === "saved") {
         const opened = await owner.subscribe(taskId, callbacks).catch(failedOf);
-        if ("ok" in opened) return opened.error.message;
-        if (!opened.response.ok) return opened.response.error?.message ?? t("tui.chat.refusedFollow");
+        if ("ok" in opened) return errorTextIn(opened.error, t);
+        if (!opened.response.ok) return refusedIn(opened.response.error, t);
         if (mine === generation) following = opened.subscription;
         else void opened.subscription?.close();
         const result = opened.response.result as SubscribeResult;
@@ -981,7 +992,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       }
       replay = { expected: undefined, delivered: 0 };
       const opened = await owner.subscribe(taskId, { from: "beginning", ...callbacks });
-      if (!opened.response.ok) return opened.response.error?.message ?? t("tui.chat.refusedFollow");
+      if (!opened.response.ok) return refusedIn(opened.response.error, t);
       const result = opened.response.result as SubscribeResult;
       // A stream that settled at the end of its replay was let go already (`follow`).
       if (mine === generation) following = opened.subscription;
@@ -1650,7 +1661,7 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
       void attachMode(taskId)
         // Another chat was opened, Home gone back to, or a prompt sent while the record was read: that one is followed.
         .then((mode) => (mine === opening ? attach(taskId, mode) : undefined))
-        .catch((error: unknown) => errorMessage(error))
+        .catch((error: unknown) => errorTextIn(error, t))
         .then((refused) => {
           if (refused !== undefined && current === taskId) store.finishWith(`${GLYPHS.failed} ${refused}`, "failure");
         });
@@ -2399,9 +2410,31 @@ export async function runChat(options: ResolvedChat, streams: ChatStreams, exit:
     }, probeEvery);
     // The chat shown's workers' questions, read on a cadence: they arrive on no stream this chat follows.
     const workerPoll = setInterval(() => void readWorkers(), deps.workerPollMs ?? WORKER_POLL_MS);
+    // The workspace's language, read again: a change in Settings, `tavi config set` or onboarding reaches this chat
+    // without a restart. Lines already shown stay as they were said; what is drawn from now on is in the new language.
+    let readingLanguage = false;
+    const languagePoll = setInterval(() => {
+      if (readingLanguage || owner.state !== "ready") return;
+      readingLanguage = true;
+      void owner
+        .request("workspace-settings", { action: "get", workspaceId: options.workspaceId }, { timeoutMs: READ_TIMEOUT_MS })
+        .then((answer) => {
+          // A refused or failed read keeps the language the chat speaks.
+          if (!answer.ok) return;
+          const heard = localeOfSettingsAnswer(answer.result);
+          if (heard === speaking) return;
+          speaking = heard;
+          store.words(wordsIn(heard));
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          readingLanguage = false;
+        });
+    }, deps.languagePollMs ?? LANGUAGE_POLL_MS);
     stopProbe = () => {
       clearInterval(probe);
       clearInterval(workerPoll);
+      clearInterval(languagePoll);
     };
 
     instance = render(

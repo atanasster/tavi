@@ -1,6 +1,8 @@
 import type { CatalogFor } from "../../i18n.js";
 
 import type { channels as en } from "../en/channels.js";
+import { navPathIn } from "../nav-path.js";
+import { nav } from "./nav.js";
 
 /** The `core` words for replies, digests, buttons and receipts sent to chat apps, in Bulgarian. */
 export const channels = {
@@ -204,7 +206,7 @@ export const channels = {
     "Употреба: /remember <текст> — запазва се, както го напишеш; --чат го пази само за този чат, а „ключ: стойност“ запазва предпочитание.",
   "channel.memory.forgetUsage": "Употреба: /forget <думи> показва съвпаденията, после /forget <n>; или /forget <id на спомен>.",
   "channel.memory.chatFirst": "--чат го пази за твой чат: първо напиши нещо тук, после пак /remember.",
-  "channel.memory.savedUndo": "Запазено ({scope}): {name} /forget 1 го отменя.",
+  "channel.memory.savedUndo": "Запазено ({scope}): {name} /forget 1 го отменя.",
   "channel.memory.savedUndoCenter": "Запазено ({scope}): {name} — отмени го от {place} или с /forget {id}.",
   "channel.memory.forgotten": "Забравено: {name}",
   "channel.memory.notNumbered": "Тук няма нищо с номер {n}: /forget <думи> показва съвпаденията, от които да избереш.",
@@ -300,7 +302,7 @@ export const channels = {
   "channel.memory.card.nothingWaits": "Тук вече нищо не чака.",
   "channel.memory.card.discardedCount": "Отхвърлени: {n}.",
   "channel.memory.card.failed": "Нещо се обърка — отвори Tavi за преглед.",
-  "channel.memory.card.oneSensitive": "1 чувствителен запис чака — отвори Tavi за преглед",
+  "channel.memory.card.oneSensitive": "1 чувствителен запис чака — отвори Tavi за преглед",
   "channel.memory.card.itReplace": "То {line} — отвори Tavi, за да го замениш",
   "channel.memory.card.tidyUp": "Подреждане — отвори Tavi, за да го сравниш с това, което заменя",
   "channel.memory.card.forgottenItems": { one: "Забравени: {n} запис", other: "Забравени: {n} записа" },
@@ -399,6 +401,20 @@ export const channels = {
   "channel.conversation.alreadyAnswered": "На този въпрос вече е отговорено: {answer}. За да поискаш нещо ново, кажи го с други думи.",
   "channel.conversation.noPlugin": "/{name}: никой плъгин не отговаря на тази команда.",
   "channel.room.flood": "Получавам много съобщения тук, затова пропускам някои. Ще продължа след минута.",
+  "channel.mail.unverified": `Съобщението ти пристигна, но не можах да проверя, че е от теб (проверката на подателя не мина), затова не направих нищо по него. Ако пощата ти е настроена правилно, значи не е от теб; иначе помоли собственика да разреши непроверената ти поща от ${navPathIn(nav, "nav.route.settings", "nav.settings.people")}.`,
+  "channel.test.message": "Това е пробно съобщение от Tavi: връзката работи.",
+  "channel.room.intro.hello": "Здравейте, аз съм Tavi, асистентът на {owner}. {who}.",
+  "channel.room.intro.operatorOnly": "Тук отговарям само на {owner} {trigger}",
+  "channel.room.intro.known": "Тук отговарям на хората, които познавам от {owner}, {trigger}",
+  "channel.room.intro.private":
+    "Никога не уча от съобщенията тук за личната употреба на {owner} и никога не чета съобщения от хора, които Tavi не познава.",
+  "channel.room.intro.leaveOut": "Ако не искате да участвате, кажете на {owner}.",
+  "channel.room.intro.ownerUnknown": "собственика ми",
+  "channel.room.context.reads": "Отсега нататък, {who}, чета и до 20 от предишните съобщения тук, за контекст.",
+  "channel.room.context.operatorOnly": "при съобщение от {owner} към мен тук",
+  "channel.room.context.known": "при съобщение към мен тук от някого, когото познавам от {owner}",
+  "channel.room.context.private":
+    "Съобщенията от хора, които Tavi не познава, остават настрана и нищо прочетено тук не се пази за личната употреба на {owner}.",
   "channel.schedule.alert.staleDispatchNext":
     "График „{name}“: пускането от {fireTime} започна, но така и не съобщи резултат, а следващото вече е насрочено.",
   "channel.schedule.alert.staleDispatch": "График „{name}“: пускането от {fireTime} започна, но така и не съобщи резултат.",

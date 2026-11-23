@@ -112,6 +112,45 @@ const CALQUES: readonly { readonly pattern: RegExp; readonly instead: string }[]
   { pattern: /направи сигурно/iu, instead: "„провери“" },
 ];
 
+/**
+ * A count followed by a word it must agree with ("{count} файла", "1 файла" when it is 1), in a plain string: write
+ * it as a `{ one, other }` message. A word that does not agree with the count ("{count} от {total}", "+{count} още")
+ * passes.
+ */
+const COUNTED_WORD = /\{(?:count|n)\}[  ](?!(?:от|още|до|ч|мин|сек|д|Б|КБ|МБ|ГБ|мс|км)(?!\p{L}))\p{Script=Cyrillic}/u;
+
+/** Plain strings whose count is never 1: a fixed limit or a threshold above it, or a position rather than a count. */
+const NEVER_ONE: ReadonlySet<string> = new Set([
+  "schedule.paused.failures",
+  "error.mcp.tooManyTools",
+  "notice.schedule.paused.text",
+  "channel.approval.stdinLong",
+  "channel.review.screenshots",
+  "channel.review.files",
+  "channel.memory.card.forgetUndoes",
+  "channel.heartbeat.alert.failures",
+  "channel.schedule.alert.watchBackoff",
+  "tui.form.tooMany",
+  "tui.card.stdinLong",
+  "ui.cadence.nextRuns",
+  "chatPanel.folder.atMost",
+  "center.recurring.firstRoutines",
+  "center.recurring.firstSchedules",
+  "center.reminders.noticesMax",
+  "center.reminderRows.doneCount",
+  "center.heartbeatTargets.full",
+  "center.soul.count",
+]);
+
+/**
+ * A number and its unit ("80 знака", "5 мин"), or "1" and the word after it ("1 човек"), with a plain space between,
+ * where a no-break space keeps them on one line. A counted noun after another number keeps its plain space ("5 файла").
+ * A digit that ends a name (sha256, SHA-256) or a time (9:00) is not a number standing alone, and a range ("от 1 до 5")
+ * is not a number and its word.
+ */
+const SPLIT_NUMBER =
+  /(?<![\p{L}\d.,:-])(?:1 (?!до )\p{Script=Cyrillic}|\d+ (?:ч|мин|сек|д|дни|часа|минути|секунди|знака|Б|КБ|МБ|ГБ|мс|км)(?!\p{L}))/u;
+
 describe("language packs", () => {
   for (const namespace of NAMESPACES) {
     it(`gives "${namespace.name}" in Bulgarian every key and parameter English has`, () => {
@@ -135,6 +174,9 @@ describe("language packs", () => {
           if (MIXED_SCRIPT.test(form)) problems.push(`${key}: a word mixes Cyrillic and Latin letters`);
           if (titleCased(form)) problems.push(`${key}: Title Case; write sentence case`);
           for (const calque of CALQUES) if (calque.pattern.test(form)) problems.push(`${key}: write ${calque.instead}`);
+          if (typeof message === "string" && COUNTED_WORD.test(form) && !NEVER_ONE.has(key))
+            problems.push(`${key}: a count and the word that agrees with it; write { one, other }`);
+          if (SPLIT_NUMBER.test(form)) problems.push(`${key}: a no-break space after a number keeps it with its word`);
         }
       expect(problems).toEqual([]);
     });
@@ -157,6 +199,17 @@ describe("language packs", () => {
     expect(FOREIGN_QUOTES.test("Отвори “Настройки”")).toBe(true);
     expect(FOREIGN_QUOTES.test("Отвори „Настройки“")).toBe(false);
     expect(CALQUES.some((calque) => calque.pattern.test("Кликнете тук"))).toBe(true);
+    expect(COUNTED_WORD.test("{count} файла")).toBe(true);
+    expect(COUNTED_WORD.test("{n} чакат")).toBe(true);
+    expect(COUNTED_WORD.test("{count} от {total}")).toBe(false);
+    expect(COUNTED_WORD.test("+{count} още")).toBe(false);
+    expect(SPLIT_NUMBER.test("най-много 80 знака")).toBe(true);
+    expect(SPLIT_NUMBER.test("още 1 човек")).toBe(true);
+    expect(SPLIT_NUMBER.test("най-много 80\u00a0знака")).toBe(false);
+    expect(SPLIT_NUMBER.test("sha256 {hash}, SHA-256 не съвпада, в 9:00 да")).toBe(false);
+    expect(SPLIT_NUMBER.test("250 търсения на месец, до 20 от тях")).toBe(false);
+    expect(SPLIT_NUMBER.test("Напиши число от 1 до {n}.")).toBe(false);
+    expect(COUNTED_WORD.test("{n}\u00a0мин")).toBe(false);
     expect(parameterProblems("tasks", "{count} tasks", "{n} задачи")).toEqual(["tasks: {n} is not supplied", "tasks: {count} is dropped"]);
     expect(parameterProblems("date.longDay", "{weekday} {day} {monthShort}", "{weekday}, {day} {month}")).toEqual([]);
   });

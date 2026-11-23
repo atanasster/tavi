@@ -18,7 +18,7 @@ import { builtCanvasDirectory } from "../../canvas-directory.js";
 import { inProcessAudit, type PluginAuditEntry } from "./audit.js";
 import { coreIn } from "@tavi/contracts/locales/core-server";
 import { BUILTIN_CHANNELS, builtinViewIn } from "./catalog.js";
-import { localizedUiEntries } from "./localized.js";
+import { builtinUiViewIn, localizedUiEntries } from "./localized.js";
 
 /**
  * One `plugins` action, shared by the owner's IPC handler and the
@@ -112,7 +112,9 @@ export async function runPluginAction(
 ): Promise<PluginAnswer> {
   switch (input.action) {
     case "list":
-      return { plugins: inLocale(await registry.list(live, context?.locale), context?.locale) };
+      return {
+        plugins: inLocale(await registry.list(live, context?.locale), context?.locale, context?.canvasDirectory ?? builtCanvasDirectory()),
+      };
     case "audit": {
       // Every enabled plugin whose code runs in the owner's process, read from its approved files.
       const entries: PluginAuditEntry[] = [];
@@ -123,7 +125,13 @@ export async function runPluginAction(
       return { audit: entries };
     }
     case "show":
-      return { plugin: inLocale([await registry.show(input.pluginId, live, context?.locale)], context?.locale)[0]! };
+      return {
+        plugin: inLocale(
+          [await registry.show(input.pluginId, live, context?.locale)],
+          context?.locale,
+          context?.canvasDirectory ?? builtCanvasDirectory(),
+        )[0]!,
+      };
     case "install": {
       const { record, created } = await registry.install(input.path, actor);
       const { manifest } = record;
@@ -268,10 +276,11 @@ export async function runPluginAction(
 }
 
 /** Views with each built-in's own words in `locale` (an installed plugin's come from its pack); as listed without one. */
-function inLocale(views: readonly PluginView[], locale: Locale | undefined): readonly PluginView[] {
+function inLocale(views: readonly PluginView[], locale: Locale | undefined, canvasDirectory: string | undefined): readonly PluginView[] {
   if (locale === undefined || locale === "en") return views;
   const t = coreIn(locale);
-  return views.map((view) => builtinViewIn(view, t));
+  // A UI built-in (the browser view) speaks through its own pack in the canvas build, as its frames do.
+  return views.map((view) => builtinUiViewIn(builtinViewIn(view, t), locale, canvasDirectory));
 }
 
 /**

@@ -1,23 +1,16 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { QuestionCard, QuestionReceipt, type QuestionNeed } from "../../../src/features/needs/NeedCard.js";
 import { NotifyOffer } from "../../../src/features/needs/NeedNotify.js";
-import { setLocale } from "../../../src/lib/i18n.js";
-import { mount, unmountAll } from "../../support/dom.js";
+import { mount } from "../../support/dom.js";
+import { inBulgarian } from "../../support/bulgarian.js";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 /** A question card, its receipt and the notification offer in Bulgarian. */
 
-beforeEach(async () => {
-  await setLocale("bg");
-});
-
-afterEach(async () => {
-  unmountAll();
-  await setLocale("en");
-});
+inBulgarian();
 
 const NOW = Date.parse("2026-10-02T14:00:00.000Z");
 const need: QuestionNeed = {

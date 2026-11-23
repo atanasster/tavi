@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { errorMessage } from "./util.js";
 import { coreEnglish, type CoreKey, type CoreT } from "./locales/core.js";
-import { englishOf, textRef, TextRefSchema, type TextRef, type TextRefParams } from "./text-ref.js";
+import { englishOf, renderTextRef, textRef, TextRefSchema, type TextRef, type TextRefParams } from "./text-ref.js";
 
 /**
  * Typed errors.
@@ -136,6 +136,30 @@ export function keyedError(
 ): TaviError {
   const ref = textRef(key, params);
   return new TaviError(code, englishOf(ref), { ...options, i18n: ref });
+}
+
+/**
+ * An error as `t`'s reader is told it: a keyed error (a `TaviError`, or its data off the wire) in their language, its
+ * English message when this build does not know its key, and any other error framed (`error.generic`, which adds
+ * nothing in English) around its English message. For a person's surfaces (the canvas, `tavi chat`, a chat app's
+ * reply); the CLI's stderr, logs and what the model reads keep `message`.
+ */
+export function errorTextIn(error: unknown, t: CoreT = coreEnglish): string {
+  const said =
+    error instanceof Error
+      ? error
+      : typeof error === "object" && error !== null
+        ? (error as { message?: unknown; i18n?: unknown })
+        : undefined;
+  const message = typeof said?.message === "string" ? said.message : errorMessage(error);
+  const i18n = said === undefined ? undefined : TextRefSchema.safeParse((said as { i18n?: unknown }).i18n);
+  if (i18n?.success === true && i18n.data !== undefined) return renderTextRef(i18n.data, t) ?? message;
+  return t("error.generic", { message });
+}
+
+/** A refusal's data (an IPC answer's `error`) thrown again as a `TaviError`, its key kept so a reader still says it in their language. */
+export function taviErrorOf(error: { readonly code: string; readonly message: string; readonly i18n?: TextRef | undefined }): TaviError {
+  return new TaviError(error.code as TaviErrorCode, error.message, error.i18n === undefined ? {} : { i18n: error.i18n });
 }
 
 /** The errors `refusedEarly` made: kept here, so no field a caller can set or copy marks an error as Tavi's own words. */

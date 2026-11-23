@@ -3,7 +3,7 @@ import type { HeartbeatGetAnswer } from "@tavi/contracts";
 import { useT } from "../../lib/i18n.js";
 import { localDate, localTime } from "../../lib/time.js";
 import { heartbeatHistory, setHeartbeatInstructions } from "./heartbeat-api.js";
-import { HEARTBEAT_SUGGESTIONS } from "./heartbeat-options.js";
+import { heartbeatSuggestions } from "./heartbeat-options.js";
 import { Button } from "../../ui/Button.js";
 import { useWorkspace } from "../shell/Workspace.js";
 import { Field } from "../../ui/Field.js";
@@ -88,27 +88,29 @@ export function HeartbeatWatch({
             </Button>
           </div>
           <ul className="heartbeat-suggestions list-reset" aria-label={t("center.heartbeatWatch.suggestions")}>
-            {HEARTBEAT_SUGGESTIONS.filter((suggestion) => !lines.includes(suggestion)).map((suggestion) => (
-              <li key={suggestion}>
-                <Button
-                  className="chip"
-                  onClick={() =>
-                    void apply((at) => {
-                      // Added to the instructions as the owner last answered them, so two quick taps keep both lines.
-                      const current = (configRef.current ?? config).instructions;
-                      return setHeartbeatInstructions(
-                        client,
-                        workspaceId,
-                        at,
-                        `${current.trimEnd()}${current.trim() === "" ? "" : "\n"}${suggestion}\n`,
-                      );
-                    }, t("center.heartbeatWatch.added"))
-                  }
-                >
-                  + {suggestion}
-                </Button>
-              </li>
-            ))}
+            {heartbeatSuggestions()
+              .filter((suggestion) => !lines.includes(suggestion))
+              .map((suggestion) => (
+                <li key={suggestion}>
+                  <Button
+                    className="chip"
+                    onClick={() =>
+                      void apply((at) => {
+                        // Added to the instructions as the owner last answered them, so two quick taps keep both lines.
+                        const current = (configRef.current ?? config).instructions;
+                        return setHeartbeatInstructions(
+                          client,
+                          workspaceId,
+                          at,
+                          `${current.trimEnd()}${current.trim() === "" ? "" : "\n"}${suggestion}\n`,
+                        );
+                      }, t("center.heartbeatWatch.added"))
+                    }
+                  >
+                    + {suggestion}
+                  </Button>
+                </li>
+              ))}
           </ul>
           {history === undefined ? null : (
             <ol className="heartbeat-history list-reset" aria-label={t("center.heartbeatWatch.historyLabel")}>

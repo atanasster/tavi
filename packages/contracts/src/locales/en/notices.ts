@@ -52,12 +52,12 @@ export const notices = {
     "Routine “{name}”: its run due {due} expired before it could finish (the owner was asleep, stopped or busy), so it made no report. The next scheduled run tries again.",
   "notice.routine.credentialGrace.text":
     "Routine “{name}” paused: its model or search credential has been rejected for over {hours} hours. Fix the key in Settings, then resume it. {resume}",
-  "notice.routine.failures.text": "Routine “{name}” paused after {n} failed runs in a row; its run history says why. {resume}",
+  "notice.routine.failures.text": { other: "Routine “{name}” paused after {n} failed runs in a row; its run history says why. {resume}" },
   "notice.routine.delivery.title": "Routine “{name}” delivery paused",
   "notice.routine.delivery.text":
     "Routine “{name}”: delivery to “{label}” paused because {why}. Research keeps running and reports stay in the app. {fix}.",
   "notice.routine.delivery.why.credentials": "its channel's credentials have been missing for over {hours} hours",
-  "notice.routine.delivery.why.failures": "{n} sends failed in a row",
+  "notice.routine.delivery.why.failures": { other: "{n} sends failed in a row" },
   "notice.routine.delivery.fix.credentials": "Reconnect the channel and delivery resumes on its own",
   "notice.routine.delivery.fix.failures": "Fix the channel, then resume delivery on the run's deliveries in {path}, or resume the routine",
   "notice.scheduledBudget.title": "Scheduled work",
@@ -65,9 +65,9 @@ export const notices = {
     "Your schedules and routines have used {usage} for {month}. Nothing is stopped. Change the budget with `tavi config set scheduled.monthlyTokenBudget <tokens>`, or give a schedule its own ceiling with `tavi schedules update <name> --max-tokens <n>`.",
   /** An MCP server's notice: what happened and what to do, never the server's own words. */
   "notice.mcp.drift.title": "{plugin}: its tools changed",
-  "notice.mcp.drift.withheld": "{n} changed and withheld ({names})",
-  "notice.mcp.drift.added": "{n} new, waiting for review",
-  "notice.mcp.drift.removed": "{n} removed",
+  "notice.mcp.drift.withheld": { other: "{n} changed and withheld ({names})" },
+  "notice.mcp.drift.added": { other: "{n} new, waiting for review" },
+  "notice.mcp.drift.removed": { other: "{n} removed" },
   "notice.mcp.drift.instructions": "its instructions changed (nothing withheld; read them in the review)",
   "notice.mcp.drift.list": "{first}; {rest}",
   "notice.mcp.drift.summary": "{parts}. Review with `tavi mcp review {plugin}`.",

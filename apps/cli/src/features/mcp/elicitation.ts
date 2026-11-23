@@ -1,5 +1,6 @@
 import type { ElicitResult } from "@modelcontextprotocol/client";
 import { ASK_USER_QUESTION_MAX_CHARS, type AgentWaitOutcome, type AskUserChoices, type ToolQuestion } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { csvList } from "@tavi/contracts/util";
 
 import type { McpElicitation } from "./client.js";
@@ -20,8 +21,22 @@ const MODERN_QUESTION_MS = 24 * 60 * 60 * 1000;
 /** How long a legacy question waits: the server holds the call open meanwhile. */
 export const LEGACY_QUESTION_MS = 10 * 60 * 1000;
 
-const DECLINE = "Decline";
 const QUESTION_MAX = 1_500;
+
+/**
+ * Tavi's buttons, in the workspace's language. An answer is read by which button it is, not by its words, so a
+ * question asked in one language and answered after a change to another (or typed in English) reads the same.
+ */
+const BUTTONS = ["decline", "done", "accept", "yes", "no"] as const;
+type Button = (typeof BUTTONS)[number];
+const buttonWord = (button: Button, t: CoreT): string => t(`mcp.elicit.${button}`);
+
+/** The button an answer names, in `t`'s words or English; undefined for other words. */
+function buttonOf(text: string | undefined, t: CoreT): Button | undefined {
+  if (text === undefined) return undefined;
+  const said = text.trim().toLowerCase();
+  return BUTTONS.find((button) => buttonWord(button, t).toLowerCase() === said || buttonWord(button, coreEnglish).toLowerCase() === said);
+}
 
 /** A question to ask, and how to read its answer; or why the server's question is declined at once. */
 export type ElicitationPlan =
@@ -69,7 +84,7 @@ function enumOf(field: Field): readonly { readonly label: string; readonly value
 function valueOf(field: Field, text: string): string | number | boolean | string[] | undefined {
   const words = text.trim();
   const type = field["type"];
-  if (type === "boolean") return /^(?:yes|true|y)$/i.test(words) ? true : /^(?:no|false|n)$/i.test(words) ? false : undefined;
+  if (type === "boolean") return /^(?:yes|true|y|да|д)$/i.test(words) ? true : /^(?:no|false|n|не|н)$/i.test(words) ? false : undefined;
   if (type === "number" || type === "integer") {
     const number = Number(words);
     if (words === "" || !Number.isFinite(number) || (type === "integer" && !Number.isInteger(number))) return undefined;
@@ -103,18 +118,23 @@ const options = (labels: readonly string[], allowOther = false): AskUserChoices 
 
 /**
  * The plan for one server question: `server` is the operator's name for the
- * server, `era` how the call waits (a legacy server holds its call open).
+ * server, `era` how the call waits (a legacy server holds its call open), `t`
+ * the workspace's words for Tavi's frame and buttons; the server's own words
+ * are shown as it wrote them.
  */
-export function planElicitation(server: string, request: McpElicitation, era: "modern" | "legacy"): ElicitationPlan {
+export function planElicitation(
+  server: string,
+  request: McpElicitation,
+  era: "modern" | "legacy",
+  t: CoreT = coreEnglish,
+): ElicitationPlan {
   const { _meta: _ignored, ...asked } = request as McpElicitation & { readonly _meta?: unknown };
   const key = canonicalHash(asked).slice(0, 24);
   const message = shown(request.message, QUESTION_MAX);
   const deadlineMs = era === "modern" ? MODERN_QUESTION_MS : LEGACY_QUESTION_MS;
-  const context =
-    era === "modern"
-      ? `Asked by the MCP server ${server}; the call waits for your answer for up to a day.`
-      : `Asked by the MCP server ${server} in the middle of a call, which stops if you do not answer within 10 minutes, or if Tavi restarts first.`;
-  const decline = (outcome: AgentWaitOutcome): boolean => answerText(outcome)?.toLowerCase() === DECLINE.toLowerCase();
+  const context = t(era === "modern" ? "mcp.elicit.context.modern" : "mcp.elicit.context.legacy", { server });
+  const DECLINE = buttonWord("decline", t);
+  const decline = (outcome: AgentWaitOutcome): boolean => buttonOf(answerText(outcome), t) === "decline";
 
   if (request.mode === "url") {
     let url: URL;
@@ -128,12 +148,14 @@ export function planElicitation(server: string, request: McpElicitation, era: "m
       kind: "ask",
       question: {
         key,
-        question:
-          `${server} asks you to open a page on ${shown(url.hostname)}: ${message}\n${shown(url.href, 1_000)}\nIt is not opened for you. Choose Done once you have finished there.`.slice(
-            0,
-            ASK_USER_QUESTION_MAX_CHARS,
-          ),
-        choices: options(["Done", DECLINE]),
+        question: t("mcp.elicit.openPage", {
+          server,
+          host: shown(url.hostname),
+          message,
+          url: shown(url.href, 1_000),
+          done: buttonWord("done", t),
+        }).slice(0, ASK_USER_QUESTION_MAX_CHARS),
+        choices: options([buttonWord("done", t), DECLINE]),
         context,
         deadlineMs,
       },
@@ -142,7 +164,7 @@ export function planElicitation(server: string, request: McpElicitation, era: "m
           ? undefined
           : decline(outcome)
             ? { action: "decline" }
-            : answerText(outcome)?.toLowerCase() === "done"
+            : buttonOf(answerText(outcome), t) === "done"
               ? { action: "accept" }
               : { action: "decline" },
     };
@@ -164,7 +186,7 @@ export function planElicitation(server: string, request: McpElicitation, era: "m
     typeof field["title"] === "string" ? `${shown(field["title"], 60)} (${shown(name, 60)})` : shown(name, 60);
   const ask = (question: string, choices?: AskUserChoices): ToolQuestion => ({
     key,
-    question: `${server} asks: ${question}`.slice(0, ASK_USER_QUESTION_MAX_CHARS),
+    question: t("mcp.elicit.asks", { server, question }).slice(0, ASK_USER_QUESTION_MAX_CHARS),
     ...(choices === undefined ? {} : { choices }),
     context,
     deadlineMs,
@@ -174,11 +196,11 @@ export function planElicitation(server: string, request: McpElicitation, era: "m
   if (fields.length === 0) {
     return {
       kind: "ask",
-      question: ask(message, options(["Accept", DECLINE])),
+      question: ask(message, options([buttonWord("accept", t), DECLINE])),
       read: (outcome) =>
         answerText(outcome) === undefined
           ? undefined
-          : answerText(outcome)?.toLowerCase() === "accept"
+          : buttonOf(answerText(outcome), t) === "accept"
             ? { action: "accept", content: {} }
             : { action: "decline" },
     };
@@ -188,37 +210,45 @@ export function planElicitation(server: string, request: McpElicitation, era: "m
     const choices =
       field["type"] === "boolean"
         ? [
-            { label: "Yes", value: "true" },
-            { label: "No", value: "false" },
+            { label: buttonWord("yes", t), value: "true" },
+            { label: buttonWord("no", t), value: "false" },
           ]
         : enumOf(field);
     // Buttons when the choices fit beside Decline; typed words otherwise.
     const buttons = choices !== undefined && choices.length <= 3 ? options([...choices.map((choice) => choice.label), DECLINE]) : undefined;
-    const hint =
+    const label = named(name, field);
+    const hinted =
       buttons !== undefined
-        ? ""
+        ? label
         : field["type"] === "array"
-          ? " (one or more, separated by commas)"
+          ? t("mcp.elicit.field.many", { field: label })
           : choices !== undefined
-            ? ` (one of ${choices.map((choice) => choice.label).join(", ")})`
-            : "";
+            ? t("mcp.elicit.field.oneOf", { field: label, choices: choices.map((choice) => choice.label).join(", ") })
+            : label;
     return {
       kind: "ask",
-      question: ask(`${message}\n${named(name, field)}${hint}${buttons === undefined ? `; or answer ${DECLINE}` : ""}`, buttons),
+      question: ask(
+        `${message}\n${buttons === undefined ? t("mcp.elicit.orAnswer", { text: hinted, decline: DECLINE }) : hinted}`,
+        buttons,
+      ),
       read: (outcome) => {
         const text = answerText(outcome);
         if (text === undefined) return undefined;
         if (decline(outcome)) return { action: "decline" };
-        const value = valueOf(field, text);
+        // A yes or no button is read by which it is, in either language.
+        const button = field["type"] === "boolean" ? buttonOf(text, t) : undefined;
+        const value = button === "yes" ? true : button === "no" ? false : valueOf(field, text);
         return value === undefined ? { action: "decline" } : { action: "accept", content: { [name]: value } };
       },
     };
   }
   // Several fields: one line each, `name: value`.
-  const lines = fields.map(([name, field]) => `- ${named(name, field)}${required.has(name) ? "" : " (optional)"}`);
+  const lines = fields.map(
+    ([name, field]) => `- ${required.has(name) ? named(name, field) : t("mcp.elicit.field.optional", { field: named(name, field) })}`,
+  );
   return {
     kind: "ask",
-    question: ask(`${message}\nAnswer with one line per field, as name: value; or answer ${DECLINE}.\n${lines.join("\n")}`),
+    question: ask(`${message}\n${t("mcp.elicit.perLine", { decline: DECLINE })}\n${lines.join("\n")}`),
     read: (outcome) => {
       const text = answerText(outcome);
       if (text === undefined) return undefined;

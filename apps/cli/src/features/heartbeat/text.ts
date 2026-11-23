@@ -163,6 +163,9 @@ export function editedInstructions(
   }
 }
 
+/** How many bytes the heartbeat's notes take. */
+const memoBytes = (memo: string): number => new TextEncoder().encode(memo).length;
+
 const TELL: Readonly<Record<string, CoreKey>> = {
   "urgent-now": "cli.heartbeat.tell.urgentNow",
   "everything-now": "cli.heartbeat.tell.everythingNow",
@@ -220,7 +223,11 @@ export function heartbeatStatusText(answer: HeartbeatGetAnswer, t: CoreT = coreE
       days,
       deep: intervalWords(config.deepCheckEveryMs, t),
     }),
-    t("cli.heartbeat.tells", { how: tell === undefined ? config.tellMe : t(tell), n: String(config.maxNowPerHour) }),
+    t("cli.heartbeat.tells", {
+      how: tell === undefined ? config.tellMe : t(tell),
+      count: config.maxNowPerHour,
+      n: String(config.maxNowPerHour),
+    }),
     t("cli.heartbeat.targets", {
       targets:
         config.targets.length === 0
@@ -251,7 +258,7 @@ export function heartbeatStatusText(answer: HeartbeatGetAnswer, t: CoreT = coreE
       notes:
         answer.state?.memo === undefined
           ? none
-          : t("cli.heartbeat.bytes", { n: String(new TextEncoder().encode(answer.state.memo).length) }),
+          : t("cli.heartbeat.bytes", { count: memoBytes(answer.state.memo), n: String(memoBytes(answer.state.memo)) }),
     }),
     t("cli.heartbeat.instructions", {
       instructions:
@@ -297,7 +304,7 @@ export function heartbeatLogLine(tick: HeartbeatTickRecord, t: CoreT = coreEngli
   const cost =
     tick.tokens === 0
       ? ""
-      : ` · ${t("cli.heartbeat.log.tokens", { n: String(tick.tokens) })}${tick.costUsd === null ? "" : `, $${tick.costUsd.toFixed(4)}`}`;
+      : ` · ${t("cli.heartbeat.log.tokens", { count: tick.tokens, n: String(tick.tokens) })}${tick.costUsd === null ? "" : `, $${tick.costUsd.toFixed(4)}`}`;
   const context = heartbeatTickContext(tick, t)
     .map((part) => ` · ${part}`)
     .join("");

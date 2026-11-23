@@ -1303,3 +1303,20 @@ describe("a host-folder file a tainted chat wrote", () => {
     });
   });
 });
+
+describe("a file's card in Bulgarian", () => {
+  it("says a write's and an edit's title and reasons in the workspace's language, the path and diff as they are", () => {
+    const { assess, context } = setup();
+    const bulgarian = { ...context, locale: "bg" as const };
+    const created = assess("fs.write", { path: "notes.md", content: "x" }, bulgarian);
+    expect(created.display.title).toBe("Запиши notes.md");
+    expect(created.reasons[0]).toBe("създава файл");
+    const edited = assess("fs.edit", { path: "src/a.ts", oldText: "b = 2", newText: "b = 3" }, bulgarian);
+    expect(edited.display.title).toBe("Редактирай src/a.ts");
+    expect(edited.display.detail).toContain("--- src/a.ts");
+    expect(edited.reasons[0]).toBe("променя файл");
+    // What the gate decides by is the same in either language.
+    const english = assess("fs.edit", { path: "src/a.ts", oldText: "b = 2", newText: "b = 3" });
+    expect({ ...edited, display: undefined, reasons: undefined }).toEqual({ ...english, display: undefined, reasons: undefined });
+  });
+});

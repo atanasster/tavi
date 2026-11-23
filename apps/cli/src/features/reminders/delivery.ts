@@ -3,11 +3,9 @@ import { z } from "zod";
 import {
   TaviError,
   isUntrusted,
-  localDateTime,
   conversationOfKey,
   topicConversationKey,
   formatReminderClock,
-  formatReminderTime,
   reminderRetryDecision,
   type InboundEvent,
   type MemoryActor,
@@ -24,7 +22,8 @@ import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
 
 import { pressOf } from "../channels/button-press.js";
-import { channelWords, type WorkspaceLocaleOf, zonedClock, zonedShortDay } from "../channels/channel-words.js";
+import { channelWords, type WorkspaceLocaleOf } from "../channels/channel-words.js";
+import { reminderWhenText } from "./when-text.js";
 
 /**
  * Saying a reminder where it was asked.
@@ -100,16 +99,8 @@ export async function reminderReplyTarget(
   return undefined;
 }
 
-/** "Mon 5 Oct 10:00" in `t`'s words, the year said when it is not this one; English as `formatReminderTime` says it. */
-function reminderWhenText(instant: Date, timezone: string, t: CoreT): string {
-  if (t === coreEnglish) return formatReminderTime(instant, timezone);
-  const year = localDateTime(instant, timezone).year;
-  return t("channel.reminder.when", {
-    day: zonedShortDay(instant, timezone, t),
-    year: year === localDateTime(new Date(), timezone).year ? "" : ` ${year}`,
-    time: zonedClock(instant, timezone),
-  });
-}
+/** "Mon 5 Oct 10:00" in `t`'s words; where the schedule tools have always read it from. */
+export { reminderWhenText };
 
 /** "⏰ Dentist appointment — Mon 5 Oct 10:00 (late: was due 09:00)": what a fire says, in `t`'s words. */
 export function reminderMessageText(reminder: Reminder, fire: ReminderFire, late: boolean, t: CoreT = coreEnglish): string {

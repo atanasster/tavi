@@ -83,7 +83,7 @@ export async function stopTakenOverTask(
   if (aborted.ok || aborted.error?.code !== "NOT_RUNNING") return aborted;
   const withdraw = () => ask("tasks", { action: "stop-handoff", taskId: input.taskId, workspaceId: input.workspaceId });
   if (input.isHome) return await withdraw();
-  const cancelled = await ask("cancel", { taskId: input.taskId, reason: "Stopped from the browser takeover" });
+  const cancelled = await ask("cancel", { taskId: input.taskId, reason: translateNow("takeover.stop.reason") });
   if (cancelled.ok || cancelled.error?.code !== "CONFLICT") return cancelled;
   const withdrawn = await withdraw();
   return withdrawn.ok ? withdrawn : cancelled;

@@ -70,6 +70,8 @@ import {
 } from "@tavi/contracts";
 import { definedOnly, errorMessage, nowTimestamp } from "@tavi/contracts/util";
 import { SUPPORTED_LOCALES, type Catalog, type Locale } from "@tavi/contracts/i18n";
+import { coreEnglish } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 
 export interface PluginFile {
   readonly relative: string;
@@ -1042,6 +1044,8 @@ export class PluginRegistry {
     const byPlugin = new Map<string, PluginVersionRecord[]>();
     const all = this.#repository.listVersions().versions;
     const toolViews = (record: PluginVersionRecord) => pluginToolViews(record);
+    // What a channel shares, said in the language its words are listed in.
+    const words = locale === undefined ? coreEnglish : coreIn(locale);
     const shown = (record: PluginVersionRecord): PluginVersionRecord => {
       const manifest = localizedPluginManifest(
         this.snapshotDirectory(record.pluginId, record.version),
@@ -1099,12 +1103,12 @@ export class PluginRegistry {
           ...definedOnly({ router: record.manifest.router, ui: record.manifest.ui, apps: record.manifest.apps }),
           ...(record.manifest.channels.length === 0
             ? {}
-            : { channels: record.manifest.channels.map((descriptor) => channelDisclosureOf(descriptor)) }),
+            : { channels: record.manifest.channels.map((descriptor) => channelDisclosureOf(descriptor, words)) }),
           ...ownerCodeFacts(record.manifest),
           ...isolationFacts(record),
           ...(record.manifest.mods === undefined || record.manifest.mods.hooks.length === 0
             ? {}
-            : { mods: modHookViewsOf(record.manifest.mods) }),
+            : { mods: modHookViewsOf(record.manifest.mods, words) }),
           ...(record.manifest.mods === undefined || record.manifest.mods.commands.length === 0
             ? {}
             : { commands: record.manifest.mods.commands }),
@@ -1126,7 +1130,7 @@ export class PluginRegistry {
         ...(current.isolation === undefined ? {} : { isolation: current.isolation }),
         ...(current.manifest.mods === undefined || current.manifest.mods.hooks.length === 0
           ? {}
-          : { mods: modHookViewsOf(current.manifest.mods) }),
+          : { mods: modHookViewsOf(current.manifest.mods, words) }),
         ...(current.manifest.mods === undefined || current.manifest.mods.commands.length === 0
           ? {}
           : { commands: current.manifest.mods.commands }),

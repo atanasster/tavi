@@ -88,7 +88,7 @@ export function toolQuestionFor(
           connect,
           ...(tell === undefined
             ? {}
-            : { deliver: async () => await tell({ taskId: state.runId, waitId, text: connectNeedText(connect) }) }),
+            : { deliver: async () => await tell({ taskId: state.runId, waitId, text: connectNeedText(connect), connect }) }),
           deadlineAt: earliestInstant(new Date(Date.parse(now()) + asked.deadlineMs).toISOString(), deadlineCap),
         })
       ).outcome;

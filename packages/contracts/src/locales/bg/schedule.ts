@@ -89,6 +89,7 @@ export const schedule = {
   "schedule.spec.sentenceEvery": "{days}, {step} от {from} до {to} ({timezone})",
   "schedule.spec.everyHours": { one: "всеки час", other: "на всеки {count} часа" },
   "schedule.spec.until": "{spec} до {date}",
+  "schedule.spec.stored": "{spec}",
   "schedule.spec.labelAt": "{days} {times}",
   "schedule.spec.labelAtDated": "{days}, {times}",
   "schedule.spec.labelEvery": "{days} {step} {from}–{to}",
@@ -153,6 +154,14 @@ export const schedule = {
   "reminder.offset.hours": { one: "{amount} час преди", other: "{amount} часа преди" },
   "reminder.offset.days": { one: "{amount} ден преди", other: "{amount} дни преди" },
   "reminder.offset.at": "{span}, в {time}",
+  "reminder.readBack.at": "{day} в {time}",
+  "reminder.readBack.dayYear": "{day} {year} г.",
+  "reminder.readBack.date": "{day} {monthShort} {year} г.",
+  "reminder.readBack.once": "{time} {timezone}; ще ти напомня тогава",
+  "reminder.readBack.event": "{time} {timezone}; ще ти напомня {notices}",
+  "reminder.readBack.eventNone": "{time} {timezone}; не остава напомняне",
+  "reminder.readBack.repeat": "{days} в {times} {timezone}",
+  "reminder.readBack.next": "{text}; следващо: {time}",
 
   "routine.report.llmNews": "Новини за LLM",
 } as const satisfies CatalogFor<typeof en>;

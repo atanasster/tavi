@@ -17,7 +17,7 @@ import { STALE_WEB_PATTERN_MESSAGE, isStaleWebPattern } from "./tool-policy.js";
 import type { SchedulePrecheck, SchedulePrecheckState } from "./schedule-precheck.js";
 import { definedOnly } from "./util.js";
 import { coreEnglish, type CoreT } from "./locales/core.js";
-import { renderTextRef, textRef, type TextRef } from "./text-ref.js";
+import { renderTextRef, sayTextRefWith, textRef, TEXT_REF_PARAM_MAX, type TextRef } from "./text-ref.js";
 
 /**
  * Recurring schedules.
@@ -287,6 +287,29 @@ export function scheduleSpecText(spec: ScheduleSpec, style: "sentence" | "label"
   const until = spec.until === undefined ? label : t("schedule.spec.until", { spec: label, date: spec.until });
   return t("schedule.spec.labelZone", { spec: until, timezone: spec.timezone });
 }
+
+/**
+ * A spec's sentence stored for later (a notice, an alert, a keyed error): said in the reader's language when it is
+ * read, from the spec kept beside its English. A reader that cannot read the spec shows the English.
+ */
+export function scheduleSpecRef(spec: ScheduleSpec): TextRef {
+  const json = JSON.stringify(spec);
+  return textRef("schedule.spec.stored", {
+    spec: scheduleSpecText(spec),
+    ...(json.length <= TEXT_REF_PARAM_MAX ? { json } : {}),
+  });
+}
+
+sayTextRefWith("schedule.spec.stored", (params, t) => {
+  const json = params["json"];
+  if (typeof json !== "string") return undefined;
+  try {
+    const spec = ScheduleSpecSchema.safeParse(JSON.parse(json));
+    return spec.success ? scheduleSpecText(spec.data, "sentence", t) : undefined;
+  } catch {
+    return undefined;
+  }
+});
 
 /** Times as a sentence lists them: "07:00, 12:00 and 19:00". */
 function listAnd(items: readonly string[], t: CoreT): string {

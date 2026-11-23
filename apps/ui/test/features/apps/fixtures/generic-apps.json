@@ -121,7 +121,16 @@
           "kind": "sign-in",
           "accountId": "mcp.docs",
           "title": "Sign in to docs",
+          "titleRef": {
+            "key": "app.repair.signIn",
+            "params": {
+              "app": "docs"
+            }
+          },
           "detail": "It has not been signed in yet.",
+          "detailRef": {
+            "key": "app.repair.notSignedIn"
+          },
           "cli": "tavi mcp login mcp.docs"
         }
       ],
@@ -226,7 +235,19 @@
           "kind": "finish-setup",
           "accountId": "example.weather",
           "title": "Finish setting up Weather",
+          "titleRef": {
+            "key": "app.repair.finishSetup",
+            "params": {
+              "app": "Weather"
+            }
+          },
           "detail": "It needs apiKey.",
+          "detailRef": {
+            "key": "app.repair.needs",
+            "params": {
+              "settings": "apiKey"
+            }
+          },
           "cli": "tavi credentials set plugins.example.weather.apiKey --file … && tavi plugins config example.weather --set apiKey=plugins.example.weather.apiKey"
         }
       ],

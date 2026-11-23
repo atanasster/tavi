@@ -94,7 +94,7 @@ export async function emailTriggerConnections(
   workspaceId: string,
 ): Promise<Outcome<readonly ChannelConnectionView[]>> {
   const [catalog, list] = await Promise.all([
-    ask<ChannelsCatalogAnswer>(client, "channels", { action: "catalog" }),
+    ask<ChannelsCatalogAnswer>(client, "channels", { action: "catalog", workspaceId }),
     ask<ChannelsListAnswer>(client, "channels", { action: "list", workspaceId }),
   ]);
   if (!catalog.ok) return catalog;

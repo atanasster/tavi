@@ -94,11 +94,12 @@ export function noticeWordRefs(notice: Pick<McpNoticeRecord, "pluginId" | "kind"
         withheld.length === 0
           ? undefined
           : textRef("notice.mcp.drift.withheld", {
+              count: withheld.length,
               n: String(withheld.length),
               names: `${withheld.slice(0, 5).join(", ")}${withheld.length > 5 ? ", …" : ""}`,
             }),
-        added.length === 0 ? undefined : textRef("notice.mcp.drift.added", { n: String(added.length) }),
-        removed.length === 0 ? undefined : textRef("notice.mcp.drift.removed", { n: String(removed.length) }),
+        added.length === 0 ? undefined : textRef("notice.mcp.drift.added", { count: added.length, n: String(added.length) }),
+        removed.length === 0 ? undefined : textRef("notice.mcp.drift.removed", { count: removed.length, n: String(removed.length) }),
         detail["instructions"] === true ? textRef("notice.mcp.drift.instructions") : undefined,
       ].filter((part): part is TextRef => part !== undefined);
       // "a; b; c", as one parameter: each part joined to the rest.

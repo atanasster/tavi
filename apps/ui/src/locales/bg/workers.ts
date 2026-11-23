@@ -19,6 +19,7 @@ export const workers = {
   "workers.tree.using": "Използва {tool}",
   "workers.tree.nodeNeeds": "Чака {needs}",
   "workers.tree.cancel": "Спри {id}",
+  "workers.tree.cancelReason": "Спряно от дървото с помощници",
   "workers.tree.dismiss": "Скрий {id}",
   "workers.tree.under": { one: "{count} помощник под него", other: "{count} помощници под него" },
 

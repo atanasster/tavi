@@ -594,11 +594,20 @@ export async function runChannelsCli(options: ChannelsCommandOptions, ask: Chann
         ...(options.trustUnverified === true ? { trustUnverified: true } : {}),
       });
       const code = started.code.length === 8 ? `${started.code.slice(0, 4)}-${started.code.slice(4)}` : started.code;
+      // The instructions are said in the workspace's language; English reads its time as this machine writes one.
+      const t = (await io.words?.()) ?? coreEnglish;
+      const until = new Date(started.expiresAt).toLocaleTimeString(t === coreEnglish ? [] : "bg-BG", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
       const lines = [
-        `Code: ${field(code)} (valid until ${new Date(started.expiresAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}, once)`,
-        `Command: /link ${field(code)}`,
-        ...(started.linkUrl === undefined ? [] : [`${field(started.openLabel ?? "Link")}: ${field(started.linkUrl)}`]),
-        `Send ${field(code)} or \`/link ${field(code)}\` to ${started.account === undefined ? connection.connectionId : `@${field(started.account)}`} within 10 minutes. Waiting…`,
+        t("cli.channels.pair.code", { code: field(code), until }),
+        t("cli.channels.pair.command", { code: field(code) }),
+        ...(started.linkUrl === undefined ? [] : [`${field(started.openLabel ?? t("cli.channels.pair.link"))}: ${field(started.linkUrl)}`]),
+        t("cli.channels.pair.send", {
+          code: field(code),
+          to: started.account === undefined ? connection.connectionId : `@${field(started.account)}`,
+        }),
       ];
       io.stderr(`${lines.join("\n")}\n`);
       const wait = io.sleep ?? sleep;
@@ -612,7 +621,6 @@ export async function runChannelsCli(options: ChannelsCommandOptions, ask: Chann
           let approved = options.yes === true;
           if (!approved) {
             try {
-              const t = (await io.words?.()) ?? coreEnglish;
               approved = await confirm(
                 `${t("prompt.channels.allowPairing", { who, as: field(options.name ?? principalId) })} ${yesNoHint(false, t)} `,
               );
@@ -634,7 +642,7 @@ export async function runChannelsCli(options: ChannelsCommandOptions, ask: Chann
               ...(status.senderName === undefined ? {} : { senderName: status.senderName }),
               principalId,
             },
-            `linked ${who} as ${field(principalId)} on ${connection.connectionId}\n`,
+            `${t("cli.channels.pair.linked", { who, as: field(principalId), connection: connection.connectionId })}\n`,
           );
           return;
         }

@@ -35,6 +35,7 @@ import {
   formatReminderTime,
   parseReminderOffset,
   scheduleFinished,
+  scheduleSpecRef,
   scheduleSpecText,
   scheduledMonthWindow,
   scheduledWorkUsage,
@@ -43,6 +44,7 @@ import {
   keyedError,
 } from "@tavi/contracts";
 import { csvList, definedOnly } from "@tavi/contracts/util";
+import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
 import { prefixedId } from "@tavi/node-kit";
 import {
   runScheduleNow,
@@ -92,7 +94,7 @@ export async function setScheduleEnabled(
 ): Promise<ScheduleRecord> {
   const next = enabled ? nextOccurrence(schedule.spec, at) : undefined;
   if (enabled && next === undefined)
-    throw keyedError("INVALID_INPUT", "error.schedule.finished", { name: schedule.name, spec: scheduleSpecText(schedule.spec) });
+    throw keyedError("INVALID_INPUT", "error.schedule.finished", { name: schedule.name, spec: scheduleSpecRef(schedule.spec) });
   await schedules.setEnabled({
     scheduleId: schedule.scheduleId,
     enabled,
@@ -571,17 +573,29 @@ function timeFormat(timeZone: string): Intl.DateTimeFormat {
   });
 }
 
-/** A fire's time in `timezone`: "Tue, 27/10/2026, 07:00". */
-export function fireTimeText(at: string, timezone: string): string {
-  return timeFormat(timezone).format(new Date(at));
+/** A fire's time in `timezone`: "Tue, 27/10/2026, 07:00", in `t`'s words ("вт, 27.10.2026, 07:00"). */
+export function fireTimeText(at: string, timezone: string, t: CoreT = coreEnglish): string {
+  if (t === coreEnglish) return timeFormat(timezone).format(new Date(at));
+  const parts = Object.fromEntries(
+    timeFormat(timezone)
+      .formatToParts(new Date(at))
+      .map((part) => [part.type, part.value]),
+  );
+  const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(parts["weekday"] ?? "");
+  return t("cli.schedules.fireTime", {
+    weekday: weekday < 0 ? (parts["weekday"] ?? "") : t(`date.weekdayShort.${weekday}` as CoreKey),
+    day: parts["day"] ?? "",
+    month: parts["month"] ?? "",
+    year: parts["year"] ?? "",
+    time: `${parts["hour"] ?? "00"}:${parts["minute"] ?? "00"}`,
+  });
 }
 
 /** One line per fire, newest first: when it was for, why it ended so, and its task (no trailing newline). */
-export function fireLines(fires: ScheduleShowResult["recentFires"], timezone: string, indent = ""): string[] {
-  const format = timeFormat(timezone);
+export function fireLines(fires: ScheduleShowResult["recentFires"], timezone: string, indent = "", t: CoreT = coreEnglish): string[] {
   return fires.map(
     (fire) =>
-      `${indent}${format.format(new Date(fire.fireTime))}\t${fire.reasonCode}${fire.retryCount === undefined ? "" : ` (retry ${fire.retryCount})`}\t${fire.outcome}${fire.taskId === null ? "" : `\ttask ${fire.taskId}`}`,
+      `${indent}${fireTimeText(fire.fireTime, timezone, t)}\t${fire.reasonCode}${fire.retryCount === undefined ? "" : t("cli.schedules.fire.retry", { n: String(fire.retryCount) })}\t${fire.outcome}${fire.taskId === null ? "" : `\t${t("cli.schedules.fire.task", { id: fire.taskId })}`}`,
   );
 }
 

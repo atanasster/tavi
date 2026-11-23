@@ -1,7 +1,7 @@
 import type { SystemPromptLayer } from "@tavi/contracts";
 
 import { useT } from "../../lib/i18n.js";
-import { layerSource } from "./memory-model.js";
+import { layerDetail, layerLabel, layerSource } from "./memory-model.js";
 
 /**
  * One layer of a task's instructions, as `system-prompt preview` lists it.
@@ -14,13 +14,13 @@ export function LayerRow({ layer }: { readonly layer: SystemPromptLayer }) {
     <li className={layer.active ? "soul-layer" : "soul-layer off"}>
       <span className="soul-layer-bullet" aria-hidden="true" />
       <span className="soul-layer-name">
-        <span className="soul-layer-label">{layer.label}</span>
+        <span className="soul-layer-label">{layerLabel(layer)}</span>
         {layer.active ? null : <span className="visually-hidden">{t("center.layerRow.notSent")}</span>}
         <small>{layerSource(layer)}</small>
         {layer.generated && layer.detail !== undefined ? (
           <details className="soul-layer-detail">
             <summary className="disclosure">{layer.sample ? t("center.layerRow.sample") : t("center.layerRow.holds")}</summary>
-            {layer.sample ? <pre>{layer.detail}</pre> : <p>{layer.detail}</p>}
+            {layer.sample ? <pre>{layer.detail}</pre> : <p>{layerDetail(layer)}</p>}
           </details>
         ) : null}
       </span>

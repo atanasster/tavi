@@ -1,10 +1,11 @@
 import type { AppClientSetupStep } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 
 /**
  * Tavi's own steps for making a provider's shared OAuth client, by provider: what the connect sheet's
  * *Set up* step shows, each with the console page it opens and the values to type. Google's were
  * walked in the console on 2026-11-08 (a personal Gmail account, no organisation): re-check them
- * before each release, as presets are.
+ * before each release, as presets are. The words are `t`'s (English by default); a value to type stays as it is.
  */
 
 /** Tavi's public repository: a true home page and privacy policy for a personal app that is never submitted for verification. */
@@ -17,44 +18,47 @@ export interface ClientSetup {
   readonly steps: readonly AppClientSetupStep[];
 }
 
-const GOOGLE: ClientSetup = {
-  title: "Set up Google",
+const google = (t: CoreT): ClientSetup => ({
+  title: t("app.clientSetup.google.title"),
   steps: [
     {
-      text: "Create a Google Cloud project of your own, named, for example, tavi.",
-      link: { label: "Create a project", url: `${CONSOLE}/projectcreate` },
+      text: t("app.clientSetup.google.project"),
+      link: { label: t("app.clientSetup.google.project.link"), url: `${CONSOLE}/projectcreate` },
     },
     {
-      text: "Enable the Google Calendar and Gmail APIs in it: choose Next, then Enable.",
-      link: { label: "Enable the APIs", url: `${CONSOLE}/flows/enableapi?apiid=calendar-json.googleapis.com,gmail.googleapis.com` },
+      text: t("app.clientSetup.google.apis"),
+      link: {
+        label: t("app.clientSetup.google.apis.link"),
+        url: `${CONSOLE}/flows/enableapi?apiid=calendar-json.googleapis.com,gmail.googleapis.com`,
+      },
     },
     {
-      text: "Set up sign-in: give the app a name, your email as its support and contact email, choose External, agree to Google's policy, and Create.",
-      link: { label: "Set up sign-in", url: `${CONSOLE}/auth/overview/create` },
-      values: [{ label: "App name", value: "Tavi (personal)" }],
+      text: t("app.clientSetup.google.signIn"),
+      link: { label: t("app.clientSetup.google.signIn.link"), url: `${CONSOLE}/auth/overview/create` },
+      values: [{ label: t("app.clientSetup.google.signIn.appName"), value: "Tavi (personal)" }],
     },
     {
-      text: "On Branding, add a home page, a privacy policy and the authorized domain github.com, and Save. Then on Audience, choose Publish app and Confirm: an app left in Testing signs you out every 7 days.",
-      link: { label: "Open Branding", url: `${CONSOLE}/auth/branding` },
+      text: t("app.clientSetup.google.branding"),
+      link: { label: t("app.clientSetup.google.branding.link"), url: `${CONSOLE}/auth/branding` },
       values: [
-        { label: "Home page", value: REPOSITORY },
-        { label: "Privacy policy", value: `${REPOSITORY}/blob/main/docs/PRIVACY.md` },
-        { label: "Authorized domain", value: "github.com" },
+        { label: t("app.clientSetup.google.branding.homePage"), value: REPOSITORY },
+        { label: t("app.clientSetup.google.branding.privacy"), value: `${REPOSITORY}/blob/main/docs/PRIVACY.md` },
+        { label: t("app.clientSetup.google.branding.domain"), value: "github.com" },
       ],
     },
     {
-      text: "Create an OAuth client of type Desktop app. No redirect address is needed: a Desktop client comes back to this computer on any port.",
-      link: { label: "Create a client", url: `${CONSOLE}/auth/clients/create` },
+      text: t("app.clientSetup.google.client"),
+      link: { label: t("app.clientSetup.google.client.link"), url: `${CONSOLE}/auth/clients/create` },
     },
     {
-      text: "In the dialog that shows the new client, choose Download JSON before you close it (Google shows its secret only there), and drop the file here.",
+      text: t("app.clientSetup.google.download"),
     },
   ],
-};
+});
 
-const SETUPS: Readonly<Record<string, ClientSetup>> = { google: GOOGLE };
+const SETUPS: Readonly<Record<string, (t: CoreT) => ClientSetup>> = { google };
 
-/** The steps for `provider`'s shared client, when Tavi has some. */
-export function clientSetupOf(provider: string): ClientSetup | undefined {
-  return SETUPS[provider];
+/** The steps for `provider`'s shared client, when Tavi has some, in `t`'s words. */
+export function clientSetupOf(provider: string, t: CoreT = coreEnglish): ClientSetup | undefined {
+  return Object.hasOwn(SETUPS, provider) ? SETUPS[provider]?.(t) : undefined;
 }

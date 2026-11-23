@@ -665,4 +665,26 @@ describe("triage", () => {
       await search?.handler({ input: { query: "x" }, context: { ...context }, signal: new AbortController().signal }),
     ).not.toHaveProperty("nextPageToken");
   });
+
+  it("says a send's and a label change's card in the workspace's language, the mail itself as written", async () => {
+    const { call, registry } = await tools({ "gmail-1": "send" });
+    await call("gmail.gmail_1.draft", { to: ["ana@example.com"], subject: "Lunch", body: "Friday?" });
+    const bulgarian = { workspaceId: "default", principalId: "operator", runId: "t", caller: "test", locale: "bg" as const };
+    const english = { workspaceId: "default", principalId: "operator", runId: "t", caller: "test" };
+    const send = registry.get("gmail.gmail_1.send_draft");
+    const said = send?.assess?.({ draftId: "d1" }, bulgarian);
+    expect(said?.display).toEqual({
+      title: "Изпрати „Lunch“ от me@gmail.com",
+      destination: "ana@example.com",
+      detail: "До: ana@example.com\nПишеш за първи път на: ana@example.com\n\nFriday?",
+    });
+    expect(said?.reasons).toEqual(["изпраща имейл от твоя адрес"]);
+    // The content approved is the same draft, whatever language its card is in.
+    expect(said?.contentHash).toBe(send?.assess?.({ draftId: "d1" }, english)?.contentHash);
+    const labelled = registry.get("gmail.gmail_1.label")?.assess?.({ ids: ["m1", "m2"], archive: true }, bulgarian);
+    expect(labelled?.display).toEqual({
+      title: "архивирай: 2 съобщения",
+      detail: "• m1 (не е прочетено тук)\n• m2 (не е прочетено тук)",
+    });
+  });
 });

@@ -1,7 +1,7 @@
 import {
   describeReminderOffset,
-  formatReminderTime,
   instantForLocalTime,
+  isCoreKey,
   parseReminderOffset,
   reminderReadBack,
   type Reminder,
@@ -17,8 +17,10 @@ import {
   repeatDaysText,
 } from "@tavi/contracts";
 
+import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
 import stringWidth from "string-width";
 import { alignedColumns, indentedLines } from "../../shared/terminal-text.js";
+import { reminderWhenText } from "./when-text.js";
 import type { ReminderTimeInput, ReminderWhenInput, RemindersCommandOptions } from "./parse.js";
 
 /**
@@ -104,30 +106,37 @@ export function remindersPayload(options: RemindersCommandOptions, zone: string 
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
+/** A status or a fire's outcome in `t`'s words; one this release does not know is shown as it is stored. */
+function codeWord(prefix: "cli.reminders.status" | "cli.reminders.outcome", code: string, t: CoreT): string {
+  const key = `${prefix}.${code === "delivered-in-app" ? "deliveredInApp" : code}`;
+  return isCoreKey(key) ? t(key) : code;
+}
+
 /** A reminder's cadence in words: "once Mon 5 Oct 10:00", "event Mon 5 Oct 10:00 (1 day before at 20:00, 1 hour before)", "daily 21:00". */
-function reminderCadence(reminder: Pick<Reminder, "when" | "timezone">): string {
+function reminderCadence(reminder: Pick<Reminder, "when" | "timezone">, t: CoreT): string {
   const { when, timezone } = reminder;
   switch (when.kind) {
     case "once":
-      return `once ${formatReminderTime(new Date(when.at), timezone)}`;
+      return t("cli.reminders.once", { when: reminderWhenText(new Date(when.at), timezone, t) });
     case "event": {
       const notices = when.notify.map((notice) => {
         const offset = parseReminderOffset(notice);
-        return offset === undefined ? notice : describeReminderOffset(offset);
+        return offset === undefined ? notice : describeReminderOffset(offset, t);
       });
-      return `event ${formatReminderTime(new Date(when.at), timezone)} (${notices.join(", ")})`;
+      return t("cli.reminders.event", { when: reminderWhenText(new Date(when.at), timezone, t), notices: notices.join(", ") });
     }
     case "repeat": {
       const days =
         when.monthly !== undefined || when.yearly !== undefined
-          ? repeatDaysText(when)
+          ? repeatDaysText(when, "sentence", t)
           : when.daysOfWeek === undefined || when.daysOfWeek.length === 7
-            ? "daily"
+            ? t("cli.reminders.daily")
             : [...when.daysOfWeek]
                 .sort()
-                .map((day) => DAY_NAMES[day] ?? String(day))
+                .map((day) => (t === coreEnglish ? (DAY_NAMES[day] ?? String(day)) : t(`date.weekdayShort.${day}` as CoreKey)))
                 .join(",");
-      return `${days} ${[...when.times].sort().join(",")}${when.until === undefined ? "" : ` until ${when.until}`}`;
+      const cadence = t("cli.reminders.repeat", { days, times: [...when.times].sort().join(",") });
+      return when.until === undefined ? cadence : t("cli.reminders.until", { cadence, date: when.until });
     }
   }
 }
@@ -137,96 +146,115 @@ const LIST_WIDTH = 80;
 const LIST_INDENT = "    ";
 
 /** A reminder's row: id, status, next fire. */
-function reminderRow(reminder: ReminderView, timezone: string): readonly string[] {
+function reminderRow(reminder: ReminderView, timezone: string, t: CoreT): readonly string[] {
   return [
     reminder.reminderId,
-    reminder.status,
-    reminder.nextFireAt === null ? "-" : formatReminderTime(new Date(reminder.nextFireAt), timezone),
+    codeWord("cli.reminders.status", reminder.status, t),
+    reminder.nextFireAt === null ? "-" : reminderWhenText(new Date(reminder.nextFireAt), timezone, t),
   ];
 }
 
 /** What a reminder says under its row: its text, and its cadence unless that only repeats the next fire. */
-function reminderDetail(reminder: ReminderView, width: number): readonly string[] {
+function reminderDetail(reminder: ReminderView, width: number, t: CoreT): readonly string[] {
   const { when, nextFireAt } = reminder;
   const repeatsNext = when.kind === "once" && nextFireAt !== null && Date.parse(when.at) === Date.parse(nextFireAt);
   return [
     ...indentedLines(reminder.text, LIST_INDENT, width),
-    ...(repeatsNext ? [] : indentedLines(reminderCadence(reminder), LIST_INDENT, width)),
+    ...(repeatsNext ? [] : indentedLines(reminderCadence(reminder, t), LIST_INDENT, width)),
   ];
 }
 
 /** `tavi reminders list`: a header, padded columns, and each reminder's words on wrapped lines below its row, as `tavi permissions` lists rules. */
-function reminderTable(reminders: readonly ReminderView[], timezone: string, width: number): readonly string[] {
+function reminderTable(reminders: readonly ReminderView[], timezone: string, width: number, t: CoreT): readonly string[] {
   // In the order they run: what has no next run comes last.
   const ordered = [...reminders].sort((a, b) => (a.nextFireAt ?? "\uffff").localeCompare(b.nextFireAt ?? "\uffff"));
   const [header = "", ...rows] = alignedColumns([
-    ["REMINDER", "STATUS", "NEXT"],
-    ...ordered.map((reminder) => reminderRow(reminder, timezone)),
+    [t("cli.reminders.column.reminder"), t("cli.reminders.column.status"), t("cli.reminders.column.next")],
+    ...ordered.map((reminder) => reminderRow(reminder, timezone, t)),
   ]);
   // A row too wide for the terminal folds at its columns: the fold costs the alignment, not the words.
   const fitted = (row: string): readonly string[] => (stringWidth(row) > width ? indentedLines(row, "", width) : [row]);
-  return [...fitted(header), ...ordered.flatMap((reminder, index) => [...fitted(rows[index] ?? ""), ...reminderDetail(reminder, width)])];
+  return [
+    ...fitted(header),
+    ...ordered.flatMap((reminder, index) => [...fitted(rows[index] ?? ""), ...reminderDetail(reminder, width, t)]),
+  ];
 }
 
-function fireLine(fire: ReminderFire, timezone: string): string {
+function fireLine(fire: ReminderFire, timezone: string, t: CoreT): string {
   const notice = fire.noticeOffset === undefined ? "" : ` (${fire.noticeOffset})`;
-  const late = fire.late === true ? " late" : "";
-  const seen = fire.acknowledgedAt === undefined ? "" : " · seen";
-  return `  ${formatReminderTime(new Date(fire.fireAt), timezone)}\t${fire.outcome}${late}${notice}${seen}`;
+  const late = fire.late === true ? t("cli.reminders.late") : "";
+  const seen = fire.acknowledgedAt === undefined ? "" : t("cli.reminders.seen");
+  return `  ${reminderWhenText(new Date(fire.fireAt), timezone, t)}\t${codeWord("cli.reminders.outcome", fire.outcome, t)}${late}${notice}${seen}`;
 }
 
 /** `tavi reminders show`: the reminder, its read-back, its next fires and its recent ones. */
-function reminderShowText(answer: ReminderGetAnswer, now: Date): string {
+function reminderShowText(answer: ReminderGetAnswer, now: Date, t: CoreT): string {
   const { reminder, fires } = answer;
   const zone = reminder.timezone;
+  const added = t(reminder.createdBy === "agent" ? "cli.reminders.addedByAgent" : "cli.reminders.addedByYou");
   const lines = [
-    `${reminder.reminderId}\t${reminder.status}\t${reminder.text}`,
-    `When: ${reminderReadBack(reminder, now)}`,
-    `Delivered: ${reminder.deliverTo.kind === "app" ? "in the app" : reminder.deliverTo.kind === "home" ? "in Home, as a notice" : `to chat ${reminder.deliverTo.conversationId} (${reminder.deliverTo.connectionId})`}`,
-    ...(reminder.prompt === undefined ? [] : [`Starts a task: ${reminder.prompt}`]),
-    `Added by ${reminder.createdBy === "agent" ? "the agent" : "you"}${reminder.originTaskId === undefined ? "" : ` in task ${reminder.originTaskId}`}`,
+    `${reminder.reminderId}\t${codeWord("cli.reminders.status", reminder.status, t)}\t${reminder.text}`,
+    t("cli.reminders.when", { when: reminderReadBack(reminder, now, t) }),
+    reminder.deliverTo.kind === "app"
+      ? t("cli.reminders.delivered.app")
+      : reminder.deliverTo.kind === "home"
+        ? t("cli.reminders.delivered.home")
+        : t("cli.reminders.delivered.chat", {
+            conversation: reminder.deliverTo.conversationId,
+            connection: reminder.deliverTo.connectionId,
+          }),
+    ...(reminder.prompt === undefined ? [] : [t("cli.reminders.startsTask", { prompt: reminder.prompt })]),
+    reminder.originTaskId === undefined ? added : t("cli.reminders.addedIn", { who: added, task: reminder.originTaskId }),
     reminder.upcoming.length === 0
-      ? "Next: nothing to come"
-      : `Next:\n${reminder.upcoming.map((fire) => `  ${formatReminderTime(new Date(fire.at), zone)}${fire.noticeOffset === undefined ? "" : ` (${fire.noticeOffset})`}`).join("\n")}`,
-    fires.length === 0 ? "Fired: never" : `Fired:\n${fires.map((fire) => fireLine(fire, zone)).join("\n")}`,
+      ? t("cli.reminders.nextNone")
+      : `${t("cli.reminders.next")}\n${reminder.upcoming.map((fire) => `  ${reminderWhenText(new Date(fire.at), zone, t)}${fire.noticeOffset === undefined ? "" : ` (${fire.noticeOffset})`}`).join("\n")}`,
+    fires.length === 0
+      ? t("cli.reminders.firedNever")
+      : `${t("cli.reminders.fired")}\n${fires.map((fire) => fireLine(fire, zone, t)).join("\n")}`,
   ];
   return lines.join("\n");
 }
 
-/** What `tavi reminders <action>` prints for the owner's answer; JSON prints the answer as it is. */
+/** What `tavi reminders <action>` prints for the owner's answer, in `t`'s words; JSON prints the answer as it is. */
 export function remindersResultText(
   options: RemindersCommandOptions,
   result: unknown,
   now: Date,
   columns: number | undefined = undefined,
+  t: CoreT = coreEnglish,
 ): string {
   switch (options.action) {
     case "list": {
       const answer = result as RemindersListAnswer;
-      if (answer.reminders.length === 0) return `No reminders (${answer.timezone})`;
-      return `Reminders (${answer.timezone})\n${reminderTable(answer.reminders, answer.timezone, columns ?? LIST_WIDTH).join("\n")}${answer.nextCursor === undefined ? "" : "\n(more reminders not listed)"}`;
+      if (answer.reminders.length === 0) return t("cli.reminders.none", { zone: answer.timezone });
+      return `${t("cli.reminders.heading", { zone: answer.timezone })}\n${reminderTable(answer.reminders, answer.timezone, columns ?? LIST_WIDTH, t).join("\n")}${answer.nextCursor === undefined ? "" : `\n${t("cli.reminders.more")}`}`;
     }
     case "show":
-      return reminderShowText(result as ReminderGetAnswer, now);
+      return reminderShowText(result as ReminderGetAnswer, now, t);
     case "add": {
       const answer = result as ReminderCreateAnswer;
       const reminder = answer.reminder;
       const head =
         answer.duplicate === true
-          ? `Already set: ${reminder.reminderId}`
+          ? t("cli.reminders.alreadySet", { id: reminder.reminderId })
           : answer.created
-            ? `Added ${reminder.reminderId}`
-            : `Already added: ${reminder.reminderId}`;
-      const skipped = answer.skippedNotices.length === 0 ? "" : `\nAlready past, not sent: ${answer.skippedNotices.join(", ")}`;
-      return `${head}: ${reminder.text}\n${reminderReadBack(reminder, now)}${skipped}`;
+            ? t("cli.reminders.added", { id: reminder.reminderId })
+            : t("cli.reminders.alreadyAdded", { id: reminder.reminderId });
+      const skipped =
+        answer.skippedNotices.length === 0 ? "" : `\n${t("cli.reminders.pastNotices", { notices: answer.skippedNotices.join(", ") })}`;
+      return `${head}: ${reminder.text}\n${reminderReadBack(reminder, now, t)}${skipped}`;
     }
     case "snooze": {
       const answer = result as ReminderSnoozeAnswer;
-      return `Snoozed ${answer.reminder.reminderId} until ${formatReminderTime(new Date(answer.followUp.fireAt), answer.reminder.timezone)}: ${answer.reminder.text}`;
+      return t("cli.reminders.snoozed", {
+        id: answer.reminder.reminderId,
+        when: reminderWhenText(new Date(answer.followUp.fireAt), answer.reminder.timezone, t),
+        text: answer.reminder.text,
+      });
     }
     default: {
       const reminder = (result as ReminderWriteAnswer).reminder;
-      return `${reminder.reminderId}\t${reminder.status}\t${reminder.text}`;
+      return `${reminder.reminderId}\t${codeWord("cli.reminders.status", reminder.status, t)}\t${reminder.text}`;
     }
   }
 }

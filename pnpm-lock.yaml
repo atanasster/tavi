@@ -1134,6 +1134,9 @@ importers:
       '@tavi/contracts':
         specifier: workspace:*
         version: link:../../contracts
+      '@tavi/domain-kit':
+        specifier: workspace:*
+        version: link:../../domain-kit
       '@tavi/test-support':
         specifier: workspace:*
         version: link:../../test-support

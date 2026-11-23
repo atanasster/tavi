@@ -34,7 +34,7 @@ export function ChannelSheet({
 }) {
   const read = useCallback(async () => {
     const [catalog, people] = await Promise.all([
-      channels<ChannelsCatalogAnswer>(client, { action: "catalog" }),
+      channels<ChannelsCatalogAnswer>(client, { action: "catalog", workspaceId }),
       channels<ChannelsPeopleAnswer>(client, { action: "people", workspaceId }),
     ]);
     if (!catalog.ok) return catalog;

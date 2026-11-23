@@ -29,9 +29,11 @@ import {
   textRef,
 } from "@tavi/contracts";
 import { clip, definedOnly } from "@tavi/contracts/util";
+import type { CoreKey, CoreT } from "@tavi/contracts/locales/core";
 
 import { refusalFrom, type IpcAnswer } from "../../shared/ipc-decisions.js";
 import { workspaceZone } from "../reminders/owner.js";
+import { channelWords, workspaceLocaleOf } from "../channels/channel-words.js";
 
 /**
  * `ideas`: a workspace's ideas — listed, tried,
@@ -121,28 +123,26 @@ function shown(
  * capability the census has, never generic filler, in this order. Each
  * prompt's [part] is what the person fills in.
  */
-const CAPABILITY_CHIPS: readonly { readonly capability: IdeaCapability; readonly label: string; readonly prompt: string }[] = [
-  { capability: "web", label: "Search the web", prompt: "Search the web for [topic] and summarise what you find." },
-  { capability: "calendar", label: "Today's calendar", prompt: "What's on my calendar today?" },
-  { capability: "mailbox", label: "Emails to answer", prompt: "Which of my emails need a reply today?" },
-  { capability: "travel", label: "Find flights", prompt: "Find the cheapest flights from [origin] to [destination] around [dates]." },
-  { capability: "places", label: "Find a place", prompt: "Find a well-reviewed [kind of place] near [area]." },
-  { capability: "reminders", label: "Set a reminder", prompt: "Remind me to [thing] at [time]." },
-  { capability: "pdf", label: "Summarise a PDF", prompt: "Summarise the attached PDF and list its key points." },
-  { capability: "browser", label: "Read a page", prompt: "Open [link] and tell me what it says." },
-  { capability: "memory", label: "Remember something", prompt: "Remember that [something about me]." },
+const CAPABILITY_CHIPS: readonly { readonly capability: IdeaCapability; readonly label: CoreKey; readonly prompt: CoreKey }[] = [
+  { capability: "web", label: "ideas.chip.web.label", prompt: "ideas.chip.web.prompt" },
+  { capability: "calendar", label: "ideas.chip.calendar.label", prompt: "ideas.chip.calendar.prompt" },
+  { capability: "mailbox", label: "ideas.chip.mailbox.label", prompt: "ideas.chip.mailbox.prompt" },
+  { capability: "travel", label: "ideas.chip.travel.label", prompt: "ideas.chip.travel.prompt" },
+  { capability: "places", label: "ideas.chip.places.label", prompt: "ideas.chip.places.prompt" },
+  { capability: "reminders", label: "ideas.chip.reminders.label", prompt: "ideas.chip.reminders.prompt" },
+  { capability: "pdf", label: "ideas.chip.pdf.label", prompt: "ideas.chip.pdf.prompt" },
+  { capability: "browser", label: "ideas.chip.browser.label", prompt: "ideas.chip.browser.prompt" },
+  { capability: "memory", label: "ideas.chip.memory.label", prompt: "ideas.chip.memory.prompt" },
 ];
 
-/** The capability chips the census allows; offline (no census), none is claimed. */
-function capabilityChips(census: ReadonlySet<IdeaCapability> | undefined): readonly { readonly label: string; readonly prompt: string }[] {
+/** The capability chips the census allows, in the workspace's language; offline (no census), none is claimed. */
+function capabilityChips(
+  census: ReadonlySet<IdeaCapability> | undefined,
+  t: CoreT,
+): readonly { readonly label: string; readonly prompt: string }[] {
   if (census === undefined) return [];
-  return CAPABILITY_CHIPS.filter((chip) => census.has(chip.capability)).map(({ label, prompt }) => ({ label, prompt }));
+  return CAPABILITY_CHIPS.filter((chip) => census.has(chip.capability)).map((chip) => ({ label: t(chip.label), prompt: t(chip.prompt) }));
 }
-
-const chipPrompt = (title: string): string => {
-  const text = `Let's continue "${title}".`;
-  return clip(text, IDEA_PROMPT_MAX);
-};
 
 /**
  * A chat an idea's *Try it* started: linked to the idea with what was
@@ -299,12 +299,20 @@ export async function ideasCommand(deps: IdeasCommandDependencies, payload: Idea
         const offered = shown(listed, ledger, checked)
           .slice(0, limit)
           .map((idea) => ({ ideaId: idea.id, label: idea.label, prompt: idea.prompt, uses: idea.uses }));
-        const chips = offered.length > 0 ? offered : capabilityChips(checked).slice(0, limit);
+        // Tavi's own chips speak the workspace's language: the label, and the prompt the person sends as their own.
+        const t = await channelWords(workspaceLocaleOf(deps.repositories.workspaceSettings), workspaceId);
+        const chips = offered.length > 0 ? offered : capabilityChips(checked, t).slice(0, limit);
         // The Continue chip comes first and counts toward the three.
         const continuing =
           latest === undefined || ledger.excludedBasis.includes(latest.taskId)
             ? []
-            : [{ taskId: latest.taskId, label: clip(`Continue: ${latest.title}`, IDEA_LABEL_MAX), prompt: chipPrompt(latest.title) }];
+            : [
+                {
+                  taskId: latest.taskId,
+                  label: clip(t("ideas.chip.continue.label", { title: latest.title }), IDEA_LABEL_MAX),
+                  prompt: clip(t("ideas.chip.continue.prompt", { title: latest.title }), IDEA_PROMPT_MAX),
+                },
+              ];
         return { ok: true, result: { chips: [...continuing, ...chips].slice(0, limit) } };
       }
       case "try": {

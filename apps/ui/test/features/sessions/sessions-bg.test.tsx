@@ -1,39 +1,21 @@
 // @vitest-environment jsdom
 import type { TaskListRow } from "@tavi/contracts";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { SessionDirectory } from "../../../src/features/sessions/SessionDirectory.js";
 import type { CanvasState, CanvasStore } from "../../../src/features/chat/store/types.js";
-import { setLocale } from "../../../src/lib/i18n.js";
-import { mount, unmountAll } from "../../support/dom.js";
+import { mount } from "../../support/dom.js";
 import { InWorkspace } from "../../support/workspace.js";
+import { inBulgarian } from "../../support/bulgarian.js";
+import { taskRow as row } from "../../support/rows.js";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 /** The sidebar's chat list in Bulgarian: its group headings, its search and its marks. */
 
-beforeEach(async () => {
-  await setLocale("bg");
-});
-
-afterEach(async () => {
-  unmountAll();
-  await setLocale("en");
-});
+inBulgarian();
 
 const noop = () => undefined;
-const row = (taskId: string, title: string, extra: Partial<TaskListRow> = {}): TaskListRow => ({
-  taskId,
-  workspaceId: "default",
-  status: "completed",
-  origin: "web",
-  title,
-  createdAt: "2026-10-04T08:00:00Z",
-  updatedAt: "2026-10-04T09:00:00Z",
-  needs: [],
-  counts: { admissions: 1, tools: null },
-  ...extra,
-});
 
 async function directory(homeChat: boolean, rows: readonly TaskListRow[]): Promise<HTMLElement> {
   const state: CanvasState = { connection: "ready", runs: [], directory: { rows, needs: [], needsTruncated: false, loading: false } };

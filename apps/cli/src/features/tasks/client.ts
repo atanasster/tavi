@@ -16,6 +16,7 @@ import {
   CHECKPOINTS_KEPT,
   TaviError,
   memoryPendingProvidersNote,
+  TASK_STATUSES,
 } from "@tavi/contracts";
 import type { IpcClient } from "@tavi/runtime";
 import type { TaskHistoryOptions, TaskInstructionsOptions, CancelCommandOptions, RecoverCommandOptions } from "./parse.js";
@@ -187,6 +188,12 @@ const lineOf = (value: unknown, max: number): string => {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 };
 
+/** A task's status in `t`'s words; a status this release does not know is shown as the owner sent it. */
+function taskStatusWord(status: unknown, t: CoreT): string {
+  const raw = String(status ?? "");
+  return (TASK_STATUSES as readonly string[]).includes(raw) ? t(`cli.tasks.status.${raw}` as CoreKey) : raw;
+}
+
 /**
  * `tavi tasks` for a person: the most recent tasks, a line each — status, when, id, title — then what waits on
  * them (approvals, unresolved effects, deliveries, expired leases), each a count with the command that shows it.
@@ -196,9 +203,10 @@ export function taskListText(document: Record<string, unknown>, t: CoreT = coreE
   const lines: string[] = [];
   if (tasks.length === 0) lines.push(t("cli.tasks.none"));
   else {
-    const width = Math.max(...tasks.map((task) => stringWidth(String(task["status"] ?? ""))));
-    for (const task of tasks) {
-      const status = paddedCell(String(task["status"] ?? ""), width);
+    const statuses = tasks.map((task) => taskStatusWord(task["status"], t));
+    const width = Math.max(...statuses.map((status) => stringWidth(status)));
+    for (const [index, task] of tasks.entries()) {
+      const status = paddedCell(statuses[index] ?? "", width);
       const when = typeof task["updatedAt"] === "string" ? task["updatedAt"].slice(0, 16).replace("T", " ") : "";
       const title = lineOf(task["title"], 70) || lineOf(task["summary"], 70) || lineOf(task["finalText"], 70);
       lines.push(`${status}  ${when}  ${String(task["taskId"] ?? "")}${title === "" ? "" : `  ${title}`}`);

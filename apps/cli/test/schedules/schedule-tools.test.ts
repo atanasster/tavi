@@ -639,6 +639,9 @@ describe("schedules tools", () => {
     expect(await call("create", { name: "Plain", prompt: "Write it", at: "08:00" })).not.toHaveProperty("maxRunMinutes");
     await expect(call("update", { schedule: "Brief", maxRunMinutes: 0 })).rejects.toThrow();
     expect(card("update", { schedule: "Brief", maxRunMinutes: 45 })?.display.detail).toContain("Stops a run after 45 minutes of work");
+    // The number is shown as typed: no group separator, and one minute in the singular.
+    expect(card("update", { schedule: "Brief", maxRunMinutes: 1440 })?.display.detail).toContain("Stops a run after 1440 minutes of work");
+    expect(card("update", { schedule: "Brief", maxRunMinutes: 1 })?.display.detail).toContain("Stops a run after 1 minute of work");
     store.close();
   });
 
@@ -801,6 +804,23 @@ describe("schedules tools", () => {
       .filter((definition) => definition.effect === "read-only")
       .map((definition) => definition.id);
     expect([...readOnly].sort()).toEqual([...SCHEDULING_READ_ONLY_TOOLS].sort());
+    store.close();
+  });
+
+  it("says a schedule's card in the workspace's language, its prompt and tools as given", async () => {
+    const { store, registry } = await setup();
+    const bulgarian = { workspaceId: "default", principalId: "operator", runId: "chat-1", caller: "test", locale: "bg" as const };
+    const created = registry
+      .get("schedules.create")
+      ?.assess?.({ name: "Brief", prompt: "Brief me", at: "07:00", days: [1, 2, 3, 4, 5], maxRunMinutes: 5 }, bulgarian);
+    expect(created?.display.title).toBe("Насрочи Brief");
+    expect(created?.display.detail?.split("\n")).toEqual([
+      "Кога: пн–пт в 07:00 (Europe/Sofia); следващо пускане ср, 28 окт 07:00",
+      "Публикува резултата от всяко пускане в „Начало“",
+      "Спира пускането след 5\u00a0минути работа",
+      "Пуска: Brief me",
+    ]);
+    expect(created?.reasons).toEqual(["Пускане без надзор прави това всеки път, когато се задейства"]);
     store.close();
   });
 });

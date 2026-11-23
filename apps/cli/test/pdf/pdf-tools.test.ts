@@ -264,6 +264,22 @@ describe("the PDF tools", () => {
     ]);
   });
 
+  it("says a fill's card in the workspace's language, its values as given", async () => {
+    const xfa = await fixturePdf("xfa-hybrid");
+    files.set("xfa.pdf", xfa);
+    await call("pdf.fields", { source: { path: "xfa.pdf" } });
+    const input = {
+      source: { path: "xfa.pdf" },
+      sourceSha256: sha256(xfa),
+      values: [{ field: "name", value: "Leo", source: { kind: "person", quote: "Leo" } }],
+    };
+    const said = tool("pdf.fill").assess?.(input, { ...context, locale: "bg" });
+    expect(said?.display.title).toMatch(/^Попълни xfa\.pdf, 1 страница в forms\//);
+    expect(said?.display.detail).toMatch(/^1 стойност; оставени за теб: \d+$/);
+    expect(said?.reasons).toEqual(["попълва 1 поле от PDF формуляр"]);
+    expect(tool("pdf.fill").assess?.(input, context)?.reasons).toEqual(["fills 1 field of a PDF form"]);
+  });
+
   it("fills a signed form with a warning, and refuses a P1 certification before any card", async () => {
     const built = new Map<string, Uint8Array>();
     for (const name of ["signed", "certified-p2", "certified-p1"]) built.set(name, await fixturePdf(name));

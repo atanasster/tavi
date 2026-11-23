@@ -120,6 +120,17 @@ export function MemoryCard({
           {card.items.map((item) => {
             const name = memoryCardItemName(item, translateCore);
             const editingThis = editing?.recordId === item.recordId;
+            const discardButton = (
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={disabled}
+                aria-label={t("chat.memoryCard.discardName", { name })}
+                onClick={() => act(() => decideMemory(client, workspaceId, item, "reject"))}
+              >
+                {t("chat.memoryCard.discard")}
+              </Button>
+            );
             return (
               <li key={item.token} className="memory-card-item" data-state={item.state}>
                 <p className="memory-card-title">
@@ -200,27 +211,11 @@ export function MemoryCard({
                         {t("chat.memoryCard.keepBoth")}
                       </Button>
                     ) : null}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={disabled}
-                      aria-label={t("chat.memoryCard.discardName", { name })}
-                      onClick={() => act(() => decideMemory(client, workspaceId, item, "reject"))}
-                    >
-                      {t("chat.memoryCard.discard")}
-                    </Button>
+                    {discardButton}
                   </div>
                 ) : item.state === "proposed" && item.tidyUp === true ? (
                   <div className="memory-card-actions">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={disabled}
-                      aria-label={t("chat.memoryCard.discardName", { name })}
-                      onClick={() => act(() => decideMemory(client, workspaceId, item, "reject"))}
-                    >
-                      {t("chat.memoryCard.discard")}
-                    </Button>
+                    {discardButton}
                     {onReview === undefined ? null : (
                       <Button variant="ghost" size="sm" aria-label={t("chat.memoryCard.openName", { name })} onClick={onReview}>
                         {t("chat.memoryCard.open")}
@@ -248,15 +243,7 @@ export function MemoryCard({
                         {t("chat.memoryCard.edit")}
                       </Button>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={disabled}
-                      aria-label={t("chat.memoryCard.discardName", { name })}
-                      onClick={() => act(() => decideMemory(client, workspaceId, item, "reject"))}
-                    >
-                      {t("chat.memoryCard.discard")}
-                    </Button>
+                    {discardButton}
                   </div>
                 ) : item.state === "saved" ? (
                   <div className="memory-card-actions">

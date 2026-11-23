@@ -63,6 +63,7 @@ import {
 import { accountSetup } from "../apps/sources/channel.js";
 import { MESSAGING_PROFILE_TOOLS } from "./profile.js";
 import { channelRooms, type ChannelRoomsDependencies } from "./rooms.js";
+import { channelWords, type WorkspaceLocaleOf } from "./channel-words.js";
 import { cancelPurgesFor, purgePreview, rememberAccounts, rememberedAccount, schedulePurge } from "./purge.js";
 import {
   APPS_CALENDAR_SETTING,
@@ -125,6 +126,8 @@ export interface ChannelsCommandDependencies {
   readonly localizeCatalog?: (descriptors: readonly ChannelDescriptor[]) => readonly ChannelDescriptor[];
   /** The workspace's operator, whom a room's introduction names. */
   readonly operatorOf?: (workspaceId: string) => string | undefined;
+  /** The workspace's language: what a room is told and a connection's test message are said in it; English without it. */
+  readonly localeOf?: WorkspaceLocaleOf;
   /** Erases artifacts, rows and bodies (a forgotten sender's files). */
   readonly eraseArtifacts?: (artifactIds: readonly string[]) => Promise<{ readonly artifacts: number }>;
   /** Forgets what a person's own conversation tasks taught (their notes and memory); answers how many records went. Absent offline. */
@@ -532,7 +535,7 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
         connectionId: payload.connectionId,
         workspaceId: payload.workspaceId,
         destination,
-        parts: [{ content: payload.text ?? "This is a test message from Tavi: the connection works." }],
+        parts: [{ content: payload.text ?? (await channelWords(deps.localeOf, payload.workspaceId))("channel.test.message") }],
       });
       const detail = outcome.parts.find((part) => part.error !== undefined)?.error;
       // What setting it up still asks, as its probe says now; a link only to a host its channel declares.

@@ -22,6 +22,7 @@
     "./fixtures": "./src/fixtures.ts",
     "./messaging": "./src/messaging.ts",
     "./openai-stub": "./src/openai-stub.ts",
+    "./plugin-locales": "./src/plugin-locales.ts",
     "./plugin-worker": "./src/plugin-worker.ts",
     "./prefix": "./src/prefix.ts",
     "./routine-templates": "./src/routine-templates.ts",

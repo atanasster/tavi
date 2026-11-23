@@ -337,14 +337,17 @@ function workspaceNeeds(state: CanvasState, workspaceId: string): number {
 
 /**
  * What the owner calls a chat, when the page knows: its listed title — the
- * reader's rename, the generated title, or "Home" for the person's Home — else
+ * reader's rename, the generated title, or "Home" for the person's Home (in the page's language) — else
  * "Home" for the page's own Home. The page's first-prompt title is only the
  * fallback, so the header does not show a prompt and then flip to the owner's
  * name once the chat panel reads it.
  */
 function ownerTitle(state: CanvasState, taskId: string | undefined): string | undefined {
   if (taskId === undefined) return undefined;
-  const listed = [...(state.directory?.rows ?? []), ...(state.directory?.needs ?? [])].find((row) => row.taskId === taskId)?.title;
+  const row = [...(state.directory?.rows ?? []), ...(state.directory?.needs ?? [])].find((candidate) => candidate.taskId === taskId);
+  // Home's own title is stored in English: said in the page's language, as a rename is not.
+  if (row?.titleSource === "home") return translateNow("shell.session.home");
+  const listed = row?.title;
   if (listed !== undefined && listed.trim() !== "") return listed;
   return taskId === state.home ? translateNow("shell.session.home") : undefined;
 }

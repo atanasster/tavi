@@ -707,6 +707,23 @@ END`);
       db.exec("ALTER TABLE tavi_schedule_fires ADD COLUMN outcome_params_json TEXT");
     },
   },
+  {
+    // Every write of a workspace's settings bumps its `settings` center kind, so a page already open re-reads the
+    // summary, and with it the workspace's language, when the terminal, onboarding or another tab changes it.
+    id: "0033_settings_center_kind",
+    up: (db) => {
+      for (const [event, row] of [
+        ["INSERT", "NEW"],
+        ["UPDATE", "NEW"],
+        ["DELETE", "OLD"],
+      ] as const) {
+        db.exec(`CREATE TRIGGER tavi_workspace_settings_center_settings_${event.toLowerCase()} AFTER ${event} ON tavi_workspace_settings BEGIN
+  INSERT INTO tavi_center_versions (scope, kind, version) VALUES (${row}.workspace_id, 'settings', 1)
+  ON CONFLICT (scope, kind) DO UPDATE SET version = version + 1;
+END`);
+      }
+    },
+  },
 ];
 
 /**

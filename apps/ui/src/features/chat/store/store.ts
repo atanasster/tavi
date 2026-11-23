@@ -52,7 +52,7 @@ export function createCanvasStore(client: CanvasClient, options: CanvasOptions):
   const readCommands = (): void => {
     commandsAsked = true;
     void client
-      .request("plugin-commands", { action: "list" })
+      .request("plugin-commands", { action: "list", workspaceId: options.workspaceId })
       .then((answer) =>
         listCommands(
           answer.ok ? ((answer.result as { readonly commands?: readonly PluginCommandView[] } | undefined)?.commands ?? []) : [],

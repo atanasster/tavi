@@ -18,6 +18,7 @@ import {
   type ToolRule,
   type WorkspaceSettings,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 
 import type { McpReview, McpReviewTool, McpServerRow } from "../../mcp/actions.js";
 import { isTaviMcpDescription } from "../../mcp/descriptions.js";
@@ -53,6 +54,8 @@ export interface McpSourceInput {
   readonly now?: string;
   /** Keys a server refused at their test (`apps.refused`). */
   readonly refused?: RefusedKeys;
+  /** The workspace's words: a preset's summary, tools, settings and key steps are said in them (English without). */
+  readonly t?: CoreT;
 }
 
 /** An MCP sign-in as a page may know it: never a token. */
@@ -69,8 +72,12 @@ export function accessOf(effect: ToolEffect): AppAccess {
 }
 
 /** A server's presentation: its preset's, else its manifest's first app, else a bare one from its name. */
-function mcpPresentationOf(view: PluginView, manifest: PluginManifest | undefined): AppPresentation & { readonly auth?: AppAuth } {
-  const preset = presetOf(manifest?.mcp?.preset ?? view.mcp?.preset);
+function mcpPresentationOf(
+  view: PluginView,
+  manifest: PluginManifest | undefined,
+  t: CoreT = coreEnglish,
+): AppPresentation & { readonly auth?: AppAuth } {
+  const preset = presetOf(manifest?.mcp?.preset ?? view.mcp?.preset, t);
   if (preset?.app !== undefined) return preset.app;
   const declared = manifest?.apps?.apps[0];
   if (declared !== undefined) return authorPresentation(declared, view.id);
@@ -82,6 +89,7 @@ function authOf(
   presentation: AppPresentation & { readonly auth?: AppAuth },
   manifest: PluginManifest | undefined,
   config: PluginView["config"],
+  t: CoreT = coreEnglish,
 ): AppAuth {
   if (presentation.auth !== undefined)
     return {
@@ -98,18 +106,28 @@ function authOf(
     };
   if (block?.auth === "headers") {
     const credentials = Object.entries(manifest?.config ?? {}).filter(([, field]) => field.type === "credential");
-    const keySteps = presetOf(block.preset)?.keySteps;
+    const keySteps = presetOf(block.preset, t)?.keySteps;
     return {
       kind: "api-key",
-      fields: credentials.slice(0, 4).map(([key, field]) => settingOf(key, field, block.preset)),
+      fields: credentials.slice(0, 4).map(([key, field]) => settingOf(key, field, block.preset, t)),
       ...(keySteps === undefined ? {} : { keySteps: [...keySteps] }),
     };
   }
   return { kind: "none" };
 }
 
-/** A setting in words: its own label, else its preset's (a server added before the preset named it), else its key. */
-function settingOf(key: string, field: PluginConfigField, preset: McpBlock["preset"]): AppSettingField {
+/**
+ * A setting in words: its own label, else its preset's (a server added before the preset named it), else its key. In
+ * another language a preset's setting is said in its words, label and hint, over the English its manifest was written with.
+ */
+function settingOf(key: string, field: PluginConfigField, preset: McpBlock["preset"], t: CoreT = coreEnglish): AppSettingField {
+  const said = t === coreEnglish || preset === undefined ? undefined : presetOf(preset, t)?.config[key];
+  if (said !== undefined)
+    return appSettingFromPluginConfig(key, {
+      ...field,
+      ...(said.label === undefined ? {} : { label: said.label }),
+      ...(said.description === undefined ? {} : { description: said.description }),
+    });
   const label = field.label ?? (preset === undefined ? undefined : presetOf(preset)?.config[key]?.label);
   return appSettingFromPluginConfig(key, label === undefined ? field : { ...field, label });
 }
@@ -254,7 +272,7 @@ export function mcpApps(input: McpSourceInput): ConnectableApp[] {
     // The author's words come only from a version that was approved; a preset's are Tavi's whichever version names it.
     const reviewed = approvedVersionOf(view);
     const approvedManifest = reviewed === undefined ? undefined : reviewed === version ? manifest : input.manifestOf(view.id, reviewed);
-    const presentation = mcpPresentationOf(view, approvedManifest ?? (manifest?.mcp?.preset === undefined ? undefined : manifest));
+    const presentation = mcpPresentationOf(view, approvedManifest ?? (manifest?.mcp?.preset === undefined ? undefined : manifest), input.t);
     const key = `${presentation.id}\u0000${serverIdentityOf(view, manifest)}`;
     const group = byServer.get(key) ?? { id: presentation.id, presentation, members: [] };
     group.members.push({ view, manifest });
@@ -273,7 +291,7 @@ export function mcpApps(input: McpSourceInput): ConnectableApp[] {
     if (first === undefined) continue;
     const fromPreset = presetOf(first.manifest?.mcp?.preset)?.app !== undefined;
     const block = first.manifest?.mcp ?? first.view.mcp;
-    const auth = authOf(block, presentation, first.manifest, first.view.config);
+    const auth = authOf(block, presentation, first.manifest, first.view.config, input.t);
     const tools: AppToolView[] = [];
     const accounts: AppAccountView[] = [];
     const repairs: AppRepair[] = [];
@@ -297,7 +315,7 @@ export function mcpApps(input: McpSourceInput): ConnectableApp[] {
       const missingSettings = Object.entries(config)
         .filter(([key, field]) => field.required === true && (view.config[key] === undefined || view.config[key] === ""))
         .map(([key]) => key);
-      const fields = Object.fromEntries(Object.entries(config).map(([key, field]) => [key, settingOf(key, field, mcp?.preset)]));
+      const fields = Object.fromEntries(Object.entries(config).map(([key, field]) => [key, settingOf(key, field, mcp?.preset, input.t)]));
       const refusedKey = refusedKeyOf(view, input.refused?.[view.id], review?.probedAt, fields);
       const facts: McpAccountFacts = {
         pluginId: view.id,
@@ -367,7 +385,7 @@ export function mcpApps(input: McpSourceInput): ConnectableApp[] {
     // Named as the sheet names them ("Your Maps API key"), not by their config key (QA 2104).
     const credentials = Object.entries(first.manifest?.config ?? first.view.configFields)
       .filter(([, field]) => field.type === "credential")
-      .map(([name, field]) => ({ name: settingOf(name, field, block?.preset).label, raw: false }));
+      .map(([name, field]) => ({ name: settingOf(name, field, block?.preset, input.t).label, raw: false }));
     // A preset's own presentation names no snapshot icon; an author's is served from the server plugin's snapshot.
     const icon = fromPreset ? undefined : servedIconOf(first.view, first.manifest?.apps?.apps[0]?.icon);
     apps.push({
@@ -393,7 +411,7 @@ export function mcpApps(input: McpSourceInput): ConnectableApp[] {
       egress: { hosts: [...hosts], lan, anyNetwork },
       credentials: auth.kind === "oauth" ? [...credentials, { name: "sign-in", raw: false }] : credentials,
       settings: Object.entries(first.manifest?.config ?? first.view.configFields).map(([key, field]) =>
-        settingOf(key, field, block?.preset),
+        settingOf(key, field, block?.preset, input.t),
       ),
       trust: { output: "untrusted", source: "mcp", confidentiality: presentation.dataClass ?? "public" },
       accounts,

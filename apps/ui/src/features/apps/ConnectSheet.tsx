@@ -11,7 +11,7 @@ import type { SettingsClient } from "../../lib/ipc.js";
 import { announceOnboardingChanged } from "../welcome/onboarding-api.js";
 import { Modal } from "../../ui/Modal.js";
 import { PasswordInput } from "../settings/PasswordInput.js";
-import { ACCESS_TITLES, authorsWords, isolationWords, keyUnchecked, storedWords } from "./model.js";
+import { ACCESS_TITLES, authorsWords, isolationWords, keyUnchecked, repairDetail, storedWords } from "./model.js";
 import { credentialActions } from "../settings/credentials-api.js";
 import { Button } from "../../ui/Button.js";
 import { SignInStep } from "./SignInStep.js";
@@ -247,7 +247,12 @@ export function ConnectSheet({
             // What its setup waits for (a key not given, or refused), as the list says it.
             note={
               connecting?.health === "not-set-up"
-                ? app.repairs.find((repair) => repair.kind === "finish-setup" && repair.accountId === connecting.accountId)?.detail
+                ? (() => {
+                    const repair = app.repairs.find(
+                      (candidate) => candidate.kind === "finish-setup" && candidate.accountId === connecting.accountId,
+                    );
+                    return repair === undefined ? undefined : repairDetail(repair);
+                  })()
                 : undefined
             }
             stored={stored}

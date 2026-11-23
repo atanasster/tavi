@@ -167,7 +167,7 @@ export function AgentTree({
   };
   const cancel = (id: string) =>
     act(id, async () => {
-      const answer = await client.request("cancel", { taskId: id, reason: "Cancelled from canvas agent tree" });
+      const answer = await client.request("cancel", { taskId: id, reason: translateNow("workers.tree.cancelReason") });
       if (!answer.ok) throw new Error(refusal(answer, t("workers.tree.cancelRefused")));
       setRevision((before) => before + 1);
     });

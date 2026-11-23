@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
-import { ONBOARDING_ABI, type OnboardingFlowAnswer, type OnboardingStatus } from "@tavi/contracts";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { OnboardingStatus } from "@tavi/contracts";
+import { describe, expect, it } from "vitest";
 
 import { Welcome } from "../../../src/features/welcome/Welcome.js";
-import { setLocale } from "../../../src/lib/i18n.js";
 import type { SettingsClient } from "../../../src/lib/ipc.js";
-import { flush, settledBy, unmountAll } from "../../support/dom.js";
+import { flush, settledBy } from "../../support/dom.js";
+import { inBulgarian } from "../../support/bulgarian.js";
+import { WELCOME_FLOW } from "../../support/onboarding.js";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -13,36 +14,9 @@ import { flush, settledBy, unmountAll } from "../../support/dom.js";
 
 const { mount } = settledBy(() => flush(6));
 
-beforeEach(async () => {
-  await setLocale("bg");
-});
+inBulgarian();
 
-afterEach(async () => {
-  unmountAll();
-  await setLocale("en");
-});
-
-const FLOW: OnboardingFlowAnswer = {
-  providerId: "tavi.onboarding",
-  flow: {
-    abi: ONBOARDING_ABI,
-    version: 1,
-    title: "Welcome to Tavi",
-    steps: [
-      {
-        id: "model",
-        kind: "model",
-        title: "Choose the model Tavi thinks with",
-        body: "Tavi needs one model.",
-        optional: false,
-        featured: ["openrouter", "openai"],
-        recommended: "openrouter",
-      },
-      { id: "about", kind: "about", title: "About you", body: "Your name.", optional: true, about: { fields: ["name", "timezone"] } },
-    ],
-    done: { title: "You're set up", body: "Ask Tavi anything." },
-  },
-};
+const FLOW = WELCOME_FLOW;
 
 const status = (model: "todo" | "done", providerId: string | null = "tavi.onboarding"): OnboardingStatus => ({
   workspaceId: "default",

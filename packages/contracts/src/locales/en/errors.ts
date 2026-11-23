@@ -3,6 +3,8 @@ import { nav } from "./nav.js";
 
 /** The `core` words for errors a person reads, from every part of Tavi, in English: each reproduces the message the owner always sent. */
 export const errors = {
+  /** An error with no key of its own, its English message framed: the frame adds nothing in English. */
+  "error.generic": "{message}",
   // The owner, chats and access.
   "error.owner.shuttingDown": "the owner is shutting down",
   "error.task.notFound": "Task {taskId} does not exist",
@@ -247,6 +249,7 @@ export const errors = {
     "A page cannot switch the ideas provider or the digest, or change the hours, the budget or what a provider may prepare: use tavi ideas in a terminal",
   "error.idea.digestUnreachable": "No chat of yours on connection {channel} can be sent to: tavi channels list shows them",
   "error.routine.notFound": "Routine {routineId} does not exist",
+  "error.routine.noModel": `No model is configured for routines. Set a default model in ${navPathIn(nav, "nav.route.settings", "nav.settings.models")} (or \`tavi models set-default\`), then create the routine again.`,
   "error.routine.taskUnreadable": "Tavi could not read what task {taskId} read; try again",
   "error.heartbeat.revisionConflict": "The heartbeat changed since revision {expected} (it is at {current}); read it again and retry",
   "error.heartbeat.tokenLimitTooLow": "The daily token limit must be at least {min}: each check reserves its worst case before it runs",

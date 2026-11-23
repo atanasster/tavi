@@ -22,6 +22,7 @@ import { BodyTooLargeError, readBoundedBody } from "@tavi/node-kit";
 import { z } from "zod";
 
 import { assessWebSearch } from "../approvals/call-assessors.js";
+import { cardWords } from "../approvals/card-words.js";
 
 /**
  * Web search: an adapter per
@@ -552,7 +553,7 @@ export async function registerWebSearchTool(
     // While every provider the call would go to waits out a 429, the call is refused here — before the gate
     // asks anyone — with the time the model may search again. Only a call that cannot run is refused.
     assess: (input: unknown, context: InvocationContext) => {
-      const assessment = assessWebSearch(input);
+      const assessment = assessWebSearch(input, cardWords(context));
       const until = cooldowns.allCoolingUntil(context.workspaceId, selectedIds(context));
       return until === undefined
         ? assessment

@@ -32,6 +32,8 @@ import {
   suggestRoles,
   type ModelLifecycle,
   verifyAdvice,
+  textRef,
+  TextRefSchema,
 } from "@tavi/contracts";
 import { DEFAULT_LOCALE, type Locale } from "@tavi/contracts/i18n";
 import { coreIn } from "@tavi/contracts/locales/core-server";
@@ -48,7 +50,7 @@ import {
   type ResolvedFlow,
 } from "@tavi/agent-host/onboarding-host";
 
-import type { IpcAnswer } from "../../shared/ipc-decisions.js";
+import { refuseKeyed, type IpcAnswer } from "../../shared/ipc-decisions.js";
 import { detect, localServerRuns } from "./detect.js";
 import type { OpenRouterSignIns } from "./openrouter.js";
 import { CHATGPT_ENDPOINTS, chatGptCredentialOf, type ChatGptCredential, type ChatGptSignIns } from "./chatgpt.js";
@@ -141,8 +143,6 @@ export type OnboardingAnswer = IpcAnswer<
   | OnboardingSignInStatusAnswer
   | OnboardingReachedAnswer
 >;
-
-const refuse = (code: string, message: string): IpcAnswer<never> => ({ ok: false, error: { code, message } });
 
 /** The host's own flow's prompts, in `locale`: what an ideas step without its own falls back to, whichever provider's flow it is. */
 const fallbackPrompts = (locale: Locale): FlowContext["fallbackPrompts"] =>
@@ -290,20 +290,19 @@ export async function onboardingStatus(
 
 export async function onboardingCommand(deps: OnboardingCommandDependencies, payload: OnboardingPayload): Promise<OnboardingAnswer> {
   if (payload.action === "provider") {
-    if (deps.fromBridge === true && payload.id !== undefined)
-      return refuse("NOT_AUTHORIZED", "The canvas cannot change which onboarding flow runs; use tavi onboard provider in a terminal");
+    if (deps.fromBridge === true && payload.id !== undefined) return refuseKeyed("NOT_AUTHORIZED", "onboard.refuse.canvasProvider");
     if (payload.id !== undefined) {
       const entry = deps.providers.get(payload.id);
-      if (entry === undefined)
-        return refuse(
-          "NOT_FOUND",
-          `no onboarding flow ${payload.id} is installed; installed: ${
-            deps.providers
-              .list()
-              .map((provider) => provider.id)
-              .join(", ") || "none"
-          }`,
-        );
+      if (entry === undefined) {
+        const installed = deps.providers
+          .list()
+          .map((provider) => provider.id)
+          .join(", ");
+        return refuseKeyed("NOT_FOUND", "onboard.refuse.noFlow", {
+          id: payload.id,
+          installed: installed === "" ? textRef("onboard.refuse.none") : installed,
+        });
+      }
       await deps.repositories.onboarding.setProvider(payload.id === BUILTIN_ONBOARDING_PROVIDER_ID ? null : payload.id);
     }
     const install = await deps.repositories.onboarding.install();
@@ -316,7 +315,8 @@ export async function onboardingCommand(deps: OnboardingCommandDependencies, pay
   }
   const workspaceId = payload.workspaceId ?? "default";
   // Operator only: a workspace no operator acts in has nobody to onboard.
-  if (deps.principalOf(workspaceId) === undefined) return refuse("NOT_AUTHORIZED", `no operator acts in workspace ${workspaceId}`);
+  if (deps.principalOf(workspaceId) === undefined)
+    return refuseKeyed("NOT_AUTHORIZED", "onboard.refuse.noOperator", { workspace: workspaceId });
   const at = deps.now().toISOString();
   const surface = "surface" in payload ? payload.surface : undefined;
   const status = async (): Promise<OnboardingAnswer> => ({ ok: true, result: await onboardingStatus(deps, workspaceId, surface) });
@@ -343,7 +343,7 @@ export async function onboardingCommand(deps: OnboardingCommandDependencies, pay
       };
     }
     case "skip":
-      if (payload.step === "model") return refuse("INVALID_INPUT", "The model step cannot be skipped: Tavi needs a model to answer");
+      if (payload.step === "model") return refuseKeyed("INVALID_INPUT", "onboard.refuse.modelSkip");
       await deps.repositories.onboarding.setStep({ workspaceId, kind: payload.step, mark: "skipped", now: at });
       await deps.repositories.onboarding.recordEvent({ workspaceId, kind: payload.step, event: "skipped", now: at });
       return await status();
@@ -356,7 +356,7 @@ export async function onboardingCommand(deps: OnboardingCommandDependencies, pay
     case "complete-step":
       // Only steps whose completion live state cannot show are marked: the rest are done when they are true.
       if (payload.step !== "about" && payload.step !== "tasks" && payload.step !== "info")
-        return refuse("INVALID_INPUT", `the ${payload.step} step is done when its configuration says so, not when it is marked`);
+        return refuseKeyed("INVALID_INPUT", "onboard.refuse.notMarked", { step: payload.step });
       await deps.repositories.onboarding.setStep({
         workspaceId,
         kind: payload.step,
@@ -381,22 +381,23 @@ export async function onboardingCommand(deps: OnboardingCommandDependencies, pay
       await deps.repositories.onboarding.complete(at);
       return await status();
     case "reset":
-      if (deps.fromBridge === true)
-        return refuse("NOT_AUTHORIZED", "The canvas cannot reset onboarding; use tavi onboard reset in a terminal");
+      if (deps.fromBridge === true) return refuseKeyed("NOT_AUTHORIZED", "onboard.refuse.canvasReset");
       return { ok: true, result: { cleared: await deps.repositories.onboarding.reset(workspaceId, at) } satisfies OnboardingResetAnswer };
     case "detect": {
-      if (deps.detection === undefined) return refuse("UNSUPPORTED", "detection is not available here");
+      if (deps.detection === undefined) return refuseKeyed("UNSUPPORTED", "onboard.refuse.noDetection");
       return { ok: true, result: await detectHere(deps, deps.detection) };
     }
     case "connect-detected":
       return await connectDetected(deps, workspaceId, payload.preset, payload.variable);
     case "connect-key": {
       const config = deps.config;
-      if (config === undefined) return refuse("UNSUPPORTED", "connecting a provider is not available here");
+      if (config === undefined) return refuseKeyed("UNSUPPORTED", "onboard.refuse.noConnect");
       const preset = MODEL_PROVIDER_PRESETS.find((candidate) => candidate.id === payload.preset);
-      if (preset === undefined) return refuse("INVALID_INPUT", `${payload.preset} is not a provider Tavi knows`);
+      if (preset === undefined) return refuseKeyed("INVALID_INPUT", "onboard.refuse.unknownProvider", { preset: payload.preset });
       if ((preset.baseUrl === "") !== (payload.baseUrl !== undefined))
-        return refuse("INVALID_INPUT", preset.baseUrl === "" ? `${preset.name} needs its endpoint` : `${preset.name}'s endpoint is fixed`);
+        return refuseKeyed("INVALID_INPUT", preset.baseUrl === "" ? "onboard.refuse.needsEndpoint" : "onboard.refuse.endpointFixed", {
+          provider: preset.name,
+        });
       const endpoint = payload.baseUrl === undefined ? undefined : new URL(payload.baseUrl);
       if (
         endpoint !== undefined &&
@@ -406,7 +407,7 @@ export async function onboardingCommand(deps: OnboardingCommandDependencies, pay
           endpoint.search !== "" ||
           endpoint.hash !== "")
       )
-        return refuse("INVALID_INPUT", "Enter an HTTP(S) endpoint without credentials, query or fragment");
+        return refuseKeyed("INVALID_INPUT", "onboard.refuse.badEndpoint");
       return await storeProviderKey(
         deps,
         config,
@@ -417,29 +418,22 @@ export async function onboardingCommand(deps: OnboardingCommandDependencies, pay
     }
     case "connect-signed-in": {
       const config = deps.config;
-      if (deps.chatGpt === undefined) return refuse("UNSUPPORTED", CHATGPT_PREVIEW_OFF);
-      if (config === undefined) return refuse("UNSUPPORTED", "Sign in with ChatGPT is not available here");
+      if (deps.chatGpt === undefined)
+        return refuseKeyed("UNSUPPORTED", "onboard.refuse.chatGptPreview", { variable: CHATGPT_PREVIEW_VARIABLE });
+      if (config === undefined) return refuseKeyed("UNSUPPORTED", "onboard.refuse.chatGptUnavailable");
       // A token record is kept only in an encrypted store, and only one that is a whole ChatGPT sign-in.
-      if (!deps.chatGpt.encrypted())
-        return refuse(
-          "NOT_CONFIGURED",
-          "A ChatGPT sign-in is kept only in an encrypted credential store: run tavi credentials encrypt, then sign in again",
-        );
-      if (chatGptCredentialOf(payload.credential) === undefined) return refuse("INVALID_INPUT", "that is not a ChatGPT sign-in");
+      if (!deps.chatGpt.encrypted()) return refuseKeyed("NOT_CONFIGURED", "onboard.refuse.chatGptEncrypted");
+      if (chatGptCredentialOf(payload.credential) === undefined) return refuseKeyed("INVALID_INPUT", "onboard.refuse.notChatGpt");
       return await storeProviderKey(deps, config, workspaceId, CHATGPT_PROVIDER, payload.credential);
     }
     case "sign-in": {
       const config = deps.config;
       if (payload.preset === "chatgpt") {
         const chatGpt = deps.chatGpt;
-        if (chatGpt === undefined) return refuse("UNSUPPORTED", CHATGPT_PREVIEW_OFF);
-        if (config === undefined || chatGpt.signIns === undefined)
-          return refuse("UNSUPPORTED", "Sign in with ChatGPT is not available here");
-        if (!chatGpt.encrypted())
-          return refuse(
-            "NOT_CONFIGURED",
-            "A ChatGPT sign-in is kept only in an encrypted credential store: run tavi credentials encrypt, then sign in again",
-          );
+        if (chatGpt === undefined)
+          return refuseKeyed("UNSUPPORTED", "onboard.refuse.chatGptPreview", { variable: CHATGPT_PREVIEW_VARIABLE });
+        if (config === undefined || chatGpt.signIns === undefined) return refuseKeyed("UNSUPPORTED", "onboard.refuse.chatGptUnavailable");
+        if (!chatGpt.encrypted()) return refuseKeyed("NOT_CONFIGURED", "onboard.refuse.chatGptEncrypted");
         // Signed in before: the same registration and account again, never a second one (OpenAI's returning sign-in).
         const kept = await chatGpt.kept?.().catch(() => undefined);
         const started = await chatGpt.signIns.start(async (credential) => {
@@ -453,9 +447,8 @@ export async function onboardingCommand(deps: OnboardingCommandDependencies, pay
         return { ok: true, result: { url: started.url, state: started.state } satisfies OnboardingSignInAnswer };
       }
       const signIns = deps.signIns;
-      if (signIns === undefined || config === undefined) return refuse("UNSUPPORTED", "signing in is not available here");
-      if (payload.callbackOrigin === undefined)
-        return refuse("INVALID_INPUT", "Sign in with OpenRouter comes back to tavi ui: it needs its origin");
+      if (signIns === undefined || config === undefined) return refuseKeyed("UNSUPPORTED", "onboard.refuse.noSignIn");
+      if (payload.callbackOrigin === undefined) return refuseKeyed("INVALID_INPUT", "onboard.refuse.openRouterOrigin");
       // The browser comes back to `tavi ui` on this computer: a callback anywhere else is refused.
       const origin = new URL(payload.callbackOrigin);
       if (
@@ -464,9 +457,9 @@ export async function onboardingCommand(deps: OnboardingCommandDependencies, pay
         origin.pathname !== "/" ||
         origin.search !== ""
       )
-        return refuse("INVALID_INPUT", "the sign-in comes back to tavi ui on this computer: a loopback http origin");
+        return refuseKeyed("INVALID_INPUT", "onboard.refuse.loopback");
       const preset = MODEL_PROVIDER_PRESETS.find((candidate) => candidate.id === "openrouter");
-      if (preset === undefined) return refuse("NOT_FOUND", "OpenRouter is not a provider here");
+      if (preset === undefined) return refuseKeyed("NOT_FOUND", "onboard.refuse.noOpenRouter");
       const started = signIns.start(origin.origin, async (key) => {
         const stored = await storeProviderKey(deps, config, workspaceId, preset, key);
         if (!stored.ok) {
@@ -482,7 +475,7 @@ export async function onboardingCommand(deps: OnboardingCommandDependencies, pay
       const chatGpt = deps.chatGpt?.signIns;
       if (chatGpt?.owns(payload.state) === true)
         return { ok: true, result: chatGpt.status(payload.state) satisfies OnboardingSignInStatusAnswer };
-      if (deps.signIns === undefined) return refuse("UNSUPPORTED", "signing in is not available here");
+      if (deps.signIns === undefined) return refuseKeyed("UNSUPPORTED", "onboard.refuse.noSignIn");
       return { ok: true, result: deps.signIns.status(payload.state) satisfies OnboardingSignInStatusAnswer };
     }
     case "verify":
@@ -491,7 +484,11 @@ export async function onboardingCommand(deps: OnboardingCommandDependencies, pay
 }
 
 const resultOf = <T>(answer: IpcAnswer<unknown>): T => {
-  if (!answer.ok) throw Object.assign(new Error(answer.error.message), { code: answer.error.code });
+  if (!answer.ok)
+    throw Object.assign(new Error(answer.error.message), {
+      code: answer.error.code,
+      ...(answer.error.i18n === undefined ? {} : { i18n: answer.error.i18n }),
+    });
   return answer.result as T;
 };
 
@@ -527,21 +524,25 @@ async function connectDetected(
 ): Promise<OnboardingAnswer> {
   const config = deps.config;
   const detection = deps.detection;
-  if (config === undefined || detection === undefined) return refuse("UNSUPPORTED", "connecting a detected provider is not available here");
+  if (config === undefined || detection === undefined) return refuseKeyed("UNSUPPORTED", "onboard.refuse.noConnectDetected");
   const preset = MODEL_PROVIDER_PRESETS.find((candidate) => candidate.id === presetId && candidate.baseUrl !== "");
-  if (preset === undefined) return refuse("INVALID_INPUT", `${presetId} is not a provider Tavi can connect from detection`);
+  if (preset === undefined) return refuseKeyed("INVALID_INPUT", "onboard.refuse.notDetectable", { preset: presetId });
   let value: string;
   if (variable !== undefined) {
     const allowed = (ONBOARDING_ENV_KEYS as Readonly<Record<string, readonly string[]>>)[preset.id] ?? [];
     if (!allowed.includes(variable))
-      return refuse("INVALID_INPUT", `${variable} is not a key for ${preset.name}; use one of ${allowed.join(", ") || "none"}`);
+      return refuseKeyed("INVALID_INPUT", "onboard.refuse.notKeyFor", {
+        variable,
+        provider: preset.name,
+        allowed: allowed.length === 0 ? textRef("onboard.refuse.none") : allowed.join(", "),
+      });
     const found = (detection.env[variable] ?? "").trim();
-    if (found === "") return refuse("NOT_FOUND", `${variable} is not set where this flow runs`);
+    if (found === "") return refuseKeyed("NOT_FOUND", "onboard.refuse.notSet", { variable });
     value = found;
   } else {
-    if (!preset.localOnly) return refuse("INVALID_INPUT", `${preset.name} needs a key: name the variable that holds it`);
+    if (!preset.localOnly) return refuseKeyed("INVALID_INPUT", "onboard.refuse.needsKey", { provider: preset.name });
     if (!(await localServerRuns({ fetch: detection.fetch }, preset.id)))
-      return refuse("NOT_FOUND", `${preset.name} is not running on this computer`);
+      return refuseKeyed("NOT_FOUND", "onboard.refuse.notRunning", { provider: preset.name });
     // A keyless local server still needs a stored binding: the adapter and discovery resolve one.
     value = LOCAL_NO_KEY_CREDENTIAL;
   }
@@ -560,9 +561,6 @@ async function connectDetected(
 type StoredProvider = Pick<(typeof MODEL_PROVIDER_PRESETS)[number], "id" | "name" | "baseUrl" | "localOnly"> & {
   readonly wireApi?: "responses";
 };
-
-/** Why a ChatGPT sign-in is refused while its preview flag is off. */
-const CHATGPT_PREVIEW_OFF = `Sign in with ChatGPT is a preview: set ${CHATGPT_PREVIEW_VARIABLE}=1 for tavi and tavi serve to offer it`;
 
 /** Sign in with ChatGPT's connection: OpenAI's API, on the Responses wire, its credential the token record. */
 const CHATGPT_PROVIDER: StoredProvider = {
@@ -641,7 +639,16 @@ async function storeProviderKey(
     };
   } catch (error) {
     const code = (error as { code?: unknown }).code;
-    return refuse(typeof code === "string" ? code : "UNAVAILABLE", errorMessage(error));
+    // A keyed refusal keeps its key, so the canvas still says it in the workspace's language.
+    const i18n = TextRefSchema.safeParse((error as { i18n?: unknown }).i18n);
+    return {
+      ok: false,
+      error: {
+        code: typeof code === "string" ? code : "UNAVAILABLE",
+        message: errorMessage(error),
+        ...(i18n.success && i18n.data !== undefined ? { i18n: i18n.data } : {}),
+      },
+    };
   }
 }
 
@@ -659,7 +666,7 @@ async function verifyRole(
       ...base,
       ok: false,
       errorCode: "provider-managed",
-      advice: `Provided by ${target.providedBy}: its first answered turn verifies it.`,
+      advice: coreIn(await localeFor(deps, workspaceId))("onboard.say.providedBy", { provider: target.providedBy }),
     };
   const preset = presetOf(target.baseUrl)?.id;
   const context = {
@@ -723,15 +730,15 @@ async function verify(
   named?: { readonly connectionId: string; readonly model: string },
 ): Promise<OnboardingAnswer> {
   const config = deps.config;
-  if (config === undefined) return refuse("UNSUPPORTED", "verifying a model is not available here");
+  if (config === undefined) return refuseKeyed("UNSUPPORTED", "onboard.refuse.noVerify");
   let targets: readonly (readonly [OnboardingVerifyRole, NonNullable<OnboardingLiveFacts["model"]["main"]> | undefined])[];
   if (named !== undefined && only !== undefined) {
     const target = await deps.target?.(named.connectionId, named.model);
-    if (target === undefined) return refuse("NOT_FOUND", `No connection ${named.connectionId} exists`);
+    if (target === undefined) return refuseKeyed("NOT_FOUND", "onboard.refuse.noConnection", { connection: named.connectionId });
     targets = [[only, target]];
   } else {
     const facts = await deps.facts(workspaceId);
-    if (facts.model.main === undefined) return refuse("NOT_CONFIGURED", "No model is set up yet: add one first");
+    if (facts.model.main === undefined) return refuseKeyed("NOT_CONFIGURED", "onboard.refuse.noModel");
     targets = (
       [
         ["main", facts.model.main],
@@ -739,14 +746,15 @@ async function verify(
       ] as const
     ).filter(([role, target]) => target !== undefined && (only === undefined || only === role));
   }
-  if (targets.length === 0) return refuse("NOT_CONFIGURED", `No ${only ?? "main"} model is set apart from the main one`);
+  if (targets.length === 0)
+    return refuseKeyed("NOT_CONFIGURED", only === "fast" ? "onboard.refuse.noFastApart" : "onboard.refuse.noMainApart");
   // Every role's gate before any test: a refused second role never wastes the first one's completion.
   const releases: (() => void)[] = [];
   for (const [role] of targets) {
     const release = deps.verifyGate?.begin(`${workspaceId}\u0000${role}`, deps.now().getTime());
     if (deps.verifyGate !== undefined && release === undefined) {
       for (const taken of releases) taken();
-      return refuse("RATE_LIMITED", `A verify of the ${role} model ran moments ago; wait a few seconds`);
+      return refuseKeyed("RATE_LIMITED", role === "fast" ? "onboard.refuse.verifyFastSoon" : "onboard.refuse.verifyMainSoon");
     }
     if (release !== undefined) releases.push(release);
   }

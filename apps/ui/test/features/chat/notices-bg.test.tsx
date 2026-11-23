@@ -1,24 +1,17 @@
 // @vitest-environment jsdom
 import { NOTICE_TITLE_MAX, type ChatNotice } from "@tavi/contracts";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { outcomeSentence } from "../../../src/features/center/schedule-model.js";
 import { NoticeCards, noticeTitle } from "../../../src/features/chat/Notices.js";
-import { setLocale } from "../../../src/lib/i18n.js";
-import { mount, unmountAll } from "../../support/dom.js";
+import { mount } from "../../support/dom.js";
+import { inBulgarian } from "../../support/bulgarian.js";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 /** Stored notices said in the reader's language by their keys; one stored before keys shows the English it was written in. */
 
-beforeEach(async () => {
-  await setLocale("bg");
-});
-
-afterEach(async () => {
-  unmountAll();
-  await setLocale("en");
-});
+inBulgarian();
 
 const AT = "2026-11-22T08:00:00.000Z";
 

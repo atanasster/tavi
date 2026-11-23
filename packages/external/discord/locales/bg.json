@@ -8,5 +8,31 @@
     "channels.discord.target.label": "ID на канала или dm:<потребителски ID>",
     "channels.discord.setupHelp": "Създай приложение на discord.com/developers, добави бот, изключи Public Bot и постави токена му. Отвори връзката за покана, която Tavi показва, пиши на бота лично, разреши своя потребителски ID в „Разрешени хора“ и после добави стаи."
   },
-  "messages": {}
+  "messages": {
+    "status.tripped": "Discord отказа твърде много заявки за десет минути: връзката спря, за да не бъде блокиран ботът; отвори я отново, след като оправиш причината",
+    "status.revoked": "Discord вече не приема токена на бота: той е сменен или отменен",
+    "status.noToken": "липсва токен на бота",
+    "status.notBot": "токенът не е на бот",
+    "status.refused": "Discord отказа токена ({status})",
+    "status.taken": "приложението {application} вече работи през друга връзка",
+    "status.reconnecting": "свързва се отново: {detail}",
+    "probe.state": "връзката не работи ({state})",
+    "probe.answered": "Discord отговори с {status}",
+    "setup.bot": "Бот {name}.",
+    "setup.publicBot": "Public Bot е включен: всеки с поканата може да добави бота в сървър. Изключи го в Developer Portal.",
+    "setup.intent": "интентът {name}",
+    "setup.intents": "{first} и {second}",
+    "setup.privileged": {
+      "one": "{intents} е включен за бота: Tavi не го използва и можеш да го изключиш.",
+      "other": "{intents} са включени за бота: Tavi не ги използва и можеш да ги изключиш."
+    },
+    "setup.contentOn": "Интентът Message Content е включен: стая, настроена да чете последните си съобщения, ги чете.",
+    "setup.contentOff": "Интентът Message Content е изключен: стая, настроена да чете последните си съобщения, чете само съобщението до бота. Включи го в Developer Portal за това.",
+    "setup.commandsRefused": "Discord не прие командите на бота (/tavi, „Попитай Tavi за това“): те ще се регистрират отново при следващото пускане.",
+    "setup.aServer": "сървър",
+    "setup.lacks": "На бота му липсва нужното за анкети и събития в {servers}: покани го отново с връзката по-долу.",
+    "setup.lacksMore": "{servers} и още {count}",
+    "setup.invite": "Покани го: {url}",
+    "setup.inviteLink": "Покани бота в сървър"
+  }
 }

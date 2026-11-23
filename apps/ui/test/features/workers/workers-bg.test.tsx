@@ -1,25 +1,18 @@
 // @vitest-environment jsdom
 import type { AgentTreeNode, AgentTreeResult, TranscriptEntry } from "@tavi/contracts";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { AgentTree } from "../../../src/features/workers/AgentTree.js";
 import { WorkerTranscript } from "../../../src/features/workers/WorkerView.js";
-import { setLocale } from "../../../src/lib/i18n.js";
-import { mount, settle, unmountAll } from "../../support/dom.js";
+import { mount, settle } from "../../support/dom.js";
 import { InWorkspace } from "../../support/workspace.js";
+import { inBulgarian } from "../../support/bulgarian.js";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 /** The agent tree and a worker's view-only transcript in Bulgarian. */
 
-beforeEach(async () => {
-  await setLocale("bg");
-});
-
-afterEach(async () => {
-  unmountAll();
-  await setLocale("en");
-});
+inBulgarian();
 
 const at = "2026-09-20T00:00:00.000Z";
 const node = (taskId: string, status = "completed"): AgentTreeNode => ({

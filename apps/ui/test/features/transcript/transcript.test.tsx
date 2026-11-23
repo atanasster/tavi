@@ -1,28 +1,17 @@
-import type { ToolCard, TranscriptEntry } from "@tavi/client/browser";
+import type { TranscriptEntry } from "@tavi/client/browser";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { TOOL_HEADLINE_FIELDS } from "@tavi/contracts";
 import { groupEntries, Transcript } from "../../../src/features/transcript/Transcript.js";
 import { headlineOf, rendererFor, TOOL_FAMILIES, TOOL_RENDERERS } from "../../../src/features/transcript/ToolCards.js";
+import { textEntry as text, toolCard as card } from "../../support/rows.js";
 
 /**
  * How a transcript is drawn: consecutive tool calls
  * as one collapsed block, a renderer per family rather than a `switch`, and an
  * entry that cannot be rendered taking only its own row.
  */
-
-const card = (callId: string, over: Partial<ToolCard> = {}): ToolCard => ({
-  kind: "tool",
-  key: callId,
-  attemptId: "a",
-  callId,
-  toolName: "sandbox.run",
-  status: "completed",
-  ...over,
-});
-
-const text = (key: string, body: string): TranscriptEntry => ({ kind: "text", key, attemptId: "a", blockId: key, text: body });
 
 describe("grouping consecutive tool calls", () => {
   it("folds a run of tool calls into one group and leaves everything else alone", () => {

@@ -12,6 +12,7 @@ import type { SettingsClient } from "../../../src/lib/ipc.js";
 import { announced, freshAnnouncer } from "../../announced.js";
 import { InWorkspace } from "../../support/workspace.js";
 import { flush, settledBy, unmountAll } from "../../support/dom.js";
+import { IDEA_AT, idea } from "../../support/rows.js";
 
 beforeEach(() => void freshAnnouncer());
 
@@ -33,31 +34,7 @@ afterEach(() => {
 /** What was asked answered: microtasks only, as tests here fake the clock. */
 const { settle, mount, click } = settledBy(() => flush());
 
-const AT = "2026-10-19T10:00:00.000Z";
-
-const idea = (key: string, overrides: Partial<Idea> = {}): Idea => ({
-  id: `id-${key}`,
-  workspaceId: "default",
-  runId: "run-1",
-  providerId: "tavi.ideasagent",
-  key,
-  category: key.split(".")[0] as Idea["category"],
-  icon: "💡",
-  title: `I can help with ${key}`,
-  pitch: `A pitch for ${key}.`,
-  label: key,
-  prompt: `Help me with ${key}.`,
-  basis: [{ kind: "general", ref: "general" }],
-  uses: [{ capability: "web", approval: false }],
-  score: 0.5,
-  status: "active",
-  pinned: false,
-  shownRuns: 0,
-  createdAt: AT,
-  updatedAt: AT,
-  expiresAt: "2026-11-19T10:00:00.000Z",
-  ...overrides,
-});
+const AT = IDEA_AT;
 
 const IDEAS: readonly Idea[] = [
   idea("travel.fare-watch", {

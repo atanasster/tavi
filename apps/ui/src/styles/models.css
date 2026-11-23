@@ -73,7 +73,11 @@
 .role-name {
   font-size: var(--text-md);
   font-weight: var(--weight-semibold);
-  text-transform: capitalize;
+}
+
+/* Only the first letter: "Main", "Основен" — capitalising each word would read as Title Case ("По Подразбиране"). */
+.role-name::first-letter {
+  text-transform: uppercase;
 }
 
 .role-target {

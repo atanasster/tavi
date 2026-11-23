@@ -10,7 +10,7 @@ import type { AsyncRepository } from "./persistence-types.js";
 import { z } from "zod";
 
 import { SECRET_KEY_REF_PATTERN, TimestampSchema } from "./ids.js";
-import { coreEnglish, type CoreT } from "./locales/core.js";
+import { coreEnglish, type CoreKey, type CoreT } from "./locales/core.js";
 import { SUPPORTED_LOCALES, type Locale } from "./i18n.js";
 import { ToolEffectSchema } from "./tools.js";
 import { RouterFeatureSchema } from "./router.js";
@@ -232,6 +232,16 @@ export function pluginToolDeclarationNote(
   return notes.map((note) => t("plugin.tool.note", { note })).join("");
 }
 
+/** A tool's effect as its badge says it: read-only, mutating, external; an effect this release does not know reads as it arrives. */
+const TOOL_EFFECT_KEYS: Readonly<Record<z.infer<typeof ToolEffectSchema>, CoreKey>> = {
+  "read-only": "plugin.tool.effect.readOnly",
+  mutating: "plugin.tool.effect.mutating",
+  external: "plugin.tool.effect.external",
+};
+
+const toolEffectLabel = (effect: string, t: CoreT): string =>
+  Object.hasOwn(TOOL_EFFECT_KEYS, effect) ? t(TOOL_EFFECT_KEYS[effect as keyof typeof TOOL_EFFECT_KEYS]) : effect;
+
 /** A tool as a review lists it: `acme.weather.forecast (read-only)`, with its output's trust when that is not the default, and what it asks of the gate. */
 export function describePluginTool(
   tool: {
@@ -247,7 +257,7 @@ export function describePluginTool(
 ): string {
   return t("plugin.tool.line", {
     id: tool.id,
-    effect: tool.effect,
+    effect: toolEffectLabel(tool.effect, t),
     notes: `${pluginToolOutputNote(tool.output, t)}${pluginToolDeclarationNote(tool, t)}`,
   });
 }
@@ -1275,9 +1285,12 @@ const pluginIdField = z.string().min(1).max(128);
 const versionField = PluginVersionSchema;
 
 /** The `plugins` IPC command (CLI and web canvas). */
+/** The canvas's workspace on a read: the words a person reads come in its language (the owner's `default` when absent). */
+const readWorkspaceField = z.string().min(1).max(128).optional();
+
 export const PluginsPayloadSchema = z.discriminatedUnion("action", [
-  z.strictObject({ action: z.literal("list") }),
-  z.strictObject({ action: z.literal("show"), pluginId: pluginIdField }),
+  z.strictObject({ action: z.literal("list"), workspaceId: readWorkspaceField }),
+  z.strictObject({ action: z.literal("show"), pluginId: pluginIdField, workspaceId: readWorkspaceField }),
   /** An absolute path to a plugin directory. */
   z.strictObject({ action: z.literal("install"), path: z.string().min(1).max(4096) }),
   z.strictObject({ action: z.literal("approve"), pluginId: pluginIdField, version: versionField, inProcess: z.boolean().optional() }),
@@ -1307,7 +1320,12 @@ export const PluginsPayloadSchema = z.discriminatedUnion("action", [
    * `contentHash`, whether that exact one still may — the bridge asks before
    * serving each document, so a revoked plugin is never served again.
    */
-  z.strictObject({ action: z.literal("ui"), pluginId: pluginIdField.optional(), contentHash: PluginContentHashSchema.optional() }),
+  z.strictObject({
+    action: z.literal("ui"),
+    pluginId: pluginIdField.optional(),
+    contentHash: PluginContentHashSchema.optional(),
+    workspaceId: readWorkspaceField,
+  }),
   /** What each plugin running in the owner's process would lose as a confined worker. */
   z.strictObject({ action: z.literal("audit") }),
 ]);

@@ -97,6 +97,11 @@ export interface DiscordConnectorOptions {
   readonly readArtifact?: ChannelHostServices["readArtifact"];
   /** The workspace's language, read as each command is answered: its private answers speak it (`bg`), English otherwise. */
   readonly locale?: () => string | undefined;
+  /**
+   * The plugin's own messages (`ctx.t`, its `locales/<lang>.json`): the status and setup words Settings → Channels
+   * shows, in the workspace's language when it is not English. Absent, or a key with no message, the English.
+   */
+  readonly t?: (key: string, params?: Readonly<Record<string, string | number>>) => string;
 }
 
 const realGatewayClock: GatewayClock = {
@@ -300,8 +305,10 @@ function createInstance(
     gateway = undefined;
     setStatus({
       state: "failed",
-      detail:
+      detail: say(
+        "status.tripped",
         "Discord refused too many requests in ten minutes: the connection stopped so the bot is not banned; open it again once the cause is fixed",
+      ),
     });
   };
 
@@ -315,7 +322,22 @@ function createInstance(
     if (status.state !== "running") return;
     gateway?.stop();
     gateway = undefined;
-    setStatus({ state: "failed", detail: "Discord no longer accepts the bot token: it was reset or revoked", repair: "credentials" });
+    setStatus({
+      state: "failed",
+      detail: say("status.revoked", "Discord no longer accepts the bot token: it was reset or revoked"),
+      repair: "credentials",
+    });
+  };
+
+  /**
+   * Words a person reads in Settings → Channels (a status, a setup line): `key`'s message in the workspace's language,
+   * or `english` when the language is English, or the pack has no message for it.
+   */
+  const say = (key: string, english: string, params?: Readonly<Record<string, string | number>>): string => {
+    const locale = options.locale?.();
+    if (options.t === undefined || locale === undefined || locale.toLowerCase().split(/[-_]/)[0] === "en") return english;
+    const said = options.t(key, params);
+    return said === key ? english : said;
   };
 
   const setStatus = (next: Omit<MessagingConnectionStatus, "since">): void => {
@@ -414,11 +436,21 @@ function createInstance(
       const granted = botPermissionsOf(guildId, guild);
       if (granted === undefined || (granted & ADMINISTRATOR) !== 0n) return [];
       const lacking = GROUP_PERMISSIONS.filter((permission) => (granted & permission.bit) === 0n).map((permission) => permission.name);
-      return lacking.length === 0 ? [] : [`${(guild.name ?? "a server").slice(0, 40)} (${lacking.join(", ")})`];
+      return lacking.length === 0 ? [] : [`${(guild.name ?? say("setup.aServer", "a server")).slice(0, 40)} (${lacking.join(", ")})`];
     });
     if (lacks.length === 0) return [];
-    const line = (shown: number): string =>
-      `The bot lacks what polls and events need in ${lacks.slice(0, shown).join("; ")}${lacks.length > shown ? ` and ${String(lacks.length - shown)} more` : ""}: invite it again with the link below.`;
+    const line = (shown: number): string => {
+      const named = lacks.slice(0, shown).join("; ");
+      const servers =
+        lacks.length > shown
+          ? say("setup.lacksMore", `${named} and ${String(lacks.length - shown)} more`, { servers: named, count: lacks.length - shown })
+          : named;
+      return say(
+        "setup.lacks",
+        `The bot lacks what polls and events need in ${named}${lacks.length > shown ? ` and ${String(lacks.length - shown)} more` : ""}: invite it again with the link below.`,
+        { servers },
+      );
+    };
     let shown = Math.min(3, lacks.length);
     while (shown > 1 && line(shown).length > 200) shown -= 1;
     return [line(shown)];
@@ -660,7 +692,7 @@ function createInstance(
       setStatus({ state: "starting" });
       const read = await readToken();
       if (read === null || read === "") {
-        setStatus({ state: "failed", detail: "the bot token is absent", repair: "credentials" });
+        setStatus({ state: "failed", detail: say("status.noToken", "the bot token is absent"), repair: "credentials" });
         throw new TaviError("NOT_CONFIGURED", `Discord connection ${connection.connectionId} has no bot token`, {
           details: { connectionId: connection.connectionId, repair: "credentials" },
         });
@@ -670,7 +702,8 @@ function createInstance(
       if (!me.ok || me.body?.bot !== true || typeof me.body.id !== "string") {
         const repair = me.status === 401 || (me.ok && me.body?.bot !== true) ? ("credentials" as const) : undefined;
         const detail = me.ok ? "the token is not a bot's" : `Discord refused the token (${String(me.status)})`;
-        setStatus({ state: "failed", detail, ...(repair === undefined ? {} : { repair }) });
+        const shown = me.ok ? say("status.notBot", detail) : say("status.refused", detail, { status: String(me.status) });
+        setStatus({ state: "failed", detail: shown, ...(repair === undefined ? {} : { repair }) });
         throw new TaviError("UNAVAILABLE", `Discord connection ${connection.connectionId}: ${detail}`, {
           details: { connectionId: connection.connectionId, ...(repair === undefined ? {} : { repair }) },
         });
@@ -680,7 +713,12 @@ function createInstance(
       applicationId = app.ok && typeof app.body?.id === "string" ? app.body.id : botUserId;
       messageContent = app.ok && typeof app.body?.flags === "number" && (app.body.flags & MESSAGE_CONTENT_FLAGS) !== 0;
       if (activeApplications.has(applicationId)) {
-        setStatus({ state: "failed", detail: `application ${applicationId} is already running under another connection` });
+        setStatus({
+          state: "failed",
+          detail: say("status.taken", `application ${applicationId} is already running under another connection`, {
+            application: applicationId,
+          }),
+        });
         throw new TaviError(
           "CONFLICT",
           `Discord connection ${connection.connectionId} is application ${applicationId}, which is already running under another connection in this owner`,
@@ -739,7 +777,8 @@ function createInstance(
             setStatus({ state: "running" });
             return;
           }
-          if (state.state === "reconnecting") setStatus({ state: "running", detail: `reconnecting: ${state.detail}` });
+          if (state.state === "reconnecting")
+            setStatus({ state: "running", detail: say("status.reconnecting", `reconnecting: ${state.detail}`, { detail: state.detail }) });
           if (state.state === "failed")
             setStatus({ state: "failed", detail: state.detail, ...(state.repair === undefined ? {} : { repair: state.repair }) });
         },
@@ -806,40 +845,72 @@ function createInstance(
     },
 
     async probe() {
-      if (token === undefined) return { ok: false, detail: `connection is ${status.state}` };
+      if (token === undefined) return { ok: false, detail: say("probe.state", `connection is ${status.state}`, { state: status.state }) };
       const me = await rest.request<{ readonly username?: unknown }>("GET", "/users/@me");
       const app = await rest.request<{ readonly id?: unknown; readonly bot_public?: unknown; readonly flags?: unknown }>(
         "GET",
         "/applications/@me",
       );
-      if (!me.ok || !app.ok) return { ok: false, detail: `Discord answered ${String(me.ok ? app.status : me.status)}` };
+      if (!me.ok || !app.ok) {
+        const answered = String(me.ok ? app.status : me.status);
+        return { ok: false, detail: say("probe.answered", `Discord answered ${answered}`, { status: answered }) };
+      }
       const invite = `https://discord.com/oauth2/authorize?client_id=${applicationId}&scope=bot+applications.commands&permissions=${INVITE_PERMISSIONS}&integration_type=0`;
       const flags = typeof app.body?.flags === "number" ? app.body.flags : 0;
       // What the operator turned on in the Developer Portal since the connection started counts from now.
       messageContent = (flags & MESSAGE_CONTENT_FLAGS) !== 0;
       const privileged = privilegedIntentsOf(flags);
+      // The intents by name, in the workspace's words: "the Presence intent", „интентът Presence“.
+      const intents = PRIVILEGED_INTENTS.filter((intent) => (flags & intent.flags) !== 0).map((intent) =>
+        say("setup.intent", `the ${intent.name} intent`, { name: intent.name }),
+      );
+      const user = typeof me.body?.username === "string" ? me.body.username : botUserId;
       const lines = [
-        `Bot ${typeof me.body?.username === "string" ? me.body.username : botUserId}.`,
+        say("setup.bot", `Bot ${user}.`, { name: user }),
         ...(app.body?.bot_public === true
-          ? ["Public Bot is on: anyone with the invite can add it to a server. Turn it off in the Developer Portal."]
+          ? [
+              say(
+                "setup.publicBot",
+                "Public Bot is on: anyone with the invite can add it to a server. Turn it off in the Developer Portal.",
+              ),
+            ]
           : []),
         ...(privileged.length === 0
           ? []
           : [
-              `${sentenceCase(privileged.join(" and "))} ${privileged.length === 1 ? "is" : "are"} on for the bot: Tavi does not use ${privileged.length === 1 ? "it" : "them"}, and you can turn ${privileged.length === 1 ? "it" : "them"} off.`,
+              say(
+                "setup.privileged",
+                `${sentenceCase(privileged.join(" and "))} ${privileged.length === 1 ? "is" : "are"} on for the bot: Tavi does not use ${privileged.length === 1 ? "it" : "them"}, and you can turn ${privileged.length === 1 ? "it" : "them"} off.`,
+                {
+                  count: intents.length,
+                  intents: sentenceCase(
+                    intents.length === 2
+                      ? say("setup.intents", intents.join(" and "), { first: intents[0] ?? "", second: intents[1] ?? "" })
+                      : (intents[0] ?? ""),
+                  ),
+                },
+              ),
             ]),
         messageContent
-          ? "The Message Content intent is on: a room set to read its recent messages reads them."
-          : "The Message Content intent is off: a room set to read its recent messages reads only the message that addresses the bot. Turn it on in the Developer Portal for that.",
+          ? say("setup.contentOn", "The Message Content intent is on: a room set to read its recent messages reads them.")
+          : say(
+              "setup.contentOff",
+              "The Message Content intent is off: a room set to read its recent messages reads only the message that addresses the bot. Turn it on in the Developer Portal for that.",
+            ),
         ...(commands === "refused"
-          ? ["Discord would not take the bot's commands (/tavi, Ask Tavi about this): they register again at the next start."]
+          ? [
+              say(
+                "setup.commandsRefused",
+                "Discord would not take the bot's commands (/tavi, Ask Tavi about this): they register again at the next start.",
+              ),
+            ]
           : []),
         ...lackingInServers(),
       ];
       return {
         ok: status.state === "running",
-        detail: [...lines, `Invite it: ${invite}`].join(" "),
-        setup: { lines, link: { label: "Invite the bot to a server", url: invite } },
+        detail: [...lines, say("setup.invite", `Invite it: ${invite}`, { url: invite })].join(" "),
+        setup: { lines, link: { label: say("setup.inviteLink", "Invite the bot to a server"), url: invite } },
       };
     },
 

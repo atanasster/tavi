@@ -4,7 +4,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { join } from "node:path";
 
-import { TaviError, type OnboardingConnectAnswer } from "@tavi/contracts";
+import { keyedError, TaviError, type OnboardingConnectAnswer } from "@tavi/contracts";
 import { definedOnly, errorMessage, isRecord } from "@tavi/contracts/util";
 import { z } from "zod";
 import { readJsonBody } from "../../shared/json-body.js";
@@ -323,9 +323,9 @@ async function exchangeChatGptCode(input: {
     // Bounds the body read too: a stalled token endpoint must not hang the sign-in.
     signal: AbortSignal.timeout(TOKEN_TIMEOUT_MS),
   });
-  if (!response.ok) throw new TaviError("NOT_AUTHORIZED", `ChatGPT refused the sign-in (${await refusalOf(response)}). Start it again.`);
+  if (!response.ok) throw keyedError("NOT_AUTHORIZED", "onboard.signIn.chatGptRefused", { why: await refusalOf(response) });
   const parsed = TokenResponseSchema.safeParse(await readJsonBody(response));
-  if (!parsed.success || parsed.data.id_token === undefined) throw new TaviError("UNAVAILABLE", "ChatGPT's answer was not a token set");
+  if (!parsed.success || parsed.data.id_token === undefined) throw keyedError("UNAVAILABLE", "onboard.signIn.notTokenSet");
   const tokens = parsed.data;
   const identity = await verifyChatGptIdToken(tokens.id_token as string, {
     issuer: endpoints.issuer,
@@ -334,17 +334,9 @@ async function exchangeChatGptCode(input: {
     now: now(),
     jwks: jwksFrom(fetchImpl, endpoints.jwks),
   });
-  if (input.sameAccount !== undefined && identity.sub !== input.sameAccount)
-    throw new TaviError(
-      "CONFLICT",
-      "That is another ChatGPT account: sign in with the one this connection uses, or add another connection.",
-    );
+  if (input.sameAccount !== undefined && identity.sub !== input.sameAccount) throw keyedError("CONFLICT", "onboard.signIn.otherAccount");
   const scopes = (tokens.scope ?? "").split(/\s+/u).filter((scope) => scope !== "");
-  if (!scopes.includes(CHATGPT_PLAN_SCOPE))
-    throw new TaviError(
-      "NOT_AUTHORIZED",
-      "ChatGPT plan use was not allowed, so Tavi cannot answer with it. Sign in again and allow it, or use an API key.",
-    );
+  if (!scopes.includes(CHATGPT_PLAN_SCOPE)) throw keyedError("NOT_AUTHORIZED", "onboard.signIn.planScope");
   const at = new Date(now());
   return ChatGptCredentialSchema.parse({
     kind: "chatgpt-sign-in",
@@ -390,23 +382,19 @@ export async function refreshChatGpt(
       signal: AbortSignal.timeout(TOKEN_TIMEOUT_MS),
     });
   } catch (error) {
-    throw new TaviError("UNAVAILABLE", `ChatGPT could not be reached to renew the sign-in: ${errorMessage(error)}`);
+    throw keyedError("UNAVAILABLE", "onboard.signIn.unreachable", { why: errorMessage(error) });
   }
   if (!response.ok) {
     const code = await refusalOf(response);
     // OpenAI's: the client itself refused, which signing in registers anew.
-    if (code === "invalid_client")
-      throw new TaviError(
-        "NOT_AUTHORIZED",
-        "ChatGPT no longer accepts this install's registration (invalid_client). Sign in with ChatGPT again to register it anew: tavi setup model.",
-      );
+    if (code === "invalid_client") throw keyedError("NOT_AUTHORIZED", "onboard.signIn.invalidClient");
     if ((CHATGPT_SIGN_IN_AGAIN as readonly string[]).includes(code) || response.status === 400 || response.status === 401) {
-      throw new TaviError("NOT_AUTHORIZED", "The ChatGPT sign-in has ended. Sign in with ChatGPT again: tavi setup model.");
+      throw keyedError("NOT_AUTHORIZED", "onboard.signIn.ended");
     }
-    throw new TaviError("UNAVAILABLE", `ChatGPT could not renew the sign-in (${code})`);
+    throw keyedError("UNAVAILABLE", "onboard.signIn.cannotRenew", { code });
   }
   const parsed = TokenResponseSchema.safeParse(await readJsonBody(response));
-  if (!parsed.success) throw new TaviError("UNAVAILABLE", "ChatGPT's answer was not a token set");
+  if (!parsed.success) throw keyedError("UNAVAILABLE", "onboard.signIn.notTokenSet");
   // A new ID token is kept only once it is OpenAI's, for this client, and the same account.
   if (parsed.data.id_token !== undefined) {
     const identity = await verifyChatGptIdToken(parsed.data.id_token, {
@@ -415,8 +403,7 @@ export async function refreshChatGpt(
       now: now(),
       jwks: jwksFrom(options.fetch ?? globalThis.fetch, endpoints.jwks),
     });
-    if (identity.sub !== record.subject)
-      throw new TaviError("NOT_AUTHORIZED", "ChatGPT renewed the sign-in for another account. Sign in with ChatGPT again.");
+    if (identity.sub !== record.subject) throw keyedError("NOT_AUTHORIZED", "onboard.signIn.renewedOther");
   }
   const at = new Date(now());
   return ChatGptCredentialSchema.parse({
@@ -521,7 +508,7 @@ export async function listenForChatGpt(
   const { server, origin } = loopback;
   const close = () => {
     server.close();
-    fail(new TaviError("ABORTED", "The ChatGPT sign-in was stopped"));
+    fail(keyedError("ABORTED", "onboard.signIn.chatGptStopped"));
   };
   options.signal?.addEventListener("abort", close, { once: true });
   // Awaited or raced elsewhere: this only keeps an early rejection from going unhandled.
@@ -560,24 +547,18 @@ export async function signInWithChatGpt(input: {
     const query = await withTimeout(loopback.callback, CHATGPT_SIGN_IN_TTL_MS);
     const error = query.get("error");
     if (error !== null)
-      throw new TaviError(
-        "NOT_AUTHORIZED",
-        error === "access_denied"
-          ? "You didn't allow Tavi to use ChatGPT. Nothing was connected."
-          : "ChatGPT did not sign you in. Nothing was connected.",
-      );
+      throw keyedError("NOT_AUTHORIZED", error === "access_denied" ? "onboard.signIn.chatGptDenied" : "onboard.signIn.chatGptNotSignedIn");
     const code = query.get("code");
-    if (code === null || code === "") throw new TaviError("NOT_AUTHORIZED", "ChatGPT sent no sign-in code. Start it again.");
+    if (code === null || code === "") throw keyedError("NOT_AUTHORIZED", "onboard.signIn.noCode");
     const issued = query.get("client_id");
     let clientId: string;
     if (start.clientId !== undefined) {
       // Returning: the callback may omit the id, and may not change it.
-      if (issued !== null && issued !== start.clientId)
-        throw new TaviError("CONFLICT", "ChatGPT answered for another registration. Nothing was changed.");
+      if (issued !== null && issued !== start.clientId) throw keyedError("CONFLICT", "onboard.signIn.otherRegistration");
       clientId = start.clientId;
     } else {
       if (issued === null || issued === "" || issued === CHATGPT_REGISTRATION_CLIENT)
-        throw new TaviError("UNAVAILABLE", "ChatGPT did not finish registering Tavi. Start it again.");
+        throw keyedError("UNAVAILABLE", "onboard.signIn.notRegistered");
       clientId = issued;
     }
     return await exchangeChatGptCode({
@@ -599,7 +580,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
     return await Promise.race([
       promise,
       new Promise<never>((_resolve, reject) => {
-        timer = setTimeout(() => reject(new TaviError("CANCELLED", "The ChatGPT sign-in took too long. Start it again.")), ms);
+        timer = setTimeout(() => reject(keyedError("CANCELLED", "onboard.signIn.chatGptTooLong")), ms);
       }),
     ]);
   } finally {
@@ -665,7 +646,7 @@ export class ChatGptSignIns {
     const url = await Promise.race([
       address,
       done.then(() => {
-        throw new TaviError("UNAVAILABLE", "The ChatGPT sign-in ended before it began");
+        throw keyedError("UNAVAILABLE", "onboard.signIn.endedBefore");
       }),
     ]);
     const state = new URL(url).searchParams.get("state") ?? "";

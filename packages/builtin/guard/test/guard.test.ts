@@ -2,22 +2,12 @@ import { mkdirSync, realpathSync, symlinkSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { ModEnvelope, ModHookInput } from "@tavi/contracts";
 import { temporaryDirectories } from "@tavi/test-support";
 
 import { guardCheck } from "../src/index.js";
+import { check, next } from "./support/check.js";
 
 /** `tavi.guard`'s hook. */
-
-const envelope: ModEnvelope = { workspaceId: "default", principalId: "operator", taskId: "t", runId: "t", source: "cli", attended: true };
-const check = (input: unknown, over: Partial<ModEnvelope> = {}): ModHookInput<"tool.check"> => ({
-  envelope: { ...envelope, ...over },
-  tool: "sandbox.run",
-  callId: "c",
-  input,
-  verdict: { decision: "ask", reasons: [] },
-});
-const next = Object.assign(async () => ({ decision: "ask" as const }), { signal: new AbortController().signal });
 
 describe("guardCheck", () => {
   it.each([

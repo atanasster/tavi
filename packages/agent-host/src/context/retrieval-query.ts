@@ -811,27 +811,18 @@ export function parseTemporalQueryRange(text: string, now?: string, timeZone?: s
     `\\b(since|depuis|seit|desde|sinds|sedert|dal|dalla)\\s+(${MONTH_NAME_PATTERN})(?:\\s+(19\\d{2}|20\\d{2}))?\\b`,
     "giu",
   );
-  for (const sinceMonthMatch of queryText.matchAll(sinceMonthRegex)) {
-    const monthRaw = sinceMonthMatch[2] ?? "";
-    const month = MONTH_NAMES[monthRaw.toLowerCase()];
-    const yearEnd = sinceMonthMatch[3] === undefined ? undefined : sinceMonthMatch.index + sinceMonthMatch[0].length;
-    if (month !== undefined && monthReadsAsMonth(monthRaw, sinceMonthMatch[1], yearEnd, queryText)) {
-      const explicitYear = sinceMonthMatch[3] === undefined ? undefined : Number(sinceMonthMatch[3]);
-      const year = explicitYear ?? (month <= refMonth ? refYear : refYear - 1);
-      return makeRange(Date.UTC(year, month - 1, 1, 0, 0, 0, 0), todayEndMs, false);
-    }
-  }
-
   // BG: "от <месец> [<година>]" ("от март", "от май 2024 г.").
   const bulgarianSinceMonth = new RegExp(`(?<!\\p{L})(от|откакто)\\s+(${MONTH_NAME_PATTERN})(?:\\s+${BULGARIAN_YEAR})?(?!\\p{L})`, "giu");
-  for (const sinceMonthMatch of queryText.matchAll(bulgarianSinceMonth)) {
-    const monthRaw = sinceMonthMatch[2] ?? "";
-    const month = MONTH_NAMES[monthRaw.toLowerCase()];
-    const yearEnd = sinceMonthMatch[3] === undefined ? undefined : sinceMonthMatch.index + sinceMonthMatch[0].length;
-    if (month !== undefined && monthReadsAsMonth(monthRaw, sinceMonthMatch[1], yearEnd, queryText)) {
-      const explicitYear = sinceMonthMatch[3] === undefined ? undefined : Number(sinceMonthMatch[3]);
-      const year = explicitYear ?? (month <= refMonth ? refYear : refYear - 1);
-      return makeRange(Date.UTC(year, month - 1, 1, 0, 0, 0, 0), todayEndMs, false);
+  for (const sinceRegex of [sinceMonthRegex, bulgarianSinceMonth]) {
+    for (const sinceMonthMatch of queryText.matchAll(sinceRegex)) {
+      const monthRaw = sinceMonthMatch[2] ?? "";
+      const month = MONTH_NAMES[monthRaw.toLowerCase()];
+      const yearEnd = sinceMonthMatch[3] === undefined ? undefined : sinceMonthMatch.index + sinceMonthMatch[0].length;
+      if (month !== undefined && monthReadsAsMonth(monthRaw, sinceMonthMatch[1], yearEnd, queryText)) {
+        const explicitYear = sinceMonthMatch[3] === undefined ? undefined : Number(sinceMonthMatch[3]);
+        const year = explicitYear ?? (month <= refMonth ? refYear : refYear - 1);
+        return makeRange(Date.UTC(year, month - 1, 1, 0, 0, 0, 0), todayEndMs, false);
+      }
     }
   }
 

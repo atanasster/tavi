@@ -4,7 +4,6 @@ import {
   MEMORY_DIGEST_ITEMS_MAX,
   MEMORY_DIGEST_NEAR_EXPIRY_DAYS,
   MEMORY_IPC_LIST_MAX,
-  TaviError,
   localDateTime,
   memoryDigestKey,
   type EffectiveMemorySettings,
@@ -13,7 +12,7 @@ import {
   type MemoryPayload,
   type MemoryServicePort,
   type PersistencePort,
-  type TaviErrorCode,
+  taviErrorOf,
 } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
 
@@ -186,7 +185,7 @@ export function createMemoryDigest(deps: MemoryDigestDependencies): MemoryDigest
       },
       { ...payload, workspaceId } as MemoryPayload,
     );
-    if (!answer.ok) throw new TaviError(answer.error.code as TaviErrorCode, answer.error.message);
+    if (!answer.ok) throw taviErrorOf(answer.error);
     return answer.result as T;
   };
 

@@ -165,7 +165,7 @@ describe("notices keep their keys", () => {
       "2 changed and withheld (read, write); 1 new, waiting for review; its instructions changed (nothing withheld; read them in the review). Allow rules still cover read. Review with `tavi mcp review mcp.files`.",
     );
     expect(localizedText(words.title, refs.title, bg)).toBe("mcp.files: инструментите му се промениха");
-    expect(localizedText(words.summary, refs.summary, bg)).toMatch(/^2 променени и задържани \(read, write\); 1 нови, чакат преглед; /);
+    expect(localizedText(words.summary, refs.summary, bg)).toMatch(/^2 променени и задържани \(read, write\); 1 нов, чака преглед; /);
   });
 
   it("tells Home of the month's scheduled work by key", async () => {

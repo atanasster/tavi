@@ -1,10 +1,8 @@
-import type { ChildProcess } from "node:child_process";
 import { spawn } from "node:child_process";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-import type { RunnerData } from "../template.js";
+import type { LiveRunnerOptions } from "../runner.js";
 
 /**
  * The skill eval pair: each task run twice in a private copy of a template,
@@ -19,11 +17,15 @@ import type { RunnerData } from "../template.js";
  * build and `tests/skill-eval.test.ts` imports its pure parts.
  */
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
-
-const { runnerData, taviRunJson, withTemplateCopies } = (await import(
-  new URL("../template.ts", import.meta.url).href
-)) as typeof import("../template.js");
+// What a template may hold, each run's private copy and the runner's scaffold are shared with the other live evals
+// (`node` runs the .ts; the types come from it too).
+const [
+  { withTemplateCopies },
+  { liveRun, liveRunnerOptions, parseRunnerFlags, reportHead, repositoryRoot, runnerData, running, runWhenMain, writeReport },
+] = await Promise.all([
+  import(new URL("../template.ts", import.meta.url).href) as Promise<typeof import("../template.js")>,
+  import(new URL("../runner.ts", import.meta.url).href) as Promise<typeof import("../runner.js")>,
+]);
 
 export interface SkillCaseChecks {
   /** Text the answer must hold, case-sensitively. */
@@ -216,93 +218,25 @@ export function formatSummary(summary: SkillEvalSummary, runs: readonly ArmRun[]
   return lines.join("\n");
 }
 
-export interface RunnerOptions {
+export interface RunnerOptions extends LiveRunnerOptions {
   readonly casesPath: string;
-  readonly only: readonly string[];
-  readonly connectionId?: string;
-  readonly model?: string;
-  readonly data: RunnerData;
-  readonly label?: string;
-  readonly outDir: string;
-  readonly timeoutMs: number;
-  readonly repeat: number;
 }
 
 /** The runner's options; a run without `--template` or `--data-dir` is refused, so it never writes into the default data directory. */
 export function parseArgs(argv: readonly string[]): RunnerOptions {
-  let casesPath = join(repositoryRoot, "evals", "skills", "cases.json");
-  const only: string[] = [];
-  let connectionId: string | undefined;
-  let model: string | undefined;
-  let template: string | undefined;
-  let dataDir: string | undefined;
-  let label: string | undefined;
-  let outDir = join(repositoryRoot, "evals", "skills", "results");
-  let timeoutSeconds = 180;
-  let repeat = 3;
-  for (let index = 0; index < argv.length; index += 1) {
-    const flag = argv[index];
-    const value = (): string => {
-      const next = argv[index + 1];
-      if (next === undefined) throw new Error(`${flag} needs a value`);
-      index += 1;
-      return next;
-    };
-    switch (flag) {
-      case "--cases":
-        casesPath = resolve(value());
-        break;
-      case "--case":
-        only.push(...value().split(","));
-        break;
-      case "--connection":
-        connectionId = value();
-        break;
-      case "--model":
-        model = value();
-        break;
-      case "--template":
-        template = value();
-        break;
-      case "--data-dir":
-        dataDir = value();
-        break;
-      case "--label":
-        label = value();
-        break;
-      case "--out":
-        outDir = resolve(value());
-        break;
-      case "--timeout-s":
-        timeoutSeconds = Number(value());
-        break;
-      case "--repeat":
-        repeat = Number(value());
-        break;
-      default:
-        throw new Error(`unknown option ${String(flag)}`);
-    }
-  }
-  if (!Number.isInteger(timeoutSeconds) || timeoutSeconds <= 0) throw new Error("--timeout-s must be a positive whole number");
-  if (!Number.isInteger(repeat) || repeat <= 0) throw new Error("--repeat must be a positive whole number");
-  const data = runnerData(template, dataDir, "evals/skills/README.md");
+  const flags = parseRunnerFlags(argv, {
+    fileFlag: "--cases",
+    file: join(repositoryRoot, "evals", "skills", "cases.json"),
+    onlyFlag: "--case",
+    outDir: join(repositoryRoot, "evals", "skills", "results"),
+    timeoutSeconds: 180,
+    repeat: 3,
+  });
+  const data = runnerData(flags.template, flags.dataDir, "evals/skills/README.md");
   // A shared data directory would carry one arm's skill into the other: each run needs its own copy.
   if ("dataDir" in data) throw new Error("the skill eval needs --template: each run imports its skill into a private copy");
-  return {
-    casesPath,
-    only,
-    ...(connectionId === undefined ? {} : { connectionId }),
-    ...(model === undefined ? {} : { model }),
-    data,
-    ...(label === undefined ? {} : { label }),
-    outDir,
-    timeoutMs: timeoutSeconds * 1000,
-    repeat,
-  };
+  return { casesPath: flags.file, ...liveRunnerOptions(flags, data) };
 }
-
-/** The `tavi` children still running, stopped by an interrupt. */
-const running = new Set<ChildProcess>();
 
 /** One `tavi skills …` in `dataDir`, refused unless it succeeds. */
 function taviSkills(args: readonly string[], dataDir: string): Promise<void> {
@@ -353,18 +287,8 @@ async function installSkill(entry: SkillCase, dataDir: string): Promise<void> {
   rmSync(packagePath, { force: true });
 }
 
-async function taviRun(prompt: string, dataDir: string, options: RunnerOptions): Promise<RunSummary> {
-  const { stdout, timedOut } = await taviRunJson({
-    repositoryRoot,
-    prompt,
-    dataDir,
-    ...(options.connectionId === undefined ? {} : { connectionId: options.connectionId }),
-    ...(options.model === undefined ? {} : { model: options.model }),
-    timeoutMs: options.timeoutMs,
-    running,
-  });
-  const summary = summarizeStream(stdout);
-  return timedOut ? { ...summary, timedOut: true } : summary;
+function taviRun(prompt: string, dataDir: string, options: RunnerOptions): Promise<RunSummary> {
+  return liveRun(prompt, dataDir, options, summarizeStream);
 }
 
 async function main(argv: readonly string[]): Promise<number> {
@@ -411,27 +335,9 @@ async function main(argv: readonly string[]): Promise<number> {
     },
   );
   const summary = summarize(runs);
-  const report = {
-    ...(options.label === undefined ? {} : { label: options.label }),
-    startedAt: startedAt.toISOString(),
-    ...(options.connectionId === undefined ? {} : { connection: options.connectionId }),
-    ...(options.model === undefined ? {} : { model: options.model }),
-    summary,
-    runs,
-  };
-  mkdirSync(options.outDir, { recursive: true });
-  const path = join(options.outDir, `${startedAt.toISOString().replaceAll(":", "-").replace(".", "-")}.json`);
-  writeFileSync(path, `${JSON.stringify(report, null, 2)}\n`);
+  const path = writeReport(options.outDir, startedAt, { ...reportHead(options, startedAt), summary, runs });
   process.stdout.write(`${formatSummary(summary, runs)}\n\nreport: ${path}\n`);
   return summary.regressed.length === 0 ? 0 : 1;
 }
 
-if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main(process.argv.slice(2)).then(
-    (code) => process.exit(code),
-    (error: unknown) => {
-      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-      process.exit(2);
-    },
-  );
-}
+runWhenMain(import.meta.url, main);

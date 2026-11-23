@@ -138,7 +138,12 @@ export function ChatPanelView({
     <ChatPanel
       open={panel.open}
       tab={panel.tab}
-      title={chatSummary.title ?? current?.title}
+      // Home's own title as the shell says it, in the page's language; a rename as the reader wrote it.
+      title={
+        current?.taskId !== undefined && current.taskId === state.home && !chatSummary.renamed
+          ? current.title
+          : (chatSummary.title ?? current?.title)
+      }
       status={
         current === undefined
           ? undefined

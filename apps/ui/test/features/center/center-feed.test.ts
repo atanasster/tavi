@@ -94,6 +94,24 @@ describe("the Command Center feed", () => {
     expect(owner.waits).toEqual([]);
   });
 
+  it("re-reads the summary, and with it the workspace's language, when the workspace's settings change", async () => {
+    const owner = scripted([
+      ok(summary("c1", { locale: "en" })),
+      ok({ cursor: "c2", changed: ["settings"] }),
+      ok(summary("c2b", { locale: "bg" })),
+    ]);
+    const locales: (string | undefined)[] = [];
+    const seen = recorder();
+    const handlers = {
+      ...seen.handlers,
+      summary: (value: CenterSummaryAnswer) => void locales.push(value.locale),
+    };
+    await followCenter(owner.client, "default", handlers, owner.signal, owner.sleep);
+    expect(CENTER_CHANGE_KINDS).toContain("settings");
+    expect(seen.changed).toEqual([["settings"]]);
+    expect(locales).toEqual(["en", "bg"]);
+  });
+
   it("waits longer after each failure, up to its ceiling, and starts over after a success", async () => {
     const owner = scripted([
       refused("UNAVAILABLE"),

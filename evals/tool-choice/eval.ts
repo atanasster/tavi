@@ -1,9 +1,7 @@
-import type { ChildProcess } from "node:child_process";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
-import type { RunnerData } from "../template.js";
+import type { LiveRunnerOptions } from "../runner.js";
 
 /**
  * The live tool-choice eval: everyday requests, each with the tools that are
@@ -20,12 +18,20 @@ import type { RunnerData } from "../template.js";
  * no build and `tests/tool-choice-eval.test.ts` imports its pure parts.
  */
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
-
-// What a template may hold and each run's private copy are shared with the other live evals (`node` runs the .ts; the types come from it too).
-const { runnerData, taviRunJson, withTemplateCopies } = (await import(
-  new URL("../template.ts", import.meta.url).href
-)) as typeof import("../template.js");
+// What a template may hold, each run's private copy and the runner's scaffold are shared with the other live evals
+// (`node` runs the .ts; the types come from it too).
+const {
+  chosenById,
+  liveRun,
+  liveRunnerOptions,
+  parseRunnerFlags,
+  reportHead,
+  repositoryRoot,
+  runnerData,
+  runWhenMain,
+  withRunData,
+  writeReport,
+} = (await import(new URL("../runner.ts", import.meta.url).href)) as typeof import("../runner.js");
 
 export interface ChoiceCase {
   readonly id: string;
@@ -275,136 +281,61 @@ export function formatSummary(summary: ChoiceSummary, runs: readonly CaseRun[]):
   return lines.join("\n");
 }
 
-export interface RunnerOptions {
+export interface RunnerOptions extends LiveRunnerOptions {
   readonly casesPath: string;
-  readonly only: readonly string[];
   /** What the data directory holds that some cases require (`--with`); cases needing anything else are skipped. */
   readonly available: readonly string[];
-  readonly connectionId?: string;
-  readonly model?: string;
-  readonly data: RunnerData;
-  readonly label?: string;
-  readonly outDir: string;
-  readonly timeoutMs: number;
-  readonly repeat: number;
 }
 
 /** The runner's options; a run without `--template` or `--data-dir` is refused, so it never writes into the default data directory. */
 export function parseArgs(argv: readonly string[]): RunnerOptions {
-  let casesPath = join(repositoryRoot, "evals", "tool-choice", "cases.json");
-  const only: string[] = [];
   const available: string[] = [];
-  let connectionId: string | undefined;
-  let model: string | undefined;
-  let template: string | undefined;
-  let dataDir: string | undefined;
-  let label: string | undefined;
-  let outDir = join(repositoryRoot, "evals", "tool-choice", "results");
-  let timeoutSeconds = 120;
-  let repeat = 3;
-  for (let index = 0; index < argv.length; index += 1) {
-    const flag = argv[index];
-    const value = (): string => {
-      const next = argv[index + 1];
-      if (next === undefined) throw new Error(`${flag} needs a value`);
-      index += 1;
-      return next;
-    };
-    switch (flag) {
-      case "--cases":
-        casesPath = resolve(value());
-        break;
-      case "--case":
-        only.push(...value().split(","));
-        break;
-      case "--with":
-        available.push(...value().split(","));
-        break;
-      case "--connection":
-        connectionId = value();
-        break;
-      case "--model":
-        model = value();
-        break;
-      case "--template":
-        template = value();
-        break;
-      case "--data-dir":
-        dataDir = value();
-        break;
-      case "--label":
-        label = value();
-        break;
-      case "--out":
-        outDir = resolve(value());
-        break;
-      case "--timeout-s":
-        timeoutSeconds = Number(value());
-        break;
-      case "--repeat":
-        repeat = Number(value());
-        break;
-      default:
-        throw new Error(`unknown option ${String(flag)}`);
-    }
-  }
-  if (!Number.isInteger(timeoutSeconds) || timeoutSeconds <= 0) throw new Error("--timeout-s must be a positive whole number");
-  if (!Number.isInteger(repeat) || repeat <= 0) throw new Error("--repeat must be a positive whole number");
+  const flags = parseRunnerFlags(argv, {
+    fileFlag: "--cases",
+    file: join(repositoryRoot, "evals", "tool-choice", "cases.json"),
+    onlyFlag: "--case",
+    outDir: join(repositoryRoot, "evals", "tool-choice", "results"),
+    timeoutSeconds: 120,
+    repeat: 3,
+    extra: (flag, value) => {
+      if (flag !== "--with") return false;
+      available.push(...value().split(","));
+      return true;
+    },
+  });
   const unknown = available.filter((need) => !REQUIREMENTS.has(need));
   if (unknown.length > 0) throw new Error(`--with takes ${[...REQUIREMENTS].join(", ")}, not ${unknown.join(", ")}`);
-  if (available.length > 0 && template !== undefined)
+  if (available.length > 0 && flags.template !== undefined)
     throw new Error("--with needs --data-dir: a template holds no mail account or calendar, so its runs could not use them");
   return {
-    casesPath,
-    only,
+    casesPath: flags.file,
     available,
-    ...(connectionId === undefined ? {} : { connectionId }),
-    ...(model === undefined ? {} : { model }),
-    data: runnerData(template, dataDir, "evals/tool-choice/README.md"),
-    ...(label === undefined ? {} : { label }),
-    outDir,
-    timeoutMs: timeoutSeconds * 1000,
-    repeat,
+    ...liveRunnerOptions(flags, runnerData(flags.template, flags.dataDir, "evals/tool-choice/README.md")),
   };
 }
 
-/** The `tavi run` children still running, stopped by an interrupt. */
-const running = new Set<ChildProcess>();
-
 /** One run of `prompt` in `dataDir`, read for its calls. */
-async function taviRun(prompt: string, dataDir: string, options: RunnerOptions): Promise<RunSummary> {
-  const { stdout, timedOut } = await taviRunJson({
-    repositoryRoot,
-    prompt,
-    dataDir,
-    ...(options.connectionId === undefined ? {} : { connectionId: options.connectionId }),
-    ...(options.model === undefined ? {} : { model: options.model }),
-    timeoutMs: options.timeoutMs,
-    running,
-  });
-  return { ...summarizeStream(stdout), ...(timedOut ? { timedOut: true as const } : {}) };
+function taviRun(prompt: string, dataDir: string, options: RunnerOptions): Promise<RunSummary> {
+  return liveRun(prompt, dataDir, options, summarizeStream);
 }
 
 async function main(argv: readonly string[]): Promise<number> {
   const options = parseArgs(argv);
-  const file = parseCasesFile(JSON.parse(readFileSync(options.casesPath, "utf8")));
-  const unknown = options.only.filter((id) => !file.cases.some((entry) => entry.id === id));
-  if (unknown.length > 0) throw new Error(`no such case: ${unknown.join(", ")}`);
-  const chosen = options.only.length === 0 ? file.cases : file.cases.filter((entry) => options.only.includes(entry.id));
+  const chosen = chosenById(parseCasesFile(JSON.parse(readFileSync(options.casesPath, "utf8"))).cases, options.only, "case");
   const { run: cases, skipped } = selectCases(chosen, options.available);
   if (cases.length === 0)
     throw new Error(
       `nothing to run: ${skipped.map((entry) => `${entry.id} needs ${entry.requires.join(", ")}`).join("; ")} (--with, with --data-dir)`,
     );
-  for (const entry of skipped)
-    process.stderr.write(`[tool-choice eval] skipping ${entry.id}: needs ${entry.requires.join(", ")} (--with)\n`);
+  const log = (message: string): void => void process.stderr.write(`[tool-choice eval] ${message}\n`);
+  for (const entry of skipped) log(`skipping ${entry.id}: needs ${entry.requires.join(", ")} (--with)`);
   const startedAt = new Date();
   const runs: CaseRun[] = [];
-  const runCases = async (dataDirFor: (name: string) => string, done: (dataDir: string) => void = () => undefined): Promise<void> => {
+  await withRunData(options.data, { prefix: "choice-", log }, async (dataDirFor, done) => {
     let count = 0;
     for (const entry of cases)
       for (let run = 1; run <= options.repeat; run += 1) {
-        process.stderr.write(`[tool-choice eval] ${entry.id} #${run}…\n`);
+        log(`${entry.id} #${run}…`);
         count += 1;
         const dataDir = dataDirFor(`r${count}`);
         try {
@@ -413,37 +344,11 @@ async function main(argv: readonly string[]): Promise<number> {
           done(dataDir);
         }
       }
-  };
-  const { data } = options;
-  if ("dataDir" in data) await runCases(() => data.dataDir);
-  else
-    await withTemplateCopies(
-      data.template,
-      { prefix: "choice-", commands: running, log: (message) => process.stderr.write(`[tool-choice eval] ${message}\n`) },
-      (copy) => runCases(copy, (dataDir) => rmSync(dataDir, { recursive: true, force: true })),
-    );
+  });
   const summary = summarize(runs, skipped);
-  const report = {
-    ...(options.label === undefined ? {} : { label: options.label }),
-    startedAt: startedAt.toISOString(),
-    ...(options.connectionId === undefined ? {} : { connection: options.connectionId }),
-    ...(options.model === undefined ? {} : { model: options.model }),
-    summary,
-    runs,
-  };
-  mkdirSync(options.outDir, { recursive: true });
-  const path = join(options.outDir, `${startedAt.toISOString().replaceAll(":", "-").replace(".", "-")}.json`);
-  writeFileSync(path, `${JSON.stringify(report, null, 2)}\n`);
+  const path = writeReport(options.outDir, startedAt, { ...reportHead(options, startedAt), summary, runs });
   process.stdout.write(`${formatSummary(summary, runs)}\n\nreport: ${path}\n`);
   return summary.failing.length === 0 ? 0 : 1;
 }
 
-if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main(process.argv.slice(2)).then(
-    (code) => process.exit(code),
-    (error: unknown) => {
-      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-      process.exit(2);
-    },
-  );
-}
+runWhenMain(import.meta.url, main);

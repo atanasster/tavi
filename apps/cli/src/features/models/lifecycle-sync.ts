@@ -11,6 +11,7 @@ import {
   type ModelLifecycle,
   type ModelLifecycleEntry,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
 
 import type { TaviRuntime } from "../../runtime/types.js";
@@ -251,13 +252,17 @@ export const RHUMB_KEY_HINT =
   "To check which models retire, get a free Rhumb key at https://rhumbdata.com/sign-up and store it: tavi credentials set rhumb (or set RHUMB_KEY).";
 
 /** The report of a sync, in words, with the replacements `cache` holds. */
-export function lifecycleSyncReport(result: LifecycleSyncResult, cache: ReplacementCache = replacementCache): LifecycleSyncReport {
+export function lifecycleSyncReport(
+  result: LifecycleSyncResult,
+  cache: ReplacementCache = replacementCache,
+  t: CoreT = coreEnglish,
+): LifecycleSyncReport {
   const providers = providersOf(result.connections);
   return {
     ...(result.catalogVersion === undefined ? {} : { catalogVersion: result.catalogVersion }),
     complete: result.complete,
     connections: result.connections,
-    warnings: result.warnings.map((warning) => warningInWords(warning, providers, cache)),
+    warnings: result.warnings.map((warning) => warningInWords(warning, providers, cache, t)),
     unread: result.unread,
   };
 }
@@ -271,6 +276,7 @@ function warningInWords(
   { target, lifecycle, warnings }: LifecycleInUseWarning,
   providers: ReadonlyMap<string, string>,
   cache: ReplacementCache,
+  t: CoreT = coreEnglish,
 ): LifecycleSyncReport["warnings"][number] {
   const level = worstLifecycleLevel(warnings) ?? "info";
   return {
@@ -278,7 +284,7 @@ function warningInWords(
     model: target.model,
     level,
     usedBy: target.usedBy,
-    says: warnings.map((warning) => lifecycleWarningText(warning)),
+    says: warnings.map((warning) => lifecycleWarningText(warning, t)),
     ...(isReplacedLevel(level)
       ? {
           replacements: knownReplacements(cache, {
@@ -317,6 +323,7 @@ export async function storedLifecycleReport(
   sources: Pick<LifecycleSyncSources, "stored" | "inUse" | "connections">,
   now: Date,
   cache: ReplacementCache = replacementCache,
+  t: CoreT = coreEnglish,
 ): Promise<StoredLifecycleReport> {
   const stored = await sources.stored();
   const inUse = await sources.inUse();
@@ -352,7 +359,7 @@ export async function storedLifecycleReport(
     stale: oldest !== undefined && now.getTime() - Date.parse(oldest.checkedAt) > 2 * LIFECYCLE_SYNC_INTERVAL_MS,
     unchecked,
     warnings: inUseWarnings(inUse.targets, lifecycles, now.toISOString().slice(0, 10)).map((warning) =>
-      warningInWords(warning, providers, cache),
+      warningInWords(warning, providers, cache, t),
     ),
     unread: inUse.unread,
     ...(hint === undefined ? {} : { hint }),
@@ -362,6 +369,7 @@ export async function storedLifecycleReport(
 /** What the last sync stored of a runtime's models in use, for today: doctor's and `models lifecycle`'s, with no network. */
 export async function runtimeLifecycleReport(
   runtime: Pick<TaviRuntime, "store" | "access" | "routines" | "routerRepository" | "clock">,
+  t: CoreT = coreEnglish,
 ): Promise<StoredLifecycleReport> {
   const service = runtime.store.services.modelConfig;
   return await storedLifecycleReport(
@@ -371,6 +379,8 @@ export async function runtimeLifecycleReport(
       connections: async () => await service.listConnections(),
     },
     new Date(runtime.clock.now()),
+    replacementCache,
+    t,
   );
 }
 
@@ -397,6 +407,8 @@ export async function syncRuntimeModelLifecycle(
     readonly fetchImpl?: typeof globalThis.fetch;
     readonly now?: () => Date;
     readonly signal?: AbortSignal;
+    /** The words its warnings are said in: the asking workspace's language. */
+    readonly t?: CoreT;
   } = {},
 ): Promise<LifecycleSyncReport | LifecycleSyncNoKey> {
   const env = options.env ?? process.env;
@@ -407,7 +419,11 @@ export async function syncRuntimeModelLifecycle(
     ...(options.signal === undefined ? {} : { signal: options.signal }),
   });
   const now = (options.now ?? (() => new Date()))();
-  return lifecycleSyncReport(await syncModelLifecycle(lifecycleSyncSourcesOf(runtime), call, now, options.signal));
+  return lifecycleSyncReport(
+    await syncModelLifecycle(lifecycleSyncSourcesOf(runtime), call, now, options.signal),
+    replacementCache,
+    options.t ?? coreEnglish,
+  );
 }
 
 /** One line for the owner's log: the models in use that warn, or that none do. */

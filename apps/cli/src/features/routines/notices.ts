@@ -14,6 +14,8 @@ import {
 import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
 
+import type { ChatNotices } from "../tasks/notices.js";
+
 /**
  * A routine's notices: it paused on its own, one of its delivery targets
  * paused, or a run expired before it could finish — what is wrong in a
@@ -32,17 +34,12 @@ export interface RoutineNoticeDependencies {
     readonly target: (scope: RoutineScope, targetId: string) => Promise<RoutineDeliveryTarget>;
   };
   readonly messaging: Pick<MessagingServicePort, "send" | "buildDestination">;
-  /** Into the person's Home, once per `sourceKey`; false when they have no Home. */
-  readonly postHome: (input: {
-    readonly workspaceId: string;
-    readonly principalId: string;
-    readonly sourceKey: string;
-    readonly title: string;
-    readonly summary: string;
-    /** `title` and `summary` by key: the routine's and the target's names are parameters. */
-    readonly titleRef?: TextRef;
-    readonly summaryRef?: TextRef;
-  }) => Promise<boolean>;
+  /**
+   * `ChatNotices.postAlert`: into the person's Home, once per `sourceKey`; false
+   * when they have no Home. `titleRef` and `summaryRef` carry the routine's and
+   * the target's names as parameters.
+   */
+  readonly postHome: ChatNotices["postAlert"];
   readonly log: (message: string, fields: Record<string, unknown>) => void;
   /** The words a target's channel is told in: the workspace's language. Absent, English. */
   readonly channelWords?: (workspaceId: string) => Promise<CoreT>;
@@ -180,7 +177,12 @@ export function createRoutineNotices(deps: RoutineNoticeDependencies): RoutineNo
           ? textRef("notice.routine.expired.text", { name, due: run.scheduledFor ?? run.claimedAt })
           : cause === "credential-grace"
             ? textRef("notice.routine.credentialGrace.text", { name, hours: String(execution.credentialGraceHours), resume: RESUME_HINT })
-            : textRef("notice.routine.failures.text", { name, n: String(execution.failureThreshold), resume: RESUME_HINT });
+            : textRef("notice.routine.failures.text", {
+                name,
+                count: execution.failureThreshold,
+                n: String(execution.failureThreshold),
+                resume: RESUME_HINT,
+              });
       return tell(run, {
         key: `routine-notice:${run.runId}:${cause}`,
         title: textRef(cause === "expired" ? "notice.routine.expired.title" : "notice.routine.paused.title", { name }),
@@ -194,7 +196,10 @@ export function createRoutineNotices(deps: RoutineNoticeDependencies): RoutineNo
       const why =
         cause === "credential-grace"
           ? textRef("notice.routine.delivery.why.credentials", { hours: String(run.snapshot.execution.credentialGraceHours) })
-          : textRef("notice.routine.delivery.why.failures", { n: String(run.snapshot.execution.failureThreshold) });
+          : textRef("notice.routine.delivery.why.failures", {
+              count: run.snapshot.execution.failureThreshold,
+              n: String(run.snapshot.execution.failureThreshold),
+            });
       const fix =
         cause === "credential-grace"
           ? textRef("notice.routine.delivery.fix.credentials")

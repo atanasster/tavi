@@ -192,9 +192,9 @@ export interface ConfigDependencies {
   /** `models voice-status` / `voice-setup`: voice messages' transcription, and the job that installs it; absent offline. */
   readonly voice?: VoiceSetup;
   /** `models sync`: what Rhumb says of the models in use, stored; absent offline, where the CLI composes its own runtime. */
-  readonly lifecycleSync?: () => Promise<LifecycleSyncReport | LifecycleSyncNoKey>;
+  readonly lifecycleSync?: (workspaceId: string) => Promise<LifecycleSyncReport | LifecycleSyncNoKey>;
   /** `models lifecycle`: what the last sync stored of the models in use, for today; absent offline. */
-  readonly lifecycleReport?: () => Promise<StoredLifecycleReport>;
+  readonly lifecycleReport?: (workspaceId: string) => Promise<StoredLifecycleReport>;
   /** `models replace`: what moving one model to another would change, or the change made; absent offline. */
   readonly replaceModel?: (
     from: ModelTarget,
@@ -624,10 +624,11 @@ export function modelsCommand(deps: ConfigDependencies, input: ModelsPayload): P
           return input.action === "voice-status" ? await deps.voice.status() : await deps.voice.start();
         case "sync":
           if (deps.lifecycleSync === undefined) throw new Error("this owner cannot sync model lifecycles");
-          return await deps.lifecycleSync();
+          // Its warnings are said in the asking workspace's language.
+          return await deps.lifecycleSync(workspaceOf(input));
         case "lifecycle":
           if (deps.lifecycleReport === undefined) throw new Error("this owner cannot read model lifecycles");
-          return await deps.lifecycleReport();
+          return await deps.lifecycleReport(workspaceOf(input));
         case "replace": {
           if (deps.replaceModel === undefined) throw new Error("this owner cannot replace models");
           if (input.model === undefined || input.replaceWith === undefined)

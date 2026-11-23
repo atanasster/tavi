@@ -1,4 +1,6 @@
 import { emit } from "../../cli/output.js";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+import { ownerWords, pageIn, storeWords } from "../../shared/terminal-words.js";
 import { EXIT, configRefusalExit, reportCommandFailure } from "../../cli/exit.js";
 import type { RemindersCommandOptions } from "./parse.js";
 import { terminalText } from "../../shared/terminal-text.js";
@@ -20,10 +22,12 @@ import type { ResolvedDataDirectory } from "../../cli/store.js";
  */
 export async function remindersCliCommand(options: ResolvedDataDirectory<RemindersCommandOptions>, io: CliIo): Promise<number> {
   const operationKey = `cli:${randomUUID()}`;
-  const print = (result: unknown): number => {
-    emit(io, options.format, result, () => remindersResultText(options, result, new Date(), io.columns));
+  // The text is said in the workspace's language, read only when text is printed; JSON stays as the owner answered.
+  const print = (result: unknown, t: CoreT = coreEnglish): number => {
+    emit(io, options.format, result, () => pageIn(t, remindersResultText(options, result, new Date(), io.columns, t), io.columns));
     return EXIT.ok;
   };
+  const textual = options.format !== "json";
   const mutates = options.action !== "list" && options.action !== "show";
   const codes = { NOT_FOUND: EXIT.usage };
   return runFamily(options.dataDirectory, "reminders", io, {
@@ -52,7 +56,7 @@ export async function remindersCliCommand(options: ResolvedDataDirectory<Reminde
       }
       return remindersPayload(options, zone, operationKey);
     },
-    render: (result) => print(result),
+    render: async (result, client) => print(result, textual ? await ownerWords(client, options.workspaceId) : coreEnglish),
     offline: async (store) => {
       const deps = { repositories: store.asPort().repositories, principalOf: () => options.principalId, now: () => new Date() };
       const zone = needsZone(options) ? await workspaceZone(deps, options.workspaceId) : undefined;
@@ -61,7 +65,7 @@ export async function remindersCliCommand(options: ResolvedDataDirectory<Reminde
         io.stderr(`${terminalText(answer.error.message)}\n`);
         return answer.error.code === "NOT_FOUND" ? codes.NOT_FOUND : configRefusalExit(answer.error.code);
       }
-      return print(answer.result);
+      return print(answer.result, textual ? await storeWords(store, options.workspaceId) : coreEnglish);
     },
     failed: (error) => reportCommandFailure(error, io, "reminders command failed"),
   });

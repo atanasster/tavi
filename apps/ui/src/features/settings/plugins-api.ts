@@ -272,9 +272,19 @@ export const mcpActions = {
 };
 
 export const pluginActions = {
-  list: (client: SettingsClient) => ask<{ readonly plugins: readonly PluginView[] }>(client, "plugins", { action: "list" }),
+  /** The plugins, their words in `workspaceId`'s language (the owner's default workspace's when absent). */
+  list: (client: SettingsClient, workspaceId?: string) =>
+    ask<{ readonly plugins: readonly PluginView[] }>(client, "plugins", {
+      action: "list",
+      ...(workspaceId === undefined ? {} : { workspaceId }),
+    }),
   /** One plugin as `show` gives it: with its hooks' activity (`hookActivity`) when it has hooks or commands. */
-  show: (client: SettingsClient, pluginId: string) => ask<{ readonly plugin: PluginView }>(client, "plugins", { action: "show", pluginId }),
+  show: (client: SettingsClient, pluginId: string, workspaceId?: string) =>
+    ask<{ readonly plugin: PluginView }>(client, "plugins", {
+      action: "show",
+      pluginId,
+      ...(workspaceId === undefined ? {} : { workspaceId }),
+    }),
   async install(client: SettingsClient, path: string): Promise<Outcome<string | undefined>> {
     const written = await ask<PluginWrite>(client, "plugins", { action: "install", path });
     if (!written.ok) return written;

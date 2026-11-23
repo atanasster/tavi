@@ -1,26 +1,20 @@
 // @vitest-environment jsdom
 import type { ClientResponse } from "@tavi/client/browser";
 import type { AppsCatalogAnswer, ConnectableApp } from "@tavi/contracts";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { ConnectedApps, type AppsWhere } from "../../../src/features/apps/ConnectedApps.js";
-import { setLocale } from "../../../src/lib/i18n.js";
 import type { SettingsClient } from "../../../src/lib/ipc.js";
-import { mountSettled as mount, unmountAll } from "../../support/dom.js";
+import { mountSettled as mount } from "../../support/dom.js";
 import { InWorkspace } from "../../support/workspace.js";
+import { inBulgarian } from "../../support/bulgarian.js";
+import { calendarAccount, calendarReach } from "../../support/apps.js";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 /** Connected apps in Bulgarian: the page's tabs, the list's groups and health, and Discover's sections. App names and summaries are the owner's. */
 
-beforeEach(async () => {
-  await setLocale("bg");
-});
-
-afterEach(async () => {
-  unmountAll();
-  await setLocale("en");
-});
+inBulgarian();
 
 const app: ConnectableApp = {
   appId: "calendar-app",
@@ -31,27 +25,8 @@ const app: ConnectableApp = {
   source: { kind: "mcp", pluginIds: ["mcp.cal"], preset: "calendar-preset", verified: "tavi-preset", isolation: "remote" },
   auth: { kind: "oauth", client: "shared-provider", provider: "example", scopes: [], stepUp: [] },
   tools: [],
-  egress: { hosts: ["calendar.example.com"], lan: false, anyNetwork: false },
-  credentials: [{ name: "sign-in", raw: false }],
-  settings: [],
-  trust: { output: "untrusted", source: "mcp", confidentiality: "personal" },
-  accounts: [
-    {
-      accountId: "mcp.cal",
-      label: "you@example.com",
-      identity: "you@example.com",
-      owner: { kind: "owner" },
-      health: "ready",
-      grantedScopes: [],
-      missingScopes: [],
-      signedInAt: "2026-10-16T09:00:00.000Z",
-      expiresWeekly: false,
-      workspaces: ["default"],
-      people: false,
-      sharing: "personal",
-      readOnly: false,
-    },
-  ],
+  ...calendarReach,
+  accounts: [calendarAccount],
   health: "ready",
   repairs: [],
   warnings: [],
@@ -105,6 +80,40 @@ describe("Connected apps in Bulgarian", () => {
     expect(text).toContain("Аварийно спиране: Изключи всички MCP приложения");
     for (const word of ["Connected apps", "Discover", "Connected", "The kill switch", "Turn every MCP app off"])
       expect(text).not.toContain(word);
+  });
+
+  it("says a repair's button and cause in Bulgarian from their keys, and a server's own reason as written", async () => {
+    const lapsed: ConnectableApp = {
+      ...app,
+      health: "needs-sign-in",
+      accounts: app.accounts.map((account) => ({ ...account, health: "needs-sign-in" as const })),
+      repairs: [
+        {
+          kind: "sign-in",
+          accountId: "mcp.cal",
+          title: "Sign in to Calendar again",
+          titleRef: { key: "app.repair.signInAgain", params: { app: "Calendar" } },
+          detail: "its sign-in expired or was revoked",
+          detailRef: { key: "app.repair.signInLapsed" },
+          cli: "tavi mcp login mcp.cal",
+        },
+      ],
+    };
+    const repairing: SettingsClient = {
+      request: async (command, payload) =>
+        command === "apps" && (payload as Record<string, unknown>)["action"] === "list"
+          ? ({ ok: true, result: { apps: [lapsed] } } as ClientResponse)
+          : client.request(command, payload),
+    };
+    const view = await mount(
+      <InWorkspace client={repairing} workspaceId="default">
+        <ConnectedApps where={{ tab: "connected" }} onWhere={() => undefined} />
+      </InWorkspace>,
+    );
+    const text = view.textContent ?? "";
+    expect(text).toContain("Влез отново в Calendar");
+    expect(text).toContain("входът изтече или беше отменен");
+    expect(text).not.toContain("Sign in to Calendar again");
   });
 
   it("names Discover's sections", async () => {

@@ -25,6 +25,8 @@ import {
   nextSignInLine,
   pageFix,
   primaryRepair,
+  repairDetail,
+  repairTitle,
 } from "./model.js";
 import { Button } from "../../ui/Button.js";
 import { RowAction } from "../../ui/RowAction.js";
@@ -309,7 +311,7 @@ function AppRow({
         {/* An account named like its app (a channel's) says nothing the title does not. */}
         {accounts === app.name ? null : <span className="meta-sm">{accounts}</span>}
         {next === undefined ? null : <span className="meta-sm">{next}</span>}
-        {repair === undefined ? null : <span className="meta-sm">{repair.detail}</span>}
+        {repair === undefined ? null : <span className="meta-sm">{repairDetail(repair)}</span>}
       </span>
       {repair === undefined || repair.kind === "cli-only" ? null : (
         <span className="actions">
@@ -321,7 +323,7 @@ function AppRow({
               )
             }
           >
-            {repair.title}
+            {repairTitle(repair)}
           </RowAction>
         </span>
       )}

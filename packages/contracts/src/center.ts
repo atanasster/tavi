@@ -22,7 +22,9 @@ import type { MemoryScope } from "./memory.js";
  * to refetch, not the rows that changed. A kind is added here with counter
  * triggers on its tables in the runtime (`browser`: browser history; `plugin`:
  * plugin settings and versions, owner-wide, and a workspace's
- * `uiRoles`/`uiPlacements`, so every open page re-reads its UI plugins).
+ * `uiRoles`/`uiPlacements`, so every open page re-reads its UI plugins;
+ * `settings`: every write of a workspace's settings, so an open page re-reads
+ * the summary and with it the workspace's language).
  */
 export const CENTER_CHANGE_KINDS = [
   "task",
@@ -36,6 +38,7 @@ export const CENTER_CHANGE_KINDS = [
   "reminder",
   "browser",
   "plugin",
+  "settings",
 ] as const;
 
 /** The counter scope of an owner-wide change (plugins are installed and enabled for the whole owner). */

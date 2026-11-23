@@ -92,6 +92,7 @@ export const schedule = {
   "schedule.spec.sentenceEvery": "{days}, {step} from {from} to {to} ({timezone})",
   "schedule.spec.everyHours": { one: "every hour", other: "every {count} hours" },
   "schedule.spec.until": "{spec} until {date}",
+  "schedule.spec.stored": "{spec}",
   /** A cadence as a label leads with it: "Daily 07:00 · Europe/Sofia". */
   "schedule.spec.labelAt": "{days} {times}",
   /** After a dated pattern: "Monthly on the 1st, 09:00". */
@@ -165,6 +166,15 @@ export const schedule = {
   "reminder.offset.hours": { one: "{amount} hour before", other: "{amount} hours before" },
   "reminder.offset.days": { one: "{amount} day before", other: "{amount} days before" },
   "reminder.offset.at": "{span} at {time}",
+  /** A reminder read back to the person in the terminal (the agent's own read-back stays English). */
+  "reminder.readBack.at": "{day} {time}",
+  "reminder.readBack.dayYear": "{day} {year}",
+  "reminder.readBack.date": "{day} {monthShort} {year}",
+  "reminder.readBack.once": "{time} {timezone}; I'll remind you then",
+  "reminder.readBack.event": "{time} {timezone}; I'll remind you {notices}",
+  "reminder.readBack.eventNone": "{time} {timezone}; no notice is still to come",
+  "reminder.readBack.repeat": "{days} at {times} {timezone}",
+  "reminder.readBack.next": "{text}; next {time}",
 
   "routine.report.llmNews": "LLM news",
 } as const;

@@ -368,6 +368,15 @@ describe("the built-in browser view", () => {
     expect(addressOf("https://example.com/")).toEqual({ host: "example.com", path: "" });
     expect(addressOf("about:")).toEqual({ host: "", path: "" });
     expect(addressOf(undefined)).toEqual({ host: "", path: "" });
+    // A path in another script reads as its words, not its percent codes; a hidden control or direction mark stays encoded.
+    expect(addressOf("https://bg.wikipedia.org/wiki/%D0%92%D1%80%D1%8A%D1%85")).toEqual({ host: "bg.wikipedia.org", path: "/wiki/Връх" });
+    expect(addressOf("https://example.com/a%E2%80%AEb")).toEqual({ host: "example.com", path: "/a%E2%80%AEb" });
+    // Characters that render as nothing stay encoded too: a soft hyphen, a Hangul filler, a tag character.
+    expect(addressOf("https://example.com/a%C2%ADb")).toEqual({ host: "example.com", path: "/a%C2%ADb" });
+    expect(addressOf("https://example.com/a%CD%8Fb")).toEqual({ host: "example.com", path: "/a%CD%8Fb" });
+    expect(addressOf("https://example.com/a%E3%85%A4b")).toEqual({ host: "example.com", path: "/a%E3%85%A4b" });
+    expect(addressOf("https://example.com/a%F3%A0%81%81b")).toEqual({ host: "example.com", path: "/a%F3%A0%81%81b" });
+    expect(addressOf("https://example.com/%E0%A4%A")).toEqual({ host: "example.com", path: "/%E0%A4%A" });
   });
 
   it("ships a page with nothing inline, under its own CSP", () => {

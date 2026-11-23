@@ -20,6 +20,7 @@ import { definedOnly } from "@tavi/contracts/util";
 import type { ToolRegistry } from "@tavi/runtime";
 import { z } from "zod";
 
+import { cardWords } from "../approvals/card-words.js";
 import { nearestHeartbeatInterval } from "./text.js";
 import { saveHeartbeatChange } from "./owner.js";
 
@@ -247,11 +248,12 @@ export function registerHeartbeatTools(tools: ToolRegistry, deps: HeartbeatToolD
         : lines.length > 0
           ? `${parsed.data.reason}\n\n${lines.join("\n")}`
           : `${sites}${parsed.data.reason}\n\n(Read the heartbeat again to see this change as a diff.)`;
+      const t = cardWords(context);
       return {
-        display: { title: "Change the heartbeat", detail: detail.slice(0, 2_000) },
+        display: { title: t("approval.card.heartbeat.change"), detail: detail.slice(0, 2_000) },
         subjects: ["heartbeat"],
         risk: "medium",
-        reasons: ["Changes what the heartbeat watches and when it may message you"],
+        reasons: [t("approval.reason.heartbeat.change")],
         // Each change is approved on its own, never by a standing rule or grant.
         onceOnly: true,
         askWhenTainted: true,

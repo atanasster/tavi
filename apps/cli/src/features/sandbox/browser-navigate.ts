@@ -2,6 +2,7 @@ import { TaviError } from "@tavi/contracts";
 import type { ToolRegistry } from "@tavi/runtime";
 
 import { assessBrowserNavigate } from "../approvals/call-assessors.js";
+import { cardWords } from "../approvals/card-words.js";
 import { type BrowserToolContext, noteApprovedHost, requireChatSession, withCancelOnAbort } from "./browser-context.js";
 import {
   NEEDS_TARGET,
@@ -27,7 +28,7 @@ export function registerBrowserNavigate(registry: ToolRegistry, ctx: BrowserTool
     effect: "external",
     requiredPermissions: ["tools.invoke"],
     inputSchema: BrowserNavigateInputSchema,
-    assess: (input) => withDestination(ctx, assessBrowserNavigate(input), input),
+    assess: (input, context) => withDestination(ctx, assessBrowserNavigate(input, cardWords(context)), input),
     // The page's text reaches the model: web content is untrusted.
     untrustedOutput: true,
     // Every browser read is personal: sessions share the persistent profile, with the person's cookies.

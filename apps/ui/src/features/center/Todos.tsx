@@ -1,4 +1,4 @@
-import type { Todo, TodosListAnswer } from "@tavi/contracts";
+import { DEFAULT_TODO_LIST, type Todo, type TodosListAnswer } from "@tavi/contracts";
 import { useState, type FormEvent } from "react";
 
 import { useLoaded } from "../../hooks/use-loaded.js";
@@ -72,7 +72,7 @@ export function Todos({ revision }: { readonly revision: number }) {
       {todos.data !== undefined && groups.length === 0 ? <p className="meta-sm">{t("center.todos.empty")}</p> : null}
       {groups.map((group) => (
         <div key={group.list} className="center-todo-list">
-          <h3 className="meta-sm">{group.list}</h3>
+          <h3 className="meta-sm">{group.list === DEFAULT_TODO_LIST ? t("center.todos.inbox") : group.list}</h3>
           <ul className="schedule-recurring-list card-flat list-reset">
             {group.todos.map((todo) => {
               const due = dueText(todo, zone);

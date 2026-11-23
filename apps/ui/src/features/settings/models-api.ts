@@ -507,7 +507,11 @@ export const modelActions = {
     });
     if (written.ok)
       return { ok: true, value: translateNow(enable ? "settings.models.video.whole" : "settings.models.video.frames", { model }) };
-    const disclosure = written.details?.["disclosure"];
+    const english = written.details?.["disclosure"];
+    // Said in the page's language from the provider the owner named; the owner's English where it named none.
+    const provider = written.details?.["provider"];
+    const disclosure =
+      currentLocale() !== "en" && typeof provider === "string" ? translateCore("model.video.disclosure", { provider, model }) : english;
     return typeof disclosure === "string" && enable && !confirmed ? { ok: false, disclosure, message: written.message } : written;
   },
   /** `tavi models probe --video`: whether the model watches a short clip sent whole, recorded on its catalog row. */

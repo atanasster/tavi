@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { registerAuthoringTools } from "../../src/features/plugins/authoring-tools.js";
 import { folderFileCheck, fsRootResolver } from "../../src/features/folders/fs-tools.js";
 import { PLUGIN_AUTHORING_GUIDE } from "../../src/features/plugins/authoring-guide.js";
+import { directSandbox as direct } from "../support/direct-sandbox.js";
 
 /** The context an assessor is given with a call; these tools do not read it. */
 const assessContext = { workspaceId: "default", principalId: "operator", runId: "task-1", caller: "test" };
@@ -34,23 +35,6 @@ function contextIn(primary: string): InvocationContext {
   };
   return { ...context, folder };
 }
-
-/** Runs the command unconfined: what is under test is the guide's own example, not the sandbox. */
-const direct: SandboxPort = {
-  capabilities: () => ({ available: true, platforms: ["darwin"] }),
-  run: async (_policy, command) => {
-    const run = spawnSync(command.command, [...(command.args ?? [])], { cwd: command.cwd, encoding: "utf8" });
-    return {
-      session: { sessionId: "s", state: "completed" },
-      exitCode: run.status,
-      stdout: run.stdout,
-      stderr: run.stderr,
-      truncated: false,
-    };
-  },
-  cancel: async () => {},
-  dispose: async () => {},
-};
 
 /** The guide's fenced blocks of one language, in order. */
 const blocks = (language: string): string[] =>

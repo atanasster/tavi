@@ -3,6 +3,7 @@ import { definedOnly, errorMessage } from "@tavi/contracts/util";
 import type { ToolRegistry } from "@tavi/runtime";
 
 import { BROWSER_BATCH_FILL_STEPS, BROWSER_BATCH_MAX_STEPS, assessBrowserBatch, longBatchRefusal } from "../approvals/call-assessors.js";
+import { cardWords } from "../approvals/card-words.js";
 import {
   type BrowserToolContext,
   elementOf,
@@ -42,13 +43,14 @@ export function registerBrowserBatch(registry: ToolRegistry, ctx: BrowserToolCon
     effect: "external",
     requiredPermissions: ["tools.invoke"],
     inputSchema: BrowserBatchInputSchema,
-    assess: (input) =>
+    assess: (input, context) =>
       onPageHost(
         ctx,
         assessBrowserBatch(
           input,
           (sessionId, ref) => elementOf(ctx, sessionId, ref),
           (sessionId) => pageOf(ctx, sessionId),
+          cardWords(context),
         ),
         input,
       ),

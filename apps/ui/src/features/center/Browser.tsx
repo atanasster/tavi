@@ -7,7 +7,7 @@ import { useOpenError } from "../../hooks/use-action.js";
 import { useLazyLoad } from "../../hooks/use-loaded.js";
 import { useNearViewport } from "../../hooks/use-near-viewport.js";
 import { taskPath } from "../shell/route.js";
-import { useT } from "../../lib/i18n.js";
+import { translateCore, useT } from "../../lib/i18n.js";
 import type { Outcome, SettingsClient } from "../../lib/ipc.js";
 import { appendPage, refreshFirstPage, useOlderPage, type Paged } from "../../lib/paging.js";
 import { Disclosure, Failure, LoadMore, LoadState, PageHead } from "../../ui/Parts.js";
@@ -313,8 +313,8 @@ function BrowserCard({
     .join(" · ");
   const pages = t("center.browser.pages", { count: item.pages });
   const duration = item.live
-    ? formatBrowserDuration(durationMs)
-    : `${nearDay(localDate(item.openedAt, timeZone), today, "past")} · ${formatBrowserDuration(durationMs)}`;
+    ? formatBrowserDuration(durationMs, translateCore)
+    : `${nearDay(localDate(item.openedAt, timeZone), today, "past")} · ${formatBrowserDuration(durationMs, translateCore)}`;
   const pill = item.live ? (
     <span className="browser-live">
       <span className="center-pulse" aria-hidden="true" />

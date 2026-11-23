@@ -6,6 +6,7 @@ import { nav } from "./nav.js";
 
 /** The `core` words for errors a person reads, from every part of Tavi, in Bulgarian. */
 export const errors = {
+  "error.generic": "Нещо се обърка: {message}",
   // The owner, chats and access.
   "error.owner.shuttingDown": "Сървърът на Tavi спира",
   "error.task.notFound": "Чатът {taskId} не съществува",
@@ -251,6 +252,7 @@ export const errors = {
     "От страницата не можеш да смениш доставчика на идеи или обобщението, нито часовете, бюджета или какво може да подготвя доставчикът: използвай tavi ideas в терминал",
   "error.idea.digestUnreachable": "Нямаш чат във връзката {channel}, до който може да се изпраща: tavi channels list ги показва",
   "error.routine.notFound": "Рутината {routineId} не съществува",
+  "error.routine.noModel": `Няма настроен модел за рутини. Задай модел по подразбиране в ${navPathIn(nav, "nav.route.settings", "nav.settings.models")} (или с \`tavi models set-default\`) и създай рутината отново.`,
   "error.routine.taskUnreadable": "Не успях да прочета какво прочете чатът {taskId}; опитай пак",
   "error.heartbeat.revisionConflict": "Пулсът се промени след версия {expected} (сега е {current}); прочети го отново и опитай пак",
   "error.heartbeat.tokenLimitTooLow":

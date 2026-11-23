@@ -41,7 +41,7 @@ export function ChannelNamesProvider({
   const { data: loaded, reload: refresh } = useLoaded(async () => {
     const quiet = { timeoutMs: 10_000, refused: "", unreachable: "" };
     const [catalog, list] = await Promise.all([
-      ask<ChannelsCatalogAnswer>(client, "channels", { action: "catalog" }, quiet),
+      ask<ChannelsCatalogAnswer>(client, "channels", { action: "catalog", workspaceId }, quiet),
       ask<ChannelsListAnswer>(client, "channels", { action: "list", workspaceId }, quiet),
     ]);
     return mapOutcome(catalog, (value) => ({

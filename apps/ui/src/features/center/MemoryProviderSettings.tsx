@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 
 import { BUILTIN_MEMORY_PROVIDER_ID, type MemoryEgressField } from "@tavi/contracts";
 
-import { useT } from "../../lib/i18n.js";
+import { currentLocale, useT } from "../../lib/i18n.js";
 import type { UiKey } from "../../locales/en.js";
 import { useLoaded } from "../../hooks/use-loaded.js";
 import { Failure, InlineConfirm, StatusNote } from "../../ui/Parts.js";
@@ -63,7 +63,13 @@ export function MemoryProviderSettings({ onChanged }: { readonly onChanged?: () 
       onChanged?.();
     } else if (outcome.code === "APPROVAL_REQUIRED") {
       setError(undefined);
-      setAsking({ change: wanted, message: outcome.message, done });
+      // The owner says what it sends in the workspace's language beside its English message: a page not in English shows that.
+      const disclosure = outcome.details?.["disclosure"];
+      setAsking({
+        change: wanted,
+        message: currentLocale() !== "en" && typeof disclosure === "string" ? disclosure : outcome.message,
+        done,
+      });
     } else {
       setError(outcome.message);
       if (outcome.code === "CONFLICT") reload();

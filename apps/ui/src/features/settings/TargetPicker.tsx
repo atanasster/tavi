@@ -155,7 +155,7 @@ export function TargetPicker({
         <div className="picker-filters" role="search">
           <input
             aria-label={t("settings.picker.search")}
-            placeholder={t("settings.picker.searchCount", { count: String(data.models.length) })}
+            placeholder={t("settings.picker.searchCount", { count: data.models.length, n: String(data.models.length) })}
             value={search}
             autoComplete="off"
             onChange={(event) => setSearch(event.target.value)}

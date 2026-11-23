@@ -1,27 +1,21 @@
 // @vitest-environment jsdom
 import type { RoutineDetail } from "@tavi/contracts";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { RoutineChecks } from "../../../src/features/routines/RoutineChecks.js";
-import { RunInspector } from "../../../src/features/routines/RunInspector.js";
 import { routineStatusView } from "../../../src/features/routines/status.js";
 import { setLocale } from "../../../src/lib/i18n.js";
 import type { SettingsClient } from "../../../src/lib/ipc.js";
-import { mount, settle, unmountAll } from "../../support/dom.js";
+import { mount, settle } from "../../support/dom.js";
 import { InWorkspace } from "../../support/workspace.js";
+import { inBulgarian } from "../../support/bulgarian.js";
+import { inspectorAnswer, inspectorPage } from "../../support/routines.js";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 /** Routines in Bulgarian: a routine's status notice, and a run's inspector. The run's headline and the routine's name are the owner's. */
 
-beforeEach(async () => {
-  await setLocale("bg");
-});
-
-afterEach(async () => {
-  unmountAll();
-  await setLocale("en");
-});
+inBulgarian();
 
 const detail = (status: string, evaluation: string): RoutineDetail =>
   ({
@@ -74,24 +68,10 @@ describe("routines in Bulgarian", () => {
     };
     const publication = { reportArtifactId: "art", pdfArtifactId: null, pdfError: null, headline: "GPT-9 ships" };
     const client: SettingsClient = {
-      request: async (_command, raw) => {
-        const action = (raw as Record<string, unknown>)["action"];
-        const result =
-          action === "inspect"
-            ? { run, publication, deliveries: [], attempts: [] }
-            : action === "ledger"
-              ? { events: [] }
-              : action === "sources"
-                ? { sources: [], nextAfterSourceId: null }
-                : {};
-        return { ok: true, result } as never;
-      },
+      request: async (_command, raw) =>
+        ({ ok: true, result: inspectorAnswer(raw, { run, publication, deliveries: [], attempts: [] }) }) as never,
     };
-    const page = await mount(
-      <InWorkspace client={client} workspaceId="default">
-        <RunInspector timeZone="UTC" routineId="routine" routineName="LLM news" runId="run" onBack={() => {}} onFollow={async () => {}} />
-      </InWorkspace>,
-    );
+    const page = await mount(inspectorPage(client));
     await settle();
     const labels = [...page.querySelectorAll(".summary-grid dt")].map((term) => term.textContent ?? "");
     expect(labels).toContain("Заглавие");

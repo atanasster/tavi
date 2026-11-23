@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
-import type { Idea, IdeasListAnswer } from "@tavi/contracts";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { IdeasListAnswer } from "@tavi/contracts";
+import { describe, expect, it } from "vitest";
 
 import { IdeasPage } from "../../../src/features/ideas/IdeasPage.js";
-import { setLocale } from "../../../src/lib/i18n.js";
 import type { SettingsClient } from "../../../src/lib/ipc.js";
-import { flush, settledBy, unmountAll } from "../../support/dom.js";
+import { flush, settledBy } from "../../support/dom.js";
 import { InWorkspace } from "../../support/workspace.js";
+import { inBulgarian } from "../../support/bulgarian.js";
+import { IDEA_AT, idea } from "../../support/rows.js";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -14,39 +15,9 @@ import { InWorkspace } from "../../support/workspace.js";
 
 const { mount } = settledBy(() => flush());
 
-beforeEach(async () => {
-  await setLocale("bg");
-});
+inBulgarian();
 
-afterEach(async () => {
-  unmountAll();
-  await setLocale("en");
-});
-
-const AT = "2026-10-19T10:00:00.000Z";
-const idea = (key: string, overrides: Partial<Idea> = {}): Idea => ({
-  id: `id-${key}`,
-  workspaceId: "default",
-  runId: "run-1",
-  providerId: "tavi.ideasagent",
-  key,
-  category: key.split(".")[0] as Idea["category"],
-  icon: "💡",
-  title: `I can help with ${key}`,
-  pitch: `A pitch for ${key}.`,
-  label: key,
-  prompt: `Help me with ${key}.`,
-  basis: [{ kind: "general", ref: "general" }],
-  uses: [{ capability: "web", approval: false }],
-  score: 0.5,
-  status: "active",
-  pinned: false,
-  shownRuns: 0,
-  createdAt: AT,
-  updatedAt: AT,
-  expiresAt: "2026-11-19T10:00:00.000Z",
-  ...overrides,
-});
+const AT = IDEA_AT;
 
 const list = (answer: Partial<IdeasListAnswer>): SettingsClient => ({
   request: (async (command: string, payload: Record<string, unknown>) => {

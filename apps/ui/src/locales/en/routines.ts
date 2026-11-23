@@ -202,6 +202,8 @@ export const routines = {
   "routines.inspector.headline": "Headline",
   "routines.inspector.configuration": "Immutable run configuration and researcher instructions",
   "routines.inspector.authority": "Research authority",
+  /** Why the person revoked a run's grant, stored with it in their words. */
+  "routines.inspector.revokeReason": "Revoked from the run inspector",
   "routines.inspector.revokeDone": "Grant revoked; the next research fetch and any pending delivery for this run will be refused",
   "routines.inspector.noGrant": "This run has no durable grant.",
   "routines.inspector.attempts": "Attempts",

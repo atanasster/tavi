@@ -4,8 +4,10 @@
 // import other than Node's own, at most 400 KB, and no second TaviError class
 // or contracts barrel bundled in.
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
-import { dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+
+import { containedCopy } from "@tavi/domain-kit/assemble-plugin";
 
 export const BUDGET_BYTES = 400 * 1024;
 
@@ -32,24 +34,9 @@ export function problemsOf(out) {
   return { problems, files, bytes };
 }
 
-/**
- * Where a language pack the manifest names is copied from and to: a relative
- * path inside the package and inside dist-plugin/, as `@tavi/domain-kit`'s
- * assembler checks a domain plugin's (this package does not depend on it).
- * An absolute path, or one that climbs out with `..`, is refused.
- */
-export function containedCopy(root, out, path) {
-  const inside = (base, target) => {
-    const rest = relative(base, target);
-    return rest !== "" && !rest.startsWith("..") && !isAbsolute(rest);
-  };
-  const refused = () => new Error(`the manifest names ${String(path)}, which is not a relative path inside the package`);
-  if (typeof path !== "string" || isAbsolute(path) || path.split(/[\\/]/).includes("..")) throw refused();
-  const from = resolve(root, path);
-  const to = resolve(out, path);
-  if (!inside(root, from) || !inside(out, to)) throw refused();
-  return { from, to };
-}
+// Where a language pack the manifest names is copied from and to: the domain kit's check, a relative path
+// inside the package and inside dist-plugin/ (a build-time dev dependency; nothing of it is bundled).
+export { containedCopy };
 
 if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
   const root = join(dirname(fileURLToPath(import.meta.url)), "..");

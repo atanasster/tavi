@@ -224,10 +224,12 @@ export class ModelConfigService implements ModelConfigPort {
         { details: { connectionId: input.connectionId, modelId: input.modelId } },
       );
     if (current.includes(input.modelId)) return existing;
-    const disclosure = videoDisclosure(presetOf(existing.baseUrl)?.name ?? existing.label, input.modelId);
+    const provider = presetOf(existing.baseUrl)?.name ?? existing.label;
+    const disclosure = videoDisclosure(provider, input.modelId);
     if (input.disclosureConfirmed !== true)
+      // The provider's name too, so a page says the disclosure in its own language.
       throw new TaviError("INVALID_INPUT", `${disclosure} Confirm it to turn video on (tavi models video --yes).`, {
-        details: { connectionId: input.connectionId, modelId: input.modelId, disclosure },
+        details: { connectionId: input.connectionId, modelId: input.modelId, disclosure, provider },
       });
     if (current.length >= 32)
       throw new TaviError("INVALID_INPUT", `Connection ${input.connectionId} has native video on for 32 models, the most`, {

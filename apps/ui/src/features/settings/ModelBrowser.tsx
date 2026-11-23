@@ -28,6 +28,7 @@ import { VideoAnalyzerStatus, VideoModels } from "./VideoModels.js";
 import { RhumbKeyCard } from "./RhumbKeyCard.js";
 import { credentialActions } from "./credentials-api.js";
 import {
+  modelRoleName,
   previewReplace,
   replaceModel,
   replacementChoices,
@@ -54,8 +55,6 @@ const ROLE_PURPOSE: Readonly<Record<ModelRole, UiKey>> = {
   fast: "settings.modelsPage.purpose.fast",
   embedding: "settings.modelsPage.purpose.embedding",
 };
-
-const roleName = (role: ModelRole): string => role.replaceAll("_", " ");
 
 /** Which picker is open: the workspace default, or one role. */
 type Picking = { readonly slot: "default"; readonly connectionId?: string } | { readonly slot: "role"; readonly role: ModelRole };
@@ -351,7 +350,7 @@ function RolePicker({
   const binding = data.roles.roles?.find((row) => row.role === picking.role);
   return (
     <TargetPicker
-      title={t("settings.modelsPage.roleTitle", { role: roleName(picking.role) })}
+      title={t("settings.modelsPage.roleTitle", { role: modelRoleName(picking.role) })}
       intro={t("settings.modelsPage.roleIntro", { purpose: t(ROLE_PURPOSE[picking.role]) })}
       data={data}
       loading={loading}
@@ -450,7 +449,7 @@ function RoleLine({
   readonly onReset: () => void;
 }) {
   const t = useT();
-  const name = roleName(row.role);
+  const name = modelRoleName(row.role);
   return (
     <li className={`role-row role-source-${row.source}`}>
       <div className="role-label">

@@ -8251,6 +8251,35 @@ describe("the unattended execution policy", () => {
     expect(stepOf(model.calls[0])).toContain("The current local time is вторник, 29 септември 2026 г., 19:42 (Europe/Berlin, UTC+02:00).");
   });
 
+  it("tells a tool's assessor the workspace's language for its card, and never its handler", async () => {
+    const assessedIn: (string | undefined)[] = [];
+    const handledIn: (string | undefined)[] = [];
+    const write = {
+      definition: writeDefinition,
+      schema: z.object({ value: z.string() }),
+      handler: async (input: unknown, invocation: InvocationContext) => {
+        handledIn.push(invocation.locale);
+        return input;
+      },
+      assess: (_input: unknown, invocation: InvocationContext) => {
+        assessedIn.push(invocation.locale);
+        return { display: { title: "Write" }, subjects: [], risk: "low" as const, reasons: [] };
+      },
+    };
+    for (const locale of ["bg", "en"] as const) {
+      const { adapter } = build({
+        turns: [{ toolCall: { id: `call-${locale}`, name: "fixture.write", input: { value: "x" } } }, { text: "done" }],
+        tools: [write],
+        approvalRequiredFor: [],
+        workspaceLocale: async () => locale,
+      });
+      await adapter.invoke({ context, threadId: `thread-card-${locale}`, messages: [userMessage] });
+    }
+    // English is no language at all on the context: an English card is said as it always was.
+    expect(assessedIn).toEqual(["bg", undefined]);
+    expect(handledIn).toEqual([undefined, undefined]);
+  });
+
   it("refuses a workspace base and a persona that are each valid but together exceed the budget", async () => {
     // The boundary: two individually acceptable 20,000-unit texts.
     const base = "b".repeat(20_000);

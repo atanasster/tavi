@@ -19,7 +19,7 @@ import {
   type IdeasSettingsAnswer,
   type IdeasTryAnswer,
 } from "@tavi/contracts";
-import { plural } from "@tavi/contracts/util";
+import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
 
 import type { IdeasCommandOptions } from "./parse.js";
 import { indentedLines, pageWidth, terminalText } from "../../shared/terminal-text.js";
@@ -103,8 +103,6 @@ export function ideasPayload(options: IdeasCommandOptions): IdeasPayload {
   }
 }
 
-const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
-
 /** Whether an action writes: a lost answer to a write may still have been applied. */
 export function ideasMutates(options: IdeasCommandOptions): boolean {
   return !(
@@ -119,52 +117,58 @@ export function ideasMutates(options: IdeasCommandOptions): boolean {
 }
 
 /** The last run, in one line: when nothing came of it, the reason a person reads (a provider's words, cleaned). */
-function lastRunLine(run: IdeaRun): string {
-  const when = `Last run ${minuteUtc(run.startedAt)} (${run.trigger})`;
+function lastRunLine(run: IdeaRun, t: CoreT): string {
+  const when = t("cli.ideas.lastRun", { at: minuteUtc(run.startedAt), trigger: run.trigger });
   switch (run.outcome) {
     case "generated":
       // A provider's left-out ideas: the rules they broke, on the line below.
-      return `${when}: ${run.generated} offered${run.dropped === 0 ? "" : `, ${run.dropped} left out`}${run.reason === undefined ? "" : `\n  ${terminalText(run.reason)}`}`;
+      return `${t("cli.ideas.run.generated", { when, n: String(run.generated) })}${run.dropped === 0 ? "" : t("cli.ideas.run.leftOut", { n: String(run.dropped) })}${run.reason === undefined ? "" : `\n  ${terminalText(run.reason)}`}`;
     case "unchanged":
-      return `${when}: nothing new to look at`;
+      return t("cli.ideas.run.unchanged", { when });
     case "running":
-      return `${when}: still looking`;
+      return t("cli.ideas.run.running", { when });
     default:
       return `${when}: ${run.outcome}${run.reason === undefined ? "" : ` — ${terminalText(run.reason)}`}`;
   }
 }
 
 /** An idea: its id and title, then its pitch on indented lines cut at spaces to `width`, not where the terminal breaks a word. */
-function ideaLine(idea: Idea, width: number): string {
+function ideaLine(idea: Idea, width: number, t: CoreT): string {
   const marks = [
-    idea.pinned ? "pinned" : undefined,
-    idea.prepared === undefined ? undefined : "ready",
+    idea.pinned ? t("cli.ideas.mark.pinned") : undefined,
+    idea.prepared === undefined ? undefined : t("cli.ideas.mark.ready"),
     idea.status === "active" ? undefined : idea.status,
   ].filter((mark) => mark !== undefined);
   // What a provider wrote is printed without control characters: a plugin's text cannot drive the terminal.
   return `${idea.id}\t${idea.icon} ${terminalText(idea.title)}${marks.length === 0 ? "" : ` (${marks.join(", ")})`}\n${indentedLines(terminalText(idea.pitch), "    ", width).join("\n")}`;
 }
 
-export function ideasResultText(options: IdeasCommandOptions, result: unknown, columns: number | undefined = undefined): string {
+/** What `tavi ideas <action>` prints, in `t`'s words: English as it always printed. */
+export function ideasResultText(
+  options: IdeasCommandOptions,
+  result: unknown,
+  columns: number | undefined = undefined,
+  t: CoreT = coreEnglish,
+): string {
   switch (options.action) {
     case "list": {
       const answer = result as IdeasListAnswer;
       const muted =
         answer.mutedCategories.length === 0
           ? ""
-          : `\nMuted: ${answer.mutedCategories.map((category) => ideaCategoryLabel(category)).join(", ")}`;
-      const next = answer.nextAt === undefined ? "" : `\nNext run ${minuteUtc(answer.nextAt)}`;
-      const last = `${answer.lastRun === undefined ? "" : `\n${lastRunLine(answer.lastRun)}`}${next}`;
+          : `\n${t("cli.ideas.muted", { categories: answer.mutedCategories.map((category) => ideaCategoryLabel(category, t)).join(", ") })}`;
+      const next = answer.nextAt === undefined ? "" : `\n${t("cli.ideas.nextRun", { at: minuteUtc(answer.nextAt) })}`;
+      const last = `${answer.lastRun === undefined ? "" : `\n${lastRunLine(answer.lastRun, t)}`}${next}`;
       // Off, nothing listed is offered anywhere: said first, so the list reads as what is kept, not what is shown.
-      const off = answer.enabled === false ? "Ideas are off: none are offered (tavi ideas on)\n" : "";
-      if (answer.ideas.length === 0) return `${off}No ideas yet${muted}${last}`;
+      const off = answer.enabled === false ? `${t("cli.ideas.off")}\n` : "";
+      if (answer.ideas.length === 0) return `${off}${t("cli.ideas.none")}${muted}${last}`;
       const sections = [...new Set(answer.ideas.map((idea) => idea.category))];
       const body = sections
         .map(
           (category) =>
-            `${ideaCategoryLabel(category)}\n${answer.ideas
+            `${ideaCategoryLabel(category, t)}\n${answer.ideas
               .filter((idea) => idea.category === category)
-              .map((idea) => ideaLine(idea, pageWidth(columns)))
+              .map((idea) => ideaLine(idea, pageWidth(columns), t))
               .join("\n")}`,
         )
         .join("\n\n");
@@ -174,63 +178,66 @@ export function ideasResultText(options: IdeasCommandOptions, result: unknown, c
       return terminalText((result as IdeasTryAnswer).prompt);
     case "dismiss": {
       const idea = (result as IdeasIdeaAnswer).idea;
-      return idea === undefined ? "Dismissed" : `Dismissed ${idea.id}: it will not be offered again`;
+      return idea === undefined ? t("cli.ideas.dismissed") : t("cli.ideas.dismissedOne", { id: idea.id });
     }
     case "restore": {
       const idea = (result as IdeasIdeaAnswer).idea;
-      return idea === undefined ? "Restored" : `Restored ${idea.id}: ${terminalText(idea.title)}`;
+      return idea === undefined ? t("cli.ideas.restored") : t("cli.ideas.restoredOne", { id: idea.id, title: terminalText(idea.title) });
     }
     case "provider": {
-      if (options.provider !== undefined) return `Ideas now come from ${(result as IdeasSettingsAnswer).settings.provider}`;
+      if (options.provider !== undefined)
+        return t("cli.ideas.providerNow", { provider: (result as IdeasSettingsAnswer).settings.provider });
       const answer = result as IdeasListAnswer;
-      if (answer.providers.length === 0)
-        return `In use: ${answer.provider}. None is listed: no owner is running, or it has no ideas provider installed`;
+      if (answer.providers.length === 0) return t("cli.ideas.providerNone", { provider: answer.provider });
       return answer.providers
         .map(
           (provider) =>
-            `${provider.id === answer.provider ? "*" : " "} ${provider.id}\t${provider.kind}\t${provider.ready ? "ready" : "not ready"}\treceives: ${provider.receives.join(", ") || "nothing"}`,
+            `${provider.id === answer.provider ? "*" : " "} ${provider.id}\t${provider.kind}\t${t(provider.ready ? "cli.ideas.providerReady" : "cli.ideas.providerNotReady")}\t${t("cli.ideas.providerReceives", { what: provider.receives.join(", ") || t("cli.ideas.providerNothing") })}`,
         )
         .join("\n");
     }
     case "refresh": {
       const status = (result as IdeasRefreshAnswer).status;
-      if (status === "started") return "Looking for new ideas; tavi ideas list shows them, and how the run went";
-      if (status === "queued") return "New ideas are already being looked for; this refresh follows";
-      return "New ideas are being looked for elsewhere; refresh again once that run ends";
+      if (status === "started") return t("cli.ideas.refresh.started");
+      if (status === "queued") return t("cli.ideas.refresh.queued");
+      return t("cli.ideas.refresh.elsewhere");
     }
     case "brief": {
       const text = (result as IdeasBriefAnswer).text;
-      if (options.brief !== undefined) return text === "" ? "Cleared the ideas brief" : "Saved the ideas brief";
-      return text === "" ? "No ideas brief" : terminalText(text);
+      if (options.brief !== undefined) return t(text === "" ? "cli.ideas.brief.cleared" : "cli.ideas.brief.saved");
+      return text === "" ? t("cli.ideas.brief.none") : terminalText(text);
     }
     case "reset": {
       const cleared = (result as IdeasResetAnswer).cleared;
-      return options.reset === "sections"
-        ? `Unmuted ${plural(cleared, "section")}`
-        : `Forgot ${plural(cleared, "dismissal")}, ${cleared === 1 ? "snooze" : "snoozes"} and ${cleared === 1 ? "exclusion" : "exclusions"}`;
+      return t(options.reset === "sections" ? "cli.ideas.reset.sections" : "cli.ideas.reset.forgot", {
+        count: cleared,
+        n: String(cleared),
+      });
     }
     case "hours": {
       const hours = (result as IdeasSettingsAnswer).settings.hours;
-      return `Ideas look once a day between ${hours.start} and ${hours.end}, in the workspace's timezone`;
+      return t("cli.ideas.hours", { start: hours.start, end: hours.end });
     }
     case "budget": {
       const tokens = (result as IdeasSettingsAnswer).settings.dailyTokens;
-      return tokens === 0
-        ? "Ideas' model turns are off: ideas keep their plain wording"
-        : `Ideas' model turns may spend ${tokens} tokens a day`;
+      return tokens === 0 ? t("cli.ideas.budget.off") : t("cli.ideas.budget.on", { count: tokens, n: String(tokens) });
     }
     case "prepare":
-      return (result as IdeasSettingsAnswer).settings.prepareExternal === true
-        ? "A provider that reads your memory, tasks or brief may prepare its ideas' first steps"
-        : "Only a provider that reads nothing of yours (the built-in included) prepares ideas' first steps";
+      return t(
+        (result as IdeasSettingsAnswer).settings.prepareExternal === true ? "cli.ideas.prepare.external" : "cli.ideas.prepare.builtin",
+      );
     case "digest": {
       const digest = (result as IdeasSettingsAnswer).settings.digest;
       return digest === undefined
-        ? "No weekly ideas digest"
-        : `The ideas digest goes to your chat on ${terminalText(digest.channel)} each ${WEEKDAY_NAMES[digest.weekday] ?? "week"}, inside your ideas hours`;
+        ? t("cli.ideas.digest.none")
+        : t("cli.ideas.digest.weekly", {
+            channel: terminalText(digest.channel),
+            weekday:
+              digest.weekday >= 0 && digest.weekday <= 6 ? t(`date.weekday.${digest.weekday}` as CoreKey) : t("cli.ideas.digest.week"),
+          });
     }
     case "on":
     case "off":
-      return (result as IdeasSettingsAnswer).settings.enabled ? "Ideas are on" : "Ideas are off";
+      return t((result as IdeasSettingsAnswer).settings.enabled ? "cli.ideas.on" : "cli.ideas.offShort");
   }
 }

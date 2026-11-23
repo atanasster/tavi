@@ -5,8 +5,7 @@ import {
   routineProvenanceLine,
   skillProvenanceForeign,
   type RoutineProvenance,
-  englishOf,
-  navPath,
+  keyedError,
 } from "@tavi/contracts";
 import type { Locale } from "@tavi/contracts/i18n";
 import {
@@ -473,11 +472,7 @@ export class RoutineControlService {
           const setup = required(input.setup, "Routine setup");
           const defaults = routineDefaults(setup.timezone, this.options.language);
           const models = setup.models ?? this.options.defaultModels();
-          if (models === undefined)
-            throw new TaviError(
-              "NOT_CONFIGURED",
-              `No model is configured for routines. Set a default model in ${englishOf(navPath("nav.route.settings", "nav.settings.models"))} (or \`tavi models set-default\`), then create the routine again.`,
-            );
+          if (models === undefined) throw keyedError("NOT_CONFIGURED", "error.routine.noModel");
           const triggers = routineSetupTriggers(setup);
           create = RoutineCreateSchema.parse({
             ...defaults,

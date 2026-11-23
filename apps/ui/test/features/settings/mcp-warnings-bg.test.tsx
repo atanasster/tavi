@@ -8,6 +8,7 @@ import type { McpReview } from "../../../src/features/settings/plugins-api.js";
 import type { SettingsClient } from "../../../src/lib/ipc.js";
 import { McpReviewModal } from "../../../src/features/settings/McpServers.js";
 import { setLocale } from "../../../src/lib/i18n.js";
+import { close, offeredWords, open } from "../../pick.js";
 import { InWorkspace } from "../../support/workspace.js";
 import { mountSettled as mount, unmountAll } from "../../support/dom.js";
 
@@ -72,5 +73,62 @@ describe("an MCP review's warnings", () => {
       </InWorkspace>,
     );
     expect(warningsOf("Warnings")).toEqual([`${OVERLAP}; leave out the ones you do not need`, SHADOWING]);
+  });
+});
+
+/** The words a `Select` offers, opened and closed again. */
+async function optionsOf(label: string): Promise<readonly (string | null)[]> {
+  await open(document.body.querySelector(`[aria-label="${label}"]`));
+  const words = offeredWords();
+  await close();
+  return words;
+}
+
+const WITH_TOOL: McpReview = {
+  ...REVIEW,
+  warnings: [],
+  warningRefs: [],
+  tools: [
+    {
+      name: "search",
+      toolId: "mcp.docs.search",
+      state: "pending",
+      suggestedEffect: "mutating",
+      doubtful: false,
+      flagged: false,
+      observedDef: {},
+      shown: { name: "search" },
+      schema: { form: "zod", wrapped: false },
+    },
+  ],
+};
+
+const toolClient: SettingsClient = {
+  request: async (command, payload) =>
+    (command === "mcp" && (payload as { action?: unknown }).action === "show"
+      ? { ok: true, result: { review: WITH_TOOL } }
+      : { ok: true, result: {} }) as ClientResponse,
+};
+
+describe("an MCP review's effect and floor pickers", () => {
+  it("name each effect and risk floor in Bulgarian, never the raw id", async () => {
+    await setLocale("bg");
+    await mount(
+      <InWorkspace client={toolClient}>
+        <McpReviewModal pluginId="mcp.docs" onClose={() => undefined} onDone={() => undefined} />
+      </InWorkspace>,
+    );
+    expect(await optionsOf("Ефект на search")).toEqual(["само за четене", "променя данни (предложен)", "излиза навън"]);
+    expect(await optionsOf("Минимален риск на search")).toEqual(["няма (нисък)", "среден", "висок", "критичен"]);
+  });
+
+  it("keep the English ids in English", async () => {
+    await mount(
+      <InWorkspace client={toolClient}>
+        <McpReviewModal pluginId="mcp.docs" onClose={() => undefined} onDone={() => undefined} />
+      </InWorkspace>,
+    );
+    expect(await optionsOf("Effect of search")).toEqual(["read-only", "mutating (suggested)", "external"]);
+    expect(await optionsOf("Floor of search")).toEqual(["none (low)", "medium", "high", "critical"]);
   });
 });

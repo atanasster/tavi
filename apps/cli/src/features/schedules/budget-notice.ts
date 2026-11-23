@@ -6,9 +6,9 @@ import {
   scheduledWorkRef,
   textRef,
   type PersistencePort,
-  type TextRef,
 } from "@tavi/contracts";
 
+import type { ChatNotices } from "../tasks/notices.js";
 import { scheduledWorkThisMonth } from "./actions.js";
 
 /**
@@ -25,15 +25,7 @@ export function scheduledBudgetNotices(deps: {
   readonly workspaceIds: () => readonly string[];
   readonly principalOf: (workspaceId: string) => string | undefined;
   /** `ChatNotices.postAlert`: once per `sourceKey`; false with no Home. */
-  readonly postAlert: (input: {
-    readonly workspaceId: string;
-    readonly principalId: string;
-    readonly sourceKey: string;
-    readonly title: string;
-    readonly summary: string;
-    readonly titleRef?: TextRef;
-    readonly summaryRef?: TextRef;
-  }) => Promise<boolean>;
+  readonly postAlert: ChatNotices["postAlert"];
   readonly log: (message: string, fields: Record<string, unknown>) => void;
   readonly warn: (message: string, fields: Record<string, unknown>) => void;
 }): (nowIso: string) => Promise<void> {

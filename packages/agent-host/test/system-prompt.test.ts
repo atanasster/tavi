@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { coreEnglish } from "@tavi/contracts/locales/core";
 
 import { absentWorkspaceSystemPrompt, SCHEDULE_NOTHING_TO_REPORT, TaviError, type TaskRecord } from "@tavi/contracts";
 
@@ -832,5 +833,45 @@ describe("composeSystemPromptLayers", () => {
       (layer) => layer.kind === "facts",
     );
     expect(facts).toMatchObject({ generated: true, sample: true, detail: sample });
+  });
+});
+
+describe("the layers' English words", () => {
+  it("are the core catalogue's, so a canvas in another language can say each one", () => {
+    const persona = { agentId: "agent-1", name: "Khan", systemPrompt: "Be brief." };
+    const shipped = { text: "Shipped.", templateVersion: "tavi-default-5" };
+    const workspace = composeSystemPromptLayers({
+      base: { text: "Base.", source: "workspace", revision: 7 },
+      shipped,
+      persona,
+      chat: { text: "  ", revision: 3 },
+    }).layers;
+    expect(workspace.map((layer) => layer.label)).toEqual([
+      coreEnglish("prompt.layer.shippedVersion", { version: "tavi-default-5" }),
+      coreEnglish("prompt.layer.workspaceRevision", { revision: "7" }),
+      coreEnglish("prompt.layer.persona", { name: "Khan" }),
+      coreEnglish("prompt.layer.chat", { revision: "3" }),
+      coreEnglish("prompt.layer.facts"),
+      coreEnglish("prompt.layer.context"),
+    ]);
+    expect(workspace.map((layer) => layer.detail)).toEqual([
+      coreEnglish("prompt.layer.replacedWorkspace"),
+      undefined,
+      undefined,
+      coreEnglish("prompt.layer.chatCleared"),
+      coreEnglish("prompt.layer.factsDetail"),
+      coreEnglish("prompt.layer.contextDetail"),
+    ]);
+    const explicit = composeSystemPromptLayers({
+      base: { text: "Routine.", source: "explicit" },
+      shipped,
+      persona: { ...persona, systemPrompt: " " },
+    }).layers;
+    expect(explicit[0]?.detail).toBe(coreEnglish("prompt.layer.replacedExplicit"));
+    expect(explicit[1]?.label).toBe(coreEnglish("prompt.layer.explicit"));
+    expect(explicit[2]?.detail).toBe(coreEnglish("prompt.layer.personaBlank"));
+    const disabled = composeSystemPromptLayers({ base: { text: "Base.", source: "shipped" }, persona: { ...persona, enabled: false } });
+    expect(disabled.layers[0]?.label).toBe(coreEnglish("prompt.layer.shipped"));
+    expect(disabled.layers[1]?.detail).toBe(coreEnglish("prompt.layer.personaDisabled"));
   });
 });

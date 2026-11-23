@@ -58,6 +58,7 @@ import {
 import { definedOnly, errorMessage, plural } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
 
+import { cardWords } from "../approvals/card-words.js";
 import { folderFileLabel, type FolderFile, type NewFileTarget } from "../folders/fs-tools.js";
 
 /**
@@ -1006,7 +1007,9 @@ export function registerPdfTools(registry: ToolRegistryPort, options: PdfToolOpt
       assess: (input, context): CallAssessment => {
         const parsed = parseFill(kind, input);
         const reading = readFill(parsed, context, kind);
-        const title = "Fill a PDF form";
+        // The card in the workspace's language; each refusal, which the model reads, in English.
+        const t = cardWords(context);
+        const title = t("approval.card.pdf.fill");
         if (typeof reading === "string")
           return { display: { title }, subjects: [], risk: "high", reasons: [], hardDeny: reading, attendedOnly: true, onceOnly: true };
         const { entry, fields } = reading;
@@ -1085,7 +1088,11 @@ export function registerPdfTools(registry: ToolRegistryPort, options: PdfToolOpt
           );
         const risk: RiskLevel = rows.some((row) => row.sensitive !== undefined) || amber || reading.hostOutput ? "high" : "medium";
         const form: ApprovalForm = {
-          source: `${formName(parsed.source, entry)}, ${plural(entry.facts.pageCount, "page")}`,
+          source: t("approval.card.pdf.source", {
+            name: formName(parsed.source, entry),
+            count: entry.facts.pageCount,
+            n: String(entry.facts.pageCount),
+          }),
           output: "path" in reading.target ? reading.outputShown : `${reading.outputShown} (or the next free name)`,
           rows,
           leftBlank,
@@ -1106,14 +1113,14 @@ export function registerPdfTools(registry: ToolRegistryPort, options: PdfToolOpt
         const command = rows.map((row) => `p${row.page} ${row.field} = ${row.value}  [${row.source}; ${row.status}]`).join("\n");
         return {
           display: {
-            title: `Fill ${form.source} into ${form.output}`,
-            detail: `${plural(rows.length, "value")}; ${leftBlank.length} left for you`,
+            title: t("approval.card.pdf.fillInto", { source: form.source, output: form.output }),
+            detail: t("approval.card.pdf.values", { count: rows.length, n: String(rows.length), left: String(leftBlank.length) }),
             command,
             form,
           },
           subjects: [],
           risk,
-          reasons: [`fills ${plural(rows.length, "field")} of a PDF form`],
+          reasons: [t("approval.reason.pdf.fills", { count: rows.length, n: String(rows.length) })],
           sink: reading.hostOutput ? "persist" : "none",
           ...(reading.hostOutput ? { askWhenTainted: true } : {}),
           onceOnly: true,

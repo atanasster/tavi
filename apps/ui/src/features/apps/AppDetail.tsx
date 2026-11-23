@@ -20,7 +20,18 @@ import { AccountRow } from "./AccountRow.js";
 import { ConnectSheet } from "./ConnectSheet.js";
 import { RecentActivity } from "./RecentActivity.js";
 import { AppIcon } from "./AppIcon.js";
-import { authorsWords, HEALTH_BADGE, isolationWords, keptByWords, lendingAccess, pageFix, primaryRepair, testedWords } from "./model.js";
+import {
+  authorsWords,
+  HEALTH_BADGE,
+  isolationWords,
+  keptByWords,
+  lendingAccess,
+  pageFix,
+  primaryRepair,
+  repairDetail,
+  repairTitle,
+  testedWords,
+} from "./model.js";
 import { SettingsForm } from "./SettingsForm.js";
 import { ToolDecisions } from "./ToolDecisions.js";
 import { Empty } from "../../ui/Empty.js";
@@ -543,7 +554,7 @@ function AppHead({ app, busy, onRepair }: { readonly app: ConnectableApp; readon
           {app.publisher === undefined ? "" : ` · ${app.publisher}`}
           {app.source.verified === "tavi-preset" ? ` · ${t("apps.badge.taviPreset")}` : ""}
         </p>
-        {repair === undefined ? null : <p className="muted">{repair.detail}</p>}
+        {repair === undefined ? null : <p className="muted">{repairDetail(repair)}</p>}
       </div>
       {fix === undefined ? (
         repair === undefined ? null : (
@@ -551,11 +562,11 @@ function AppHead({ app, busy, onRepair }: { readonly app: ConnectableApp; readon
         )
       ) : fix === "channels" ? (
         <AppLink href={settingsPath("messaging")} className="button-primary" onFollow={undefined}>
-          {t("apps.detail.inChannels", { action: repair?.title ?? app.name })}
+          {t("apps.detail.inChannels", { action: repair === undefined ? app.name : repairTitle(repair) })}
         </AppLink>
       ) : (
         <Button variant="primary" disabled={busy} onClick={onRepair}>
-          {repair?.title}
+          {repair === undefined ? undefined : repairTitle(repair)}
         </Button>
       )}
     </header>
