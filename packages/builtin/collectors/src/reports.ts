@@ -17,6 +17,9 @@ import {
   type SecretReaderPort,
   type ToolRegistrar,
 } from "@tavi/contracts";
+import type { Locale } from "@tavi/contracts/i18n";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { printThemeCss } from "@tavi/contracts/print-theme";
 import { nowTimestamp } from "@tavi/contracts/util";
 
@@ -85,8 +88,8 @@ function metricRow(metric: Metric): string {
     </tr>`;
 }
 
-function newsList(news: readonly NewsItem[]): string {
-  if (news.length === 0) return `<p class="muted">No news items matched this project's keywords.</p>`;
+function newsList(news: readonly NewsItem[], t: CoreT): string {
+  if (news.length === 0) return `<p class="muted">${t("plugins.collectors.brief.noNews")}</p>`;
   return `<ul class="news">${news
     .map((item) => {
       // The URL is escaped, but the scheme is validated here too: this HTML runs
@@ -104,29 +107,35 @@ function newsList(news: readonly NewsItem[]): string {
     .join("")}</ul>`;
 }
 
-function projectSection(project: ProjectReport): string {
+function projectSection(project: ProjectReport, t: CoreT): string {
   const notes =
     project.notes.length === 0
       ? ""
-      : `<div class="notes"><strong>Data quality</strong><ul>${project.notes
+      : `<div class="notes"><strong>${t("plugins.collectors.brief.dataQuality")}</strong><ul>${project.notes
           .map((note) => `<li>${escapeHtml(note)}</li>`)
           .join("")}</ul></div>`;
   const metrics =
     project.metrics.length === 0
-      ? `<p class="muted">No metrics were collected for this project.</p>`
-      : `<table class="metrics"><thead><tr><th>Metric</th><th>Source</th><th class="value">Value</th></tr></thead>
+      ? `<p class="muted">${t("plugins.collectors.brief.noMetrics")}</p>`
+      : `<table class="metrics"><thead><tr><th>${t("plugins.collectors.brief.metric")}</th><th>${t("plugins.collectors.brief.source")}</th><th class="value">${t("plugins.collectors.brief.value")}</th></tr></thead>
           <tbody>${project.metrics.map(metricRow).join("")}</tbody></table>`;
   return `<section class="project">
     <h2>${escapeHtml(project.name)} <span class="meta">${escapeHtml(project.id)}</span></h2>
     ${metrics}
-    <h3>News</h3>
-    ${newsList(project.news)}
+    <h3>${t("plugins.collectors.brief.news")}</h3>
+    ${newsList(project.news, t)}
     ${notes}
   </section>`;
 }
 
-/** Render the brief to a complete, self-contained HTML document. */
-export async function renderBriefHtml(brief: DailyBrief): Promise<string> {
+/**
+ * Render the brief to a complete, self-contained HTML document, its own words
+ * (headings, column names, empty states) in `locale`: English by default. They
+ * are the catalogue's, written into the page as they are; everything collected
+ * is escaped. The collectors' metric labels and notes are their data, as collected.
+ */
+export async function renderBriefHtml(brief: DailyBrief, locale: Locale = "en"): Promise<string> {
+  const t = locale === "en" ? coreEnglish : coreIn(locale);
   const summaryKeys = ["sessions", "mrr", "revenue"];
   const header = (await brief.projects.map((project) => `<td>${escapeHtml(project.name)}</td>`)).join("");
   const body = summaryKeys
@@ -137,12 +146,18 @@ export async function renderBriefHtml(brief: DailyBrief): Promise<string> {
           return `<td>${metric === undefined ? "—" : escapeHtml(formatValue(metric))}</td>`;
         })
         .join("");
-      const label = key === "mrr" ? "MRR" : key === "revenue" ? "Paid revenue" : "Sessions";
+      const label = t(
+        key === "mrr"
+          ? "plugins.collectors.brief.mrr"
+          : key === "revenue"
+            ? "plugins.collectors.brief.revenue"
+            : "plugins.collectors.brief.sessions",
+      );
       return `<tr><th>${label}</th>${cells}</tr>`;
     })
     .join("");
   return `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Daily brief</title>
+<html lang="${locale}"><head><meta charset="utf-8"><title>${t("plugins.collectors.brief.title")}</title>
 <style>
   ${printThemeCss("px")}
   @page { size: A4; margin: 18mm 16mm; }
@@ -167,11 +182,16 @@ export async function renderBriefHtml(brief: DailyBrief): Promise<string> {
 </style></head>
 <body>
   <header>
-    <h1>Daily brief — all projects</h1>
-    <div class="meta">Period ${escapeHtml(brief.period.start)} → ${escapeHtml(brief.period.end)} · generated ${escapeHtml(brief.generatedAt)} · ${brief.projects.length} project(s)</div>
+    <h1>${t("plugins.collectors.brief.heading")}</h1>
+    <div class="meta">${t("plugins.collectors.brief.meta", {
+      start: escapeHtml(brief.period.start),
+      end: escapeHtml(brief.period.end),
+      generatedAt: escapeHtml(brief.generatedAt),
+      count: brief.projects.length,
+    })}</div>
   </header>
-  <table class="summary"><thead><tr><th>Cross-project</th>${header}</tr></thead><tbody>${body}</tbody></table>
-  ${(await brief.projects.map(projectSection)).join("")}
+  <table class="summary"><thead><tr><th>${t("plugins.collectors.brief.crossProject")}</th>${header}</tr></thead><tbody>${body}</tbody></table>
+  ${(await brief.projects.map((project) => projectSection(project, t))).join("")}
 </body></html>`;
 }
 
@@ -209,6 +229,8 @@ export interface ReportToolOptions {
    * disk, or a bug in this handler was responsible.
    */
   readonly logWarning?: (message: string, details?: Record<string, unknown>) => void;
+  /** The workspace's language, which the brief's own words are written in. Absent: English. */
+  readonly locale?: (workspaceId: string) => Promise<Locale>;
 }
 
 /** What a render returns to the model: a reference and a size, never the bytes. */
@@ -494,7 +516,8 @@ export function registerReportTools(registry: ToolRegistrar, options: ReportTool
         },
       );
 
-      const rendered = await options.renderer.renderPdf({ html: await renderBriefHtml(brief) });
+      const locale = (await options.locale?.(context.workspaceId)) ?? "en";
+      const rendered = await options.renderer.renderPdf({ html: await renderBriefHtml(brief, locale) });
       if (signal.aborted) throw new TaviError("CANCELLED", "reports.generate was cancelled");
       // Rendered by Tavi from the business collectors' numbers, which are personal, with the feeds'
       // headlines and snippets when any project has news (third parties' words, `routine-output`),

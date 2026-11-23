@@ -14,7 +14,10 @@ import {
 import type { Catalog, Locale } from "@tavi/contracts/i18n";
 import { localizedPluginManifest, readBuiltinUiPacks, readPluginManifest, readPluginUiMessages } from "@tavi/runtime";
 
-import { channelPluginOf, channelPluginVersionOf } from "../channels/catalog.js";
+import { coreIn } from "@tavi/contracts/locales/core-server";
+
+import { channelPluginOf, channelPluginVersionOf, isBuiltinChannel } from "../channels/catalog.js";
+import { builtinChannelDescriptorIn } from "./catalog.js";
 import type { ExternalPluginLanguage } from "./external.js";
 
 /**
@@ -80,8 +83,8 @@ export function localizedSnapshotManifest(
 
 /**
  * Channel descriptors as channel setup shows them in `locale`: a plugin's
- * channel with its version's pack laid over it; a built-in's, or one whose
- * pack does not reach it, as registered.
+ * channel with its version's pack laid over it; a built-in's in the core
+ * catalogue's words; one whose pack does not reach it, as registered.
  */
 export function localizedChannelDescriptors(
   descriptors: readonly ChannelDescriptor[],
@@ -90,7 +93,10 @@ export function localizedChannelDescriptors(
 ): readonly ChannelDescriptor[] {
   if (locale === undefined || locale === "en") return descriptors;
   const manifests = new Map<string, PluginManifest | undefined>();
+  const t = coreIn(locale);
   return descriptors.map((descriptor) => {
+    // A built-in channel's words are the core catalogue's.
+    if (isBuiltinChannel(descriptor.providerId)) return builtinChannelDescriptorIn(descriptor.providerId, t) ?? descriptor;
     const pluginId = channelPluginOf(descriptor.providerId);
     const version = channelPluginVersionOf(descriptor.providerId);
     const snapshot = pluginId === undefined || version === undefined ? undefined : snapshotOf(pluginId, version);
@@ -99,6 +105,45 @@ export function localizedChannelDescriptors(
       manifests.set(snapshot.directory, localizedSnapshotManifest(snapshot.directory, locale, snapshot.contentHash));
     return manifests.get(snapshot.directory)?.channels.find((candidate) => candidate.providerId === descriptor.providerId) ?? descriptor;
   });
+}
+
+/**
+ * Each workspace's language, answered at once for a reader that cannot wait
+ * (a tool's `assess`): `seed`'s is read up front; another workspace's is read
+ * on its first ask, which meanwhile answers `seed`'s. Every workspace asked
+ * about is read again after each write to workspace settings (`onWrite`).
+ * `close` stops following writes.
+ */
+export async function workspaceLocales(
+  settings: Pick<WorkspaceSettingsRepositoryPort, "get">,
+  seed: string,
+  onWrite: (listener: (operation: string) => void) => () => void,
+): Promise<{ readonly of: (workspaceId: string) => Locale; readonly close: () => void }> {
+  const known = new Map<string, Locale>([[seed, localeOf((await settings.get(seed)).settings)]]);
+  const reading = new Set<string>();
+  const read = (workspaceId: string): void => {
+    if (reading.has(workspaceId)) return;
+    reading.add(workspaceId);
+    void settings
+      .get(workspaceId)
+      .then((answer) => known.set(workspaceId, localeOf(answer.settings)))
+      // A workspace whose settings cannot be read keeps what it had, else the seed's.
+      .catch(() => undefined)
+      .finally(() => reading.delete(workspaceId));
+  };
+  const close = onWrite((operation) => {
+    if (!operation.startsWith("repository.workspaceSettings.") || /\.(get|list)$/.test(operation)) return;
+    for (const workspaceId of known.keys()) read(workspaceId);
+  });
+  return {
+    of: (workspaceId) => {
+      const locale = known.get(workspaceId);
+      if (locale !== undefined) return locale;
+      read(workspaceId);
+      return known.get(seed) ?? "en";
+    },
+    close,
+  };
 }
 
 /**

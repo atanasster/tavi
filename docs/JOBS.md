@@ -26,7 +26,7 @@ tavi plugins install packages/external/jobs/dist-plugin
 ```
 
 ```bash
-tavi plugins approve jobs.finder 0.1.0
+tavi plugins approve jobs.finder 0.1.1
 ```
 
 ```bash

@@ -1,15 +1,16 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "abi": "tavi.providers/1",
   "provenance": {
     "format": "bundled-esm",
     "packages": []
   },
   "id": "discord.channel",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "name": "Discord",
   "description": "Discord as a channel: DMs with your bot, and the server channels you list as rooms. Built on Discord's official bot API (Gateway and REST).",
   "entry": "index.mjs",
+  "locales": { "bg": "locales/bg.json" },
   "isolation": "in-process",
   "provides": ["channel"],
   "channelAbi": 2,

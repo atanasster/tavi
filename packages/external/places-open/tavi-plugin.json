@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "abi": "tavi.providers/1",
   "provenance": {
     "format": "bundled-esm",
@@ -43,10 +43,11 @@
     ]
   },
   "id": "places.open",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "name": "Places",
   "description": "Finds places from open data (OpenStreetMap, and an Overture Maps area pack you choose), resolves them across sources with each fact's source and age, and keeps them as each source's terms allow. Never books for you.",
   "entry": "index.mjs",
+  "locales": { "bg": "locales/bg.json" },
   "isolation": "process",
   "provides": ["heartbeat-signals"],
   "heartbeatSignals": { "abi": "tavi.heartbeat/1", "sources": ["watches"] },

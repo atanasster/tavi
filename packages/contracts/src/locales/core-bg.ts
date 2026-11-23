@@ -13,6 +13,7 @@ import { agent } from "./bg/agent.js";
 import { reports } from "./bg/reports.js";
 import { channels } from "./bg/channels.js";
 import { terminal } from "./bg/terminal.js";
+import { plugins } from "./bg/plugins.js";
 
 /** The `core` namespace in Bulgarian: weekdays and months are lowercase, and a day reads "вт, 29 сеп". */
 export const CORE_BG = {
@@ -29,4 +30,5 @@ export const CORE_BG = {
   ...reports,
   ...channels,
   ...terminal,
+  ...plugins,
 } as const satisfies CatalogFor<typeof CORE_EN>;

@@ -79,6 +79,18 @@ built-in. The built-in browser view speaks Bulgarian this way: its status chip,
 notices, buttons and what it announces to a screen reader. A plugin that
 ignores the language keeps its English.
 
+Tavi's built-in plugins speak the workspace's language through the `plugins`
+part of the core catalogue: each built-in's description in the canvas's plugin
+list, the built-in onboarding flow, the setup words of the Telegram, Gmail and
+Mailgun channels, the guard's hook disclosure and the reason on its approval
+card, the flight search's approval card (in the language of the workspace the
+search runs in), and the frame of the daily brief's PDF. The Discord, Jobs,
+Trends, Places and Places: health plugins ship Bulgarian language packs. What
+the model reads (tool descriptions, tool answers and refusals, the guard's
+unattended refusal) stays English, and so do a few words a pack cannot reach: a
+Telegram bot check's lines, Mailgun's default subject and a channel app's setup
+links.
+
 Errors Tavi's server sends the canvas for you to act on (a value it
 refuses, something that no longer exists, a change someone else saved first,
 a folder, channel or connected app it cannot use) carry the key of their

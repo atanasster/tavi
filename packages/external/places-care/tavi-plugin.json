@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "abi": "tavi.providers/1",
   "provenance": {
     "format": "bundled-esm",
@@ -31,10 +31,11 @@
     ]
   },
   "id": "places.care",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "name": "Places: health",
   "description": "Finds health providers in public registries (the NPI Registry, Medicare's Doctors and Clinicians) and checks providers against a payer's published Plan-Net network. Personal: offered only in its operator's own chats. Keeps nothing about a provider, plan or person.",
   "entry": "index.mjs",
+  "locales": { "bg": "locales/bg.json" },
   "isolation": "process",
   "apps": {
     "abi": "tavi.apps/1",

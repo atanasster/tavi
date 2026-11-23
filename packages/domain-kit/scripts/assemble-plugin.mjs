@@ -1,9 +1,9 @@
-// Puts a domain plugin's manifest, the site profiles it names and the files
-// it ships beside its bundle, so dist-plugin/ is the folder `tavi plugins
+// Puts a domain plugin's manifest, the site profiles and language packs it
+// names and the files it ships beside its bundle, so dist-plugin/ is the folder `tavi plugins
 // install` takes, and holds it to its budget: one module, no import other
 // than Node's own, and at most `budgetMegabytes`.
 import { copyFileSync, cpSync, mkdirSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
@@ -22,11 +22,12 @@ export function assemblePlugin(packageUrl, { budgetMegabytes, files: shipped = [
   const out = join(root, "dist-plugin");
   copyFileSync(join(root, "tavi-plugin.json"), join(out, "tavi-plugin.json"));
   for (const path of shipped) cpSync(join(root, path), join(out, path), { recursive: true });
-  // The site profiles the manifest's sites block names, beside it.
+  // The site profiles the manifest's sites block names, and its language packs, beside it.
   const manifest = JSON.parse(readFileSync(join(root, "tavi-plugin.json"), "utf8"));
-  for (const path of manifest.sites ?? []) {
-    mkdirSync(dirname(join(out, path)), { recursive: true });
-    copyFileSync(join(root, path), join(out, path));
+  for (const path of [...(manifest.sites ?? []), ...Object.values(manifest.locales ?? {})]) {
+    const { from, to } = containedCopy(root, out, path);
+    mkdirSync(dirname(to), { recursive: true });
+    copyFileSync(from, to);
   }
   if (dictionary !== undefined) {
     mkdirSync(dirname(join(out, dictionary.to)), { recursive: true });
@@ -55,4 +56,27 @@ export function assemblePlugin(packageUrl, { budgetMegabytes, files: shipped = [
   if (bytes > budgetMegabytes * 1024 * 1024)
     throw new Error(`dist-plugin is ${String(bytes)} bytes${without}, past its ${String(budgetMegabytes)} MB budget`);
   console.log(`dist-plugin: ${files.join(", ")} (${String(bytes)} bytes)`);
+}
+
+/**
+ * Where a file the manifest names is copied from and to: a relative path that
+ * stays inside the package and inside dist-plugin/. An absolute path, or one
+ * that climbs out with `..`, is refused before anything is read or written.
+ *
+ * @param {string} root The package's folder.
+ * @param {string} out Its dist-plugin/ folder.
+ * @param {string} path The path as the manifest names it.
+ * @returns {{ readonly from: string; readonly to: string }}
+ */
+export function containedCopy(root, out, path) {
+  const inside = (base, target) => {
+    const rest = relative(base, target);
+    return rest !== "" && !rest.startsWith("..") && !isAbsolute(rest);
+  };
+  const refused = () => new Error(`the manifest names ${String(path)}, which is not a relative path inside the package`);
+  if (typeof path !== "string" || isAbsolute(path) || path.split(/[\\/]/).includes("..")) throw refused();
+  const from = resolve(root, path);
+  const to = resolve(out, path);
+  if (!inside(root, from) || !inside(out, to)) throw refused();
+  return { from, to };
 }

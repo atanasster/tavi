@@ -11,7 +11,7 @@ import { useHostTaviError } from "./host-shim.js";
  * and its `z`, so the bundle carries no schema library.
  */
 
-export const VERSION = "0.1.1";
+export const VERSION = "0.1.2";
 
 /**
  * The workspace's language (`ctx.locale`): read on each answer, so a language changed while it runs

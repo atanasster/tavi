@@ -28,7 +28,7 @@ const PROFESSIONS = [...new Set(LICENSING.flatMap((file) => file.rows.map((row) 
  * books, types into a page, or sends anything.
  */
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 const REQUEST_TIMEOUT_MS = 25_000;
 /** A file read line by line (Germany's charging register, about 55 MB a month): its own limits. */
 const STREAM_MAX_BYTES = 200 * 1024 * 1024;

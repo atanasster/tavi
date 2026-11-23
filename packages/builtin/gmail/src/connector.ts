@@ -32,6 +32,7 @@ import type {
   OutboundMessage,
   SendOutcome,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { errorMessage, nowTimestamp, retryAfterMs } from "@tavi/contracts/util";
 
 /**
@@ -114,108 +115,110 @@ type GmailDestination = z.infer<typeof GmailDestinationSchema>;
 /**
  * What Gmail is to core: an email channel that
  * signs in with Google (an OAuth app of the operator's own), takes in only
- * labelled mail, and whose senders are authenticated per message.
+ * labelled mail, and whose senders are authenticated per message. Its words a
+ * person reads are `t`'s (English by default), for the workspace's language.
  */
-export const GMAIL_CHANNEL_DESCRIPTOR: ChannelDescriptor = {
-  providerId: "gmail",
-  label: "Gmail",
-  kind: "email",
-  icon: { name: "mail" },
-  description: "Email the agent through your own Gmail account: it reads only mail you label, and replies from your address.",
-  settings: [
-    {
-      key: "label",
-      label: "Label to read",
-      type: "string",
-      default: "tavi",
-      pattern: LABEL_PATTERN,
-      help: "Only mail with this Gmail label reaches the agent; give it with a filter (for example, mail to you+tavi@gmail.com). Each message read is labelled <label>-processed.",
-    },
-    {
-      key: "receive",
-      label: "Reach Tavi by email",
-      type: "boolean",
-      default: true,
-      help: "Take in mail with the label, and answer it from your address. Off, the account only carries its mailbox's and calendar's tools.",
-    },
-  ],
-  // Where its calls go besides its token host: the mailbox and the channel, the calendar, and who signed in.
-  hosts: ["gmail.googleapis.com", "www.googleapis.com", "openidconnect.googleapis.com"],
-  auth: {
-    kind: "oauth2",
-    oauth: {
-      authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
-      tokenUrl: "https://oauth2.googleapis.com/token",
-      revokeUrl: "https://oauth2.googleapis.com/revoke",
-      // Who signed in, and nothing more, until something that needs more is on. Google answers with the email
-      // scope's full name, so it is asked for by that name: a short `email` would read as never granted.
-      scopes: ["openid", "https://www.googleapis.com/auth/userinfo.email"],
-      optInScopes: {
-        // Taking mail in, or its mailbox's tools: read and label the mail, and send as you; nothing broader.
-        mail: ["https://www.googleapis.com/auth/gmail.modify"],
-        // Its calendar's tools: its list, free or busy, and events.
-        calendar: [...GOOGLE_CALENDAR_SCOPES],
-      },
-      pkce: true,
-      // Without these Google issues no refresh token.
-      extraAuthorizeParams: { access_type: "offline", prompt: "consent" },
-      client: { source: "operator" },
-      redirect: "loopback-any-port",
-      tokenAuthMethod: "client_secret_post",
-      accountIdentity: { userinfoUrl: "https://openidconnect.googleapis.com/v1/userinfo", field: "email" },
-      // Google's device flow allows none of its mail or calendar scopes.
-      disallowsDeviceFlow: true,
-      // Google revokes a grant for every client of its Cloud project; its ids lead with the project number.
-      clientProjectPattern: "^(\\d+)-[^.]+\\.apps\\.googleusercontent\\.com$",
-    },
-  },
-  sender: {
-    label: "Email address",
-    placeholder: "person@example.com",
-    pattern: EMAIL_PATTERN,
-    normalize: "lowercase",
-    authentication: "per-message",
-  },
-  target: { label: "Email address", placeholder: "person@example.com", pattern: EMAIL_PATTERN, normalize: "lowercase" },
-  // Google's limits are per user per day; this keeps one connection well inside them.
-  sendRate: { perMinute: 60, perTargetPerMinute: 20 },
-  // In Connected apps: its client is the one Google's apps share, and its
-  // accounts are mailboxes the agent may use, each by its own opt-in.
-  app: {
-    name: "Google",
-    summary: "Your Google account: its calendar and Gmail, each turned on by you, and Tavi reached by email.",
-    category: "email",
-    publisher: "Google",
-    provider: "google",
-    dataClass: "personal",
-    scopes: [
+export function gmailChannelDescriptor(t: CoreT = coreEnglish): ChannelDescriptor {
+  return {
+    providerId: "gmail",
+    label: "Gmail",
+    kind: "email",
+    icon: { name: "mail" },
+    description: t("plugins.gmail.description"),
+    settings: [
       {
-        scope: "https://www.googleapis.com/auth/userinfo.email",
-        says: "See your Google account's email address",
-        access: "read",
-        optional: false,
+        key: "label",
+        label: t("plugins.gmail.label.label"),
+        type: "string",
+        default: "tavi",
+        pattern: LABEL_PATTERN,
+        help: t("plugins.gmail.label.help"),
       },
       {
-        scope: "https://www.googleapis.com/auth/gmail.modify",
-        says: "Read and label your mail, write drafts, and send as you (only while Gmail is on)",
-        access: "send",
-        optional: true,
-      },
-      {
-        scope: "https://www.googleapis.com/auth/calendar.events",
-        says: "See your calendars and free time, and add or change events (only while the calendar is on)",
-        access: "change",
-        optional: true,
+        key: "receive",
+        label: t("plugins.gmail.receive.label"),
+        type: "boolean",
+        default: true,
+        help: t("plugins.gmail.receive.help"),
       },
     ],
-    mailbox: true,
-    calendar: true,
-  },
-  setupHelp:
-    "Set up Google once from Connected apps (Set up Google): a Google Cloud project of your own with the Gmail and Calendar APIs, a published consent screen, and an OAuth client of type Desktop app, whose downloaded JSON you drop there; or enter its client ID and secret here. Your other Google apps use the same client. " +
-    "An app left in Testing signs in for 7 days at a time. " +
-    "Mail sent through this channel goes out as you, from your address, into your Sent folder.",
-};
+    // Where its calls go besides its token host: the mailbox and the channel, the calendar, and who signed in.
+    hosts: ["gmail.googleapis.com", "www.googleapis.com", "openidconnect.googleapis.com"],
+    auth: {
+      kind: "oauth2",
+      oauth: {
+        authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+        tokenUrl: "https://oauth2.googleapis.com/token",
+        revokeUrl: "https://oauth2.googleapis.com/revoke",
+        // Who signed in, and nothing more, until something that needs more is on. Google answers with the email
+        // scope's full name, so it is asked for by that name: a short `email` would read as never granted.
+        scopes: ["openid", "https://www.googleapis.com/auth/userinfo.email"],
+        optInScopes: {
+          // Taking mail in, or its mailbox's tools: read and label the mail, and send as you; nothing broader.
+          mail: ["https://www.googleapis.com/auth/gmail.modify"],
+          // Its calendar's tools: its list, free or busy, and events.
+          calendar: [...GOOGLE_CALENDAR_SCOPES],
+        },
+        pkce: true,
+        // Without these Google issues no refresh token.
+        extraAuthorizeParams: { access_type: "offline", prompt: "consent" },
+        client: { source: "operator" },
+        redirect: "loopback-any-port",
+        tokenAuthMethod: "client_secret_post",
+        accountIdentity: { userinfoUrl: "https://openidconnect.googleapis.com/v1/userinfo", field: "email" },
+        // Google's device flow allows none of its mail or calendar scopes.
+        disallowsDeviceFlow: true,
+        // Google revokes a grant for every client of its Cloud project; its ids lead with the project number.
+        clientProjectPattern: "^(\\d+)-[^.]+\\.apps\\.googleusercontent\\.com$",
+      },
+    },
+    sender: {
+      label: t("plugins.gmail.address"),
+      placeholder: "person@example.com",
+      pattern: EMAIL_PATTERN,
+      normalize: "lowercase",
+      authentication: "per-message",
+    },
+    target: { label: t("plugins.gmail.address"), placeholder: "person@example.com", pattern: EMAIL_PATTERN, normalize: "lowercase" },
+    // Google's limits are per user per day; this keeps one connection well inside them.
+    sendRate: { perMinute: 60, perTargetPerMinute: 20 },
+    // In Connected apps: its client is the one Google's apps share, and its
+    // accounts are mailboxes the agent may use, each by its own opt-in.
+    app: {
+      name: "Google",
+      summary: t("plugins.gmail.app.summary"),
+      category: "email",
+      publisher: "Google",
+      provider: "google",
+      dataClass: "personal",
+      scopes: [
+        {
+          scope: "https://www.googleapis.com/auth/userinfo.email",
+          says: t("plugins.gmail.scope.email"),
+          access: "read",
+          optional: false,
+        },
+        {
+          scope: "https://www.googleapis.com/auth/gmail.modify",
+          says: t("plugins.gmail.scope.mail"),
+          access: "send",
+          optional: true,
+        },
+        {
+          scope: "https://www.googleapis.com/auth/calendar.events",
+          says: t("plugins.gmail.scope.calendar"),
+          access: "change",
+          optional: true,
+        },
+      ],
+      mailbox: true,
+      calendar: true,
+    },
+    setupHelp: t("plugins.gmail.setupHelp"),
+  };
+}
+
+export const GMAIL_CHANNEL_DESCRIPTOR: ChannelDescriptor = gmailChannelDescriptor();
 
 export interface GmailHeader {
   readonly name: string;

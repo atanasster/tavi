@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// Puts the manifest beside the bundle, so dist-plugin/ is the folder
+// Puts the manifest and its language packs beside the bundle, so dist-plugin/ is the folder
 // `tavi plugins install` takes, and holds it to its budget: one module, no
 // import other than Node's own, at most 400 KB, and no second TaviError class
 // or contracts barrel bundled in.
-import { copyFileSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { copyFileSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 export const BUDGET_BYTES = 400 * 1024;
@@ -32,10 +32,36 @@ export function problemsOf(out) {
   return { problems, files, bytes };
 }
 
+/**
+ * Where a language pack the manifest names is copied from and to: a relative
+ * path inside the package and inside dist-plugin/, as `@tavi/domain-kit`'s
+ * assembler checks a domain plugin's (this package does not depend on it).
+ * An absolute path, or one that climbs out with `..`, is refused.
+ */
+export function containedCopy(root, out, path) {
+  const inside = (base, target) => {
+    const rest = relative(base, target);
+    return rest !== "" && !rest.startsWith("..") && !isAbsolute(rest);
+  };
+  const refused = () => new Error(`the manifest names ${String(path)}, which is not a relative path inside the package`);
+  if (typeof path !== "string" || isAbsolute(path) || path.split(/[\\/]/).includes("..")) throw refused();
+  const from = resolve(root, path);
+  const to = resolve(out, path);
+  if (!inside(root, from) || !inside(out, to)) throw refused();
+  return { from, to };
+}
+
 if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
   const root = join(dirname(fileURLToPath(import.meta.url)), "..");
   const out = join(root, "dist-plugin");
   copyFileSync(join(root, "tavi-plugin.json"), join(out, "tavi-plugin.json"));
+  // Its language packs, at the paths the manifest names.
+  const manifest = JSON.parse(readFileSync(join(root, "tavi-plugin.json"), "utf8"));
+  for (const path of Object.values(manifest.locales ?? {})) {
+    const { from, to } = containedCopy(root, out, path);
+    mkdirSync(dirname(to), { recursive: true });
+    copyFileSync(from, to);
+  }
   const { problems, files, bytes } = problemsOf(out);
   if (problems.length > 0) throw new Error(problems.join("; "));
   console.log(`dist-plugin: ${files.join(", ")} (${String(bytes)} bytes)`);

@@ -10,7 +10,7 @@ Say what kind of provider you need, your plan and your ZIP code. Tavi lists near
 
 ## 1. Add the care app
 
-Run `tavi plugins install packages/external/places-care/dist-plugin`, then `tavi plugins approve places.care 0.1.0` and `tavi plugins enable places.care`, and restart `tavi serve`: a plugin loads when Tavi starts. `tavi plugins show places.care` shows what you added. It keeps nothing about a provider, a plan or you, and needs no account.
+Run `tavi plugins install packages/external/places-care/dist-plugin`, then `tavi plugins approve places.care 0.1.1` and `tavi plugins enable places.care`, and restart `tavi serve`: a plugin loads when Tavi starts. `tavi plugins show places.care` shows what you added. It keeps nothing about a provider, a plan or you, and needs no account.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../../assets/use-cases/everyday/local-services/in-network/01-add-the-care-app-dark.svg">

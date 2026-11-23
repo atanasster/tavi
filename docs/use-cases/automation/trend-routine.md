@@ -7,7 +7,7 @@ Name a topic and let Tavi follow how much it is talked about across free public 
 
 ## 1. Add the Trends app
 
-Run `tavi plugins install packages/external/trends/dist-plugin`, then `tavi plugins approve trends.radar 0.1.0` and `tavi plugins enable trends.radar`, and restart `tavi serve`. `tavi plugins show trends.radar` lists the sites it may read and its tools; it uses no paid service and never posts.
+Run `tavi plugins install packages/external/trends/dist-plugin`, then `tavi plugins approve trends.radar 0.1.1` and `tavi plugins enable trends.radar`, and restart `tavi serve`. `tavi plugins show trends.radar` lists the sites it may read and its tools; it uses no paid service and never posts.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../assets/use-cases/automation/trend-routine/01-add-the-trends-app-dark.svg">

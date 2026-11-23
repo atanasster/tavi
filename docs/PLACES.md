@@ -11,7 +11,7 @@ you.
 ```bash
 pnpm --filter @tavi/plugin-places-open build
 tavi plugins install packages/external/places-open/dist-plugin
-tavi plugins approve places.open 0.1.0
+tavi plugins approve places.open 0.1.1
 tavi plugins enable places.open
 ```
 

@@ -26,7 +26,7 @@ tavi plugins install packages/external/trends/dist-plugin
 ```
 
 ```bash
-tavi plugins approve trends.radar 0.1.0
+tavi plugins approve trends.radar 0.1.1
 ```
 
 ```bash

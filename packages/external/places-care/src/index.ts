@@ -15,7 +15,7 @@ import { PAYERS } from "./payers.js";
  * the request log.
  */
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 const REQUEST_TIMEOUT_MS = 25_000;
 
 /** One request with the worker's `fetch`, through its proxy, read to a bounded body: JSON, whatever the request says. */

@@ -2,6 +2,8 @@ import { realpathSync } from "node:fs";
 import { posix } from "node:path";
 
 import type { ModHookInput, ModHookResult, ModNext } from "@tavi/contracts";
+import { coreEnglish, type CoreKey, type CoreT } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 
 export { GUARD_MODS, GUARD_PLUGIN_ID } from "./manifest.js";
 
@@ -308,12 +310,33 @@ const ANYWHERE = new Set(["rm", "git", "chmod", "dd"]);
 const AS_COMMAND = new Set(["find", "truncate"]);
 
 /** What one command would do that the guard asks about, and the paths it would touch. */
-function destructive(segment: Segment): { readonly does: string; readonly paths: readonly string[] } | undefined {
+/**
+ * What a destructive command does, as a key of its words (`plugins.guard.does.<does>`), and the paths it
+ * would touch.
+ */
+interface Hit {
+  readonly does: GuardDoes;
+  readonly paths: readonly string[];
+}
+
+type GuardDoes =
+  | "overwrite"
+  | "dropDatabase"
+  | "removeRecursive"
+  | "openToEveryone"
+  | "overwriteDevice"
+  | "format"
+  | "findDelete"
+  | "truncate"
+  | "gitReset"
+  | "gitClean";
+
+function destructive(segment: Segment): Hit | undefined {
   const { words } = segment;
   // Printed, not run.
   const name = commandName(words[0]);
   if (name === "echo" || name === "printf") return undefined;
-  if (/\bdrop\s+(table|database|schema)\b/i.test(words.join(" "))) return { does: "drops database objects", paths: [] };
+  if (/\bdrop\s+(table|database|schema)\b/i.test(words.join(" "))) return { does: "dropDatabase", paths: [] };
   // Every place a command of the guard's may start: the first word, and a word a wrapper runs.
   for (const [index, word] of words.entries()) {
     const command = commandName(word).split(".")[0] ?? "";
@@ -326,29 +349,29 @@ function destructive(segment: Segment): { readonly does: string; readonly paths:
 }
 
 /** The guard's rule for one command's own words, from its name. */
-function ruleOf(own: readonly string[]): { readonly does: string; readonly paths: readonly string[] } | undefined {
+function ruleOf(own: readonly string[]): Hit | undefined {
   const command = commandName(own[0]);
   const flags = flagsOf(own.slice(1));
   if (command === "rm" && (flags.short.has("r") || flags.long.has("--recursive")) && (flags.short.has("f") || flags.long.has("--force"))) {
-    return { does: "deletes files and folders recursively", paths: operandsOf(own, 1) };
+    return { does: "removeRecursive", paths: operandsOf(own, 1) };
   }
   if (command === "git") return gitRuleOf(own);
   if (command === "chmod" && (flags.short.has("r") || flags.long.has("--recursive")) && own.some((word) => /^0?777$/.test(word)))
-    return { does: "opens every file to everyone", paths: operandsOf(own, 1).filter((word) => !/^0?777$/.test(word)) };
+    return { does: "openToEveryone", paths: operandsOf(own, 1).filter((word) => !/^0?777$/.test(word)) };
   if (command === "dd") {
     const target = own.find((word) => word.startsWith("of="));
-    if (target !== undefined) return { does: "overwrites a file or device", paths: [target.slice("of=".length)] };
+    if (target !== undefined) return { does: "overwriteDevice", paths: [target.slice("of=".length)] };
   }
-  if (command.startsWith("mkfs")) return { does: "formats a disk", paths: operandsOf(own, 1) };
+  if (command.startsWith("mkfs")) return { does: "format", paths: operandsOf(own, 1) };
   if (command === "find" && own.includes("-delete")) {
     // The folders it searches: its operands before the first expression.
     const start = own.slice(1);
     const until = start.findIndex((word) => word.startsWith("-") || word === "!");
-    return { does: "deletes the files it finds", paths: until === -1 ? start : start.slice(0, until) };
+    return { does: "findDelete", paths: until === -1 ? start : start.slice(0, until) };
   }
   if (command === "truncate")
     return {
-      does: "cuts files short",
+      does: "truncate",
       paths: own.slice(1).filter((word, at, rest) => !word.startsWith("-") && !(rest[at - 1] === "-s" || rest[at - 1] === "--size")),
     };
   return undefined;
@@ -364,7 +387,7 @@ const GIT_VALUED = new Set(["-C", "-c", "--git-dir", "--work-tree", "--namespace
  * (`-n`, `--dry-run`), and it deletes nothing; a `--dry-run` elsewhere is not
  * one — `rm` reads it as a file once an operand is given.
  */
-function gitRuleOf(own: readonly string[]): { readonly does: string; readonly paths: readonly string[] } | undefined {
+function gitRuleOf(own: readonly string[]): Hit | undefined {
   let at = 1;
   let folder = "";
   while (own[at]?.startsWith("-") === true) {
@@ -382,10 +405,10 @@ function gitRuleOf(own: readonly string[]): { readonly does: string; readonly pa
     (_word, index, words) => !(words[index - 1] === "-e" || words[index - 1] === "--exclude"),
   );
   const flags = flagsOf(its);
-  if (own[at] === "reset" && flags.long.has("--hard")) return { does: "discards uncommitted work", paths: [] };
+  if (own[at] === "reset" && flags.long.has("--hard")) return { does: "gitReset", paths: [] };
   if (own[at] !== "clean" || !(flags.short.has("f") || flags.long.has("--force"))) return undefined;
   if (flags.short.has("n") || flags.long.has("--dry-run")) return undefined;
-  return { does: "deletes untracked files", paths: operandsOf(own, at + 1).map((path) => fromFolder(folder, path)) };
+  return { does: "gitClean", paths: operandsOf(own, at + 1).map((path) => fromFolder(folder, path)) };
 }
 
 /**
@@ -403,6 +426,14 @@ function shownPath(path: string, cwd: string): string {
   }
 }
 
+/** Why the guard asks, in `t`'s words: "This command deletes untracked files: build, dist." */
+function reasonOf(does: GuardDoes, paths: readonly string[], t: CoreT = coreEnglish): string {
+  const what = t(`plugins.guard.does.${does}` satisfies CoreKey);
+  return paths.length === 0
+    ? t("plugins.guard.reason", { does: what })
+    : t("plugins.guard.reasonPaths", { does: what, paths: paths.join(", ") });
+}
+
 /** The guard's answer for one `sandbox.run` call. */
 export async function guardCheck(e: ModHookInput<"tool.check">, next: ModNext<"tool.check">): Promise<ModHookResult<"tool.check">> {
   const verdict = await next(e);
@@ -411,7 +442,7 @@ export async function guardCheck(e: ModHookInput<"tool.check">, next: ModNext<"t
   // A redirect overwrites its target, whatever prints into it (`echo x > notes.md`).
   const redirected = redirectTargets(line.bare);
   const hits = [
-    ...(redirected.length === 0 ? [] : [{ hit: { does: "overwrites a file", paths: redirected }, cwd: line.cwd }]),
+    ...(redirected.length === 0 ? [] : [{ hit: { does: "overwrite" as const, paths: redirected }, cwd: line.cwd }]),
     ...segmentsOf(line).flatMap((segment) => {
       const hit = destructive(segment);
       return hit === undefined ? [] : [{ hit, cwd: segment.cwd }];
@@ -419,11 +450,15 @@ export async function guardCheck(e: ModHookInput<"tool.check">, next: ModNext<"t
   ];
   for (const { hit, cwd } of hits) {
     const paths = hit.paths.slice(0, 5).map((path) => shownPath(path, cwd));
-    const reason = `This command ${hit.does}${paths.length === 0 ? "" : `: ${paths.join(", ")}`}.`;
-    // Where nobody can answer an ask, a schedule would approve it: refuse instead.
-    return e.envelope.attended
-      ? { decision: "ask", reason }
-      : { decision: "deny", reason: `${reason} Nobody can approve it in this run, so the tavi.guard plugin refused it.` };
+    // Where nobody can answer an ask, a schedule would approve it: refuse instead. A refusal is the model's to
+    // read, in English; an ask's reason is the person's, on the approval card, in the workspace's language.
+    if (!e.envelope.attended)
+      return {
+        decision: "deny",
+        reason: `${reasonOf(hit.does, paths)} Nobody can approve it in this run, so the tavi.guard plugin refused it.`,
+      };
+    const locale = e.envelope.locale;
+    return { decision: "ask", reason: reasonOf(hit.does, paths, locale === undefined || locale === "en" ? coreEnglish : coreIn(locale)) };
   }
   return verdict;
 }

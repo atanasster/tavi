@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "abi": "tavi.providers/1",
   "provenance": {
     "format": "bundled-esm",
@@ -13,10 +13,11 @@
     ]
   },
   "id": "trends.radar",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "name": "Trends",
   "description": "Tracks the topics you name across free public sources (Hacker News, Wikipedia pageviews, GDELT news, Google Trends, Bluesky, Mastodon, arXiv and public broadcasters' feeds) and, with your free keys, YouTube, Naver DataLab, Reddit and Threads; tests in code whether one is spiking, and tells your heartbeat. Uses no paid service, never watches a person, and never posts.",
   "entry": "index.mjs",
+  "locales": { "bg": "locales/bg.json" },
   "isolation": "process",
   "provides": ["heartbeat-signals"],
   "heartbeatSignals": { "abi": "tavi.heartbeat/1", "sources": ["spikes"] },

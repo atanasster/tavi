@@ -10,7 +10,7 @@ Tell Tavi the role, where you'd work and the least you'd take, and give it your 
 
 ## 1. Add the Jobs app
 
-Run `tavi plugins install packages/external/jobs/dist-plugin`, then `tavi plugins approve jobs.finder 0.1.0` and `tavi plugins enable jobs.finder`, and restart `tavi serve`: a plugin loads when Tavi starts. `tavi plugins show jobs.finder` shows what you added. It runs as a confined worker and never applies for you.
+Run `tavi plugins install packages/external/jobs/dist-plugin`, then `tavi plugins approve jobs.finder 0.1.1` and `tavi plugins enable jobs.finder`, and restart `tavi serve`: a plugin loads when Tavi starts. `tavi plugins show jobs.finder` shows what you added. It runs as a confined worker and never applies for you.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../../assets/use-cases/everyday/work-and-career/job-watch/01-add-the-jobs-app-dark.svg">

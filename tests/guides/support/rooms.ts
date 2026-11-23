@@ -28,7 +28,7 @@ type Walk = {
 /** The Discord plugin's built folder, as the pages give it: relative to the repository, where the walks run. */
 export const DISCORD_PLUGIN = "packages/external/discord/dist-plugin";
 export const DISCORD_ID = "discord.channel";
-export const DISCORD_VERSION = "0.1.1";
+export const DISCORD_VERSION = "0.1.2";
 /** The room's own name in Tavi, as the pages give it. */
 export const ROOM_LABEL = "general";
 /** The name the pictures show for the person: the display name the walks give them. */

@@ -1,0 +1,18 @@
+{
+  "manifest": {
+    "name": "Места: здраве",
+    "description": "Намира медицински специалисти в публичните регистри (NPI Registry и данните на Medicare за лекари и клиники) и проверява дали са в публикуваната мрежа Plan-Net на застрахователя. Личен: предлага се само в собствените чатове на собственика си. Не пази нищо за специалист, план или човек.",
+    "apps.apps.places-health.name": "Места: здраве",
+    "apps.apps.places-health.summary": "Лекари, зъболекари и клиники от NPI Registry и файла на Medicare и дали са в публикуваната мрежа на твоя план.",
+    "apps.apps.places-health.scopes.places.health.says": "Търси специалисти и мрежи (четене)",
+    "apps.apps.places-health.tools.providers.title": "Намери специалисти",
+    "apps.apps.places-health.tools.providers.says": "Изпраща специалност и пощенски код или град на NPI Registry, а намерените NPI — на файла на Medicare.",
+    "apps.apps.places-health.tools.registry_check.title": "Провери записа на специалист",
+    "apps.apps.places-health.tools.registry_check.says": "Изпраща NPI или име на NPI Registry.",
+    "apps.apps.places-health.tools.in_network.title": "Провери мрежата на план",
+    "apps.apps.places-health.tools.in_network.says": "Изпраща NPI на специалистите към публичния справочник на застрахователя; името на плана ти остава тук и се сверява с мрежите му.",
+    "apps.apps.places-health.tools.sources.title": "Здравни източници",
+    "apps.apps.places-health.tools.sources.says": "Кои източници и застрахователи познава, бюджетите и състоянието им и последните заявки."
+  },
+  "messages": {}
+}

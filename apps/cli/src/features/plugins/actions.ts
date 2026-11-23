@@ -16,7 +16,8 @@ import type { Locale } from "@tavi/contracts/i18n";
 import type { PluginLiveStatus, PluginRegistry } from "@tavi/runtime";
 import { builtCanvasDirectory } from "../../canvas-directory.js";
 import { inProcessAudit, type PluginAuditEntry } from "./audit.js";
-import { BUILTIN_CHANNELS } from "./catalog.js";
+import { coreIn } from "@tavi/contracts/locales/core-server";
+import { BUILTIN_CHANNELS, builtinViewIn } from "./catalog.js";
 import { localizedUiEntries } from "./localized.js";
 
 /**
@@ -111,7 +112,7 @@ export async function runPluginAction(
 ): Promise<PluginAnswer> {
   switch (input.action) {
     case "list":
-      return { plugins: await registry.list(live, context?.locale) };
+      return { plugins: inLocale(await registry.list(live, context?.locale), context?.locale) };
     case "audit": {
       // Every enabled plugin whose code runs in the owner's process, read from its approved files.
       const entries: PluginAuditEntry[] = [];
@@ -122,7 +123,7 @@ export async function runPluginAction(
       return { audit: entries };
     }
     case "show":
-      return { plugin: await registry.show(input.pluginId, live, context?.locale) };
+      return { plugin: inLocale([await registry.show(input.pluginId, live, context?.locale)], context?.locale)[0]! };
     case "install": {
       const { record, created } = await registry.install(input.path, actor);
       const { manifest } = record;
@@ -264,6 +265,13 @@ export async function runPluginAction(
       return { entries, ...(icons.length === 0 ? {} : { icons }) };
     }
   }
+}
+
+/** Views with each built-in's own words in `locale` (an installed plugin's come from its pack); as listed without one. */
+function inLocale(views: readonly PluginView[], locale: Locale | undefined): readonly PluginView[] {
+  if (locale === undefined || locale === "en") return views;
+  const t = coreIn(locale);
+  return views.map((view) => builtinViewIn(view, t));
 }
 
 /**

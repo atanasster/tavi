@@ -10,7 +10,7 @@ Name the trade and your area. Tavi finds businesses nearby, checks what licence 
 
 ## 1. Add the Places app
 
-Run `tavi plugins install packages/external/places-open/dist-plugin`, then `tavi plugins approve places.open 0.1.0` and `tavi plugins enable places.open`, and restart `tavi serve`: a plugin loads when Tavi starts. `tavi plugins show places.open` shows what you added. It runs as a confined worker and never books for you.
+Run `tavi plugins install packages/external/places-open/dist-plugin`, then `tavi plugins approve places.open 0.1.1` and `tavi plugins enable places.open`, and restart `tavi serve`: a plugin loads when Tavi starts. `tavi plugins show places.open` shows what you added. It runs as a confined worker and never books for you.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../../assets/use-cases/everyday/local-services/specialist/01-add-the-places-app-dark.svg">

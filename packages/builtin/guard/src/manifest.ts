@@ -1,4 +1,5 @@
 import { MODS_ABI, type ModsDeclaration } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 
 /**
  * `tavi.guard`: a first-party mod, off until the
@@ -9,14 +10,13 @@ import { MODS_ABI, type ModsDeclaration } from "@tavi/contracts";
  */
 export const GUARD_PLUGIN_ID = "tavi.guard";
 
-export const GUARD_MODS: ModsDeclaration = {
-  abi: MODS_ABI,
-  hooks: [
-    {
-      event: "tool.check",
-      match: { tools: ["sandbox.run"] },
-      disclosure: "Asks before a shell command that deletes or overwrites files, and says what it would touch.",
-    },
-  ],
-  commands: [],
-};
+/** Its hooks, with the disclosure a person reads in `t`'s words: English by default. */
+export function guardMods(t: CoreT = coreEnglish): ModsDeclaration {
+  return {
+    abi: MODS_ABI,
+    hooks: [{ event: "tool.check", match: { tools: ["sandbox.run"] }, disclosure: t("plugins.guard.disclosure") }],
+    commands: [],
+  };
+}
+
+export const GUARD_MODS: ModsDeclaration = guardMods();

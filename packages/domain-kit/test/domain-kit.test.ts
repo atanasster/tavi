@@ -209,3 +209,15 @@ describe("the release check of a domain's sources", () => {
     expect(domainCovers("api.example.com", "api.example.com:8443")).toBe(false);
   });
 });
+
+describe("assemblePlugin's copies", () => {
+  it("copies only a relative path the manifest names inside the package and dist-plugin/", async () => {
+    // @ts-expect-error -- a plain script with no declarations, imported for its checks.
+    const { containedCopy } = (await import("../scripts/assemble-plugin.mjs")) as {
+      containedCopy: (root: string, out: string, path: string) => { from: string; to: string };
+    };
+    expect(containedCopy("/p", "/p/dist-plugin", "sites/a.json")).toEqual({ from: "/p/sites/a.json", to: "/p/dist-plugin/sites/a.json" });
+    for (const path of ["../x.json", "locales/../../x.json", "/etc/passwd", ""])
+      expect(() => containedCopy("/p", "/p/dist-plugin", path)).toThrow("not a relative path inside the package");
+  });
+});

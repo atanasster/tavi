@@ -2,7 +2,7 @@ import type { ChannelCalendarKit, ChannelHostServices, ChannelMailboxKit } from 
 
 import { GOOGLE_CALENDAR_LIST_MAX, GoogleCalendar } from "./calendar.js";
 
-import { createGmailConnectorDefinition, GMAIL_CHANNEL_DESCRIPTOR } from "./connector.js";
+import { createGmailConnectorDefinition, GMAIL_CHANNEL_DESCRIPTOR, gmailChannelDescriptor } from "./connector.js";
 import { GMAIL_SEARCH_MAX, GmailMailbox, recipientOf } from "./tools.js";
 
 /**
@@ -26,6 +26,8 @@ const calendar: ChannelCalendarKit<typeof fetch> = {
 
 export const gmailChannel = {
   descriptor: GMAIL_CHANNEL_DESCRIPTOR,
+  /** The descriptor in a language's words, for a person's screens. */
+  descriptorIn: gmailChannelDescriptor,
   connector: (host: ChannelHostServices<typeof fetch>) => createGmailConnectorDefinition({ now: host.now, fetch: host.fetch }),
   mailbox,
   calendar,

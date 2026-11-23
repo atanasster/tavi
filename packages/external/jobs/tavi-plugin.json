@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "abi": "tavi.providers/1",
   "provenance": {
     "format": "bundled-esm",
@@ -13,10 +13,11 @@
     ]
   },
   "id": "jobs.finder",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "name": "Jobs",
   "description": "Searches employers' job boards and job APIs, matches postings to your profile in code, and keeps your application pipeline. Never applies for you.",
   "entry": "index.mjs",
+  "locales": { "bg": "locales/bg.json" },
   "isolation": "process",
   "provides": ["heartbeat-signals"],
   "sites": [

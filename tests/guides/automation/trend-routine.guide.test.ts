@@ -22,7 +22,7 @@ walkGuide("automation/trend-routine", {
     "add-the-trends-app": async (walk) => {
       // The repository's built plugin (pnpm --filter @tavi/plugin-trends build), installed, approved and enabled.
       walk.tavi("plugins", "install", join(root, "packages/external/trends/dist-plugin"));
-      walk.tavi("plugins", "approve", "trends.radar", "0.1.0");
+      walk.tavi("plugins", "approve", "trends.radar", "0.1.1");
       walk.tavi("plugins", "enable", "trends.radar");
       const screen = await walk.terminal({ title: "tavi plugins show trends.radar", args: ["plugins", "show", "trends.radar"], lines: 12 });
       expect(screen.join("\n")).toMatch(/state: enabled/);

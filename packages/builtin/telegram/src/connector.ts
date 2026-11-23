@@ -22,7 +22,7 @@ import type { TelegramBot } from "./inbound.js";
 import { DEFAULT_POLL_ERROR_BACKOFF_MS, DEFAULT_POLL_TIMEOUT_SECONDS, TelegramPoller } from "./polling.js";
 import { inlineKeyboard, sendPart, TELEGRAM_CALLBACK_DATA_MAX_BYTES, TelegramDestinationSchema, type TelegramAttachment } from "./send.js";
 
-export { TELEGRAM_CHANNEL_DESCRIPTOR, TELEGRAM_MAX_ATTACHMENT_BYTES } from "./descriptor.js";
+export { TELEGRAM_CHANNEL_DESCRIPTOR, TELEGRAM_MAX_ATTACHMENT_BYTES, telegramChannelDescriptor } from "./descriptor.js";
 export { TELEGRAM_CALLBACK_DATA_MAX_BYTES, type TelegramAttachment } from "./send.js";
 
 /**

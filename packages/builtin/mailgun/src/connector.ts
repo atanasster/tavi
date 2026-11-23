@@ -29,6 +29,7 @@ import type {
   OutboundMessage,
   SendOutcome,
 } from "@tavi/contracts";
+import { coreEnglish, type CoreT } from "@tavi/contracts/locales/core";
 import { nowTimestamp } from "@tavi/contracts/util";
 
 /**
@@ -194,68 +195,72 @@ const EMAIL_PATTERN = "[^\\s<>@]+@[^\\s<>@]+\\.[^\\s<>@]+";
  * What Mailgun email is to core: an email
  * channel whose senders are authenticated per message (SPF/DKIM),
  * configured with a sending domain and two keys, receiving through one
- * webhook route.
+ * webhook route. Its words a person reads are `t`'s (English by default), for
+ * the workspace's language.
  */
-export const MAILGUN_CHANNEL_DESCRIPTOR: ChannelDescriptor = {
-  app: {
-    name: "Email (Mailgun)",
-    summary: "Reach Tavi by email on a domain you send with through Mailgun.",
-    category: "email",
-    publisher: "Mailgun",
-    scopes: [],
-  },
-  providerId: "mailgun",
-  label: "Email",
-  kind: "email",
-  icon: { name: "mail" },
-  description: "Email the agent through a Mailgun domain and inbound route.",
-  settings: [
-    {
-      key: "domain",
-      label: "Sending domain",
-      type: "string",
-      required: true,
-      pattern: "(?=.{1,253}$)[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?",
+export function mailgunChannelDescriptor(t: CoreT = coreEnglish): ChannelDescriptor {
+  return {
+    app: {
+      name: t("plugins.mailgun.app.name"),
+      summary: t("plugins.mailgun.app.summary"),
+      category: "email",
+      publisher: "Mailgun",
+      scopes: [],
     },
-    { key: "from", label: "Sender address", type: "string", help: "An address on the sending domain; tavi@<domain> when empty." },
-    {
-      key: "region",
-      label: "Region",
-      type: "choice",
-      choices: ["us", "eu"],
-      default: "us",
-      help: "The region the domain was created in, as Mailgun → Domains shows it: eu is reached at api.eu.mailgun.net.",
-    },
-  ],
-  hosts: ["api.mailgun.net", "api.eu.mailgun.net"],
-  auth: {
-    kind: "secrets",
-    fields: [
-      { key: "apiKey", label: "API key", help: "Mailgun → API Security → a sending key for this domain." },
+    providerId: "mailgun",
+    label: t("plugins.mailgun.label"),
+    kind: "email",
+    icon: { name: "mail" },
+    description: t("plugins.mailgun.description"),
+    settings: [
       {
-        key: "webhookSigningKey",
-        label: "Webhook signing key",
-        help: "Mailgun → Webhooks → HTTP webhook signing key: a separate secret from the API key.",
+        key: "domain",
+        label: t("plugins.mailgun.domain.label"),
+        type: "string",
+        required: true,
+        pattern: "(?=.{1,253}$)[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?",
+      },
+      { key: "from", label: t("plugins.mailgun.from.label"), type: "string", help: t("plugins.mailgun.from.help") },
+      {
+        key: "region",
+        label: t("plugins.mailgun.region.label"),
+        type: "choice",
+        choices: ["us", "eu"],
+        default: "us",
+        help: t("plugins.mailgun.region.help"),
       },
     ],
-  },
-  sender: {
-    label: "Email address",
-    placeholder: "person@example.com",
-    pattern: EMAIL_PATTERN,
-    normalize: "lowercase",
-    authentication: "per-message",
-  },
-  target: { label: "Email address", placeholder: "person@example.com", pattern: EMAIL_PATTERN, normalize: "lowercase" },
-  // Mailgun's inbound route posts the whole message, attachments included.
-  ingress: [{ name: "inbound", methods: ["POST"], scope: "connection", maxBodyBytes: DEFAULT_MAX_BODY_BYTES }],
-  // An email's attached files arrive in the inbound request, so its body cap is theirs too: a video and its mail share it.
-  media: { inboundMaxBytes: DEFAULT_MAX_BODY_BYTES, mimeTypes: ["image/*", "application/pdf", "text/plain", "audio/*", "video/*"] },
-  // A connection sends from its `from` setting, or tavi@<domain>.
-  account: { setting: "from", fallback: "tavi@{domain}" },
-  setupHelp:
-    "Add a Mailgun inbound route that forwards to this connection's webhook address (behind your https reverse proxy), and allow each sender's address in Allowed people.",
-};
+    hosts: ["api.mailgun.net", "api.eu.mailgun.net"],
+    auth: {
+      kind: "secrets",
+      fields: [
+        { key: "apiKey", label: t("plugins.mailgun.apiKey.label"), help: t("plugins.mailgun.apiKey.help") },
+        {
+          key: "webhookSigningKey",
+          label: t("plugins.mailgun.signingKey.label"),
+          help: t("plugins.mailgun.signingKey.help"),
+        },
+      ],
+    },
+    sender: {
+      label: t("plugins.mailgun.address"),
+      placeholder: "person@example.com",
+      pattern: EMAIL_PATTERN,
+      normalize: "lowercase",
+      authentication: "per-message",
+    },
+    target: { label: t("plugins.mailgun.address"), placeholder: "person@example.com", pattern: EMAIL_PATTERN, normalize: "lowercase" },
+    // Mailgun's inbound route posts the whole message, attachments included.
+    ingress: [{ name: "inbound", methods: ["POST"], scope: "connection", maxBodyBytes: DEFAULT_MAX_BODY_BYTES }],
+    // An email's attached files arrive in the inbound request, so its body cap is theirs too: a video and its mail share it.
+    media: { inboundMaxBytes: DEFAULT_MAX_BODY_BYTES, mimeTypes: ["image/*", "application/pdf", "text/plain", "audio/*", "video/*"] },
+    // A connection sends from its `from` setting, or tavi@<domain>.
+    account: { setting: "from", fallback: "tavi@{domain}" },
+    setupHelp: t("plugins.mailgun.setupHelp"),
+  };
+}
+
+export const MAILGUN_CHANNEL_DESCRIPTOR: ChannelDescriptor = mailgunChannelDescriptor();
 
 function createMailgunConnectorInstance(
   connection: MessagingConnection,

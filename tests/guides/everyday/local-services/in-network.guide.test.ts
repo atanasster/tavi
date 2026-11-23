@@ -38,7 +38,7 @@ walkGuide("everyday/local-services/in-network", {
   steps: {
     "add-the-care-app": async (walk) => {
       walk.tavi("plugins", "install", join(root, "packages/external/places-care/dist-plugin"));
-      walk.tavi("plugins", "approve", "places.care", "0.1.0");
+      walk.tavi("plugins", "approve", "places.care", "0.1.1");
       walk.tavi("plugins", "enable", "places.care");
       const screen = await walk.terminal({ title: "tavi plugins show places.care", args: ["plugins", "show", "places.care"], lines: 11 });
       expect(screen.join("\n")).toMatch(/state: enabled/);

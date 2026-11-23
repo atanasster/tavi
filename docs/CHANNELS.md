@@ -152,7 +152,7 @@ Discord is a channel plugin, `discord.channel`, built in this repository and ins
 ```bash
 pnpm --filter @tavi/plugin-discord build
 tavi plugins install packages/external/discord/dist-plugin
-tavi plugins approve discord.channel 0.1.1 --in-process
+tavi plugins approve discord.channel 0.1.2 --in-process
 tavi plugins enable discord.channel
 ```
 

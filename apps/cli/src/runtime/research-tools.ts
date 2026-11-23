@@ -10,6 +10,7 @@ import {
   skillSuggestionsOn,
   videoToolsOn,
   englishOf,
+  localeOf,
   navPath,
 } from "@tavi/contracts";
 import { createOwnerRenderer } from "../features/browser/host.js";
@@ -262,6 +263,8 @@ export async function composeResearchTools(composed: HostsContext) {
         // The report handler degrades a failed history write instead of failing the
         // generation, so the cause only ever reaches the operator through the log.
         logWarning: (message, details) => logger.warn(message, details),
+        // The brief's own words are written in the workspace's language.
+        locale: async (workspaceId) => localeOf((await persistencePort.repositories.workspaceSettings.get(workspaceId)).settings),
       },
     );
   return { builtinSearchIds, builtinSearchRevisions, keyAllowed, registerSearch, searchConfigurations, searchImplementationHash };

@@ -11,6 +11,7 @@ import { agent } from "./en/agent.js";
 import { reports } from "./en/reports.js";
 import { channels } from "./en/channels.js";
 import { terminal } from "./en/terminal.js";
+import { plugins } from "./en/plugins.js";
 
 /**
  * The `core` namespace in English: words every surface shares (the canvas,
@@ -35,6 +36,7 @@ export const CORE_EN = {
   ...reports,
   ...channels,
   ...terminal,
+  ...plugins,
 } as const;
 
 export type CoreKey = keyof typeof CORE_EN;

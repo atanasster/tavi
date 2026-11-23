@@ -5,6 +5,7 @@ import { readAgentTree } from "../features/agents/tree.js";
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import {
+  DEFAULT_WORKSPACE_ID,
   flightSearchOn,
   pdfToolsOn,
   videoToolsOn,
@@ -46,6 +47,7 @@ import { registerBrowserVisionTool } from "../features/browser/vision.js";
 import { BROWSER_WORKER_AGENT_ID } from "../features/agents/builtin.js";
 import { registerFindingsTools } from "../features/tools/findings.js";
 import { FLIGHTS_PLUGIN_ID, registerOwnerFlightsTools } from "../features/flights/host.js";
+import { workspaceLocales } from "../features/plugins/localized.js";
 import { utilityTarget, visionTarget } from "../features/browser/models.js";
 import {
   DESKTOP_STOPPED_NOTICE,
@@ -77,6 +79,7 @@ export async function composeTools(composed: ChannelsContext) {
     options,
     overrides,
     persistencePort,
+    providerLifetime,
     recipes,
     sandboxHost,
     secrets,
@@ -214,8 +217,14 @@ export async function composeTools(composed: ChannelsContext) {
   }
   // Flight search as a domain tool, before browsing (`tavi.flights`): Kiwi.com's public MCP server, no key, and
   // Google Flights beside it — through SerpApi with the person's stored key, else Google's own page.
-  if (!disabledBuiltins.has(FLIGHTS_PLUGIN_ID))
+  if (!disabledBuiltins.has(FLIGHTS_PLUGIN_ID)) {
+    // Each workspace's language, followed after each settings write: a call's approval card is said in its workspace's.
+    const languages = await workspaceLocales(persistencePort.repositories.workspaceSettings, DEFAULT_WORKSPACE_ID, (listener) =>
+      composed.store.onWrite(listener),
+    );
+    providerLifetime.signal.addEventListener("abort", () => languages.close(), { once: true });
     registerOwnerFlightsTools(tools, {
+      locale: (workspaceId) => languages.of(workspaceId),
       secret: async (reference) => await secrets.getSecret(reference),
       findings: persistencePort.repositories.findings,
       now: () => clock.now(),
@@ -226,6 +235,7 @@ export async function composeTools(composed: ChannelsContext) {
       // Its fallbacks name the browser's tools only while `tavi.browser` offers them.
       browser: browserOn,
     });
+  }
   // The working tools: files in the calling chat's working folder —
   // always offered, built per call from the folder stamped on the turn
   // — a plan, past conversations, and

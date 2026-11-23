@@ -25,7 +25,7 @@ import { createEngine, type Engine, type Fetcher, type WatchInput } from "./engi
  * applies, or sends anything.
  */
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 const REQUEST_TIMEOUT_MS = 20_000;
 
 const USER_AGENT = `Tavi-jobs/${VERSION}`;

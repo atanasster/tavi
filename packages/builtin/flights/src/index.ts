@@ -9,6 +9,9 @@ import {
   type TaskFindingRepositoryPort,
   type ToolRegistrar,
 } from "@tavi/contracts";
+import type { Locale } from "@tavi/contracts/i18n";
+import { coreEnglish } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { errorMessage } from "@tavi/contracts/util";
 import { z } from "zod";
 
@@ -278,6 +281,11 @@ export interface FlightsToolOptions {
    * Without them every fallback is the `check` links, for the person to open.
    */
   readonly browser?: boolean;
+  /**
+   * The workspace's language, read when a call is assessed: its approval card's words are said in it. Absent, or
+   * English: English. What the model reads (the tool's description, its answers and refusals) stays English.
+   */
+  readonly locale?: (workspaceId: string) => Locale | undefined;
 }
 
 /** A round trip's fares each way from a source of one-way fares: to set the others' against, never the trip's price. */
@@ -499,16 +507,18 @@ export function registerFlightsTools(registry: ToolRegistrar, options: FlightsTo
       ? "Domain tools first: for flights use `travel.flights_search` before browsing. Always give the person its `check.googleFlights` link with the fares, say which source each fare is from, and that Kiwi's are a reseller's; with `oneWayFares`, give them as one-way fares each way, never added up as a round-trip price. Confirm a fare in the browser when asked or when every source fails."
       : "For flights use `travel.flights_search`. Always give the person its `check.googleFlights` link with the fares, say which source each fare is from, and that Kiwi's are a reseller's; with `oneWayFares`, give them as one-way fares each way, never added up as a round-trip price.",
     inputSchema: FlightsSearchInputSchema,
-    assess: (input) => {
+    assess: (input, context) => {
       const call = input as Partial<FlightsSearchInput>;
+      const locale = options.locale?.(context.workspaceId);
+      const t = locale === undefined || locale === "en" ? coreEnglish : coreIn(locale);
       return {
         display: {
-          title: `Search flights ${String(call.from ?? "?")} → ${String(call.to ?? "?")}`,
-          detail: "Sends the trip (places, dates, passengers) to Kiwi.com's flight search, and to Google Flights where that is on",
+          title: t("plugins.flights.approval.title", { from: String(call.from ?? "?"), to: String(call.to ?? "?") }),
+          detail: t("plugins.flights.approval.detail"),
         },
         subjects: [],
         risk: "low",
-        reasons: ["sends the trip to Kiwi.com's flight search and to Google Flights"],
+        reasons: [t("plugins.flights.approval.reason")],
         alwaysAnyCall: true,
         scopeGroup: "travel.*",
       };

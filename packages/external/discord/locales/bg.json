@@ -1,0 +1,12 @@
+{
+  "manifest": {
+    "description": "Discord като канал: лични съобщения с твоя бот и каналите в сървъра, които посочиш като стаи. Работи през официалния API за ботове на Discord (Gateway и REST).",
+    "channels.discord.description": "Пиши на агента през собствения си бот в Discord.",
+    "channels.discord.auth.fields.token.label": "Токен на бота",
+    "channels.discord.auth.fields.token.help": "Discord Developer Portal → твоето приложение → Bot → Reset Token. Изключи Public Bot.",
+    "channels.discord.sender.label": "Потребителски ID в Discord",
+    "channels.discord.target.label": "ID на канала или dm:<потребителски ID>",
+    "channels.discord.setupHelp": "Създай приложение на discord.com/developers, добави бот, изключи Public Bot и постави токена му. Отвори връзката за покана, която Tavi показва, пиши на бота лично, разреши своя потребителски ID в „Разрешени хора“ и после добави стаи."
+  },
+  "messages": {}
+}

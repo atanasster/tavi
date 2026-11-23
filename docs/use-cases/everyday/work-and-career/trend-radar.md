@@ -10,7 +10,7 @@ Name a topic and Tavi counts how much it is talked about across free public sour
 
 ## 1. Add the Trends app
 
-Run `tavi plugins install packages/external/trends/dist-plugin`, then `tavi plugins approve trends.radar 0.1.0` and `tavi plugins enable trends.radar`, and restart `tavi serve`: a plugin loads when Tavi starts. `tavi plugins show trends.radar` shows what you added. It runs as a confined worker, reads only free public sources and never posts.
+Run `tavi plugins install packages/external/trends/dist-plugin`, then `tavi plugins approve trends.radar 0.1.1` and `tavi plugins enable trends.radar`, and restart `tavi serve`: a plugin loads when Tavi starts. `tavi plugins show trends.radar` shows what you added. It runs as a confined worker, reads only free public sources and never posts.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../../assets/use-cases/everyday/work-and-career/trend-radar/01-add-the-trends-app-dark.svg">
