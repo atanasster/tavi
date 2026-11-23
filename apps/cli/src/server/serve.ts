@@ -2021,7 +2021,7 @@ async function dispatchCommand(
             runtime.heartbeat.signals.list().map(({ id, kind, label }) => (label === undefined ? { id, kind } : { id, kind, label })),
           host: () => runtime.heartbeat.host(),
           // The first-run offer, when a built-in source has something to watch for this person.
-          offerInstructions: async (scope) => await heartbeatOfferInstructions(runtime.heartbeat.signals, scope),
+          offerInstructions: async (scope, t) => await heartbeatOfferInstructions(runtime.heartbeat.signals, scope, t),
           author: "ipc",
           now: () => new Date(runtime.clock.now()),
         },

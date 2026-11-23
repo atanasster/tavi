@@ -16,6 +16,7 @@ import {
   type MemoryActor,
 } from "@tavi/contracts";
 import { describeSignalSourceConformance } from "@tavi/plugin-kit/heartbeat/conformance";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { MemoryService } from "@tavi/runtime";
 import { afterEach, describe, expect, it } from "vitest";
 import { temporaryDirectories, delay } from "@tavi/test-support";
@@ -770,6 +771,10 @@ describe("the first-run offer's instructions", () => {
     });
     expect(await heartbeatOfferInstructions(registry, scope)).toBe(
       "Approvals or questions waiting more than an hour\nReminders and events in the next 2 hours\nScheduled runs that fail\nMessages held for my review\nMessages that wait over an hour for an answer\nMessages that bounce or fail to send\nRoutines that fail\nApps that need signing in again\n",
+    );
+    // The built-in lines are the person's words, so a Bulgarian workspace is offered them in Bulgarian.
+    expect(await heartbeatOfferInstructions(registry, scope, coreIn("bg"))).toBe(
+      "Одобрения или въпроси, чакащи над час\nНапомняния и събития през следващите 2 часа\nПускания по график, които се провалят\nСъобщения, задържани за моя преглед\nСъобщения, които чакат отговор над час\nСъобщения, които се връщат или не тръгват\nРутини, които се провалят\nПриложения, които искат нов вход\n",
     );
     // A plugin's source with something to watch is not a reason to offer the built-in heartbeat.
     const plugins = new HeartbeatSignalRegistry();

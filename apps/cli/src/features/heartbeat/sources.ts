@@ -22,6 +22,7 @@ import {
   type ScheduleFireRecord,
   SCHEDULE_FIRES_KEPT,
 } from "@tavi/contracts";
+import { type CoreKey, type CoreT, coreEnglish } from "@tavi/contracts/locales/core";
 import { errorMessage } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
 import { HeartbeatSignalRegistry, collectHeartbeatSignals } from "@tavi/agent-host/heartbeat-host";
@@ -541,15 +542,29 @@ export async function heartbeatMemoryContext(
   return excerpts;
 }
 
+/** A built-in source's offer line in the catalogue, by the source's id: the person's words, so said in their language. */
+const OFFER_KEYS: Readonly<Record<string, CoreKey>> = {
+  needs: "heartbeat.offer.needs",
+  agenda: "heartbeat.offer.agenda",
+  schedules: "heartbeat.offer.schedules",
+  held: "heartbeat.offer.held",
+  messages: "heartbeat.offer.messages",
+  sends: "heartbeat.offer.sends",
+  routines: "heartbeat.offer.routines",
+  apps: "heartbeat.offer.apps",
+};
+
 /**
  * The first-run offer's instructions: a line per installed source that
- * suggests one (a built-in's own, a plugin's from its approved manifest), but
- * only when a built-in source has something to watch for this person now — a
- * heartbeat with nothing to look at is not offered.
+ * suggests one (a built-in's own, in the workspace's language; a plugin's from
+ * its approved manifest), but only when a built-in source has something to
+ * watch for this person now — a heartbeat with nothing to look at is not
+ * offered.
  */
 export async function heartbeatOfferInstructions(
   registry: HeartbeatSignalRegistry,
   scope: { readonly workspaceId: string; readonly principalId: string; readonly now: string; readonly timezone: string },
+  t: CoreT = coreEnglish,
 ): Promise<string | undefined> {
   const offering = registry.list().filter((entry) => entry.source.offer !== undefined);
   const builtins = offering.filter((entry) => entry.kind === "builtin");
@@ -560,7 +575,11 @@ export async function heartbeatOfferInstructions(
   const collection = await collectHeartbeatSignals(own, scope);
   // The lines are every source's that has one: a plugin's is its approved manifest's words, shown at approval.
   const ordered = [...builtins, ...offering.filter((entry) => entry.kind === "plugin")];
-  return collection.signals.length > 0 ? `${ordered.map((entry) => entry.source.offer).join("\n")}\n` : undefined;
+  const line = (entry: (typeof ordered)[number]): string | undefined => {
+    const key = entry.kind === "builtin" ? OFFER_KEYS[entry.source.id] : undefined;
+    return key === undefined ? entry.source.offer : t(key);
+  };
+  return collection.signals.length > 0 ? `${ordered.map(line).join("\n")}\n` : undefined;
 }
 
 /** At most this many of a person's chat folders are measured each collection. */

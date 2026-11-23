@@ -90,4 +90,13 @@ export const setup = {
   "onboard.say.ideasSoon": "Личните идеи ще са в `tavi ideas` след минута.",
   "onboard.say.ideasLater": "Личните идеи започват, щом `tavi serve` работи; `tavi ideas` ги показва.",
   "onboard.say.providedBy": "Осигурява го {provider}: първият ход с отговор го проверява.",
+  // ---------------------------------------------------------------- the heartbeat's first-run offer: a built-in source's line, as the person would write it
+  "heartbeat.offer.needs": "Одобрения или въпроси, чакащи над час",
+  "heartbeat.offer.agenda": "Напомняния и събития през следващите 2 часа",
+  "heartbeat.offer.schedules": "Пускания по график, които се провалят",
+  "heartbeat.offer.held": "Съобщения, задържани за моя преглед",
+  "heartbeat.offer.messages": "Съобщения, които чакат отговор над час",
+  "heartbeat.offer.sends": "Съобщения, които се връщат или не тръгват",
+  "heartbeat.offer.routines": "Рутини, които се провалят",
+  "heartbeat.offer.apps": "Приложения, които искат нов вход",
 } as const satisfies CatalogFor<typeof en>;

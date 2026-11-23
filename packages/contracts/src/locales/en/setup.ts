@@ -86,4 +86,13 @@ export const setup = {
   "onboard.say.ideasSoon": "Personal ideas will be in `tavi ideas` in a minute.",
   "onboard.say.ideasLater": "Personal ideas start once `tavi serve` runs; `tavi ideas` shows them.",
   "onboard.say.providedBy": "Provided by {provider}: its first answered turn verifies it.",
+  // ---------------------------------------------------------------- the heartbeat's first-run offer: a built-in source's line, as the person would write it
+  "heartbeat.offer.needs": "Approvals or questions waiting more than an hour",
+  "heartbeat.offer.agenda": "Reminders and events in the next 2 hours",
+  "heartbeat.offer.schedules": "Scheduled runs that fail",
+  "heartbeat.offer.held": "Messages held for my review",
+  "heartbeat.offer.messages": "Messages that wait over an hour for an answer",
+  "heartbeat.offer.sends": "Messages that bounce or fail to send",
+  "heartbeat.offer.routines": "Routines that fail",
+  "heartbeat.offer.apps": "Apps that need signing in again",
 } as const;

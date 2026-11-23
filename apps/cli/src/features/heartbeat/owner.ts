@@ -49,7 +49,7 @@ import {
 } from "@tavi/contracts";
 import { zodIssues } from "@tavi/contracts/zod-util";
 import { DEFAULT_LOCALE } from "@tavi/contracts/i18n";
-import { coreEnglish } from "@tavi/contracts/locales/core";
+import { type CoreT, coreEnglish } from "@tavi/contracts/locales/core";
 import { coreIn } from "@tavi/contracts/locales/core-server";
 import { z } from "zod";
 
@@ -105,12 +105,15 @@ export interface HeartbeatCommandDependencies {
    * when one has something to watch; undefined when none has, or where no
    * source runs.
    */
-  readonly offerInstructions?: (scope: {
-    readonly workspaceId: string;
-    readonly principalId: string;
-    readonly now: string;
-    readonly timezone: string;
-  }) => Promise<string | undefined>;
+  readonly offerInstructions?: (
+    scope: {
+      readonly workspaceId: string;
+      readonly principalId: string;
+      readonly now: string;
+      readonly timezone: string;
+    },
+    t: CoreT,
+  ) => Promise<string | undefined>;
   /** Who writes, for the instructions history: `cli`, `ipc`. */
   readonly author: string;
   readonly now: () => Date;
@@ -317,14 +320,14 @@ export async function heartbeatCommand(deps: HeartbeatCommandDependencies, paylo
     const scope = { workspaceId, principalId };
     const workspaceSettings = (await deps.repositories.workspaceSettings.get(workspaceId)).settings;
     const timezone = workspaceSettings.timezone ?? hostTimeZone();
-    // A plugin provider's disclosure is said in the workspace's language.
+    // A plugin provider's disclosure and the first-run offer's lines are said in the workspace's language.
     const locale = localeOf(workspaceSettings);
     const t = locale === DEFAULT_LOCALE ? coreEnglish : coreIn(locale);
 
     const view = async (state?: HeartbeatState, offering = false): Promise<HeartbeatGetAnswer> => {
       const current = state ?? (await heartbeats.get(workspaceId, principalId));
       // Offered once: only before anything was saved (turned on, configured or *Not now*), and only when there is something to watch.
-      const offered = offering && current === undefined ? await deps.offerInstructions?.({ ...scope, now: stamp, timezone }) : undefined;
+      const offered = offering && current === undefined ? await deps.offerInstructions?.({ ...scope, now: stamp, timezone }, t) : undefined;
       const published = current === undefined ? undefined : deps.providerStates?.get(workspaceId, principalId, current.config.providerId);
       return {
         workspaceId,
