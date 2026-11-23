@@ -95,6 +95,8 @@ export interface DiscordConnectorOptions {
   readonly apiBaseUrl?: string;
   /** An approved artifact of the sending workspace, at most `maxBytes` long: what a file part sends (`ctx.channelHost`). */
   readonly readArtifact?: ChannelHostServices["readArtifact"];
+  /** The workspace's language, read as each command is answered: its private answers speak it (`bg`), English otherwise. */
+  readonly locale?: () => string | undefined;
 }
 
 const realGatewayClock: GatewayClock = {
@@ -642,10 +644,10 @@ function createInstance(
       const receipt = await hand(mapped.event, {
         onRecorded: async (recorded) => {
           told = true;
-          await answerCommand(commandToken, commandAnswer(recorded));
+          await answerCommand(commandToken, commandAnswer(recorded, options.locale?.()));
         },
       });
-      if (!told) await answerCommand(commandToken, commandAnswer(receipt));
+      if (!told) await answerCommand(commandToken, commandAnswer(receipt, options.locale?.()));
       return;
     }
     await hand(mapped.event);

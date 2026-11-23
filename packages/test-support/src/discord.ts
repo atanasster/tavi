@@ -339,7 +339,8 @@ export function fakeDiscord(options: FakeDiscordOptions = {}) {
       return { body: { id } };
     }
     if (method === "POST" && /^\/interactions\/\d+\/[^/]+\/callback$/.test(path)) return { status: 204 };
-    if (path === `/applications/${APP}/commands`) {
+    // Read with `?with_localizations=true`, as the connector does: routed by its path alone.
+    if (path.split("?")[0] === `/applications/${APP}/commands`) {
       if (method === "GET")
         return { body: commands.current, ...(typeof options.commandsMood === "object" ? { hold: options.commandsMood.holdUntil } : {}) };
       if (method === "PUT" && options.commandsMood === "refuse")

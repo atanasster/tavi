@@ -13,12 +13,24 @@ import { useHostTaviError } from "./host-shim.js";
 
 export const VERSION = "0.1.1";
 
+/**
+ * The workspace's language, when the host gives its plugins one (`ctx.locale`, which the context
+ * does not carry yet): read on each answer, so a host that keeps it current is followed.
+ */
+function localeOf(ctx: ExternalPluginContext): () => string | undefined {
+  return () => {
+    const locale = (ctx as { readonly locale?: unknown }).locale;
+    return typeof locale === "string" ? locale : undefined;
+  };
+}
+
 export function register(ctx: ExternalPluginContext): void {
   useHostTaviError(ctx.TaviError);
   ctx.registerChannel(
     createDiscordConnectorDefinition({
       z: ctx.z,
       version: VERSION,
+      locale: localeOf(ctx),
       ...(ctx.channelHost === undefined
         ? {}
         : { now: ctx.channelHost.now, fetch: ctx.channelHost.fetch, readArtifact: ctx.channelHost.readArtifact }),

@@ -929,6 +929,25 @@ describe("the Discord connector", () => {
       );
     });
 
+    it("answers a command in the workspace's language, read as it is answered", async () => {
+      let locale: string | undefined = "bg";
+      const { instance, discord } = await started({}, TOKEN, { locale: () => locale });
+      instance.onInboundEvent?.(async () => ({ accepted: true, duplicate: false, dropped: "flood" as const }));
+      const bulgarian = command(ask("hi"));
+      discord.dispatch("INTERACTION_CREATE", bulgarian);
+      await turns();
+      locale = undefined;
+      const english = command(ask("hi"));
+      discord.dispatch("INTERACTION_CREATE", english);
+      await turns();
+      expect(discord.posted.find((post) => post.channel === `interaction:${bulgarian.token}`)?.content).toBe(
+        "Твърде много съобщения тук. Опитай пак след минута.",
+      );
+      expect(discord.posted.find((post) => post.channel === `interaction:${english.token}`)?.content).toBe(
+        "Too many messages here right now: try again in a minute.",
+      );
+    });
+
     it("maps /tavi new to /new, and Ask Tavi about this to the picked message, its author's words", async () => {
       const { discord, received } = await started();
       discord.dispatch("INTERACTION_CREATE", command({ name: "tavi", type: 1, options: [{ type: 1, name: "new" }] }));
@@ -1009,6 +1028,12 @@ describe("the Discord connector", () => {
       await stopping.instance.stop();
       release();
       await turns();
+      // The read itself was held, not refused as an unknown route.
+      expect(
+        stopping.discord.requests.filter(
+          (request) => request.method === "GET" && request.path === `/applications/${APP}/commands?with_localizations=true`,
+        ),
+      ).toHaveLength(1);
       expect(
         stopping.discord.requests.filter((request) => request.method === "PUT" && request.path === `/applications/${APP}/commands`),
       ).toHaveLength(0);
@@ -1017,6 +1042,12 @@ describe("the Discord connector", () => {
     it("registers its commands once, and not again while Discord has them", async () => {
       const first = await started();
       await turns();
+      // Read with their localization maps, or Discord's answer would always differ from Tavi's.
+      expect(
+        first.discord.requests.some(
+          (request) => request.method === "GET" && request.path === `/applications/${APP}/commands?with_localizations=true`,
+        ),
+      ).toBe(true);
       expect(first.discord.commands.overwrites).toBe(1);
       expect(first.discord.commands.current.map((command) => (command as { readonly name: string }).name)).toEqual([
         "tavi",

@@ -79,6 +79,13 @@ signing in again, and why a schedule's webhook or email trigger refused a
 call. The agent reads notices in English, and messages sent to a chat app stay
 in English for now.
 
+On Discord, the `/tavi` command descriptions and the "Ask Tavi about this"
+message menu carry Bulgarian names, which Discord shows to people whose Discord
+app is set to Bulgarian. The commands themselves stay `/tavi ask` and
+`/tavi new` in every language. The bot's private replies to a command will
+follow the workspace's language once Tavi passes plugins the language; until
+then they are in English.
+
 ## How the language packs are laid out
 
 Words are kept in catalogues, one per namespace and language, typed against
