@@ -53,8 +53,11 @@
       "ignoreDependencies": [
         // Imported from styles/index.css, which knip does not read.
         "@fontsource-variable/inter",
-        "@fontsource-variable/bricolage-grotesque"
-      ]
+        "@fontsource-variable/bricolage-grotesque",
+        "@fontsource-variable/onest"
+      ],
+      // The overflow probe: tests/integration/overflow.bg.real.test.ts reads it by path and runs it in each page.
+      "entry": ["scripts/overflow-probe.js"]
     },
     "packages/builtin/browser": {
       // Playwright launches these by path as the confined Chromium and its in-sandbox shim.
