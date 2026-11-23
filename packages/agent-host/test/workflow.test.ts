@@ -431,6 +431,7 @@ function build(options: {
   systemPrompt?: string | null;
   promptSettings?: Parameters<typeof createWorkflowAdapter>[0]["promptSettings"];
   workspaceTimezone?: Parameters<typeof createWorkflowAdapter>[0]["workspaceTimezone"];
+  workspaceLocale?: Parameters<typeof createWorkflowAdapter>[0]["workspaceLocale"];
   /**
    * Supply the task repository instead of a fresh in-memory one, so a test can
    * wrap it (hide a snapshot, fake a legacy marker) without changing how the
@@ -527,6 +528,7 @@ function build(options: {
     ...(options.systemPrompt === null ? {} : { systemPrompt: options.systemPrompt ?? "test system prompt" }),
     ...(options.promptSettings === undefined ? {} : { promptSettings: options.promptSettings }),
     ...(options.workspaceTimezone === undefined ? {} : { workspaceTimezone: options.workspaceTimezone }),
+    ...(options.workspaceLocale === undefined ? {} : { workspaceLocale: options.workspaceLocale }),
     access,
     newId,
     now: options.now ?? (() => "2026-01-01T00:00:00.000Z"),
@@ -8233,6 +8235,20 @@ describe("the unattended execution policy", () => {
     expect(stepOf(model.calls[0])).toContain("The current local time is Tue 29 Sep 2026, 19:42 (Europe/Berlin, UTC+02:00).");
     expect(model.calls[0]?.messages[0]?.text).not.toContain("19:42");
     expect(zones).toEqual(["ws-1"]);
+  });
+
+  it("asks for replies in the workspace's language and states the local time in its words", async () => {
+    const { adapter, model } = build({
+      turns: [{ text: "ok" }],
+      now: () => "2026-09-29T17:42:00.000Z",
+      workspaceTimezone: async () => "Europe/Berlin",
+      workspaceLocale: async () => "bg",
+    });
+    await adapter.invoke({ context, threadId: "thread-locale", messages: [userMessage] });
+    expect(model.calls[0]?.messages[0]?.text).toContain(
+      "- The person's language is Bulgarian: reply in Bulgarian unless they write in another language.",
+    );
+    expect(stepOf(model.calls[0])).toContain("The current local time is вторник, 29 септември 2026 г., 19:42 (Europe/Berlin, UTC+02:00).");
   });
 
   it("refuses a workspace base and a persona that are each valid but together exceed the budget", async () => {

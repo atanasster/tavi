@@ -15,6 +15,8 @@ import {
   type TaskRecord,
   type WorkspaceSystemPromptRecord,
 } from "@tavi/contracts";
+import { DEFAULT_LOCALE, type Locale } from "@tavi/contracts/i18n";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { sha256Hex } from "@tavi/node-kit";
 
 /**
@@ -483,6 +485,26 @@ export interface RuntimeFactsInput {
    * own list is their home, and nothing is said.
    */
   readonly tasksHomeServer?: string;
+  /**
+   * The workspace's language (`workspace.locale`). Other than English, the
+   * facts tell the model to reply in it, and the local time is written with
+   * its weekday and month names. Absent or English: the block is as it was.
+   */
+  readonly locale?: Locale;
+}
+
+/** Each language's English name, as the model is told it (the prompt stays English). */
+const LANGUAGE_NAMES_IN_ENGLISH: { readonly [L in Locale]: string } = { en: "English", bg: "Bulgarian" };
+
+/**
+ * The reply-language fact for `locale`, or `undefined` for English or none:
+ * the prompt stays English, and this one line asks for the workspace's
+ * language unless the person writes in another.
+ */
+export function replyLanguageFact(locale: Locale | undefined): string | undefined {
+  if (locale === undefined || locale === DEFAULT_LOCALE) return undefined;
+  const language = LANGUAGE_NAMES_IN_ENGLISH[locale];
+  return `- The person's language is ${language}: reply in ${language} unless they write in another language.`;
 }
 
 /** Where to-dos go when the person keeps tasks in an app of their own (`tasks.home` `mcp:<server>`). */
@@ -550,9 +572,11 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
  * sentence is byte-identical across ICU versions (`en-GB` spells September
  * "Sept" in newer ones). The offset is derived from the same parts: the local
  * wall time read as UTC, minus the instant. A zone the platform does not know
- * is stated as UTC rather than failing the model call.
+ * is stated as UTC rather than failing the model call. In a language other
+ * than English it is the catalogue's words in that language's order
+ * (`петък, 16 януари 2026 г., 00:30 (Europe/Berlin, UTC+01:00)`).
  */
-export function formatLocalTime(now: string, timezone: string): string | undefined {
+export function formatLocalTime(now: string, timezone: string, locale: Locale = DEFAULT_LOCALE): string | undefined {
   const instant = new Date(now);
   if (Number.isNaN(instant.getTime())) return undefined;
   const formatterFor = (timeZone: string): Intl.DateTimeFormat =>
@@ -581,7 +605,20 @@ export function formatLocalTime(now: string, timezone: string): string | undefin
   const sign = offsetMinutes < 0 ? "-" : "+";
   const two = (value: number): string => String(value).padStart(2, "0");
   const offset = `UTC${sign}${two(Math.floor(Math.abs(offsetMinutes) / 60))}:${two(Math.abs(offsetMinutes) % 60)}`;
-  const weekday = WEEKDAYS[new Date(wall).getUTCDay()];
+  const weekdayIndex = new Date(wall).getUTCDay();
+  if (locale !== DEFAULT_LOCALE) {
+    // The language's own names and order ("петък, 16 януари 2026 г., 00:30"); the numbers passed as text, so none is regrouped.
+    const t = coreIn(locale);
+    const date = t("date.longDay", {
+      weekday: t(`date.weekday.${weekdayIndex}` as "date.weekday.0"),
+      day: String(day),
+      month: t(`date.month.${month}` as "date.month.1"),
+      monthShort: t(`date.monthShort.${month}` as "date.monthShort.1"),
+    });
+    const dated = t("date.dayTime", { date: t("date.withYear", { date, year: String(year) }), time: `${two(hour)}:${two(minute)}` });
+    return `${dated} (${zone}, ${offset})`;
+  }
+  const weekday = WEEKDAYS[weekdayIndex];
   return `${weekday} ${day} ${MONTHS[month - 1]} ${year}, ${two(hour)}:${two(minute)} (${zone}, ${offset})`;
 }
 
@@ -614,6 +651,8 @@ export function renderRuntimeFacts(input: RuntimeFactsInput): string {
       `It states this response's remaining model steps and tool calls${input.localTime === undefined ? "" : " and the current local time"}; ` +
       "those bounds apply to this response, not to the task as a whole, so reserve enough room to produce your final answer.",
   ];
+  const replyLanguage = replyLanguageFact(input.locale);
+  if (replyLanguage !== undefined) lines.push(replyLanguage);
   if (input.toolsOffered) {
     lines.push(
       "- Independent read-only calls sent together in one step run at the same time; send a call that changes something, or that needs an earlier result, only after reading what came before.",
@@ -824,7 +863,8 @@ export function renderStepFacts(input: RuntimeFactsInput): string {
       `${input.stepIndex} of at most ${input.maxSteps}, so at most ${laterSteps} further model step(s) can follow it, ` +
       `along with ${input.toolCallsRemaining} further tool call(s).`,
   ];
-  const localTime = input.localTime === undefined ? undefined : formatLocalTime(input.localTime.now, input.localTime.timezone);
+  const localTime =
+    input.localTime === undefined ? undefined : formatLocalTime(input.localTime.now, input.localTime.timezone, input.locale);
   if (localTime !== undefined) {
     lines.push(
       `- The current local time is ${localTime}. Resolve relative dates and times such as "tomorrow" or ` +
@@ -1063,7 +1103,7 @@ export function composeSystemPromptLayers(input: ComposeSystemPromptLayersInput)
  * call would end with. Not what any call received: that depends on the call's
  * step, remaining budget and offered tools.
  */
-export function sampleRuntimeFacts(localTime?: { readonly now: string; readonly timezone: string }): string {
+export function sampleRuntimeFacts(localTime?: { readonly now: string; readonly timezone: string }, locale?: Locale): string {
   const input: RuntimeFactsInput = {
     policy: ATTENDED_TASK_POLICY,
     stepIndex: 1,
@@ -1076,6 +1116,8 @@ export function sampleRuntimeFacts(localTime?: { readonly now: string; readonly 
     outputLimitBytes: MAX_TOOL_RESULT_BYTES,
     reviewEnabled: true,
     ...(localTime === undefined ? {} : { localTime }),
+    // The workspace's language, as the agent reads it: the reply-language line and the local time in its words.
+    ...(locale === undefined ? {} : { locale }),
   };
   return `${renderRuntimeFacts(input)}\n\n${renderStepFacts(input)}`;
 }

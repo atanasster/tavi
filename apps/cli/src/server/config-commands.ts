@@ -44,6 +44,7 @@ import {
   type WebSearchKind,
   WEB_SEARCH_KINDS,
   hostTimeZone,
+  localeOf,
   type TaintMode,
   type ChatInstructionsRevision,
   type ToolDefinition,
@@ -1358,8 +1359,10 @@ export async function systemPromptPreviewFor(
       throw new TaviError("NOT_FOUND", `no agent ${JSON.stringify(agentId)} exists in workspace ${workspaceId}`);
     }
   }
-  const timezone = (await repositories.workspaceSettings.get(workspaceId)).settings.timezone ?? hostTimeZone();
-  const factsSample = sampleRuntimeFacts({ now, timezone });
+  const { settings } = await repositories.workspaceSettings.get(workspaceId);
+  const timezone = settings.timezone ?? hostTimeZone();
+  // The workspace's language too, so the preview shows the reply-language line and local time the agent reads.
+  const factsSample = sampleRuntimeFacts({ now, timezone }, localeOf(settings));
   const composed = composeSystemPromptLayers({
     base:
       own !== undefined

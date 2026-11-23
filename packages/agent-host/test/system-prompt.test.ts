@@ -174,6 +174,49 @@ describe("renderRuntimeFacts", () => {
     expect(renderRuntimeFacts(base)).not.toContain("local time");
   });
 
+  it("asks for replies in the workspace's language and states the local time in its words, and leaves English as it was", () => {
+    const base = {
+      policy: attended,
+      stepIndex: 1,
+      maxSteps: 4,
+      toolCallsRemaining: 7,
+      approvalRequiredFor: [],
+      toolsOffered: true,
+      askUserOffered: true,
+      waitsOffered: true,
+      outputLimitBytes: 64 * 1024,
+      reviewEnabled: false,
+      localTime: { now: "2026-01-15T23:30:00.000Z", timezone: "Europe/Berlin" },
+    } as const;
+    // English, said or not, is byte-identical to no locale at all.
+    expect(renderRuntimeFacts({ ...base, locale: "en" })).toBe(renderRuntimeFacts(base));
+    expect(renderStepFacts({ ...base, locale: "en" })).toBe(renderStepFacts(base));
+    expect(renderRuntimeFacts(base)).not.toContain("language");
+    // Bulgarian: one more line, in English, naming the language; nothing else changes.
+    const bulgarian = renderRuntimeFacts({ ...base, locale: "bg" });
+    const languageLine = "- The person's language is Bulgarian: reply in Bulgarian unless they write in another language.";
+    expect(bulgarian.split("\n").filter((line) => line !== languageLine)).toEqual(renderRuntimeFacts(base).split("\n"));
+    expect(bulgarian.split("\n")[2]).toBe(languageLine);
+    // The local time in the catalogue's weekday and month names.
+    expect(formatLocalTime("2026-01-15T23:30:00.000Z", "Europe/Berlin", "bg")).toBe(
+      "петък, 16 януари 2026 г., 00:30 (Europe/Berlin, UTC+01:00)",
+    );
+    expect(formatLocalTime("2026-09-29T17:42:00Z", "Europe/Sofia", "bg")).toBe(
+      "вторник, 29 септември 2026 г., 20:42 (Europe/Sofia, UTC+03:00)",
+    );
+    expect(formatLocalTime("2026-01-15T23:30:00.000Z", "Europe/Berlin", "en")).toBe("Fri 16 Jan 2026, 00:30 (Europe/Berlin, UTC+01:00)");
+    // The `tavi config` preview shows the same two facts.
+    const sample = sampleRuntimeFacts({ now: "2026-01-15T23:30:00.000Z", timezone: "Europe/Berlin" }, "bg");
+    expect(sample).toContain(languageLine);
+    expect(sample).toContain("петък, 16 януари 2026 г., 00:30");
+    expect(sampleRuntimeFacts({ now: "2026-01-15T23:30:00.000Z", timezone: "Europe/Berlin" }, "en")).toBe(
+      sampleRuntimeFacts({ now: "2026-01-15T23:30:00.000Z", timezone: "Europe/Berlin" }),
+    );
+    expect(renderStepFacts({ ...base, locale: "bg" })).toContain(
+      "The current local time is петък, 16 януари 2026 г., 00:30 (Europe/Berlin, UTC+01:00).",
+    );
+  });
+
   it("tells only a schedule's run that may stay quiet how to say there is nothing to report", () => {
     const input = {
       policy: attended,

@@ -6,6 +6,7 @@ import {
   CHECKPOINTS_KEPT,
   SHIPPED_TOOL_RULES,
   hostTimeZone,
+  localeOf,
   maxOutputTokensOf,
   promptLayoutOf,
   toolDeferralOf,
@@ -293,6 +294,8 @@ export function composeWorkflow(composed: AskingContext) {
         // Read per call, so a `tavi config set`
         // reaches the next model call of a running task; unset is the host zone.
         workspaceTimezone: async (workspaceId) => (await readMemos.workspaceSettings.get(workspaceId)).settings.timezone ?? hostTimeZone(),
+        // `workspace.locale`, read per call as the zone is: the runtime facts ask for replies in it.
+        workspaceLocale: async (workspaceId) => localeOf((await readMemos.workspaceSettings.get(workspaceId)).settings),
         // The workspace's `models.promptLayout`, read per call as the zone is.
         promptLayout: async (workspaceId) => promptLayoutOf((await readMemos.workspaceSettings.get(workspaceId)).settings),
         // `models.toolDeferral`: `auto` defers a chat's rarely used built-ins unless it runs on a local model.

@@ -78,6 +78,12 @@ describe("retrievalKeywordsFrom", () => {
     ).toEqual(["dog", "name", "check"]);
   });
 
+  it("drops Bulgarian function words and keeps Bulgarian content words", () => {
+    expect(retrievalKeywordsFrom("Какво мислиш за моята нова работа в София?")).toEqual(["мислиш", "моята", "нова", "работа", "софия"]);
+    expect(retrievalKeywordsFrom("Може ли това да стане след вечеря")).toEqual(["стане", "вечеря"]);
+    expect(isSubstantiveMessage("благодаря много")).toBe(false);
+  });
+
   it("keeps English names and words that are function words elsewhere", () => {
     expect(retrievalKeywordsFrom("What did Dan say about Mia's school and Sue?")).toEqual(["dan", "say", "mia", "school", "sue"]);
     expect(retrievalKeywordsFrom("Is my MIT application due?")).toEqual(["mit", "application", "due"]);
@@ -344,6 +350,84 @@ describe("the turn's hybrid query", () => {
     expect(parseTemporalQueryRange("Please note:\nReference date: 2026-05-10\nWhat did I do yesterday?", now)?.from).not.toBe(
       "2026-05-09T00:00:00.000Z",
     );
+  });
+
+  it("reads Bulgarian dates and ranges, with Cyrillic words bounded as words", () => {
+    const now = "2026-10-14T12:00:00.000Z"; // a Wednesday
+    const range = (text: string) => parseTemporalQueryRange(text, now);
+    expect(range("Какво правих вчера?")).toEqual({ from: "2026-10-13T00:00:00.000Z", to: "2026-10-13T23:59:59.999Z", pastOnly: true });
+    expect(range("Къде бях завчера?")?.from).toBe("2026-10-12T00:00:00.000Z");
+    expect(range("Какво казах онзи ден?")?.from).toBe("2026-10-12T00:00:00.000Z");
+    expect(range("Какво сготвих миналата седмица?")).toEqual({
+      from: "2026-10-05T00:00:00.000Z",
+      to: "2026-10-11T23:59:59.999Z",
+      pastOnly: true,
+    });
+    expect(range("Какво купих миналия месец?")).toEqual({
+      from: "2026-09-01T00:00:00.000Z",
+      to: "2026-09-30T23:59:59.999Z",
+      pastOnly: true,
+    });
+    expect(range("Къде пътувах миналата година?")?.from).toBe("2025-01-01T00:00:00.000Z");
+    expect(range("Къде бях лани?")?.from).toBe("2025-01-01T00:00:00.000Z");
+    // "преди <N> <unit>", the count as a figure, a word or left out.
+    expect(range("Какво реших преди 3 дни?")?.from).toBe("2026-10-10T00:00:00.000Z");
+    expect(range("Какво реших преди три дни?")?.from).toBe("2026-10-10T00:00:00.000Z");
+    expect(range("С кого говорих преди две седмици?")?.from).toBe(range("Who did I talk to 2 weeks ago?")?.from);
+    expect(range("Какво казах преди два месеца?")?.from).toBe("2026-08-01T00:00:00.000Z");
+    expect(range("Какво казах преди месец?")?.from).toBe(range("What did I say 1 month ago?")?.from);
+    expect(range("Къде живеех преди година?")?.from).toBe("2025-01-01T00:00:00.000Z");
+    // This week, month and year: up to the end of today.
+    expect(range("Какво съм планирал тази седмица?")).toEqual({
+      from: "2026-10-12T00:00:00.000Z",
+      to: "2026-10-14T23:59:59.999Z",
+      pastOnly: false,
+    });
+    expect(range("Колко похарчих този месец?")?.from).toBe("2026-10-01T00:00:00.000Z");
+    expect(range("Какво прочетох тази година?")).toEqual({
+      from: "2026-01-01T00:00:00.000Z",
+      to: "2026-10-14T23:59:59.999Z",
+      pastOnly: false,
+    });
+    // Months: "през", "в", "миналия", "от" (since), with a year written with or without "г.".
+    expect(range("Къде бях през март?")).toEqual({ from: "2026-03-01T00:00:00.000Z", to: "2026-03-31T23:59:59.999Z", pastOnly: true });
+    expect(range("Къде бях в декември?")?.from).toBe("2025-12-01T00:00:00.000Z");
+    expect(range("Къде ходих миналия октомври?")?.from).toBe("2025-10-01T00:00:00.000Z");
+    expect(range("Какво стана през май 2024 г.?")?.from).toBe("2024-05-01T00:00:00.000Z");
+    expect(range("Какво стана януари 2025?")?.from).toBe("2025-01-01T00:00:00.000Z");
+    expect(range("Какво стана яну 2025?")?.from).toBe("2025-01-01T00:00:00.000Z");
+    expect(range("Какво се промени от февруари?")).toEqual({
+      from: "2026-02-01T00:00:00.000Z",
+      to: "2026-10-14T23:59:59.999Z",
+      pastOnly: false,
+    });
+    expect(range("Какво се промени от 2020 г.?")?.from).toBe("2020-01-01T00:00:00.000Z");
+    expect(range("Къде живеех през 2019 година?")?.from).toBe("2019-01-01T00:00:00.000Z");
+    expect(range("Къде живеех в 2019?")?.from).toBe("2019-01-01T00:00:00.000Z");
+    // Past history: "навремето", or a past verb with "преди" and a name.
+    expect(range("Къде живеех преди Порто?")?.pastOnly).toBe(true);
+    expect(range("Преди Порто къде живеех?")?.pastOnly).toBe(true);
+    expect(range("Къде работех навремето?")?.pastOnly).toBe(true);
+    expect(range("Къде живеех преди да се преместя?")?.pastOnly).toBe(true);
+    // Words that only look like a date are not one.
+    for (const text of [
+      "Май ще вали утре",
+      "Ное е в ковчега",
+      "Направи го за пет дни",
+      "Струва от 2000 лева",
+      "В 2000 години ще има промени",
+      "Провери вчерашния отчет",
+      "Ела преди обяд",
+      "Какво мислиш за плана?",
+      "Пожелай ми успех преди Коледа",
+      "Имам страх преди Изпита",
+      // A plural with no count is no number, as English "years ago" is not.
+      "Какво правих преди години?",
+      "Какво правих преди дни?",
+      "What did I do years ago?",
+    ]) {
+      expect(range(text), text).toBeUndefined();
+    }
   });
 
   it("does not read a date into words that only look like one", () => {

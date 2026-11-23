@@ -202,6 +202,78 @@ describe("the capture pipeline's secrets and sensitive topics", () => {
     }
   });
 
+  it("finds Bulgarian sensitive topics and stated passwords and PINs, and leaves ordinary Bulgarian alone", () => {
+    for (const [text, topic] of [
+      ["Диагностициран е с диабет тип 2", "health"],
+      ["Кръвната група е 0 отрицателна", "health"],
+      ["Ходи на терапевт във вторник", "health"],
+      ["Има астма и носи инхалатор", "health"],
+      ["Лекарят каза да почива", "health"],
+      ["Бременна е в петия месец", "health"],
+      ["Гей е и не го крие", "sex-life"],
+      ["Сексуалната ориентация не е тайна", "sex-life"],
+      ["Ходи на църква в неделя", "beliefs"],
+      ["Православен християнин", "beliefs"],
+      ["Моли се всяка вечер", "beliefs"],
+      ["Гласува за зелената партия", "politics"],
+      ["Има леви възгледи", "politics"],
+      ["Етническият произход е в анкетата", "ethnicity"],
+      ["Член на синдикат от 2010", "union"],
+      ["Заплатата е 3000 лева", "money"],
+      ["Изплаща ипотека за апартамента", "money"],
+      ["Има кредит в банката", "money"],
+      ["Изплаща потребителски кредит", "money"],
+      ["Има стар дълг към брат си", "money"],
+      ["ЕГН 8001010000", "identifiers"],
+      ["Номерът на паспорта е 382910443", "identifiers"],
+      ["Пин кодът на картата е в чекмеджето", "identifiers"],
+      ["Домашният адрес е ул. Витоша 12", "location"],
+      ["Живее на ул. Шипка 5", "location"],
+      ["Адресът ми е бул. България 1", "location"],
+    ] as const) {
+      expect(sensitiveTopicOf([text]), text).toBe(topic);
+    }
+    for (const ordinary of [
+      "Живее в Пловдив",
+      "Предпочита метрични единици",
+      "Моля, отговаряй накратко",
+      "Има рецепта за баница",
+      "Операцията по миграция мина",
+      "Политиката за поверителност е обновена",
+      "Обнови зависимостите на проекта",
+      "Здравей, как си?",
+      "Имейл адресът ми е в профила",
+      "Има две котки",
+      "Тренира за маратон през май",
+      "Предпочита дълга форма на отговорите",
+      "Компилацията заема 2 минути",
+      "Остават ми 50 кредита в OpenRouter",
+      "окр. Пловдив",
+    ]) {
+      expect(sensitiveTopicOf([ordinary]), ordinary).toBeUndefined();
+    }
+    for (const stated of [
+      "паролата ми е тайна123",
+      "Паролата за wifi е hunter2",
+      "Паролата: hunter2",
+      "ПИН-ът ми е 1234",
+      "пин кодът ми е 4821",
+      "ПИН кодът на картата е 0000",
+      "ПИН: 1234",
+      "кодът ми за достъп е 9911",
+      "Паролата за домашния wifi е hunter2",
+      "Паролата за Gmail акаунта ми е hunter2",
+      "Паролата за wi-fi в офиса е X",
+      "Кодът за достъп до сървъра е 1234",
+      "ПИН кодът на старата ми карта е 1234",
+    ]) {
+      expect(holdsSecret([stated]), stated).toBe(true);
+    }
+    for (const ordinary of ["Забравих си паролата", "Смени паролата си всеки месец", "Използва вход без парола", "Пиния в двора"]) {
+      expect(holdsSecret([ordinary]), ordinary).toBe(false);
+    }
+  });
+
   it("memory invariant 7: under skip (the default) files nothing sensitive, under suggest files it marked sensitive, and never a secret", async () => {
     for (const mode of [undefined, "skip", "suggest"] as const) {
       const memory = dedupingMemory();

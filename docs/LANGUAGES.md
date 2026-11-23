@@ -86,6 +86,16 @@ app is set to Bulgarian. The commands themselves stay `/tavi ask` and
 follow the workspace's language once Tavi passes plugins the language; until
 then they are in English.
 
+The agent's own instructions stay in English. When the workspace's language
+isn't English, the facts the agent reads each turn add one line asking it to
+reply in that language unless the person writes in another, and give the local
+time with that language's weekday and month names. The `tavi config` preview of
+the system prompt shows them as the agent reads them. Memory recall understands
+Bulgarian dates ("вчера", "миналата седмица", "преди 3 дни", "през март",
+"от 2020 г.", "тази година"), and automatic memory capture recognises Bulgarian
+passwords, PIN codes and sensitive topics (health, beliefs, money, ЕГН and other
+ID numbers, a home address) the same way it recognises English ones.
+
 Status words the canvas shows for codes the owner sends (the state of a
 routine, run, delivery, schedule, reminder, plugin or worker; a run's mode and
 network reach; a tool's effect; a review state) come from the canvas's own

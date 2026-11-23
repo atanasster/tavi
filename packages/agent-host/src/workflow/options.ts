@@ -51,6 +51,7 @@ import type {
   ToolRegistryPort,
   TurnHooksPort,
 } from "@tavi/contracts";
+import type { Locale } from "@tavi/contracts/i18n";
 import type { WorkspacePromptSettingsPort } from "../prompts/system-prompt.js";
 import type { EpochRollover } from "./epoch.js";
 
@@ -339,6 +340,12 @@ export interface WorkflowAdapterOptions {
    * Absent, or resolving to `undefined`: no local-time fact, as before.
    */
   readonly workspaceTimezone?: (workspaceId: string) => Promise<string | undefined>;
+  /**
+   * The workspace's language (`workspace.locale`), read on every model call as
+   * the zone is: other than English, the runtime facts ask the model to reply
+   * in it and state the local time in its words. Absent: English, as before.
+   */
+  readonly workspaceLocale?: (workspaceId: string) => Promise<Locale | undefined>;
   /**
    * The MCP server the person keeps their tasks in (`tasks.home` `mcp:<server>`),
    * read per model call, or `undefined` while Tavi's own list is their home.

@@ -38,8 +38,8 @@ import {
 
 /**
  * The host's sensitive categories: special-category data in the GDPR's
- * sense, money, account numbers and government ids, and where the person lives. Whole words, English
- * only, matched over a draft's title, body, topic key and preference key and value; a
+ * sense, money, account numbers and government ids, and where the person lives. Whole words, in English
+ * and Bulgarian, matched over a draft's title, body, topic key and preference key and value; a
  * miss falls back to the model's own mark, which the extractor prompt and the
  * tool's guidance ask for (others' private details, in particular, are left
  * to it: no word list finds them).
@@ -86,6 +86,49 @@ const SENSITIVE_TOPICS: readonly { readonly topic: SensitiveTopic; readonly patt
   },
   // An IBAN: case-sensitive, so lowercase hex that starts with two letters and two digits is not one.
   { topic: "identifiers", pattern: /\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){3,7}\b/ },
+  // Bulgarian, the same categories. `\b` is ASCII-only in JavaScript, so each word is bounded by letter lookarounds, and
+  // a stem ends in `\p{L}*` for its forms. Words with an everyday sense are left out or narrowed: "операция" (any
+  // operation), "рецепта" (a recipe), "зависимост" (a dependency), "политика" (a policy), "моля" (please), "дълга" (long), "заема" (takes up), a bare "кредит" (API credits) and "окр." (district).
+  {
+    topic: "health",
+    pattern:
+      /(?<!\p{L})(?:здравословн\p{L}*|здравето|здравн\p{L}*|медицинск\p{L}*|лекарств\p{L}*|диагноз\p{L}*|диагностицира\p{L}*|болест\p{L}*|заболяван\p{L}*|болен|болна|болни|болница\p{L}*|болнич\p{L}*|хронич\p{L}*|рак|ракът|тумор\p{L}*|диабет\p{L}*|астм\p{L}*|алерги\p{L}*|алергичн\p{L}*|епилепс\p{L}*|мигрен\p{L}*|хив|бременн\p{L}*|спонтанен аборт|аборт\p{L}*|хирургич\p{L}*|опериран\p{L}*|предписан\p{L}* (?:ми|от лекар\p{L}*)|терапи\p{L}*|терапевт\p{L}*|психотерап\p{L}*|психиатр\p{L}*|психичн\p{L}* (?:здраве|болест\p{L}*|разстройств\p{L}*|проблем\p{L}*)|депреси\p{L}*|депресира\p{L}*|тревожност\p{L}*|паническ\p{L}* атак\p{L}*|антидепресант\p{L}*|аутиз\p{L}*|аутист\p{L}*|биполяр\p{L}*|окр(?!\.)|птср|хранителн\p{L}* разстройств\p{L}*|анорекси\p{L}*|булими\p{L}*|пристраст(?:ен|ена|ени|яване|яването)|рехаб\p{L}*|инвалидн\p{L}*|увреждания|кръвн\p{L}* (?:група|налягане|захар|изследван\p{L}*)|кръвното|инсулин\p{L}*|ваксин\p{L}*|лекар|лекари|лекаря|лекарят|лекарите|лекарка\p{L}*|хоспитализира\p{L}*)(?!\p{L})/iu,
+  },
+  {
+    topic: "sex-life",
+    pattern:
+      /(?<!\p{L})(?:сексуал\p{L}*|полов\p{L}* живот|интимн\p{L}* живот|гей|геят|лесбийк\p{L}*|лесби|бисексуал\p{L}*|транссексуал\p{L}*|трансджендър\p{L}*|транс (?:мъж|жена)|куиър|лгбт\p{L}*|асексуал\p{L}*|небинар\p{L}*)(?!\p{L})/iu,
+  },
+  {
+    topic: "beliefs",
+    pattern:
+      /(?<!\p{L})(?:религи\p{L}*|църкв\p{L}*|църков\p{L}*|джами\p{L}*|синагог\p{L}*|молитв\p{L}*|мол(?:я|и|им|ят|ех|еше|ел|ела) се|християн\p{L}*|православ\p{L}*|католи\p{L}*|протестант\p{L}*|мюсюлман\p{L}*|ислям\p{L}*|евре(?:ин|йка|и|ите|йски|йска|йско)|юдаиз\p{L}*|индуис\p{L}*|будис\p{L}*|будизъм|сикх\p{L}*|атеис\p{L}*|атеизъм|агностик\p{L}*|духовност\p{L}*|вярващ\p{L}*)(?!\p{L})/iu,
+  },
+  {
+    topic: "politics",
+    pattern:
+      /(?<!\p{L})(?:политическ\p{L}*|партийн\p{L}*|гласува\p{L}* (?:за|против)|социалист\p{L}*|комунист\p{L}*|либертариан\p{L}*|лявоориентиран\p{L}*|дясноориентиран\p{L}*|(?:леви|десни) възгледи|(?:консервативн|либерал|зелен)\p{L}* партия|активист\p{L}*)(?!\p{L})/iu,
+  },
+  {
+    topic: "ethnicity",
+    pattern: /(?<!\p{L})(?:етническ\p{L}*|етнос\p{L}*|расов\p{L}*|имиграционн\p{L}* статус|бежан\p{L}*|убежище\p{L}*)(?!\p{L})/iu,
+  },
+  { topic: "union", pattern: /(?<!\p{L})(?:синдикат\p{L}*|синдикалн\p{L}*|профсъюз\p{L}*|членски внос)(?!\p{L})/iu },
+  {
+    topic: "money",
+    pattern:
+      /(?<!\p{L})(?:заплат\p{L}*|подоходн\p{L}* дан\p{L}*|надник\p{L}*|дълг|дългът|дългове|дълговете|задлъжня\p{L}*|заем|заеми|заемът|(?:ипотечен|потребителски|бърз|банков)\p{L}* кредит\p{L}*|кредит\p{L}* (?:от|в|към) банка\p{L}*|(?:взе|тегли|изплаща)\p{L}* кредит\p{L}*|кредитен рейтинг|ипотек\p{L}*|фалит\p{L}*|фалира\p{L}*|нетн\p{L}* (?:стойност|състояние)|спестявания(?:та)?|данъчн\p{L}* декларац\p{L}*|пенси\p{L}*)(?!\p{L})/iu,
+  },
+  {
+    topic: "identifiers",
+    pattern:
+      /(?<!\p{L})(?:(?:номер\p{L}*|№) на (?:банков\p{L}* )?сметка\p{L}*|банков\p{L}* сметка\p{L}*|(?:номер\p{L}*|№) на (?:банков\p{L}* |кредитн\p{L}* |дебитн\p{L}* )?карта\p{L}*|пин[\s-]?код\p{L}*|(?:номер\p{L}*|№) на (?:паспорт\p{L}*|лична(?:та)? карта|шофьорск\p{L}* книжк\p{L}*)|паспортн\p{L}* номер\p{L}*|егн|лнч|данъчен номер|осигурителен номер)(?!\p{L})/iu,
+  },
+  {
+    topic: "location",
+    pattern:
+      /(?<!\p{L})(?:домашн\p{L}* адрес\p{L}*|(?<!(?:имейл|e-mail|email|уеб|ip)[\s-]?)адрес(?:ът|а) (?:ми|ни|му|й)|(?:моя|моят|нашия|нашият) адрес|координатите (?:ми|ни)|живе(?:я|ем|е|еш|ете|ят) на (?:ул\.|улица|бул\.|булевард|ж\.к\.|кв\.|адрес))(?!\p{L})/iu,
+  },
 ];
 
 /** A category of the host's sensitive list. */
@@ -118,6 +161,16 @@ export function sensitiveTopicOf(texts: readonly (string | undefined)[]): Sensit
 const STATED_PASSWORD = /\b(?:password|passcode|passphrase)s?\s*(?:[:=]|\bis\b)\s*\S/i;
 /** The same for a PIN, upper case only, so the verb "pin" (a dependency, a tab) is not one. */
 const STATED_PIN = /\bPINs?\s*(?:[:=]|\b[Ii]s\b)\s*\S/;
+/**
+ * The same in Bulgarian: "паролата ми е …", "паролата за wifi е …", "ПИН-ът ми е …", "пин кодът на картата е …",
+ * "кодът за достъп до сървъра е …" (up to four words after "за", "на" or "до", a bounded run so matching stays
+ * linear), then `:`, `=` or "е" and a value. Cyrillic is bounded by letter lookarounds (`\b` is
+ * ASCII-only).
+ */
+const STATED_PASSWORD_BG =
+  /(?<!\p{L})(?:парол(?:а|ата|и|ите)|код(?:ът|а)?(?:\s+(?:ми|ни))?\s+за\s+достъп)(?:\s+(?:ми|ни))?(?:\s+(?:за|на|до)\s+[^\s:=]+(?:\s+(?!е(?!\p{L}))[^\s:=]+){0,3})?(?:\s+(?:ми|ни))?\s*(?:[:=]|(?<!\p{L})е(?!\p{L}))\s*\S/iu;
+const STATED_PIN_BG =
+  /(?<!\p{L})пин(?:-?ът|-?а|-?ове|-?овете)?(?:[\s-]*код(?:ът|а|ове|овете)?)?(?:\s+(?:ми|ни))?(?:\s+(?:за|на|до)\s+[^\s:=]+(?:\s+(?!е(?!\p{L}))[^\s:=]+){0,3})?(?:\s+(?:ми|ни))?\s*(?:[:=]|(?<!\p{L})е(?!\p{L}))\s*\S/iu;
 
 /**
  * Whether any of `texts` holds a key-shaped secret (`redactToolText` would
@@ -127,7 +180,13 @@ const STATED_PIN = /\bPINs?\s*(?:[:=]|\b[Ii]s\b)\s*\S/;
  */
 export function holdsSecret(texts: readonly (string | undefined)[]): boolean {
   return texts.some(
-    (text) => text !== undefined && (redactToolText(text).masked.length > 0 || STATED_PASSWORD.test(text) || STATED_PIN.test(text)),
+    (text) =>
+      text !== undefined &&
+      (redactToolText(text).masked.length > 0 ||
+        STATED_PASSWORD.test(text) ||
+        STATED_PIN.test(text) ||
+        STATED_PASSWORD_BG.test(text) ||
+        STATED_PIN_BG.test(text)),
   );
 }
 

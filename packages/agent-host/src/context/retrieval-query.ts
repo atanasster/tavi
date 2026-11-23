@@ -18,7 +18,7 @@ const RETRIEVAL_KEYWORDS_MAX_TERMS = 24;
 const RETRIEVAL_KEYWORDS_MAX_CHARS = 512;
 
 /**
- * Words too common to tell one memory from another (English, plus function words in FR, DE, ES, PT, IT, NL).
+ * Words too common to tell one memory from another (English, plus function words in FR, DE, ES, PT, IT, NL, BG).
  * A foreign word that is also an English word or a common name ("die", "con", "plus",
  * "Dan", "Mia", "Sue", "MIT", "Como", "todo") is never listed: dropping it would
  * lose the person's own word.
@@ -38,6 +38,8 @@ const RETRIEVAL_STOPWORDS = new Set(
     "gli dei degli delle dalla dallo dagli dalle nello nei negli nelle sul sulla sullo sugli sulle più tutto tutti tutta tutte questo questa questi queste quello quella quelli quelle noi voi loro suo suoi mio miei mie nostro nostra nostri nostre erano stato stata stati",
     // Dutch function words
     "een voor niet maar ook deze zijn wordt worden werden heeft hebben hadden wij jullie mijn onze jouw geen onder tegen zonder tussen omdat wanneer waarom waar welke",
+    // Bulgarian function words
+    "как кога къде защо какво какви какъв каква кой коя кое кои който която което които чий чия чие чии това тази този тези онзи онази онова онези там тук така също само още вече сега тогава после много малко всеки всяка всяко всички всичко нещо някой някоя някое някои нищо никой нито без във със към след през при под над пред между около заради чрез върху срещу освен или ако защото като дали обаче въпреки докато бях беше бяхме бяха бил била било били съм сме сте има няма имам имаш имат имаме мога можеш може можем могат трябва искам искаш моля благодаря добре мой моя мое мои твой твоя твое твои негов нейн нейна нейно наш наша наше наши ваш ваша ваше ваши техен тяхна тях него нея нас вас мен теб тебе мене ние вие той тя",
   ]
     .join(" ")
     .split(" "),
@@ -295,6 +297,24 @@ const NUMBER_WORDS: Readonly<Record<string, number>> = {
   negen: 9,
   tien: 10,
   twaalf: 12,
+  // BG (the counted masculine "два" as well as "две")
+  един: 1,
+  една: 1,
+  едно: 1,
+  два: 2,
+  две: 2,
+  три: 3,
+  четири: 4,
+  пет: 5,
+  шест: 6,
+  седем: 7,
+  осем: 8,
+  девет: 9,
+  десет: 10,
+  единайсет: 11,
+  единадесет: 11,
+  дванайсет: 12,
+  дванадесет: 12,
 };
 
 const MONTH_NAMES: Readonly<Record<string, number>> = {
@@ -308,6 +328,8 @@ const MONTH_NAMES: Readonly<Record<string, number>> = {
   janeiro: 1,
   gennaio: 1,
   januari: 1,
+  яну: 1,
+  януари: 1,
   // 2 - February
   february: 2,
   feb: 2,
@@ -318,6 +340,9 @@ const MONTH_NAMES: Readonly<Record<string, number>> = {
   fevereiro: 2,
   febbraio: 2,
   februari: 2,
+  фев: 2,
+  февр: 2,
+  февруари: 2,
   // 3 - March
   march: 3,
   mar: 3,
@@ -328,12 +353,15 @@ const MONTH_NAMES: Readonly<Record<string, number>> = {
   março: 3,
   marco: 3,
   maart: 3,
+  март: 3,
   // 4 - April
   april: 4,
   apr: 4,
   avril: 4,
   abril: 4,
   aprile: 4,
+  апр: 4,
+  април: 4,
   // 5 - May
   may: 5,
   mai: 5,
@@ -341,6 +369,7 @@ const MONTH_NAMES: Readonly<Record<string, number>> = {
   maio: 5,
   maggio: 5,
   mei: 5,
+  май: 5,
   // 6 - June
   june: 6,
   jun: 6,
@@ -349,6 +378,7 @@ const MONTH_NAMES: Readonly<Record<string, number>> = {
   junio: 6,
   junho: 6,
   giugno: 6,
+  юни: 6,
   // 7 - July
   july: 7,
   jul: 7,
@@ -357,6 +387,7 @@ const MONTH_NAMES: Readonly<Record<string, number>> = {
   julio: 7,
   julho: 7,
   luglio: 7,
+  юли: 7,
   // 8 - August
   august: 8,
   aug: 8,
@@ -364,6 +395,8 @@ const MONTH_NAMES: Readonly<Record<string, number>> = {
   aout: 8,
   agosto: 8,
   augustus: 8,
+  авг: 8,
+  август: 8,
   // 9 - September
   september: 9,
   sep: 9,
@@ -372,6 +405,9 @@ const MONTH_NAMES: Readonly<Record<string, number>> = {
   septiembre: 9,
   setembro: 9,
   settembre: 9,
+  сеп: 9,
+  септ: 9,
+  септември: 9,
   // 10 - October
   october: 10,
   oct: 10,
@@ -380,12 +416,17 @@ const MONTH_NAMES: Readonly<Record<string, number>> = {
   octubre: 10,
   outubro: 10,
   ottobre: 10,
+  окт: 10,
+  октомври: 10,
   // 11 - November
   november: 11,
   nov: 11,
   novembre: 11,
   noviembre: 11,
   novembro: 11,
+  ное: 11,
+  ноем: 11,
+  ноември: 11,
   // 12 - December
   december: 12,
   dec: 12,
@@ -395,6 +436,8 @@ const MONTH_NAMES: Readonly<Record<string, number>> = {
   diciembre: 12,
   dezembro: 12,
   dicembre: 12,
+  дек: 12,
+  декември: 12,
 };
 
 const MONTH_NAME_PATTERN = Object.keys(MONTH_NAMES)
@@ -463,10 +506,17 @@ function parseCountToken(raw: string): number | undefined {
 
 function classifyUnit(raw: string): "day" | "week" | "month" | "year" | undefined {
   const lower = raw.toLowerCase();
-  if (/^(?:day|days|jour|jours|tag|tagen|tage|día|días|dia|dias|giorno|giorni|dag|dagen)$/u.test(lower)) return "day";
-  if (/^(?:week|weeks|semaine|semaines|woche|wochen|semana|semanas|settimana|settimane|weken)$/u.test(lower)) return "week";
-  if (/^(?:month|months|mois|monat|monaten|monate|mes|meses|mês|mese|mesi|maand|maanden)$/u.test(lower)) return "month";
-  if (/^(?:year|years|an|ans|année|années|annee|annees|jahr|jahren|jahre|año|años|ano|anos|anno|anni|jaar|jaren)$/u.test(lower))
+  if (/^(?:day|days|jour|jours|tag|tagen|tage|día|días|dia|dias|giorno|giorni|dag|dagen|ден|дни|дена|деня|денят)$/u.test(lower))
+    return "day";
+  if (/^(?:week|weeks|semaine|semaines|woche|wochen|semana|semanas|settimana|settimane|weken|седмица|седмици|седмицата)$/u.test(lower))
+    return "week";
+  if (/^(?:month|months|mois|monat|monaten|monate|mes|meses|mês|mese|mesi|maand|maanden|месец|месеца|месеци|месецът)$/u.test(lower))
+    return "month";
+  if (
+    /^(?:year|years|an|ans|année|années|annee|annees|jahr|jahren|jahre|año|años|ano|anos|anno|anni|jaar|jaren|година|години|годината)$/u.test(
+      lower,
+    )
+  )
     return "year";
   return undefined;
 }
@@ -500,6 +550,19 @@ const AMBIGUOUS_MONTHS: Readonly<Record<string, { readonly prepositions: readonl
   mei: { prepositions: ["in", "sinds", "sedert"], lowercase: true },
   marco: { prepositions: ["em", "no mês de", "no mes de", "desde"], lowercase: true },
   may: { prepositions: ["in", "during", "last", "since"] },
+  // Bulgarian: the short forms, "ное" (Noah), and "май", also "it seems" ("май ще вали").
+  яну: { prepositions: [] },
+  фев: { prepositions: [] },
+  февр: { prepositions: [] },
+  апр: { prepositions: [] },
+  авг: { prepositions: [] },
+  сеп: { prepositions: [] },
+  септ: { prepositions: [] },
+  окт: { prepositions: [] },
+  ное: { prepositions: [] },
+  ноем: { prepositions: [] },
+  дек: { prepositions: [] },
+  май: { prepositions: ["през", "в", "от", "миналия", "миналата"] },
 };
 
 /**
@@ -508,7 +571,9 @@ const AMBIGUOUS_MONTHS: Readonly<Record<string, { readonly prepositions: readonl
  * and "in 1984 terms" are not.
  */
 function yearStandsAlone(text: string, end: number): boolean {
-  return /^(?:\s*$|\s*[^\p{L}\p{N}\s]|\s+(?:and|or|but|when|while|et|ou|und|oder|y|o|e|en|of)(?!\p{L}))/u.test(text.slice(end));
+  return /^(?:\s*$|\s*[^\p{L}\p{N}\s]|\s+(?:and|or|but|when|while|et|ou|und|oder|y|o|e|en|of|и|или|но|когато)(?!\p{L})|\s*г\.?(?!\p{L})|\s+година(?:та)?(?!\p{L}))/u.test(
+    text.slice(end),
+  );
 }
 
 /** Whether a matched month name reads as a month here (see `AMBIGUOUS_MONTHS`). */
@@ -533,6 +598,18 @@ const FRENCH_CUE =
 const PAST_SUBJECT = /\b(?:[Dd]id|[Ww]as|[Ww]ere|[Hh]ad)\s+(?:I|we)\b|\b(?:I|[Ww]e)\s+(?:did|was|were|had|\p{L}+ed)\b/u;
 const PAST_BEFORE = /\b(?:[Bb]efore|[Pp]rior\s+to)\s+(?:(?:I|we|you|he|she|they)\s+\p{L}|(?:19|20)\d{2}(?!\d)|[^?!.]*?\p{Lu}\p{Ll})/u;
 
+/**
+ * Bulgarian past cues for "преди" ("before"): a first-person past verb ("бях",
+ * "живеех", "работих"; never a noun with the same ending, such as "успех" or "страх") and, after "преди", a clause ("преди да се преместя"), a
+ * year or a name ("преди Порто"). `\b` is ASCII-only in JavaScript, so every
+ * Cyrillic pattern bounds its words with letter lookarounds instead.
+ */
+const BULGARIAN_PAST_SUBJECT =
+  /(?<!\p{L})(?:бях|бяхме|бил|била|били|(?!(?:успех|страх|грях|смях|орех|прах|монах|връх|мях|цех)(?!\p{L}))\p{L}{2,}(?:ех|ах|ях|их|ехме|ахме|яхме|ихме))(?!\p{L})/iu;
+const BULGARIAN_PAST_BEFORE = /(?<!\p{L})(?:[Пп]реди|[Дд]опреди)\s+(?:да\s+\p{L}|(?:19|20)\d{2}(?!\d)|[^?!.]*?\p{Lu}\p{Ll})/u;
+/** A Bulgarian year, with the "г." or "година" a year is written with ("през 2024 г."). */
+const BULGARIAN_YEAR = "(19\\d{2}|20\\d{2})(?!\\d)";
+
 /** A German past auxiliary or participle beside "früher", which is also "earlier" in "Kannst du früher kommen?". */
 const GERMAN_PAST = /(?<!\p{L})(?:war|warst|waren|wart|hatte|hattest|hatten|ge\p{L}{2,}(?:t|en))(?!\p{L})/u;
 
@@ -543,7 +620,9 @@ const GERMAN_PAST = /(?<!\p{L})(?:war|warst|waren|wart|hatte|hattest|hatten|ge\p
  * "in <Month> [YYYY]", "since <Month> [YYYY]", "in <YYYY>", "since <YYYY>",
  * and past-history cues such as "Where did I live before Porto?" or
  * "used to" / "previously") in English plus French, German, Spanish,
- * Portuguese, Italian and Dutch against `now` in `timeZone`. Each boundary
+ * Portuguese, Italian, Dutch and Bulgarian (which also has "this week",
+ * "this month" and "this year": "тази седмица", "този месец", "тази година")
+ * against `now` in `timeZone`. Each boundary
  * is a midnight in `timeZone` (UTC when unset or unknown); "last week" is
  * the previous calendar week, Monday to Sunday.
  *
@@ -596,7 +675,8 @@ export function parseTemporalQueryRange(text: string, now?: string, timeZone?: s
   if (
     /\b(?:(?:the\s+)?day\s+before\s+yesterday|avant-hier|vorgestern|anteayer|antes\s+de\s+ontem|anteontem|l['’]altro\s+ieri|eergisteren)\b/iu.test(
       queryText,
-    )
+    ) ||
+    /(?<!\p{L})(?:завчера|онзи\s+ден)(?!\p{L})/iu.test(queryText)
   ) {
     return makeRange(
       Date.UTC(refYear, refMonth - 1, refDay - 2, 0, 0, 0, 0),
@@ -608,13 +688,20 @@ export function parseTemporalQueryRange(text: string, now?: string, timeZone?: s
   // 3. Yesterday (EN, FR, DE, ES, PT, IT, NL); a bare "hier" only among French words.
   if (
     /\b(?:yesterday|gestern|ayer|ontem|ieri|gisteren)\b/iu.test(queryText) ||
-    (/\bhier\b/iu.test(queryText) && FRENCH_CUE.test(queryText))
+    (/\bhier\b/iu.test(queryText) && FRENCH_CUE.test(queryText)) ||
+    /(?<!\p{L})вчера(?!\p{L})/iu.test(queryText)
   ) {
     return makeRange(Date.UTC(refYear, refMonth - 1, refDay - 1, 0, 0, 0, 0), todayStartMs - 1, true);
   }
 
   // 4. "<N> days/weeks/months/years ago" across EN, FR, DE, ES, PT, IT, NL.
-  const agoPatterns: readonly { readonly regex: RegExp; readonly countIndex: number; readonly unitIndex: number }[] = [
+  const agoPatterns: readonly {
+    readonly regex: RegExp;
+    readonly countIndex: number;
+    readonly unitIndex: number;
+    /** A count-less singular unit's group: one of it. */
+    readonly singularUnitIndex?: number;
+  }[] = [
     {
       // EN, IT, NL: "<N> <unit> ago|fa|geleden"
       regex: new RegExp(
@@ -633,12 +720,24 @@ export function parseTemporalQueryRange(text: string, now?: string, timeZone?: s
       countIndex: 1,
       unitIndex: 2,
     },
+    {
+      // BG: "преди <N> <unit>", or a singular unit with no count for one ("преди месец"). A plural with no count
+      // ("преди години") is no number, as English "years ago" is not: it falls through to the rules below.
+      regex: new RegExp(
+        `(?<!\\p{L})преди\\s+(?:(\\d+|${NUMBER_WORD_PATTERN})\\s+(ден|дни|дена|седмица|седмици|месец|месеца|месеци|година|години)|(ден|седмица|месец|година))(?!\\p{L})`,
+        "iu",
+      ),
+      countIndex: 1,
+      unitIndex: 2,
+      singularUnitIndex: 3,
+    },
   ];
-  for (const { regex, countIndex, unitIndex } of agoPatterns) {
+  for (const { regex, countIndex, unitIndex, singularUnitIndex } of agoPatterns) {
     const match = queryText.match(regex);
     if (match !== null) {
-      const count = parseCountToken(match[countIndex] ?? "");
-      const unit = classifyUnit(match[unitIndex] ?? "");
+      const singular = singularUnitIndex === undefined ? undefined : match[singularUnitIndex];
+      const count = singular === undefined ? parseCountToken(match[countIndex] ?? "") : 1;
+      const unit = classifyUnit(singular ?? match[unitIndex] ?? "");
       if (count !== undefined && unit !== undefined) {
         if (unit === "day") {
           const fromMs = Date.UTC(refYear, refMonth - 1, refDay - count - 1, 0, 0, 0, 0);
@@ -666,7 +765,8 @@ export function parseTemporalQueryRange(text: string, now?: string, timeZone?: s
   if (
     /\b(?:(?:last|past|previous)\s+week|(?:la\s+)?semaine\s+derni[èe]re|(?:letzte[nr]?|vergangene[nr]?)\s+woche|(?:la\s+|na\s+)?semana\s+pass?ada|(?:la\s+)?settimana\s+scorsa|(?:vorige|afgelopen)\s+week)\b/iu.test(
       queryText,
-    )
+    ) ||
+    /(?<!\p{L})(?:миналата|предишната|изминалата)\s+седмица(?!\p{L})/iu.test(queryText)
   ) {
     const thisMonday = refDay - ((new Date(todayStartMs).getUTCDay() + 6) % 7);
     return makeRange(
@@ -679,7 +779,8 @@ export function parseTemporalQueryRange(text: string, now?: string, timeZone?: s
   if (
     /\b(?:(?:last|past|previous)\s+month|(?:le\s+)?mois\s+dernier|(?:letzte[nrs]?|vergangene[nrs]?)\s+monat|(?:el\s+|no\s+)?m[eê]s\s+pass?ado|(?:il\s+)?mese\s+scorso|(?:vorige|afgelopen)\s+maand)\b/iu.test(
       queryText,
-    )
+    ) ||
+    /(?<!\p{L})(?:миналия|миналият|предишния|предишният|изминалия)\s+месец(?!\p{L})/iu.test(queryText)
   ) {
     return makeRange(Date.UTC(refYear, refMonth - 2, 1, 0, 0, 0, 0), Date.UTC(refYear, refMonth - 1, 1, 0, 0, 0, 0) - 1, true);
   }
@@ -687,9 +788,22 @@ export function parseTemporalQueryRange(text: string, now?: string, timeZone?: s
   if (
     /\b(?:(?:last|past|previous)\s+year|l['’]an(?:n[ée]e)?\s+derni[èe]re?|(?:letzte[ns]?|vergangene[ns]?)\s+jahr|(?:el\s+|no\s+)?a[ñn]o\s+pass?ado|(?:l['’])?anno\s+scorso|(?:vorig|afgelopen)\s+jaar)\b/iu.test(
       queryText,
-    )
+    ) ||
+    /(?<!\p{L})(?:(?:миналата|предишната|изминалата)\s+година|лани)(?!\p{L})/iu.test(queryText)
   ) {
     return makeRange(Date.UTC(refYear - 1, 0, 1, 0, 0, 0, 0), Date.UTC(refYear, 0, 1, 0, 0, 0, 0) - 1, true);
+  }
+
+  // Bulgarian only: this week (from Monday), this month and this year, up to the end of today.
+  if (/(?<!\p{L})тази\s+седмица(?!\p{L})/iu.test(queryText)) {
+    const thisMonday = refDay - ((new Date(todayStartMs).getUTCDay() + 6) % 7);
+    return makeRange(Date.UTC(refYear, refMonth - 1, thisMonday, 0, 0, 0, 0), todayEndMs, false);
+  }
+  if (/(?<!\p{L})този\s+месец(?!\p{L})/iu.test(queryText)) {
+    return makeRange(Date.UTC(refYear, refMonth - 1, 1, 0, 0, 0, 0), todayEndMs, false);
+  }
+  if (/(?<!\p{L})тази\s+година(?!\p{L})/iu.test(queryText)) {
+    return makeRange(Date.UTC(refYear, 0, 1, 0, 0, 0, 0), todayEndMs, false);
   }
 
   // 6. "since <Month> [YYYY]" or "since <YYYY>" (EN, FR, DE, ES, PT, IT, NL).
@@ -708,9 +822,26 @@ export function parseTemporalQueryRange(text: string, now?: string, timeZone?: s
     }
   }
 
-  for (const sinceYearMatch of queryText.matchAll(/\b(?:since|depuis|seit|desde|sinds|sedert|dal)\s+(19\d{2}|20\d{2})\b/giu)) {
+  // BG: "от <месец> [<година>]" ("от март", "от май 2024 г.").
+  const bulgarianSinceMonth = new RegExp(`(?<!\\p{L})(от|откакто)\\s+(${MONTH_NAME_PATTERN})(?:\\s+${BULGARIAN_YEAR})?(?!\\p{L})`, "giu");
+  for (const sinceMonthMatch of queryText.matchAll(bulgarianSinceMonth)) {
+    const monthRaw = sinceMonthMatch[2] ?? "";
+    const month = MONTH_NAMES[monthRaw.toLowerCase()];
+    const yearEnd = sinceMonthMatch[3] === undefined ? undefined : sinceMonthMatch.index + sinceMonthMatch[0].length;
+    if (month !== undefined && monthReadsAsMonth(monthRaw, sinceMonthMatch[1], yearEnd, queryText)) {
+      const explicitYear = sinceMonthMatch[3] === undefined ? undefined : Number(sinceMonthMatch[3]);
+      const year = explicitYear ?? (month <= refMonth ? refYear : refYear - 1);
+      return makeRange(Date.UTC(year, month - 1, 1, 0, 0, 0, 0), todayEndMs, false);
+    }
+  }
+
+  const sinceYearRegex = new RegExp(
+    `\\b(?:since|depuis|seit|desde|sinds|sedert|dal)\\s+(19\\d{2}|20\\d{2})\\b|(?<!\\p{L})(?:от|откакто)\\s+${BULGARIAN_YEAR}`,
+    "giu",
+  );
+  for (const sinceYearMatch of queryText.matchAll(sinceYearRegex)) {
     if (!yearStandsAlone(queryText, sinceYearMatch.index + sinceYearMatch[0].length)) continue;
-    const year = Number(sinceYearMatch[1]);
+    const year = Number(sinceYearMatch[1] ?? sinceYearMatch[2]);
     return makeRange(Date.UTC(year, 0, 1, 0, 0, 0, 0), todayEndMs, false);
   }
 
@@ -733,6 +864,26 @@ export function parseTemporalQueryRange(text: string, now?: string, timeZone?: s
     }
   }
 
+  // BG: "през/в <месец> [<година>]", "миналия <месец>", or "<месец> <година>".
+  const bulgarianInMonth = new RegExp(
+    `(?<!\\p{L})(?:(през|във|в|миналия|миналият)\\s+)?(${MONTH_NAME_PATTERN})(?:\\s+${BULGARIAN_YEAR})?(?!\\p{L})`,
+    "giu",
+  );
+  for (const inMonthMatch of queryText.matchAll(bulgarianInMonth)) {
+    const prep = inMonthMatch[1]?.toLowerCase();
+    const monthRaw = inMonthMatch[2] ?? "";
+    // Cyrillic months only: a Latin one is read above, and a bare one ("March") is no range.
+    if (!/\p{Script=Cyrillic}/u.test(monthRaw) || (prep === undefined && inMonthMatch[3] === undefined)) continue;
+    const month = MONTH_NAMES[monthRaw.toLowerCase()];
+    const yearEnd = inMonthMatch[3] === undefined ? undefined : inMonthMatch.index + inMonthMatch[0].length;
+    if (month !== undefined && monthReadsAsMonth(monthRaw, prep, yearEnd, queryText)) {
+      const explicitYear = inMonthMatch[3] === undefined ? undefined : Number(inMonthMatch[3]);
+      const last = prep === "миналия" || prep === "миналият";
+      const year = explicitYear ?? (last ? (month < refMonth ? refYear : refYear - 1) : month > refMonth ? refYear - 1 : refYear);
+      return makeRange(Date.UTC(year, month - 1, 1, 0, 0, 0, 0), Date.UTC(year, month, 1, 0, 0, 0, 0) - 1);
+    }
+  }
+
   const monthYearRegex = new RegExp(`\\b(${MONTH_NAME_PATTERN})\\s+(19\\d{2}|20\\d{2})\\b`, "giu");
   for (const monthYearMatch of queryText.matchAll(monthYearRegex)) {
     const monthRaw = monthYearMatch[1] ?? "";
@@ -744,9 +895,13 @@ export function parseTemporalQueryRange(text: string, now?: string, timeZone?: s
   }
 
   // 8. "in/during <YYYY>" (EN, FR, DE, ES, PT, IT, NL), when the number stands alone as a year.
-  for (const inYearMatch of queryText.matchAll(/\b(?:in|during|en|im|em|nel)\s+(19\d{2}|20\d{2})\b/giu)) {
+  const inYearRegex = new RegExp(
+    `\\b(?:in|during|en|im|em|nel)\\s+(19\\d{2}|20\\d{2})\\b|(?<!\\p{L})(?:през|във|в)\\s+${BULGARIAN_YEAR}`,
+    "giu",
+  );
+  for (const inYearMatch of queryText.matchAll(inYearRegex)) {
     if (!yearStandsAlone(queryText, inYearMatch.index + inYearMatch[0].length)) continue;
-    const year = Number(inYearMatch[1]);
+    const year = Number(inYearMatch[1] ?? inYearMatch[2]);
     return makeRange(Date.UTC(year, 0, 1, 0, 0, 0, 0), Date.UTC(year + 1, 0, 1, 0, 0, 0, 0) - 1);
   }
 
@@ -759,7 +914,12 @@ export function parseTemporalQueryRange(text: string, now?: string, timeZone?: s
     (/\bfr[üu]her\b/iu.test(queryText) && GERMAN_PAST.test(queryText)) ||
     /\b(?:anteriormente|antes\s+de\s+(?:me\s+mudar|mudarme|mudar|cambiar|trocar|unirme|entrar|comprar|pasar|passar))\b/iu.test(queryText) ||
     /\b(?:precedentemente|in\s+precedenza|prima\s+di\s+(?:trasferirmi|cambiare|passare|comprare|entrare))\b/iu.test(queryText) ||
-    /\b(?:vroeger|voorheen)\b/iu.test(queryText);
+    /\b(?:vroeger|voorheen)\b/iu.test(queryText) ||
+    /(?<!\p{L})(?:навремето|едно\s+време|преди\s+да\s+(?:се\s+)?(?:преместя|преместим|сменя|сменим|започна|започнем|постъпя|купя|купим))(?!\p{L})/iu.test(
+      queryText,
+    ) ||
+    (/(?<!\p{L})по-рано(?!\p{L})/iu.test(queryText) && BULGARIAN_PAST_SUBJECT.test(queryText)) ||
+    (BULGARIAN_PAST_SUBJECT.test(queryText) && BULGARIAN_PAST_BEFORE.test(queryText));
   if (isPastHistoryQuery) {
     return {
       from: "1970-01-01T00:00:00.000Z",

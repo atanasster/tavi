@@ -49,6 +49,8 @@ export async function buildModelCall(step: ModelStep, instructions: Instructions
   const memorySettings = await facts.memorySettings();
   // `tasks.home`: a task app of the person's own takes their to-dos.
   const tasksHome = await options.tasksHomeServer?.(current.invocation.workspaceId);
+  // `workspace.locale`: other than English, the facts ask for replies in it and write the local time in its words.
+  const locale = await options.workspaceLocale?.(current.invocation.workspaceId);
   const contextBudget = memorySettings.limits.contextTokens;
   // A chat with memory off, or a private one, is a no-memory call too.
   const chatMemoryOff = (await facts.chatMemory()).mode !== undefined;
@@ -115,6 +117,7 @@ export async function buildModelCall(step: ModelStep, instructions: Instructions
         }),
     ...(keptFindings === undefined ? {} : { keptFindings }),
     ...(tasksHome === undefined ? {} : { tasksHomeServer: tasksHome }),
+    ...(locale === undefined ? {} : { locale }),
     outputLimitBytes: MAX_TOOL_RESULT_BYTES,
     // A capability, and a coarse one: an artifact repository is wired exactly
     // when the adapter may archive (without one `archiveToolOutput` can only
