@@ -390,17 +390,20 @@ export type IdeaWords = Pick<IdeaTemplate, "title" | "label" | "pitch" | "prompt
 /** The catalogue's words in each language besides English, by `ideas.<key>.<field>`. */
 const TRANSLATIONS: { readonly [L in Exclude<Locale, "en">]: { readonly [key: string]: string | undefined } } = { bg: IDEAS_BG };
 
+/** The catalogue's words in every language, English first. */
+const WORDS: { readonly [L in Locale]: { readonly [key: string]: string | undefined } } = { en: IDEAS_EN, ...TRANSLATIONS };
+
 /**
- * A template's words in `locale`. Only a template that still says what the catalogue's English says, word for word,
- * is translated: a provider's own template, or one it rewrote, stays as written.
+ * A template's words in `locale`. Only a template that still says what the catalogue says in one of its languages,
+ * word for word, is translated (so an idea stored before a language change is said in the new one): a provider's own
+ * template, or one it rewrote, stays as written.
  */
 export function ideaWordsIn(template: IdeaWords & Pick<IdeaTemplate, "key">, locale: Locale): IdeaWords {
   const own = { title: template.title, label: template.label, pitch: template.pitch, prompt: template.prompt };
-  if (locale === "en") return own;
-  const english: { readonly [key: string]: string | undefined } = IDEAS_EN;
   const fields = ["title", "label", "pitch", "prompt"] as const;
-  if (fields.some((field) => english[`ideas.${template.key}.${field}`] !== own[field])) return own;
-  const words = TRANSLATIONS[locale];
+  const catalogued = Object.values(WORDS).some((words) => fields.every((field) => words[`ideas.${template.key}.${field}`] === own[field]));
+  if (!catalogued) return own;
+  const words = WORDS[locale];
   const [title, label, pitch, prompt] = fields.map((field) => words[`ideas.${template.key}.${field}`]);
   return title === undefined || label === undefined || pitch === undefined || prompt === undefined ? own : { title, label, pitch, prompt };
 }

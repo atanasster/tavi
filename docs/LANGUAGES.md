@@ -255,9 +255,10 @@ pack for.
 The built-in ideas come in each language Tavi has a pack for: their titles,
 labels, pitches and prompts, and the words in your notes that bring an idea up.
 Trigger words count in English and Bulgarian alike, whatever the workspace's
-language. Ideas are stored in the language they were written in, so after a
-language change they switch at the next run. An idea from a plugin, or one Tavi
-reworded, stays as it was written.
+language. A built-in idea is shown in the language set when you read it, so
+after a language change the Ideas tab, the chat's suggested prompts and *Try*
+switch at once. An idea from a plugin, or one Tavi reworded, stays as it was
+written until the next run writes it again.
 
 Status words the canvas shows for codes the owner sends (the state of a
 routine, run, delivery, schedule, reminder, plugin or worker; a run's mode and

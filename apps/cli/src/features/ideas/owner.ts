@@ -29,6 +29,8 @@ import {
   textRef,
 } from "@tavi/contracts";
 import { clip, definedOnly } from "@tavi/contracts/util";
+import { DEFAULT_LOCALE } from "@tavi/contracts/i18n";
+import { ideaWordsIn } from "@tavi/plugin-kit/ideas";
 import type { CoreKey, CoreT } from "@tavi/contracts/locales/core";
 
 import { refusalFrom, type IpcAnswer } from "../../shared/ipc-decisions.js";
@@ -245,6 +247,15 @@ export async function ideasCommand(deps: IdeasCommandDependencies, payload: Idea
     const feedback = async (fields: Omit<Parameters<typeof ideas.feedback>[0], "id" | "workspaceId" | "now">) =>
       await ideas.feedback({ id: `ifb-${newId()}`, workspaceId, now: stamp, ...fields });
 
+    /**
+     * A built-in idea in the workspace's language: one stored before a language change still has the catalogue's words
+     * in the old one. One a provider wrote or reworded is shown as written.
+     */
+    const inLanguage = async (): Promise<(idea: Idea) => Idea> => {
+      const locale = await workspaceLocaleOf(deps.repositories.workspaceSettings)(workspaceId).catch(() => DEFAULT_LOCALE);
+      return (idea) => ({ ...idea, ...ideaWordsIn(idea, locale) });
+    };
+
     switch (payload.action) {
       case "list": {
         const [listed, ledger, lastRun, { settings }, checked, excludedSources] = await Promise.all([
@@ -264,7 +275,7 @@ export async function ideasCommand(deps: IdeasCommandDependencies, payload: Idea
         return {
           ok: true,
           result: {
-            ideas: shown(listed, ledger, checked, true),
+            ideas: shown(listed, ledger, checked, true).map(await inLanguage()),
             mutedCategories: [...ledger.mutedCategories],
             excludedBasis: [...ledger.excludedBasis],
             excludedSources: await Promise.all(
@@ -298,6 +309,7 @@ export async function ideasCommand(deps: IdeasCommandDependencies, payload: Idea
         ]);
         const offered = shown(listed, ledger, checked)
           .slice(0, limit)
+          .map(await inLanguage())
           .map((idea) => ({ ideaId: idea.id, label: idea.label, prompt: idea.prompt, uses: idea.uses }));
         // Tavi's own chips speak the workspace's language: the label, and the prompt the person sends as their own.
         const t = await channelWords(workspaceLocaleOf(deps.repositories.workspaceSettings), workspaceId);
@@ -317,7 +329,7 @@ export async function ideasCommand(deps: IdeasCommandDependencies, payload: Idea
       }
       case "try": {
         const idea = await inWorkspace(payload.id);
-        const tried = (await feedback({ ideaId: idea.id, signal: "tried" })) ?? idea;
+        const tried = (await inLanguage())((await feedback({ ideaId: idea.id, signal: "tried" })) ?? idea);
         return { ok: true, result: { prompt: tried.prompt, idea: tried } };
       }
       case "feedback": {
@@ -360,7 +372,7 @@ export async function ideasCommand(deps: IdeasCommandDependencies, payload: Idea
         return { ok: true, result: done === undefined ? {} : { idea: done } };
       }
       case "remind": {
-        const idea = await inWorkspace(payload.id);
+        const idea = (await inLanguage())(await inWorkspace(payload.id));
         if (idea.status !== "active" && idea.status !== "tried")
           throw keyedError("CONFLICT", "error.idea.wrongStatus", { ideaId: idea.id, status: textRef(`error.idea.status.${idea.status}`) });
         const checked = await census();

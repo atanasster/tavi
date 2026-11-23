@@ -68,6 +68,17 @@ describe("the idea catalogue in Bulgarian", () => {
     expect(ideaWordsIn(fares, "bg").prompt).toBe(IDEAS_BG["ideas.travel.fare-watch.prompt"]);
   });
 
+  it("says an idea stored in one of the catalogue's languages in another, so a language change reaches it", () => {
+    const fares = template("travel.fare-watch");
+    const bulgarian = { ...fares, ...ideaWordsIn(fares, "bg") };
+    expect(ideaWordsIn(bulgarian, "en")).toEqual({ title: fares.title, label: fares.label, pitch: fares.pitch, prompt: fares.prompt });
+    expect(ideaWordsIn(bulgarian, "bg")).toEqual(ideaWordsIn(fares, "bg"));
+    // Bulgarian words that are not the catalogue's, by so much as a space, stay as written in either language.
+    const reworded = { ...bulgarian, pitch: `${bulgarian.pitch} ` };
+    expect(ideaWordsIn(reworded, "en").pitch).toBe(reworded.pitch);
+    expect(ideaWordsIn(reworded, "en").title).toBe(bulgarian.title);
+  });
+
   it("gives every idea Bulgarian triggers, each found as a word of its own", () => {
     for (const { key, triggers } of IDEA_CATALOGUE) {
       const bulgarian = ideaTriggers[key as keyof typeof ideaTriggers];

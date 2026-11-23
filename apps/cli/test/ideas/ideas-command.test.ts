@@ -1,4 +1,5 @@
 import { IDEA_DEFAULT_SETTINGS, IDEA_SNOOZE_MS, IDEA_TTL_MS, TaviError, type IdeaDraft, type IdeasPayload } from "@tavi/contracts";
+import { catalogueIdea, IDEA_CATALOGUE } from "@tavi/plugin-kit/ideas";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -107,6 +108,32 @@ describe("ideas command", () => {
         { label: "Намери полети", prompt: "Намери най-евтините полети от [откъде] до [докъде] около [дати]." },
       ],
     });
+  });
+
+  it("says a built-in idea stored before a language change in the new language, and a reworded one as written", async () => {
+    const { repositories, seed, call } = await fixture();
+    const fares = IDEA_CATALOGUE.find((template) => template.key === "travel.fare-watch");
+    if (fares === undefined) throw new Error("travel.fare-watch is not in the catalogue");
+    const english = catalogueIdea(fares);
+    await seed([english, draft("travel.own")]);
+    await repositories.workspaceSettings.set({
+      workspaceId: "default",
+      settings: { locale: "bg" },
+      expectedRevision: (await repositories.workspaceSettings.get("default")).revision,
+      actor: "operator",
+      now: NOW.toISOString(),
+    });
+    const bulgarian = catalogueIdea(fares, "bg");
+    const listed = (await call({ action: "list" }))["ideas"] as { key: string; title: string; prompt: string }[];
+    expect(listed.map(({ key, title, prompt }) => ({ key, title, prompt }))).toEqual([
+      { key: "travel.fare-watch", title: bulgarian.title, prompt: bulgarian.prompt },
+      { key: "travel.own", title: "I can help with travel.own", prompt: "Help me with travel.own." },
+    ]);
+    expect((await call({ action: "chips" }))["chips"]).toEqual([
+      expect.objectContaining({ label: bulgarian.label, prompt: bulgarian.prompt }),
+      expect.objectContaining({ label: "Try travel.own" }),
+    ]);
+    expect(await call({ action: "try", id: "default-travel.fare-watch" })).toMatchObject({ prompt: bulgarian.prompt });
   });
 
   it("with no ideas to offer, chips for what Tavi can do here; Continue first for a recent chat; never more than three", async () => {
