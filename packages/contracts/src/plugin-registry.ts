@@ -11,6 +11,7 @@ import { z } from "zod";
 
 import { SECRET_KEY_REF_PATTERN, TimestampSchema } from "./ids.js";
 import { coreEnglish, type CoreT } from "./locales/core.js";
+import { SUPPORTED_LOCALES, type Locale } from "./i18n.js";
 import { ToolEffectSchema } from "./tools.js";
 import { RouterFeatureSchema } from "./router.js";
 import { PluginContentHashSchema, PluginUiSchema, snapshotPath, type PluginUi } from "./plugin-ui.js";
@@ -75,7 +76,28 @@ export const PLUGIN_BOUNDS = {
   hookBudgetMs: 5_000,
   /** The most of a tool's output a `tool.result` hook is handed; more is handed over truncated. */
   maxHookOutputBytes: 1024 * 1024,
+  /** One language pack (`locales/<lang>.json`): its bytes, its manifest overlay's entries and its messages. */
+  maxLocaleBytes: 64 * 1024,
+  maxLocaleOverlayKeys: 500,
+  maxLocaleMessages: 1000,
+  /** One message, or one plural form of it. */
+  maxLocaleMessageChars: 2000,
 } as const;
+
+/** The newest manifest `schemaVersion` this Tavi reads; 3 adds `locales`. */
+export const PLUGIN_MANIFEST_SCHEMA_VERSION = 3;
+
+/**
+ * Why a manifest cannot be read by this Tavi before its schema is checked: a
+ * `schemaVersion` newer than it knows, said plainly rather than as a schema
+ * mismatch; `undefined` otherwise (the schema says what else is wrong).
+ */
+export function pluginManifestVersionProblem(raw: unknown): string | undefined {
+  if (typeof raw !== "object" || raw === null) return undefined;
+  const version = (raw as { readonly schemaVersion?: unknown }).schemaVersion;
+  if (typeof version !== "number" || !Number.isInteger(version) || version <= PLUGIN_MANIFEST_SCHEMA_VERSION) return undefined;
+  return `${PLUGIN_MANIFEST_FILE} uses schemaVersion ${String(version)}, which needs a newer Tavi: this one reads up to ${String(PLUGIN_MANIFEST_SCHEMA_VERSION)}`;
+}
 
 /**
  * External plugin ids are dotted lower-case like every plugin id; the `tavi.`
@@ -422,9 +444,13 @@ export function channelDisclosureOf(descriptor: ChannelDescriptor, t: CoreT = co
 export const PLUGIN_ISOLATIONS = ["process", "in-process"] as const;
 export type PluginIsolation = (typeof PLUGIN_ISOLATIONS)[number];
 
+/** A language a plugin can carry a pack for. */
+const PluginLocaleSchema = z.enum(SUPPORTED_LOCALES);
+
 export const PluginManifestSchema = z
   .strictObject({
-    schemaVersion: z.literal(2),
+    /** 2, or 3 for a manifest with `locales` (and only then): an older Tavi refuses 3, so only a plugin that carries a pack uses it. */
+    schemaVersion: z.literal([2, 3]),
     abi: z.literal(PROVIDER_ABI),
     provenance: PluginProvenanceSchema,
     capabilities: z.array(ProviderDeclarationSchema).max(32).default([]),
@@ -552,8 +578,22 @@ export const PluginManifestSchema = z
       .array(z.enum(["screen"]))
       .max(1)
       .optional(),
+    /**
+     * Its language packs (schemaVersion 3), by language: `locales/<lang>.json` files, each a
+     * `PluginLocaleFileSchema`, reviewed and hash-pinned with the version. The manifest itself stays English.
+     */
+    locales: z.partialRecord(PluginLocaleSchema, snapshotPath(["json"], "a language pack")).optional(),
   })
   .superRefine((manifest, context) => {
+    // 3 is a manifest with language packs: one without stays 2, so an older Tavi still reads it.
+    if (manifest.locales !== undefined && manifest.schemaVersion < 3)
+      context.addIssue({ code: "custom", path: ["locales"], message: "language packs (locales) need schemaVersion 3" });
+    if (manifest.locales === undefined && manifest.schemaVersion === 3)
+      context.addIssue({
+        code: "custom",
+        path: ["schemaVersion"],
+        message: "schemaVersion 3 is for a manifest with language packs (locales); without them it stays 2",
+      });
     for (const key of manifest.rawSecrets ?? []) {
       if (manifest.config[key]?.type !== "credential")
         context.addIssue({ code: "custom", path: ["rawSecrets"], message: `rawSecrets names ${key}, which is not a credential setting` });
@@ -692,6 +732,248 @@ export const PluginManifestSchema = z
     }
   });
 export type PluginManifest = z.infer<typeof PluginManifestSchema>;
+
+// ——— language packs ———
+
+const LocaleTextSchema = z.string().trim().min(1).max(PLUGIN_BOUNDS.maxLocaleMessageChars);
+/** The longest manifest field a pack translates (a channel's `setupHelp`); each path's own limit is `pluginLocaleProblems`'s. */
+const OVERLAY_TEXT_MAX = 4000;
+
+/** One of a plugin's own messages: a string with `{param}`s, or a plural object chosen by the count. */
+const PluginMessageSchema = z.union([
+  LocaleTextSchema,
+  z.strictObject({
+    zero: LocaleTextSchema.optional(),
+    one: LocaleTextSchema.optional(),
+    two: LocaleTextSchema.optional(),
+    few: LocaleTextSchema.optional(),
+    many: LocaleTextSchema.optional(),
+    other: LocaleTextSchema,
+  }),
+]);
+
+/** A message's key, as `ctx.t(key)` takes it. */
+export const PLUGIN_MESSAGE_KEY_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/;
+
+/**
+ * A plugin's language pack (`locales/<lang>.json`): `manifest`, the words of its
+ * manifest a person reads, by ID-keyed path (`config.apiKey.label`,
+ * `channels.<providerId>.label`, `apps.apps.<appId>.tools.<tool>.title`, …; see
+ * `pluginOverlayTargets`), and `messages`, its code's own words (`ctx.t`).
+ * Each path is checked against the manifest; a field the model reads is never one.
+ */
+export const PluginLocaleFileSchema = z.strictObject({
+  manifest: z
+    .record(z.string().min(1).max(600), z.string().trim().min(1).max(OVERLAY_TEXT_MAX))
+    .refine((overlay) => Object.keys(overlay).length <= PLUGIN_BOUNDS.maxLocaleOverlayKeys, "too many manifest entries")
+    .default({}),
+  messages: z
+    .record(
+      z.string().regex(PLUGIN_MESSAGE_KEY_PATTERN, "a message key is letters, digits, dots, dashes and underscores"),
+      PluginMessageSchema,
+    )
+    .refine((messages) => Object.keys(messages).length <= PLUGIN_BOUNDS.maxLocaleMessages, "too many messages")
+    .default({}),
+});
+export type PluginLocaleFile = z.infer<typeof PluginLocaleFileSchema>;
+// `ctx.t`'s lookup lives with the formatter, so the confined worker bundles the same one.
+export { pluginTranslate, type PluginMessages } from "./i18n.js";
+
+/** A manifest field a language pack may translate: the longest text it takes, and how it is written into a copy. */
+export interface PluginOverlayTarget {
+  readonly max: number;
+  readonly apply: (copy: PluginManifest, text: string) => void;
+}
+
+/**
+ * Every manifest field a language pack may translate, by its ID-keyed path:
+ * only words a person reads (names, labels, help, sentences and titles), each
+ * with the length limit of the field it replaces. Nothing the model reads is
+ * here — a tool's description or schema, a routine template's prompts — so the
+ * model always reads the English the version was reviewed with.
+ */
+export function pluginOverlayTargets(manifest: PluginManifest): ReadonlyMap<string, PluginOverlayTarget> {
+  const targets = new Map<string, PluginOverlayTarget>();
+  const add = (path: string, max: number, apply: PluginOverlayTarget["apply"]) => targets.set(path, { max, apply });
+  add("name", 80, (copy, text) => {
+    copy.name = text;
+  });
+  add("description", 500, (copy, text) => {
+    copy.description = text;
+  });
+  for (const key of Object.keys(manifest.config)) {
+    add(`config.${key}.label`, 60, (copy, text) => {
+      const field = copy.config[key];
+      if (field !== undefined) field.label = text;
+    });
+    add(`config.${key}.description`, 500, (copy, text) => {
+      const field = copy.config[key];
+      if (field !== undefined) field.description = text;
+    });
+  }
+  for (const app of manifest.apps?.apps ?? []) {
+    const appOf = (copy: PluginManifest) => copy.apps?.apps.find((candidate) => candidate.id === app.id);
+    const base = `apps.apps.${app.id}`;
+    add(`${base}.name`, 60, (copy, text) => {
+      const found = appOf(copy);
+      if (found !== undefined) found.name = text;
+    });
+    add(`${base}.summary`, 200, (copy, text) => {
+      const found = appOf(copy);
+      if (found !== undefined) found.summary = text;
+    });
+    for (const scope of app.scopes)
+      add(`${base}.scopes.${scope.scope}.says`, 160, (copy, text) => {
+        const found = appOf(copy)?.scopes.find((candidate) => candidate.scope === scope.scope);
+        if (found !== undefined) found.says = text;
+      });
+    for (const name of Object.keys(app.tools)) {
+      add(`${base}.tools.${name}.title`, 60, (copy, text) => {
+        const found = appOf(copy)?.tools[name];
+        if (found !== undefined) found.title = text;
+      });
+      add(`${base}.tools.${name}.says`, 160, (copy, text) => {
+        const found = appOf(copy)?.tools[name];
+        if (found !== undefined) found.says = text;
+      });
+    }
+  }
+  for (const channel of manifest.channels) {
+    const channelOf = (copy: PluginManifest) => copy.channels.find((candidate) => candidate.providerId === channel.providerId);
+    const base = `channels.${channel.providerId}`;
+    add(`${base}.label`, 60, (copy, text) => {
+      const found = channelOf(copy);
+      if (found !== undefined) found.label = text;
+    });
+    add(`${base}.description`, 500, (copy, text) => {
+      const found = channelOf(copy);
+      if (found !== undefined) found.description = text;
+    });
+    add(`${base}.setupHelp`, OVERLAY_TEXT_MAX, (copy, text) => {
+      const found = channelOf(copy);
+      if (found !== undefined) found.setupHelp = text;
+    });
+    for (const field of channel.settings) {
+      add(`${base}.settings.${field.key}.label`, 80, (copy, text) => {
+        const found = channelOf(copy)?.settings.find((candidate) => candidate.key === field.key);
+        if (found !== undefined) found.label = text;
+      });
+      add(`${base}.settings.${field.key}.help`, 500, (copy, text) => {
+        const found = channelOf(copy)?.settings.find((candidate) => candidate.key === field.key);
+        if (found !== undefined) found.help = text;
+      });
+    }
+    const authFields = channel.auth.kind === "none" ? [] : (channel.auth.fields ?? []);
+    for (const field of authFields) {
+      const fieldOf = (copy: PluginManifest) => {
+        const auth = channelOf(copy)?.auth;
+        return auth === undefined || auth.kind === "none" ? undefined : auth.fields?.find((candidate) => candidate.key === field.key);
+      };
+      add(`${base}.auth.fields.${field.key}.label`, 80, (copy, text) => {
+        const found = fieldOf(copy);
+        if (found !== undefined) found.label = text;
+      });
+      add(`${base}.auth.fields.${field.key}.help`, 500, (copy, text) => {
+        const found = fieldOf(copy);
+        if (found !== undefined) found.help = text;
+      });
+    }
+    for (const side of ["sender", "target"] as const) {
+      add(`${base}.${side}.label`, 80, (copy, text) => {
+        const found = channelOf(copy);
+        if (found !== undefined) found[side].label = text;
+      });
+      add(`${base}.${side}.placeholder`, 120, (copy, text) => {
+        const found = channelOf(copy);
+        if (found !== undefined) found[side].placeholder = text;
+      });
+      add(`${base}.${side}.help`, 200, (copy, text) => {
+        const found = channelOf(copy);
+        if (found !== undefined) found[side].help = text;
+      });
+    }
+    if (channel.pairing !== undefined)
+      add(`${base}.pairing.openLabel`, 60, (copy, text) => {
+        const found = channelOf(copy)?.pairing;
+        if (found !== undefined) found.openLabel = text;
+      });
+  }
+  for (const contribution of manifest.ui?.contributions ?? []) {
+    const contributionOf = (copy: PluginManifest) => copy.ui?.contributions.find((candidate) => candidate.id === contribution.id);
+    add(`ui.contributions.${contribution.id}.title`, 40, (copy, text) => {
+      const found = contributionOf(copy);
+      if (found !== undefined) found.title = text;
+    });
+    if (contribution.disclosure !== undefined)
+      add(`ui.contributions.${contribution.id}.disclosure`, 500, (copy, text) => {
+        const found = contributionOf(copy);
+        if (found !== undefined) found.disclosure = text;
+      });
+  }
+  for (const template of manifest.routineTemplates ?? [])
+    add(`routineTemplates.${template.id}.title`, 60, (copy, text) => {
+      const found = copy.routineTemplates?.find((candidate) => candidate.id === template.id);
+      if (found !== undefined) found.title = text;
+    });
+  for (const command of manifest.mods?.commands ?? [])
+    add(`mods.commands.${command.name}.description`, 200, (copy, text) => {
+      const found = copy.mods?.commands.find((candidate) => candidate.name === command.name);
+      if (found !== undefined) found.description = text;
+    });
+  return targets;
+}
+
+/** A path the model reads: a tool's declaration, a routine template's prompts, an MCP server's launch spec. */
+function modelFacingPath(path: string): boolean {
+  return (
+    path === "tools" ||
+    path.startsWith("tools.") ||
+    path.startsWith("mcp.") ||
+    /^routineTemplates\..+\.(research|synthesis|corroborationRule|tools)(\.|$)/.test(path)
+  );
+}
+
+/**
+ * What is wrong with `raw` as `manifest`'s language pack for `locale`: not a
+ * pack, a path the manifest has no such field at, a field the model reads, or a
+ * text longer than the field it replaces. English's pack carries messages only:
+ * the manifest is the English.
+ */
+export function pluginLocaleProblems(manifest: PluginManifest, locale: Locale, raw: unknown): string[] {
+  const parsed = PluginLocaleFileSchema.safeParse(raw);
+  if (!parsed.success)
+    return parsed.error.issues.map((issue) => `${issue.path.length === 0 ? "" : `${issue.path.join(".")}: `}${issue.message}`);
+  const entries = Object.entries(parsed.data.manifest);
+  if (locale === "en" && entries.length > 0) return ["the English pack carries messages only: the manifest itself is the English"];
+  const targets = pluginOverlayTargets(manifest);
+  const problems: string[] = [];
+  for (const [path, text] of entries) {
+    const target = targets.get(path);
+    if (modelFacingPath(path)) problems.push(`${path} is read by the model, which reads the manifest's English; it cannot be translated`);
+    else if (target === undefined) problems.push(`${path} is not a field of this manifest a language pack can translate`);
+    else if (text.length > target.max) problems.push(`${path} is longer than the ${String(target.max)} characters its field takes`);
+  }
+  return problems;
+}
+
+/**
+ * `manifest` with a language pack's words in place of its English ones, for a
+ * person's screens only; never what runs or what the model reads. Paths the
+ * manifest has no field at are skipped (the pack was checked at install). No
+ * overlay, or an empty one, answers `manifest` itself.
+ */
+export function overlayPluginManifest(manifest: PluginManifest, overlay: Readonly<Record<string, string>> | undefined): PluginManifest {
+  const entries = Object.entries(overlay ?? {});
+  if (entries.length === 0) return manifest;
+  const targets = pluginOverlayTargets(manifest);
+  const copy = JSON.parse(JSON.stringify(manifest)) as PluginManifest;
+  for (const [path, text] of entries) {
+    const target = targets.get(path);
+    if (target === undefined || modelFacingPath(path) || text.length > target.max) continue;
+    target.apply(copy, text);
+  }
+  return copy;
+}
 
 /** Why `config` does not satisfy `manifest`, or an empty list. Unknown keys and wrong types are refused. */
 export function pluginCredentialNamespace(pluginId: string): string {

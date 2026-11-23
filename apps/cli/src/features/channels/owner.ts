@@ -121,6 +121,8 @@ export interface ChannelsCommandDependencies {
   >;
   /** Rooms waiting for the operator (group pairing): a room added or left waits no more. */
   readonly roomInvitations?: ChannelRoomsDependencies["roomInvitations"];
+  /** The catalog as the canvas reads it: each plugin channel's words from its language pack (`features/plugins/localized.ts`). */
+  readonly localizeCatalog?: (descriptors: readonly ChannelDescriptor[]) => readonly ChannelDescriptor[];
   /** The workspace's operator, whom a room's introduction names. */
   readonly operatorOf?: (workspaceId: string) => string | undefined;
   /** Erases artifacts, rows and bodies (a forgotten sender's files). */
@@ -238,7 +240,7 @@ async function answer(deps: ChannelsCommandDependencies, payload: ChannelsPayloa
   const { messagingConnections: connections, messagingIdentityBindings: bindings, channelIngress: ingress } = deps.repositories;
   switch (payload.action) {
     case "catalog":
-      return { channels: channelDescriptors() };
+      return { channels: deps.localizeCatalog?.(channelDescriptors()) ?? channelDescriptors() };
     case "list": {
       const stored = new Set((await listCredentialRefs(deps.dataDirectory)).valid);
       const rows = await connections.list(payload.workspaceId);

@@ -51,7 +51,10 @@ import {
   TASK_FINDING_MAX_CHARS,
   oversizedFindingIndex,
   type TaskFindingRepositoryPort,
+  pluginTranslate,
+  type PluginMessages,
 } from "@tavi/contracts";
+import type { Locale, MessageParams } from "@tavi/contracts/i18n";
 import { zodIssues } from "@tavi/contracts/zod-util";
 import { errorMessage, nowTimestamp } from "@tavi/contracts/util";
 import {
@@ -65,6 +68,7 @@ import {
   disposeWithDeadline,
   findUnrepresentable,
   hookMatchOf,
+  readPluginMessages,
   type ResolvedExternalPlugin,
   type RouterProviderSlot,
   type ToolRegistry,
@@ -263,6 +267,35 @@ export interface ExternalRoutineTemplateHost {
   install(pluginId: string, templates: readonly RoutineTemplate[]): () => void;
 }
 
+/** The workspace's language for plugins' `ctx.locale`: what it is now, and each change. */
+export interface ExternalPluginLanguage {
+  current(): Locale;
+  /** Hears each change; answers the unsubscribe. */
+  onChange?(listener: (locale: Locale) => void): () => void;
+}
+
+/**
+ * `context` with `locale`, read live from `language` on each use (English
+ * without one), and `t`, the plugin's own `messages` in that language with
+ * English, then the key, behind it. A spread copies a getter's value, so each
+ * context a plugin is handed is given its own.
+ */
+function withLanguage<T extends object>(
+  context: T,
+  language: ExternalPluginLanguage | undefined,
+  messages: PluginMessages,
+): T & { readonly locale: Locale; t(key: string, params?: MessageParams): string } {
+  const now = (): Locale => language?.current() ?? "en";
+  return Object.defineProperties(context, {
+    locale: { get: now, enumerable: true, configurable: true },
+    t: {
+      value: (key: string, params?: MessageParams) => pluginTranslate(messages, now(), key, params),
+      enumerable: true,
+      configurable: true,
+    },
+  }) as T & { readonly locale: Locale; t(key: string, params?: MessageParams): string };
+}
+
 export async function loadExternalPlugins(
   resolved: readonly ResolvedExternalPlugin[],
   tools: ToolRegistry,
@@ -282,6 +315,7 @@ export async function loadExternalPlugins(
   ideas?: ExternalIdeasHost,
   onboarding?: ExternalOnboardingHost,
   routineTemplates?: ExternalRoutineTemplateHost,
+  language?: ExternalPluginLanguage,
 ): Promise<ExternalPluginLoad> {
   const definitions: PluginDefinition[] = [];
   const failures = new Map<string, string>();
@@ -331,9 +365,11 @@ export async function loadExternalPlugins(
       // A channel already installed (a builtin's id) is not a plugin's to declare: refused before its code runs.
       const claimed = record.manifest.channels.find((channel) => channels?.taken(channel.providerId) === true);
       if (claimed !== undefined) throw new Error(`its channel ${claimed.providerId} is already installed`);
+      // Its own words by language, from the packs approved with it, read from its snapshot only while it has its approved hash (`ctx.t`).
+      const messages = readPluginMessages(plugin.directory, record.manifest, record.contentHash);
       const module =
         record.isolation === "process"
-          ? workerModule(plugin, isolation)
+          ? workerModule(plugin, isolation, language, messages)
           : moduleShape(
               await withDeadline(
                 import(`${pathToFileURL(plugin.entryPath).href}?sha256=${record.contentHash}`) as Promise<Record<string, unknown>>,
@@ -488,21 +524,25 @@ export async function loadExternalPlugins(
           flushTimer ??= setTimeout(flush, 0);
         },
       };
-      const base = {
-        pluginId: record.pluginId,
-        version: record.version,
-        config: Object.freeze({ ...config }),
-        z,
-        log,
-        secret,
-        state: stateStore,
-        scope: lifetime,
-        signal: lifetime.signal,
-        ui,
-        RouterProviderError,
-        ROUTER_PROVIDER_FAILURES,
-        TaviError,
-      };
+      const base = withLanguage(
+        {
+          pluginId: record.pluginId,
+          version: record.version,
+          config: Object.freeze({ ...config }),
+          z,
+          log,
+          secret,
+          state: stateStore,
+          scope: lifetime,
+          signal: lifetime.signal,
+          ui,
+          RouterProviderError,
+          ROUTER_PROVIDER_FAILURES,
+          TaviError,
+        },
+        language,
+        messages,
+      );
       let router: RouterProvider | undefined;
       let refused: string | undefined;
       // A refusal fails the load even if the plugin catches it.
@@ -701,32 +741,38 @@ export async function loadExternalPlugins(
       };
       await withDeadline(
         Promise.resolve(
-          module.register?.({
-            ...base,
-            ...heartbeatContext,
-            ...memoryContext,
-            ...ideasContext,
-            ...onboardingContext,
-            registerChannel,
-            ...(channelHost === undefined ? {} : { channelHost }),
-            hooks,
-            commands,
-            registerSearch: (name, factory) => registerFactory("search", name, factory, dependencies.get(SearchFactoriesService)),
-            registerFetch: (name, factory) => registerFactory("fetch", name, factory, dependencies.get(FetchFactoriesService)),
-            registerModel: (name, factory) => registerFactory("model", name, factory, dependencies.get(ModelFactoriesService)),
-            registerTool: (tool) => {
-              if (!registering || lifetime.signal.aborted) throw new Error("plugin registration is closed");
-              const raw = rawModelSchemaOf(tool);
-              const registration = toolRegistration(record, tool, raw, state, household, findings, (id) => tools.has(id));
-              // Its schema reads like instructions: said in the log, as `tavi plugins validate` says it to the author. The
-              // raw schema is reviewed, so hidden characters that cleaning takes out of a property name are flagged too.
-              const flagged = schemaFlags(raw, "/inputSchema");
-              if (flagged.length > 0)
-                log.warn("a tool's schema reads like instructions", { tool: registration.id, at: flagged.slice(0, 10) });
-              pending.push(registration);
-            },
-            provideRouter,
-          }),
+          module.register?.(
+            withLanguage(
+              {
+                ...base,
+                ...heartbeatContext,
+                ...memoryContext,
+                ...ideasContext,
+                ...onboardingContext,
+                registerChannel,
+                ...(channelHost === undefined ? {} : { channelHost }),
+                hooks,
+                commands,
+                registerSearch: (name, factory) => registerFactory("search", name, factory, dependencies.get(SearchFactoriesService)),
+                registerFetch: (name, factory) => registerFactory("fetch", name, factory, dependencies.get(FetchFactoriesService)),
+                registerModel: (name, factory) => registerFactory("model", name, factory, dependencies.get(ModelFactoriesService)),
+                registerTool: (tool) => {
+                  if (!registering || lifetime.signal.aborted) throw new Error("plugin registration is closed");
+                  const raw = rawModelSchemaOf(tool);
+                  const registration = toolRegistration(record, tool, raw, state, household, findings, (id) => tools.has(id));
+                  // Its schema reads like instructions: said in the log, as `tavi plugins validate` says it to the author. The
+                  // raw schema is reviewed, so hidden characters that cleaning takes out of a property name are flagged too.
+                  const flagged = schemaFlags(raw, "/inputSchema");
+                  if (flagged.length > 0)
+                    log.warn("a tool's schema reads like instructions", { tool: registration.id, at: flagged.slice(0, 10) });
+                  pending.push(registration);
+                },
+                provideRouter,
+              },
+              language,
+              messages,
+            ),
+          ),
         ),
         "register",
       );
@@ -1270,6 +1316,8 @@ function rawModelSchemaOf(tool: { readonly inputSchema: unknown }): ToolJsonSche
 function workerModule(
   plugin: Extract<ResolvedExternalPlugin, { ok: true }>,
   isolation: PluginIsolationPort | undefined,
+  language: ExternalPluginLanguage | undefined,
+  messages: PluginMessages,
 ): ExternalPluginModule {
   const { record } = plugin;
   let stop: (() => Promise<void>) | undefined;
@@ -1298,6 +1346,8 @@ function workerModule(
           config: plugin.config,
           maskedSecrets,
           home: join(dirname(plugin.directory), "home"),
+          locale: context.locale,
+          messages,
         },
         {
           loadState: () => context.state.load(),
@@ -1311,8 +1361,14 @@ function workerModule(
           },
         },
       );
-      stop = () => handle.stop();
+      // Its `ctx.locale` follows the workspace's language while it runs.
+      const unfollow = handle.setLocale === undefined ? undefined : language?.onChange?.((locale) => handle.setLocale?.(locale));
+      stop = () => {
+        unfollow?.();
+        return handle.stop();
+      };
       if (abandoned || context.signal.aborted) {
+        unfollow?.();
         await handle.stop();
         throw new Error("it was stopped while its worker started");
       }

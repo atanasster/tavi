@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import { join } from "node:path";
 
@@ -123,6 +123,37 @@ describe("a worker", () => {
     expect(answer).toEqual({ decision: "allow", reason: "seen fs.read" });
     expect(host.logs.some((line) => line.includes("checking fs.read"))).toBe(true);
     expect(await handle.command("hello", { envelope: {} as never, args: "you" }, signal())).toEqual({ text: "hello you" });
+    await handle.stop();
+  }, 30_000);
+
+  it("gives the plugin the workspace's language live, and its own messages in it with English behind them", async () => {
+    const messages = { bg: { hello: "Здравей, {name}" }, en: { hello: "Hello, {name}", bye: "Bye" } };
+    const handle = await isolation().start(launch({ locale: "bg", messages }), services());
+    expect(await handle.callTool("speak", {}, signal(), "read")).toEqual({ locale: "bg", hello: "Здравей, Ana", bye: "Bye" });
+    handle.setLocale?.("en");
+    expect(await handle.callTool("speak", {}, signal(), "read")).toEqual({ locale: "en", hello: "Hello, Ana", bye: "Bye" });
+    await handle.stop();
+    // Without a language or messages: English, then the key.
+    const plain = await isolation().start(launch(), services());
+    expect(await plain.callTool("speak", {}, signal(), "read")).toEqual({ locale: "en", hello: "hello", bye: "bye" });
+    await plain.stop();
+  }, 30_000);
+
+  it("tells a worker a language changed while it was starting again, once it runs", async () => {
+    const messages = { bg: { hello: "Здравей, {name}" }, en: { hello: "Hello, {name}", bye: "Bye" } };
+    // Once armed, the language changes just after the worker's hello went out, before it is ready.
+    let armed = false;
+    const spawning = ((...args: Parameters<typeof spawn>) => {
+      const child = spawn(...args);
+      if (armed) queueMicrotask(() => handle.setLocale?.("en"));
+      return child;
+    }) as typeof spawn;
+    const handle = await isolation({ idleMs: 150, spawn: spawning }).start(launch({ locale: "bg", messages }), services());
+    await handle.callTool("speak", {}, signal(), "read");
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(handle.status().state).toBe("idle");
+    armed = true;
+    expect(await handle.callTool("speak", {}, signal(), "read")).toEqual({ locale: "en", hello: "Hello, Ana", bye: "Bye" });
     await handle.stop();
   }, 30_000);
 

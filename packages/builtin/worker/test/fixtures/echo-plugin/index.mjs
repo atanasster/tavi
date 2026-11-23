@@ -13,6 +13,12 @@ export function register(ctx) {
     handler: async ({ text }) => ({ echoed: text, pluginId: ctx.pluginId }),
   });
   ctx.registerTool({
+    name: "speak",
+    inputSchema: ctx.z.object({}),
+    // The workspace's language, read live, and the plugin's own words in it.
+    handler: async () => ({ locale: ctx.locale, hello: ctx.t("hello", { name: "Ana" }), bye: ctx.t("bye") }),
+  });
+  ctx.registerTool({
     name: "store",
     inputSchema: ctx.z.object({}),
     // A domain plugin's store (as places.open keeps one): node:sqlite on a file in its home, which is its cwd.

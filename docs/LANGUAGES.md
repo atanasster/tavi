@@ -57,6 +57,17 @@ it is translated. Anything not yet translated stays in English.
 | These docs | No: they are written in English |
 
 A plugin's own words come from the plugin, in the languages its author wrote.
+A plugin can ship its own language packs: `locales/<lang>.json`, declared in
+its manifest under `locales` (manifest `schemaVersion: 3`). A pack translates
+the words of the manifest a person reads (its name and description, settings
+labels, Connected apps entries, channel setup, canvas panel titles) and carries
+the plugin's own messages for its code (`ctx.t`). Tavi shows those words in the
+workspace's language on the canvas; the terminal's plugin listings stay
+English. What the model reads (tool descriptions, MCP text, routine prompts) is
+never translated: a pack that tries is refused at install. Packs are part of
+the plugin version's reviewed files, so changing one is a new version to
+approve, and a pack changed on disk after approval is never shown. A running
+plugin hears a language change at once (`ctx.locale`), with no restart.
 
 Errors Tavi's server sends the canvas for you to act on (a value it
 refuses, something that no longer exists, a change someone else saved first,

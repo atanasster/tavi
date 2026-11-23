@@ -1,6 +1,7 @@
 import { TaviError } from "./errors.js";
 import type { ModEnvelope, ModEvent } from "./mods.js";
-import type { PluginIsolation, PluginManifest } from "./plugin-registry.js";
+import type { PluginIsolation, PluginManifest, PluginMessages } from "./plugin-registry.js";
+import type { Locale } from "./i18n.js";
 
 /**
  * Plugin isolation: a
@@ -105,6 +106,8 @@ export interface PluginWorkerHandle {
   ): Promise<{ readonly text: string }>;
   status(): PluginWorkerStatus;
   stop(): Promise<void>;
+  /** The workspace's language changed: the worker's `ctx.locale` reads `locale` from now on. */
+  setLocale?(locale: Locale): void;
 }
 
 /** One approved plugin version to start as a worker. */
@@ -121,6 +124,10 @@ export interface PluginWorkerLaunch {
   readonly maskedSecrets: Readonly<Record<string, string>>;
   /** Its own read-write folder and `cwd` (`<data>/plugins/<id>/home`). */
   readonly home: string;
+  /** The workspace's language at its start (`ctx.locale`); `setLocale` tells it each change. */
+  readonly locale?: Locale;
+  /** Its own messages by language, from its approved language packs (`ctx.t`). */
+  readonly messages?: PluginMessages;
 }
 
 export interface PluginIsolationPort {

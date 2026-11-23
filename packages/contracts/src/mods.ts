@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ToolPatternSchema } from "./tool-policy.js";
 import { TASK_ORIGINS, type FrontEnd } from "./task-origins.js";
 import type { ModelUsage } from "./model.js";
+import type { Locale } from "./i18n.js";
 import type { AdmissionKind, ChatKind } from "./ports/tasks.js";
 import type { ChatFolder, ChatFolderMode, ChatFolderPrimaryKind } from "./chat-folders.js";
 
@@ -240,6 +241,11 @@ export interface ModEnvelope {
   readonly heartbeatProvider?: string;
   /** An idea's prepared step: the provider that wrote the idea, whose own hooks pass it over. */
   readonly ideasProvider?: string;
+  /**
+   * The workspace's language (`workspace.locale`), for what a hook or command says to the person:
+   * absent means English. Text a model reads stays English.
+   */
+  readonly locale?: Locale;
 }
 
 /**
@@ -498,6 +504,8 @@ export function sameOutputShape(before: unknown, after: unknown, depth = 0): boo
 export interface ModCommandInput {
   readonly envelope: ModEnvelope;
   readonly args: string;
+  /** The language its answer is read in: the envelope's, `en` when it has none. The owner always sets it; absent only from an older one. */
+  readonly locale?: Locale;
   /** Aborted when the command runs out of time, or its plugin stops: a command still running should stop. */
   readonly signal: AbortSignal;
 }

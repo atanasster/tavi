@@ -31,7 +31,13 @@ export type OwnerMessage =
       readonly maskedEnv: Record<string, string>;
       /** Every credential setting the manifest declares: one with no value set reads as null, not as undeclared. */
       readonly credentials?: readonly string[];
+      /** The workspace's language (`ctx.locale`) at the worker's start; a `locale` message follows each change. */
+      readonly locale?: string;
+      /** The plugin's own messages by language, from its approved language packs (`ctx.t`). */
+      readonly messages?: Record<string, Record<string, unknown>>;
     }
+  /** The workspace's language changed: `ctx.locale` reads it from now on. */
+  | { readonly t: "locale"; readonly locale: string }
   /** `noNetwork`: the tool's manifest declares sink `none`, so the worker refuses any request the call makes. */
   | {
       readonly t: "call";

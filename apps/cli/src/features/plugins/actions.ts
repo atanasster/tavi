@@ -12,6 +12,7 @@ import {
   navPath,
 } from "@tavi/contracts";
 import { nowTimestamp } from "@tavi/contracts/util";
+import type { Locale } from "@tavi/contracts/i18n";
 import type { PluginLiveStatus, PluginRegistry } from "@tavi/runtime";
 import { inProcessAudit, type PluginAuditEntry } from "./audit.js";
 import { BUILTIN_CHANNELS } from "./catalog.js";
@@ -58,6 +59,11 @@ export interface PluginActionContext {
     | undefined;
   /** The owner's tool-budget check before an MCP server is enabled; offline, the next start checks. */
   readonly mcpBudget?: ((pluginId: string, version: string | undefined, workspaceId: string) => Promise<void>) | undefined;
+  /**
+   * The language a listing's words are read in (`list`, `show`, `ui`): each version's language pack laid over its
+   * English for a person's screen. Absent: the English as installed.
+   */
+  readonly locale?: Locale | undefined;
 }
 
 /** The workspace an enable that names none acts in: the owner's own. */
@@ -98,7 +104,7 @@ export async function runPluginAction(
 ): Promise<PluginAnswer> {
   switch (input.action) {
     case "list":
-      return { plugins: await registry.list(live) };
+      return { plugins: await registry.list(live, context?.locale) };
     case "audit": {
       // Every enabled plugin whose code runs in the owner's process, read from its approved files.
       const entries: PluginAuditEntry[] = [];
@@ -109,7 +115,7 @@ export async function runPluginAction(
       return { audit: entries };
     }
     case "show":
-      return { plugin: await registry.show(input.pluginId, live) };
+      return { plugin: await registry.show(input.pluginId, live, context?.locale) };
     case "install": {
       const { record, created } = await registry.install(input.path, actor);
       const { manifest } = record;
@@ -238,7 +244,7 @@ export async function runPluginAction(
       };
     }
     case "ui": {
-      const plugins = await registry.list();
+      const plugins = await registry.list(undefined, context?.locale);
       const asked = (entry: { readonly pluginId: string; readonly contentHash: string }) =>
         (input.pluginId === undefined || entry.pluginId === input.pluginId) &&
         (input.contentHash === undefined || entry.contentHash === input.contentHash);

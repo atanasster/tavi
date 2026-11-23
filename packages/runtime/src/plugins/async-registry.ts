@@ -9,6 +9,7 @@ import {
   type ProviderInstanceConfig,
   type PluginView,
 } from "@tavi/contracts";
+import type { Locale } from "@tavi/contracts/i18n";
 import { nowTimestamp } from "@tavi/contracts/util";
 import type { DatabaseClient } from "../persistence/client.js";
 import { peekManifest, withDevViews, type PluginLiveStatus, type PluginRegistry as WorkerPluginRegistry } from "./registry.js";
@@ -116,15 +117,19 @@ export class PluginRegistry {
   resolveEnabled(): Promise<ReturnType<WorkerPluginRegistry["resolveEnabled"]>> {
     return this.#options.client.call("pluginRegistry.resolveEnabled", { configuration: this.#configuration(), args: [] });
   }
-  async list(live?: PluginLiveStatus): Promise<readonly PluginView[]> {
-    const views = await this.#options.client.call("pluginRegistry.list", { configuration: this.#configuration() });
+  /** With `locale`, each version's person-facing words in that language (`PluginRegistry.list`). */
+  async list(live?: PluginLiveStatus, locale?: Locale): Promise<readonly PluginView[]> {
+    const views = await this.#options.client.call("pluginRegistry.list", {
+      configuration: this.#configuration(),
+      ...(locale === undefined ? {} : { locale }),
+    });
     return withDevViews(
       views.map((view) => ({ ...view, ...live?.status(view.id) })),
       live,
     );
   }
-  async show(pluginId: string, live?: PluginLiveStatus): Promise<PluginView> {
-    const view = (await this.list(live)).find((candidate) => candidate.id === pluginId);
+  async show(pluginId: string, live?: PluginLiveStatus, locale?: Locale): Promise<PluginView> {
+    const view = (await this.list(live, locale)).find((candidate) => candidate.id === pluginId);
     if (view === undefined) throw new TaviError("NOT_FOUND", `no plugin ${pluginId}`);
     if (view.mods === undefined && view.commands === undefined) return view;
     // A dev plugin's rows are its own, apart from an installed plugin's of its id.

@@ -61,8 +61,15 @@ import {
   workerRefusal,
   zodIssues,
   parseOrThrow,
+  overlayPluginManifest,
+  pluginLocaleProblems,
+  pluginManifestVersionProblem,
+  PluginLocaleFileSchema,
+  type PluginLocaleFile,
+  type PluginMessages,
 } from "@tavi/contracts";
 import { definedOnly, errorMessage, nowTimestamp } from "@tavi/contracts/util";
+import type { Catalog, Locale } from "@tavi/contracts/i18n";
 
 export interface PluginFile {
   readonly relative: string;
@@ -197,6 +204,38 @@ function hashFiles(files: readonly PluginFile[]): string {
   return hash.digest("hex");
 }
 
+/** A version's language packs by language, as read from its files: only those its manifest declares and that check out. */
+type PluginLocalePacks = { readonly [L in Locale]?: PluginLocaleFile };
+
+/**
+ * `content` as `manifest`'s language pack for `locale`: within its byte limit,
+ * JSON, a pack, and every manifest path one this manifest has and the model never
+ * reads (`pluginLocaleProblems`). Throws, naming the file, when it is not.
+ */
+function parseLocalePack(manifest: PluginManifest, locale: Locale, path: string, content: Buffer | undefined): PluginLocaleFile {
+  if (content === undefined) throw new TaviError("INVALID_INPUT", `the manifest's language pack ${path} does not exist`);
+  if (content.length > PLUGIN_BOUNDS.maxLocaleBytes)
+    throw new TaviError("INVALID_INPUT", `the language pack ${path} is over ${String(PLUGIN_BOUNDS.maxLocaleBytes)} bytes`);
+  let raw: unknown;
+  try {
+    raw = JSON.parse(content.toString("utf8"));
+  } catch {
+    throw new TaviError("INVALID_INPUT", `the language pack ${path} is not JSON`);
+  }
+  const problems = pluginLocaleProblems(manifest, locale, raw);
+  if (problems.length > 0)
+    throw new TaviError("INVALID_INPUT", `the language pack ${path} is not valid: ${problems.join("; ").slice(0, 600)}`);
+  return PluginLocaleFileSchema.parse(raw);
+}
+
+/** The language packs `manifest` declares, from `fileOf`: each checked (`parseLocalePack`); one that does not check out throws. */
+function localePacksOf(manifest: PluginManifest, fileOf: (path: string) => Buffer | undefined): PluginLocalePacks {
+  const packs: { [L in Locale]?: PluginLocaleFile } = {};
+  for (const [locale, path] of Object.entries(manifest.locales ?? {}) as [Locale, string][])
+    packs[locale] = parseLocalePack(manifest, locale, path, fileOf(path));
+  return packs;
+}
+
 /**
  * A plugin directory's files and their hash, from one read: what is served is
  * exactly what was hashed (no second read could see a swapped file).
@@ -206,7 +245,7 @@ export function readPluginSnapshot(root: string): { readonly hash: string; reado
   return { hash: hashFiles(files), files: new Map(files.map((file) => [file.relative, file.content])) };
 }
 
-/** Hash a plugin directory: sorted relative paths with their sizes and bytes (see `readPluginTree`). */
+/** Hash a plugin directory: sorted relative paths with their sizes and bytes (see `readPluginTree`), its language packs among them. */
 export function hashPluginDirectory(root: string): { readonly hash: string; readonly files: number; readonly bytes: number } {
   const files = readPluginTree(root);
   return { hash: hashFiles(files), files: files.length, bytes: files.reduce((sum, file) => sum + file.content.length, 0) };
@@ -220,6 +259,9 @@ function parseManifest(content: Buffer | undefined, directory: string): PluginMa
   } catch {
     throw new TaviError("INVALID_INPUT", `no readable ${PLUGIN_MANIFEST_FILE} in ${directory}`);
   }
+  // Newer than this Tavi: said plainly, before the schema would call it a mismatch.
+  const newer = pluginManifestVersionProblem(raw);
+  if (newer !== undefined) throw new TaviError("INVALID_INPUT", newer);
   return parseOrThrow(PluginManifestSchema, raw, (issues) => `${PLUGIN_MANIFEST_FILE} is not valid: ${issues.join("; ")}`, {
     root: "manifest",
   });
@@ -275,6 +317,8 @@ export function validatePluginDirectory(
   };
   checkDataFiles(manifest.sites ?? [], "site profile", SiteProfileSchema, "tavi.sites/1 profile");
   checkDataFiles(manifest.siteNotes ?? [], "site note", SiteNoteSchema, `${SITE_NOTE_ABI} note`);
+  // Its language packs: each declared one there, within its limits, and translating only what a person reads.
+  localePacksOf(manifest, (path) => files.find((file) => file.relative === path)?.content);
   validateModuleClosure(files);
   return { manifest, hash: hashFiles(files), files };
 }
@@ -299,6 +343,71 @@ export function readPluginManifest(directory: string): PluginManifest {
     content = undefined;
   }
   return parseManifest(content, directory);
+}
+
+/** Language packs read from verified snapshots, by snapshot and content hash: a version's files never change under its hash. */
+const verifiedPacks = new Map<string, PluginLocalePacks>();
+const MAX_CACHED_PACKS = 256;
+
+/**
+ * The language packs of the version `manifest` and `contentHash` name, read
+ * from its snapshot in one read whose hash must be `contentHash` (as the
+ * canvas's plugin files are), so a pack changed on disk after approval is never
+ * shown. Each pack that checks out is kept; one that does not, or a snapshot
+ * that no longer matches its hash, leaves English to answer.
+ */
+function verifiedLocalePacks(directory: string, manifest: PluginManifest, contentHash: string): PluginLocalePacks {
+  if (manifest.locales === undefined) return {};
+  const key = `${directory}\u0000${contentHash}`;
+  const cached = verifiedPacks.get(key);
+  if (cached !== undefined) return cached;
+  let snapshot: ReturnType<typeof readPluginSnapshot>;
+  try {
+    snapshot = readPluginSnapshot(directory);
+  } catch {
+    return {};
+  }
+  if (snapshot.hash !== contentHash) return {};
+  const packs: { [L in Locale]?: PluginLocaleFile } = {};
+  for (const [locale, path] of Object.entries(manifest.locales) as [Locale, string][]) {
+    try {
+      packs[locale] = parseLocalePack(manifest, locale, path, snapshot.files.get(path));
+    } catch {
+      // Left out: English, then the key, answer for it.
+    }
+  }
+  if (verifiedPacks.size >= MAX_CACHED_PACKS) verifiedPacks.clear();
+  verifiedPacks.set(key, packs);
+  return packs;
+}
+
+/**
+ * `manifest` as a person reads it in `locale`: its version's language pack for
+ * that language laid over its English (`overlayPluginManifest`), for screens
+ * only. English, no pack, a pack that does not check out, or a snapshot that no
+ * longer matches `contentHash` answer `manifest` itself, so English output is unchanged.
+ */
+export function localizedPluginManifest(
+  directory: string,
+  manifest: PluginManifest,
+  locale: Locale | undefined,
+  contentHash: string,
+): PluginManifest {
+  if (locale === undefined || locale === "en" || manifest.locales?.[locale] === undefined) return manifest;
+  return overlayPluginManifest(manifest, verifiedLocalePacks(directory, manifest, contentHash)[locale]?.manifest);
+}
+
+/**
+ * A version's own messages in each language it carries a pack for (`ctx.t`),
+ * from its verified snapshot (`contentHash`): a pack that does not check out is
+ * left out, so its keys fall back to English, then to the key.
+ */
+export function readPluginMessages(directory: string, manifest: PluginManifest, contentHash: string): PluginMessages {
+  const messages: { [L in Locale]?: Catalog } = {};
+  // A pack's messages, as checked, are a catalogue: its optional plural forms are never present as `undefined`.
+  for (const [locale, pack] of Object.entries(verifiedLocalePacks(directory, manifest, contentHash)) as [Locale, PluginLocaleFile][])
+    messages[locale] = pack.messages as Catalog;
+  return messages;
 }
 
 /**
@@ -827,12 +936,26 @@ export class PluginRegistry {
     return resolved;
   }
 
-  list(live?: PluginLiveStatus): readonly PluginView[] {
+  /**
+   * Every plugin as its listing shows it. With `locale`, each version's words a
+   * person reads come from its language pack for that language (the canvas's
+   * listing); what runs, and what the model reads, never do.
+   */
+  list(live?: PluginLiveStatus, locale?: Locale): readonly PluginView[] {
     const settings = new Map(this.#repository.listSettings().settings.map((setting) => [setting.pluginId, setting]));
     const byPlugin = new Map<string, PluginVersionRecord[]>();
     const all = this.#repository.listVersions().versions;
     const toolViews = (record: PluginVersionRecord) => pluginToolViews(record);
-    for (const record of all) byPlugin.set(record.pluginId, [...(byPlugin.get(record.pluginId) ?? []), record]);
+    const shown = (record: PluginVersionRecord): PluginVersionRecord => {
+      const manifest = localizedPluginManifest(
+        this.snapshotDirectory(record.pluginId, record.version),
+        record.manifest,
+        locale,
+        record.contentHash,
+      );
+      return manifest === record.manifest ? record : { ...record, manifest };
+    };
+    for (const record of all) byPlugin.set(record.pluginId, [...(byPlugin.get(record.pluginId) ?? []), shown(record)]);
     const views: PluginView[] = [];
     for (const builtin of this.#builtins.values()) {
       const setting = settings.get(builtin.id);
@@ -917,8 +1040,8 @@ export class PluginRegistry {
     return withDevViews(views, live);
   }
 
-  show(pluginId: string, live?: PluginLiveStatus): PluginView {
-    const view = this.list(live).find((candidate) => candidate.id === pluginId);
+  show(pluginId: string, live?: PluginLiveStatus, locale?: Locale): PluginView {
+    const view = this.list(live, locale).find((candidate) => candidate.id === pluginId);
     if (view === undefined) throw new TaviError("NOT_FOUND", `no plugin ${pluginId}`);
     return view;
   }

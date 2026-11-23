@@ -56,6 +56,8 @@ export function createHookScope(scope: CoreScope) {
     const chatKind = (await options.tasks.get(taskId))?.chatKind;
     const heartbeatProvider = origin.success && origin.data === "heartbeat" ? options.heartbeatProviderOf?.(taskId) : undefined;
     const ideasProvider = origin.success && origin.data === "ideas" ? options.ideasProviderOf?.(taskId) : undefined;
+    // The workspace's language, for what a hook says to the person; absent when the owner reads none.
+    const locale = await options.workspaceLocale?.(invocation.workspaceId);
     return {
       workspaceId: invocation.workspaceId,
       principalId: invocation.principalId,
@@ -70,6 +72,7 @@ export function createHookScope(scope: CoreScope) {
       ...(ideasProvider === undefined ? {} : { ideasProvider }),
       // By label only: no hook learns host paths from its envelope.
       ...(invocation.folder === undefined ? {} : { folder: modFolderLabels(invocation.folder) }),
+      ...(locale === undefined ? {} : { locale }),
     };
   };
   /**

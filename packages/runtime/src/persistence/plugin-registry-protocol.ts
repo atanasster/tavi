@@ -1,3 +1,4 @@
+import type { Locale } from "@tavi/contracts/i18n";
 import type { PluginRegistry, PluginRegistryOptions } from "../plugins/registry.js";
 
 export type PluginRegistryConfiguration = Omit<PluginRegistryOptions, "repository" | "now"> & { readonly timestamp: string };
@@ -19,5 +20,8 @@ export type PluginRegistryOperations = {
     output: ReturnType<PluginRegistry[K]>;
   };
 } & {
-  "pluginRegistry.list": { input: { readonly configuration: PluginRegistryConfiguration }; output: ReturnType<PluginRegistry["list"]> };
+  "pluginRegistry.list": {
+    input: { readonly configuration: PluginRegistryConfiguration; readonly locale?: Locale };
+    output: ReturnType<PluginRegistry["list"]>;
+  };
 };

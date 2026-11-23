@@ -37,7 +37,7 @@ export function dispatchPluginRegistry(port: PersistencePort, operation: string,
     case "pluginRegistry.mcpTreeState":
       return registry.mcpTreeState(...(input as PluginRegistryOperations["pluginRegistry.mcpTreeState"]["input"]).args);
     case "pluginRegistry.list":
-      return registry.list();
+      return registry.list(undefined, (input as PluginRegistryOperations["pluginRegistry.list"]["input"]).locale);
     default:
       throw new TaviError("INVALID_INPUT", "Unknown plugin registry operation");
   }

@@ -4,6 +4,8 @@ import type { Socket } from "node:net";
 
 import { z } from "zod";
 
+import { isLocale, pluginTranslate, type Locale, type MessageParams, type PluginMessages } from "@tavi/contracts/i18n";
+
 import {
   FrameReader,
   MAX_STATE_BYTES,
@@ -147,7 +149,10 @@ type Hook = (input: unknown, next: ((input?: unknown) => Promise<unknown>) & { r
 
 const tools = new Map<string, Tool>();
 const hooks: { readonly event: string; readonly match?: unknown; readonly hook: Hook }[] = [];
-const commands = new Map<string, (input: { readonly envelope: unknown; readonly args: string; readonly signal: AbortSignal }) => unknown>();
+const commands = new Map<
+  string,
+  (input: { readonly envelope: unknown; readonly args: string; readonly locale: Locale; readonly signal: AbortSignal }) => unknown
+>();
 type SignalSource = { readonly id: string; readonly retracts?: false; readonly collect: (input: Record<string, unknown>) => unknown };
 const signalSources = new Map<string, SignalSource>();
 const deferred: (() => unknown)[] = [];
@@ -156,6 +161,8 @@ const calls = new Map<number, AbortController>();
 const requests = new Map<number, { readonly resolve: (value: unknown) => void; readonly reject: (error: unknown) => void }>();
 let nextRequest = 0;
 let registering = true;
+/** The workspace's language, as the owner last said it. */
+let currentLocale: Locale = "en";
 let stopModule: (() => unknown) | undefined;
 
 type RequestBody =
@@ -176,10 +183,17 @@ function contextFor(hello: Extract<OwnerMessage, { t: "hello" }>): Record<string
   const open = (): void => {
     if (!registering) throw new Error("plugin registration is closed");
   };
+  if (isLocale(hello.locale)) currentLocale = hello.locale;
   return {
     pluginId: hello.pluginId,
     version: hello.version,
     config: Object.freeze({ ...hello.config }),
+    // Live: read on each use, so a language changed while it runs is followed.
+    get locale(): Locale {
+      return currentLocale;
+    },
+    // `key` from its own messages in the language now, else English, else the key itself.
+    t: (key: string, params?: MessageParams) => pluginTranslate((hello.messages ?? {}) as PluginMessages, currentLocale, key, params),
     z,
     log: {
       debug: (message: string, meta?: Record<string, unknown>) => log("debug", message, meta),
@@ -239,7 +253,12 @@ function contextFor(hello: Extract<OwnerMessage, { t: "hello" }>): Record<string
     commands: {
       register: (command: {
         readonly name: string;
-        readonly run: (input: { readonly envelope: unknown; readonly args: string; readonly signal: AbortSignal }) => unknown;
+        readonly run: (input: {
+          readonly envelope: unknown;
+          readonly args: string;
+          readonly locale: Locale;
+          readonly signal: AbortSignal;
+        }) => unknown;
       }) => {
         open();
         if (typeof command?.run !== "function") throw new Error("commands.register needs a run function");
@@ -355,7 +374,15 @@ async function call(message: Extract<OwnerMessage, { t: "call" }>): Promise<unkn
     if (message.op === "command") {
       const run = commands.get(message.name);
       if (run === undefined) throw new TaviError("NOT_FOUND", `no command /${message.name}`);
-      return snapshot(await run({ envelope: message.input.envelope, args: message.input.args, signal }));
+      const envelopeLocale = (message.input.envelope as { readonly locale?: unknown } | undefined)?.locale;
+      return snapshot(
+        await run({
+          envelope: message.input.envelope,
+          args: message.input.args,
+          locale: isLocale(envelopeLocale) ? envelopeLocale : "en",
+          signal,
+        }),
+      );
     }
     throw new TaviError("INVALID_INPUT", "an unknown call");
   } finally {
@@ -420,6 +447,9 @@ const reader = new FrameReader(
         else pending?.reject(new TaviError(message.error.code, message.error.message));
         return;
       }
+      case "locale":
+        if (isLocale(message.locale)) currentLocale = message.locale;
+        return;
       case "stop":
         void stop();
         return;

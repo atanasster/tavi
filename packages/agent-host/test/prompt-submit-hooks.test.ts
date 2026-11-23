@@ -429,4 +429,18 @@ describe("prompt.submit hooks", () => {
     await sleep(50);
     expect(seen).toEqual(["prompt.submit"]);
   });
+
+  it("puts the workspace's language on a hook's envelope, and none when the owner reads none", async () => {
+    const bulgarian = hooks({});
+    await adapter(recordingModel().model, bulgarian.port, { workspaceLocale: async () => "bg" }).admit({
+      context,
+      operationKey: "op-locale",
+      kind: "start",
+      prompt: "здравей",
+    });
+    expect(bulgarian.asked[0]).toMatchObject({ envelope: { locale: "bg" } });
+    const none = hooks({});
+    await adapter(recordingModel().model, none.port).admit({ context, operationKey: "op-no-locale", kind: "start", prompt: "hi" });
+    expect(none.asked[0]).not.toMatchObject({ envelope: { locale: expect.anything() } });
+  });
 });

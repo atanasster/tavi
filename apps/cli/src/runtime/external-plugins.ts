@@ -1,9 +1,11 @@
 import { BUILTIN_CHANNELS } from "../features/plugins/catalog.js";
 import { devPluginView, snapshotDevPlugin, watchDevPlugin, type DevPluginLoad } from "../features/plugins/dev.js";
 import { loadExternalPlugins, type ExternalChannelHost } from "../features/plugins/external.js";
+import { pluginLanguage } from "../features/plugins/localized.js";
 import {
   mcpSlugOf,
   createServiceToken,
+  DEFAULT_WORKSPACE_ID,
   TaviError,
   type PluginDefinition,
   maskPluginText,
@@ -51,6 +53,8 @@ export async function composeExternalPlugins(composed: BuiltinPluginsContext) {
     options,
     overrides,
     ownership,
+    persistencePort,
+    store,
     peopleChanged,
     peopleKey,
     providerLifetime,
@@ -103,6 +107,12 @@ export async function composeExternalPlugins(composed: BuiltinPluginsContext) {
     // The builtins' services, for a plugin's channels (channel ABI 2): its own fetch override in tests, else the global one.
     services: channelServices,
   };
+  // The workspace's language, which plugins read live as `ctx.locale`: followed after each settings write.
+  const language =
+    options.externalPlugins === "verify"
+      ? undefined
+      : await pluginLanguage(persistencePort.repositories.workspaceSettings, DEFAULT_WORKSPACE_ID, (listener) => store.onWrite(listener));
+  if (language !== undefined) providerLifetime.signal.addEventListener("abort", () => language.close(), { once: true });
   const externalPlugins =
     options.externalPlugins === "verify"
       ? {
@@ -234,6 +244,7 @@ export async function composeExternalPlugins(composed: BuiltinPluginsContext) {
           },
           // Routine templates: offered while their plugin runs.
           routineTemplates,
+          language,
         );
   late.withdrawnPlugins = () => externalPlugins.withdrawn;
   // MCP servers' tools, after every other tool is in (the budget counts them), offline changes included.

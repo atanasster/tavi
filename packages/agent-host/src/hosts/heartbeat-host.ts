@@ -32,6 +32,7 @@ import {
   type StoredWords,
 } from "@tavi/contracts";
 import type { CoreKey } from "@tavi/contracts/locales/core";
+import type { Locale } from "@tavi/contracts/i18n";
 import { errorMessage } from "@tavi/contracts/util";
 
 import {
@@ -115,6 +116,8 @@ export interface HeartbeatHostDependencies {
   readonly newId: (prefix: string) => string;
   /** The workspace's timezone, falling back to the owner host's. */
   readonly timezoneOf: (workspaceId: string) => Promise<string>;
+  /** The workspace's language, on mods' envelopes (`ModEnvelope.locale`); absent: none is put there. */
+  readonly localeOf?: (workspaceId: string) => Promise<Locale>;
   /** Home's activity for G2; undefined when the person has no Home (never busy then). */
   readonly homeActivity: (workspaceId: string, principalId: string) => Promise<HomeActivity | undefined>;
   /** Free bytes on the data directory's filesystem, for G0's disk check; undefined skips it. */
@@ -295,7 +298,7 @@ export function startHeartbeatHost(
    * `heartbeat:<tickId>` when no turn ran; unattended, and naming the provider
    * so that plugin's own hooks pass it over.
    */
-  const heartbeatEnvelope = (state: HeartbeatState, taskId: string): ModEnvelope =>
+  const heartbeatEnvelope = (state: HeartbeatState, taskId: string, locale: Locale | undefined): ModEnvelope =>
     Object.freeze({
       workspaceId: state.workspaceId,
       principalId: state.principalId,
@@ -305,6 +308,7 @@ export function startHeartbeatHost(
       chatKind: "run" as const,
       attended: false,
       ...(state.config.providerId === "off" ? {} : { heartbeatProvider: state.config.providerId }),
+      ...(locale === undefined ? {} : { locale }),
     });
 
   /** Tell mods a check was recorded (`heartbeat.tick`, an observer): when and why it ran and how it ended, never what it looked at. */
@@ -314,7 +318,11 @@ export function startHeartbeatHost(
     const wake = recorded.wakeReason;
     track(
       (async () => {
-        const envelope = heartbeatEnvelope(state, recorded.taskId ?? `heartbeat:${recorded.tickId}`);
+        const envelope = heartbeatEnvelope(
+          state,
+          recorded.taskId ?? `heartbeat:${recorded.tickId}`,
+          await deps.localeOf?.(state.workspaceId),
+        );
         if (!hooks.has("heartbeat.tick", envelope)) return;
         const timezone = await deps.timezoneOf(state.workspaceId);
         await hooks.dispatch(
@@ -817,7 +825,7 @@ export function startHeartbeatHost(
         hooks === undefined || hooks.hasEvent?.("heartbeat.item") === false
           ? undefined
           : async (item: HeartbeatItem): Promise<HeartbeatItemVerdict> => {
-              const envelope = heartbeatEnvelope(state, result.taskId ?? `heartbeat:${tickId}`);
+              const envelope = heartbeatEnvelope(state, result.taskId ?? `heartbeat:${tickId}`, await deps.localeOf?.(state.workspaceId));
               if (!hooks.has("heartbeat.item", envelope)) return {};
               try {
                 const outcome = await hooks.dispatch(

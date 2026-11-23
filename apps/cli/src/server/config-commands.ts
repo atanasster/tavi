@@ -2,6 +2,8 @@ import { readAgentTree } from "../features/agents/tree.js";
 import { channelDescriptorOf, channelDescriptors } from "../features/channels/catalog.js";
 import { pluginChannelPurgePreview, rememberedAccount, schedulePluginChannelPurges } from "../features/channels/purge.js";
 import { runPluginAction } from "../features/plugins/actions.js";
+import { localizedChannelDescriptors, localizedSnapshotManifest, pluginSnapshots } from "../features/plugins/localized.js";
+import type { Locale } from "@tavi/contracts/i18n";
 import { runMcpAction } from "../features/mcp/actions.js";
 import { mcpRemovalDeps, removeMcpServer } from "../features/mcp/remove.js";
 import { mcpSearchLines } from "../features/mcp/bridge.js";
@@ -10,7 +12,7 @@ import { mcpAccountPersonal } from "../features/apps/sharing.js";
 import { appsCommand } from "../features/apps/owner.js";
 import { snapshotSiteNotes, snapshotSites } from "../features/apps/registry.js";
 import { routineScheduleAction } from "../features/routines/actions.js";
-import { readPluginManifest, type RoutineService } from "@tavi/runtime";
+import type { RoutineService } from "@tavi/runtime";
 import {
   MCP_ENABLED_SETTING,
   mcpEnabledOf,
@@ -1550,29 +1552,34 @@ export async function appsOwnerCommand(
   extra: {
     readonly channels?: (payload: import("@tavi/contracts").ChannelsPayload) => Promise<IpcAnswer<unknown>>;
     readonly declineConnect?: (waitId: string, workspaceId: string) => Promise<void>;
+    /** The canvas's language: plugins' and channels' words come from their language packs (`features/plugins/localized.ts`). */
+    readonly locale?: Locale | undefined;
   } = {},
 ): Promise<IpcAnswer<unknown>> {
   const repositories = runtime.store.asPort().repositories;
+  const locale = extra.locale;
+  const snapshotDirectory = (pluginId: string, version: string) => runtime.plugins.registry.snapshotDirectory(pluginId, version);
+  // A pack is read only from a snapshot that still has its approved hash; without a language none is read.
+  const snapshotOf =
+    locale === undefined ? () => undefined : await pluginSnapshots({ list: () => runtime.plugins.registry.list(), snapshotDirectory });
   return await appsCommand(
     {
       ...(extra.channels === undefined ? {} : { channels: extra.channels }),
       ...(extra.declineConnect === undefined ? {} : { declineConnect: extra.declineConnect }),
       mcp: (payload) => mcpCommand(runtime, payload, actor),
       plugins: (payload) => pluginsCommand(runtime, payload, actor),
-      views: () => runtime.plugins.registry.list(),
-      manifestOf: (pluginId, version) => {
-        try {
-          return readPluginManifest(runtime.plugins.registry.snapshotDirectory(pluginId, version));
-        } catch {
-          // A snapshot that no longer reads presents as a bare app, from its view.
-          return undefined;
-        }
-      },
+      views: () => runtime.plugins.registry.list(undefined, locale),
+      // A snapshot that no longer reads presents as a bare app, from its view.
+      manifestOf: (pluginId, version) =>
+        localizedSnapshotManifest(snapshotDirectory(pluginId, version), locale, snapshotOf(pluginId, version)?.contentHash),
       sitesOf: snapshotSites((pluginId, version) => runtime.plugins.registry.snapshotDirectory(pluginId, version)),
       siteNotesOf: snapshotSiteNotes((pluginId, version) => runtime.plugins.registry.snapshotDirectory(pluginId, version)),
       connections: async (workspaceId) => await repositories.messagingConnections.list(workspaceId),
-      descriptorOf: (providerId) => channelDescriptorOf(providerId),
-      descriptors: () => channelDescriptors(),
+      descriptorOf: (providerId) => {
+        const descriptor = channelDescriptorOf(providerId);
+        return descriptor === undefined ? undefined : localizedChannelDescriptors([descriptor], locale, snapshotOf)[0];
+      },
+      descriptors: () => localizedChannelDescriptors(channelDescriptors(), locale, snapshotOf),
       channelStatus: (connectionId) => runtime.channels.statusOf(connectionId),
       channelSetup: (connectionId) => runtime.messaging.probeOf?.(connectionId)?.setup,
       rules: {
@@ -1620,6 +1627,8 @@ export async function pluginsCommand(
   >,
   input: import("@tavi/contracts").PluginsPayload,
   actor: string,
+  /** The canvas's language, for a listing's words (`PluginActionContext.locale`); absent: English as installed. */
+  locale?: Locale,
 ): Promise<IpcAnswer<unknown>> {
   // From a page, an in-process (unsandboxed) approval is refused, as MCP's weaker sandbox is: it stays the CLI's.
   if (actor === operatorActor(true) && input.action === "approve" && input.inProcess === true) {
@@ -1631,6 +1640,7 @@ export async function pluginsCommand(
   const boundBefore = "pluginId" in input && input.pluginId !== undefined ? runtime.routerProviders.bound(input.pluginId) : undefined;
   const answer = await answering(() =>
     runPluginAction(runtime.plugins.registry, input, actor, runtime.plugins, {
+      ...(locale === undefined ? {} : { locale }),
       workspaceSettings: runtime.store.asPort().repositories.workspaceSettings,
       mcpBudget: (pluginId, version, workspaceId) => runtime.mcp.checkEnable(pluginId, version, workspaceId),
       channelPluginRemove: async (_pluginId, providerIds) =>

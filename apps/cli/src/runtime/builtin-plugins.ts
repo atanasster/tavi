@@ -1207,6 +1207,7 @@ export function composeBuiltinPlugins(composed: ConversationsContext) {
                   : { eventDebounceMs: overrides.heartbeatTiming.eventDebounceMs }),
                 timezoneOf: async (workspaceId) =>
                   (await repositories.workspaceSettings.get(workspaceId)).settings.timezone ?? hostTimeZone(),
+                localeOf: workspaceLocaleOf(repositories.workspaceSettings),
                 homeActivity: async (workspaceId, principalId) => {
                   const home = await repositories.tasks.homeOf(workspaceId, principalId);
                   if (home === undefined) return undefined;

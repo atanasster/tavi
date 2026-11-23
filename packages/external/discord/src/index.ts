@@ -14,14 +14,11 @@ import { useHostTaviError } from "./host-shim.js";
 export const VERSION = "0.1.1";
 
 /**
- * The workspace's language, when the host gives its plugins one (`ctx.locale`, which the context
- * does not carry yet): read on each answer, so a host that keeps it current is followed.
+ * The workspace's language (`ctx.locale`): read on each answer, so a language changed while it runs
+ * is followed. An older host's context has none, and the answers are English.
  */
 function localeOf(ctx: ExternalPluginContext): () => string | undefined {
-  return () => {
-    const locale = (ctx as { readonly locale?: unknown }).locale;
-    return typeof locale === "string" ? locale : undefined;
-  };
+  return () => ctx.locale;
 }
 
 export function register(ctx: ExternalPluginContext): void {

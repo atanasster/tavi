@@ -1026,6 +1026,8 @@ export function composeConversations(composed: SchedulesContext) {
           source: "messaging",
           channel: event.connectionId,
           attended: true,
+          // The workspace's language: the command answers in it.
+          locale: await workspaceLocaleOf(persistencePort.repositories.workspaceSettings)(actor.workspaceId),
         });
         // Where it was typed, for the memory commands (invariant 11): never in a group or by email.
         const place: MemoryCommandPlace =

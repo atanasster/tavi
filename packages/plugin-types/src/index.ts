@@ -24,6 +24,7 @@ import type {
   RouterProviderError,
   TaviError,
 } from "@tavi/contracts";
+import type { Locale, MessageParams } from "@tavi/contracts/i18n";
 import type { z } from "zod";
 
 /**
@@ -118,6 +119,11 @@ export type {
   PluginManifest,
 } from "@tavi/contracts";
 
+/** The languages `ctx.locale` names, and what `ctx.t` fills a message with. */
+export type { Locale, MessageParams } from "@tavi/contracts/i18n";
+/** A language pack, `locales/<lang>.json`: its manifest overlay and its messages. */
+export type { PluginLocaleFile } from "@tavi/contracts";
+
 export interface ExternalPluginLog {
   info(message: string, fields?: Record<string, unknown>): void;
   warn(message: string, fields?: Record<string, unknown>): void;
@@ -141,6 +147,19 @@ export interface ExternalPluginContext {
   readonly pluginId: string;
   readonly version: string;
   readonly config: Readonly<PluginConfig>;
+  /**
+   * The workspace's language (`workspace.locale`: `"en"`, `"bg"`), live: read it each time
+   * you say something, so a language changed in Settings is followed without a restart.
+   * What a person reads may use it; what the model reads (a tool's result) stays as it is.
+   */
+  readonly locale: Locale;
+  /**
+   * `key` from this plugin's own `messages` (its `locales/<lang>.json`) in the
+   * workspace's language now, else in English (`locales/en.json`), else the key
+   * itself. `{name}` in a message is `params.name`; a plural object
+   * (`{ "one": …, "other": … }`) is chosen by `params.count`.
+   */
+  t(key: string, params?: MessageParams): string;
   readonly z: typeof z;
   readonly log: ExternalPluginLog;
   /** Owned from registration onward, including failed registration/startup. */

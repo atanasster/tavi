@@ -21,6 +21,7 @@ import {
   type ResourceLimitPort,
 } from "@tavi/contracts";
 import { errorMessage } from "@tavi/contracts/util";
+import type { Locale } from "@tavi/contracts/i18n";
 
 import { z } from "zod";
 
@@ -173,6 +174,8 @@ class Worker {
   #restarts = 0;
   #streak = 0;
   #startedAt = 0;
+  /** The workspace's language its plugin reads (`ctx.locale`): the launch's, then each change. */
+  #locale: Locale | undefined;
   #backoffUntil = 0;
   #lastError: string | undefined;
   /** Why the owner refused the worker it just started, kept over its exit's own reason. */
@@ -188,6 +191,7 @@ class Worker {
     this.#launch = launch;
     this.#services = services;
     this.#options = options;
+    this.#locale = launch.locale;
   }
 
   async begin(): Promise<void> {
@@ -220,6 +224,12 @@ class Worker {
         ...(this.#lastError === undefined ? {} : { lastError: this.#lastError }),
       }),
       stop: () => this.#stop("stopped"),
+      // Kept for a start after an idle stop, and told to a running worker now.
+      setLocale: (locale) => {
+        if (locale === this.#locale) return;
+        this.#locale = locale;
+        if (this.#state === "running") this.#write({ t: "locale", locale });
+      },
     };
   }
 
@@ -375,6 +385,8 @@ class Worker {
         child.once("close", () => clearTimeout(settle));
       });
     });
+    // The language the worker starts in; a change made while it starts is told to it once it is running.
+    const startedLocale = this.#locale;
     this.#write({
       t: "hello",
       protocol: PROTOCOL_VERSION,
@@ -388,6 +400,10 @@ class Worker {
       credentials: Object.entries(launch.manifest.config ?? {})
         .filter(([, field]) => field.type === "credential")
         .map(([key]) => key),
+      ...(startedLocale === undefined ? {} : { locale: startedLocale }),
+      ...(launch.messages === undefined || Object.keys(launch.messages).length === 0
+        ? {}
+        : { messages: launch.messages as Record<string, Record<string, unknown>> }),
     });
     try {
       await ready;
@@ -398,6 +414,7 @@ class Worker {
     }
     this.#state = "running";
     this.#startedAt = Date.now();
+    if (this.#locale !== undefined && this.#locale !== startedLocale) this.#write({ t: "locale", locale: this.#locale });
     // A renewal that came due while it started waits for the call that started it, which a stop now would fail.
     if (!this.#renewDue) this.#touch();
   }

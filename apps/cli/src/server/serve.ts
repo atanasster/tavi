@@ -16,6 +16,7 @@ import type {
 } from "@tavi/contracts";
 import { MOD_COMMAND_TEXT_MAX_CHARS, maskPluginText } from "@tavi/contracts";
 import { channelsCommand } from "../features/channels/owner.js";
+import { canvasPluginLocale, localizedChannelDescriptors, pluginSnapshots } from "../features/plugins/localized.js";
 import { runtimeLifecycleReport, startLifecycleSync, syncRuntimeModelLifecycle } from "../features/models/lifecycle-sync.js";
 import { previewReplace, replaceModel } from "../features/models/replace.js";
 import { uiPreferencesCommand } from "../features/ui/preferences.js";
@@ -72,6 +73,7 @@ import {
   type ChannelMailboxKit,
   parseCommandPayload,
   DEFAULT_WORKSPACE_ID,
+  localeOf,
   APPROVAL_HISTORY_DEFAULT_LIMIT,
   type ApprovalsListResult,
   type ApprovalsShowResult,
@@ -1800,7 +1802,25 @@ async function dispatchCommand(
     },
     channels: async (value) => {
       try {
-        return await channelsCommand(channelsDependencies(runtime), value);
+        // The canvas's channel setup reads a plugin channel's words in the workspace's language.
+        const locale =
+          value.action === "catalog"
+            ? await canvasPluginLocale(repositories.workspaceSettings, DEFAULT_WORKSPACE_ID, connection?.viaBridge() === true)
+            : undefined;
+        const dependencies = channelsDependencies(runtime);
+        const snapshotOf =
+          locale === undefined
+            ? undefined
+            : await pluginSnapshots({
+                list: () => runtime.plugins.registry.list(),
+                snapshotDirectory: (pluginId, version) => runtime.plugins.registry.snapshotDirectory(pluginId, version),
+              });
+        return await channelsCommand(
+          locale === undefined || snapshotOf === undefined
+            ? dependencies
+            : { ...dependencies, localizeCatalog: (descriptors) => localizedChannelDescriptors(descriptors, locale, snapshotOf) },
+          value,
+        );
       } catch (error) {
         // Its refusal's words are the terminal's; the facts the page words it from go along (QA 2033).
         const details = channelsPageDetails(TaviError.from(error));
@@ -1849,7 +1869,10 @@ async function dispatchCommand(
     },
     plugins: async (value) => {
       // Operator-only (CLI or canvas), never a tool: plugin code runs with the owner's privileges.
-      return await pluginsCommand(runtime, value, operatorActor(connection?.viaBridge() === true));
+      // The canvas reads a plugin's words in the workspace's language; the terminal's listing stays English.
+      const fromCanvas = connection?.viaBridge() === true;
+      const locale = await canvasPluginLocale(repositories.workspaceSettings, DEFAULT_WORKSPACE_ID, fromCanvas);
+      return await pluginsCommand(runtime, value, operatorActor(fromCanvas), locale);
     },
     mcp: async (value) => {
       // Operator-only as plugins are: probing runs a server's code, approving trusts its tools.
@@ -1859,9 +1882,16 @@ async function dispatchCommand(
       // Operator-only like `mcp` and `plugins`, whose commands it calls: a page meets their refusals.
       // A shared client changes through the channels command, which signs a channel's older sign-ins out.
       try {
-        return await appsOwnerCommand(runtime, value, operatorActor(connection?.viaBridge() === true), {
+        const fromCanvas = connection?.viaBridge() === true;
+        const locale = await canvasPluginLocale(
+          repositories.workspaceSettings,
+          ("workspaceId" in value ? value.workspaceId : undefined) ?? DEFAULT_WORKSPACE_ID,
+          fromCanvas,
+        );
+        return await appsOwnerCommand(runtime, value, operatorActor(fromCanvas), {
           channels: (payload) => channelsCommand(channelsDependencies(runtime), payload),
           declineConnect: (waitId, workspaceId) => runtime.connectWaits.decline(waitId, workspaceId),
+          ...(locale === undefined ? {} : { locale }),
         });
       } finally {
         // A mailbox opt-in, or a connection added or signed out, changes which accounts have tools.
@@ -2236,6 +2266,8 @@ async function dispatchCommand(
         source: viaBridge ? "web" : "ipc",
         frontEnd: viaBridge ? ("web" as const) : ("ipc" as const),
         attended: true,
+        // The workspace's language: the command answers in it.
+        locale: localeOf((await repositories.workspaceSettings.get(workspaceId)).settings),
       });
       const answer = await runtime.turnHooks.runCommand(payload.name.toLowerCase(), { envelope, args: payload.args });
       if (answer === undefined) return refuseKeyed("NOT_FOUND", "error.plugin.noCommand", { name: payload.name });

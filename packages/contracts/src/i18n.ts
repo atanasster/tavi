@@ -179,3 +179,22 @@ export function createTranslator<Source extends Catalog>(
     return options.pseudo === true ? pseudoLocalize(text) : text;
   };
 }
+
+/** A plugin's own messages (`ctx.t`), by language: each a catalogue from its `locales/<lang>.json`. */
+export type PluginMessages = { readonly [L in Locale]?: Catalog };
+
+/**
+ * `ctx.t` for a plugin: `key` from its own messages in `locale`, else in
+ * English (its `locales/en.json`), else the key itself, with `{param}`s filled
+ * and a plural chosen by `params.count`. One lookup for the owner's process and
+ * the confined worker alike.
+ */
+export function pluginTranslate(messages: PluginMessages, locale: Locale, key: string, params?: MessageParams): string {
+  // Own keys only, as `createTranslator`'s: a key such as "toString" must not find `Object.prototype`'s.
+  const own = messages[locale];
+  const english = messages.en;
+  const found = own !== undefined && Object.hasOwn(own, key) ? own[key] : undefined;
+  const message = found ?? (english !== undefined && Object.hasOwn(english, key) ? english[key] : undefined);
+  if (message === undefined) return String(key);
+  return formatMessage(message, found === undefined ? "en" : locale, params, locale);
+}

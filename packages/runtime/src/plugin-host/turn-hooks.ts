@@ -358,7 +358,7 @@ export class TurnHookRegistry implements TurnHooksPort {
    * Run `/name` (as `commands()` lists it) under the hook budget. A command that
    * fails answers that it failed; `undefined` when no plugin has that name.
    */
-  async runCommand(name: string, input: Omit<ModCommandInput, "signal">): Promise<ModCommandResult | undefined> {
+  async runCommand(name: string, input: Omit<ModCommandInput, "signal" | "locale">): Promise<ModCommandResult | undefined> {
     const command = this.#commands.find((candidate) => this.#typedName(candidate) === name);
     if (command === undefined) return undefined;
     if (this.#suspended.has(command.pluginId) || this.#commandsSuspended.has(command.pluginId)) {
@@ -381,7 +381,7 @@ export class TurnHookRegistry implements TurnHooksPort {
     const startedAt = this.#now();
     try {
       const answer = await Promise.race([
-        Promise.resolve(command.run({ ...input, signal: controller.signal })),
+        Promise.resolve(command.run({ ...input, locale: input.envelope.locale ?? "en", signal: controller.signal })),
         new Promise<never>((_resolve, reject) => {
           timer = setTimeout(() => {
             const error = new HookTimeout(this.#budgetMs);

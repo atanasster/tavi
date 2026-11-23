@@ -11,7 +11,7 @@ export default defineConfig([
     target: "node22",
   },
   {
-    // The worker runs confined, reading only its own folder: one file, zod inside it.
+    // The worker runs confined, reading only its own folder: one file, zod and the message formatter inside it.
     entry: ["src/worker.ts"],
     format: ["esm"],
     platform: "node",
@@ -19,6 +19,6 @@ export default defineConfig([
     clean: false,
     sourcemap: false,
     target: "node22",
-    noExternal: ["zod"],
+    noExternal: ["zod", "@tavi/contracts/i18n"],
   },
 ]);

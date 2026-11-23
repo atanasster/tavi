@@ -187,8 +187,10 @@ export { DEFAULT_MEMORY_QUOTAS, type MemoryQuotas, type MemoryServiceOptions } f
 export { memoryNearMatchQuery, toFtsPhraseQuery } from "./memory/rules.js";
 export {
   hashPluginDirectory,
+  localizedPluginManifest,
   ownerCodeFacts,
   readPluginManifest,
+  readPluginMessages,
   readPluginSiteProfiles,
   readPluginSnapshot,
   validatePluginDirectory,
