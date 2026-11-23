@@ -383,6 +383,7 @@ describe("declared dependency direction", () => {
     // The sandbox, limits and worker packages implement the ports on contracts alone; the sandbox and the
     // worker's host (not the confined worker itself) may use the node kit too, a leaf on Node's built-ins,
     // as their launches build children's environments, and the child kit, which ends the children they start.
+    // The worker reads a plugin's messages through contracts' i18n leaf (`pluginTranslate`), inlined into its bundle.
     const nodeKitHost = (file: string): boolean =>
       /^packages\/builtin\/(sandbox\/|worker\/src\/index\.ts$)/.test(file.split(sep).join("/"));
     for (const file of [
@@ -395,6 +396,7 @@ describe("declared dependency direction", () => {
           (specifier) =>
             specifier !== "@tavi/contracts" &&
             specifier !== "@tavi/contracts/util" &&
+            specifier !== "@tavi/contracts/i18n" &&
             !(nodeKitHost(file) && (specifier === "@tavi/node-kit" || specifier === "@tavi/child-kit")),
         ),
         file,

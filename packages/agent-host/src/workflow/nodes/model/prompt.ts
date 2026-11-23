@@ -1,5 +1,5 @@
 import { isPlumbingOrigin, BROWSER_REQUEST_HANDOFF_TOOL_ID, MAX_TOOL_RESULT_BYTES, TaviError, type WorkflowMessage } from "@tavi/contracts";
-import { errorMessage } from "@tavi/contracts/util";
+import { definedOnly, errorMessage } from "@tavi/contracts/util";
 import { turnRecallKey, defaultEstimateTokens } from "../../../context/context.js";
 import {
   NO_REACHABLE_CHANNELS_LINE,
@@ -115,9 +115,7 @@ export async function buildModelCall(step: ModelStep, instructions: Instructions
             ...(repeatedCall.alternate === undefined ? {} : { alternate: repeatedCall.alternate }),
           },
         }),
-    ...(keptFindings === undefined ? {} : { keptFindings }),
-    ...(tasksHome === undefined ? {} : { tasksHomeServer: tasksHome }),
-    ...(locale === undefined ? {} : { locale }),
+    ...definedOnly({ keptFindings, tasksHomeServer: tasksHome, locale }),
     outputLimitBytes: MAX_TOOL_RESULT_BYTES,
     // A capability, and a coarse one: an artifact repository is wired exactly
     // when the adapter may archive (without one `archiveToolOutput` can only
