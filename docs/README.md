@@ -38,6 +38,7 @@ with the [README](../README.md) to install and run Tavi, then
 | [CLI](CLI.md) | Every command, action and flag, exit codes and environment variables |
 | [CONFIGURATION](CONFIGURATION.md) | Credentials, model connections and roles, workspace settings |
 | [LANGUAGES](LANGUAGES.md) | Choosing the language Tavi speaks, what follows it, and adding words or a language |
+| [Tavi на български](bg/README.md) | An introduction to Tavi in Bulgarian: installing, choosing the language, what is in Bulgarian |
 | [OPERATIONS](OPERATIONS.md) | The data directory, running the owner as a service, doctor, backups and storage |
 | [WINDOWS](WINDOWS.md) | Tavi on Windows: WSL2, and what native Windows does and refuses so far |
 | [SECURITY-MODEL](SECURITY-MODEL.md) | How a tool call is decided, approvals, untrusted content and the taint gate |

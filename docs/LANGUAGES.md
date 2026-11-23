@@ -45,7 +45,8 @@ within seconds; lines already shown stay as they were.
 
 ### Tavi in Bulgarian
 
-A chat asking to approve two calls, with the cards in Bulgarian:
+An introduction for Bulgarian readers, in Bulgarian, is at [Tavi на
+български](bg/README.md). A chat asking to approve two calls, with the cards in Bulgarian:
 
 ![The Home chat in Bulgarian: two calls wait for approval, "Напомни: Полей цветята" (reminders.create) and "Добави задача: яйца" (todos.add), each with its risk, why Tavi asks and where each value came from, above the buttons Разреши отметнатите, Разреши всички and Откажи](assets/screens/bg/01-chat-approval-cards.png)
 
@@ -85,7 +86,7 @@ still in English, and each section below names them.
 | Plugins | Built-ins yes; another plugin as far as its language packs go |
 | CLI `--help`, usage errors, stderr, logs and `--format json` | No: they stay in English, since scripts read them |
 | What a model reads: the agent's instructions, tool descriptions, routine prompts | No: always English |
-| These docs | No: they are written in English |
+| These docs | No: they are written in English, apart from a Bulgarian introduction, [Tavi на български](bg/README.md) |
 
 A plugin's own words come from the plugin, in the languages its author wrote.
 A plugin can ship its own language packs: `locales/<lang>.json`, declared in
