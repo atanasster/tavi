@@ -17,11 +17,20 @@ import {
   type SandboxPort,
 } from "@tavi/contracts";
 import { errorMessage, plural } from "@tavi/contracts/util";
-import { declarationFor, ownerStagingDirectory, validatePluginDirectory, type PluginFile, type PluginFileCheck } from "@tavi/runtime";
+import type { Catalog } from "@tavi/contracts/i18n";
+import {
+  declarationFor,
+  isLocalePackError,
+  ownerStagingDirectory,
+  validatePluginDirectory,
+  type PluginFile,
+  type PluginFileCheck,
+} from "@tavi/runtime";
 
 import { schemaFlags } from "../mcp/review.js";
 import { probeReadPaths } from "./probe-paths.js";
 import { withOwnerSandbox } from "../sandbox/host.js";
+import { listed, pluginLocaleReport, pluginLocaleReportOnDisk, type PluginLocaleCoverage } from "./validate-locales.js";
 
 /**
  * `tavi plugins validate <dir>`: what install
@@ -36,6 +45,8 @@ export interface PluginValidation {
   readonly files?: number;
   /** What install or the owner's load would refuse. */
   readonly problems: readonly string[];
+  /** Its language packs (`locales`), each with its problems and what it translates; absent when it declares none. */
+  readonly locales?: readonly PluginLocaleCoverage[];
   /** What loads, but may not be what the author meant. */
   readonly warnings: readonly string[];
   /** What `register` registered, when it ran. */
@@ -101,17 +112,31 @@ export async function validatePlugin(directory: string, options: ValidateOptions
   try {
     checked = validatePluginDirectory(directory, options.builtins, options.checkFile);
   } catch (error) {
-    return { problems: [errorMessage(error)], warnings: [] };
+    const message = errorMessage(error);
+    // Install stops at a pack's first problem (once every file was read and the rest checked): every pack's are told, in place of that one.
+    const packs = isLocalePackError(error) ? pluginLocaleReportOnDisk(directory, options.checkFile) : undefined;
+    if (packs === undefined || packs.problems.length === 0) return { problems: [message], warnings: [] };
+    return { problems: packs.problems, warnings: packs.warnings, locales: packs.locales };
   }
   const { manifest, hash, files } = checked;
-  const head = { pluginId: manifest.id, version: manifest.version, contentHash: hash, files: files.length };
-  const warnings = (manifest.mods?.hooks ?? []).flatMap((hook) =>
-    MOD_FAILURE_RULES[hook.event].length > 1 && hook.onFailure === undefined
-      ? [
-          `its ${hook.event} hook states no onFailure, so it fails as ${modFailureRuleOf(hook)}; say so in the manifest (${MOD_FAILURE_RULES[hook.event].join(" or ")})`,
-        ]
-      : [],
-  );
+  const packs = pluginLocaleReport(manifest, (path) => files.find((file) => file.relative === path)?.content);
+  const head = {
+    pluginId: manifest.id,
+    version: manifest.version,
+    contentHash: hash,
+    files: files.length,
+    ...(packs.locales.length === 0 ? {} : { locales: packs.locales }),
+  };
+  const warnings = [
+    ...(manifest.mods?.hooks ?? []).flatMap((hook) =>
+      MOD_FAILURE_RULES[hook.event].length > 1 && hook.onFailure === undefined
+        ? [
+            `its ${hook.event} hook states no onFailure, so it fails as ${modFailureRuleOf(hook)}; say so in the manifest (${MOD_FAILURE_RULES[hook.event].join(" or ")})`,
+          ]
+        : [],
+    ),
+    ...packs.warnings,
+  ];
   // An MCP server runs no code in the owner; its code runs in its sandbox, at its probe.
   if (manifest.mcp !== undefined)
     return {
@@ -135,7 +160,7 @@ export async function validatePlugin(directory: string, options: ValidateOptions
     const capabilities = (await sandbox.ready?.()) ?? sandbox.capabilities();
     if (!capabilities.available)
       return { ...head, problems: [], warnings, skipped: `the sandbox is unavailable: ${capabilities.detail ?? "not supported here"}` };
-    const outcome = await runRegister(manifest, files, sandbox);
+    const outcome = await runRegister(manifest, files, sandbox, packs.english);
     if (!outcome.ok) return { ...head, problems: [`register failed: ${outcome.error}`], warnings };
     return { ...head, ...compare(manifest, outcome.registered, warnings), registered: outcome.registered };
   });
@@ -261,9 +286,10 @@ function compare(
  * that records each registration and does nothing else. Zod is bundled in, so
  * `ctx.z` describes input as it does in the owner.
  */
-function runnerSource(entry: string, marker: string): string {
+function runnerSource(entry: string, marker: string, english: Catalog): string {
   return `
 import { z } from "zod";
+import { pluginTranslate } from "@tavi/contracts/i18n";
 
 // After a marker line, last: the plugin's own code may write to stdout too.
 const finish = (payload, code) => process.stdout.write(${JSON.stringify(`\n${marker}`)} + JSON.stringify(payload), () => process.exit(code));
@@ -290,6 +316,9 @@ const keepSchema = (tool) => {
 const controller = new AbortController();
 const ctx = {
   pluginId: "validate", version: "0.0.0", config: Object.freeze({}), z,
+  // English, with the plugin's English messages: a register that says something with ctx.t runs as it does in the owner.
+  locale: "en",
+  t: (key, params) => pluginTranslate({ en: ${JSON.stringify(english)} }, "en", key, params),
   log: { info() {}, warn() {}, error() {} },
   scope: { defer() {}, signal: controller.signal },
   signal: controller.signal,
@@ -339,6 +368,7 @@ async function runRegister(
   manifest: PluginManifest,
   files: readonly PluginFile[],
   sandbox: SandboxPort,
+  english: Catalog,
 ): Promise<{ readonly ok: true; readonly registered: PluginRegistrations } | { readonly ok: false; readonly error: string }> {
   // Its real path: Node's permission model compares the resolved one, and the temporary directory is a link on macOS.
   const staging = realpathSync(mkdtempSync(join(ownerStagingDirectory(), "tavi-validate-")));
@@ -352,13 +382,19 @@ async function runRegister(
     // A plugin that prints an answer of its own does not know this run's marker. (It could find it by reading the runner:
     // validate is a check for the plugin's author, never a boundary against a plugin that means to deceive it.)
     const marker = `${RESULT_MARKER}${randomUUID()}>>`;
-    writeFileSync(source, runnerSource(manifest.entry ?? "", marker));
+    writeFileSync(source, runnerSource(manifest.entry ?? "", marker, english));
     // The bundler is loaded only when a plugin is validated.
     const { rolldown } = await import("rolldown");
     const bundle = await rolldown({
       input: source,
       platform: "node",
-      resolve: { alias: { zod: fileURLToPath(import.meta.resolve("zod")) } },
+      // `ctx.t` is the owner's own lookup, bundled in as the confined worker bundles it.
+      resolve: {
+        alias: {
+          zod: fileURLToPath(import.meta.resolve("zod")),
+          "@tavi/contracts/i18n": fileURLToPath(import.meta.resolve("@tavi/contracts/i18n")),
+        },
+      },
       external: (id) => id.startsWith("node:") || isBuiltin(id) || id.startsWith("./plugin/"),
     });
     try {
@@ -418,8 +454,30 @@ export function renderPluginValidation(directory: string, report: PluginValidati
     );
   }
   if (report.skipped !== undefined) lines.push(`register not run: ${report.skipped}`);
+  for (const pack of report.locales ?? []) lines.push(...packLines(pack));
   for (const problem of report.problems) lines.push(`error: ${problem}`);
   for (const warning of report.warnings) lines.push(`warning: ${warning}`);
   lines.push(report.problems.length === 0 ? "valid" : "not valid");
   return `${lines.join("\n")}\n`;
+}
+
+/** A language pack's lines: what it translates of the total, and what it leaves to English. */
+function packLines(pack: PluginLocaleCoverage): string[] {
+  const head = `language pack ${pack.locale} (${pack.path})`;
+  if (pack.manifest === undefined && pack.messages === undefined) return [`${head}: not valid, its errors below`];
+  // A count with nothing to count (no messages in any pack, a manifest with no words a pack takes) is left out.
+  const counts = [
+    ...(pack.manifest === undefined || pack.manifest.total === 0
+      ? []
+      : [`${String(pack.manifest.translated)} of ${plural(pack.manifest.total, "manifest field")}`]),
+    ...(pack.messages === undefined || pack.messages.total === 0
+      ? []
+      : [`${String(pack.messages.translated)} of ${plural(pack.messages.total, "message")}`]),
+  ];
+  const lines = [`${head}: ${counts.length === 0 ? "nothing to translate" : counts.join(", ")}`];
+  if (pack.manifest !== undefined && pack.manifest.missing.length > 0)
+    lines.push(`  fields left in English: ${listed(pack.manifest.missing)}`);
+  if (pack.messages !== undefined && pack.messages.missing.length > 0)
+    lines.push(`  messages ${pack.locale === "en" ? "without English" : "left to English"}: ${listed(pack.messages.missing)}`);
+  return lines;
 }

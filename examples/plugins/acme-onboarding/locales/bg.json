@@ -1,0 +1,21 @@
+{
+  "manifest": {
+    "name": "Първи стъпки в ACME",
+    "description": "Първо Slack, после ключът на фирмата, без Telegram."
+  },
+  "messages": {
+    "flow.title": "Здравей! Това е Tavi в ACME",
+    "step.model.title": "Избери модела, за който плаща ACME",
+    "step.model.body": "Използвай фирмения ключ за OpenRouter от уикито на ACME.",
+    "step.slack.title": "Пиши на Tavi от Slack",
+    "step.slack.body": "Сдвои се в #tavi. В ACME не ползваме Telegram.",
+    "step.about.title": "За теб",
+    "step.about.body": "Името и часовата ти зона.",
+    "step.service.title": "Остави Tavi да работи",
+    "step.service.body": "Пускай го заедно с компютъра.",
+    "step.ideas.title": "Пробвай нещо",
+    "step.ideas.body": "Няколко неща, които Tavi може да направи за теб още сега.",
+    "done.title": "Всичко е готово",
+    "done.body": "Въпроси? Пиши в #tavi-help."
+  }
+}

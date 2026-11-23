@@ -3,37 +3,21 @@
  * the guide's "ACME: Slack first, no Telegram". It chooses steps and words
  * only: readiness, every write and the fallback stay Tavi's. Plain JavaScript
  * with no imports, so the guide's `@tavi/plugin-kit/onboarding` helpers are
- * inlined: feature only what the request says is available.
+ * inlined: feature only what the request says is available. Its words are
+ * in its language packs (`locales/en.json`, `locales/bg.json`).
  */
 
+/**
+ * The steps, their words named by message keys: `ctx.t` reads each from
+ * `locales/<lang>.json` in the workspace's language when the flow is asked
+ * for, so a language changed in Settings is followed at the next ask.
+ */
 const STEPS = [
-  {
-    id: "model",
-    kind: "model",
-    title: "Pick the model ACME pays for",
-    body: "Use the company OpenRouter key from the ACME wiki.",
-    optional: false,
-    featured: ["openrouter"],
-    recommended: "openrouter",
-  },
-  {
-    id: "slack",
-    kind: "channels",
-    title: "Message Tavi from Slack",
-    body: "Pair yourself in #tavi. Telegram is not used at ACME.",
-    optional: true,
-    featured: ["slack"],
-  },
-  {
-    id: "about",
-    kind: "about",
-    title: "About you",
-    body: "Your name and time zone.",
-    optional: true,
-    about: { fields: ["name", "timezone"] },
-  },
-  { id: "service", kind: "service", title: "Keep Tavi running", body: "Start it with your computer.", optional: true, surfaces: ["cli"] },
-  { id: "ideas", kind: "ideas", title: "Try something", body: "A few things Tavi can do for you now.", optional: true },
+  { id: "model", kind: "model", optional: false, featured: ["openrouter"], recommended: "openrouter" },
+  { id: "slack", kind: "channels", optional: true, featured: ["slack"] },
+  { id: "about", kind: "about", optional: true, about: { fields: ["name", "timezone"] } },
+  { id: "service", kind: "service", optional: true, surfaces: ["cli"] },
+  { id: "ideas", kind: "ideas", optional: true },
 ];
 
 /** What a step of `kind` may feature now: presets, channel kinds or app ids. */
@@ -49,19 +33,23 @@ function withAvailableFeatured(step, available) {
   return { ...rest, featured, ...(recommended !== undefined && featured.includes(recommended) ? { recommended } : {}) };
 }
 
-export const acmeOnboarding = {
-  async flow(request) {
-    request.signal.throwIfAborted();
-    return {
-      abi: "tavi.onboarding/1",
-      version: 1,
-      title: "Welcome to Tavi at ACME",
-      steps: STEPS.map((step) => withAvailableFeatured(step, availableFor(step.kind, request))),
-      done: { title: "You're set up", body: "Questions? #tavi-help." },
-    };
-  },
-};
+/** The flow, its words from `t` (`ctx.t`), looked up on each ask. */
+export function createAcmeOnboarding(t) {
+  return {
+    async flow(request) {
+      request.signal.throwIfAborted();
+      const worded = STEPS.map((step) => ({ ...step, title: t(`step.${step.id}.title`), body: t(`step.${step.id}.body`) }));
+      return {
+        abi: "tavi.onboarding/1",
+        version: 1,
+        title: t("flow.title"),
+        steps: worded.map((step) => withAvailableFeatured(step, availableFor(step.kind, request))),
+        done: { title: t("done.title"), body: t("done.body") },
+      };
+    },
+  };
+}
 
-export function register({ provideOnboarding }) {
-  provideOnboarding(acmeOnboarding);
+export function register({ provideOnboarding, t }) {
+  provideOnboarding(createAcmeOnboarding(t));
 }

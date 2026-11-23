@@ -68,6 +68,9 @@ never translated: a pack that tries is refused at install. Packs are part of
 the plugin version's reviewed files, so changing one is a new version to
 approve, and a pack changed on disk after approval is never shown. A running
 plugin hears a language change at once (`ctx.locale`), with no restart.
+`tavi plugins validate` checks every pack as install does and counts, for each
+language, how many of the manifest's words and messages it translates;
+[Translating your plugin](PLUGINS.md#translating-your-plugin) is the author's guide.
 
 Errors Tavi's server sends the canvas for you to act on (a value it
 refuses, something that no longer exists, a change someone else saved first,

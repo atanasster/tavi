@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "abi": "tavi.providers/1",
   "provenance": { "format": "bundled-esm", "packages": [] },
   "id": "acme.telegramhook",
@@ -7,6 +7,7 @@
   "name": "Telegram over webhooks",
   "description": "Takes the telegram provider id from the built-in tavi.telegram: the Bot API's webhooks in, sendMessage out.",
   "entry": "index.mjs",
+  "locales": { "bg": "locales/bg.json" },
   "provides": ["channel"],
   "channelAbi": 1,
   "channels": [

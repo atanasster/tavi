@@ -207,25 +207,50 @@ function hashFiles(files: readonly PluginFile[]): string {
 /** A version's language packs by language, as read from its files: only those its manifest declares and that check out. */
 type PluginLocalePacks = { readonly [L in Locale]?: PluginLocaleFile };
 
+/** Errors `parseLocalePack` throws: a pack install refused, told apart from the rest without reading their words. */
+const localePackErrors = new WeakSet<object>();
+
+/** Whether `error` is a language pack install refused (`validatePluginDirectory` stopped at a pack). */
+export function isLocalePackError(error: unknown): boolean {
+  return typeof error === "object" && error !== null && localePackErrors.has(error);
+}
+
 /**
- * `content` as `manifest`'s language pack for `locale`: within its byte limit,
- * JSON, a pack, and every manifest path one this manifest has and the model never
- * reads (`pluginLocaleProblems`). Throws, naming the file, when it is not.
+ * `content` as `manifest`'s language pack for `locale`, without throwing: the
+ * pack when it checks out (within its byte limit, JSON, a pack, and every
+ * manifest path one this manifest has and the model never reads,
+ * `pluginLocaleProblems`), or what is wrong, file-level first. `problems` are
+ * `pluginLocaleProblems`'s own, and `file` a whole sentence naming the file.
  */
-function parseLocalePack(manifest: PluginManifest, locale: Locale, path: string, content: Buffer | undefined): PluginLocaleFile {
-  if (content === undefined) throw new TaviError("INVALID_INPUT", `the manifest's language pack ${path} does not exist`);
+export function checkLocalePack(
+  manifest: PluginManifest,
+  locale: Locale,
+  path: string,
+  content: Buffer | undefined,
+): { readonly pack: PluginLocaleFile } | { readonly file: string } | { readonly problems: readonly string[] } {
+  if (content === undefined) return { file: `the manifest's language pack ${path} does not exist` };
   if (content.length > PLUGIN_BOUNDS.maxLocaleBytes)
-    throw new TaviError("INVALID_INPUT", `the language pack ${path} is over ${String(PLUGIN_BOUNDS.maxLocaleBytes)} bytes`);
+    return { file: `the language pack ${path} is over ${String(PLUGIN_BOUNDS.maxLocaleBytes)} bytes` };
   let raw: unknown;
   try {
     raw = JSON.parse(content.toString("utf8"));
   } catch {
-    throw new TaviError("INVALID_INPUT", `the language pack ${path} is not JSON`);
+    return { file: `the language pack ${path} is not JSON` };
   }
   const problems = pluginLocaleProblems(manifest, locale, raw);
-  if (problems.length > 0)
-    throw new TaviError("INVALID_INPUT", `the language pack ${path} is not valid: ${problems.join("; ").slice(0, 600)}`);
-  return PluginLocaleFileSchema.parse(raw);
+  return problems.length > 0 ? { problems } : { pack: PluginLocaleFileSchema.parse(raw) };
+}
+
+/** `checkLocalePack`, throwing (and tagged for `isLocalePackError`), naming the file, when the pack does not check out. */
+function parseLocalePack(manifest: PluginManifest, locale: Locale, path: string, content: Buffer | undefined): PluginLocaleFile {
+  const checked = checkLocalePack(manifest, locale, path, content);
+  if ("pack" in checked) return checked.pack;
+  const error = new TaviError(
+    "INVALID_INPUT",
+    "file" in checked ? checked.file : `the language pack ${path} is not valid: ${checked.problems.join("; ").slice(0, 600)}`,
+  );
+  localePackErrors.add(error);
+  throw error;
 }
 
 /** The language packs `manifest` declares, from `fileOf`: each checked (`parseLocalePack`); one that does not check out throws. */

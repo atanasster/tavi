@@ -1,0 +1,17 @@
+{
+  "messages": {
+    "flow.title": "Welcome to Tavi at ACME",
+    "step.model.title": "Pick the model ACME pays for",
+    "step.model.body": "Use the company OpenRouter key from the ACME wiki.",
+    "step.slack.title": "Message Tavi from Slack",
+    "step.slack.body": "Pair yourself in #tavi. Telegram is not used at ACME.",
+    "step.about.title": "About you",
+    "step.about.body": "Your name and time zone.",
+    "step.service.title": "Keep Tavi running",
+    "step.service.body": "Start it with your computer.",
+    "step.ideas.title": "Try something",
+    "step.ideas.body": "A few things Tavi can do for you now.",
+    "done.title": "You're set up",
+    "done.body": "Questions? #tavi-help."
+  }
+}

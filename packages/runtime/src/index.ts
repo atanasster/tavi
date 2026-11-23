@@ -186,7 +186,9 @@ export type { ModelConfigServiceOptions } from "./models/config.js";
 export { DEFAULT_MEMORY_QUOTAS, type MemoryQuotas, type MemoryServiceOptions } from "./memory/service.js";
 export { memoryNearMatchQuery, toFtsPhraseQuery } from "./memory/rules.js";
 export {
+  checkLocalePack,
   hashPluginDirectory,
+  isLocalePackError,
   localizedPluginManifest,
   ownerCodeFacts,
   readPluginManifest,

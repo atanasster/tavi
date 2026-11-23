@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "abi": "tavi.providers/1",
   "provenance": { "format": "bundled-esm", "packages": [] },
   "id": "acme.onboarding",
@@ -7,6 +7,7 @@
   "name": "ACME setup",
   "description": "Slack first, the company key, no Telegram.",
   "entry": "index.mjs",
+  "locales": { "en": "locales/en.json", "bg": "locales/bg.json" },
   "isolation": "in-process",
   "provides": ["onboarding"],
   "onboarding": { "abi": "tavi.onboarding/1", "disclosure": "Puts ACME's Slack first and leaves Telegram out." }

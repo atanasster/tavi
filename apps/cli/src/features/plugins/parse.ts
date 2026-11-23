@@ -42,7 +42,8 @@ Actions:
   install <path>               Install a plugin directory (alias: add)
   validate <path>              Check a plugin directory as install would, without
                                installing it; on macOS also run its register in
-                               the sandbox and compare what it adds with the manifest
+                               the sandbox and compare what it adds with the manifest.
+                               Counts what each language pack translates
   approve|reject <id> <ver>    Review a version; reject also revokes an
                                approved one and withdraws it if loaded.
                                Approved code runs as a confined worker; one

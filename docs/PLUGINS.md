@@ -162,7 +162,7 @@ Every field, at a glance; the larger blocks are described after the table.
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `schemaVersion` | number, `2` | yes | The manifest format. |
+| `schemaVersion` | number, `2` or `3` | yes | The manifest format: `3` for a manifest with `locales`, `2` otherwise. |
 | `abi` | string, `"tavi.providers/1"` | yes | The plugin contract it is built for. |
 | `provenance` | object: `format`, `packages` | yes | How its files are packaged: `bundled-esm`, or an MCP server's `mcp-*` format ([MCP servers](#mcp-servers)). |
 | `id` | string | yes | Dotted lower-case segments, such as `acme.weather`. The `tavi.` namespace is reserved. |
@@ -191,6 +191,7 @@ Every field, at a glance; the larger blocks are described after the table.
 | `rawSecrets` | array of setting keys, at most 16 | no | Credential settings whose real value a worker's `secret(key)` returns, rather than a placeholder its proxy replaces; shown at approval. |
 | `devices` | `["screen"]` | no | `["screen"]` is accepted, for desktop computer use, but grants nothing in this build; desktop control is the built-in `tavi.desktop` ([DESKTOP.md](DESKTOP.md)). |
 | `config` | object, at most 32 settings | no | Its settings (below). |
+| `locales` | object: language → `.json` path | with `schemaVersion: 3` | Its language packs ([Translating your plugin](#translating-your-plugin)). |
 
 - `ui` (optional): what the plugin adds to the web canvas, under the `tavi.ui/1` ABI — at most 8 `contributions`, each with:
   - an `id`, a `title`, an HTML `document` (and optionally an `.svg`/`.png` `icon`) inside the directory;
@@ -308,7 +309,7 @@ stateDiagram-v2
 ```
 
 **While you write one**:
-- `tavi plugins validate <dir>` checks the folder as `install` would, without installing it. On macOS, and on Linux where the sandbox works (`tavi sandbox check`), it also runs `register` in a sandbox, against a context that only records. It compares what that adds with the manifest and refuses what the owner would refuse to load: more than 16 hooks, a hook or a command with no function, or a command registered twice. It warns about a tool whose schema's prose reads like instructions to the model, naming where. Elsewhere, or where the sandbox does not work, only the manifest and files are checked.
+- `tavi plugins validate <dir>` checks the folder as `install` would, without installing it. On macOS, and on Linux where the sandbox works (`tavi sandbox check`), it also runs `register` in a sandbox, against a context that only records. It compares what that adds with the manifest and refuses what the owner would refuse to load: more than 16 hooks, a hook or a command with no function, or a command registered twice. It warns about a tool whose schema's prose reads like instructions to the model, naming where. Elsewhere, or where the sandbox does not work, only the manifest and files are checked. For a plugin with language packs it reports every pack's problems and what each pack translates ([Translating your plugin](#translating-your-plugin)).
 - `tavi serve --dev-plugin <dir>` loads the folder for that owner run without installing or approving it, and reloads it after each save, so a change is tried without a version bump or a restart. `tavi plugins list` marks it `dev`, and its decisions are its own: a verdict it changes names the rule `mod:dev:<id>`, and its hook activity is kept apart from an installed plugin's of its id. It is refused under a service (`TAVI_SERVICE=1`). The folder is read-only to Tavi's file tools while it runs: edit it yourself, or let Tavi write the plugin before you start the owner with it.
 - Asked in a chat, Tavi writes one itself: the tool `plugins.authoring_guide` gives its agent the format, the hooks, a test to write and the install commands to hand back, and `plugins.validate` runs the same check as `tavi plugins validate` on a folder in the chat's working folder or an attached folder, one at a time, never from a chat-started task (the messaging profile holds it back, as it does the shell), and only after asking (once) in a turn that holds untrusted content, since it runs the folder's code. Both are read-only; neither installs anything.
 - `@tavi/plugin-types` (`packages/plugin-types`) has the module's types — `ExternalPluginContext`, `ExternalPluginModule`, the hook events and their results — as one `.d.ts` that needs only `zod`, so a plugin type-checks outside this repository (`import type { ExternalPluginContext } from "@tavi/plugin-types"`, in a `// @ts-check` `.mjs` through JSDoc, or a `.ts` you build to `.mjs`). It is private to this repository, not published to npm: build it (`pnpm --filter @tavi/plugin-types build`) and depend on the folder, or copy its `dist/index.d.mts` beside the plugin.
@@ -317,6 +318,113 @@ Disabling or rejecting the loaded version withdraws its tools/providers and abor
 affected calls immediately. A cleanup failure during withdrawal does not undo the
 committed change: it is reported once as a warning and as the plugin's `failed`
 status. The CLI and canvas report the restart requirement.
+
+### Translating your plugin
+
+A plugin speaks the workspace's language (`workspace.locale`, [LANGUAGES.md](LANGUAGES.md)) through language packs: one JSON file per language, shipped in the plugin's folder. English is the manifest itself; a pack adds another language's words for what a person reads. Tavi speaks `en` and `bg`, so those are the languages a pack can be for.
+
+**Declare the packs.** List them under `locales` and set `schemaVersion` to `3`, as [`acme-onboarding`](../examples/plugins/acme-onboarding/) does:
+
+```json
+{
+  "schemaVersion": 3,
+  "abi": "tavi.providers/1",
+  "provenance": { "format": "bundled-esm", "packages": [] },
+  "id": "acme.onboarding",
+  "version": "0.1.0",
+  "name": "ACME setup",
+  "description": "Slack first, the company key, no Telegram.",
+  "entry": "index.mjs",
+  "locales": { "en": "locales/en.json", "bg": "locales/bg.json" },
+  "isolation": "in-process",
+  "provides": ["onboarding"],
+  "onboarding": { "abi": "tavi.onboarding/1", "disclosure": "Puts ACME's Slack first and leaves Telegram out." }
+}
+```
+
+`locales` needs `schemaVersion: 3`, and `3` needs `locales`: a manifest without packs stays `2`, so a Tavi from before packs still installs it (one from before packs refuses a `3` manifest). Each path is a relative `.json` path inside the plugin.
+
+**A pack** has two parts, both optional. Its `locales/bg.json`, shortened:
+
+```json
+{
+  "manifest": {
+    "name": "Първи стъпки в ACME",
+    "description": "Първо Slack, после ключът на фирмата, без Telegram."
+  },
+  "messages": {
+    "flow.title": "Здравей! Това е Tavi в ACME",
+    "step.about.title": "За теб"
+  }
+}
+```
+
+- `manifest` translates the manifest's words a person reads, each named by its path, in which a setting, channel, app, tool, contribution, template or command is named by its id or key:
+
+  | Path | Longest text |
+  | :--- | ---: |
+  | `name` | 80 |
+  | `description` | 500 |
+  | `config.<key>.label` | 60 |
+  | `config.<key>.description` | 500 |
+  | `apps.apps.<appId>.name` | 60 |
+  | `apps.apps.<appId>.summary` | 200 |
+  | `apps.apps.<appId>.scopes.<scope>.says` | 160 |
+  | `apps.apps.<appId>.tools.<tool>.title` | 60 |
+  | `apps.apps.<appId>.tools.<tool>.says` | 160 |
+  | `channels.<providerId>.label` | 60 |
+  | `channels.<providerId>.description` | 500 |
+  | `channels.<providerId>.setupHelp` | 4000 |
+  | `channels.<providerId>.settings.<key>.label` | 80 |
+  | `channels.<providerId>.settings.<key>.help` | 500 |
+  | `channels.<providerId>.auth.fields.<key>.label` | 80 |
+  | `channels.<providerId>.auth.fields.<key>.help` | 500 |
+  | `channels.<providerId>.sender.label`, `.target.label` | 80 |
+  | `channels.<providerId>.sender.placeholder`, `.target.placeholder` | 120 |
+  | `channels.<providerId>.sender.help`, `.target.help` | 200 |
+  | `channels.<providerId>.pairing.openLabel` | 60 |
+  | `ui.contributions.<id>.title` | 40 |
+  | `ui.contributions.<id>.disclosure` | 500 |
+  | `routineTemplates.<id>.title` | 60 |
+  | `mods.commands.<name>.description` | 200 |
+
+  Nothing the model reads can be translated: a tool's declaration (`tools.…`), an MCP server's (`mcp.…`), or a routine template's research, synthesis, corroboration rule or tools. The model always reads the English the version was reviewed with. A path the manifest has no field at, a model-facing path, or a text longer than its field takes is refused at install. The English pack (`en`) carries `messages` only: its manifest words are the manifest's.
+- `messages` are the code's own words, read with `ctx.t`. A key is letters, digits, dots, dashes and underscores, starting with a letter or digit, at most 128 characters. A message is a string, with `{name}` where a parameter goes, or a plural object with an `other` form and any of `zero`, `one`, `two`, `few` and `many`, such as `{ "one": "{count} нещо", "other": "{count} неща" }`. Bulgarian, like English, uses `one` and `other`.
+
+A pack is at most 64 KiB, with at most 500 `manifest` entries and 1000 messages; each message, or each plural form, is at most 2000 characters, and no text may be empty.
+
+**Use the messages in code.** `ctx.locale` is the workspace's language (`"en"` or `"bg"`), and `ctx.t(key, params)` says a message in it:
+
+```js
+export function register({ provideOnboarding, t }) {
+  provideOnboarding({
+    async flow(request) {
+      // Read when the flow is asked for, so a language changed in Settings is followed.
+      return { abi: "tavi.onboarding/1", version: 1, title: t("flow.title"), steps: [/* … */] };
+    },
+  });
+}
+```
+
+- `ctx.t` looks the key up in the language's messages, then in English (`locales/en.json`), then answers the key itself. It fills each `{name}` from `params` (a number is written the reader's way: "20 000" in Bulgarian), and a name with no parameter is left as written. A plural object's form is chosen by `params.count`; with no count it is `other`.
+- Both are live: call `ctx.t` and read `ctx.locale` each time something is said, not once in `register`, and a language changed while the plugin runs is followed with no restart. A confined worker hears each change too, one made while it starts included.
+- Translate only what a person reads. What a tool returns is read by the model and stays as it is.
+- A mod's hooks and commands are told the language in the envelope (`envelope.locale`, absent for English), and a command's input carries `locale`, `en` when the envelope has none ([MODS.md](MODS.md)).
+
+**Where the words show.** The canvas shows a plugin's manifest words in the workspace's language: its name and description, its settings in Connected apps, its apps' entries, a channel's setup, and its canvas contributions' titles. The terminal's plugin listings, `--format json` and what runs stay English. A field a pack leaves out shows in English.
+
+**Review and changes.** Packs are among the version's files: they count toward its content hash, and are reviewed and approved with it, so changing a pack is a new version. Tavi reads a pack only from the approved snapshot while it still has its approved hash: a pack changed on disk after approval, or a snapshot that no longer matches, is never shown: its manifest words show in English, with no error (and the owner refuses to start a version whose snapshot changed).
+
+**Check them.** `tavi plugins validate <dir>` runs install's checks on every pack and lists each pack's problems, not only the first. For each pack that checks out it counts the manifest fields with English text that the pack translates, and the message keys it has out of every key in the packs that check out, and names those it leaves to English:
+
+```text
+language pack bg (locales/bg.json): 14 of 16 manifest fields
+  fields left in English: channels.telegram.sender.placeholder, channels.telegram.target.placeholder
+```
+
+It warns about a message that has no English (`ctx.t` would answer its key in English) and about a pack that translates a field the manifest leaves empty. `--format json` gives the same as `locales`: each pack's `locale`, `path`, `problems`, and `manifest` and `messages` counts (`translated`, `total`, `missing`); an English pack has no `manifest` count. In the sandbox run, `register` is handed `ctx.locale` `"en"` and a `ctx.t` that reads the English pack.
+
+[`examples/plugins/acme-telegram-webhook`](../examples/plugins/acme-telegram-webhook/) translates a channel's setup words, and [`examples/plugins/acme-onboarding`](../examples/plugins/acme-onboarding/) says its whole flow with `ctx.t`, from an English and a Bulgarian pack.
 
 ## Plugins this repository ships
 

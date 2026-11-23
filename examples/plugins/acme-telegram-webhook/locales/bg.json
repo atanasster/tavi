@@ -1,0 +1,18 @@
+{
+  "manifest": {
+    "name": "Telegram през уебхукове",
+    "description": "Поема доставчика telegram от вградения tavi.telegram: съобщенията идват от Bot API по уебхук, а отговорите излизат със sendMessage.",
+    "channels.telegram.label": "Telegram (уебхукове)",
+    "channels.telegram.description": "Говори с агента през Telegram бот, който получава съобщенията по уебхук.",
+    "channels.telegram.setupHelp": "Насочи бота към адреса за уебхука на тази връзка: извикай setWebhook с url=<публичен адрес>/hooks/<ID на връзката>/webhook и secret_token=<тайната за уебхука>.",
+    "channels.telegram.settings.botUsername.label": "Потребителско име на бота",
+    "channels.telegram.settings.apiBaseUrl.label": "Адрес на API",
+    "channels.telegram.auth.fields.token.label": "Токен на бота",
+    "channels.telegram.auth.fields.token.help": "От @BotFather.",
+    "channels.telegram.auth.fields.webhookSecret.label": "Тайна за уебхука",
+    "channels.telegram.auth.fields.webhookSecret.help": "Стойността на secret_token, която подаваш на setWebhook.",
+    "channels.telegram.sender.label": "ID на потребителя в Telegram",
+    "channels.telegram.target.label": "ID на чата",
+    "channels.telegram.pairing.openLabel": "Отвори в Telegram"
+  }
+}

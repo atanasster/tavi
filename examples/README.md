@@ -15,6 +15,11 @@ tavi plugins enable acme.units
 the module API; [MODS.md](../docs/MODS.md) walks through writing `acme-units`,
 `acme-fx`, `acme-guard` and `cache-meter` from nothing.
 
+`acme-telegram-webhook` and `acme-onboarding` carry Bulgarian language packs
+(`locales/bg.json`, manifest `schemaVersion: 3`); `acme-onboarding` says its
+flow with `ctx.t`. [Translating your plugin](../docs/PLUGINS.md#translating-your-plugin)
+says how they work.
+
 ## Tool plugins
 
 | Example | What it shows |
