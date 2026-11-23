@@ -10,6 +10,7 @@ import {
   routineReportFileName,
   routineReportTitle,
   routineTemplateIdOf,
+  unsupportedRoutinePolicy,
 } from "../src/index.js";
 
 const report = routineDefaults("Europe/Sofia").report;
@@ -46,5 +47,18 @@ describe("the host's routine templates", () => {
     expect(routineFileSlug("Café Économie 2026")).toBe("cafe-economie-2026");
     expect(routineFileSlug("新闻")).toBe("routine-report");
     expect(routineFileSlug(`${"a".repeat(59)} b`)).toBe("a".repeat(59));
+  });
+});
+
+describe("a routine report's language", () => {
+  it("is any supported language, defaulting to the one a routine is created in; an unknown one is still refused", () => {
+    expect(routineDefaults("UTC").report.language).toBe("en");
+    expect(routineDefaults("UTC", "bg").report.language).toBe("bg");
+    for (const language of ["en", "bg"]) {
+      expect(unsupportedRoutinePolicy({ report: { language } })).toBeUndefined();
+      expect(unsupportedRoutinePolicy({ action: "create", create: { report: { language } } })).toBeUndefined();
+    }
+    for (const language of ["de", "BG", "bg-BG", ""])
+      expect(unsupportedRoutinePolicy({ create: { report: { language } } })).toBe("Report output is available in en, bg only");
   });
 });

@@ -8,6 +8,7 @@ import {
   englishOf,
   navPath,
 } from "@tavi/contracts";
+import type { Locale } from "@tavi/contracts/i18n";
 import {
   AgentWaitOutcomeSchema,
   AskUserChoicesSchema,
@@ -118,6 +119,8 @@ export type RoutineControlOptions<Services> = Services & {
   wake: () => void;
   renderer?: () => { available: boolean; provider: string };
   now?: () => string;
+  /** The workspace's language: a routine created from a setup writes its report in it. Absent, English. */
+  language?: Locale;
 };
 /**
  * Decrypted report bytes a chunked download reads from, across requests.
@@ -468,7 +471,7 @@ export class RoutineControlService {
         let create = input.create;
         if (create === undefined) {
           const setup = required(input.setup, "Routine setup");
-          const defaults = routineDefaults(setup.timezone);
+          const defaults = routineDefaults(setup.timezone, this.options.language);
           const models = setup.models ?? this.options.defaultModels();
           if (models === undefined)
             throw new TaviError(

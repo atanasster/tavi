@@ -6,6 +6,7 @@ import {
   type RoutineTemplate,
   type RoutinesPayload,
 } from "@tavi/contracts";
+import type { Locale } from "@tavi/contracts/i18n";
 import type { DatabaseClient } from "../persistence/client.js";
 import { routineSetupPermissions, type RoutineControlOptions } from "./control.js";
 import type {
@@ -34,6 +35,8 @@ export class RoutineControlService {
      * into the revision, and one not installed is refused. Absent, only the host's own templates are saved.
      */
     templateOf?: (id: string) => RoutineTemplate | undefined;
+    /** The workspace's language: a routine created from a setup writes its report in it. Absent, English. */
+    languageOf?: (workspaceId: string) => Promise<Locale>;
   };
   constructor(options: RoutineControlService["options"]) {
     this.options = options;
@@ -47,12 +50,15 @@ export class RoutineControlService {
   async execute(payload: RoutinesPayload): Promise<unknown> {
     payload = this.pinnedFolder(payload);
     const now = this.options.now?.();
+    const language =
+      payload.action === "create" && payload.setup !== undefined ? await this.options.languageOf?.(payload.workspaceId) : undefined;
     const result = await this.options.routines.call("routine.control", {
       payload,
       control: {
         defaultModels: this.options.defaultModels(),
         allowedHosts: this.options.allowedHosts,
         renderer: this.options.renderer?.(),
+        ...(language === undefined ? {} : { language }),
       },
       ...(now === undefined ? {} : { now }),
     });

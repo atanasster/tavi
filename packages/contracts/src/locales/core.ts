@@ -1,4 +1,4 @@
-import { createTranslator, type Translate } from "../i18n.js";
+import { createTranslator, type Locale, type Translate } from "../i18n.js";
 import { CORE_EN, type CoreKey } from "./core-en.js";
 
 export type { CoreKey };
@@ -16,3 +16,14 @@ export type CoreT = Translate<CoreKey>;
 
 /** The `core` words in English: every helper's default. */
 export const coreEnglish: CoreT = createTranslator({ en: CORE_EN }, "en");
+
+/** Each language's name key: a language added to `SUPPORTED_LOCALES` without one fails to compile. */
+const LANGUAGE_NAME_KEYS: { readonly [L in Locale]: CoreKey } = { en: "reports.language.en", bg: "reports.language.bg" };
+
+/**
+ * `locale`'s name in `t`'s language. Left as English, it is what a model is
+ * told to write in ("Bulgarian"): its instructions are English whatever the workspace's language.
+ */
+export function languageName(locale: Locale, t: CoreT = coreEnglish): string {
+  return t(LANGUAGE_NAME_KEYS[locale]);
+}

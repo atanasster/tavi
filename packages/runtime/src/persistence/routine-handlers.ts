@@ -151,6 +151,7 @@ export function createRoutineDispatcher(store: SqliteStore): (operation: string,
         wake: () => {},
         now,
         ...(renderer === undefined ? {} : { renderer: () => renderer }),
+        ...(controlInput?.language === undefined ? {} : { language: controlInput.language }),
       },
       artifactCache,
     );

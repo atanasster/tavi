@@ -1465,10 +1465,56 @@ it("honors the report's render policy instead of hardcoding it", async () => {
   const withLinks = renderRoutineNewsHtml(report, { language: "en", sourceLinks: true, templateVersion: "news-v1" });
   const withoutLinks = renderRoutineNewsHtml(report, { language: "de", sourceLinks: false, templateVersion: "news-v1" });
   expect(withLinks).toContain('<html lang="en">');
-  expect(withoutLinks).toContain('<html lang="de">');
+  // A language the product cannot save is written, and labelled, in English.
+  expect(withoutLinks).toContain('<html lang="en">');
   expect(withLinks).toContain('<a href="https://example.com/model"');
   expect(withoutLinks).not.toContain("<a href=");
   expect(() => renderRoutineNewsHtml(report, { language: "en", sourceLinks: true, templateVersion: "news-v2" })).toThrow(/not available/);
+});
+
+it("writes the page's own words and dates in the report's language, and English as it always was", async () => {
+  const { renderRoutineNewsHtml } = await import("@tavi/runtime");
+  const f = fixture();
+  const report = f.news.select(scope, f.run.runId, f.selection, f.now);
+  const policy = { sourceLinks: true, templateVersion: "news-v1" } as const;
+  const english = renderRoutineNewsHtml(report, { ...policy, language: "en", timezone: "Europe/Sofia" });
+  expect(english).toContain(`<small>${report.generatedAt} · Revision ${report.revision}</small>`);
+  expect(english).toContain(
+    `<small>Coverage: ${report.coverage.from} to ${report.coverage.to}. ${report.coverage.fetched} pages fetched.${report.coverage.widened ? " Window widened within the saved limit." : ""}</small>`,
+  );
+  expect(renderRoutineNewsHtml({ ...report, quiet: true, stories: [] }, { ...policy, language: "en" })).toContain(
+    "<p>No qualifying stories were verified in this coverage window.</p>",
+  );
+  // English prints the count as it always has; Bulgarian formats it, with or without a template's own word.
+  const many = { ...report, coverage: { ...report.coverage, fetched: 1234, widened: false } };
+  expect(renderRoutineNewsHtml(many, { ...policy, language: "en" })).toContain(" 1234 pages fetched.</small>");
+  const word = { ...policy, templateVersion: "trends-v1", template: trendsRoutineTemplate() };
+  expect(renderRoutineNewsHtml(many, { ...word, language: "en" })).toContain(` 1234 ${word.template.sourcesWord}.</small>`);
+  const most = { ...many, coverage: { ...many.coverage, fetched: 12345 } };
+  expect(renderRoutineNewsHtml(most, { ...policy, language: "bg" })).toContain(" 12\u00a0345 изтеглени страници.</small>");
+  expect(renderRoutineNewsHtml(most, { ...word, language: "bg" })).toContain(` 12\u00a0345 ${word.template.sourcesWord}.</small>`);
+  const bulgarian = renderRoutineNewsHtml(report, { ...policy, language: "bg", timezone: "Europe/Sofia" });
+  expect(bulgarian).toContain('<html lang="bg">');
+  expect(bulgarian).toContain(` · Версия ${report.revision}</small>`);
+  expect(bulgarian).toMatch(
+    /<small>Обхват: от \d{1,2} [а-я]+ \d{4} г\., \d{2}:\d{2} до \d{1,2} [а-я]+ \d{4} г\., \d{2}:\d{2}\. \d+ изтеглен/,
+  );
+  expect(bulgarian).not.toMatch(/Coverage|Revision|pages fetched/);
+  // The report's own words (titles, claims) are shown as they were written.
+  for (const story of report.stories) expect(bulgarian).toContain(story.title.replace(/&/g, "&amp;"));
+  expect(
+    renderRoutineNewsHtml(
+      { ...report, generatedAt: "2026-11-23T05:30:00.000Z", mode: "preview" },
+      { ...policy, language: "bg", timezone: "Europe/Sofia" },
+    ),
+  ).toContain("<small>23 ноември 2026 г., 07:30 · Пробно пускане</small>");
+  // Without a zone, a date reads in UTC and says so.
+  expect(renderRoutineNewsHtml({ ...report, generatedAt: "2026-11-23T05:30:00.000Z" }, { ...policy, language: "bg" })).toContain(
+    "<small>23 ноември 2026 г., 05:30 UTC · ",
+  );
+  expect(renderRoutineNewsHtml({ ...report, quiet: true, stories: [] }, { ...policy, language: "bg" })).toContain(
+    "<p>В този период не се потвърди нито една новина, която да отговаря на условията.</p>",
+  );
 });
 
 it("reclaims eligible old artifacts before staging, and says so when every byte is protected", async () => {

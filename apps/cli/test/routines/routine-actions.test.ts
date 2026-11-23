@@ -107,7 +107,11 @@ it("keeps a routine's provenance through an owned schedule's time change, and cl
 });
 
 /** The production construction: one control service over a bare store, as `serve.ts` builds it. */
-async function controlFixture(deliveryAuthorization?: "available", templateOf?: (id: string) => RoutineTemplate | undefined) {
+async function controlFixture(
+  deliveryAuthorization?: "available",
+  templateOf?: (id: string) => RoutineTemplate | undefined,
+  languageOf?: (workspaceId: string) => Promise<"en" | "bg">,
+) {
   const store = await SqliteStore.open({ databasePath: ":memory:", inMemory: true });
   stores.push(store);
   const routines = await routineFixture(store, deliveryAuthorization === undefined ? {} : { deliveryAuthorization });
@@ -132,6 +136,7 @@ async function controlFixture(deliveryAuthorization?: "available", templateOf?: 
     allowedHosts: ["example.com"],
     wake: () => {},
     ...(templateOf === undefined ? {} : { templateOf }),
+    ...(languageOf === undefined ? {} : { languageOf }),
   });
   return { store, routines, control };
 }
@@ -163,6 +168,30 @@ it("routes owner actions through the one control service, refusing deferred poli
   await expect(
     (async () => await routineAction(f.control, { ...scope, principalId: "other", action: "get", routineId: created.routine.routineId }))(),
   ).rejects.toThrow(/scope/);
+});
+
+it("writes a routine set up here in the workspace's language, and in English where none is known", async () => {
+  const scope = { workspaceId: "default", principalId: "operator" };
+  const setup = { name: "News", objective: "Find news", timezone: "Europe/Sofia", at: "09:00" };
+  const english = (await routineAction((await controlFixture()).control, {
+    ...scope,
+    action: "create",
+    operationKey: "create",
+    setup,
+  })) as RoutineDetail;
+  expect(english.revision.snapshot.report.language).toBe("en");
+  const asked: string[] = [];
+  const bulgarian = (await routineAction(
+    (
+      await controlFixture(undefined, undefined, async (workspaceId) => {
+        asked.push(workspaceId);
+        return "bg";
+      })
+    ).control,
+    { ...scope, action: "create", operationKey: "create", setup },
+  )) as RoutineDetail;
+  expect(asked).toEqual(["default"]);
+  expect(bulgarian.revision.snapshot.report.language).toBe("bg");
 });
 
 it("stamps a routine repeated from a chat with what that chat read, as the owner reads it, and only from the caller's own chat", async () => {

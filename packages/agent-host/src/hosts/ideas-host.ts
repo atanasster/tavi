@@ -45,6 +45,7 @@ import {
   type StoreIdeaInput,
   TaviError,
 } from "@tavi/contracts";
+import { DEFAULT_LOCALE, type Locale } from "@tavi/contracts/i18n";
 import { clip as clipTo } from "@tavi/contracts/util";
 import { zodIssues } from "@tavi/contracts/zod-util";
 import { sha256Hex } from "@tavi/node-kit";
@@ -120,6 +121,8 @@ export interface IdeasHostDependencies {
    */
   readonly memoryOn?: (workspaceId: string) => Promise<boolean>;
   readonly timezone: (workspaceId: string) => Promise<string>;
+  /** The workspace's language: a provider writes its ideas in it. Absent, English. */
+  readonly locale?: (workspaceId: string) => Promise<Locale>;
   /**
    * When setup was finished: until a scheduled
    * run since has generated (for at most `IDEA_FRESH_AFTER_SETUP_MS`), the
@@ -439,13 +442,14 @@ export async function completeIdeasRun(deps: IdeasHostDependencies, workspaceId:
     const allowed = (what: IdeasReceive): boolean =>
       receives.has(what) && (what === "ledger" || (settings.sources[what] && (recalls || what === "brief")));
     const now = stamp();
-    const [capabilities, memory, tasks, timezone, ledger, active] = await Promise.all([
+    const [capabilities, memory, tasks, timezone, ledger, active, locale] = await Promise.all([
       deps.census(workspaceId),
       allowed("memory") ? deps.memory(workspaceId) : undefined,
       allowed("tasks") ? deps.tasks(workspaceId) : undefined,
       deps.timezone(workspaceId),
       allowed("ledger") ? ideas.ledger(workspaceId, now) : undefined,
       allowed("ledger") ? ideas.list({ workspaceId, now }) : undefined,
+      deps.locale?.(workspaceId),
     ]);
     const deadlineMs = entry.maxRunSeconds * 1_000;
     // *Don't use this* withholds the source itself, not only ideas citing it: the provider never reads it.
@@ -471,6 +475,8 @@ export async function completeIdeasRun(deps: IdeasHostDependencies, workspaceId:
               },
             }),
         limits: { maxIdeas: volume, deadlineMs },
+        // English is what a provider writes without being told, so only another language is named (and hashed).
+        ...(locale === undefined || locale === DEFAULT_LOCALE ? {} : { locale }),
       }),
     );
     const sources = proposalSources(data, excluded);

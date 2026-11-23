@@ -1,1 +1,10 @@
-export { availableTemplates, catalogueIdea, IDEA_CATALOGUE, triggerScore, type IdeaTemplate } from "./catalogue.js";
+export {
+  availableTemplates,
+  catalogueIdea,
+  IDEA_CATALOGUE,
+  ideaWordsIn,
+  triggerScore,
+  type CatalogueKey,
+  type IdeaTemplate,
+  type IdeaWords,
+} from "./catalogue.js";

@@ -3,6 +3,7 @@ import {
   type ChatFolder,
   mcpSlugOf,
   hostTimeZone,
+  localeOf,
   type HeartbeatOptions,
   type HeartbeatToolChoice,
   heartbeatOptionsFor,
@@ -153,6 +154,7 @@ export function composeHosts(composed: FoldersContext) {
     },
     timezone: async (workspaceId) =>
       (await persistencePort.repositories.workspaceSettings.get(workspaceId)).settings.timezone ?? hostTimeZone(),
+    locale: async (workspaceId) => localeOf((await persistencePort.repositories.workspaceSettings.get(workspaceId)).settings),
     // The morning after setup is finished has ideas of its own: setup's completion is per install.
     freshSince: async () => (await persistencePort.repositories.onboarding.install()).completedAt,
     // A provider's turn: one tool-less call on the workspace's fast model, as its owner, recorded under the

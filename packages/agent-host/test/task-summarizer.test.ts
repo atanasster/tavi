@@ -348,6 +348,20 @@ describe("summarizing one task", () => {
     expect(summaryMessages(work()).system).toMatch(/failed or cancelled, the summary says why/);
   });
 
+  it("falls back to the workspace's language when the request's is not clear; English is as it was", async () => {
+    const english = summaryMessages(work()).system;
+    expect(summaryMessages(work(), "en").system).toBe(english);
+    expect(english.endsWith("Use the language of the request.")).toBe(true);
+    const bulgarian = summaryMessages(work(), "bg").system;
+    expect(bulgarian).toContain("Use the language of the request; when it is not clear, write in Bulgarian.");
+    expect(bulgarian.replace("; when it is not clear, write in Bulgarian.", ".")).toBe(english);
+    expect(summaryMessages(work({ title: "Kept" }), "bg").system).toContain("write in Bulgarian");
+    // The workspace's `locale` reaches the call.
+    const { model, requests } = fakeModel('{"title":"План","summary":"Готово"}');
+    expect(await summarizeTask(work(), deps({ model, settings: { locale: "bg" } }).value)).toBe("done");
+    expect(requests[0]?.messages[0]?.text).toBe(bulgarian);
+  });
+
   it("normalises the task's text as the envelope does: forged fences and chat tokens quoted, nothing else changed", () => {
     const task = JSON.parse(
       summaryMessages(

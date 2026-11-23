@@ -18,10 +18,14 @@ import {
   type RoutineScope,
   LLM_RELEASES_ROUTINE_TEMPLATE_ID,
   isBuiltinRoutineTemplate,
+  localDateTime,
   routineReportTitle,
   routineTemplateIdOf,
   type RoutineTemplate,
 } from "@tavi/contracts";
+import { DEFAULT_LOCALE, isLocale } from "@tavi/contracts/i18n";
+import type { CoreKey, CoreT } from "@tavi/contracts/locales/core";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 import { printThemeCss } from "@tavi/contracts/print-theme";
 import { nowTimestamp, plural } from "@tavi/contracts/util";
 import { sha256Hex } from "@tavi/node-kit";
@@ -661,19 +665,35 @@ export class RoutineNewsService {
  *
  * The renderer reads all three fields rather than hardcoding them, but today the
  * only production caller passes what the revision schema pins: `sourceLinks` is
- * `z.literal(true)`, `unsupportedRoutinePolicy` refuses any language but `"en"`,
+ * `z.literal(true)`, `unsupportedRoutinePolicy` refuses any language but a supported one (`SUPPORTED_LOCALES`),
  * and `templateVersion` is the host's own (`news-v1`, `llm-releases-v1`), or a plugin's template the
  * revision carries (`template`), which shares its layout and gives its words; one
  * with no template is refused rather than rendered as news. They are read but
  * invariant, so a direct caller (and the renderer test) can still exercise the
  * other values without the product being able to produce them.
+ *
+ * The page's own words (run, coverage, the quiet sentence), its dates and its `lang` are in `language` (English when
+ * it is not a supported one); what the report holds (titles, claims, caveats, gaps) is shown as it was written. In English the dates stay as stored (ISO), as they
+ * always have; in another language they read as that language's dates in `timezone` (UTC when absent).
  */
 export interface RoutineRenderPolicy {
   readonly language: string;
   readonly sourceLinks: boolean;
   readonly templateVersion: string;
   readonly template?: Pick<RoutineTemplate, "id" | "quiet" | "sourcesWord">;
+  readonly timezone?: string;
 }
+
+/** `iso` as `t`'s language reads a date and time in `timezone`: "23 ноември 2026 г., 07:00". */
+function reportDate(iso: string, t: CoreT, timezone: string): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return iso;
+  const local = localDateTime(at, timezone);
+  const time = `${String(local.hour).padStart(2, "0")}:${String(local.minute).padStart(2, "0")}`;
+  const day = t("date.withYear", { date: `${local.day} ${t(`date.month.${local.month}` as CoreKey)}`, year: String(local.year) });
+  return `${t("date.dayTime", { date: day, time })}${timezone === "UTC" ? " UTC" : ""}`;
+}
+
 export function renderRoutineNewsHtml(
   report: RoutineNewsReport,
   policy: RoutineRenderPolicy = { language: "en", sourceLinks: true, templateVersion: "news-v1" },
@@ -681,6 +701,9 @@ export function renderRoutineNewsHtml(
   const template = policy.template;
   if (isBuiltinRoutineTemplate(policy.templateVersion) ? template !== undefined : template?.id !== policy.templateVersion)
     throw new TaviError("UNSUPPORTED", `Report template ${policy.templateVersion} is not available`);
+  const locale = isLocale(policy.language) ? policy.language : DEFAULT_LOCALE;
+  const t = coreIn(locale);
+  const when = (iso: string): string => (locale === DEFAULT_LOCALE ? iso : reportDate(iso, t, policy.timezone ?? "UTC"));
   const source = (id: string) => {
     const found = report.sources.find((item) => item.sourceId === id);
     if (found === undefined) throw new TaviError("INVALID_INPUT", `the report cites ${id}, a source it does not hold`);
@@ -688,7 +711,15 @@ export function renderRoutineNewsHtml(
   };
   const citation = (claim: { sourceId: string }) =>
     policy.sourceLinks ? ` <a href="${escape(source(claim.sourceId).canonicalUrl)}">${escape(source(claim.sourceId).publisher)}</a>` : "";
-  return `<!doctype html><html lang="${escape(policy.language)}"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>${escape(report.title)}</title><style>${printThemeCss("pt")}@page{size:A4;margin:18mm}body{font:var(--print-text-base)/1.5 var(--print-font);color:var(--print-ink)}h1{font-size:var(--print-text-2xl);margin-bottom:4mm}h2{font-size:var(--print-text-lg);margin-bottom:2mm}article{break-inside:avoid;margin:7mm 0}a{color:var(--print-link);overflow-wrap:anywhere}small{color:var(--print-ink-soft)}.caveat{font-size:var(--print-text-xs);color:var(--print-caution)}footer{margin-top:8mm;border-top:1px solid var(--print-rule);padding-top:3mm}</style></head><body><h1>${escape(report.title)}</h1><small>${escape(report.generatedAt)} · ${report.mode === "preview" ? "Preview" : `Revision ${report.revision}`}</small>${report.quiet ? `<p>${escape(template?.quiet.report ?? "No qualifying stories were verified in this coverage window.")}</p>` : report.stories.map((story) => `<article><h2>${escape(story.title)}</h2>${story.claims.map((claim) => `<p>${escape(claim.text)}${citation(claim)}</p>`).join("")}${story.caveats.map((item) => `<p class="caveat">${escape(item)}</p>`).join("")}</article>`).join("")}<footer><small>Coverage: ${escape(report.coverage.from)} to ${escape(report.coverage.to)}. ${report.coverage.fetched} ${escape(template?.sourcesWord ?? "pages fetched")}.${report.coverage.widened ? " Window widened within the saved limit." : ""}</small>${report.coverage.gaps.map((gap) => `<p class="caveat">${escape(gap)}</p>`).join("")}</footer></body></html>`;
+  const run = report.mode === "preview" ? t("reports.news.preview") : t("reports.news.revision", { revision: String(report.revision) });
+  // English has always printed the count as it is ("1234"); another language formats it ("1 234") and picks its plural.
+  const count = locale === DEFAULT_LOCALE ? String(report.coverage.fetched) : report.coverage.fetched;
+  const fetched =
+    template?.sourcesWord === undefined
+      ? t("reports.news.fetched", { count })
+      : t("reports.news.fetchedAs", { count, word: template.sourcesWord });
+  const coverage = `${t("reports.news.coverage", { from: when(report.coverage.from), to: when(report.coverage.to) })} ${fetched}${report.coverage.widened ? ` ${t("reports.news.widened")}` : ""}`;
+  return `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>${escape(report.title)}</title><style>${printThemeCss("pt")}@page{size:A4;margin:18mm}body{font:var(--print-text-base)/1.5 var(--print-font);color:var(--print-ink)}h1{font-size:var(--print-text-2xl);margin-bottom:4mm}h2{font-size:var(--print-text-lg);margin-bottom:2mm}article{break-inside:avoid;margin:7mm 0}a{color:var(--print-link);overflow-wrap:anywhere}small{color:var(--print-ink-soft)}.caveat{font-size:var(--print-text-xs);color:var(--print-caution)}footer{margin-top:8mm;border-top:1px solid var(--print-rule);padding-top:3mm}</style></head><body><h1>${escape(report.title)}</h1><small>${escape(when(report.generatedAt))} · ${escape(run)}</small>${report.quiet ? `<p>${escape(template?.quiet.report ?? t("reports.news.quiet"))}</p>` : report.stories.map((story) => `<article><h2>${escape(story.title)}</h2>${story.claims.map((claim) => `<p>${escape(claim.text)}${citation(claim)}</p>`).join("")}${story.caveats.map((item) => `<p class="caveat">${escape(item)}</p>`).join("")}</article>`).join("")}<footer><small>${escape(coverage)}</small>${report.coverage.gaps.map((gap) => `<p class="caveat">${escape(gap)}</p>`).join("")}</footer></body></html>`;
 }
 
 /**

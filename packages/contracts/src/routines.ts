@@ -14,6 +14,7 @@ import { SCHEDULE_TIME_PATTERN, instantForLocalTime, isValidTimeZone, localDateT
 import { RoutineNetworkModeSchema } from "./routine-egress.js";
 import { ContentLabelSchema } from "./content-label.js";
 import { coreEnglish, type CoreT } from "./locales/core.js";
+import { DEFAULT_LOCALE, isLocale, SUPPORTED_LOCALES, type Locale } from "./i18n.js";
 import { memoryProvenanceLine, type MemoryProvenance } from "./memory.js";
 
 const id = z.string().min(1).max(128);
@@ -846,14 +847,16 @@ function deliveryWindowSubject(outside: readonly { readonly label: string; reado
  * run against a provider, so they are unchanged and this comment is the record:
  * they are a working default, not a measured promise. A revision pins its
  * snapshot, so changing them here would affect new routines only.
+ *
+ * The report is written in `language`: the workspace's, where a routine is created.
  */
 /* Provisional ceilings, not a model-cost or quality promise. */
-export function routineDefaults(timezone: string) {
+export function routineDefaults(timezone: string, language: Locale = DEFAULT_LOCALE) {
   return {
     report: {
       style: "summary",
       maxItems: 5,
-      language: "en",
+      language,
       formats: ["in-app"],
       sourceLinks: true,
       templateVersion: "news-v1",
@@ -908,7 +911,8 @@ export function unsupportedRoutinePolicy(value: unknown): string | undefined {
   )
     return "Event triggers are not available";
   const report = object["report"] as { language?: unknown } | undefined;
-  if (report?.language !== undefined && report.language !== "en") return "Only English report output is currently supported";
+  if (report?.language !== undefined && !isLocale(report.language))
+    return `Report output is available in ${SUPPORTED_LOCALES.join(", ")} only`;
   const execution = object["execution"] as { overlap?: unknown } | undefined;
   if (execution?.overlap === "queue" || execution?.overlap === "cancel_previous") return "Only skip overlap policy is available";
   return undefined;

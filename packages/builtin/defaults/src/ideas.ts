@@ -8,6 +8,8 @@ import {
   type IdeasProvider,
   type ProposedIdea,
 } from "@tavi/contracts";
+import { DEFAULT_LOCALE, type Locale } from "@tavi/contracts/i18n";
+import { languageName } from "@tavi/contracts/locales/core";
 import { clip } from "@tavi/contracts/util";
 
 /**
@@ -25,7 +27,8 @@ import { clip } from "@tavi/contracts/util";
  * person (`TRIAGE_SYSTEM`): its picks, each citing the note it rests on, rank
  * above every idea a trigger word alone matched, since a word in common is not
  * an interest. Then it asks the model once more to reword the
- * matched ideas for the person — title, pitch, chip label and prompt — and
+ * matched ideas for the person — title, pitch, chip label and prompt, in the
+ * workspace's language (`request.locale`) — and
  * keeps everything else (key, section, basis, uses) as the catalogue has it.
  * A rewording that fails, is refused as over budget, or does not hold to the
  * idea's schema leaves that idea as the catalogue wrote it.
@@ -72,8 +75,22 @@ export const REWORD_SYSTEM = [
   'Answer with JSON only: {"ideas":[{"key":"…","title":"…","pitch":"…","label":"…","prompt":"…"}]}.',
 ].join("\n");
 
-/** A prompt's promise of a reminder. */
-const REMINDS = /\bremind/i;
+/**
+ * The rewording instructions for a workspace in `locale`: `REWORD_SYSTEM` as it is in English, and with one more
+ * line asking for the workspace's language otherwise, whatever language the catalogue's words are in.
+ */
+export function rewordSystem(locale: Locale = DEFAULT_LOCALE): string {
+  if (locale === DEFAULT_LOCALE) return REWORD_SYSTEM;
+  const language = languageName(locale);
+  return `${REWORD_SYSTEM}\nWrite title, pitch, label and prompt in ${language}, whatever language the current wording is in; a [placeholder] you keep is written in ${language} too, inside its brackets.`;
+}
+
+/**
+ * A prompt's promise of a reminder, in any language the workspace can be in: English "remind…" (reminder, reminders)
+ * and Bulgarian "напомн…" (напомни, напомняне, напомняния). A rewording into the workspace's language keeps the
+ * promise in its own words, so the check reads both, whichever language the catalogue and the rewording are in.
+ */
+const REMINDS = /\bremind|(?<!\p{L})напомн/iu;
 
 /** The first JSON object in a model's answer, which may come fenced or with words around it. */
 function jsonObject(text: string): unknown {
@@ -112,13 +129,14 @@ async function reworded(
   host: NonNullable<IdeasGenerateRequest["host"]>,
   proposals: readonly ProposedIdea[],
   retired: readonly IdeaTemplate[],
+  locale: Locale = DEFAULT_LOCALE,
 ): Promise<readonly ProposedIdea[]> {
   const asked = proposals.slice(0, REWORD_MAX);
   if (asked.length === 0) return proposals;
   const user = rewordRequest(asked.map(({ idea }) => idea));
   let answer: unknown;
   try {
-    answer = jsonObject((await host.runTurn({ system: REWORD_SYSTEM, user, maxOutputTokens: 1_500 })).text);
+    answer = jsonObject((await host.runTurn({ system: rewordSystem(locale), user, maxOutputTokens: 1_500 })).text);
   } catch {
     return proposals;
   }
@@ -242,7 +260,7 @@ export function createBuiltinIdeasProvider(catalogue: readonly IdeaTemplate[] = 
         // *More like this* counts as one more mention of the template, or of anything in its section.
         const hits = triggerScore(template, everything) + (boosted.has(template.key) || boosted.has(template.category) ? 1 : 0);
         const cited = pick?.mention ?? (hits === 0 ? undefined : mentions.find((mention) => triggerScore(template, mention.text) > 0));
-        const idea = catalogueIdea(template);
+        const idea = catalogueIdea(template, request.locale);
         // A pick ranks above every idea the words alone matched, in the model's order; with picks to rank, a match on
         // words alone stays below them.
         const score =
@@ -297,6 +315,7 @@ export function createBuiltinIdeasProvider(catalogue: readonly IdeaTemplate[] = 
               request.host,
               matched.filter(cites).map((entry) => entry.proposal),
               catalogue.filter((template) => ruledOut.has(template.key)),
+              request.locale,
             );
       const fittedByKey = new Map(fitted.map((proposal) => [proposal.idea.key, proposal]));
       const personal = matched.map((entry) => fittedByKey.get(entry.proposal.idea.key) ?? entry.proposal);

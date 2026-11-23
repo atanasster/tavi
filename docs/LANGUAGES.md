@@ -96,6 +96,23 @@ Bulgarian dates ("вчера", "миналата седмица", "преди 3 
 passwords, PIN codes and sensitive topics (health, beliefs, money, ЕГН and other
 ID numbers, a home address) the same way it recognises English ones.
 
+Text a model writes follows the workspace's language too. Ideas Tavi rewords
+for you are written in it, and a reminder an idea promises is kept whichever
+language it's written in. Activity summaries use the language of the chat, and
+the workspace's language when that isn't clear. A routine set up after you
+choose a language writes its report in it: story titles are in your language,
+while each claim stays the exact sentence from its source page, because that is
+what Tavi checks. The report's headings, labels and dates follow its language.
+Routines created earlier keep theirs. A report can be in any language Tavi has a
+pack for.
+
+The built-in ideas come in each language Tavi has a pack for: their titles,
+labels, pitches and prompts, and the words in your notes that bring an idea up.
+Trigger words count in English and Bulgarian alike, whatever the workspace's
+language. Ideas are stored in the language they were written in, so after a
+language change they switch at the next run. An idea from a plugin, or one Tavi
+reworded, stays as it was written.
+
 Status words the canvas shows for codes the owner sends (the state of a
 routine, run, delivery, schedule, reminder, plugin or worker; a run's mode and
 network reach; a tool's effect; a review state) come from the canvas's own

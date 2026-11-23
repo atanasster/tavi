@@ -216,6 +216,17 @@ describe("the ideas host", () => {
     expect(seen[2]?.ledger?.examples).toEqual([]);
   });
 
+  it("tells a provider the workspace's language only when it is not English", async () => {
+    const { deps, seen, plugin } = await fixture({ settings: { provider: "acme.ideas" } });
+    plugin(async () => ({ ideas: [] }));
+    await runIdeas(deps, "default", "refresh");
+    await runIdeas({ ...deps, locale: async () => "en" }, "default", "refresh");
+    await runIdeas({ ...deps, locale: async () => "bg" }, "default", "refresh");
+    expect(seen[0]?.locale).toBeUndefined();
+    expect(seen[1]?.locale).toBeUndefined();
+    expect(seen[2]?.locale).toBe("bg");
+  });
+
   it("skips while off or while its provider is missing, and says why", async () => {
     const off = await fixture({ settings: { enabled: false } });
     expect(await runIdeas(off.deps, "default", "refresh")).toMatchObject({ outcome: "skipped", reason: "Ideas are off" });

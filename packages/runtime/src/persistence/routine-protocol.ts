@@ -148,6 +148,8 @@ export type RoutineOperations = Enveloped<RpcOperations<"routine", RoutinePort>>
         defaultModels: import("@tavi/contracts").RoutineSnapshot["models"] | undefined;
         allowedHosts: readonly string[];
         renderer: { available: boolean; provider: string } | undefined;
+        /** The workspace's language, for a routine created from a setup. */
+        language?: import("@tavi/contracts/i18n").Locale;
       };
     };
     output: unknown;

@@ -6,6 +6,7 @@ import type { AsyncRepository } from "./persistence-types.js";
 import { IdSchema, TimestampSchema } from "./ids.js";
 import { defineProviderError } from "./util.js";
 import { coreEnglish, type CoreT } from "./locales/core.js";
+import type { Locale } from "./i18n.js";
 import type { CoreKey } from "./locales/core-en.js";
 
 /**
@@ -554,6 +555,8 @@ export interface IdeasGenerateRequest {
   /** What the person steered away from, and the keys active now. */
   readonly ledger?: IdeaLedger & { readonly active: readonly { readonly key: string; readonly category: IdeaCategory }[] };
   readonly limits: { readonly maxIdeas: number; readonly deadlineMs: number };
+  /** The workspace's language, when it is not English: what an idea's words are written in. Absent, English. */
+  readonly locale?: Locale;
   /**
    * Present for a provider whose manifest declares `usesTurns`: one
    * metered, tool-less model call on the workspace's `fast` model, within the

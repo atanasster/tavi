@@ -2,7 +2,7 @@ import { describeIdeasProviderConformance, fullIdeasRequest, bareIdeasRequest } 
 import { IDEA_CATEGORIES, IdeasProviderError, type IdeasGenerateRequest } from "@tavi/contracts";
 import { describe, expect, it } from "vitest";
 
-import { createBuiltinIdeasProvider, REWORD_SYSTEM, TRIAGE_SYSTEM } from "../src/ideas.js";
+import { createBuiltinIdeasProvider, REWORD_SYSTEM, rewordSystem, TRIAGE_SYSTEM } from "../src/ideas.js";
 
 /** The built-in ideas provider: catalogue templates the census can run, ranked by what the person mentioned. */
 
@@ -110,6 +110,68 @@ describe("the built-in ideas provider", () => {
     const { ideas } = await createBuiltinIdeasProvider().generate({ ...request, host });
     const exam = ideas.find(({ idea }) => idea.key === "learning.exam-prep");
     expect(exam?.idea.title).toBe("I can get you ready for your exam");
+    expect(exam?.idea.prompt).toBe(plain.ideas.find(({ idea }) => idea.key === "learning.exam-prep")?.idea.prompt);
+  });
+
+  it("rewords in the workspace's language, and keeps a reminder the rewording promises in Bulgarian", async () => {
+    const systems: string[] = [];
+    const request = {
+      ...fullIdeasRequest(new AbortController().signal),
+      brief: "I have an exam to prepare for next month.",
+      locale: "bg" as const,
+    };
+    const host: NonNullable<IdeasGenerateRequest["host"]> = {
+      runTurn: async ({ system }) => {
+        systems.push(system);
+        return {
+          text: JSON.stringify({
+            ideas: [
+              {
+                key: "learning.exam-prep",
+                title: "Мога да те подготвя за изпита",
+                prompt: "Помогни ми да се подготвя за изпита: изпитай ме, за да намеря слабите си места, и планирай учене с напомняния.",
+              },
+            ],
+          }),
+        };
+      },
+    };
+    const { ideas } = await createBuiltinIdeasProvider().generate({ ...request, host });
+    // The rewording turn is told the language; English keeps the instructions as they were.
+    expect(systems).toContain(rewordSystem("bg"));
+    expect(rewordSystem("bg")).toContain("in Bulgarian");
+    expect(rewordSystem("bg").startsWith(REWORD_SYSTEM)).toBe(true);
+    expect(rewordSystem("en")).toBe(REWORD_SYSTEM);
+    expect(rewordSystem()).toBe(REWORD_SYSTEM);
+    // The English template promises reminders and the Bulgarian rewording keeps them: it is not reverted to English.
+    const exam = ideas.find(({ idea }) => idea.key === "learning.exam-prep");
+    expect(exam?.idea.title).toBe("Мога да те подготвя за изпита");
+    expect(exam?.idea.prompt).toContain("с напомняния");
+  });
+
+  it("still keeps the catalogue's prompt when a Bulgarian rewording drops the reminder", async () => {
+    const request = {
+      ...fullIdeasRequest(new AbortController().signal),
+      brief: "I have an exam to prepare for next month.",
+      locale: "bg" as const,
+    };
+    const host: NonNullable<IdeasGenerateRequest["host"]> = {
+      runTurn: async () => ({
+        text: JSON.stringify({
+          ideas: [
+            {
+              key: "learning.exam-prep",
+              title: "Мога да те подготвя за изпита",
+              prompt: "Помогни ми да се подготвя за изпита и планирай ученето.",
+            },
+          ],
+        }),
+      }),
+    };
+    const plain = await createBuiltinIdeasProvider().generate(request);
+    const { ideas } = await createBuiltinIdeasProvider().generate({ ...request, host });
+    const exam = ideas.find(({ idea }) => idea.key === "learning.exam-prep");
+    expect(exam?.idea.title).toBe("Мога да те подготвя за изпита");
     expect(exam?.idea.prompt).toBe(plain.ideas.find(({ idea }) => idea.key === "learning.exam-prep")?.idea.prompt);
   });
 

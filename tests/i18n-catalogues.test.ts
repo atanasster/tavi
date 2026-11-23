@@ -10,6 +10,8 @@ import { CORE_EN } from "@tavi/contracts/locales/core-en";
 
 import { bg as UI_BG } from "../apps/ui/src/locales/bg.js";
 import { en as UI_EN } from "../apps/ui/src/locales/en.js";
+import { ideas as IDEAS_BG } from "../packages/plugin-kit/src/ideas/locales/bg.js";
+import { ideas as IDEAS_EN } from "../packages/plugin-kit/src/ideas/locales/en.js";
 
 /**
  * The language packs: every namespace's catalogue in another language has
@@ -29,6 +31,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const NAMESPACES: readonly { readonly name: string; readonly en: Catalog; readonly bg: Catalog }[] = [
   { name: "core", en: CORE_EN, bg: CORE_BG },
   { name: "ui", en: UI_EN, bg: UI_BG },
+  { name: "ideas", en: IDEAS_EN, bg: IDEAS_BG },
 ];
 
 const PARAMETER = /\{([A-Za-z][A-Za-z0-9_]*)\}/g;

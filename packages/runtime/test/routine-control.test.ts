@@ -945,9 +945,9 @@ it("passes blocked pending drafts fairly and rejects unsupported language", asyn
       routineId: ready.routineId,
       operationKey: "language",
       expectedVersion: current.routine.version,
-      edit: { report: { ...current.revision.snapshot.report, language: "bg" } },
+      edit: { report: { ...current.revision.snapshot.report, language: "de" } },
     }),
-  ).toThrow(/English/);
+  ).toThrow(/available in en, bg only/);
 });
 it("activates evaluated replacement models without rewriting queued or historical bindings", async () => {
   const f = await fixture();

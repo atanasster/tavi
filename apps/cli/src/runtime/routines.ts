@@ -16,6 +16,7 @@ import {
   DEFAULT_WORKSPACE_ID,
   parallelReadsOf,
   englishOf,
+  localeOf,
   navPath,
 } from "@tavi/contracts";
 import { createOwnerRenderer } from "../features/browser/host.js";
@@ -379,6 +380,8 @@ export function composeRoutines(composed: WorkflowContext) {
     templateOf: (id) => routineTemplates.get(id),
   });
   // The workspace's zone as the routines and schedules tools read it: one cache, refreshed once per step for both.
+    // A routine set up here writes its report in the workspace's language.
+    languageOf: async (workspaceId) => localeOf((await persistencePort.repositories.workspaceSettings.get(workspaceId)).settings),
   const workspaceZone = rememberedWorkspaceZone(persistencePort.repositories.workspaceSettings);
   registerRoutineTools(tools, routineControl, {
     workspaceTimezone: workspaceZone.zoneOf,

@@ -2,7 +2,7 @@ import { trendsRoutineTemplate } from "@tavi/test-support/routine-templates";
 import { routineFixture, executionFixture } from "./routine-fixture.js";
 import { readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { executeRoutinePipeline } from "../../src/features/routines/pipeline.js";
+import { executeRoutinePipeline, routineLanguageNote } from "../../src/features/routines/pipeline.js";
 import { routineReportsDoctor } from "../../src/features/doctor/reports.js";
 import { afterEach, expect, it, vi } from "vitest";
 import { ROUTINE_LLM_RELEASES_INSTRUCTIONS, ROUTINE_NEWS_INSTRUCTIONS, RoutineCreateSchema, routineDefaults } from "@tavi/contracts";
@@ -804,4 +804,10 @@ it("fills a plugin template's window with the widened bound and adds the prefere
   expect(asked).toContain(
     " The application prefers evidence published since 2026-09-19T06:00:00.000Z and uses older evidence only when none of that qualifies.",
   );
+});
+
+it("asks for story titles in the report's language, and adds nothing in English", () => {
+  expect(routineLanguageNote("en")).toBe("");
+  expect(routineLanguageNote("de")).toBe("");
+  expect(routineLanguageNote("bg")).toBe(" Write each story title in Bulgarian; each claim stays the verbatim sentence from its page.");
 });
