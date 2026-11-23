@@ -27,3 +27,13 @@ host sends in `init` and `theme`. `plugin-base.css` defines all of them with
 the canvas's light and dark values until then, or outside Tavi: copy it into
 your own plugin and link it before your stylesheet (see
 [PLUGINS.md](../../../docs/PLUGINS.md#ui-plugins)).
+
+It speaks the canvas's language. Its words are in `locales/en.json` and
+`locales/bg.json`, declared under `locales` (manifest `schemaVersion: 3`). The
+host hands the page its messages in `init` and again in a `locale` message when
+the person changes language. `live.js` then says its status line, its title and
+its picture's description in that language, and anything it lacks in English.
+The Bulgarian pack also translates the plugin's name, description, panel title
+and disclosure. If you copy it under your own name and title, change them in
+`locales/bg.json` too, or delete the `manifest` part of that pack (see
+[Translating your plugin](../../../docs/PLUGINS.md#translating-your-plugin)).

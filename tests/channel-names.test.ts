@@ -23,7 +23,9 @@ import { TEST_SUPPORT, workspacePackageDirectories } from "./support/dependency-
  * overlap words (`apps/cli/src/features/mcp/review.ts`), where a server named
  * for Gmail or Telegram may do the job of Tavi's own mail or messaging tools.
  * Setup names Telegram as its terminal
- * channel step and in the import of another agent's Telegram bot.
+ * channel step and in the import of another agent's Telegram bot. The
+ * language catalogues (`src/locales/`) are words a person reads, not code, and
+ * are not scanned.
  * (The release test's package list is a test, so it is not scanned.)
  */
 
@@ -59,9 +61,9 @@ const ALLOWED: Readonly<Record<string, number>> = {
   "apps/cli/src/features/onboard/steps.ts": 1,
   "apps/cli/src/features/onboard/import.ts": 38,
   "apps/ui/src/features/welcome/IdeasStep.tsx": 1,
-  // Not a channel: the Google Cloud console steps for a sign-in client, which name the Gmail API to enable and
-  // its id in the console's own link.
-  "apps/cli/src/features/apps/client-setup.ts": 2,
+  // Not a channel: the Google Cloud console steps for a sign-in client, whose link names the Gmail API to enable
+  // by its id (the steps' words are in the catalogue).
+  "apps/cli/src/features/apps/client-setup.ts": 1,
   // Not a channel: the example app id in the `apps` tool's own description.
   "apps/cli/src/features/apps/tool.ts": 1,
 };
@@ -142,6 +144,9 @@ function channelNamesInCore(): Record<string, number> {
     const src = join(root, pkg, "src");
     if (!statSync(src, { throwIfNoEntry: false })?.isDirectory()) continue;
     for (const file of sources(src)) {
+      // A language catalogue's words name channels as a person reads them (the built-ins' setup words, a reply
+      // "sent to Telegram"): words, not channel code. A catalogue never decides by a channel's name.
+      if (file.split(sep).includes("locales")) continue;
       const count = code(readFileSync(file, "utf8")).match(NAMES)?.length ?? 0;
       if (count > 0) counts[relative(root, file).split(sep).join("/")] = count;
     }

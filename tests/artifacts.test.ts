@@ -210,7 +210,9 @@ describe("built artifacts resolve and run", () => {
 
   it("ships the built-in browser view with the canvas, holding it to the canvas's bundle rules", () => {
     const plugin = join(repositoryRoot, "apps/cli/ui-dist/plugins/tavi.browserview");
-    expect(readdirSync(plugin).sort()).toEqual(["icon.svg", "live.css", "live.html", "live.js", "plugin-base.css"]);
+    expect(readdirSync(plugin).sort()).toEqual(["icon.svg", "live.css", "live.html", "live.js", "locales", "plugin-base.css"]);
+    // Its language packs, which the canvas hands the panel as `init.messages`.
+    expect(readdirSync(join(plugin, "locales")).sort()).toEqual(["bg.json"]);
     const page = readFileSync(join(plugin, "live.html"), "utf8");
     // Its document's CSP allows only its own files: nothing inline, nothing from elsewhere.
     for (const [, attributes, body] of page.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)) {

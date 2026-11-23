@@ -393,7 +393,7 @@ A plugin speaks the workspace's language (`workspace.locale`, [LANGUAGES.md](LAN
 
 A pack is at most 64 KiB, with at most 500 `manifest` entries and 1000 messages; each message, or each plural form, is at most 2000 characters, and no text may be empty.
 
-**Use the messages in code.** `ctx.locale` is the workspace's language (`"en"` or `"bg"`), and `ctx.t(key, params)` says a message in it:
+**Use the messages in code.** `ctx.locale` is the language of the owner's default workspace (`"en"` or `"bg"`), and `ctx.t(key, params)` says a message in it. A plugin runs once for the whole owner, so where it serves another workspace too (a channel bound to it, say), it still speaks the default workspace's language there. The words Tavi shows for your manifest are different: the canvas picks the pack of the workspace it shows.
 
 ```js
 export function register({ provideOnboarding, t }) {
@@ -407,7 +407,7 @@ export function register({ provideOnboarding, t }) {
 ```
 
 - `ctx.t` looks the key up in the language's messages, then in English (`locales/en.json`), then answers the key itself. It fills each `{name}` from `params` (a number is written the reader's way: "20 000" in Bulgarian), and a name with no parameter is left as written. A plural object's form is chosen by `params.count`; with no count it is `other`.
-- Both are live: call `ctx.t` and read `ctx.locale` each time something is said, not once in `register`, and a language changed while the plugin runs is followed with no restart. A confined worker hears each change too, one made while it starts included.
+- Both are live: call `ctx.t` and read `ctx.locale` each time something is said, not once in `register`, and a language changed while the plugin runs (in the default workspace) is followed with no restart. A confined worker hears each change too, one made while it starts included.
 - Translate only what a person reads. What a tool returns is read by the model and stays as it is.
 - A mod's hooks and commands are told the language in the envelope (`envelope.locale`, absent for English), and a command's input carries `locale`, `en` when the envelope has none ([MODS.md](MODS.md)).
 
@@ -415,7 +415,7 @@ export function register({ provideOnboarding, t }) {
 
 **Review and changes.** Packs are among the version's files: they count toward its content hash, and are reviewed and approved with it, so changing a pack is a new version. Tavi reads a pack only from the approved snapshot while it still has its approved hash: a pack changed on disk after approval, or a snapshot that no longer matches, is never shown: its manifest words show in English, with no error (and the owner refuses to start a version whose snapshot changed).
 
-**Canvas panels (`tavi.ui/1`).** A UI contribution's frame is told the language too. `init` carries `locale`, the canvas's language (`"en"` or `"bg"`; an older host sends none, which means English), and `messages`, your pack's messages in that language with each key it lacks filled from `locales/en.json`, at most 1000 keys, the language's own first. `messages` is absent when you ship no messages for it. When the person changes language the host sends `{abi: "tavi.ui/1", type: "locale", locale, messages?}`: redraw your words when it arrives. There is no `t()` inside the frame, so fill each `{param}` yourself and pick a plural form with `new Intl.PluralRules(locale)`. Your document cannot fetch its own `locales/*.json` (`connect-src 'none'` stays): the host reads and verifies the packs and hands you the words. A pack's `ui.contributions.<id>.title` and `.disclosure` translate the panel's title and what it says it receives. Keep state you read back (a `data-state`) as stable ids, never display text.
+**Canvas panels (`tavi.ui/1`).** A UI contribution's frame is told the language too. `init` carries `locale`, the canvas's language (`"en"` or `"bg"`; an older host sends none, which means English), and `messages`, your pack's messages in that language with each key it lacks filled from `locales/en.json`, at most 1000 keys, the language's own first. `messages` is absent when you ship no messages for it. When the person changes language the host sends `{abi: "tavi.ui/1", type: "locale", locale, messages?}`: redraw your words when it arrives. There is no `t()` inside the frame, so fill each `{param}` yourself and pick a plural form with `new Intl.PluralRules(locale)`. Your document cannot fetch its own `locales/*.json` (`connect-src 'none'` stays): the host reads and verifies the packs and hands you the words. A pack's `ui.contributions.<id>.title` and `.disclosure` translate the panel's title and what it says it receives. Keep state you read back (a `data-state`) as stable ids, never display text. [`minimal-browser-view`](../examples/ui-plugins/minimal-browser-view/) is the smallest panel that does all of this.
 
 **Check them.** `tavi plugins validate <dir>` runs install's checks on every pack and lists each pack's problems, not only the first. For each pack that checks out it counts the manifest fields with English text that the pack translates, and the message keys it has out of every key in the packs that check out, and names those it leaves to English:
 

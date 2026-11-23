@@ -1,10 +1,10 @@
 {
-  "features/apps": 5,
-  "features/center": 9,
-  "features/chat": 7,
-  "features/ideas": 2,
-  "features/settings": 44,
-  "features/shell": 1,
-  "features/welcome": 7,
-  "ui": 2
+  "features/apps": 0,
+  "features/center": 0,
+  "features/chat": 0,
+  "features/ideas": 0,
+  "features/settings": 0,
+  "features/shell": 0,
+  "features/welcome": 0,
+  "ui": 0
 }

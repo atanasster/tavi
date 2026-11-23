@@ -406,10 +406,10 @@ describe("Set up a schedule in the chat panel", () => {
 
 describe("Repeat this on a message", () => {
   it("is offered only when asked for, and says what was created", async () => {
-    const plain = await mount(<MessageActions text="hi" label="prompt" />);
+    const plain = await mount(<MessageActions text="hi" kind="prompt" />);
     expect(plain.querySelector('[aria-label="Repeat this…"]')).toBeNull();
     const onRepeat = vi.fn((report: (note: string) => void) => report("Daily brief created."));
-    const page = await mount(<MessageActions text="hi" label="prompt" onRepeat={onRepeat} />);
+    const page = await mount(<MessageActions text="hi" kind="prompt" onRepeat={onRepeat} />);
     await click(page.querySelector('[aria-label="Repeat this…"]'));
     expect(onRepeat).toHaveBeenCalledTimes(1);
     expect(page.querySelector(".action-notice")?.textContent).toBe("Daily brief created.");

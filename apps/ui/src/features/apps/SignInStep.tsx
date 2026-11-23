@@ -286,7 +286,7 @@ export function SignInStep({
             <details className="apps-paste-parts" open={phone}>
               <summary className="disclosure">{t("apps.signIn.typeParts")}</summary>
               <label>
-                code{" "}
+                <code>code</code>{" "}
                 <input
                   value={typed.code}
                   autoComplete="off"
@@ -301,7 +301,7 @@ export function SignInStep({
                 />
               </label>
               <label>
-                state{" "}
+                <code>state</code>{" "}
                 <input
                   value={typed.state}
                   autoComplete="off"

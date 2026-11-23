@@ -16,7 +16,7 @@ afterEach(() => {
 it("copies exact response text and reports clipboard failures", async () => {
   const writeText = vi.fn().mockResolvedValue(undefined);
   vi.stubGlobal("navigator", { clipboard: { writeText } });
-  const host = await mount(<MessageActions text={"Hello\nworld"} label="response" />);
+  const host = await mount(<MessageActions text={"Hello\nworld"} kind="response" />);
   await act(async () => host.querySelector<HTMLButtonElement>("button")!.click());
   expect(writeText).toHaveBeenCalledWith("Hello\nworld");
   expect(host.textContent).toContain("Copied");
@@ -35,7 +35,7 @@ it("reads a response, stops it, and cancels speech on unmount", async () => {
   const speech = { speak: vi.fn(), cancel: vi.fn() };
   vi.stubGlobal("SpeechSynthesisUtterance", Utterance);
   vi.stubGlobal("speechSynthesis", speech);
-  const host = await mount(<MessageActions text="A response" label="response" readAloud />);
+  const host = await mount(<MessageActions text="A response" kind="response" readAloud />);
   const button = host.querySelectorAll<HTMLButtonElement>("button")[1]!;
   await act(async () => button.click());
   expect(speech.speak.mock.calls[0]?.[0].text).toBe("A response");

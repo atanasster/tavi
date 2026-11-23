@@ -19,14 +19,14 @@ export interface RewindOffer {
 /** Shared actions for user prompts and assistant responses, including restored turns. */
 export function MessageActions({
   text,
-  label,
+  kind,
   readAloud = false,
   rewind,
   onRepeat,
 }: {
   readonly text: string;
   /** What the text is: the person's prompt or Tavi's response. */
-  readonly label: "prompt" | "response";
+  readonly kind: "prompt" | "response";
   readonly readAloud?: boolean;
   readonly rewind?: RewindOffer | undefined;
   /** *Repeat this…*: open the schedule form filled from this message; `report` says what was created. */
@@ -139,8 +139,8 @@ export function MessageActions({
     <div className="message-actions" ref={row}>
       <IconButton
         icon={copied ? "check" : "copy"}
-        label={t(COPY_KEYS[label])}
-        tooltip={copied ? t("chat.actions.copied") : t(COPY_KEYS[label])}
+        label={t(COPY_KEYS[kind])}
+        tooltip={copied ? t("chat.actions.copied") : t(COPY_KEYS[kind])}
         tooltipPlacement="bottom"
         onClick={() => copy(text, (ok) => report(ok ? t("chat.actions.copied") : t("chat.actions.copyUnavailable")))}
       />

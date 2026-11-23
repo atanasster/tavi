@@ -1,7 +1,8 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { LOCALE_NAMES } from "@tavi/contracts/i18n";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { run } from "./support/process.js";
@@ -67,5 +68,20 @@ describe.skipIf(!built)("web canvas bundle budget", () => {
     expect(report.totalJsGzip, `all JavaScript is ${(report.totalJsGzip / KIB).toFixed(1)} KiB gzipped`).toBeLessThanOrEqual(
       TOTAL_JS_GZIP_BUDGET,
     );
+  });
+
+  it("keeps every other language's words out of the first load", () => {
+    // The first load speaks English; a language's catalogue (ui and core) is a chunk fetched only when it is chosen.
+    // The language picker's own names ("Български") are the one exception, so Cyrillic is a fair probe for Bulgarian.
+    const names = new Set(Object.values(LOCALE_NAMES));
+    const stray = report.firstLoad
+      .filter((file) => file.endsWith(".js"))
+      .flatMap((file) =>
+        [...readFileSync(join(dist, "assets", file), "utf8").matchAll(/\p{Script=Cyrillic}[\p{Script=Cyrillic}\s\p{P}]*/gu)]
+          .map((match) => match[0].trim())
+          .filter((run) => !names.has(run))
+          .map((run) => `${file}: ${run.slice(0, 60)}`),
+      );
+    expect(stray, "Bulgarian words in the first load: import the bg catalogue lazily").toEqual([]);
   });
 });

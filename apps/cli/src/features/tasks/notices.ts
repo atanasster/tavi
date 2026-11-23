@@ -98,7 +98,7 @@ export function noticeStatusLine(status: string, errorCode?: string): string {
 }
 
 /** `noticeStatusLine` by key, stored with a notice to be said in its reader's language. */
-export function noticeStatusRef(status: string, errorCode?: string): TextRef {
+function noticeStatusRef(status: string, errorCode?: string): TextRef {
   switch (status) {
     case "completed":
       return textRef("notice.status.completed");

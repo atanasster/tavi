@@ -206,6 +206,15 @@ describe("tavi plugins validate: language packs", () => {
     ]);
   });
 
+  it("reads the example UI plugin's packs: its panel's words and every manifest field a person reads", async () => {
+    const view = await validatePlugin(join(repo, "examples/ui-plugins/minimal-browser-view"), { platform: "darwin" });
+    expect(view).toMatchObject({ problems: [], warnings: [] });
+    expect(view.locales?.map((pack) => [pack.locale, pack.manifest?.missing, pack.messages?.translated, pack.messages?.missing])).toEqual([
+      ["en", undefined, 6, []],
+      ["bg", [], 6, []],
+    ]);
+  });
+
   it("prints the coverage in text and in --format json, and exits 1 on a pack install would refuse", async () => {
     const good = plugin({ en: { messages: { hi: "Hi" } }, bg: { manifest: { name: "Пакети" }, messages: { hi: "Здрасти" } } });
     const text = await tavi(["plugins", "validate", good, "--data-dir", dirs.create("tavi-validate-locales-data-")]);

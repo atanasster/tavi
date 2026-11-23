@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "abi": "tavi.providers/1",
   "provenance": { "format": "bundled-esm", "packages": [] },
   "id": "example.browserview",
@@ -22,5 +22,6 @@
         "disclosure": "Receives live images of the pages the agent browses, and the address of each page."
       }
     ]
-  }
+  },
+  "locales": { "en": "locales/en.json", "bg": "locales/bg.json" }
 }

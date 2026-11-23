@@ -247,7 +247,7 @@ export const RunView = memo(function RunView({
       {run.prompt === "" ? null : (
         <div className="user-message" data-run={run.id} data-turn={firstTurn + (run.recordedPrompts?.length ?? 0)}>
           <Prompt id={promptId} text={run.prompt} {...(run.fileNames === undefined ? {} : { fileNames: run.fileNames })} />
-          <MessageActions text={run.prompt} label="prompt" rewind={rewindOffer} onRepeat={repeat} />
+          <MessageActions text={run.prompt} kind="prompt" rewind={rewindOffer} onRepeat={repeat} />
         </div>
       )}
       {/* A replayed turn that kept only its prompt (its answer drawn as the next, promptless turn) names no one under it. */}
@@ -452,7 +452,7 @@ function ReplyFooter({
   );
   return (
     <footer className="response-footer">
-      {response ? <MessageActions text={response} label="response" readAloud={turnEnded(run.run.status)} /> : null}
+      {response ? <MessageActions text={response} kind="response" readAloud={turnEnded(run.run.status)} /> : null}
       {memoryChip}
       {said.length === 0 ? null : (
         <p className="reply-facts meta-sm" title={facts.modelIds}>

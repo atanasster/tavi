@@ -25,7 +25,7 @@ export function noticeTitle(notice: Pick<ChatNotice, "title" | "titleRef">): str
 }
 
 /** A notice's summary in the reader's language, as `noticeTitle` says its title. */
-export function noticeSummary(notice: Pick<ChatNotice, "summary" | "summaryRef">): string {
+function noticeSummary(notice: Pick<ChatNotice, "summary" | "summaryRef">): string {
   return localizedText(notice.summary, notice.summaryRef, translateCore);
 }
 

@@ -19,7 +19,7 @@ import { checkLocalePack, type PluginFileCheck } from "@tavi/runtime";
  */
 
 /** How much of one kind of text a pack translates: `translated` of `total`, and the paths or keys it leaves to English. */
-export interface PluginLocaleCount {
+interface PluginLocaleCount {
   readonly translated: number;
   readonly total: number;
   readonly missing: readonly string[];
@@ -93,7 +93,7 @@ function valueAt(value: unknown, path: readonly (string | number)[]): unknown {
  * kept when the manifest has words there. A field the manifest leaves empty
  * (an optional description, a setting with no label) is not counted.
  */
-export function englishOverlayFields(manifest: PluginManifest): readonly string[] {
+function englishOverlayFields(manifest: PluginManifest): readonly string[] {
   const fields: string[] = [];
   for (const [path, target] of pluginOverlayTargets(manifest)) {
     const copy = structuredClone(manifest);

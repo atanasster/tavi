@@ -1,0 +1,10 @@
+{
+  "messages": {
+    "view.title": "Browser (minimal)",
+    "status.waiting": "Waiting for the agent's browser…",
+    "status.paused": "Paused: too many browsers are shown at once.",
+    "status.hidden": "Hidden: a sensitive page.",
+    "status.ended": "The browser session ended.",
+    "frame.alt": "The agent's page"
+  }
+}

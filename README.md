@@ -61,6 +61,9 @@ fresh install, with the model's waits sped up.
   kept until you approve it, and every answer can show what it drew on.
 - **Start from an idea.** 65 ready-to-run everyday templates across 19 areas,
   from meal plans to job searches.
+- **Languages.** English or Bulgarian for the whole workspace: the canvas, the
+  terminal, chat apps, the agent's replies and plugins follow the language you
+  choose ([LANGUAGES](docs/LANGUAGES.md)).
 
 The [how-to guides](docs/use-cases/README.md) show each of these one task at a
 time, with the real screens.

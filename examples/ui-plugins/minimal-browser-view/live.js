@@ -1,7 +1,8 @@
 // The smallest browser view a plugin can be:
 // it says it is ready, asks for the one channel its manifest declares, shows
 // one session's frames, gives each frame's credit back once it is handled,
-// and takes the canvas's theme tokens (plugin-base.css has them until then).
+// takes the canvas's theme tokens (plugin-base.css has them until then),
+// and speaks the canvas's language with the words the host hands it.
 // It never sees the canvas, the network or a control: only what the host sends.
 const ABI = "tavi.ui/1";
 const status = document.querySelector("[data-status]");
@@ -13,6 +14,41 @@ const seen = [];
 let shown;
 /** The newest frame asked to be drawn: an older one finishing later is not. */
 let drawing = 0;
+
+/** The page's words in English, as live.html is written: the host's `messages` say them in the canvas's language. */
+const ENGLISH = {
+  "view.title": "Browser (minimal)",
+  "status.waiting": "Waiting for the agent's browser…",
+  "status.paused": "Paused: too many browsers are shown at once.",
+  "status.hidden": "Hidden: a sensitive page.",
+  "status.ended": "The browser session ended.",
+  "frame.alt": "The agent's page",
+};
+/** This plugin's messages in the canvas's language (locales/<lang>.json), from `init` and `locale`; none means English. */
+let messages;
+/** What the status line says: a message's key, or an address, which is never translated. */
+let statusSaid = { key: "status.waiting" };
+
+/** `key`'s words: the pack's when it has them (a plural says its `other`: nothing here is counted), else English. */
+const t = (key) => {
+  const found = messages !== undefined && Object.hasOwn(messages, key) ? messages[key] : undefined;
+  return typeof found === "string" ? found : typeof found?.other === "string" ? found.other : ENGLISH[key];
+};
+
+/** Says the status line again, in the language now set. */
+function showStatus(said) {
+  statusSaid = said;
+  status.textContent = said.key === undefined ? said.text : t(said.key);
+}
+
+/** The language `init` or `locale` names, and its words: the page's own words said again in it. */
+function setLanguage(locale, words) {
+  document.documentElement.lang = typeof locale === "string" && /^[a-z]{2,3}$/.test(locale) ? locale : "en";
+  messages = words !== null && typeof words === "object" && !Array.isArray(words) ? words : undefined;
+  document.title = t("view.title");
+  frame.alt = t("frame.alt");
+  showStatus(statusSaid);
+}
 
 const note = (kind) => {
   seen.push(kind);
@@ -51,6 +87,9 @@ window.addEventListener("message", (event) => {
   if (message === null || typeof message !== "object" || message.abi !== ABI) return;
   note(message.type === "channel" ? `channel:${message.channel}:${message.message.kind}` : message.type);
   if (message.type === "init" || message.type === "theme") applyTheme(message.theme);
+  // An older host sends no language: English, as the page is written.
+  if (message.type === "init" || message.type === "locale") setLanguage(message.locale, message.messages);
+  if (message.type === "locale") return;
   if (message.type === "init" || message.type === "context") {
     const context = message.context;
     if (context?.sessionId !== undefined && context.sessionId !== shown) {
@@ -70,12 +109,12 @@ window.addEventListener("message", (event) => {
   }
   if (live.kind === "frame") draw(live, message.seq);
   else if (live.kind === "navigated" || (live.kind === "session" && live.url !== undefined)) {
-    status.textContent = live.title === undefined ? live.url : `${live.title} — ${live.url}`;
+    showStatus({ text: live.title === undefined ? live.url : `${live.title} — ${live.url}` });
   } else if (live.kind === "hidden") {
     frame.hidden = true;
-    status.textContent = live.reason === "paused" ? "Paused: too many browsers are shown at once." : "Hidden: a sensitive page.";
+    showStatus({ key: live.reason === "paused" ? "status.paused" : "status.hidden" });
   } else if (live.kind === "ended") {
-    status.textContent = "The browser session ended.";
+    showStatus({ key: "status.ended" });
   }
 });
 

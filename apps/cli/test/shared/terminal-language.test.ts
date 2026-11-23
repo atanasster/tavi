@@ -113,7 +113,8 @@ describe("command output in Bulgarian", () => {
       bg,
     );
     expect(text.split("\n")).toEqual([
-      "completed  2026-11-15 08:00  task-1  Отчет",
+      // The status is said in the workspace's language too.
+      "завършена  2026-11-15 08:00  task-1  Отчет",
       "",
       "Още: 2 чакащи одобрения, 1 действие с неизвестен изход.",
       "",

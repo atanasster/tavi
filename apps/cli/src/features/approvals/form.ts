@@ -11,7 +11,7 @@ import { GLYPHS } from "../../tui/theme.js";
 export type FormView = "full" | "masked" | "labels";
 
 /** How a row's status reads: what the gate checked its value against. */
-export const FORM_STATUS_TEXT: Readonly<Record<SourceStatus, string>> = {
+const FORM_STATUS_TEXT: Readonly<Record<SourceStatus, string>> = {
   verified: `${GLYPHS.done} verified`,
   unmatched: "? not found in its source",
   document: "the form's own words",

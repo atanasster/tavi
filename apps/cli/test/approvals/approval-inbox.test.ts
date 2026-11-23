@@ -2,6 +2,7 @@ import { labelSummary, untrustedLabel, type ApprovalsHistoryResult, type Pending
 import { join } from "node:path";
 import { describe, expect, it, afterEach } from "vitest";
 import { temporaryDirectories } from "@tavi/test-support";
+import { coreIn } from "@tavi/contracts/locales/core-server";
 
 import { SqliteStore } from "../support/database-fixture.js";
 
@@ -49,6 +50,30 @@ describe("approvals list rows", () => {
     expect(approvalListRowOf({ ...row, label })).toMatchObject({ label, provenance: "⚠ after reading news.example — once only" });
     expect(approvalListRowOf({ ...row, label, allowedScopes: ["once", "session"] }).provenance).toBe("⚠ after reading news.example");
     expect(approvalListRowOf(row)).not.toHaveProperty("provenance");
+  });
+
+  it("says the provenance and Tavi's own channels in the workspace's language", () => {
+    const t = coreIn("bg");
+    const label = labelSummary(untrustedLabel("web", { ref: { ref: "c1", host: "news.example", at: "2026-09-30T08:00:00.000Z" } }));
+    const english = approvalListRowOf({ ...row, label }).provenance;
+    const bulgarian = approvalListRowOf({ ...row, label }, undefined, t).provenance;
+    expect(bulgarian).toContain("news.example");
+    expect(bulgarian).toMatch(/\p{Script=Cyrillic}/u);
+    expect(bulgarian).not.toBe(english);
+    // A connection's own name stays as the owner names it; the terminal and the web interface are said in Bulgarian.
+    const named = (id: string) => (id === "telegram-default" ? "Telegram" : undefined);
+    expect(approvalListRowOf(row, named, t).announcedIn?.channel).toBe("Telegram");
+    const history: ApprovalsHistoryResult = {
+      items: [
+        { kind: "approval", via: "cli" } as unknown as ApprovalsHistoryResult["items"][number],
+        { kind: "approval", via: "bridge" } as unknown as ApprovalsHistoryResult["items"][number],
+      ],
+    } as unknown as ApprovalsHistoryResult;
+    expect(withChannels(history, undefined, t).items.map((item) => (item as { channel?: string }).channel)).toEqual([
+      t("approval.channel.terminal"),
+      t("approval.channel.web"),
+    ]);
+    expect(t("approval.channel.terminal")).toBe("терминала");
   });
 });
 

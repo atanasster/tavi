@@ -273,12 +273,6 @@ export function linkLabels(t: CoreT = coreEnglish): Readonly<Record<ApprovalScop
   };
 }
 
-/**
- * Said under every set of single-use links: a link is a bearer capability, so
- * whoever holds the message can use it (a critical round still asks for the PIN).
- */
-export const LINK_BEARER_NOTE = coreEnglish("channel.approval.link.bearer");
-
 /** A link's label; a grouped round's names the group. */
 export function linkLabel(
   choice: ApprovalScope | "deny",

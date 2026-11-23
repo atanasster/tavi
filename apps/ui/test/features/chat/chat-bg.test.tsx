@@ -49,7 +49,7 @@ describe("the chat in Bulgarian", () => {
   it("labels a response's copy and read-aloud", async () => {
     vi.stubGlobal("SpeechSynthesisUtterance", class {});
     vi.stubGlobal("speechSynthesis", { speak: vi.fn(), cancel: vi.fn() });
-    const page = await mount(<MessageActions text="A response" label="response" readAloud />);
+    const page = await mount(<MessageActions text="A response" kind="response" readAloud />);
     expect(labels(page)).toContain("Копирай отговора");
     expect(labels(page)).toContain("Прочети на глас");
     for (const word of ["Copy response", "Read aloud", "Copy prompt"]) expect(labels(page)).not.toContain(word);

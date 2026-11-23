@@ -296,14 +296,15 @@ describe("packed release artifacts", { timeout: 60_000 }, () => {
         // its page and tab icon, hashed scripts, stylesheet and bundled font
         // assets (KaTeX's stylesheet references woff2, woff and ttf faces, so
         // all three ship), plus the built-in UI plugins' built files under
-        // `plugins/<id>/`.
+        // `plugins/<id>/` and their language packs under `plugins/<id>/locales/`.
         const canvas =
           entry.name === "@tavi/cli" &&
           (path === "package/ui-dist/index.html" ||
             path === "package/ui-dist/favicon.svg" ||
             path === "package/ui-dist/THIRD-PARTY-NOTICES.txt" ||
             /^package\/ui-dist\/assets\/[^/]+\.(js|css|woff2|woff|ttf)$/.test(path) ||
-            /^package\/ui-dist\/plugins\/[^/]+\/[^/]+\.(html|js|css|svg)$/.test(path));
+            /^package\/ui-dist\/plugins\/[^/]+\/[^/]+\.(html|js|css|svg)$/.test(path) ||
+            /^package\/ui-dist\/plugins\/[^/]+\/locales\/[a-z]{2,3}\.json$/.test(path));
         // The PDF writer's core font ships as data, with its licence.
         const font =
           entry.name === "@tavi/plugin-pdf" &&

@@ -85,7 +85,24 @@ function nestedLowQuotes(text: string): boolean {
 const MIXED_SCRIPT = /[\p{Script=Cyrillic}][\p{Script=Latin}]|[\p{Script=Latin}][\p{Script=Cyrillic}]/u;
 
 /** Names written with a capital wherever they stand, so the sentence-case check passes them. */
-const PROPER_NOUNS: ReadonlySet<string> = new Set(["България", "София"]);
+const PROPER_NOUNS: ReadonlySet<string> = new Set([
+  "България",
+  "София",
+  // Places and names the plugin packs write: each word of a name is capitalised.
+  "Великобритания",
+  "Германия",
+  "Йорк",
+  "Канада",
+  "Корея",
+  "Нов",
+  "Норвегия",
+  "Ню",
+  "Тасмания",
+  "Тексас",
+  "Уелс",
+  "Уикипедия",
+  "Южен",
+]);
 
 /** Capitalised Cyrillic words past a sentence's start: Bulgarian writes sentence case, never Title Case. */
 function titleCased(text: string): boolean {
@@ -151,6 +168,54 @@ const NEVER_ONE: ReadonlySet<string> = new Set([
 const SPLIT_NUMBER =
   /(?<![\p{L}\d.,:-])(?:1 (?!до )\p{Script=Cyrillic}|\d+ (?:ч|мин|сек|д|дни|часа|минути|секунди|знака|Б|КБ|МБ|ГБ|мс|км)(?!\p{L}))/u;
 
+/** The section 2a rules a Bulgarian catalogue breaks, one line per key and rule. */
+function styleProblems(catalog: Catalog): string[] {
+  const problems: string[] = [];
+  for (const [key, message] of Object.entries(catalog))
+    for (const form of forms(message)) {
+      if (nestedLowQuotes(form)) problems.push(`${key}: „ opened inside „…“`);
+      if (FOREIGN_QUOTES.test(form)) problems.push(`${key}: quote with „…“, not ", ', ” or «»`);
+      if (MIXED_SCRIPT.test(form)) problems.push(`${key}: a word mixes Cyrillic and Latin letters`);
+      if (titleCased(form)) problems.push(`${key}: Title Case; write sentence case`);
+      for (const calque of CALQUES) if (calque.pattern.test(form)) problems.push(`${key}: write ${calque.instead}`);
+      if (typeof message === "string" && COUNTED_WORD.test(form) && !NEVER_ONE.has(key))
+        problems.push(`${key}: a count and the word that agrees with it; write { one, other }`);
+      if (SPLIT_NUMBER.test(form)) problems.push(`${key}: a no-break space after a number keeps it with its word`);
+    }
+  return problems;
+}
+
+/** The folders that hold plugins, two levels down from the root: `packages/external/discord`, `examples/plugins/acme-onboarding`. */
+const PLUGIN_ROOTS = ["packages", "examples"] as const;
+
+/**
+ * Every plugin's Bulgarian pack (`<plugin>/locales/bg.json`), its manifest
+ * words and its messages as one catalogue (`manifest.<field>`, `messages.<key>`).
+ */
+function pluginPacks(): readonly { readonly path: string; readonly catalog: Catalog }[] {
+  const packs: { path: string; catalog: Catalog }[] = [];
+  for (const top of PLUGIN_ROOTS)
+    for (const group of readdirSync(join(root, top), { withFileTypes: true })) {
+      if (!group.isDirectory()) continue;
+      for (const plugin of readdirSync(join(root, top, group.name), { withFileTypes: true })) {
+        if (!plugin.isDirectory()) continue;
+        const path = join(top, group.name, plugin.name, "locales", "bg.json");
+        let text: string;
+        try {
+          text = readFileSync(join(root, path), "utf8");
+        } catch {
+          continue;
+        }
+        const pack = JSON.parse(text) as { readonly manifest?: Record<string, Message>; readonly messages?: Record<string, Message> };
+        const catalog: Record<string, Message> = {};
+        for (const [key, value] of Object.entries(pack.manifest ?? {})) catalog[`manifest.${key}`] = value;
+        for (const [key, value] of Object.entries(pack.messages ?? {})) catalog[`messages.${key}`] = value;
+        packs.push({ path: path.split(sep).join("/"), catalog });
+      }
+    }
+  return packs.sort((a, b) => a.path.localeCompare(b.path));
+}
+
 describe("language packs", () => {
   for (const namespace of NAMESPACES) {
     it(`gives "${namespace.name}" in Bulgarian every key and parameter English has`, () => {
@@ -166,21 +231,21 @@ describe("language packs", () => {
     });
 
     it(`writes "${namespace.name}" in Bulgarian as Bulgarian is written`, () => {
-      const problems: string[] = [];
-      for (const [key, message] of Object.entries(namespace.bg))
-        for (const form of forms(message)) {
-          if (nestedLowQuotes(form)) problems.push(`${key}: „ opened inside „…“`);
-          if (FOREIGN_QUOTES.test(form)) problems.push(`${key}: quote with „…“, not ", ', ” or «»`);
-          if (MIXED_SCRIPT.test(form)) problems.push(`${key}: a word mixes Cyrillic and Latin letters`);
-          if (titleCased(form)) problems.push(`${key}: Title Case; write sentence case`);
-          for (const calque of CALQUES) if (calque.pattern.test(form)) problems.push(`${key}: write ${calque.instead}`);
-          if (typeof message === "string" && COUNTED_WORD.test(form) && !NEVER_ONE.has(key))
-            problems.push(`${key}: a count and the word that agrees with it; write { one, other }`);
-          if (SPLIT_NUMBER.test(form)) problems.push(`${key}: a no-break space after a number keeps it with its word`);
-        }
-      expect(problems).toEqual([]);
+      expect(styleProblems(namespace.bg)).toEqual([]);
     });
   }
+
+  for (const pack of pluginPacks())
+    it(`writes ${pack.path} as Bulgarian is written`, () => {
+      expect(styleProblems(pack.catalog)).toEqual([]);
+    });
+
+  it("finds every plugin's Bulgarian pack", () => {
+    const paths = pluginPacks().map((pack) => pack.path);
+    expect(paths).toContain("packages/external/discord/locales/bg.json");
+    expect(paths).toContain("packages/builtin/browser-view/locales/bg.json");
+    expect(paths).toContain("examples/ui-plugins/minimal-browser-view/locales/bg.json");
+  });
 
   it("catches each rule it states", () => {
     expect(nestedLowQuotes("„едно „друго“ “")).toBe(true);
@@ -224,34 +289,83 @@ const RATCHET = join(root, "tests", "fixtures", "i18n-ratchet.json");
 const WORD = /\p{L}{2}/u;
 /** The attributes a person reads or hears. */
 const READ_ATTRIBUTES: ReadonlySet<string> = new Set(["aria-label", "title", "placeholder", "alt", "label"]);
+/** Elements whose text is code, typed and copied as shown in every language: `<Command>` renders a `<code>`. */
+const CODE_ELEMENTS: ReadonlySet<string> = new Set(["code", "kbd", "Command"]);
+/** Names every language writes the same: brands, and an abbreviation no language spells out. */
+const NAMES: ReadonlySet<string> = new Set([
+  "Tavi",
+  "tavi",
+  "ChatGPT",
+  "Todoist",
+  "SerpApi",
+  "Rhumb",
+  "Telegram",
+  "Discord",
+  "Gmail",
+  "Mailgun",
+  "Ollama",
+  "OpenRouter",
+  "URL",
+]);
+
+/**
+ * Text that is not words to translate: a name from `NAMES`, or every word of it
+ * code (an address, a path, a dotted setting, a package: it has `.`, `/`, `@`,
+ * `:` or `*`). A placeholder that is one lowercase identifier is an example
+ * value the field only accepts in ASCII (a slug such as `docs`).
+ */
+function untranslatable(text: string, attribute?: string): boolean {
+  const trimmed = text.trim();
+  if (NAMES.has(trimmed)) return true;
+  if (attribute === "placeholder" && /^[a-z][a-z0-9-]*$/.test(trimmed)) return true;
+  return trimmed.split(/\s+/).every((token) => /[./@:*]/.test(token));
+}
 
 /**
  * The words a `.tsx` source writes inline, counted from its syntax tree: each
  * JSX text with a word in it (beside an `{expression}` too), and each read
- * attribute given a string with a word in it, quoted or in braces.
+ * attribute given a string with a word in it, quoted or in braces. Text inside
+ * `<code>`, `<kbd>` or `<Command>`, inside an `aria-hidden` mark (its name is
+ * said by text beside it), and text `untranslatable` names are not counted.
  */
 function inlineWords(name: string, source: string): number {
   let found = 0;
-  const visit = (node: unknown): void => {
+  const visit = (node: unknown, skipped: boolean): void => {
     if (Array.isArray(node)) {
-      for (const child of node) visit(child);
+      for (const child of node) visit(child, skipped);
       return;
     }
     if (node === null || typeof node !== "object") return;
-    const record = node as { readonly type?: unknown; readonly value?: unknown; readonly name?: { readonly name?: unknown } };
-    if (record.type === "JSXText" && typeof record.value === "string" && WORD.test(record.value)) found += 1;
-    if (record.type === "JSXAttribute" && typeof record.name?.name === "string" && READ_ATTRIBUTES.has(record.name.name)) {
+    const record = node as {
+      readonly type?: unknown;
+      readonly value?: unknown;
+      readonly name?: { readonly name?: unknown };
+      readonly openingElement?: { readonly name?: { readonly name?: unknown }; readonly attributes?: readonly unknown[] };
+    };
+    let skip = skipped;
+    if (record.type === "JSXElement") {
+      const opening = record.openingElement;
+      const element = opening?.name?.name;
+      const hidden = (opening?.attributes ?? []).some((attribute) => {
+        const a = attribute as { readonly name?: { readonly name?: unknown }; readonly value?: { readonly value?: unknown } | null };
+        return a.name?.name === "aria-hidden" && a.value?.value === "true";
+      });
+      if ((typeof element === "string" && CODE_ELEMENTS.has(element)) || hidden) skip = true;
+    }
+    if (!skip && record.type === "JSXText" && typeof record.value === "string" && WORD.test(record.value) && !untranslatable(record.value))
+      found += 1;
+    if (!skip && record.type === "JSXAttribute" && typeof record.name?.name === "string" && READ_ATTRIBUTES.has(record.name.name)) {
       const value = record.value as {
         readonly type?: unknown;
         readonly value?: unknown;
         readonly expression?: { readonly type?: unknown; readonly value?: unknown };
       } | null;
       const text = value?.type === "Literal" ? value.value : value?.expression?.type === "Literal" ? value.expression.value : undefined;
-      if (typeof text === "string" && WORD.test(text)) found += 1;
+      if (typeof text === "string" && WORD.test(text) && !untranslatable(text, record.name.name)) found += 1;
     }
-    for (const child of Object.values(node)) if (child !== null && typeof child === "object") visit(child);
+    for (const child of Object.values(node)) if (child !== null && typeof child === "object") visit(child, skip);
   };
-  visit(parseSync(name, source).program);
+  visit(parseSync(name, source).program, false);
   return found;
 }
 
@@ -284,9 +398,25 @@ describe("the canvas's inline words", () => {
     expect(inlineWords("a.tsx", 'const x = <p>{t("k")} · {n}</p>; // a comment with words')).toBe(0);
   });
 
+  it("does not count code, names or a decorative mark", () => {
+    expect(inlineWords("a.tsx", "const x = <p><code>tavi serve</code> <kbd>Enter</kbd> <Command>tavi ui</Command></p>;")).toBe(0);
+    expect(inlineWords("a.tsx", 'const x = <p><span aria-hidden="true">tav</span> <a>Rhumb</a> <h2>Todoist</h2></p>;')).toBe(0);
+    expect(inlineWords("a.tsx", 'const x = <i placeholder="https://host/v1" title="ann@example.com, @example.org" />;')).toBe(0);
+    expect(inlineWords("a.tsx", 'const x = <i placeholder="docs" />;')).toBe(0);
+    // A sentence beside code still counts, and so does a sentence naming a brand.
+    expect(inlineWords("a.tsx", "const x = <p>Run <code>tavi serve</code> first</p>;")).toBe(2);
+    expect(inlineWords("a.tsx", 'const x = <i title="Open Todoist" aria-label="Close" />;')).toBe(2);
+  });
+
   it("count no more than the ratchet allows, and the ratchet follows them down", () => {
     const counts = inlineCounts();
-    if (process.env["UPDATE_I18N_RATCHET"] === "1") writeFileSync(RATCHET, `${JSON.stringify(counts, null, 2)}\n`);
+    if (process.env["UPDATE_I18N_RATCHET"] === "1") {
+      // A folder that reached 0 keeps its row at 0, so the fixture shows the folders the ratchet has closed.
+      const before = JSON.parse(readFileSync(RATCHET, "utf8")) as Record<string, number>;
+      const kept = Object.fromEntries(Object.keys(before).map((folder) => [folder, 0]));
+      const written = Object.fromEntries(Object.entries({ ...kept, ...counts }).sort(([a], [b]) => a.localeCompare(b)));
+      writeFileSync(RATCHET, `${JSON.stringify(written, null, 2)}\n`);
+    }
     const ratchet = JSON.parse(readFileSync(RATCHET, "utf8")) as Record<string, number>;
     const grown = Object.entries(counts).filter(([folder, count]) => count > (ratchet[folder] ?? 0));
     expect(grown, "new words written inline: put them in apps/ui/src/locales/en.ts and bg.ts").toEqual([]);

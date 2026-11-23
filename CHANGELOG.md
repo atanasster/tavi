@@ -4,6 +4,56 @@ All notable changes to Tavi are recorded here. The project follows
 [Semantic Versioning](https://semver.org); before 1.0, a minor version may
 change behaviour or stored data.
 
+## Unreleased
+
+Tavi speaks Bulgarian: choose the language once, and the canvas, the
+terminal, chat apps, the agent's replies and plugins follow it.
+
+### Added
+
+- A language for the workspace, `workspace.locale` (`en` or `bg`). `tavi
+  onboard` asks for it first (Enter keeps English), Welcome has the picker on
+  every step, and Settings → General has it as **Language**. A Welcome with
+  no language set yet picks Bulgarian when it is the browser's first language
+  Tavi speaks. `tavi config set workspace.locale bg` changes it any time, and
+  an open canvas page or `tavi chat` follows within seconds. See
+  docs/LANGUAGES.md.
+- The canvas in Bulgarian: every view, dates, counts and status words, with
+  Onest for Cyrillic titles. Notices, schedule history, approval cards and the
+  words Tavi stored itself are said in the language you read them in, and
+  keyed errors are shown in it; an error with no key is framed in your language
+  around its English. Bulgarian loads as its own chunk, only when chosen.
+- The terminal in Bulgarian: `tavi chat`'s status row, cards, panes and forms,
+  onboarding, the `[Д/н]` confirms with Bulgarian keys beside the English
+  ones, and the text output of `tavi tasks`, `reports`, `heartbeat`, `doctor`,
+  `needs`, `reminders`, `schedules`, `ideas`, `plugins list` and `show`, and
+  `channels pair`, measured in terminal cells to fit 80 and 120 columns.
+  `--help`, usage errors, stderr and `--format json` stay English.
+- Chat apps in Bulgarian: approval requests and their buttons, questions,
+  memory cards, the heartbeat, reminders, digests, alerts, room introductions
+  and the approval link and sign-in pages a phone opens. What you type back is
+  read in English and Bulgarian alike (`одобри`, `/memory запази всички`,
+  `/heartbeat пауза 2ч`), and Discord's `/tavi` commands carry Bulgarian
+  descriptions.
+- The agent replies in the workspace's language unless you write in another,
+  reads the local time with that language's day and month names, and writes
+  ideas and new routines' reports in it. Its own instructions stay English.
+  Memory recall understands Bulgarian dates, and automatic capture recognises
+  Bulgarian passwords and sensitive topics.
+- Language packs for plugins: `locales/<lang>.json`, declared under `locales`
+  in a `schemaVersion: 3` manifest, translate what a person reads in the
+  manifest and carry the plugin's messages for `ctx.t`; `ctx.locale` is the
+  owner's default workspace's language. Canvas panels get the language and
+  their words in `init` and a `locale` message. Packs are reviewed files of
+  the version, and a pack that translates what the model reads is refused.
+  The built-in plugins speak Bulgarian, and Discord, Jobs, Trends, Places,
+  Places: health, the browser view and the example plugins ship Bulgarian
+  packs.
+- `tavi plugins validate` checks every language pack as install does and
+  counts how many of the manifest's words and messages each translates
+  (`locales` in `--format json`). See "Translating your plugin" in
+  docs/PLUGINS.md.
+
 ## 0.4.3 — 2026-11-22
 
 Return trips without a SerpApi key get Google Flights' one-way fares each way.
