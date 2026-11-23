@@ -24,8 +24,8 @@ export const settings = {
   "settings.models.target.unconfigured": "Няма настроен модел, затова Tavi не изпълнява нищо. Избери модел по-долу.",
   "settings.models.target.unconfiguredUntilRestart":
     "Сървърът на Tavi стартира без настроен модел, затова не изпълнява нищо. Пусни отново `tavi serve`, за да ползва {next}.",
-  "settings.models.target.unresolved": `Сървърът на Tavi ползва {running}; запазеният избор на модел още не може да се разреши. Провери ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.models")}, преди да пуснеш отново \`tavi serve\`.`,
-  "settings.models.target.startupUnresolved": `Сървърът на Tavi ползва модела, с който е стартирал; запазеният избор на модел още не може да се разреши. Провери ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.models")}, преди да пуснеш отново \`tavi serve\`.`,
+  "settings.models.target.unresolved": `Сървърът на Tavi ползва {running}; запазеният избор на модел още не сочи към наличен модел. Провери ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.models")}, преди да пуснеш отново \`tavi serve\`.`,
+  "settings.models.target.startupUnresolved": `Сървърът на Tavi ползва модела, с който е стартирал; запазеният избор на модел още не сочи към наличен модел. Провери ${navPathIn(CORE_BG, "nav.route.settings", "nav.settings.models")}, преди да пуснеш отново \`tavi serve\`.`,
   "settings.models.target.untilRestart":
     "Сървърът на Tavi ползва {running}, докато не пуснеш отново `tavi serve`; след това ще ползва {next}.",
   "settings.models.target.startupUntilRestart":
@@ -124,7 +124,7 @@ export const settings = {
   "settings.general.region": "общи",
   "settings.general.setup": "Първи стъпки",
   "settings.general.setupHint":
-    "Мини отново през всички стъпки: модела, за теб, приложенията, каналите, търсенето и първите идеи. Каквото е настроено, си остава, освен ако не го промениш.",
+    "Мини отново през всички стъпки: модела, „За теб“, приложенията, каналите, търсенето и първите идеи. Каквото е настроено, си остава, освен ако не го промениш.",
   "settings.general.runSetup": "Мини стъпките отново",
   "settings.general.timezone": "Часова зона",
   "settings.general.timezoneHint":
@@ -157,7 +157,7 @@ export const settings = {
   "settings.systemPrompt.shippedLabel": "Вградени системни инструкции",
   "settings.systemPrompt.added": "Какво се добавя към този текст",
   "settings.systemPrompt.addedBody":
-    "Характерът на именуван агент се добавя след този текст, а паметта, одобрените умения и намереният контекст се добавят отделно при всяко извикване на модела. Обобщаването при сгъстяване ползва свои инструкции и не се влияе. Характерите се четат на живо, затова тази версия не ги замразява.",
+    "Характерът на именуван агент се добавя след този текст, а паметта, одобрените умения и намереният контекст се добавят отделно при всяко извикване на модела. Обобщаването при сгъстяване ползва свои инструкции и не зависи от този текст. Характерите се четат на живо, затова тази версия не ги замразява.",
 
   "settings.action.remove": "Премахни",
   "settings.action.test": "Тествай",
@@ -323,10 +323,10 @@ export const settings = {
   "settings.mcpApi.off": "MCP е изключен: всички сървъри са спрени, а инструментите им — оттеглени.",
 
   "settings.action.delete": "Изтрий",
-  "settings.credentials.notEncrypted": "Не са криптирани: пусни {command}",
-  "settings.credentials.encryptedKeychain": "Криптирани; ключът е в {keychain}",
-  "settings.credentials.encryptedOsKeychain": "Криптирани; ключът е в хранилището за ключове на системата",
-  "settings.credentials.encryptedFile": "Криптирани; ключът е в credentials.key в папката с данни",
+  "settings.credentials.notEncrypted": "Не са шифровани: пусни {command}",
+  "settings.credentials.encryptedKeychain": "Шифровани; ключът е в {keychain}",
+  "settings.credentials.encryptedOsKeychain": "Шифровани; ключът е в хранилището за ключове на системата",
+  "settings.credentials.encryptedFile": "Шифровани; ключът е в credentials.key в папката с данни",
   "settings.credentials.label.signIn": "Тайна за вход на {plugin}",
   "settings.credentials.label.channel": "Канал: {secret}",
   "settings.credentials.label.apiKey": "API ключ за {connection}",
@@ -359,7 +359,7 @@ export const settings = {
   "settings.permissions.origin.heartbeat": "проверки на пулса",
   "settings.permissions.origin.ideas": "подготвените първи стъпки на идеи",
   "settings.permissions.anyCall": "всяко извикване",
-  "settings.permissions.allWorkspaces": "Всички пространства",
+  "settings.permissions.allWorkspaces": "Всички работни пространства",
   "settings.permissions.onlyFirst": "Само за {who}",
   "settings.permissions.only": "само за {who}",
   "settings.permissions.grantBy": "в {chat}{id}, от {by}",
@@ -434,7 +434,7 @@ export const settings = {
   "settings.tools.summaries.ownModel": "Ролята fast, иначе собственият модел на задачата",
   "settings.tools.skills.title": "Предложения за умения",
   "settings.tools.skills.body":
-    "След задача от няколко стъпки, която е проработила, агентът може да предложи да запази как го е направил като умение. Предложението винаги чака преглед в командния център и не се ползва, докато не го одобриш; да поискаш умение става и в двата случая. Или ползвай {command}.",
+    "След задача от няколко стъпки, която е проработила, агентът може да предложи да запази как го е направил като умение. Предложението винаги чака преглед в командния център и не се ползва, докато не го одобриш; а да поискаш умение можеш и в двата случая. Или ползвай {command}.",
   "settings.tools.skills.label": "предлагай процедурите да се запазват като умения",
   "settings.tools.skills.check": "Предлагай процедурите да се запазват като умения",
   "settings.tools.deferral.auto": "Автоматично: чакат зад търсенето, освен на локален модел",
@@ -467,7 +467,7 @@ export const settings = {
   "settings.browser.recipes.element": "елемент",
   "settings.browser.recipes.title": "Рецепти за сайтове",
   "settings.browser.recipes.body":
-    "Стъпките, които последно са довели до резултат в даден сайт; агентът ги вижда следващия път, когато стигне там. Никога това, което е писано. Или ползвай {command}.",
+    "Стъпките, които последно са довели до резултат в даден сайт; агентът ги вижда следващия път, когато стигне там. Въведеният текст никога не се пази. Или ползвай {command}.",
   "settings.browser.recipes.steps": { one: "{count} стъпка", other: "{count} стъпки" },
   "settings.browser.recipes.uses": { one: "{count} път", other: "{count} пъти" },
   "settings.browser.recipes.meta": "{steps}, ползвана {uses}, последно {day}",
@@ -887,7 +887,7 @@ export const settings = {
   "settings.testSend.recipientLabel": "Получател на теста",
   "settings.testSend.send": "Изпрати тестово съобщение",
   "settings.testSend.allowed": "{principal} има достъп: съобщенията от {senderLabel} {sender} вече стигат до Tavi.",
-  "settings.testSend.allowPrompt": "{sender} е и {senderLabel}. Да може ли този човек да пише с агента през тази връзка?",
+  "settings.testSend.allowPrompt": "{sender} е и {senderLabel}. Да може ли този човек да пише на агента през тази връзка?",
   "settings.testSend.allow": "Разреши",
 
   "settings.people.pairedMe": "Връзката е готова: съобщенията ти в този канал вече стигат до Tavi.",
@@ -983,7 +983,7 @@ export const settings = {
   "settings.signIn.reconnect": "Свържи отново с {label}",
   "settings.signIn.connect": "Свържи с {label}",
   "settings.signIn.waiting": "Чакам входа…",
-  "settings.signIn.encryptRefused": "Данните за достъп не можаха да се шифроват.",
+  "settings.signIn.encryptRefused": "Не успях да шифровам данните за достъп.",
   "settings.signIn.undecryptable": "Някои данни за достъп не се дешифрират с ключа на тази папка с данни: {names}. Задай ги отново.",
   "settings.signIn.encrypted": "Данните за достъп са шифровани. Вече можеш да се свържеш.",
   "settings.signIn.leftAsIs": "Оставени както са (не са данни за достъп): {names}.",
@@ -1043,7 +1043,7 @@ export const settings = {
   "settings.rooms.denyTool": "Забрани {tool}",
   "settings.rooms.allowTool": "Разреши {tool}",
   "settings.rooms.scopeRoom": "стая {id}",
-  "settings.rooms.scopeContact": "личен чат с {id}",
+  "settings.rooms.scopeContact": "личен разговор с {id}",
   "settings.rooms.revoked": "отнето",
   "settings.rooms.expired": "изтекло",
   "settings.rooms.revokeLabel": "Отнеми {id}",
@@ -1053,7 +1053,7 @@ export const settings = {
   "settings.rooms.savingGrant": "Запазвам разрешението…",
   "settings.rooms.where": "Къде",
   "settings.rooms.scopeLabel": "Обхват на разрешението",
-  "settings.rooms.scopeContactOption": "Личен чат с един човек",
+  "settings.rooms.scopeContactOption": "Личен разговор с един човек",
   "settings.rooms.scopeRoomOption": "Стая",
   "settings.rooms.roomId": "ID на стаята",
   "settings.rooms.senderId": "ID на подателя",
@@ -1076,10 +1076,10 @@ export const settings = {
 
   "settings.channelsPage.peopleTitle": "Хора с достъп",
   "settings.channelsPage.title": "Канали",
-  "settings.channelsPage.peopleDescription": "Избери кой може да пише с агента през каналите му.",
+  "settings.channelsPage.peopleDescription": "Избери кой може да пише на агента през каналите му.",
   "settings.channelsPage.description": "Свържи каналите, през които агентът може да бъде намерен и да изпраща.",
   "settings.channelsPage.intro":
-    "Запазването на връзка се прилага веднага. Тайните се пазят в хранилището за данни за достъп и никога не се връщат към тази страница; остави запазена тайна празна, за да я запазиш.",
+    "Запазването на връзка се прилага веднага. Тайните се пазят в хранилището за данни за достъп и никога не се връщат към тази страница; остави полето на вече запазена тайна празно, за да не я смениш.",
   "settings.channelsPage.connections": "Връзки",
   "settings.channelsPage.empty": "В това работно пространство още няма свързани канали.",
   "settings.channelsPage.openApp": "Отвори приложението",

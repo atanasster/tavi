@@ -125,7 +125,7 @@ export const ui = {
   "ui.cadence.addTime": "Добави час",
   "ui.cadence.every": "На всеки",
   "ui.cadence.everyHowMany": "През колко часа",
-  "ui.cadence.hours": { one: "час", other: "{count} часа" },
+  "ui.cadence.hours": { one: "час", other: "{count} часа" },
   "ui.cadence.from": "от",
   "ui.cadence.windowStart": "Начало на интервала",
   "ui.cadence.to": "до",

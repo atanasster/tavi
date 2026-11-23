@@ -280,7 +280,7 @@ describe("/heartbeat typed in Bulgarian", () => {
 
   it("lists the Bulgarian words in a Bulgarian workspace's help, English as before", async () => {
     const usage = await (await command("bg"))("скачай");
-    expect(usage).toMatch(/^Как се ползва: \/heartbeat \[състояние \| пауза \[30мин\|2ч\|1д\] \| продължи \| сега\]\./u);
+    expect(usage).toMatch(/^Употреба: \/heartbeat \[състояние \| пауза \[30мин\|2ч\|1д\] \| продължи \| сега\]\./u);
     expect(bg("channel.heartbeat.pauseUsage")).toContain("30мин, 2ч или 1д (най-много 7д)");
     const english = await command("en");
     expect(await english("jump")).toBe(
@@ -333,7 +333,7 @@ describe("/ideas in Bulgarian", () => {
     expect(await say("обнови")).toBe("Търся нови идеи; /ideas ще ги покаже след малко.");
     expect(await say("refresh")).toBe("Търся нови идеи; /ideas ще ги покаже след малко.");
     expect(refreshes()).toBe(2);
-    expect(await say("закачи 3")).toBe("Как се ползва: /ideas [обнови]. Насочвай ги в раздела „Идеи“ или с tavi ideas.");
+    expect(await say("закачи 3")).toBe("Употреба: /ideas [обнови]. Насочвай ги в раздела „Идеи“ или с tavi ideas.");
     expect(await say("", "someone-else")).toBe("/ideas е само за собственика на работното пространство.");
     await repositories.ideas.startRun({ runId: "run-a", workspaceId: "default", trigger: "schedule", now: NOW.toISOString() });
     await repositories.ideas.store({

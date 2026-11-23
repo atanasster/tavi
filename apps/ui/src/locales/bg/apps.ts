@@ -88,7 +88,7 @@ export const apps = {
   "apps.detail.connections": "Връзки и хора",
   "apps.detail.sites": "Сайтове, които приложението може да разглежда",
   "apps.detail.sitesNote":
-    "Всеки е изключен, докато не го включиш. Включен, агентът го разглежда в твоя браузър по показаните правила, с твоята сесия и в лимита му на страници.",
+    "Всеки е изключен, докато не го включиш. Щом е включен, агентът го разглежда в твоя браузър по показаните правила, с твоята сесия и в лимита му на страници.",
   "apps.detail.siteWatchable": "Чете го и по график, където robots.txt позволява.",
   "apps.detail.siteOn": "{site} е включен.",
   "apps.detail.siteOff": "{site} е изключен.",
@@ -164,8 +164,8 @@ export const apps = {
   "apps.privacy.trustedPersonal":
     "Смятам го за надеждно и за лични данни. Прекъсването не изтрива това, което Tavi вече помни, нито това, което пази доставчикът.",
   // AccountRow
-  "apps.account.signedIn": "Влязъл на {day}.",
-  "apps.account.notSignedIn": "Още не е влязъл.",
+  "apps.account.signedIn": "Вход на {day}.",
+  "apps.account.notSignedIn": "Още няма вход.",
   "apps.account.missingScopes": "Част от достъпа, който иска, не беше разрешена.",
   "apps.account.keptBy": "Същият вход свързва и {apps}.",
   "apps.account.openInChannels": "Отвори в „Канали“",
@@ -298,7 +298,7 @@ export const apps = {
   "apps.connect.clientReady": "Вече има настроен клиент и ще го ползвам: добави друг файл само ако искаш да го смениш.",
   "apps.connect.dropFile": "Пусни JSON файла на клиента тук или го избери",
   "apps.connect.clientFile": "Клиентски файл: {file}",
-  "apps.connect.pasteInstead": "Още: постави id и тайната на клиента",
+  "apps.connect.pasteInstead": "Или постави id и тайната на клиента",
   "apps.connect.clientId": "Id на клиента",
   "apps.connect.clientSecret": "Тайна на клиента",
   "apps.connect.clientSecretOptional": "Тайна на клиента (ако има)",
@@ -306,7 +306,7 @@ export const apps = {
   "apps.connect.saveAndNext": "Запази и напред",
   "apps.connect.saveAndTest": "Запази и тествай",
   "apps.connect.ownClient":
-    "{app} не регистрира Tavi само. Създай OAuth приложение в настройките му за разработчици, дай му този адрес за пренасочване и постави тук id на клиента.",
+    "{app} не регистрира Tavi автоматично. Създай OAuth приложение в настройките му за разработчици, дай му този адрес за пренасочване и постави тук id на клиента.",
   "apps.connect.redirect": "Адрес за пренасочване",
   "apps.connect.saveAndSignIn": "Запази и влез",
   "apps.connect.copied": "Копирано",
@@ -353,7 +353,7 @@ export const apps = {
   "apps.page.connected": "Свързани",
   "apps.page.discover": "Открий",
   "apps.list.search": "Търси в приложенията си",
-  "apps.list.needsYouOnly": "Само чакащите теб",
+  "apps.list.needsYouOnly": "Само тези, които те чакат",
   "apps.list.killSwitch": "Аварийно спиране: {button} (включваш ги пак с {command}).",
   "apps.list.allOff": "Изключи всички MCP приложения",
   "apps.list.empty": "Още няма приложения. Свържи календара, задачите и дома си, за да планирам около деня ти.",

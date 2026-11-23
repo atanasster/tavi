@@ -22,10 +22,10 @@ export const routines = {
   "routines.status.blockedUnevaluated": "Ще е достъпно, след като рутината мине оценката си.",
   "routines.status.blockedCompleted": "Тази рутина няма оставащи задействания.",
   "routines.status.blockedPaused": "Продължи рутината, за да я пуснеш.",
-  "routines.status.blockedRevoked": "Притежателят ѝ вече няма достъп до това работно пространство.",
-  "routines.status.revokedTitle": "Притежателят вече няма достъп",
+  "routines.status.blockedRevoked": "Собственикът ѝ вече няма достъп до това работно пространство.",
+  "routines.status.revokedTitle": "Собственикът вече няма достъп",
   "routines.status.revokedDetail":
-    "{principal} е премахнат от „Разрешени хора“, затова рутината вече не се пуска. Архивирай я или му разреши отново, за да я ползваш.",
+    "{principal} не е в „Разрешени хора“, затова рутината вече не се пуска. Архивирай я или върни достъпа на този човек, за да я ползваш.",
   "routines.status.setupTitle": "Нужна е настройка",
   "routines.status.setupDetail":
     "Сървърът на Tavi не успя да започне оценката на рутината. Виж в „Състояние“ по-долу какво липсва, после рестартирай `tavi serve`.",
@@ -185,9 +185,9 @@ export const routines = {
   "routines.inspector.title": "Пускане {when}",
   "routines.inspector.description": "{mode} · версия {revision}",
   "routines.inspector.refresh": "Обнови пускането",
-  "routines.inspector.openTask": "Отвори основния агент и помощника",
+  "routines.inspector.openTask": "Отвори основната задача и помощника",
   "routines.inspector.cancelConfirm": "Да спра ли пускането сега? Няма да публикува доклад и няма да доставя.",
-  "routines.inspector.cancel": "Спри изпълнението",
+  "routines.inspector.cancel": "Спри пускането",
   "routines.inspector.keepRunning": "Не спирай",
   "routines.inspector.cancelDone": "Спирането е записано",
   "routines.inspector.loading": "Зареждам пускането…",
@@ -335,7 +335,7 @@ export const routines = {
   "routines.overview.configurationLine":
     "Активна версия: {active}; последна конфигурация: {latest}. Всяко пускане пази своята конфигурация.",
   "routines.overview.none": "няма",
-  "routines.overview.lastSevenDays": "Последните 7 дни",
+  "routines.overview.lastSevenDays": "Последните 7 дни",
   "routines.overview.archiveSection": "Архив",
   "routines.overview.measured": "Какво измери",
 
@@ -374,7 +374,7 @@ export const routines = {
   "routines.edit.noDestination":
     "Няма настроено място за доставка. Настрой съобщенията, после поискай в чата да добавя изрично избрано място.",
   "routines.edit.questions": "Въпроси по време на пускане",
-  "routines.edit.neverAsk": "Не питай — решавай сам",
+  "routines.edit.neverAsk": "Не питай — решавай без мен",
   "routines.edit.askDefault": "Питай на мястото за доставка, с отговор по подразбиране",
   "routines.edit.hintNoDestination": "Избери място за доставка по-горе, за да може пускането да те пита.",
   "routines.edit.hintAsk":

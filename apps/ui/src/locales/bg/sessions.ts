@@ -23,7 +23,7 @@ export const sessions = {
   "sessions.archive": "Архивирай",
   "sessions.unarchive": "Върни от архива",
   "sessions.archiveLabel": "Архивирай {title}",
-  "sessions.unarchiveLabel": "Върни от архива {title}",
+  "sessions.unarchiveLabel": "Върни {title} от архива",
   "sessions.workspace": "Работно пространство {id}",
   "sessions.search.label": "Търсене по дума",
   "sessions.search.placeholder": "Търси в чатовете…",

@@ -36,7 +36,7 @@ describe("the shell in Bulgarian", () => {
       (element) => `${element.getAttribute("aria-label") ?? ""} ${element.getAttribute("title") ?? ""}`,
     );
     expect(text).toContain("3 чата те чакат в работното пространство „default“");
-    expect(labels.join(" | ")).toContain("Tavi: свързан");
+    expect(labels.join(" | ")).toContain("Tavi: има връзка");
     for (const word of ["Chat", "Settings", "Ideas", "need you", "Keyboard shortcuts", "connected"]) {
       expect(text).not.toContain(word);
       expect(labels.join(" | ")).not.toContain(word);

@@ -65,6 +65,6 @@ export const labels = {
   "approval.channel.emailLink": "линк в имейл",
   "approval.channel.policy": "правило",
   "approval.channel.standingAnswer": "постоянен отговор",
-  "turn.stopped.message": "Спря това.",
+  "turn.stopped.message": "Ти спря това.",
   "folder.managed.label": "Файлове на чата",
 } as const satisfies CatalogFor<typeof en>;

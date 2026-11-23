@@ -211,7 +211,7 @@ export const chatPanel = {
   "chatPanel.details.moreLive": "Чатът има повече активни сесии, отколкото събира един списък; някои не се виждат.",
   "chatPanel.details.earlier": "По-ранни сесии в командния център →",
 
-  "chatPanel.folder.mode.ro": "само четене",
+  "chatPanel.folder.mode.ro": "само за четене",
   "chatPanel.folder.mode.rw": "четене и запис",
   "chatPanel.folder.chipUnavailable": "Папката е недостъпна",
   "chatPanel.folder.chip": "Папка {label}",

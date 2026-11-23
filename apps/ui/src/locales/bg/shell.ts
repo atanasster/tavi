@@ -10,7 +10,7 @@ export const shell = {
   "shell.bar.brandTitle": "Tavi: {connection}",
   "shell.bar.connection.idle": "няма връзка",
   "shell.bar.connection.connecting": "свързвам се…",
-  "shell.bar.connection.ready": "свързан",
+  "shell.bar.connection.ready": "има връзка",
   "shell.bar.connection.reconnecting": "свързвам се отново…",
   "shell.bar.connection.closed": "връзката прекъсна",
   "shell.bar.setup": "Първи стъпки",

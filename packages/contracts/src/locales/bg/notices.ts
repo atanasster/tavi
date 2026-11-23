@@ -49,12 +49,12 @@ export const notices = {
   "notice.routine.credentialGrace.text":
     "Рутината „{name}“ е на пауза: ключът ѝ за модела или търсенето се отхвърля от над {hours} ч. Поправи ключа в настройките и я пусни отново. {resume}",
   "notice.routine.failures.text":
-    "Рутината „{name}“ е на пауза след {n} неуспешни пускания подред; историята на пусканията ѝ казва защо. {resume}",
+    "Рутината „{name}“ е на пауза след {n} неуспешни пускания поред; историята на пусканията ѝ казва защо. {resume}",
   "notice.routine.delivery.title": "Доставката на рутината „{name}“ е на пауза",
   "notice.routine.delivery.text":
     "Рутина „{name}“: доставката до „{label}“ е на пауза, защото {why}. Проучването продължава, а докладите остават в приложението. {fix}.",
   "notice.routine.delivery.why.credentials": "данните за достъп на канала ѝ липсват от над {hours} ч",
-  "notice.routine.delivery.why.failures": "{n} изпращания подред не успяха",
+  "notice.routine.delivery.why.failures": "{n} изпращания поред не успяха",
   "notice.routine.delivery.fix.credentials": "Свържи канала отново и доставката ще продължи сама",
   "notice.routine.delivery.fix.failures":
     "Поправи канала, после пусни доставката отново от доставките на пускането в {path} или пусни рутината отново",
@@ -73,7 +73,7 @@ export const notices = {
   "notice.mcp.failed.summary": "Инструментите му са оттеглени. Виж `tavi mcp logs {plugin}` и го провери отново, щом бъде поправен.",
   "notice.mcp.budget.title": "Инструментите на {plugin} не се побират",
   "notice.mcp.budget.summary":
-    "Едно работно пространство има повече MCP инструменти, отколкото се побират до останалите. Направи сървъра достъпен само чрез търсене или изключи друг сървър.",
+    "В едно работно пространство има повече MCP инструменти, отколкото могат да се поберат заедно с останалите. Направи сървъра достъпен само през търсене или изключи друг сървър.",
   "notice.mcp.login.title": "{plugin} иска да влезеш отново",
   "notice.mcp.login.summary": "Инструментите му не работят, докато не влезеш: `tavi mcp login {plugin}`.",
   "notice.mcp.login.summaryCause": "{cause}. Инструментите му не работят, докато не влезеш: `tavi mcp login {plugin}`.",
@@ -88,7 +88,7 @@ export const notices = {
   "notice.conversationReset.chatApp": "приложението за чат",
   "notice.schedule.alert.title": "График „{name}“",
   "notice.schedule.paused.text":
-    "Графикът „{name}“ е на пауза: последните му {n} пускания не успяха, затова няма да се пуска, докато не бъде пуснат отново. Пусни го отново от страницата му, с молба в чата или с `tavi schedules enable {name}`.",
+    "Графикът „{name}“ е на пауза: последните му {n} пускания не успяха, затова няма да тръгне, докато не го възобновиш. Възобнови го с „Продължи“ на страницата му, с молба в чата или с `tavi schedules enable {name}`.",
   "notice.heartbeat.digest.title": { one: "{n} нещо от пулса ти", other: "{n} неща от пулса ти" },
   "notice.heartbeat.summary.heldBack": "Задържано (лимит на час) · {rest}",
   "notice.heartbeat.summary.instruction": "{sources} · ред {line} от инструкциите",

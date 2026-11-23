@@ -149,7 +149,7 @@ export const welcome = {
   "welcome.channels.scope": "Избери приложението за чат, което ползваш. Там на Tavi могат да пишат само хората, които сдвоиш.",
   "welcome.channels.seeAll": "Всички канали",
   "welcome.channels.paired": "Сдвояването в {channel} е готово: съобщенията ти там стигат до Tavi.",
-  "welcome.channels.noOperator": "За сдвояване трябва оператор на работното пространство: първо добави такъв в настройките.",
+  "welcome.channels.noOperator": "За сдвояване трябва собственик на работното пространство: първо го добави в настройките.",
   "welcome.channels.none": "Тук не е инсталиран нито един от предложените канали.",
   "welcome.channels.group": "Канали",
   "welcome.channels.inSettings": "{channel} (в настройките)",

@@ -177,7 +177,7 @@ describe("a schedule's alert in Bulgarian", () => {
   it("is sent to its target in Bulgarian, and posted to Home in English with its key", async () => {
     const run = deps(bg, false);
     await sendAlert(schedule, { identity: "fire", kind: "missed-run", text: missed }, run.deps);
-    expect(run.sent[0]).toBe("Планираното изпълнение „brief“ не се изпълни: пропуснато: закъсняло с 42 мин (правило: пропусни).");
+    expect(run.sent[0]).toBe("Пускането на графика „brief“ не тръгна: пропуснато: закъсняло с 42 мин (правило: пропусни).");
     expect(englishLeft(run.sent[0] ?? "", ["brief"])).toEqual([]);
     expect(run.home[0]).toMatchObject({
       text: 'Scheduled run "brief" did not run: skipped: missed by 42m (policy: skip).',

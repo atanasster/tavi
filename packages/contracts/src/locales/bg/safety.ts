@@ -18,7 +18,7 @@ export const safety = {
   "provenance.source.routineOutput": "резултат от рутина",
   "provenance.source.heartbeat": "сигнал от пулса",
   "provenance.source.sandbox": "резултат от изолираната среда",
-  "provenance.source.webhook": "извикване на webhook",
+  "provenance.source.webhook": "извикване на уебхук",
   "provenance.source.unknownSource": "непроверено съдържание",
   "provenance.source.desktop": "екран на настолно приложение",
   "provenance.source.desktopApp": "екран на настолно приложение ({app})",

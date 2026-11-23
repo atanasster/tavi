@@ -255,7 +255,7 @@ export const errors = {
   "error.heartbeat.revisionConflict": "Пулсът се промени след версия {expected} (сега е {current}); прочети го отново и опитай пак",
   "error.heartbeat.tokenLimitTooLow":
     "Дневният лимит на токени трябва да е поне {min}: всяка проверка запазва най-лошия си случай, преди да тръгне",
-  "error.heartbeat.operatorOnly": "В тази версия само операторът на работното пространство има пулс",
+  "error.heartbeat.operatorOnly": "В тази версия само собственикът на работното пространство има пулс",
   "error.heartbeat.notYet": "Още няма пулс; първо го включи (tavi heartbeat on)",
   "error.heartbeat.providerNotLoaded": "Доставчикът {providerId} не е зареден тук; включи превключвателите му там, където работи",
   "error.heartbeat.providerNotAsking": "Доставчикът {providerId} не иска да получава {missing}",
@@ -272,7 +272,7 @@ export const errors = {
   // Connected apps, MCP servers and sign-in.
   "error.apps.notFound": "Няма приложение {appId}",
   "error.apps.noAccount": "{app} още няма акаунт",
-  "error.apps.noAccountYet": "{app} няма акаунт {accountId}, нито какъвто и да е друг засега",
+  "error.apps.noAccountYet": "{app} няма акаунт {accountId} и засега няма никакъв друг",
   "error.apps.noAccountId": "{app} няма акаунт {accountId}",
   "error.apps.notInstalled": "Няма инсталирано приложение {pluginId}",
   "error.apps.configureInChannels": `Настройките на {app} са в ${navPathIn(nav, "nav.route.settings", "nav.settings.channels")}`,

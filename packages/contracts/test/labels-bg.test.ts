@@ -48,7 +48,7 @@ describe("the labels part in Bulgarian", () => {
   });
 
   it("says the shared one-line labels, and keeps the English constants English", () => {
-    expect(turnStoppedMessage(bg)).toBe("Спря това.");
+    expect(turnStoppedMessage(bg)).toBe("Ти спря това.");
     expect(managedFolderLabel(bg)).toBe("Файлове на чата");
     expect(staleWebPatternMessage(bg)).toContain("„web.“");
     expect(STALE_WEB_PATTERN_MESSAGE).toBe('dotted "web." patterns match no tool: use web_search, web_fetch, or web_* for both');

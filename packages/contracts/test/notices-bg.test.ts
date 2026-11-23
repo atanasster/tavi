@@ -65,7 +65,7 @@ describe("stored notice words", () => {
     const why = textRef("notice.routine.delivery.why.failures", { n: "3" });
     const fix = textRef("notice.routine.delivery.fix.credentials");
     expect(renderTextRef(textRef("notice.routine.delivery.text", { name: "News", label: "Me", why, fix }), bg)).toBe(
-      "Рутина „News“: доставката до „Me“ е на пауза, защото 3 изпращания подред не успяха. Проучването продължава, а докладите остават в приложението. Свържи канала отново и доставката ще продължи сама.",
+      "Рутина „News“: доставката до „Me“ е на пауза, защото 3 изпращания поред не успяха. Проучването продължава, а докладите остават в приложението. Свържи канала отново и доставката ще продължи сама.",
     );
   });
 

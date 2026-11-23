@@ -155,7 +155,7 @@ describe("the schedule part in Bulgarian", () => {
     expect(tokenCountText(1, bg)).toBe(`1${NBSP}токен`);
     expect(scheduleMaxTokensText({ maxTokens: 5000 }, bg)).toBe(`спира, щом едно пускане използва повече от 5000${NBSP}токена`);
     expect(schedulePausedText({ enabled: false, pausedReason: "failures" }, new Date(), bg)).toBe(
-      "на пауза след 3 неуспешни пускания подред; възобнови го, за да тръгне отново",
+      "на пауза след 3 неуспешни пускания поред; възобнови го, за да тръгне отново",
     );
     expect(schedulePausedText({ enabled: false }, new Date(), bg)).toBe("на пауза");
     expect(

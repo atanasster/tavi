@@ -324,7 +324,7 @@ export const chat = {
   "chat.review.refresh": "Обнови данните",
   "chat.review.recording": "Записвам прегледа…",
   "chat.skillOffer.saved": "Запазено като умение: {name}",
-  "chat.skillOffer.dismissed": { one: "Няма да го предлагам {count} ден: {name}", other: "Няма да го предлагам {count} дни: {name}" },
+  "chat.skillOffer.dismissed": { one: "Няма да го предлагам {count} ден: {name}", other: "Няма да го предлагам {count} дни: {name}" },
   "chat.skillOffer.waiting": "Чака прегледа ти: {name}",
   "chat.skillOffer.ask": "Да запазя ли как го направих като умение?",
   "chat.skillOffer.label": "Умение: {heading}",

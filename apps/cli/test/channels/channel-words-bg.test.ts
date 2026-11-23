@@ -299,7 +299,7 @@ describe("a reminder in Bulgarian", () => {
   };
 
   it("says when it is and that it is late in Bulgarian, English as before", () => {
-    expect(reminderMessageText(reminder, fire, true, bg)).toBe("⏰ Зъболекар — пн, 5 окт 10:00 (закъснял: трябваше да е в 09:00)");
+    expect(reminderMessageText(reminder, fire, true, bg)).toBe("⏰ Зъболекар — пн, 5 окт 10:00 (закъсняло: трябваше да е в 09:00)");
     expect(reminderMessageText(reminder, fire, true)).toBe("⏰ Зъболекар — Mon 5 Oct 10:00 (late: was due 09:00)");
   });
 
